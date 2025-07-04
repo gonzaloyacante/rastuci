@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendNotification } from "@/lib/onesignal";
 import { ApiResponse, Order, PaginatedResponse, OrderStatus } from "@/types";
+import { Prisma } from "@prisma/client";
 
 // GET /api/orders - Obtener todos los pedidos con paginación
 export async function GET(
@@ -45,15 +47,19 @@ export async function GET(
       prisma.order.count({ where }),
     ]);
 
-    const orders: Order[] = prismaOrders.map((order) => ({
+    const orders: Order[] = prismaOrders.map((order: any) => ({
       ...order,
       status: order.status as OrderStatus,
       customerAddress: order.customerAddress ?? undefined,
-      items: order.items.map((item) => ({
+      items: order.items.map((item: any) => ({
         ...item,
         product: {
           ...item.product,
           description: item.product.description ?? undefined,
+          images:
+            typeof item.product.images === "string"
+              ? JSON.parse(item.product.images)
+              : item.product.images,
           category: {
             ...item.product.category,
             description: item.product.category.description ?? undefined,
@@ -151,51 +157,53 @@ export async function POST(
     }
 
     // Crear el pedido con transacción
-    const order = await prisma.$transaction(async (tx) => {
-      // Crear el pedido
-      const newOrder = await tx.order.create({
-        data: {
-          customerName,
-          customerPhone,
-          customerAddress,
-          total,
-          items: {
-            create: validatedItems,
+    const order = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Crear el pedido
+        const newOrder = await tx.order.create({
+          data: {
+            customerName,
+            customerPhone,
+            customerAddress,
+            total,
+            items: {
+              create: validatedItems,
+            },
           },
-        },
-        include: {
-          items: {
-            include: {
-              product: {
-                include: {
-                  category: true,
+          include: {
+            items: {
+              include: {
+                product: {
+                  include: {
+                    category: true,
+                  },
                 },
               },
             },
           },
-        },
-      });
-
-      // Actualizar el stock de los productos
-      for (const item of validatedItems) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity,
-            },
-          },
         });
-      }
 
-      return newOrder;
-    });
+        // Actualizar el stock de los productos
+        for (const item of validatedItems) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: {
+                decrement: item.quantity,
+              },
+            },
+          });
+        }
+
+        return newOrder;
+      }
+    );
 
     const responseOrder: Order = {
       ...order,
       status: order.status as OrderStatus,
       customerAddress: order.customerAddress ?? undefined,
-      items: order.items.map((item) => ({
+      items: order.items.map((item: any) => ({
         ...item,
         product: {
           ...item.product,

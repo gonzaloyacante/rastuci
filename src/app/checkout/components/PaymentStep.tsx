@@ -119,17 +119,15 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
                   pago segura para completar la transacción.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <img src="/img/visa.svg" alt="Visa" className="h-8" />
-                  <img
-                    src="/img/mastercard.svg"
-                    alt="Mastercard"
-                    className="h-8"
-                  />
-                  <img
-                    src="/img/amex.svg"
-                    alt="American Express"
-                    className="h-8"
-                  />
+                  <div className="h-8 w-12 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                    VISA
+                  </div>
+                  <div className="h-8 w-12 bg-red-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                    MC
+                  </div>
+                  <div className="h-8 w-12 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                    AMEX
+                  </div>
                 </div>
               </div>
             )}

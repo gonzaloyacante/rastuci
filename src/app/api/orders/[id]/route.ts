@@ -1,12 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Order, OrderStatus } from "@/types";
+import { Prisma } from "@prisma/client";
 
 interface RouteParams {
   params: Promise<{
     id: string;
   }>;
 }
+
+type OrderItemWithProduct = {
+  id: string;
+  productId: string;
+  orderId: string;
+  quantity: number;
+  price: number;
+  product: {
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    stock: number;
+    images: string | string[];
+    categoryId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    category: {
+      id: string;
+      name: string;
+      description: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  };
+};
 
 // GET /api/orders/[id] - Obtener pedido por ID
 export async function GET(
@@ -45,18 +72,31 @@ export async function GET(
       ...order,
       customerAddress: order.customerAddress ?? undefined,
       status: order.status as OrderStatus,
-      items: order.items.map((item) => ({
-        ...item,
+      items: order.items.map((item: OrderItemWithProduct) => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        orderId: item.orderId,
+        productId: item.productId,
         product: {
-          ...item.product,
+          id: item.product.id,
+          name: item.product.name,
           description: item.product.description ?? undefined,
+          price: item.product.price,
+          stock: item.product.stock,
           images:
             typeof item.product.images === "string"
               ? JSON.parse(item.product.images)
               : item.product.images,
+          categoryId: item.product.categoryId,
+          createdAt: item.product.createdAt,
+          updatedAt: item.product.updatedAt,
           category: {
-            ...item.product.category,
+            id: item.product.category.id,
+            name: item.product.category.name,
             description: item.product.category.description ?? undefined,
+            createdAt: item.product.category.createdAt,
+            updatedAt: item.product.category.updatedAt,
           },
         },
       })),
@@ -120,14 +160,31 @@ export async function PUT(
       ...order,
       customerAddress: order.customerAddress ?? undefined,
       status: order.status as OrderStatus,
-      items: order.items.map((item) => ({
-        ...item,
+      items: order.items.map((item: OrderItemWithProduct) => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        orderId: item.orderId,
+        productId: item.productId,
         product: {
-          ...item.product,
+          id: item.product.id,
+          name: item.product.name,
           description: item.product.description ?? undefined,
+          price: item.product.price,
+          stock: item.product.stock,
+          images:
+            typeof item.product.images === "string"
+              ? JSON.parse(item.product.images)
+              : item.product.images,
+          categoryId: item.product.categoryId,
+          createdAt: item.product.createdAt,
+          updatedAt: item.product.updatedAt,
           category: {
-            ...item.product.category,
+            id: item.product.category.id,
+            name: item.product.category.name,
             description: item.product.category.description ?? undefined,
+            createdAt: item.product.category.createdAt,
+            updatedAt: item.product.category.updatedAt,
           },
         },
       })),
@@ -188,7 +245,7 @@ export async function DELETE(
     }
 
     // Eliminar el pedido y restaurar stock en transacción
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Restaurar el stock de los productos
       for (const item of order.items) {
         await tx.product.update({

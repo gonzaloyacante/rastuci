@@ -36,6 +36,10 @@ export async function GET(
     const responseProduct: Product = {
       ...product,
       description: product.description ?? undefined,
+      images:
+        typeof product.images === "string"
+          ? JSON.parse(product.images)
+          : product.images,
       category: {
         ...product.category,
         description: product.category.description ?? undefined,
@@ -132,6 +136,10 @@ export async function PUT(
     const updatedProduct: Product = {
       ...updatedPrismaProduct,
       description: updatedPrismaProduct.description ?? undefined,
+      images:
+        typeof updatedPrismaProduct.images === "string"
+          ? JSON.parse(updatedPrismaProduct.images)
+          : updatedPrismaProduct.images,
       category: {
         ...updatedPrismaProduct.category,
         description: updatedPrismaProduct.category.description ?? undefined,

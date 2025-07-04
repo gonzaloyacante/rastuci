@@ -56,7 +56,12 @@ export default function BillingStep({ onNext }: BillingStepProps) {
       };
       updateCustomerInfo(updatedInfo);
     }
-  }, [documentInfo]);
+  }, [
+    documentInfo.documentType,
+    documentInfo.documentNumber,
+    customerInfo,
+    updateCustomerInfo,
+  ]);
 
   // Manejar continuar al siguiente paso
   const handleContinue = () => {

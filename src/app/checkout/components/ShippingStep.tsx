@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useCart, ShippingOption } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
 import { Check, Truck, MapPin, ChevronRight, Loader2 } from "lucide-react";
@@ -24,18 +24,8 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
   const [error, setError] = useState<string | null>(null);
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
 
-  // Cargar opciones de envío al montar el componente
-  useEffect(() => {
-    if (customerInfo?.postalCode) {
-      calculateShippingByPostalCode();
-    } else {
-      // Si no hay código postal, usar opciones predeterminadas
-      setShippingOptions(availableShippingOptions);
-    }
-  }, [customerInfo?.postalCode]);
-
   // Calcular costos de envío según código postal
-  const calculateShippingByPostalCode = async () => {
+  const calculateShippingByPostalCode = useCallback(async () => {
     if (!customerInfo?.postalCode) return;
 
     setLoading(true);
@@ -59,7 +49,27 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    customerInfo?.postalCode,
+    calculateShippingCost,
+    selectedShippingOption,
+    setSelectedShippingOption,
+    availableShippingOptions,
+  ]);
+
+  // Cargar opciones de envío al montar el componente
+  useEffect(() => {
+    if (customerInfo?.postalCode) {
+      calculateShippingByPostalCode();
+    } else {
+      // Si no hay código postal, usar opciones predeterminadas
+      setShippingOptions(availableShippingOptions);
+    }
+  }, [
+    customerInfo?.postalCode,
+    calculateShippingByPostalCode,
+    availableShippingOptions,
+  ]);
 
   // Manejar selección de opción de envío
   const handleSelectOption = (option: ShippingOption) => {

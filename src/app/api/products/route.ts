@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
@@ -66,9 +67,10 @@ export async function GET(
       prisma.product.count({ where }),
     ]);
 
-    const products: Product[] = prismaProducts.map((p) => ({
+    const products: Product[] = prismaProducts.map((p: any) => ({
       ...p,
       description: p.description ?? undefined,
+      images: typeof p.images === "string" ? JSON.parse(p.images) : p.images,
       category: {
         ...p.category,
         description: p.category.description ?? undefined,
@@ -172,6 +174,10 @@ export async function POST(
     const product: Product = {
       ...prismaProduct,
       description: prismaProduct.description ?? undefined,
+      images:
+        typeof prismaProduct.images === "string"
+          ? JSON.parse(prismaProduct.images)
+          : prismaProduct.images,
       category: {
         ...prismaProduct.category,
         description: prismaProduct.category.description ?? undefined,
