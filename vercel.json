@@ -5,5 +5,8 @@
     }
   },
   "buildCommand": "prisma generate && next build",
-  "installCommand": "yarn install"
+  "installCommand": "yarn install",
+  "github": {
+    "autoAlias": false
+  }
 }
