@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         .upload_stream(
           {
             resource_type: "auto",
-            folder: "rastuci/products",
+            folder: "Rastuci",
           },
           (error, result) => {
             if (error) reject(error);
