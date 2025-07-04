@@ -49,6 +49,7 @@ yarn-error.log*
 
 # documentation and guides (archivos privados)
 SETUP-PRIVADO.md
+WORKFLOW.md
 
 # IDE
 .vscode/
