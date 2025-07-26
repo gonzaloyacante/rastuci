@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
@@ -5,92 +7,34 @@ import { Card, CardContent } from "@/components/ui/Card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Truck, CreditCard, ShieldCheck } from "lucide-react";
-
-// --- Mock Data ---
-const heroSlides = [
-  {
-    id: 1,
-    title: "Nueva Colección Verano",
-    subtitle: "Frescura y estilo para los más peques",
-    imageUrl:
-      "https://placehold.co/1200x600/FCE4EC/333333?text=Nueva+Colección",
-    link: "/productos?collection=verano",
-  },
-  {
-    id: 2,
-    title: "¡Ofertas Imperdibles!",
-    subtitle: "Hasta 30% de descuento en prendas seleccionadas",
-    imageUrl: "https://placehold.co/1200x600/E91E63/FFFFFF?text=OFERTAS",
-    link: "/productos?filter=ofertas",
-  },
-];
-
-const featuredProducts = [
-  {
-    id: 1,
-    name: "Vestido Floral de Verano",
-    price: 29.99,
-    imageUrl: "https://placehold.co/300x300/FAFAFA/333333?text=Vestido",
-    category: "Niña",
-  },
-  {
-    id: 2,
-    name: "Camiseta de Dinosaurio",
-    price: 15.99,
-    imageUrl: "https://placehold.co/300x300/FAFAFA/333333?text=Camiseta",
-    category: "Niño",
-  },
-  {
-    id: 3,
-    name: "Conjunto de Algodón para Bebé",
-    price: 25.99,
-    imageUrl: "https://placehold.co/300x300/FAFAFA/333333?text=Conjunto",
-    category: "Bebé",
-  },
-  {
-    id: 4,
-    name: "Shorts de Jean",
-    price: 19.99,
-    imageUrl: "https://placehold.co/300x300/FAFAFA/333333?text=Shorts",
-    category: "Niño",
-  },
-];
+import { useState, useEffect } from "react";
+import { Product } from "@/types";
+import { formatPriceARS } from "@/utils/formatters";
 
 // --- Tipos ---
-type Product = {
-  id: number;
+type Category = {
+  id: string;
   name: string;
-  price: number;
-  imageUrl: string;
-  category: string;
+  description?: string;
+  image?: string;
 };
-
-const categories = [
-  {
-    name: "Niña",
-    imageUrl: "https://placehold.co/400x500/FCE4EC/333333?text=Niña",
-    link: "/productos?category=nina",
-  },
-  {
-    name: "Niño",
-    imageUrl: "https://placehold.co/400x500/E0F7FA/333333?text=Niño",
-    link: "/productos?category=nino",
-  },
-  {
-    name: "Bebé",
-    imageUrl: "https://placehold.co/400x500/FFF9C4/333333?text=Bebé",
-    link: "/productos?category=bebe",
-  },
-];
 
 // --- Componente de Tarjeta de Producto ---
 function ProductCard({ product }: { product: Product }) {
+  const images = Array.isArray(product.images)
+    ? product.images
+    : ((typeof product.images === "string"
+        ? JSON.parse(product.images)
+        : []) as string[]);
+  const imageUrl =
+    images[0] || "https://placehold.co/300x300/FAFAFA/333333?text=No+Image";
+
   return (
     <Card className="bg-[#FAFAFA] rounded-xl shadow-lg overflow-hidden group transition-transform duration-300 hover:-translate-y-2">
       <Link href={`/productos/${product.id}`}>
         <div className="relative aspect-square bg-white">
           <Image
-            src={product.imageUrl}
+            src={imageUrl}
             alt={product.name}
             fill
             className="object-cover"
@@ -103,7 +47,7 @@ function ProductCard({ product }: { product: Product }) {
             {product.name}
           </h3>
           <p className="text-2xl font-bold text-[#E91E63] mt-2">
-            ${product.price.toFixed(2)}
+            {formatPriceARS(product.price)}
           </p>
           <Button className="mt-4 bg-[#E91E63] text-white uppercase font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-[#C2185B] transition-all duration-300 transform hover:scale-105">
             Ver más
@@ -115,6 +59,57 @@ function ProductCard({ product }: { product: Product }) {
 }
 
 export default function Home() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Productos en oferta (sin paginación)
+        const productsResponse = await fetch(
+          "/api/products?onSale=true&limit=4"
+        );
+        const productsData = await productsResponse.json();
+        if (productsData.success && productsData.data?.data) {
+          setProducts(productsData.data.data);
+        } else {
+          setProducts([]);
+        }
+
+        // Categorías (sin paginación)
+        const categoriesResponse = await fetch("/api/categories?limit=6");
+        const categoriesData = await categoriesResponse.json();
+        if (categoriesData.success && categoriesData.data?.data) {
+          setCategories(categoriesData.data.data);
+        } else {
+          setCategories([]);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setProducts([]);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header currentPage="inicio" />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E91E63] mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className="bg-white text-[#333333]"
@@ -124,77 +119,86 @@ export default function Home() {
       <main>
         {/* Hero Section */}
         <section className="w-full">
-          {/* Idealmente, aquí se usaría un componente de carrusel funcional */}
-          <div className="relative h-[400px] md:h-[600px] bg-gray-200">
-            <Image
-              src={heroSlides[0].imageUrl}
-              alt={heroSlides[0].title}
-              fill
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center text-center text-white p-4">
+          <div className="relative h-[400px] md:h-[600px] bg-gradient-to-r from-[#FCE4EC] to-[#F8BBD9]">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-[#333333] p-4">
               <h1
-                className="text-4xl md:text-6xl font-bold"
+                className="text-4xl md:text-6xl font-bold mb-4"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                {heroSlides[0].title}
+                Bienvenido a Rastuci
               </h1>
-              <p className="text-lg md:text-xl mt-4 max-w-2xl">
-                {heroSlides[0].subtitle}
+              <p className="text-lg md:text-xl mb-8 max-w-2xl">
+                Ropa infantil de calidad, comodidad y estilo para los más
+                pequeños
               </p>
-              <Button className="mt-8 bg-[#E91E63] text-white uppercase font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-[#C2185B] transition-all duration-300 transform hover:scale-105">
-                <Link href={heroSlides[0].link}>Ver Colección</Link>
+              <Button className="bg-[#E91E63] text-white uppercase font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-[#C2185B] transition-all duration-300 transform hover:scale-105">
+                <Link href="/productos">Ver Productos</Link>
               </Button>
             </div>
           </div>
         </section>
 
         {/* Categories Section */}
-        <section className="py-16 px-6 max-w-[1200px] mx-auto">
-          <h2
-            className="text-3xl font-bold text-center mb-10"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}>
-            Nuestras Categorías
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {categories.map((category) => (
-              <Link
-                href={category.link}
-                key={category.name}
-                className="relative rounded-xl overflow-hidden group shadow-lg">
-                <Image
-                  src={category.imageUrl}
-                  alt={category.name}
-                  width={400}
-                  height={500}
-                  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                  <h3
-                    className="text-white text-3xl font-bold"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                    {category.name}
-                  </h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Featured Products */}
-        <section className="bg-[#FAFAFA] py-16 px-6">
-          <div className="max-w-[1200px] mx-auto">
+        {categories.length > 0 && (
+          <section className="py-16 px-6 max-w-[1200px] mx-auto">
             <h2
               className="text-3xl font-bold text-center mb-10"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              Productos Destacados
+              Nuestras Categorías
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {categories.map((category) => (
+                <Link
+                  href={`/productos?category=${category.name.toLowerCase()}`}
+                  key={category.id}
+                  className="relative rounded-xl overflow-hidden group shadow-lg bg-gradient-to-br from-[#FCE4EC] to-[#F8BBD9] h-64 transition-all duration-300 hover:shadow-2xl hover:bg-[#FCE4EC]">
+                  {/* Imagen de la categoría */}
+                  {category.image && (
+                    <div className="absolute inset-0 z-0">
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        fill
+                        className="object-cover opacity-70 group-hover:opacity-80 transition-opacity duration-300"
+                      />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <div className="text-center">
+                      <h3
+                        className="text-[#333333] text-3xl font-bold mb-2"
+                        style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                        {category.name}
+                      </h3>
+                      {category.description && (
+                        <p className="text-[#666666] text-sm">
+                          {category.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
+        )}
+
+        {/* Featured Products */}
+        {products.length > 0 && (
+          <section className="bg-[#FAFAFA] py-16 px-6">
+            <div className="max-w-[1200px] mx-auto">
+              <h2
+                className="text-3xl font-bold text-center mb-10"
+                style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                Productos en Oferta
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Promotional Banner */}
         <section className="bg-[#FCE4EC] py-12 px-6">

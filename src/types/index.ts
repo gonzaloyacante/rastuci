@@ -7,6 +7,15 @@ export interface Category {
   updatedAt: Date;
 }
 
+// Tipos serializados para el frontend
+export interface SerializedCategory {
+  id: string;
+  name: string;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -14,6 +23,12 @@ export interface Product {
   price: number;
   stock: number;
   images: string[];
+  onSale?: boolean;
+  sizes?: string[];
+  colors?: string[];
+  features?: string[];
+  rating?: number;
+  reviewCount?: number;
   categoryId: string;
   category?: Category;
   createdAt: Date;
@@ -22,12 +37,14 @@ export interface Product {
 
 export interface User {
   id: string;
-  name: string | null;
-  email: string | null;
-  emailVerified: Date | null;
-  image: string | null;
+  name: string;
+  email: string;
+  emailVerified?: Date | null;
+  image?: string | null;
   password?: string;
   isAdmin: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Order {
@@ -42,6 +59,19 @@ export interface Order {
   items?: OrderItem[];
 }
 
+// Tipos serializados para el frontend
+export interface SerializedOrder {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress?: string;
+  total: number;
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
+  items: SerializedOrderItem[];
+}
+
 export interface OrderItem {
   id: string;
   quantity: number;
@@ -49,6 +79,22 @@ export interface OrderItem {
   orderId: string;
   productId: string;
   product?: Product;
+}
+
+export interface SerializedOrderItem {
+  id: string;
+  quantity: number;
+  price: number;
+  orderId: string;
+  productId: string;
+  product: {
+    id: string;
+    name: string;
+    category: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 export enum OrderStatus {
@@ -105,6 +151,7 @@ export interface ProductFilters {
   search?: string;
   minPrice?: number;
   maxPrice?: number;
+  onSale?: boolean;
   page?: number;
   limit?: number;
 }
@@ -115,4 +162,22 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface ProductReview {
+  id: string;
+  rating: number;
+  comment?: string;
+  customerName: string;
+  createdAt: Date;
+  productId: string;
+}
+
+export interface SerializedProductReview {
+  id: string;
+  rating: number;
+  comment?: string;
+  customerName: string;
+  createdAt: string;
+  productId: string;
 }

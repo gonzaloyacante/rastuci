@@ -15,8 +15,18 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { User as UserType } from "@prisma/client";
 import toast from "react-hot-toast";
+
+// Interface local para tipado
+interface UserType {
+  id: string;
+  name: string | null;
+  email: string | null;
+  emailVerified: Date | null;
+  image: string | null;
+  password: string | null;
+  isAdmin: boolean;
+}
 
 interface UserEditFormProps {
   initialData: UserType;

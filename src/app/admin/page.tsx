@@ -103,7 +103,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            {/* Logo de Rastuci */}
+            {/* Logo de Rastući */}
             <div className="h-20 w-20 bg-[#E91E63] rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
               R
             </div>

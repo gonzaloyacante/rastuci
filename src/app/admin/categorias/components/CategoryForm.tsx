@@ -11,12 +11,21 @@ import { toast } from "react-hot-toast";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Tag, FileText, Save, ArrowLeft } from "lucide-react";
-import { Category } from "@prisma/client";
+import { Tag, FileText, Save, ArrowLeft, Upload } from "lucide-react";
+import { uploadImageToCloudinary } from "@/src/lib/cloudinary";
+
+// Interface local para tipado
+interface Category {
+  id: string;
+  name: string;
+  description?: string | null;
+  image?: string | null;
+}
 
 const categorySchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z.string().optional(),
+  image: z.string().min(1, "La imagen es obligatoria"),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -28,6 +37,8 @@ interface CategoryFormProps {
 export default function CategoryForm({ initialData }: CategoryFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>(initialData?.image || "");
+  const [uploading, setUploading] = useState(false);
 
   const title = initialData ? "Editar Categoría" : "Crear Nueva Categoría";
   const toastMessage = initialData
@@ -38,6 +49,8 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -45,12 +58,31 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
       ? {
           ...initialData,
           description: initialData.description ?? "",
+          image: initialData.image || "",
         }
       : {
           name: "",
           description: "",
+          image: "",
         },
   });
+
+  const imageValue = watch("image");
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImageToCloudinary(file);
+      setValue("image", url, { shouldValidate: true });
+      setImagePreview(url);
+    } catch (err) {
+      toast.error("Error al subir la imagen. Intenta nuevamente.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const onSubmit: SubmitHandler<CategoryFormValues> = async (data) => {
     try {
@@ -145,6 +177,39 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                   <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                     <span className="w-1 h-1 bg-red-600 rounded-full"></span>
                     {errors.description.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Imagen */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Upload className="h-4 w-4 inline mr-2" />
+                  Imagen de la Categoría <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 disabled:opacity-50"
+                  disabled={loading || uploading}
+                />
+                {uploading && (
+                  <div className="mt-2 text-xs text-gray-500">Subiendo imagen...</div>
+                )}
+                {imagePreview && (
+                  <div className="mt-3">
+                    <img
+                      src={imagePreview}
+                      alt="Vista previa"
+                      className="w-40 h-40 object-cover rounded-lg border border-gray-200 shadow"
+                    />
+                  </div>
+                )}
+                {errors.image && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                    {errors.image.message}
                   </p>
                 )}
               </div>

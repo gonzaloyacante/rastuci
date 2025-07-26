@@ -1,26 +1,273 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   RASTUCI - SISTEMA DE DISEÑO GLOBAL
+   ========================================================================== */
+
+/* Variables CSS personalizadas para compatibilidad */
 :root {
+  --color-primary: #e91e63;
+  --color-primary-dark: #c2185b;
+  --color-primary-darker: #ad1457;
+  --color-primary-light: #f472b6;
+  --color-primary-lighter: #fce7f3;
+
+  --border-radius-card: 12px;
+  --border-radius-button: 8px;
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-primary: 0 4px 14px 0 rgba(233, 30, 99, 0.39);
+
   --background: #ffffff;
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Colores principales del sistema */
+@property --color-primary-50 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #fdf2f8;
 }
 
+@property --color-primary-100 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #fce7f3;
+}
+
+@property --color-primary-500 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e91e63;
+}
+
+@property --color-primary-600 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #c2185b;
+}
+
+@property --color-primary-700 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ad1457;
+}
+
+/* ==========================================================================
+   ESTILOS BASE Y UTILIDADES
+   ========================================================================== */
+
+/* Botones principales */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  transform: scale(1);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+  transform: scale(1.05);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: scale(1);
+}
+
+/* Botones con gradiente */
+.btn-primary-gradient {
+  background: linear-gradient(
+    to right,
+    var(--color-primary),
+    var(--color-primary-dark)
+  );
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-primary);
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  transform: scale(1);
+}
+
+.btn-primary-gradient:hover {
+  background: linear-gradient(
+    to right,
+    var(--color-primary-dark),
+    var(--color-primary-darker)
+  );
+  transform: scale(1.05);
+}
+
+/* Inputs */
+.input-primary {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+  outline: none;
+}
+
+.input-primary:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+/* Cards */
+.card-base {
+  background: white;
+  border-radius: var(--border-radius-card);
+  box-shadow: var(--shadow-card);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.card-hover:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+/* Estados de carga */
+.loading-spinner {
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-primary {
+  width: 2rem;
+  height: 2rem;
+  margin: 0 auto;
+}
+
+/* Badges */
+.badge-success {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-error {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Utilidades de texto */
+.text-primary {
+  color: var(--color-primary);
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.border-primary {
+  border-color: var(--color-primary);
+}
+
+/* Container responsive */
+.container-responsive {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    padding: 1.5rem;
+  }
+}
+
+/* Header responsive */
+.header-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .header-responsive {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header-responsive {
+    margin-bottom: 2rem;
+  }
+}
+
+/* Título responsive */
+.title-responsive {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+@media (min-width: 640px) {
+  .title-responsive {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .title-responsive {
+    font-size: 1.875rem;
+  }
+}
+
+/* Eliminar modo oscuro global para fondo y texto siempre claros */
+/*
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
+*/
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, system-ui, sans-serif;
 }

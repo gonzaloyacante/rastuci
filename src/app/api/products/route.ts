@@ -24,6 +24,7 @@ export async function GET(
       maxPrice: searchParams.get("maxPrice")
         ? Number(searchParams.get("maxPrice"))
         : undefined,
+      onSale: searchParams.get("onSale") === "true",
       page: Number(searchParams.get("page")) || 1,
       limit: Number(searchParams.get("limit")) || 12,
     };
@@ -48,6 +49,10 @@ export async function GET(
         (where.price as Record<string, number>).gte = filters.minPrice;
       if (filters.maxPrice)
         (where.price as Record<string, number>).lte = filters.maxPrice;
+    }
+
+    if (filters.onSale) {
+      where.onSale = true;
     }
 
     // Calcular offset para paginación

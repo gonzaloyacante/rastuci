@@ -1,117 +1,67 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Search, DownloadIcon } from "lucide-react";
-import { Input } from "@/components/ui/Input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { DownloadIcon } from "lucide-react";
 import toast from "react-hot-toast";
-
-interface OrderItem {
-  id: string;
-  quantity: number;
-  price: number;
-  product: {
-    id: string;
-    name: string;
-    category: {
-      id: string;
-      name: string;
-    };
-  };
-}
-
-interface Order {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  customerAddress?: string;
-  total: number;
-  status: "PENDING" | "PROCESSED" | "DELIVERED";
-  createdAt: string;
-  updatedAt: string;
-  items: OrderItem[];
-}
+import Link from "next/link";
+import {
+  AdminPageHeader,
+  AdminEmpty,
+  AdminEmptyIcons,
+  AdminLoading,
+  AdminError,
+} from "@/components/admin";
+import { SearchBar, FilterBar } from "@/components/search";
+import { useOrders } from "@/hooks/useOrders";
+import type { Order } from "@/hooks/useOrders";
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [status, setStatus] = useState<
+  const [statusFilter, setStatusFilter] = useState<
     "ALL" | "PENDING" | "PROCESSED" | "DELIVERED"
   >("ALL");
-  const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchOrders = async (
-    page = 1,
-    statusFilter?: string,
-    search?: string
-  ) => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      params.append("page", page.toString());
-      params.append("limit", "10"); // 10 pedidos por página
-
-      if (statusFilter && statusFilter !== "ALL") {
-        params.append("status", statusFilter);
-      }
-
-      if (search) {
-        params.append("search", search);
-      }
-
-      const response = await fetch(`/api/orders?${params}`);
-
-      if (!response.ok) {
-        throw new Error("Error al cargar los pedidos");
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setOrders(data.data.data);
-        setTotalPages(data.data.totalPages);
-        setCurrentPage(data.data.page);
-      } else {
-        throw new Error(data.error || "Error desconocido");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-      console.error(err);
-    } finally {
-      setLoading(false);
-      setIsSearching(false);
-    }
-  };
+  const { orders, loading, error, totalPages, fetchOrders } = useOrders();
 
   useEffect(() => {
-    fetchOrders(1);
-  }, []);
+    fetchOrders({
+      page: currentPage,
+      limit: 10,
+      status: statusFilter === "ALL" ? undefined : statusFilter,
+      search: searchTerm || undefined,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, searchTerm, currentPage]);
+
+  const filterFields = [
+    {
+      key: "status",
+      label: "Estado",
+      type: "select" as const,
+      options: [
+        { value: "ALL", label: "Todos los estados" },
+        { value: "PENDING", label: "Pendientes" },
+        { value: "PROCESSED", label: "Procesados" },
+        { value: "DELIVERED", label: "Entregados" },
+      ],
+    },
+  ];
 
   const handleStatusChange = (
     newStatus: "ALL" | "PENDING" | "PROCESSED" | "DELIVERED"
   ) => {
-    setStatus(newStatus);
+    setStatusFilter(newStatus);
     setCurrentPage(1);
-    fetchOrders(1, newStatus, searchTerm);
   };
 
   const handleSearch = () => {
-    setIsSearching(true);
     setCurrentPage(1);
-    fetchOrders(1, status, searchTerm);
   };
 
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
-    fetchOrders(page, status, searchTerm);
   };
 
   const formatDate = (dateString: string) => {
@@ -151,7 +101,7 @@ export default function OrdersPage() {
         );
       default:
         return (
-          <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">
+          <span className="px-2 py-1 badge-secondary text-xs font-medium rounded-full">
             Desconocido
           </span>
         );
@@ -170,7 +120,7 @@ export default function OrdersPage() {
         "ID,Cliente,Teléfono,Dirección,Total,Estado,Fecha,Productos\n";
 
       // Datos
-      orders.forEach((order) => {
+      orders.forEach((order: Order) => {
         const products = order.items
           .map((item) => `${item.quantity}x ${item.product.name}`)
           .join("; ");
@@ -184,7 +134,9 @@ export default function OrdersPage() {
             ? "Pendiente"
             : order.status === "PROCESSED"
             ? "Procesado"
-            : "Entregado",
+            : order.status === "DELIVERED"
+            ? "Entregado"
+            : "Desconocido",
           formatDate(order.createdAt),
           products,
         ]
@@ -215,245 +167,190 @@ export default function OrdersPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Pedidos</h1>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={exportToCSV}
-            className="flex items-center gap-2">
-            <DownloadIcon size={16} />
-            Exportar
-          </Button>
-          <Link href="/admin/pedidos/pendientes">
-            <Button className="bg-[#E91E63] hover:bg-[#C2185B]">
-              Ver Pendientes
-            </Button>
-          </Link>
-        </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Pedidos"
+        subtitle="Gestiona todos los pedidos de la tienda"
+        actions={[
+          {
+            label: "Exportar",
+            onClick: exportToCSV,
+            variant: "outline",
+            icon: <DownloadIcon size={16} />,
+          },
+          {
+            label: "Ver Pendientes",
+            onClick: () => (window.location.href = "/admin/pedidos/pendientes"),
+            variant: "primary",
+          },
+        ]}
+      />
+
+      {/* Barra de búsqueda y filtros */}
+      <div className="space-y-4">
+        <SearchBar
+          value={searchTerm}
+          onChange={(value: string) => {
+            setSearchTerm(value);
+            if (value.trim() === "") {
+              setCurrentPage(1);
+            }
+          }}
+          onSearch={() => handleSearch()}
+          placeholder="Buscar pedidos por nombre de cliente..."
+        />
+        <FilterBar
+          fields={filterFields}
+          values={{ status: statusFilter }}
+          onChange={(key: string, value: string | string[] | null) => {
+            if (key === "status" && typeof value === "string") {
+              handleStatusChange(
+                value as "ALL" | "PENDING" | "PROCESSED" | "DELIVERED"
+              );
+            }
+          }}
+          onReset={() => {
+            setStatusFilter("ALL");
+            setSearchTerm("");
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Buscar
-              </label>
-              <div className="relative">
-                <Input
-                  type="text"
-                  placeholder="Buscar por nombre de cliente..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="pl-10"
-                />
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={16}
-                />
-              </div>
-            </div>
-            <Button
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="bg-[#E91E63] hover:bg-[#C2185B]">
-              {isSearching ? (
-                <span className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Buscando...
-                </span>
-              ) : (
-                "Buscar"
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="ALL" className="mb-6">
-        <TabsList className="mb-4">
-          <TabsTrigger
-            value="ALL"
-            onClick={() => handleStatusChange("ALL")}
-            className={status === "ALL" ? "bg-[#E91E63] text-white" : ""}>
-            Todos
-          </TabsTrigger>
-          <TabsTrigger
-            value="PENDING"
-            onClick={() => handleStatusChange("PENDING")}
-            className={status === "PENDING" ? "bg-[#E91E63] text-white" : ""}>
-            Pendientes
-          </TabsTrigger>
-          <TabsTrigger
-            value="PROCESSED"
-            onClick={() => handleStatusChange("PROCESSED")}
-            className={status === "PROCESSED" ? "bg-[#E91E63] text-white" : ""}>
-            Procesados
-          </TabsTrigger>
-          <TabsTrigger
-            value="DELIVERED"
-            onClick={() => handleStatusChange("DELIVERED")}
-            className={status === "DELIVERED" ? "bg-[#E91E63] text-white" : ""}>
-            Entregados
-          </TabsTrigger>
-        </TabsList>
-
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E91E63]"></div>
-          </div>
-        ) : error ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="text-red-500 text-xl mb-4">{error}</div>
-              <Button
-                onClick={() => fetchOrders(1, status, searchTerm)}
-                className="bg-[#E91E63] hover:bg-[#C2185B]">
-                Reintentar
-              </Button>
-            </CardContent>
-          </Card>
-        ) : orders.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Contenido principal */}
+      {loading ? (
+        <AdminLoading />
+      ) : error ? (
+        <AdminError
+          message={error}
+          actions={[
+            {
+              label: "Reintentar",
+              onClick: () => {
+                // Solo reinicia la página, el useEffect hará el fetch
+                setCurrentPage(1);
+              },
+              variant: "primary",
+            },
+          ]}
+        />
+      ) : orders.length === 0 ? (
+        <AdminEmpty
+          icon={AdminEmptyIcons.orders}
+          title="No hay pedidos"
+          description={
+            searchTerm
+              ? "No se encontraron pedidos con ese criterio de búsqueda."
+              : statusFilter !== "ALL"
+              ? `No hay pedidos con estado ${
+                  statusFilter === "PENDING"
+                    ? "pendiente"
+                    : statusFilter === "PROCESSED"
+                    ? "procesado"
+                    : "entregado"
+                }.`
+              : "Aún no hay pedidos registrados en el sistema."
+          }
+          action={
+            searchTerm || statusFilter !== "ALL"
+              ? {
+                  label: "Ver todos los pedidos",
+                  onClick: () => {
+                    setSearchTerm("");
+                    setStatusFilter("ALL");
+                    setCurrentPage(1);
+                  },
+                  variant: "outline",
+                }
+              : undefined
+          }
+        />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {orders.map((order) => (
-              <Card key={order.id} className="overflow-hidden">
-                <CardHeader className="bg-gray-50 border-b">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-lg">
-                      {order.customerName}
-                    </CardTitle>
-                    {getStatusBadge(order.status)}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {formatDate(order.createdAt)}
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">
-                        Información de contacto
+              <div key={order.id} className="card">
+                <div className="bg-surface-secondary border-b -m-6 mb-6 p-4 rounded-t-lg">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-2 sm:space-y-0">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-content-primary truncate">
+                        {order.customerName}
                       </h3>
-                      <p className="text-sm">{order.customerPhone}</p>
+                      <p className="text-sm text-content-secondary">
+                        {formatDate(order.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(order.status)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-content-secondary mb-2">
+                      Información de contacto
+                    </h4>
+                    <div className="space-y-1">
+                      <p className="text-sm text-content-primary">
+                        📞 {order.customerPhone}
+                      </p>
                       {order.customerAddress && (
-                        <p className="text-sm">{order.customerAddress}</p>
+                        <p className="text-sm text-content-primary">
+                          📍 {order.customerAddress}
+                        </p>
                       )}
                     </div>
+                  </div>
 
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">
-                        Productos
-                      </h3>
-                      <div className="mt-2 text-sm text-gray-700">
-                        {order.items.length} producto(s) - Total:{" "}
-                        <span className="font-bold text-[#E91E63]">
-                          {formatCurrency(order.total)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex space-x-3 pt-3">
-                      <Link
-                        href={`/admin/pedidos/${order.id}`}
-                        className="flex-1">
-                        <Button className="w-full bg-[#E91E63] hover:bg-[#C2185B]">
-                          Ver Detalles
-                        </Button>
-                      </Link>
+                  <div>
+                    <h4 className="text-sm font-medium text-content-secondary mb-2">
+                      Resumen del pedido
+                    </h4>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-content-primary">
+                        {order.items.length} producto(s)
+                      </span>
+                      <span className="font-bold text-primary text-lg">
+                        {formatCurrency(order.total)}
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  <div className="pt-4 border-t">
+                    <Link href={`/admin/pedidos/${order.id}`}>
+                      <button className="btn-primary w-full cursor-pointer">
+                        Ver Detalles
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12 text-gray-400 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                />
-              </svg>
-              <h2 className="text-xl font-medium text-gray-900 mb-2">
-                No hay pedidos
-              </h2>
-              <p className="text-gray-500 mb-6 text-center max-w-md">
-                {searchTerm
-                  ? "No se encontraron pedidos con ese criterio de búsqueda."
-                  : status !== "ALL"
-                  ? `No hay pedidos con estado ${
-                      status === "PENDING"
-                        ? "pendiente"
-                        : status === "PROCESSED"
-                        ? "procesado"
-                        : "entregado"
-                    }.`
-                  : "Aún no hay pedidos registrados en el sistema."}
-              </p>
-              {(searchTerm || status !== "ALL") && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setStatus("ALL");
-                    fetchOrders(1);
-                  }}>
-                  Ver todos los pedidos
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
-        {orders.length > 0 && totalPages > 1 && (
-          <div className="flex justify-center mt-6">
-            <nav className="flex items-center space-x-2">
-              <Button
-                variant="outline"
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4">
+              <button
                 onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1 || loading}>
+                disabled={currentPage === 1 || loading}
+                className="btn-secondary disabled:opacity-50">
                 Anterior
-              </Button>
-              <div className="text-sm text-gray-500">
+              </button>
+              <span className="text-sm text-content-secondary">
                 Página {currentPage} de {totalPages}
-              </div>
-              <Button
-                variant="outline"
+              </span>
+              <button
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages || loading}>
+                disabled={currentPage === totalPages || loading}
+                className="btn-secondary disabled:opacity-50">
                 Siguiente
-              </Button>
-            </nav>
-          </div>
-        )}
-      </Tabs>
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

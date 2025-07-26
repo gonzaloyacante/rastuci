@@ -1,23 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { ApiResponse, User } from "@/types";
+import { ApiResponse } from "@/types";
+
+interface SafeUser {
+  id: string;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+}
 
 // GET /api/users - Obtener todos los usuarios
-export async function GET(): Promise<NextResponse<ApiResponse<User[]>>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<ApiResponse<any>>> {
   try {
-    const users = await prisma.user.findMany({
-      orderBy: { name: "asc" },
-    });
+    const { searchParams } = new URL(request.url);
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 20;
+    const search = searchParams.get("search") || "";
 
-    const safeUsers: User[] = users.map((user) => ({
-      ...user,
-      password: undefined, // No enviamos la contraseña
+    const where: Record<string, any> = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
+    const offset = (page - 1) * limit;
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        orderBy: { name: "asc" },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    const safeUsers: SafeUser[] = users.map((user: any) => ({
+      id: user.id,
+      name: user.name || "",
+      email: user.email || "",
+      isAdmin: user.isAdmin,
     }));
 
+    const totalPages = Math.ceil(total / limit);
     return NextResponse.json({
       success: true,
-      data: safeUsers,
+      data: {
+        data: safeUsers,
+        total,
+        page,
+        limit,
+        totalPages,
+      },
     });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -34,7 +71,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<User[]>>> {
 // POST /api/users - Crear nuevo usuario
 export async function POST(
   request: NextRequest
-): Promise<NextResponse<ApiResponse<User>>> {
+): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const body = await request.json();
     const { name, email, password, isAdmin } = body;
@@ -79,9 +116,11 @@ export async function POST(
     });
 
     // Retornar el usuario sin la contraseña
-    const safeUser: User = {
-      ...user,
-      password: undefined,
+    const safeUser: SafeUser = {
+      id: user.id,
+      name: user.name || "",
+      email: user.email || "",
+      isAdmin: user.isAdmin,
     };
 
     return NextResponse.json({

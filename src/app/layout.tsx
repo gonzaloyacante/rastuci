@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Poppins, Montserrat } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import { NotificationClient } from "@/components/notifications";
 import { Toaster } from "react-hot-toast";
 
 const poppins = Poppins({
@@ -32,10 +34,13 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} ${montserrat.variable} antialiased`}
         style={{ fontFamily: "'Poppins', sans-serif" }}>
-        <CartProvider>
-          <Toaster position="top-center" reverseOrder={false} />
-          {children}
-        </CartProvider>
+        <NotificationProvider>
+          <CartProvider>
+            <Toaster position="top-center" reverseOrder={false} />
+            <NotificationClient />
+            {children}
+          </CartProvider>
+        </NotificationProvider>
       </body>
     </html>
   );

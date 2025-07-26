@@ -11,6 +11,7 @@ import { toast } from "react-hot-toast";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Select } from "@/components/ui/Select";
 import {
   Package,
   FileText,
@@ -21,7 +22,22 @@ import {
   Save,
   ArrowLeft,
 } from "lucide-react";
-import { Category, Product } from "@prisma/client";
+// Interfaces locales para tipado
+interface Category {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  stock: number;
+  images: string;
+  categoryId: string;
+}
 
 const productSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
@@ -49,6 +65,9 @@ export default function ProductForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    initialData?.categoryId || ""
+  );
 
   const title = initialData ? "Editar Producto" : "Crear Nuevo Producto";
   const toastMessage = initialData
@@ -60,6 +79,7 @@ export default function ProductForm({
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: initialData
@@ -80,6 +100,12 @@ export default function ProductForm({
           images: [],
         },
   });
+
+  // Actualizar el valor del formulario cuando cambie la categoría
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    setValue("categoryId", categoryId);
+  };
 
   const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
     try {
@@ -258,20 +284,19 @@ export default function ProductForm({
                   <Tag className="h-4 w-4 inline mr-2" />
                   Categoría
                 </label>
-                <select
+                <Select
                   id="categoryId"
-                  {...register("categoryId")}
-                  className={`block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] ${
-                    errors.categoryId ? "border-red-300" : ""
-                  }`}
-                  disabled={loading}>
-                  <option value="">Selecciona una categoría</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                  name="categoryId"
+                  options={categories.map((category) => ({
+                    value: category.id,
+                    label: category.name,
+                  }))}
+                  value={selectedCategoryId}
+                  onChange={handleCategoryChange}
+                  placeholder="Selecciona una categoría"
+                  disabled={loading}
+                  error={!!errors.categoryId}
+                />
                 {errors.categoryId && (
                   <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                     <span className="w-1 h-1 bg-red-600 rounded-full"></span>

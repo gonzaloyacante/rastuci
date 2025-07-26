@@ -111,3 +111,26 @@ export const formatPhone = (phone: string): string => {
   }
   return phone;
 };
+
+/**
+ * Formatea un precio en pesos argentinos
+ * @param price - Precio en pesos (ej: 2100 = $2.100)
+ * @param showDecimals - Si mostrar decimales (default: false)
+ * @returns Precio formateado en pesos argentinos
+ */
+export const formatPriceARS = (
+  price: number,
+  showDecimals: boolean = false
+): string => {
+  if (showDecimals) {
+    return `$${price.toLocaleString("es-AR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  } else {
+    return `$${price.toLocaleString("es-AR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
+  }
+};

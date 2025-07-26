@@ -7,7 +7,9 @@ import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
+import QuantityButton from "@/components/ui/QuantityButton";
+import EmptyState from "@/components/ui/EmptyState";
 
 export default function CartPage() {
   const router = useRouter();
@@ -36,22 +38,13 @@ export default function CartPage() {
         </h1>
 
         {cartItems.length === 0 ? (
-          <div className="text-center py-20">
-            <ShoppingCart size={64} className="mx-auto text-[#E0E0E0] mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">
-              Tu carrito está vacío
-            </h2>
-            <p className="text-[#666666] mb-6">
-              Parece que todavía no has añadido nada. ¡Explora nuestros
-              productos!
-            </p>
-            <Link href="/productos">
-              <Button className="bg-[#E91E63] text-white hover:bg-[#C2185B]">
-                <ArrowLeft size={16} className="mr-2" />
-                Ir a la tienda
-              </Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={ShoppingCart}
+            title="Tu carrito está vacío"
+            description="Parece que todavía no has añadido nada. ¡Explora nuestros productos!"
+            actionText="Ir a la tienda"
+            actionHref="/productos"
+          />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
@@ -84,40 +77,30 @@ export default function CartPage() {
                       ${(item.product.price / 100).toFixed(2)}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={() =>
-                        updateQuantity(
-                          item.product.id,
-                          item.size,
-                          item.color,
-                          item.quantity - 1
-                        )
-                      }
-                      className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition">
-                      <Minus size={16} />
-                    </button>
-                    <span className="font-semibold w-8 text-center">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() =>
-                        updateQuantity(
-                          item.product.id,
-                          item.size,
-                          item.color,
-                          item.quantity + 1
-                        )
-                      }
-                      className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition">
-                      <Plus size={16} />
-                    </button>
-                  </div>
+                  <QuantityButton
+                    quantity={item.quantity}
+                    onIncrement={() =>
+                      updateQuantity(
+                        item.product.id,
+                        item.size,
+                        item.color,
+                        item.quantity + 1
+                      )
+                    }
+                    onDecrement={() =>
+                      updateQuantity(
+                        item.product.id,
+                        item.size,
+                        item.color,
+                        item.quantity - 1
+                      )
+                    }
+                  />
                   <button
                     onClick={() =>
                       removeFromCart(item.product.id, item.size, item.color)
                     }
-                    className="ml-6 text-red-500 hover:text-red-700 transition">
+                    className="ml-6 text-red-500 hover:text-red-700 transition cursor-pointer">
                     <Trash2 size={20} />
                   </button>
                 </div>

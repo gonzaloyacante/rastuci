@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { ApiResponse, User } from "@/types";
+import { ApiResponse } from "@/types";
+
+interface SafeUser {
+  id: string;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+}
 
 // GET /api/users/[id] - Obtener usuario específico
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse<ApiResponse<User>>> {
+): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const { id } = await params;
 
@@ -25,9 +32,11 @@ export async function GET(
       );
     }
 
-    const safeUser: User = {
-      ...user,
-      password: undefined,
+    const safeUser = {
+      id: user.id,
+      name: user.name || "",
+      email: user.email || "",
+      isAdmin: user.isAdmin,
     };
 
     return NextResponse.json({
@@ -50,7 +59,7 @@ export async function GET(
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse<ApiResponse<User>>> {
+): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const { id } = await params;
     const body = await request.json();
@@ -112,9 +121,11 @@ export async function PATCH(
     });
 
     // Retornar el usuario sin la contraseña
-    const safeUser: User = {
-      ...user,
-      password: undefined,
+    const safeUser: SafeUser = {
+      id: user.id,
+      name: user.name || "",
+      email: user.email || "",
+      isAdmin: user.isAdmin,
     };
 
     return NextResponse.json({

@@ -5,14 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingCart } from "lucide-react";
 import { Product } from "@/types";
+import { useFavorites } from "@/hooks/useFavorites";
+import { formatPriceARS } from "@/utils/formatters";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   // Obtener la primera imagen del producto
   let productImages: string[] = [];
@@ -28,10 +30,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const mainImage =
     productImages.length > 0 ? productImages[0] : "/placeholder-product.jpg";
-
-  const formatPrice = (price: number) => {
-    return `$${price.toLocaleString("es-CO")}`;
-  };
 
   return (
     <div className="group relative bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100">
@@ -49,11 +47,17 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Botón de favorito */}
         <button
-          onClick={() => setIsLiked(!isLiked)}
-          className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors opacity-0 group-hover:opacity-100">
+          onClick={() => toggleFavorite(product.id)}
+          className={`absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors cursor-pointer ${
+            isFavorite(product.id)
+              ? "opacity-100"
+              : "opacity-0 group-hover:opacity-100"
+          }`}>
           <Heart
             className={`w-4 h-4 ${
-              isLiked ? "fill-pink-500 text-pink-500" : "text-gray-600"
+              isFavorite(product.id)
+                ? "fill-pink-500 text-pink-500"
+                : "text-gray-600"
             }`}
           />
         </button>
@@ -100,14 +104,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-lg font-bold text-gray-900">
-              {formatPrice(product.price)}
+              {formatPriceARS(product.price)}
             </span>
           </div>
 
           {/* Botón de agregar al carrito */}
           <button
             disabled={product.stock === 0}
-            className="p-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="p-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer"
             title={
               product.stock === 0 ? "Producto agotado" : "Agregar al carrito"
             }>
