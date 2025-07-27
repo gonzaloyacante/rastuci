@@ -33,7 +33,7 @@ export const Select = ({
 }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Cerrar dropdown cuando se hace clic fuera
@@ -127,7 +127,7 @@ export const Select = ({
           {options.map((option) => (
             <li
               key={option.value}
-              className={`px-4 py-2 cursor-pointer hover:bg-[#F5F5F5] transition-colors rounded ${
+              className={`px-4 py-2 hover:bg-[#F5F5F5] transition-colors rounded ${
                 option.value === value
                   ? "bg-[#F5F5F5] font-semibold text-[#6C63FF]"
                   : "text-[#222]"

@@ -20,38 +20,40 @@ interface CategoryWithImage {
 }
 
 export default function AdminCategoriasPage() {
-  const {
-    categories,
-    loading,
-    error,
-    categoryProductCounts,
-    deleteCategory,
-    fetchCategories,
-    totalPages,
-    currentPage,
-  } = useCategories({ includeProductCount: true });
+  const { categories, isLoading, error, mutate } = useCategories();
   const categoriesWithImage = categories as CategoryWithImage[];
   const [searchInput, setSearchInput] = useState("");
 
-  // Búsqueda
-  const handleSearch = async () => {
-    await fetchCategories({ page: 1, search: searchInput });
-  };
-
-  // Paginación
-  const handlePageChange = async (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    await fetchCategories({ page, search: searchInput });
-  };
+  // Búsqueda local
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+      (category.description &&
+        category.description.toLowerCase().includes(searchInput.toLowerCase()))
+  );
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar esta categoría?")) {
       return;
     }
-    await deleteCategory(id);
+
+    try {
+      const response = await fetch(`/api/categories/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        mutate(); // Revalidar datos
+      } else {
+        alert("Error al eliminar la categoría");
+      }
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert("Error al eliminar la categoría");
+    }
   };
 
-  if (loading) return <AdminLoading />;
+  if (isLoading) return <AdminLoading />;
   if (error) return <AdminError message={error} />;
 
   return (
@@ -76,20 +78,15 @@ export default function AdminCategoriasPage() {
           type="text"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleSearch();
-          }}
           placeholder="Buscar categorías por nombre o descripción..."
           className="w-full sm:w-96 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
-        <button
-          onClick={handleSearch}
-          className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors">
+        <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors">
           Buscar
         </button>
       </div>
 
-      {categoriesWithImage.length === 0 ? (
+      {filteredCategories.length === 0 ? (
         <AdminEmpty
           icon={AdminEmptyIcons.categories}
           title="No hay categorías"
@@ -106,7 +103,7 @@ export default function AdminCategoriasPage() {
         <div className="card">
           {/* Vista de cards para mobile/tablet */}
           <div className="block xl:hidden space-y-4">
-            {categoriesWithImage.map((category) => (
+            {filteredCategories.map((category) => (
               <div
                 key={category.id}
                 className="border rounded-lg p-4 space-y-3 bg-white shadow-sm">
@@ -128,9 +125,7 @@ export default function AdminCategoriasPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="badge-info text-xs">
-                    {categoryProductCounts[category.id] || 0} productos
-                  </span>
+                  <span className="badge-info text-xs">0 productos</span>
                 </div>
                 <div className="flex space-x-2 pt-2">
                   <button
@@ -142,8 +137,7 @@ export default function AdminCategoriasPage() {
                   </button>
                   <button
                     onClick={() => handleDelete(category.id)}
-                    disabled={(categoryProductCounts[category.id] || 0) > 0}
-                    className="btn-destructive flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="btn-destructive flex-1 text-sm">
                     Eliminar
                   </button>
                 </div>
@@ -174,7 +168,7 @@ export default function AdminCategoriasPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-border">
-                {categoriesWithImage.map((category) => (
+                {filteredCategories.map((category) => (
                   <tr key={category.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {category.image && (
@@ -196,9 +190,7 @@ export default function AdminCategoriasPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="badge-info text-xs">
-                        {categoryProductCounts[category.id] || 0} productos
-                      </span>
+                      <span className="badge-info text-xs">0 productos</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
@@ -210,8 +202,7 @@ export default function AdminCategoriasPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(category.id)}
-                        disabled={(categoryProductCounts[category.id] || 0) > 0}
-                        className="text-error hover:text-error/80 disabled:opacity-50 disabled:cursor-not-allowed">
+                        className="text-error hover:text-error/80">
                         Eliminar
                       </button>
                     </td>
@@ -219,26 +210,6 @@ export default function AdminCategoriasPage() {
                 ))}
               </tbody>
             </table>
-            {/* Controles de paginación */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-6">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1 || loading}
-                  className="btn-secondary disabled:opacity-50">
-                  Anterior
-                </button>
-                <span className="text-sm text-content-secondary">
-                  Página {currentPage} de {totalPages}
-                </span>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages || loading}
-                  className="btn-secondary disabled:opacity-50">
-                  Siguiente
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}

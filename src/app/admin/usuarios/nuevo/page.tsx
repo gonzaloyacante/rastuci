@@ -7,7 +7,7 @@ export default function CreateUserPage() {
   const handleSubmit = async (data: {
     name: string;
     email: string;
-    role: string;
+    isAdmin: boolean;
     password?: string;
   }) => {
     try {
@@ -16,7 +16,10 @@ export default function CreateUserPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          role: data.isAdmin ? "admin" : "user",
+        }),
       });
 
       if (!response.ok) {
@@ -47,12 +50,9 @@ export default function CreateUserPage() {
         title="Crear Nuevo Usuario"
         subtitle="Añade un nuevo usuario al sistema"
       />
-      
+
       <div className="card">
-        <UserForm 
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-        />
+        <UserForm onSubmit={handleSubmit} onCancel={handleCancel} />
       </div>
     </div>
   );

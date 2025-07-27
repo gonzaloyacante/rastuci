@@ -4,8 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
 
 export default function ContactPage() {
@@ -40,11 +38,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div
-      className="bg-white text-[#333333] min-h-screen"
-      style={{ fontFamily: "'Poppins', sans-serif" }}>
-      <Header currentPage="contacto" />
-
+    <div className="bg-white text-[#333333] min-h-screen">
       <main className="max-w-[1200px] mx-auto py-8 px-6">
         {/* Page Header */}
         <div className="text-center mb-12">
@@ -174,9 +168,7 @@ export default function ContactPage() {
                     Gracias por contactarnos. Te responderemos dentro de las
                     próximas 24 horas.
                   </p>
-                  <Button
-                    onClick={() => setSubmitted(false)}
-                    className="bg-[#E91E63] text-white hover:bg-[#C2185B]">
+                  <Button onClick={() => setSubmitted(false)} variant="hero">
                     Enviar otro mensaje
                   </Button>
                 </CardContent>
@@ -263,8 +255,11 @@ export default function ContactPage() {
 
                     <Button
                       type="submit"
+                      variant="hero"
+                      size="xl"
+                      fullWidth
                       disabled={isSubmitting}
-                      className="w-full bg-[#E91E63] text-white hover:bg-[#C2185B] h-12 text-lg font-semibold transition-all duration-300 transform hover:scale-105">
+                      loading={isSubmitting}>
                       {isSubmitting ? (
                         <div className="flex items-center space-x-2">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -333,8 +328,6 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

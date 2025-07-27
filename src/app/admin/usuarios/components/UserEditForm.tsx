@@ -133,7 +133,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
       formData.confirmPassword.length > 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -147,7 +147,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
         </div>
 
         <Card className="shadow-lg border-0">
-          <CardHeader className="bg-gradient-to-r from-[#E91E63] to-[#C2185B] text-white rounded-t-lg">
+          <CardHeader className="bg-[#E91E63] text-white rounded-t-lg">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Shield className="h-5 w-5" />
               Información del Usuario
@@ -309,7 +309,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                 <Button
                   type="submit"
                   disabled={loading || !isPasswordValid || !passwordsMatch}
-                  className="flex-1 bg-gradient-to-r from-[#E91E63] to-[#C2185B] hover:from-[#C2185B] hover:to-[#AD1457] text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                  className="flex-1 bg-[#E91E63] hover:bg-[#C2185B] text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
 import QuantityButton from "@/components/ui/QuantityButton";
 import EmptyState from "@/components/ui/EmptyState";
+import { formatPriceARS } from "@/utils/formatters";
 
 export default function CartPage() {
   const router = useRouter();
@@ -25,11 +24,7 @@ export default function CartPage() {
   const itemCount = getItemCount();
 
   return (
-    <div
-      className="bg-white text-[#333333] min-h-screen flex flex-col"
-      style={{ fontFamily: "'Poppins', sans-serif" }}>
-      <Header />
-
+    <div className="bg-white text-[#333333] min-h-screen flex flex-col">
       <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
         <h1
           className="text-3xl font-bold text-[#333333] mb-8"
@@ -53,7 +48,9 @@ export default function CartPage() {
                 <div
                   key={`${item.product.id}-${item.size}-${item.color}`}
                   className="flex items-center bg-gray-50 p-4 rounded-lg shadow-sm">
-                  <div className="relative w-24 h-24 mr-4">
+                  <div
+                    className="relative w-24 h-24 mr-4"
+                    style={{ position: "relative" }}>
                     <Image
                       src={
                         Array.isArray(item.product.images)
@@ -74,7 +71,7 @@ export default function CartPage() {
                     </p>
                     <p className="text-sm text-[#666666]">Talla: {item.size}</p>
                     <p className="text-lg font-bold text-[#E91E63] mt-1">
-                      ${(item.product.price / 100).toFixed(2)}
+                      {formatPriceARS(item.product.price)}
                     </p>
                   </div>
                   <QuantityButton
@@ -100,7 +97,7 @@ export default function CartPage() {
                     onClick={() =>
                       removeFromCart(item.product.id, item.size, item.color)
                     }
-                    className="ml-6 text-red-500 hover:text-red-700 transition cursor-pointer">
+                    className="ml-6 text-red-500 hover:text-red-700 transition">
                     <Trash2 size={20} />
                   </button>
                 </div>
@@ -118,7 +115,7 @@ export default function CartPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${(total / 100).toFixed(2)}</span>
+                    <span>{formatPriceARS(total)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Envío</span>
@@ -127,11 +124,14 @@ export default function CartPage() {
                   <div className="border-t border-gray-200 my-4"></div>
                   <div className="flex justify-between font-bold text-xl">
                     <span>Total</span>
-                    <span>${(total / 100).toFixed(2)}</span>
+                    <span>{formatPriceARS(total)}</span>
                   </div>
                 </div>
                 <Button
-                  className="w-full mt-6 bg-[#E91E63] text-white hover:bg-[#C2185B] h-12 text-lg"
+                  variant="hero"
+                  size="xl"
+                  fullWidth
+                  className="mt-6"
                   onClick={() => router.push("/checkout")}>
                   Proceder al Pago
                 </Button>
@@ -140,8 +140,6 @@ export default function CartPage() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

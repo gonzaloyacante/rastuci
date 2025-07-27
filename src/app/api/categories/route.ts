@@ -25,38 +25,30 @@ export async function GET(
 
     const offset = (page - 1) * limit;
 
-    // Obtener categorías y total
-    const [categories, total] = await Promise.all([
-      prisma.category.findMany({
-        where,
-        orderBy: { name: "asc" },
-        skip: offset,
-        take: limit,
-      }),
-      prisma.category.count({ where }),
-    ]);
+    // Obtener categorías con conteo de productos en una sola consulta
+    const categoriesWithCount = await prisma.category.findMany({
+      where,
+      orderBy: { name: "asc" },
+      skip: offset,
+      take: limit,
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
+    });
 
-    // Contar productos por categoría si se solicita
-    let categoryProductCounts: Record<string, number> = {};
-    if (includeProductCount) {
-      const counts = await prisma.product.groupBy({
-        by: ["categoryId"],
-        _count: { categoryId: true },
-      });
-      categoryProductCounts = counts.reduce((acc, curr) => {
-        acc[curr.categoryId] = curr._count.categoryId;
-        return acc;
-      }, {} as Record<string, number>);
-    }
+    const total = await prisma.category.count({ where });
 
-    const transformedCategories = categories.map((category) => ({
+    const transformedCategories = categoriesWithCount.map((category) => ({
       ...category,
       description: category.description ?? undefined,
+      productCount: category._count.products,
     }));
 
     const totalPages = Math.ceil(total / limit);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         data: transformedCategories,
@@ -64,9 +56,13 @@ export async function GET(
         page,
         limit,
         totalPages,
-        ...(includeProductCount ? { categoryProductCounts } : {}),
       },
     });
+
+    // Cache headers para el navegador
+    response.headers.set("Cache-Control", "public, max-age=300, s-maxage=300");
+
+    return response;
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(

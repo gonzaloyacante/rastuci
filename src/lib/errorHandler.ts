@@ -1,0 +1,210 @@
+import { toast } from "react-hot-toast";
+
+// Tipos de errores
+export enum ErrorType {
+  VALIDATION = "VALIDATION",
+  NETWORK = "NETWORK",
+  AUTHENTICATION = "AUTHENTICATION",
+  AUTHORIZATION = "AUTHORIZATION",
+  NOT_FOUND = "NOT_FOUND",
+  SERVER = "SERVER",
+  UNKNOWN = "UNKNOWN",
+}
+
+// Interfaz para errores personalizados
+export interface AppError {
+  type: ErrorType;
+  message: string;
+  code?: string;
+  details?: any;
+}
+
+// Clase para errores de la aplicación
+export class AppError extends Error {
+  public type: ErrorType;
+  public code?: string;
+  public details?: any;
+
+  constructor(type: ErrorType, message: string, code?: string, details?: any) {
+    super(message);
+    this.type = type;
+    this.code = code;
+    this.details = details;
+    this.name = "AppError";
+  }
+}
+
+// Función para crear errores específicos
+export const createError = (
+  type: ErrorType,
+  message: string,
+  code?: string,
+  details?: any
+): AppError => {
+  return new AppError(type, message, code, details);
+};
+
+// Función para manejar errores de API
+export const handleApiError = (error: any): AppError => {
+  if (error instanceof AppError) {
+    return error;
+  }
+
+  // Error de red
+  if (error.name === "TypeError" && error.message.includes("fetch")) {
+    return createError(
+      ErrorType.NETWORK,
+      "Error de conexión. Verifica tu conexión a internet.",
+      "NETWORK_ERROR"
+    );
+  }
+
+  // Error de respuesta HTTP
+  if (error.status) {
+    switch (error.status) {
+      case 400:
+        return createError(
+          ErrorType.VALIDATION,
+          "Datos inválidos. Verifica la información ingresada.",
+          "BAD_REQUEST"
+        );
+      case 401:
+        return createError(
+          ErrorType.AUTHENTICATION,
+          "No tienes autorización para realizar esta acción.",
+          "UNAUTHORIZED"
+        );
+      case 403:
+        return createError(
+          ErrorType.AUTHORIZATION,
+          "No tienes permisos para acceder a este recurso.",
+          "FORBIDDEN"
+        );
+      case 404:
+        return createError(
+          ErrorType.NOT_FOUND,
+          "El recurso solicitado no fue encontrado.",
+          "NOT_FOUND"
+        );
+      case 500:
+        return createError(
+          ErrorType.SERVER,
+          "Error interno del servidor. Intenta más tarde.",
+          "INTERNAL_SERVER_ERROR"
+        );
+      default:
+        return createError(
+          ErrorType.SERVER,
+          "Error del servidor. Intenta más tarde.",
+          "SERVER_ERROR"
+        );
+    }
+  }
+
+  // Error desconocido
+  return createError(
+    ErrorType.UNKNOWN,
+    "Ocurrió un error inesperado. Intenta más tarde.",
+    "UNKNOWN_ERROR",
+    error
+  );
+};
+
+// Función para mostrar errores al usuario
+export const showError = (error: AppError | string) => {
+  const message = typeof error === "string" ? error : error.message;
+
+  toast.error(message, {
+    duration: 5000,
+    position: "top-center",
+  });
+};
+
+// Función para mostrar éxito
+export const showSuccess = (message: string) => {
+  toast.success(message, {
+    duration: 3000,
+    position: "top-center",
+  });
+};
+
+// Función para mostrar información
+export const showInfo = (message: string) => {
+  toast(message, {
+    duration: 4000,
+    position: "top-center",
+  });
+};
+
+// Hook para manejo de errores en componentes
+export const useErrorHandler = () => {
+  const handleError = (error: any) => {
+    const appError = handleApiError(error);
+    showError(appError);
+    return appError;
+  };
+
+  const handleSuccess = (message: string) => {
+    showSuccess(message);
+  };
+
+  const handleInfo = (message: string) => {
+    showInfo(message);
+  };
+
+  return {
+    handleError,
+    handleSuccess,
+    handleInfo,
+  };
+};
+
+// Función para logging de errores (para desarrollo)
+export const logError = (error: AppError, context?: string) => {
+  if (process.env.NODE_ENV === "development") {
+    console.group(`🚨 Error${context ? ` in ${context}` : ""}`);
+    console.error("Type:", error.type);
+    console.error("Message:", error.message);
+    console.error("Code:", error.code);
+    if (error.details) {
+      console.error("Details:", error.details);
+    }
+    console.groupEnd();
+  }
+};
+
+// Función para validar respuestas de API
+export const validateApiResponse = async (response: Response) => {
+  if (!response.ok) {
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = { message: "Error desconocido" };
+    }
+
+    throw createError(
+      ErrorType.SERVER,
+      errorData.message || `Error ${response.status}`,
+      `HTTP_${response.status}`,
+      errorData
+    );
+  }
+
+  return response.json();
+};
+
+// Función para hacer requests seguros
+export const safeApiCall = async <T>(
+  apiCall: () => Promise<T>,
+  context?: string
+): Promise<T | null> => {
+  try {
+    return await apiCall();
+  } catch (error) {
+    const appError = handleApiError(error);
+    logError(appError, context);
+    showError(appError);
+    return null;
+  }
+};

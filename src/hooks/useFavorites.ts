@@ -12,7 +12,12 @@ export const useFavorites = () => {
     if (savedFavorites) {
       try {
         const parsedFavorites = JSON.parse(savedFavorites);
-        setFavorites(parsedFavorites);
+        // Asegurar que sea un array
+        if (Array.isArray(parsedFavorites)) {
+          setFavorites(parsedFavorites);
+        } else {
+          setFavorites([]);
+        }
       } catch (error) {
         console.error("Error loading favorites from localStorage:", error);
         setFavorites([]);

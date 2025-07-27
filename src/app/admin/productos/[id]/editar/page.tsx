@@ -4,36 +4,14 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProductForm } from "@/components/forms";
 import { AdminPageHeader, AdminLoading, AdminError } from "@/components/admin";
-import { useProducts, useCategories, Product } from "@/hooks";
+import { useProduct, useCategories, Product } from "@/hooks";
 
 export default function EditProductPage() {
   const params = useParams();
   const router = useRouter();
-  const { getProductById } = useProducts();
-  const { categories } = useCategories();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const productId = params.id as string;
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const productData = await getProductById(productId);
-        setProduct(productData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error desconocido");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (productId) {
-      fetchProduct();
-    }
-  }, [productId, getProductById]);
+  const { product, isLoading, error } = useProduct(productId);
+  const { categories } = useCategories();
 
   const handleSubmit = async (data: {
     name: string;
@@ -66,8 +44,8 @@ export default function EditProductPage() {
     router.push("/admin/productos");
   };
 
-  if (loading) return <AdminLoading />;
-  if (error) return <AdminError message={error} />;
+  if (isLoading) return <AdminLoading />;
+  if (error) return <AdminError message={error || "Error desconocido"} />;
   if (!product) return <AdminError message="Producto no encontrado" />;
 
   return (

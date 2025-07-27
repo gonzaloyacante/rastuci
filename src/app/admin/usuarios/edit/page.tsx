@@ -1,27 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { UserForm } from "@/components/forms";
 import { AdminPageHeader, AdminLoading, AdminError } from "@/components/admin";
+import { useUsers, User } from "@/hooks/useUsers";
 
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  isAdmin: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export default function EditUserPage() {
+function EditUserPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [user, setUser] = useState<AdminUser | null>(null);
+  const userId = searchParams.get("id");
+  const { getUserById, updateUser } = useUsers();
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const userId = searchParams.get("id");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -33,19 +25,8 @@ export default function EditUserPage() {
 
       try {
         setLoading(true);
-        const response = await fetch(`/api/users/${userId}`);
-
-        if (!response.ok) {
-          throw new Error("Error al cargar el usuario");
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-          setUser(result.data);
-        } else {
-          throw new Error(result.error || "Error al cargar el usuario");
-        }
+        const userData = await getUserById(userId);
+        setUser(userData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error desconocido");
       } finally {
@@ -54,7 +35,7 @@ export default function EditUserPage() {
     };
 
     fetchUser();
-  }, [userId]);
+  }, [userId, getUserById]);
 
   const handleSubmit = async (data: {
     name: string;
@@ -64,29 +45,9 @@ export default function EditUserPage() {
   }) => {
     if (!userId) return;
 
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al actualizar el usuario");
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        router.push("/admin/usuarios");
-      } else {
-        alert(result.error || "Error al actualizar el usuario");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Error al actualizar el usuario");
+    const success = await updateUser(userId, data);
+    if (success) {
+      router.push("/admin/usuarios");
     }
   };
 
@@ -114,12 +75,24 @@ export default function EditUserPage() {
 
       <div className="card">
         <UserForm
-          user={user}
+          user={{
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.role === "ADMIN",
+          }}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          isEdit={true}
         />
       </div>
     </div>
+  );
+}
+
+export default function EditUserPage() {
+  return (
+    <Suspense fallback={<AdminLoading />}>
+      <EditUserPageContent />
+    </Suspense>
   );
 }

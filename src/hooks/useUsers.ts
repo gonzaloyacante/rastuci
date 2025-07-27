@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNotifications } from "@/context/NotificationContext";
+// import { useNotifications } from "@/context/NotificationContext";
 
 export interface User {
   id: string;
@@ -39,7 +39,7 @@ interface UseUsersReturn {
 }
 
 export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
-  const { success, error: notifyError } = useNotifications();
+  // const { success, error: notifyError } = useNotifications();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +85,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       const errorMessage =
         err instanceof Error ? err.message : "Error desconocido";
       setError(errorMessage);
-      notifyError(errorMessage);
+      // notifyError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       if (data.success) {
         const newUser = data.data;
         setUsers((prevUsers) => [newUser, ...prevUsers]);
-        success("Usuario creado correctamente");
+        // success("Usuario creado correctamente");
         return newUser;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -124,7 +124,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error desconocido";
-      notifyError(errorMessage);
+      // notifyError(errorMessage);
       return null;
     }
   };
@@ -158,7 +158,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
               : user
           )
         );
-        success("Usuario actualizado correctamente");
+        // success("Usuario actualizado correctamente");
         return true;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -166,7 +166,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error desconocido";
-      notifyError(errorMessage);
+      // notifyError(errorMessage);
       return false;
     }
   };
@@ -185,7 +185,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
 
       if (data.success) {
         setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
-        success("Usuario eliminado correctamente");
+        // success("Usuario eliminado correctamente");
         return true;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -193,7 +193,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error desconocido";
-      notifyError(errorMessage);
+      // notifyError(errorMessage);
       return false;
     }
   };
@@ -216,7 +216,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error desconocido";
-      notifyError(errorMessage);
+      // notifyError(errorMessage);
       return null;
     }
   };

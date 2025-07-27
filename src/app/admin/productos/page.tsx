@@ -14,54 +14,61 @@ import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/search";
 import { useState } from "react";
 
 export default function AdminProductsPage() {
-  const {
-    products,
-    loading,
-    error,
-    deleteProduct,
-    totalPages,
-    currentPage,
-    fetchProducts,
-  } = useProducts({ limit: 20 });
-  const { categories } = useCategories();
   const [searchInput, setSearchInput] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Búsqueda
+  const { products, isLoading, error, mutate } = useProducts({
+    category: selectedCategory || undefined,
+    search: searchInput || undefined,
+    page: currentPage,
+  });
+
+  const { categories } = useCategories();
+
+  // Búsqueda local
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+      (product.description &&
+        product.description.toLowerCase().includes(searchInput.toLowerCase()))
+  );
+
   const handleSearch = () => {
-    fetchProducts({
-      page: 1,
-      limit: 20,
-      search: searchInput,
-      category: selectedCategory,
-    });
+    // La búsqueda es local, no necesitamos hacer nada aquí
   };
 
-  // Filtro de categoría
   const handleCategoryChange = (catId: string) => {
     setSelectedCategory(catId);
-    fetchProducts({ page: 1, limit: 20, search: searchInput, category: catId });
+    setCurrentPage(1);
   };
 
-  // Paginación
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    fetchProducts({
-      page,
-      limit: 20,
-      search: searchInput,
-      category: selectedCategory,
-    });
+    setCurrentPage(page);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
       return;
     }
-    await deleteProduct(id);
+
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        mutate(); // Revalidar datos
+      } else {
+        alert("Error al eliminar el producto");
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("Error al eliminar el producto");
+    }
   };
 
-  if (loading) return <AdminLoading />;
+  if (isLoading) return <AdminLoading />;
   if (error) return <AdminError message={error} />;
 
   return (
@@ -180,7 +187,7 @@ export default function AdminProductsPage() {
                           {product.name}
                         </h3>
                         <p className="text-sm text-content-secondary">
-                          {product.category.name}
+                          {product.category?.name || "Sin categoría"}
                         </p>
                       </div>
                       <span
@@ -292,7 +299,7 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-content-primary">
-                        {product.category.name}
+                        {product.category?.name || "Sin categoría"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -337,26 +344,6 @@ export default function AdminProductsPage() {
                 ))}
               </tbody>
             </table>
-            {/* Controles de paginación */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-6">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1 || loading}
-                  className="btn-secondary disabled:opacity-50">
-                  Anterior
-                </button>
-                <span className="text-sm text-content-secondary">
-                  Página {currentPage} de {totalPages}
-                </span>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages || loading}
-                  className="btn-secondary disabled:opacity-50">
-                  Siguiente
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}

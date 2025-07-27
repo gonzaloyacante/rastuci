@@ -2,7 +2,8 @@
 export interface Category {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
+  image?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -12,6 +13,7 @@ export interface SerializedCategory {
   id: string;
   name: string;
   description?: string | null;
+  image?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,7 +29,7 @@ export interface Product {
   sizes?: string[];
   colors?: string[];
   features?: string[];
-  rating?: number;
+  rating?: number | null;
   reviewCount?: number;
   categoryId: string;
   category?: Category;
@@ -37,11 +39,11 @@ export interface Product {
 
 export interface User {
   id: string;
-  name: string;
-  email: string;
+  name: string | null;
+  email: string | null;
   emailVerified?: Date | null;
   image?: string | null;
-  password?: string;
+  password?: string | null;
   isAdmin: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -167,7 +169,7 @@ export interface PaginatedResponse<T> {
 export interface ProductReview {
   id: string;
   rating: number;
-  comment?: string;
+  comment?: string | null;
   customerName: string;
   createdAt: Date;
   productId: string;
@@ -176,7 +178,7 @@ export interface ProductReview {
 export interface SerializedProductReview {
   id: string;
   rating: number;
-  comment?: string;
+  comment?: string | null;
   customerName: string;
   createdAt: string;
   productId: string;

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useCart, ShippingOption } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
 import { Check, Truck, MapPin, ChevronRight, Loader2 } from "lucide-react";
+import { formatPriceARS } from "@/utils/formatters";
 
 interface ShippingStepProps {
   onNext: () => void;
@@ -101,7 +102,7 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
         {shippingOptions.map((option) => (
           <div
             key={option.id}
-            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+            className={`border rounded-lg p-4 transition-all ${
               selectedShippingOption?.id === option.id
                 ? "border-[#E91E63] bg-pink-50"
                 : "border-gray-200 hover:border-gray-300"
@@ -138,9 +139,7 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
               </div>
               <div className="flex items-center gap-3">
                 <span className="font-bold text-lg">
-                  {option.price === 0
-                    ? "Gratis"
-                    : `$${(option.price / 100).toFixed(2)}`}
+                  {option.price === 0 ? "Gratis" : formatPriceARS(option.price)}
                 </span>
                 {selectedShippingOption?.id === option.id && (
                   <div className="w-6 h-6 rounded-full bg-[#E91E63] flex items-center justify-center">

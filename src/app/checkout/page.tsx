@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -132,8 +130,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="bg-white text-[#333333] min-h-screen flex flex-col">
-      <Header />
-
       <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
         {currentStep !== CheckoutStep.CONFIRMATION ? (
           <>
@@ -202,8 +198,6 @@ export default function CheckoutPage() {
             </div>
           )}
       </main>
-
-      <Footer />
     </div>
   );
 }

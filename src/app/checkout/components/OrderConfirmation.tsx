@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { CheckCircle, ArrowLeft, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 
 interface OrderConfirmationProps {
@@ -12,11 +12,15 @@ interface OrderConfirmationProps {
 
 export default function OrderConfirmation({ orderId }: OrderConfirmationProps) {
   const { clearCart } = useCart();
+  const [hasClearedCart, setHasClearedCart] = useState(false);
 
-  // Asegurarse de que el carrito esté limpio
+  // Asegurarse de que el carrito esté limpio solo una vez
   useEffect(() => {
-    clearCart();
-  }, [clearCart]);
+    if (!hasClearedCart) {
+      clearCart();
+      setHasClearedCart(true);
+    }
+  }, [clearCart, hasClearedCart]);
 
   return (
     <div className="max-w-3xl mx-auto text-center">
@@ -47,14 +51,14 @@ export default function OrderConfirmation({ orderId }: OrderConfirmationProps) {
 
         <div className="flex flex-col md:flex-row gap-4 justify-center">
           <Link href="/">
-            <Button className="bg-gray-200 text-gray-800 hover:bg-gray-300 w-full md:w-auto">
+            <Button variant="outline" className="w-full md:w-auto">
               <ArrowLeft size={16} className="mr-2" />
               Volver al Inicio
             </Button>
           </Link>
 
           <Link href="/productos">
-            <Button className="bg-[#E91E63] text-white hover:bg-[#C2185B] w-full md:w-auto">
+            <Button variant="hero" fullWidth className="md:w-auto">
               <ShoppingCart size={16} className="mr-2" />
               Seguir Comprando
             </Button>

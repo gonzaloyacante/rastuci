@@ -27,16 +27,14 @@ export default function EmptyState({
 
       {actionText && actionHref && (
         <Link href={actionHref}>
-          <Button className="bg-pink-600 text-white hover:bg-pink-700 cursor-pointer">
-            {actionText}
-          </Button>
+          <Button variant="hero">{actionText}</Button>
         </Link>
       )}
 
       {actionText && onAction && (
         <Button
           onClick={onAction}
-          className="bg-pink-600 text-white hover:bg-pink-700 cursor-pointer">
+          variant="hero">
           {actionText}
         </Button>
       )}

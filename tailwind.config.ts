@@ -5,6 +5,7 @@ const config: Config = {
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -69,6 +70,8 @@ const config: Config = {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         heading: ["Poppins", "Inter", "system-ui", "sans-serif"],
+        montserrat: ["Montserrat", "Inter", "system-ui", "sans-serif"],
+        poppins: ["Poppins", "Inter", "system-ui", "sans-serif"],
       },
       // Sombras personalizadas
       boxShadow: {

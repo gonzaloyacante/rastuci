@@ -75,7 +75,7 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
           {availablePaymentMethods.map((method) => (
             <div
               key={method.id}
-              className={`border rounded-lg p-4 cursor-pointer transition-all ${
+              className={`border rounded-lg p-4 transition-all ${
                 selectedPaymentMethod?.id === method.id
                   ? "border-[#E91E63] bg-pink-50"
                   : "border-gray-200 hover:border-gray-300"

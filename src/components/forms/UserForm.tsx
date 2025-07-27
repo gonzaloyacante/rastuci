@@ -7,8 +7,8 @@ import { Select } from "@/components/ui/Select";
 
 interface AdminUser {
   id: string;
-  name: string;
-  email: string;
+  name: string | null;
+  email: string | null;
   isAdmin: boolean;
 }
 

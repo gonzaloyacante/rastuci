@@ -1,43 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ProductForm } from "@/components/forms";
 import { AdminPageHeader, AdminLoading, AdminError } from "@/components/admin";
-import { useProducts, useCategories, Product } from "@/hooks";
+import { useProduct, useCategories, Product } from "@/hooks";
 
-export default function EditProductPage() {
+function EditProductPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { getProductById, updateProduct } = useProducts();
-  const { categories } = useCategories();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const productId = searchParams.get("id");
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!productId) {
-        setError("ID de producto no válido");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const productData = await getProductById(productId);
-        setProduct(productData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error desconocido");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [productId, getProductById]);
+  const { product, isLoading, error } = useProduct(productId || "");
+  const { categories } = useCategories();
 
   const handleSubmit = async (data: {
     name: string;
@@ -49,9 +23,22 @@ export default function EditProductPage() {
   }) => {
     if (!productId) return;
 
-    const success = await updateProduct(productId, data);
-    if (success) {
-      router.push("/admin/productos");
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        router.push("/admin/productos");
+      } else {
+        throw new Error("Error al actualizar el producto");
+      }
+    } catch (error) {
+      console.error("Error:", error);
     }
   };
 
@@ -59,8 +46,8 @@ export default function EditProductPage() {
     router.push("/admin/productos");
   };
 
-  if (loading) return <AdminLoading />;
-  if (error) return <AdminError message={error} />;
+  if (isLoading) return <AdminLoading />;
+  if (error) return <AdminError message={error || "Error desconocido"} />;
   if (!product) return <AdminError message="Producto no encontrado" />;
 
   return (
@@ -86,5 +73,13 @@ export default function EditProductPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function EditProductPage() {
+  return (
+    <Suspense fallback={<AdminLoading />}>
+      <EditProductPageContent />
+    </Suspense>
   );
 }

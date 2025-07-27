@@ -19,7 +19,7 @@ export default function NotFound() {
         </div>
         <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
           <Link href="/">
-            <Button className="bg-[#E91E63] hover:bg-[#C2185B]">
+            <Button variant="hero">
               Volver al inicio
             </Button>
           </Link>

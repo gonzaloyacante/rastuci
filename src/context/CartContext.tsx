@@ -1,15 +1,15 @@
 "use client";
 
-import {
+import React, {
   createContext,
   useContext,
   useState,
   ReactNode,
-  useEffect,
+  useCallback,
 } from "react";
 import { Product } from "@/types";
 
-// Tipos para el proceso de checkout
+// Interfaces para el checkout
 export interface ShippingOption {
   id: string;
   name: string;
@@ -50,7 +50,6 @@ export interface CustomerInfo {
   documentNumber?: string;
 }
 
-// Definimos el tipo para un item del carrito
 export interface CartItem {
   product: Product;
   quantity: number;
@@ -58,7 +57,6 @@ export interface CartItem {
   color: string;
 }
 
-// Definimos el tipo para el contexto del carrito
 interface CartContextType {
   // Carrito y productos
   cartItems: CartItem[];
@@ -123,59 +121,64 @@ interface CartContextType {
   }>;
 }
 
-// Creamos el contexto con un valor por defecto
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Creamos el hook para usar el contexto del carrito
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 };
 
-// Creamos el proveedor del contexto del carrito
 interface CartProviderProps {
   children: ReactNode;
 }
 
 export const CartProvider = ({ children }: CartProviderProps) => {
-  // Estado del carrito
+  // Estados del carrito
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Estados para checkout
+  // Estados del checkout - Envío
   const [selectedShippingOption, setSelectedShippingOption] =
     useState<ShippingOption | null>(null);
+
+  // Estados del checkout - Pago
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod | null>(null);
+
+  // Estados del checkout - Facturación
   const [selectedBillingOption, setSelectedBillingOption] =
     useState<BillingOption | null>(null);
+
+  // Estados del checkout - Cupones
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+
+  // Estados del checkout - Información del cliente
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
-  // Opciones disponibles
+  // Opciones disponibles (estáticas por ahora)
   const availableShippingOptions: ShippingOption[] = [
     {
+      id: "pickup",
+      name: "Retiro en tienda",
+      description: "Retira tu pedido en nuestra tienda física",
+      price: 0,
+      estimatedDays: "Inmediato",
+    },
+    {
       id: "standard",
-      name: "Envío Estándar",
-      description: "Entrega en 3-5 días hábiles",
-      price: 1200,
+      name: "Envío estándar",
+      description: "Envío a domicilio en 3-5 días hábiles",
+      price: 1500,
       estimatedDays: "3-5 días",
     },
     {
       id: "express",
-      name: "Envío Express",
-      description: "Entrega en 24-48 horas",
+      name: "Envío express",
+      description: "Envío prioritario en 24-48 horas",
       price: 2500,
-      estimatedDays: "1-2 días",
-    },
-    {
-      id: "pickup",
-      name: "Retirar en Tienda",
-      description: "Sin costo adicional",
-      price: 0,
-      estimatedDays: "Inmediato",
+      estimatedDays: "24-48 horas",
     },
   ];
 
@@ -184,31 +187,25 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       id: "credit",
       name: "Tarjeta de Crédito",
       icon: "credit-card",
-      description: "Visa, Mastercard, American Express",
-    },
-    {
-      id: "debit",
-      name: "Tarjeta de Débito",
-      icon: "credit-card",
-      description: "Visa Débito, Maestro",
+      description: "Paga con tu tarjeta de crédito de forma segura",
     },
     {
       id: "mercadopago",
       name: "MercadoPago",
       icon: "wallet",
-      description: "Pago con cuenta de MercadoPago",
+      description: "Paga con MercadoPago usando tu cuenta o billetera",
     },
     {
       id: "transfer",
       name: "Transferencia Bancaria",
       icon: "bank",
-      description: "Transferencia a nuestra cuenta",
+      description: "Realiza una transferencia bancaria",
     },
     {
       id: "cash",
-      name: "Efectivo en Entrega",
+      name: "Efectivo",
       icon: "dollar-sign",
-      description: "Pago al recibir el producto",
+      description: "Paga en efectivo al recibir tu pedido",
     },
   ];
 
@@ -230,247 +227,198 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     },
   ];
 
-  // Cargar el carrito desde localStorage al iniciar
-  useEffect(() => {
-    try {
-      // Cargar carrito actual
-      const storedCart = localStorage.getItem("rastuci_cart");
-      if (storedCart) {
-        const parsedCart = JSON.parse(storedCart);
-        // Verificar que el carrito tenga la estructura correcta para evitar errores
-        if (Array.isArray(parsedCart)) {
-          setCartItems(parsedCart);
-        } else {
-          console.warn(
-            "Invalid cart format in localStorage, initializing empty cart"
-          );
-          setCartItems([]);
-        }
-      }
-
-      // Cargar información del cliente
-      const storedCustomerInfo = localStorage.getItem("rastuci_customer_info");
-      if (storedCustomerInfo) {
-        setCustomerInfo(JSON.parse(storedCustomerInfo));
-      }
-    } catch (error) {
-      console.error("Failed to parse cart from localStorage", error);
-      setCartItems([]);
-    }
-  }, []);
-
-  // Guardar el carrito en localStorage cuando cambie
-  useEffect(() => {
-    localStorage.setItem("rastuci_cart", JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  // Guardar información del cliente
-  useEffect(() => {
-    if (customerInfo) {
-      localStorage.setItem(
-        "rastuci_customer_info",
-        JSON.stringify(customerInfo)
-      );
-    }
-  }, [customerInfo]);
-
-  const addToCart = (
-    product: Product,
-    quantity: number,
-    size: string,
-    color: string
-  ) => {
-    setCartItems((prevItems) => {
-      const existingItemIndex = prevItems.findIndex(
-        (item) =>
-          item.product.id === product.id &&
-          item.size === size &&
-          item.color === color
-      );
-
-      if (existingItemIndex > -1) {
-        // Si el item ya existe, actualizamos la cantidad
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += quantity;
-        return updatedItems;
-      } else {
-        // Si es un item nuevo, lo agregamos al carrito
-        return [...prevItems, { product, quantity, size, color }];
-      }
-    });
-  };
-
-  const removeFromCart = (productId: string, size: string, color: string) => {
-    setCartItems((prevItems) =>
-      prevItems.filter(
-        (item) =>
-          !(
-            item.product.id === productId &&
+  // Funciones del carrito memoizadas
+  const addToCart = useCallback(
+    (product: Product, quantity: number, size: string, color: string) => {
+      setCartItems((prevItems) => {
+        const existingItemIndex = prevItems.findIndex(
+          (item) =>
+            item.product.id === product.id &&
             item.size === size &&
             item.color === color
-          )
-      )
-    );
-  };
+        );
 
-  const updateQuantity = (
-    productId: string,
-    size: string,
-    color: string,
-    newQuantity: number
-  ) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId, size, color);
-      return;
-    }
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.product.id === productId &&
-        item.size === size &&
-        item.color === color
-          ? { ...item, quantity: newQuantity }
-          : item
-      )
-    );
-  };
+        if (existingItemIndex > -1) {
+          // Actualizar cantidad del item existente
+          const updatedItems = [...prevItems];
+          updatedItems[existingItemIndex] = {
+            ...updatedItems[existingItemIndex],
+            quantity: updatedItems[existingItemIndex].quantity + quantity,
+          };
+          return updatedItems;
+        } else {
+          // Agregar nuevo item
+          return [...prevItems, { product, quantity, size, color }];
+        }
+      });
+    },
+    []
+  );
 
-  const clearCart = () => {
+  const removeFromCart = useCallback(
+    (productId: string, size: string, color: string) => {
+      setCartItems((prevItems) =>
+        prevItems.filter(
+          (item) =>
+            !(
+              item.product.id === productId &&
+              item.size === size &&
+              item.color === color
+            )
+        )
+      );
+    },
+    []
+  );
+
+  const updateQuantity = useCallback(
+    (productId: string, size: string, color: string, newQuantity: number) => {
+      if (newQuantity <= 0) {
+        removeFromCart(productId, size, color);
+        return;
+      }
+
+      setCartItems((prevItems) =>
+        prevItems.map((item) =>
+          item.product.id === productId &&
+          item.size === size &&
+          item.color === color
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      );
+    },
+    [removeFromCart]
+  );
+
+  const clearCart = useCallback(() => {
     setCartItems([]);
-  };
+  }, []);
 
-  const getCartTotal = () => {
+  const getCartTotal = useCallback(() => {
     return cartItems.reduce(
       (total, item) => total + item.product.price * item.quantity,
       0
     );
-  };
+  }, [cartItems]);
 
-  const getItemCount = () => {
+  const getItemCount = useCallback(() => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
-  };
+  }, [cartItems]);
 
   // Envío - Implementación del cálculo por código postal
-  const calculateShippingCost = async (
-    postalCode: string
-  ): Promise<ShippingOption[]> => {
-    // Validar el código postal de Argentina (formato general 4 dígitos o 1 letra + 4 dígitos)
-    const postalCodeRegex = /^[A-Z]?\d{4}$/i;
-    if (!postalCodeRegex.test(postalCode)) {
-      throw new Error(
-        "Código postal inválido. Debe tener 4 dígitos, o una letra seguida de 4 dígitos."
-      );
-    }
+  const calculateShippingCost = useCallback(
+    async (postalCode: string): Promise<ShippingOption[]> => {
+      // Validar el código postal de Argentina (formato general 4 dígitos o 1 letra + 4 dígitos)
+      const postalCodeRegex = /^[A-Z]?\d{4}$/i;
+      if (!postalCodeRegex.test(postalCode)) {
+        throw new Error(
+          "Código postal inválido. Debe tener 4 dígitos, o una letra seguida de 4 dígitos."
+        );
+      }
 
-    // Lógica de cálculo de costo de envío según código postal
-    // Simplificado: Códigos postales de CABA (1000-1499) tienen precio especial
-    // Códigos del GBA (1500-1999) tienen otro precio
-    // Resto del país tiene precio estándar pero varía por región
+      // Lógica de cálculo de costo de envío según código postal
+      // Simplificado: Códigos postales de CABA (1000-1499) tienen precio especial
+      // Códigos del GBA (1500-1999) tienen otro precio
+      // Resto del país tiene precio estándar pero varía por región
 
-    const numericCode = parseInt(postalCode.replace(/[A-Z]/i, ""));
-    let options = [...availableShippingOptions];
+      const numericCode = parseInt(postalCode.replace(/[A-Z]/i, ""));
+      let options = [...availableShippingOptions];
 
-    // CABA
-    if (numericCode >= 1000 && numericCode <= 1499) {
-      options = options.map((option) => {
-        if (option.id === "standard") {
-          return { ...option, price: 800, estimatedDays: "2-3 días" };
-        }
-        if (option.id === "express") {
-          return { ...option, price: 1500, estimatedDays: "24 horas" };
-        }
-        return option;
-      });
-    }
-    // GBA
-    else if (numericCode >= 1500 && numericCode <= 1999) {
-      options = options.map((option) => {
-        if (option.id === "standard") {
-          return { ...option, price: 1200, estimatedDays: "2-4 días" };
-        }
-        if (option.id === "express") {
-          return { ...option, price: 2000, estimatedDays: "24-48 horas" };
-        }
-        return option;
-      });
-    }
-    // Provincias cercanas (Santa Fe, Córdoba, Entre Ríos)
-    else if (
-      (numericCode >= 2000 && numericCode <= 2999) ||
-      (numericCode >= 3000 && numericCode <= 3599) ||
-      (numericCode >= 5000 && numericCode <= 5999)
-    ) {
-      options = options.map((option) => {
-        if (option.id === "standard") {
-          return { ...option, price: 1800, estimatedDays: "3-5 días" };
-        }
-        if (option.id === "express") {
-          return { ...option, price: 3000, estimatedDays: "48-72 horas" };
-        }
-        return option;
-      });
-    }
-    // Resto del país
-    else {
-      options = options.map((option) => {
-        if (option.id === "standard") {
-          return { ...option, price: 2500, estimatedDays: "5-7 días" };
-        }
-        if (option.id === "express") {
-          return { ...option, price: 4000, estimatedDays: "72-96 horas" };
-        }
-        return option;
-      });
-    }
+      // CABA
+      if (numericCode >= 1000 && numericCode <= 1499) {
+        options = options.map((option) => {
+          if (option.id === "standard") {
+            return { ...option, price: 800, estimatedDays: "2-3 días" };
+          }
+          if (option.id === "express") {
+            return { ...option, price: 1500, estimatedDays: "24 horas" };
+          }
+          return option;
+        });
+      }
+      // GBA
+      else if (numericCode >= 1500 && numericCode <= 1999) {
+        options = options.map((option) => {
+          if (option.id === "standard") {
+            return { ...option, price: 1200, estimatedDays: "2-4 días" };
+          }
+          if (option.id === "express") {
+            return { ...option, price: 2000, estimatedDays: "24-48 horas" };
+          }
+          return option;
+        });
+      }
+      // Provincias cercanas (Santa Fe, Córdoba, Entre Ríos)
+      else if (
+        (numericCode >= 2000 && numericCode <= 2999) ||
+        (numericCode >= 3000 && numericCode <= 3599) ||
+        (numericCode >= 5000 && numericCode <= 5999)
+      ) {
+        options = options.map((option) => {
+          if (option.id === "standard") {
+            return { ...option, price: 1800, estimatedDays: "3-5 días" };
+          }
+          if (option.id === "express") {
+            return { ...option, price: 3000, estimatedDays: "48-72 horas" };
+          }
+          return option;
+        });
+      }
+      // Resto del país
+      else {
+        options = options.map((option) => {
+          if (option.id === "standard") {
+            return { ...option, price: 2500, estimatedDays: "5-7 días" };
+          }
+          if (option.id === "express") {
+            return { ...option, price: 4000, estimatedDays: "72-96 horas" };
+          }
+          return option;
+        });
+      }
 
-    return options;
-  };
+      return options;
+    },
+    []
+  );
 
   // Checkout - Cupones
-  const applyCoupon = async (code: string): Promise<boolean> => {
-    // Lista de cupones válidos (en producción, esto vendría de una base de datos)
-    const validCoupons: Record<string, number> = {
-      BIENVENIDO10: 10,
-      VERANO20: 20,
-      PRIMAVERA15: 15,
-      RASTUCI25: 25,
-    };
+  const applyCoupon = useCallback(async (code: string): Promise<boolean> => {
+    // Simular validación de cupón
+    // En producción, esto se haría contra una API
+    const validCoupons = [
+      { code: "WELCOME10", discount: 10 },
+      { code: "SUMMER20", discount: 20 },
+      { code: "FREESHIP", discount: 0 }, // Descuento especial para envío
+    ];
 
-    // Verificar si el cupón es válido
-    if (code.toUpperCase() in validCoupons) {
-      const discount = validCoupons[code.toUpperCase()];
+    const coupon = validCoupons.find((c) => c.code === code.toUpperCase());
+    if (coupon) {
       setAppliedCoupon({
-        code: code.toUpperCase(),
-        discount,
+        code: coupon.code,
+        discount: coupon.discount,
         isValid: true,
       });
       return true;
     }
-
-    // Si no es válido, limpiar cualquier cupón existente
-    setAppliedCoupon(null);
     return false;
-  };
+  }, []);
 
-  const removeCoupon = () => {
+  const removeCoupon = useCallback(() => {
     setAppliedCoupon(null);
-  };
+  }, []);
 
-  // Información del cliente
-  const updateCustomerInfo = (info: CustomerInfo) => {
+  const updateCustomerInfo = useCallback((info: CustomerInfo) => {
     setCustomerInfo(info);
-  };
+  }, []);
 
-  // Resumen del pedido
-  const getOrderSummary = () => {
+  const getOrderSummary = useCallback(() => {
     const subtotal = getCartTotal();
     const shippingCost = selectedShippingOption?.price || 0;
-
-    // Calcular descuento si hay un cupón aplicado
     const discount = appliedCoupon
-      ? Math.round((subtotal * appliedCoupon.discount) / 100)
+      ? (subtotal * appliedCoupon.discount) / 100
       : 0;
-
-    // Calcular total final
     const total = subtotal + shippingCost - discount;
 
     return {
@@ -484,75 +432,40 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       payment: selectedPaymentMethod,
       billing: selectedBillingOption,
     };
-  };
+  }, [
+    cartItems,
+    getCartTotal,
+    selectedShippingOption,
+    appliedCoupon,
+    customerInfo,
+    selectedPaymentMethod,
+    selectedBillingOption,
+  ]);
 
-  // Finalizar pedido
-  const placeOrder = async (): Promise<{
+  const placeOrder = useCallback(async (): Promise<{
     success: boolean;
     orderId?: string;
     error?: string;
   }> => {
     try {
-      // Validar que tengamos toda la información necesaria
-      if (!customerInfo) {
-        return {
-          success: false,
-          error: "Falta información del cliente",
-        };
-      }
-
-      if (!selectedShippingOption) {
-        return {
-          success: false,
-          error: "Por favor selecciona un método de envío",
-        };
-      }
-
-      if (!selectedPaymentMethod) {
-        return {
-          success: false,
-          error: "Por favor selecciona un método de pago",
-        };
-      }
-
-      // Verificar si se requiere información de facturación
-      if (
-        selectedBillingOption?.requiresDocument &&
-        (!customerInfo.documentType || !customerInfo.documentNumber)
-      ) {
-        return {
-          success: false,
-          error:
-            "La información de facturación requiere un número de documento",
-        };
-      }
-
-      // En un entorno real, aquí se enviaría la información a la API
-      // para crear el pedido en la base de datos
-
-      // Simular una respuesta exitosa
+      // Simular creación de pedido
+      // En producción, esto se haría contra una API
       const orderId = `ORD-${Date.now()}`;
 
-      // Limpiar el carrito después de completar el pedido
-      clearCart();
-      setSelectedShippingOption(null);
-      setSelectedPaymentMethod(null);
-      setSelectedBillingOption(null);
-      setAppliedCoupon(null);
+      // Simular delay de procesamiento
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       return {
         success: true,
         orderId,
       };
     } catch (error) {
-      console.error("Error al procesar el pedido:", error);
       return {
         success: false,
-        error:
-          "Ocurrió un error al procesar tu pedido. Por favor intenta nuevamente.",
+        error: "Error al procesar el pedido",
       };
     }
-  };
+  }, []);
 
   const value: CartContextType = {
     // Carrito y productos

@@ -1,12 +1,12 @@
+"use client";
+
 import { Suspense } from "react";
-import prisma from "@/lib/prisma";
 import { ProductForm } from "@/components/forms";
 import { AdminPageHeader, AdminLoading } from "@/components/admin";
+import { useCategories } from "@/hooks";
 
-async function CreateProductContent() {
-  const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" },
-  });
+function CreateProductContent() {
+  const { categories } = useCategories();
 
   const handleSubmit = async (data: {
     name: string;

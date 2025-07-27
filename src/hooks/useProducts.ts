@@ -1,263 +1,194 @@
 import { useState, useEffect } from "react";
-import { useNotifications } from "@/context/NotificationContext";
+import { Product } from "@/types";
 
-export interface Product {
-  id: string;
-  name: string;
-  description?: string | null;
-  price: number;
-  images: string[];
-  stock: number;
-  category: {
-    id: string;
-    name: string;
-  };
-  categoryId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface UseProductsParams {
-  page?: number;
-  limit?: number;
+interface UseProductsOptions {
   category?: string;
   search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
-interface UseProductsReturn {
-  products: Product[];
-  loading: boolean;
-  error: string | null;
-  totalPages: number;
-  currentPage: number;
-  fetchProducts: (params?: UseProductsParams) => Promise<void>;
-  refreshProducts: () => Promise<void>;
-  createProduct: (
-    productData: Omit<Product, "id" | "createdAt" | "updatedAt" | "category">
-  ) => Promise<Product | null>;
-  updateProduct: (
-    productId: string,
-    productData: Partial<
-      Omit<Product, "id" | "createdAt" | "updatedAt" | "category">
-    >
-  ) => Promise<boolean>;
-  deleteProduct: (productId: string) => Promise<boolean>;
-  getProductById: (productId: string) => Promise<Product | null>;
+interface ProductsResponse {
+  success: boolean;
+  data: {
+    data: Product[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
-export const useProducts = (
-  initialParams?: UseProductsParams
-): UseProductsReturn => {
-  const { success, error: notifyError } = useNotifications();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+export function useProducts(options: UseProductsOptions = {}) {
+  const {
+    category,
+    search,
+    page = 1,
+    limit = 12,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = options;
+
+  const [data, setData] = useState<ProductsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(initialParams?.page || 1);
-  const [lastParams, setLastParams] = useState<UseProductsParams>(
-    initialParams || {}
-  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const fetchProducts = async (params?: UseProductsParams) => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Construir la URL de la API con query parameters
+  const buildApiUrl = () => {
+    const params = new URLSearchParams();
 
-      const finalParams = { ...lastParams, ...params };
-      setLastParams(finalParams);
+    if (category) params.append("categoryId", category);
+    if (search) params.append("search", search);
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    params.append("sortBy", sortBy);
+    params.append("sortOrder", sortOrder);
 
-      const urlParams = new URLSearchParams();
-
-      if (finalParams.page)
-        urlParams.append("page", finalParams.page.toString());
-      if (finalParams.limit)
-        urlParams.append("limit", finalParams.limit.toString());
-      if (finalParams.category)
-        urlParams.append("category", finalParams.category);
-      if (finalParams.search) urlParams.append("search", finalParams.search);
-
-      const response = await fetch(`/api/products?${urlParams}`);
-
-      if (!response.ok) {
-        throw new Error("Error al cargar los productos");
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setProducts(data.data.data);
-        setTotalPages(data.data.totalPages);
-        setCurrentPage(data.data.page);
-      } else {
-        throw new Error(data.error || "Error desconocido");
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      setError(errorMessage);
-      notifyError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    return `/api/products?${params.toString()}`;
   };
 
-  const refreshProducts = async () => {
-    await fetchProducts(lastParams);
-  };
-
-  const createProduct = async (
-    productData: Omit<Product, "id" | "createdAt" | "updatedAt" | "category">
-  ): Promise<Product | null> => {
-    try {
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(productData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al crear el producto");
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        const newProduct = data.data;
-        setProducts((prevProducts) => [newProduct, ...prevProducts]);
-        success("Producto creado correctamente");
-        return newProduct;
-      } else {
-        throw new Error(data.error || "Error desconocido");
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      notifyError(errorMessage);
-      return null;
-    }
-  };
-
-  const updateProduct = async (
-    productId: string,
-    productData: Partial<
-      Omit<Product, "id" | "createdAt" | "updatedAt" | "category">
-    >
-  ): Promise<boolean> => {
-    try {
-      const response = await fetch(`/api/products/${productId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(productData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al actualizar el producto");
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Actualizar el producto en la lista local
-        setProducts((prevProducts) =>
-          prevProducts.map((product) =>
-            product.id === productId
-              ? {
-                  ...product,
-                  ...productData,
-                  updatedAt: new Date().toISOString(),
-                }
-              : product
-          )
-        );
-        success("Producto actualizado correctamente");
-        return true;
-      } else {
-        throw new Error(data.error || "Error desconocido");
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      notifyError(errorMessage);
-      return false;
-    }
-  };
-
-  const deleteProduct = async (productId: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`/api/products/${productId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al eliminar el producto");
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Remover el producto de la lista local
-        setProducts((prevProducts) =>
-          prevProducts.filter((product) => product.id !== productId)
-        );
-        success("Producto eliminado correctamente");
-        return true;
-      } else {
-        throw new Error(data.error || "Error desconocido");
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      notifyError(errorMessage);
-      return false;
-    }
-  };
-
-  const getProductById = async (productId: string): Promise<Product | null> => {
-    try {
-      const response = await fetch(`/api/products/${productId}`);
-
-      if (!response.ok) {
-        throw new Error("Error al cargar el producto");
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        return data.data;
-      } else {
-        throw new Error(data.error || "Error desconocido");
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      notifyError(errorMessage);
-      return null;
-    }
-  };
-
-  // Cargar productos iniciales
   useEffect(() => {
-    if (initialParams) {
-      fetchProducts(initialParams);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setIsMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const url = buildApiUrl();
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error al cargar productos"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [isMounted, category, search, page, limit, sortBy, sortOrder]);
+
   return {
-    products,
-    loading,
+    products: data?.data?.data || [],
+    total: data?.data?.total || 0,
+    page: data?.data?.page || 1,
+    limit: data?.data?.limit || 12,
+    totalPages: data?.data?.totalPages || 0,
+    isLoading: !isMounted || isLoading,
     error,
-    totalPages,
-    currentPage,
-    fetchProducts,
-    refreshProducts,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    getProductById,
+    mutate: () => {
+      // Re-fetch data
+      const fetchProducts = async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+          const url = buildApiUrl();
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          setData(result);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "Error al cargar productos"
+          );
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchProducts();
+    },
   };
-};
+}
+
+export function useProduct(id: string) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/products/${id}`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        setProduct(result.data);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error al cargar el producto"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
+
+  return { product, isLoading, error };
+}
+
+export function useRelatedProducts(productId: string, categoryId?: string) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      setIsLoading(true);
+
+      try {
+        const params = new URLSearchParams();
+        if (categoryId) params.append("categoryId", categoryId);
+        params.append("limit", "4");
+
+        const response = await fetch(`/api/products?${params.toString()}`);
+
+        if (response.ok) {
+          const result = await response.json();
+          // Filtrar el producto actual
+          const filteredProducts = result.data.data.filter(
+            (p: Product) => p.id !== productId
+          );
+          setProducts(filteredProducts.slice(0, 3));
+        }
+      } catch (err) {
+        console.error("Error fetching related products:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRelatedProducts();
+  }, [productId, categoryId]);
+
+  return { products, isLoading };
+}

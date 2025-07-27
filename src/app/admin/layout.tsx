@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import React from "react";
+import SessionProvider from "@/components/providers/SessionProvider";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -214,16 +215,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <>
-      {/* Forzar a Tailwind a incluir todas las variantes de rosa */}
-      <div className="hidden">
-        bg-primary-50 bg-primary-100 bg-primary-200 bg-primary-300
-        bg-primary-400 bg-primary-500 bg-primary-600 bg-primary-700
-        bg-primary-800 bg-primary-900 text-primary-50 text-primary-100
-        text-primary-200 text-primary-300 text-primary-400 text-primary-500
-        text-primary-600 text-primary-700 text-primary-800 text-primary-900
-        hover:bg-primary-50 hover:text-primary-500
-      </div>
+    <SessionProvider>
       <div className="flex h-screen bg-[#F7F7FA] relative overflow-x-hidden">
         {/* Sidebar */}
         <div
@@ -263,7 +255,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             <button
               onClick={toggleSidebar}
-              className={`p-2 rounded-full hover:bg-primary-50 focus:outline-none transition-colors ${isSidebarOpen ? "" : "mt-2"} cursor-pointer`}>
+              className={`p-2 rounded-full hover:bg-primary-50 focus:outline-none transition-colors ${
+                isSidebarOpen ? "" : "mt-2"
+              } cursor-pointer`}>
               {isSidebarOpen ? (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -320,7 +314,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             }`}>
             <button
               onClick={() => signOut({ callbackUrl: "/admin" })}
-              className={`flex items-center ${isSidebarOpen ? "w-full px-4 py-3" : "justify-center p-3"} rounded-lg transition-colors text-[#E53935] font-medium gap-3 cursor-pointer`}
+              className={`flex items-center ${
+                isSidebarOpen ? "w-full px-4 py-3" : "justify-center p-3"
+              } rounded-lg transition-colors text-[#E53935] font-medium gap-3 cursor-pointer`}
               style={{ fontWeight: 600 }}
               onMouseOver={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "#fdf2f8";
@@ -375,6 +371,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <main className="p-2 sm:p-3 lg:p-4">{children}</main>
         </div>
       </div>
-    </>
+    </SessionProvider>
   );
 }

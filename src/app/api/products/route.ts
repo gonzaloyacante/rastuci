@@ -7,12 +7,18 @@ import {
   PaginatedResponse,
   ProductFilters,
 } from "@/types";
+import { validateProduct } from "@/lib/validations";
+import { handleApiError, validateApiResponse } from "@/lib/errorHandler";
+import { apiLimiter, createContentLimiter } from "@/middleware/rateLimit";
 
 // GET /api/products - Obtener productos con filtros y paginación
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<PaginatedResponse<Product>>>> {
   try {
+    // Aplicar rate limiting
+    // await apiLimiter(request);
+
     const { searchParams } = new URL(request.url);
 
     const filters: ProductFilters = {
@@ -28,6 +34,10 @@ export async function GET(
       page: Number(searchParams.get("page")) || 1,
       limit: Number(searchParams.get("limit")) || 12,
     };
+
+    // Obtener parámetros de ordenamiento
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
 
     // Construir filtros para Prisma
     const where: Record<string, unknown> = {};
@@ -58,14 +68,24 @@ export async function GET(
     // Calcular offset para paginación
     const offset = (filters.page! - 1) * filters.limit!;
 
-    // Obtener productos y total
+    // Construir ordenamiento dinámico
+    const orderBy: Record<string, "asc" | "desc"> = {};
+    orderBy[sortBy] = sortOrder as "asc" | "desc";
+
+    // Obtener productos y total en paralelo
     const [prismaProducts, total] = await Promise.all([
       prisma.product.findMany({
         where,
         include: {
-          category: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
         skip: offset,
         take: filters.limit,
       }),
@@ -92,16 +112,24 @@ export async function GET(
       totalPages,
     };
 
-    return NextResponse.json({
+    const apiResponse = NextResponse.json({
       success: true,
       data: response,
     });
+
+    // Cache headers para el navegador
+    apiResponse.headers.set(
+      "Cache-Control",
+      "public, max-age=300, s-maxage=300"
+    );
+
+    return apiResponse;
   } catch (error) {
-    console.error("Error fetching products:", error);
+    const appError = handleApiError(error);
     return NextResponse.json(
       {
         success: false,
-        error: "Error al obtener los productos",
+        error: appError.message,
       },
       { status: 500 }
     );
@@ -113,63 +141,48 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
+    // Aplicar rate limiting para creación
+    await createContentLimiter(request);
+
     const body = await request.json();
-    const { name, description, price, stock, categoryId, images } = body;
 
-    // Validaciones
-    if (!name || !price || !categoryId) {
+    // Validar datos con Zod
+    const validation = validateProduct(body);
+    if (!validation.success) {
       return NextResponse.json(
         {
           success: false,
-          error: "Nombre, precio y categoría son requeridos",
+          error: "Datos inválidos",
+          details: validation.error.errors,
         },
         { status: 400 }
       );
     }
 
-    if (price < 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El precio debe ser mayor o igual a 0",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (stock < 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El stock debe ser mayor o igual a 0",
-        },
-        { status: 400 }
-      );
-    }
+    const productData = validation.data;
 
     // Verificar que la categoría existe
     const category = await prisma.category.findUnique({
-      where: { id: categoryId },
+      where: { id: productData.categoryId },
     });
 
     if (!category) {
       return NextResponse.json(
         {
           success: false,
-          error: "La categoría especificada no existe",
+          error: "Categoría no encontrada",
         },
-        { status: 400 }
+        { status: 404 }
       );
     }
 
-    const prismaProduct = await prisma.product.create({
+    // Crear el producto
+    const newProduct = await prisma.product.create({
       data: {
-        name,
-        description,
-        price: Number(price),
-        stock: Number(stock) || 0,
-        categoryId,
-        images: images || [],
+        ...productData,
+        images: Array.isArray(productData.images)
+          ? JSON.stringify(productData.images)
+          : productData.images,
       },
       include: {
         category: true,
@@ -177,29 +190,28 @@ export async function POST(
     });
 
     const product: Product = {
-      ...prismaProduct,
-      description: prismaProduct.description ?? undefined,
+      ...newProduct,
+      description: newProduct.description ?? undefined,
       images:
-        typeof prismaProduct.images === "string"
-          ? JSON.parse(prismaProduct.images)
-          : prismaProduct.images,
+        typeof newProduct.images === "string"
+          ? JSON.parse(newProduct.images)
+          : newProduct.images,
       category: {
-        ...prismaProduct.category,
-        description: prismaProduct.category.description ?? undefined,
+        ...newProduct.category,
+        description: newProduct.category.description ?? undefined,
       },
     };
 
     return NextResponse.json({
       success: true,
       data: product,
-      message: "Producto creado exitosamente",
     });
   } catch (error) {
-    console.error("Error creating product:", error);
+    const appError = handleApiError(error);
     return NextResponse.json(
       {
         success: false,
-        error: "Error al crear el producto",
+        error: appError.message,
       },
       { status: 500 }
     );
