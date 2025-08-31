@@ -53,6 +53,12 @@ model Order {
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
 
+  // Mercado Pago integration fields
+  mpPaymentId     String?     @unique
+  mpPreferenceId  String?
+  mpStatus        String?
+  customerEmail   String?
+
   @@map("orders")
 }
 
@@ -62,6 +68,8 @@ model OrderItem {
   price     Float
   orderId   String
   productId String
+  size      String?
+  color     String?
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
 

@@ -143,9 +143,14 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const [selectedShippingOption, setSelectedShippingOption] =
     useState<ShippingOption | null>(null);
 
-  // Estados del checkout - Pago
+  // Estados del checkout - Pago (Mercado Pago por defecto)
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod | null>(null);
+    useState<PaymentMethod | null>({
+      id: "mercadopago",
+      name: "MercadoPago",
+      icon: "wallet",
+      description: "Paga con Mercado Pago usando tu cuenta o billetera",
+    });
 
   // Estados del checkout - Facturación
   const [selectedBillingOption, setSelectedBillingOption] =
@@ -184,28 +189,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   const availablePaymentMethods: PaymentMethod[] = [
     {
-      id: "credit",
-      name: "Tarjeta de Crédito",
-      icon: "credit-card",
-      description: "Paga con tu tarjeta de crédito de forma segura",
-    },
-    {
       id: "mercadopago",
       name: "MercadoPago",
       icon: "wallet",
-      description: "Paga con MercadoPago usando tu cuenta o billetera",
-    },
-    {
-      id: "transfer",
-      name: "Transferencia Bancaria",
-      icon: "bank",
-      description: "Realiza una transferencia bancaria",
-    },
-    {
-      id: "cash",
-      name: "Efectivo",
-      icon: "dollar-sign",
-      description: "Paga en efectivo al recibir tu pedido",
+      description: "Paga con Mercado Pago usando tu cuenta o billetera",
     },
   ];
 

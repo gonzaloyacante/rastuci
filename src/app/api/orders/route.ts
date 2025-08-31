@@ -15,11 +15,20 @@ export async function GET(
     const page = Number(searchParams.get("page")) || 1;
     const limit = Number(searchParams.get("limit")) || 10;
     const status = searchParams.get("status") || undefined;
+    const search = searchParams.get("search") || undefined;
 
     // Construir filtros
     const where: Record<string, unknown> = {};
     if (status) {
       where.status = status;
+    }
+    if (search) {
+      // Buscar por nombre, email o ID exacto
+      where.OR = [
+        { customerName: { contains: search, mode: "insensitive" } },
+        { customerEmail: { contains: search, mode: "insensitive" } },
+        { id: search },
+      ];
     }
 
     // Calcular offset para paginación

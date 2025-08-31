@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -28,13 +28,17 @@ enum CheckoutStep {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartItems, placeOrder } = useCart();
+  const searchParams = useSearchParams();
+  const { cartItems, placeOrder, getOrderSummary, selectedPaymentMethod, clearCart } =
+    useCart();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(
     CheckoutStep.CUSTOMER_INFO
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusType, setStatusType] = useState<"success" | "failure" | "pending" | null>(null);
 
   // Redireccionar si el carrito está vacío
   useEffect(() => {
@@ -48,11 +52,45 @@ export default function CheckoutPage() {
     return () => clearTimeout(checkCartTimer);
   }, [cartItems, router, currentStep]);
 
+  // Manejar retorno desde Mercado Pago con ?status=
+  useEffect(() => {
+    const status = searchParams?.get("status");
+    if (!status) return;
+
+    if (status === "success") {
+      setStatusType("success");
+      setStatusMessage("Pago aprobado. ¡Gracias por tu compra!");
+      // Limpiar carrito y mostrar confirmación
+      clearCart();
+      setCurrentStep(CheckoutStep.CONFIRMATION);
+    } else if (status === "pending") {
+      setStatusType("pending");
+      setStatusMessage("Pago pendiente. Te avisaremos cuando se acredite.");
+      // Mantenerse en Review para permitir reintentar
+      setCurrentStep(CheckoutStep.REVIEW);
+    } else if (status === "failure") {
+      setStatusType("failure");
+      setStatusMessage("El pago fue rechazado o cancelado. Intenta nuevamente.");
+      setCurrentStep(CheckoutStep.REVIEW);
+    }
+    // Limpiar el parámetro visualmente (opcional): router.replace('/checkout')
+    // router.replace('/checkout');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   // Nombres de los pasos
+  // Omitimos el paso de "Método de Pago" porque usaremos siempre Mercado Pago (Checkout Pro)
+  const visibleSteps: CheckoutStep[] = [
+    CheckoutStep.CUSTOMER_INFO,
+    CheckoutStep.SHIPPING,
+    CheckoutStep.BILLING,
+    CheckoutStep.REVIEW,
+    CheckoutStep.CONFIRMATION,
+  ];
+
   const stepNames = [
     "Información Personal",
     "Envío",
-    "Método de Pago",
     "Facturación",
     "Revisar Pedido",
     "Confirmación",
@@ -60,7 +98,11 @@ export default function CheckoutPage() {
 
   // Avanzar al siguiente paso
   const goToNextStep = () => {
-    setCurrentStep((prevStep) => (prevStep + 1) as CheckoutStep);
+    setCurrentStep((prevStep) => {
+      // Saltar PAYMENT
+      if (prevStep === CheckoutStep.SHIPPING) return CheckoutStep.BILLING;
+      return (prevStep + 1) as CheckoutStep;
+    });
     window.scrollTo(0, 0);
   };
 
@@ -85,6 +127,88 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
+      // Si el usuario eligió MercadoPago, creamos la preferencia y redirigimos a Checkout Pro
+      if (selectedPaymentMethod?.id === "mercadopago") {
+        const summary = getOrderSummary();
+
+        // Aplicar descuento (si existe) sólo sobre productos, no sobre el envío
+        const discountRate = summary.subtotal > 0 ? summary.discount / summary.subtotal : 0;
+
+        const items = summary.items.map((it) => ({
+          title: `${it.product.name} (${it.size} - ${it.color})`,
+          quantity: it.quantity,
+          unit_price: Number((it.product.price * (1 - discountRate)).toFixed(2)),
+          currency_id: "ARS",
+          picture_url: Array.isArray(it.product.images)
+            ? it.product.images[0]
+            : undefined,
+          description: it.product.description || undefined,
+        }));
+
+        // Agregar ítem de envío si corresponde (sin descuento)
+        if ((summary.shippingCost || 0) > 0) {
+          items.push({
+            title: `Envío - ${summary.shippingOption?.name || "Envío"}`,
+            quantity: 1,
+            unit_price: Number(summary.shippingCost.toFixed(2)),
+            currency_id: "ARS",
+            picture_url: undefined,
+            description: summary.shippingOption?.description || undefined,
+          });
+        }
+
+        const customer = summary.customer
+          ? {
+              name: summary.customer.name,
+              email: summary.customer.email,
+              phone: summary.customer.phone,
+              address: summary.customer.address,
+              city: summary.customer.city,
+              postalCode: summary.customer.postalCode,
+            }
+          : null;
+
+        const discountPercent = summary.subtotal > 0 ? summary.discount / summary.subtotal : 0;
+        const metadata = {
+          shipping: summary.shippingOption?.id,
+          billing: summary.billing?.id,
+          discountPercent,
+          // Información para validación server-side y construcción de orden en webhook
+          items: summary.items.map((it) => ({
+            productId: it.product.id,
+            quantity: it.quantity,
+            size: it.size,
+            color: it.color,
+          })),
+        };
+
+        const res = await fetch(
+          "/api/payments/mercadopago/preference",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items, customer, metadata }),
+          }
+        );
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(
+            err?.error || "No se pudo crear la preferencia de Mercado Pago"
+          );
+        }
+
+        const data = await res.json();
+        if (!data?.init_point) {
+          throw new Error("Respuesta inválida de Mercado Pago");
+        }
+
+        // Redirigir al checkout alojado de Mercado Pago
+        window.location.href = data.init_point as string;
+        return;
+      }
+
+      // Flujo anterior por defecto (otros métodos de pago)
       const result = await placeOrder();
 
       if (result.success) {
@@ -131,11 +255,24 @@ export default function CheckoutPage() {
   return (
     <div className="bg-white text-[#333333] min-h-screen flex flex-col">
       <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
+        {statusMessage && (
+          <div
+            className={`mb-6 rounded-md p-4 text-sm ${
+              statusType === "success"
+                ? "bg-green-50 text-green-800 border border-green-200"
+                : statusType === "pending"
+                ? "bg-yellow-50 text-yellow-800 border border-yellow-200"
+                : "bg-red-50 text-red-800 border border-red-200"
+            }`}
+          >
+            {statusMessage}
+          </div>
+        )}
         {currentStep !== CheckoutStep.CONFIRMATION ? (
           <>
             <h1 className="text-3xl font-bold text-[#333333] mb-8">Checkout</h1>
 
-            {/* Indicador de progreso */}
+            {/* Indicador de progreso (sin Paso de Pago) */}
             <div className="mb-10">
               <div className="flex justify-between items-center">
                 {stepNames.slice(0, stepNames.length - 1).map((step, index) => (
@@ -144,27 +281,28 @@ export default function CheckoutPage() {
                     className={`flex flex-col items-center ${
                       index < stepNames.length - 1 ? "w-full relative" : ""
                     }`}
-                    onClick={() => goToStep(index as CheckoutStep)}>
+                    onClick={() => goToStep(visibleSteps[index])}>
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        index <= currentStep
+                        // Considerar la posición real del paso visible respecto al currentStep
+                        visibleSteps[index] <= currentStep
                           ? "bg-[#E91E63] text-white"
                           : "bg-gray-200 text-gray-600"
-                      } ${index < currentStep ? "cursor-pointer" : ""} z-10`}>
+                      } ${visibleSteps[index] < currentStep ? "cursor-pointer" : ""} z-10`}>
                       {index + 1}
                     </div>
                     <span
                       className={`text-xs mt-2 ${
-                        index <= currentStep
+                        visibleSteps[index] <= currentStep
                           ? "text-[#333333] font-medium"
                           : "text-gray-500"
-                      } ${index < currentStep ? "cursor-pointer" : ""}`}>
+                      } ${visibleSteps[index] < currentStep ? "cursor-pointer" : ""}`}>
                       {step}
                     </span>
                     {index < stepNames.length - 2 && (
                       <div
                         className={`absolute top-5 w-full h-[2px] ${
-                          index < currentStep ? "bg-[#E91E63]" : "bg-gray-200"
+                          visibleSteps[index] < currentStep ? "bg-[#E91E63]" : "bg-gray-200"
                         }`}
                         style={{ left: "50%" }}></div>
                     )}
