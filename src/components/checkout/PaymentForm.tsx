@@ -4,14 +4,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { 
-  CreditCard, 
-  Lock, 
+import {
+  CreditCard,
+  Lock,
   AlertCircle,
-  Check,
-  Calendar,
-  User
-} from 'lucide-react';
+} from "lucide-react";
 import { paymentManager, PaymentMethod, CardData } from '@/lib/payment';
 import { EnhancedForm, FormField } from '@/components/forms/EnhancedForm';
 import { z } from 'zod';
@@ -42,7 +39,7 @@ export function PaymentForm({
 }: PaymentFormProps) {
   const [selectedMethod, setSelectedMethod] = useState<string>('stripe');
   const [processing, setProcessing] = useState(false);
-  const [cardData, setCardData] = useState<Partial<CardData>>({});
+  const [_cardData, _setCardData] = useState<Partial<CardData>>({});
   const [paymentMethods] = useState<PaymentMethod[]>(paymentManager.getAvailablePaymentMethods());
 
   const handleCardPayment = async (data: z.infer<typeof cardSchema>) => {
@@ -137,7 +134,7 @@ export function PaymentForm({
     return paymentManager.formatCardNumber(value);
   };
 
-  const formatExpiryDate = (value: string) => {
+  const _formatExpiryDate = (value: string) => {
     return paymentManager.formatExpiryDate(value);
   };
 

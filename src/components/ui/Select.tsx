@@ -109,9 +109,8 @@ export const Select = ({
           </span>
         </span>
         {clearable && value && (
-          <span
-            role="button"
-            tabIndex={0}
+          <button
+            aria-invalid={error ? 'true' : 'false'}
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -127,7 +126,7 @@ export const Select = ({
             aria-label="Limpiar selección"
           >
             <X className="w-4 h-4 muted" />
-          </span>
+          </button>
         )}
         <svg
           className={`w-5 h-5 ml-1 transition-transform duration-200 ${

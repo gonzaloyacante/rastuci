@@ -46,7 +46,7 @@ export function OfflineIndicator({
       // Try to fetch a simple endpoint to test connectivity
       await fetch('/api/health', { cache: 'no-cache' });
       toast.success(t('pwa.retry.success'));
-    } catch (error) {
+    } catch {
       toast.error(t('pwa.retry.failed'));
     } finally {
       setIsRetrying(false);

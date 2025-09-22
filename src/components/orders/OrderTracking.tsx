@@ -56,6 +56,10 @@ interface Order {
   createdAt: Date;
 }
 
+interface TrackingDetails {
+  // Add interface definition if needed
+}
+
 interface OrderTrackingProps {
   orderId: string;
   onOrderUpdate?: (order: Order) => void;
@@ -64,7 +68,7 @@ interface OrderTrackingProps {
 export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [trackingDetails, setTrackingDetails] = useState<Array<Record<string, unknown>>>([]);
+  const [_trackingDetails, _setTrackingDetails] = useState<TrackingDetails | null>(null);
 
   const loadOrderData = useCallback(async () => {
     try {
@@ -272,13 +276,26 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
           <div className="absolute left-6 top-8 bottom-8 w-0.5 surface-secondary"></div>
           
           <div className="space-y-6">
-            {order.statusHistory.map((status, index) => {
-              const isCompleted = index < order.statusHistory.length;
-              const isCurrent = index === order.statusHistory.length - 1;
-              
-              return (
-                <div key={status.id} className="relative flex items-start gap-4">
-                  {/* Status Icon */}
+            {order.statusHistory.map((event, index) => (
+              <div key={event.id} className="relative flex items-start gap-4">
+                {/* Status Icon */}
+                <div className={`
+                  relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2
+                  ${index < order.statusHistory.length - 1 
+                    ? 'bg-primary border-primary text-white' 
+                    : 'surface border-muted'
+                  }
+                `}>
+                  {getStatusIcon(event.status)}
+                </div>
+                
+                {/* Status Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-1">
+                    <h3 className="font-medium">{getStatusLabel(event.status)}</h3>
+                    {index === order.statusHistory.length - 1 && (
+                      <Badge variant="primary" className="text-xs">Actual</Badge>
+                    )}
                   <div className={`
                     relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2
                     ${isCompleted 

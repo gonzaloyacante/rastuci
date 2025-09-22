@@ -40,7 +40,7 @@ export function FormField<T extends FieldValues = FieldValues>({
     setTouched(true);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     if (realTimeValidation && touched) {
       // Real-time validation logic would go here
       // For now, just clear local error on change
