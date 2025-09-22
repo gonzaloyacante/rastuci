@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Product } from "@/types";
 import ProductCard from "./ProductCard";
-import { Card, CardContent } from "@/components/ui/Card";
+// import { Card, CardContent } from "@/components/ui/Card"; // TODO: Implement when needed
 
 interface RelatedProductsProps {
   categoryId?: string;
@@ -38,8 +38,8 @@ export default function RelatedProducts({
         } else {
           setProducts([]);
         }
-      } catch (error) {
-        console.error("Error fetching related products:", error);
+      } catch {
+        console.error("Error fetching related products");
         setProducts([]);
       } finally {
         setLoading(false);

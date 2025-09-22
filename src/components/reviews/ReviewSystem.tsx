@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from "react";
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+// import { Input } from "@/components/ui/Input"; // TODO: Implement when needed
 import { Badge } from '@/components/ui/Badge';
 import { Star, ThumbsUp, ThumbsDown, Flag, User } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
@@ -43,16 +43,7 @@ const reviewSchema = z.object({
   comment: z.string().min(20, 'El comentario debe tener al menos 20 caracteres'),
 });
 
-export function ReviewSystem({
-  productId,
-  reviews,
-  averageRating,
-  totalReviews,
-  onReviewSubmit,
-  onReviewHelpful,
-  onReviewReport,
-  currentUserId,
-}: ReviewSystemProps) {
+export default function ReviewSystem({ productId: _productId, reviews, averageRating, totalReviews, onReviewSubmit, onReviewHelpful, onReviewReport, currentUserId }: ReviewSystemProps) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -107,7 +98,7 @@ export function ReviewSystem({
       setShowReviewForm(false);
       setSelectedRating(0);
       toast.success('Reseña enviada correctamente');
-    } catch (error) {
+    } catch {
       toast.error('Error al enviar la reseña');
     }
   };

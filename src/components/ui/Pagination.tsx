@@ -172,7 +172,7 @@ interface PaginationInfoProps {
 }
 
 export function PaginationInfo({
-  currentPage,
+  currentPage: _currentPage,
   totalPages: _totalPages,
   totalItems,
   startItem,

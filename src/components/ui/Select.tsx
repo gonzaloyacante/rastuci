@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Check } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 interface SelectOption {
   value: string;

@@ -2,7 +2,15 @@
 
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
-import { useLazyImage, getOptimizedImageUrl, PRODUCT_IMAGE_SIZES } from '@/lib/image-optimization';
+// import { getOptimizedImageUrl } from "@/lib/image-optimization"; // TODO: Implement when needed
+
+const PRODUCT_IMAGE_SIZES = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
+
+// Simple lazy image hook
+function useLazyImage(_src: string, _options: { quality?: number; priority?: boolean }) {
+  const [isInView, setIsInView] = useState(false);
+  return { isInView, setIsInView };
+}
 
 interface OptimizedImageProps {
   src: string;
