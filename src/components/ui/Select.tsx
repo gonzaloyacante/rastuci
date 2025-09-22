@@ -101,7 +101,7 @@ export const Select = ({
         name={name}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-invalid={error}
+        aria-invalid={error ? 'true' : 'false'}
       >
         <span className="truncate flex-1 min-w-0 mr-2">
           <span className={value ? "" : "muted"}>
@@ -110,7 +110,6 @@ export const Select = ({
         </span>
         {clearable && value && (
           <button
-            aria-invalid={error ? 'true' : 'false'}
             onClick={(e) => {
               e.stopPropagation();
               onChange("");

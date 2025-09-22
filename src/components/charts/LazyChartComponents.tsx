@@ -4,7 +4,7 @@ import React from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 // Fallback específico para ChartComponents
-const ChartComponentsFallback = () => (
+const _ChartComponentsFallback = () => (
   <div className="space-y-6">
     {/* Chart grid skeleton */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

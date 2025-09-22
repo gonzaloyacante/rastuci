@@ -99,16 +99,16 @@ export function LineChart({
           />
 
           {/* Data points */}
-          {points.map((point, index) => (
+          {data.map((entry, _index) => (
             <circle
-              key={index}
-              cx={point.x}
-              cy={point.y}
+              key={_index}
+              cx={points[_index].x}
+              cy={points[_index].y}
               r="0.8"
               fill="rgb(233, 30, 99)"
               className="hover:r-1.2 transition-all cursor-pointer"
             >
-              <title>{`${formatChartValue(point.value)} - ${point.timestamp?.toLocaleDateString()}`}</title>
+              <title>{`${formatChartValue(points[_index].value)} - ${(chartData[_index] as TimeSeriesPoint).timestamp?.toLocaleDateString()}`}</title>
             </circle>
           ))}
 
@@ -528,7 +528,7 @@ export function DashboardCharts({
 }
 
 // Export all components as default for lazy loading
-const ChartComponents = {
+const _ChartComponents = {
   LineChart,
   BarChart,
   PieChart,

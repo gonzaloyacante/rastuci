@@ -57,7 +57,8 @@ interface Order {
 }
 
 interface TrackingDetails {
-  // Add interface definition if needed
+  status: string;
+  location?: string;
 }
 
 interface OrderTrackingProps {
@@ -276,12 +277,12 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
           <div className="absolute left-6 top-8 bottom-8 w-0.5 surface-secondary"></div>
           
           <div className="space-y-6">
-            {order.statusHistory.map((event, index) => (
+            {order.statusHistory.map((event, _index) => (
               <div key={event.id} className="relative flex items-start gap-4">
                 {/* Status Icon */}
                 <div className={`
                   relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2
-                  ${index < order.statusHistory.length - 1 
+                  ${_index < order.statusHistory.length - 1 
                     ? 'bg-primary border-primary text-white' 
                     : 'surface border-muted'
                   }
@@ -293,44 +294,26 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="font-medium">{getStatusLabel(event.status)}</h3>
-                    {index === order.statusHistory.length - 1 && (
+                    {_index === order.statusHistory.length - 1 && (
                       <Badge variant="primary" className="text-xs">Actual</Badge>
                     )}
-                  <div className={`
-                    relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2
-                    ${isCompleted 
-                      ? 'bg-primary border-primary text-white' 
-                      : 'surface border-muted'
-                    }
-                  `}>
-                    {getStatusIcon(status.status)}
                   </div>
-                  
-                  {/* Status Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="font-medium">{getStatusLabel(status.status)}</h3>
-                      {isCurrent && (
-                        <Badge variant="primary" className="text-xs">Actual</Badge>
-                      )}
-                    </div>
-                    <p className="text-sm muted mb-1">{status.description}</p>
-                    <div className="flex items-center gap-4 text-xs muted">
+                  <p className="text-sm muted mb-1">{event.description}</p>
+                  <div className="flex items-center gap-4 text-xs muted">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {event.timestamp.toLocaleString()}
+                    </span>
+                    {event.location && (
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {status.timestamp.toLocaleString()}
+                        <MapPin className="w-3 h-3" />
+                        {event.location}
                       </span>
-                      {status.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {status.location}
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -432,7 +415,7 @@ export function OrderTrackingList({ orders }: { orders: Order[] }) {
           
           <div className="flex items-center gap-4">
             <div className="flex -space-x-2">
-              {order.items.slice(0, 3).map((item, index) => (
+              {order.items.slice(0, 3).map((item, _index) => (
                 <OptimizedImage
                   key={item.id}
                   src={item.image}

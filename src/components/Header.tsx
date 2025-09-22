@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Search, ShoppingCart, Menu, X, User, Heart } from "lucide-react";
+import { Heart, ShoppingCart, Menu, X, Search } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
-import { ThemeToggle } from "./ui/ThemeToggle";
+// import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation"; // TODO: Implement when needed
+// import { ThemeToggle } from "@/components/ui/ThemeToggle"; // TODO: Implement when needed
 
 interface HeaderProps {
   currentPage?: string;
@@ -21,7 +21,7 @@ export default function Header({ currentPage = "inicio" }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { cartItems, getItemCount, getCartTotal } = useCart();
+  const { cartItems: _cartItems, getCartTotal, getItemCount } = useCart();
   const { getWishlistCount } = useWishlist();
   const router = useRouter();
 
@@ -43,12 +43,12 @@ export default function Header({ currentPage = "inicio" }: HeaderProps) {
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const _handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSearch();
   };
 
-  const totalPrice = getCartTotal();
+  const _totalPrice = getCartTotal();
 
   return (
     <header

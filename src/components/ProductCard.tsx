@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart, Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { Product } from "@/types";
 import { useFavorites } from "@/hooks/useFavorites";
 import { formatPriceARS } from "@/utils/formatters";
