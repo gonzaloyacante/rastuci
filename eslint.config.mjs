@@ -1,20 +1,10 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-});
+import reactHooks from "eslint-plugin-react-hooks";
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals"),
+  js.configs.recommended,
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
@@ -22,13 +12,43 @@ const eslintConfig = [
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",
-        project: "./tsconfig.json",
+      },
+      globals: {
+        window: "readonly",
+        document: "readonly",
+        console: "readonly",
+        process: "readonly",
+        Buffer: "readonly",
+        global: "readonly",
+        fetch: "readonly",
+        Response: "readonly",
+        Request: "readonly",
+        Headers: "readonly",
+        FormData: "readonly",
+        URLSearchParams: "readonly",
+        AbortController: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
       },
     },
     plugins: {
       "@typescript-eslint": tseslint,
+      "react-hooks": reactHooks,
     },
     rules: {
+      // React hooks rules
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      // TypeScript specific rules
+      "no-unused-vars": "off", // Turn off base rule
+      "@typescript-eslint/no-unused-vars": ["error", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+        "args": "after-used"
+      }],
       // Disable HTML entity escaping rule temporarily
       "react/no-unescaped-entities": "off",
       // Enforce semantic color utilities instead of Tailwind palette or hex colors in UI

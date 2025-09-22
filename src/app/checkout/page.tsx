@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -26,19 +26,27 @@ enum CheckoutStep {
   CONFIRMATION = 5,
 }
 
-export default function CheckoutPage() {
+// Componente que usa useSearchParams
+function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { cartItems, placeOrder, getOrderSummary, selectedPaymentMethod, clearCart } =
-    useCart();
+  const {
+    cartItems,
+    placeOrder,
+    getOrderSummary,
+    selectedPaymentMethod,
+    clearCart,
+  } = useCart();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(
-    CheckoutStep.CUSTOMER_INFO
+    CheckoutStep.CUSTOMER_INFO,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [statusType, setStatusType] = useState<"success" | "failure" | "pending" | null>(null);
+  const [statusType, setStatusType] = useState<
+    "success" | "failure" | "pending" | null
+  >(null);
 
   // Redireccionar si el carrito está vacío
   useEffect(() => {
@@ -70,13 +78,20 @@ export default function CheckoutPage() {
       setCurrentStep(CheckoutStep.REVIEW);
     } else if (status === "failure") {
       setStatusType("failure");
-      setStatusMessage("El pago fue rechazado o cancelado. Intenta nuevamente.");
+      setStatusMessage(
+        "El pago fue rechazado o cancelado. Intenta nuevamente.",
+      );
       setCurrentStep(CheckoutStep.REVIEW);
     }
     // Limpiar el parámetro visualmente (opcional): router.replace('/checkout')
     // router.replace('/checkout');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [
+    searchParams,
+    clearCart,
+    setCurrentStep,
+    setStatusType,
+    setStatusMessage,
+  ]);
 
   // Nombres de los pasos
   // Omitimos el paso de "Método de Pago" porque usaremos siempre Mercado Pago (Checkout Pro)
@@ -132,12 +147,15 @@ export default function CheckoutPage() {
         const summary = getOrderSummary();
 
         // Aplicar descuento (si existe) sólo sobre productos, no sobre el envío
-        const discountRate = summary.subtotal > 0 ? summary.discount / summary.subtotal : 0;
+        const discountRate =
+          summary.subtotal > 0 ? summary.discount / summary.subtotal : 0;
 
         const items = summary.items.map((it) => ({
           title: `${it.product.name} (${it.size} - ${it.color})`,
           quantity: it.quantity,
-          unit_price: Number((it.product.price * (1 - discountRate)).toFixed(2)),
+          unit_price: Number(
+            (it.product.price * (1 - discountRate)).toFixed(2),
+          ),
           currency_id: "ARS",
           picture_url: Array.isArray(it.product.images)
             ? it.product.images[0]
@@ -168,7 +186,8 @@ export default function CheckoutPage() {
             }
           : null;
 
-        const discountPercent = summary.subtotal > 0 ? summary.discount / summary.subtotal : 0;
+        const discountPercent =
+          summary.subtotal > 0 ? summary.discount / summary.subtotal : 0;
         const metadata = {
           shipping: summary.shippingOption?.id,
           billing: summary.billing?.id,
@@ -182,19 +201,16 @@ export default function CheckoutPage() {
           })),
         };
 
-        const res = await fetch(
-          "/api/payments/mercadopago/preference",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items, customer, metadata }),
-          }
-        );
+        const res = await fetch("/api/payments/mercadopago/preference", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items, customer, metadata }),
+        });
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           throw new Error(
-            err?.error || "No se pudo crear la preferencia de Mercado Pago"
+            err?.error || "No se pudo crear la preferencia de Mercado Pago",
           );
         }
 
@@ -261,8 +277,8 @@ export default function CheckoutPage() {
               statusType === "success"
                 ? "text-success border-success"
                 : statusType === "pending"
-                ? "text-warning border-warning"
-                : "text-error border-error"
+                  ? "text-warning border-warning"
+                  : "text-error border-error"
             }`}
           >
             {statusMessage}
@@ -281,14 +297,16 @@ export default function CheckoutPage() {
                     className={`flex flex-col items-center ${
                       index < stepNames.length - 1 ? "w-full relative" : ""
                     }`}
-                    onClick={() => goToStep(visibleSteps[index])}>
+                    onClick={() => goToStep(visibleSteps[index])}
+                  >
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         // Considerar la posición real del paso visible respecto al currentStep
                         visibleSteps[index] <= currentStep
                           ? "bg-primary text-white"
                           : "surface muted"
-                      } ${visibleSteps[index] < currentStep ? "cursor-pointer" : ""} z-10`}>
+                      } ${visibleSteps[index] < currentStep ? "cursor-pointer" : ""} z-10`}
+                    >
                       {index + 1}
                     </div>
                     <span
@@ -296,15 +314,19 @@ export default function CheckoutPage() {
                         visibleSteps[index] <= currentStep
                           ? "text-primary font-medium"
                           : "muted"
-                      } ${visibleSteps[index] < currentStep ? "cursor-pointer" : ""}`}>
+                      } ${visibleSteps[index] < currentStep ? "cursor-pointer" : ""}`}
+                    >
                       {step}
                     </span>
                     {index < stepNames.length - 2 && (
                       <div
                         className={`absolute top-5 w-full h-[2px] ${
-                          visibleSteps[index] < currentStep ? "bg-primary" : "surface"
+                          visibleSteps[index] < currentStep
+                            ? "bg-primary"
+                            : "surface"
                         }`}
-                        style={{ left: "50%" }}></div>
+                        style={{ left: "50%" }}
+                      ></div>
                     )}
                   </div>
                 ))}
@@ -323,13 +345,15 @@ export default function CheckoutPage() {
             <div className="flex justify-between mt-10">
               <Button
                 onClick={goToPreviousStep}
-                className="surface text-primary hover:brightness-95">
+                className="surface text-primary hover:brightness-95"
+              >
                 <ChevronLeft className="mr-2" size={16} />
                 Volver
               </Button>
               <Button
                 onClick={goToNextStep}
-                className="bg-primary text-white hover:brightness-90">
+                className="bg-primary text-white hover:brightness-90"
+              >
                 Continuar
                 <ChevronRight className="ml-2" size={16} />
               </Button>
@@ -337,5 +361,23 @@ export default function CheckoutPage() {
           )}
       </main>
     </div>
+  );
+}
+
+// Componente principal con Suspense
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen surface flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="muted">Cargando checkout...</p>
+          </div>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }

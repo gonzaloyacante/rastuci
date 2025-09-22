@@ -8,11 +8,12 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "pre-commit-check": "npm run type-check && npm run lint",
+    "type-check": "tsc --noEmit --skipLibCheck",
+    "build-check": "next lint && tsc --noEmit",
+    "pre-commit-check": "npm run type-check && npm run lint && npm run build-check",
     "analyze": "ANALYZE=true npm run build",
     "build:analyze": "ANALYZE=true next build",
     "build:prod": "NODE_ENV=production next build",
-    "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -81,6 +82,7 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "husky": "^8.0.3",
     "jest": "^30.1.1",
     "jest-environment-jsdom": "^30.1.1",
@@ -96,8 +98,11 @@
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
-      "eslint --fix --max-warnings=50",
+      "eslint --fix --max-warnings=0",
       "prettier --write"
+    ],
+    "**/*.{ts,tsx}": [
+      "bash -c 'tsc --noEmit'"
     ]
   }
 }
