@@ -29,7 +29,7 @@ export function ProductCard({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, 1, 'default', 'default');
+    addToCart(product, 1, 'M', 'Sin color');
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {

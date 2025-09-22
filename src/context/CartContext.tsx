@@ -229,7 +229,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       const size = isQuantityForm ? (b as string) : (a as string);
       const color = isQuantityForm ? (c as string) : (b as string);
 
-      if (!size || !color) return; // evitar inserciones inválidas
+      if (!size) return; // evitar inserciones inválidas (color puede ser opcional)
 
       setCartItems((prevItems) => {
         const existingItemIndex = prevItems.findIndex(

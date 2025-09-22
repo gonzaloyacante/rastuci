@@ -31,7 +31,7 @@ export function ProductComparison() {
   const handleAddToCart = (product: ProductWithExtras) => {
     // Type assertion needed for compatibility with existing cart system
     const productForCart = product as unknown;
-    addToCart(productForCart as never, 1, '', '');
+    addToCart(productForCart as never, 1, 'M', 'Sin color');
   };
 
   const comparisonFeatures = [

@@ -164,7 +164,7 @@ export default function ProductDetailPage() {
       return;
     }
 
-    addToCart(product, quantity, selectedSize, "");
+    addToCart(product, quantity, selectedSize, "Sin color");
     show({ type: "success", title: "Carrito", message: "Producto agregado al carrito" });
   };
 

@@ -231,7 +231,7 @@ function ProductsContent() {
   };
 
   const _handleAddToCart = (product: Product) => {
-    addToCart(product, 1, "M", "");
+    addToCart(product, 1, "M", "Sin color");
     show({
       type: "success",
       title: "Carrito",

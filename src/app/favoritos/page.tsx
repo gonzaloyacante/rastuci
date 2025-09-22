@@ -28,7 +28,7 @@ export default function FavoritosPage() {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    addToCart(product, 1, 'default', 'default');
+    addToCart(product, 1, 'M', 'Sin color');
   };
 
   const handleRemoveFromWishlist = (id: string) => {

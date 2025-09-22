@@ -35,7 +35,7 @@ const ProductCard = ({ product }: { product: Product }) => {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart(product, 1, product.sizes?.[0] || "M", "");
+    addToCart(product, 1, product.sizes?.[0] || "M", "Sin color");
     toast.success("Producto agregado al carrito");
   };
 
