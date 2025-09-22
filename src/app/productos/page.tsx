@@ -385,10 +385,10 @@ function ProductsContent() {
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden lg:flex gap-8">
+        <div className="hidden lg:flex gap-8 pt-6">
           {/* Sidebar Filters */}
           <aside className="w-80 flex-shrink-0">
-            <div className="sticky top-6 space-y-6">
+            <div className="sticky top-24 space-y-6">
               {/* Header en desktop */}
               <div className="mb-6">
                 <h1 className="text-3xl font-bold mb-2">
