@@ -264,12 +264,12 @@ function ProductsContent() {
   return (
     <div className="min-h-screen surface pb-10">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        {/* Header alineado con el contenido */}
-        <div className="pt-6 pb-6">
-          <h1 className="text-2xl lg:text-3xl font-bold mb-2">
+        {/* Header solo para móvil */}
+        <div className="pt-6 pb-6 lg:hidden">
+          <h1 className="text-2xl font-bold mb-2">
             Nuestros Productos
           </h1>
-          <p className="text-sm lg:text-base muted">
+          <p className="text-sm muted">
             Descubre nuestra colección de ropa infantil
           </p>
         </div>
@@ -447,6 +447,16 @@ function ProductsContent() {
           {/* Sidebar Filters */}
           <aside className="w-80 flex-shrink-0">
             <div className="sticky top-6 space-y-6">
+              {/* Header en desktop */}
+              <div className="mb-6">
+                <h1 className="text-3xl font-bold mb-2">
+                  Nuestros Productos
+                </h1>
+                <p className="text-base muted">
+                  Descubre nuestra colección de ropa infantil
+                </p>
+              </div>
+              
               {/* View Mode Selector */}
               <div className="mb-6">
                 <h3 className="text-sm font-medium mb-3 text-primary">Vista de productos</h3>
