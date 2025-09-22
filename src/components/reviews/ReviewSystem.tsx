@@ -252,7 +252,7 @@ export function ReviewSystem({
           <span className="text-sm font-medium">Ordenar por:</span>
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'rating-high' | 'rating-low')}
             className="px-3 py-1 border border-muted rounded surface text-sm"
           >
             <option value="newest">Más recientes</option>

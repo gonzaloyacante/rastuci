@@ -5,7 +5,7 @@ interface UseApiOptions<T> {
   enabled?: boolean;
   onSuccess?: (data: T) => void;
   onError?: (error: string) => void;
-  transform?: (data: any) => T;
+  transform?: (data: unknown) => T;
 }
 
 interface ApiResponse<T> {
@@ -21,7 +21,7 @@ interface ApiResponse<T> {
  * Hook consolidado para manejo de APIs
  * Proporciona funcionalidad común de fetch, loading, error y cache
  */
-export function useApi<T = any>(
+export function useApi<T = unknown>(
   url: string | (() => string),
   options: UseApiOptions<T> = {},
 ): ApiResponse<T> {
@@ -146,7 +146,7 @@ interface PaginatedApiResponse<T> extends Omit<ApiResponse<T[]>, "data"> {
   hasPrevPage: boolean;
 }
 
-export function usePaginatedApi<T = any>(
+export function usePaginatedApi<T = unknown>(
   baseUrl: string | (() => string),
   options: UsePaginatedApiOptions<T> = {},
 ): PaginatedApiResponse<T> {
@@ -166,13 +166,15 @@ export function usePaginatedApi<T = any>(
     return `${base}?${params.toString()}`;
   }, [baseUrl, page, limit]);
 
-  const { data: response, ...rest } = useApi<any>(buildUrl, {
-    ...apiOptions,
-    transform: (data) => data,
+  const { data: response, ...rest } = useApi<Record<string, unknown>>(buildUrl, {
+    enabled: apiOptions.enabled,
+    onSuccess: undefined,
+    onError: apiOptions.onError,
+    transform: (data) => data as Record<string, unknown>,
   });
 
-  const data = response?.[dataKey] || [];
-  const total = response?.[totalKey] || 0;
+  const data = (response?.[dataKey] as T[]) || [];
+  const total = (response?.[totalKey] as number) || 0;
   const totalPages = Math.ceil(total / limit);
 
   return {

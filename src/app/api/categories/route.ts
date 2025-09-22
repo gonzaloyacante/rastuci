@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Category } from "@/types";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { CategoriesQuerySchema, CategoryCreateSchema } from "@/lib/validation/category";
 import { normalizeApiError } from "@/lib/errors";
+import { logger, getRequestId } from "@/lib/logger";
 
 // GET /api/categories - Obtener todas las categorías con búsqueda y paginación
 export async function GET(
   request: NextRequest
-): Promise<NextResponse<ApiResponse<any>>> {
+): Promise<NextResponse<ApiResponse<{ data: Category[]; total: number; page: number; limit: number; totalPages: number }>>> {
   try {
     // Rate limit per IP to protect endpoint
     const rl = checkRateLimit(request, {
@@ -34,7 +35,7 @@ export async function GET(
     const { page, limit, search, includeProductCount } = parsed.data;
 
     // Filtros de búsqueda
-    const where: Record<string, any> = {};
+    const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -65,7 +66,7 @@ export async function GET(
       ...category,
       description: category.description ?? undefined,
       ...(includeProductCount
-        ? { productCount: (category as any)._count?.products ?? 0 }
+        ? { productCount: ((category as unknown as { _count?: { products?: number } })._count?.products ?? 0) }
         : {}),
     }));
 
@@ -84,9 +85,10 @@ export async function GET(
 
     return response;
   } catch (error) {
-    console.error("Error fetching categories:", error);
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener las categorías", 500);
-    return fail(e.code as any, e.message, e.status, e.details as any);
+    const requestId = getRequestId(request.headers);
+    logger.error("Error fetching categories", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener las categorías", 500);
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
   }
 }
 
@@ -132,8 +134,9 @@ export async function POST(
 
     return ok(transformedCategory, "Categoría creada exitosamente");
   } catch (error) {
-    console.error("Error creating category:", error);
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear la categoría", 500);
-    return fail(e.code as any, e.message, e.status, e.details as any);
+    const requestId = getRequestId(request.headers);
+    logger.error("Error creating category", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear la categoría", 500);
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
   }
 }

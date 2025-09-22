@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { Bell, BellOff, Settings, X, Check } from 'lucide-react';
+import { Bell, BellOff, X, Check } from 'lucide-react';
 import { useNotifications } from '@/lib/pwa';
 import { useTranslation } from '@/lib/i18n';
 import toast from 'react-hot-toast';
@@ -104,7 +104,7 @@ export function NotificationManager({ className = '' }: NotificationManagerProps
           <BellOff className="w-4 h-4" />
         )}
         <span className="hidden sm:inline">{t('notifications.title')}</span>
-        <Badge variant={status.color as any} className="ml-1">
+        <Badge variant={status.color as 'default' | 'secondary' | 'destructive' | 'outline'} className="ml-1">
           {status.text}
         </Badge>
       </Button>
@@ -123,7 +123,7 @@ export function NotificationManager({ className = '' }: NotificationManagerProps
             <div className="mb-4 p-3 rounded-lg border border-muted">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium">{t('notifications.permission.title')}</span>
-                <Badge variant={status.color as any}>{status.text}</Badge>
+                <Badge variant={status.color as 'default' | 'secondary' | 'destructive' | 'outline'}>{status.text}</Badge>
               </div>
               
               {permission === 'default' && (

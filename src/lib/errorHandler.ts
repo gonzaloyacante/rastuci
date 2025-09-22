@@ -12,20 +12,20 @@ export enum ErrorType {
 }
 
 // Interfaz para errores personalizados
-export interface AppError {
+export interface IAppError {
   type: ErrorType;
   message: string;
   code?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 // Clase para errores de la aplicación
 export class AppError extends Error {
   public type: ErrorType;
   public code?: string;
-  public details?: any;
+  public details?: Record<string, unknown>;
 
-  constructor(type: ErrorType, message: string, code?: string, details?: any) {
+  constructor(type: ErrorType, message: string, code?: string, details?: Record<string, unknown>) {
     super(message);
     this.type = type;
     this.code = code;
@@ -39,19 +39,28 @@ export const createError = (
   type: ErrorType,
   message: string,
   code?: string,
-  details?: any
+  details?: Record<string, unknown>
 ): AppError => {
   return new AppError(type, message, code, details);
 };
 
+// Type guards
+function isErrorWithName(error: unknown): error is { name: string; message: string } {
+  return typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
+}
+
+function isErrorWithStatus(error: unknown): error is { status: number; message?: string } {
+  return typeof error === 'object' && error !== null && 'status' in error;
+}
+
 // Función para manejar errores de API
-export const handleApiError = (error: any): AppError => {
+export const handleApiError = (error: unknown): AppError => {
   if (error instanceof AppError) {
     return error;
   }
 
   // Error de red
-  if (error.name === "TypeError" && error.message.includes("fetch")) {
+  if (isErrorWithName(error) && error.name === "TypeError" && error.message.includes("fetch")) {
     return createError(
       ErrorType.NETWORK,
       "Error de conexión. Verifica tu conexión a internet.",
@@ -60,7 +69,7 @@ export const handleApiError = (error: any): AppError => {
   }
 
   // Error de respuesta HTTP
-  if (error.status) {
+  if (isErrorWithStatus(error)) {
     switch (error.status) {
       case 400:
         return createError(
@@ -106,7 +115,7 @@ export const handleApiError = (error: any): AppError => {
     ErrorType.UNKNOWN,
     "Ocurrió un error inesperado. Intenta más tarde.",
     "UNKNOWN_ERROR",
-    error
+    { originalError: String(error) }
   );
 };
 
@@ -138,7 +147,7 @@ export const showInfo = (message: string) => {
 
 // Hook para manejo de errores en componentes
 export const useErrorHandler = () => {
-  const handleError = (error: any) => {
+  const handleError = (error: unknown) => {
     const appError = handleApiError(error);
     showError(appError);
     return appError;

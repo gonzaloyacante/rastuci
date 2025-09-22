@@ -11,7 +11,7 @@ const fetcher = async (url: string) => {
 };
 
 // Custom hook for API calls with SWR
-export function useAPI<T = any>(
+export function useAPI<T = unknown>(
   url: string | null,
   config?: SWRConfiguration,
 ): SWRResponse<T, Error> & { refetch: () => void } {
@@ -36,7 +36,7 @@ export function useProducts(params?: {
   page?: number;
   limit?: number;
 }) {
-  const query = params ? new URLSearchParams(params as any).toString() : "";
+  const query = params ? new URLSearchParams(params as Record<string, string>).toString() : "";
   const url = `/api/products${query ? `?${query}` : ""}`;
 
   return useAPI(url, {
@@ -84,7 +84,7 @@ export function useAdminProducts(params?: {
   limit?: number;
   search?: string;
 }) {
-  const query = params ? new URLSearchParams(params as any).toString() : "";
+  const query = params ? new URLSearchParams(params as Record<string, string>).toString() : "";
   const url = `/api/admin/products${query ? `?${query}` : ""}`;
 
   return useAPI(url);
@@ -95,7 +95,7 @@ export function useAdminUsers(params?: {
   limit?: number;
   search?: string;
 }) {
-  const query = params ? new URLSearchParams(params as any).toString() : "";
+  const query = params ? new URLSearchParams(params as Record<string, string>).toString() : "";
   const url = `/api/admin/users${query ? `?${query}` : ""}`;
 
   return useAPI(url);
@@ -111,10 +111,15 @@ export function useSearch(
     sortBy?: string;
   },
 ) {
-  const searchParams = new URLSearchParams({
-    q: query,
-    ...options,
-  } as any);
+  const searchParams = new URLSearchParams();
+  searchParams.append('q', query);
+  if (options) {
+    Object.entries(options).forEach(([key, value]) => {
+      if (value !== undefined) {
+        searchParams.append(key, String(value));
+      }
+    });
+  }
 
   return useAPI(
     query.trim() ? `/api/search?${searchParams.toString()}` : null,
@@ -136,9 +141,9 @@ export function useCart(userId: string | null) {
 }
 
 // Generic mutation hook
-export function useMutation<T = any>(url: string, options?: RequestInit) {
+export function useMutation<T = unknown>(url: string, options?: RequestInit) {
   return useCallback(
-    async (data?: any): Promise<T> => {
+    async (data?: unknown): Promise<T> => {
       const res = await fetch(url, {
         method: "POST",
         headers: {

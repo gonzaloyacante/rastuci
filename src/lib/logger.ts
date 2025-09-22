@@ -77,7 +77,6 @@ export function getRequestId(headers: Headers): string {
   if (existing) return existing;
   // Node/Edge has crypto.randomUUID
   try {
-    // @ts-ignore
     return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
   } catch {
     return `${Date.now()}-${Math.random()}`;

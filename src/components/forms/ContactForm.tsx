@@ -41,7 +41,7 @@ export default function ContactForm({ initial }: Props) {
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Error al guardar");
       setMessage("Guardado correctamente");
-    } catch (err: any) { setMessage(err.message || "Error inesperado"); } finally { setSaving(false); }
+    } catch (err: unknown) { setMessage(err instanceof Error ? err.message : "Error inesperado"); } finally { setSaving(false); }
   };
 
   return (

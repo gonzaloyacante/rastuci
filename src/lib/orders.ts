@@ -1,15 +1,31 @@
-import type { Order as PrismaOrder } from "@prisma/client";
 import type { Order, OrderStatus } from "@/types";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
+// Define the type for the order with nested relations
+type OrderWithItems = Prisma.OrderGetPayload<{
+  include: {
+    items: {
+      include: {
+        product: {
+          include: {
+            category: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
+type OrderItem = OrderWithItems['items'][0];
+
 // Map a Prisma order (with nested items->product->category) to the API Order DTO
-export function mapOrderToDTO(order: any): Order {
+export function mapOrderToDTO(order: OrderWithItems): Order {
   return {
     ...order,
     customerAddress: order.customerAddress ?? undefined,
     status: order.status as OrderStatus,
-    items: order.items.map((item: any) => ({
+    items: order.items.map((item: OrderItem) => ({
       id: item.id,
       quantity: item.quantity,
       price: item.price,

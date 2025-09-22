@@ -10,9 +10,9 @@ const CACHE_TTL = {
 
 // In-memory cache store
 class CacheStore {
-  private store = new Map<string, { data: any; timestamp: number }>();
+  private store = new Map<string, { data: unknown; timestamp: number }>();
 
-  set(key: string, data: any, ttl: number) {
+  set(key: string, data: unknown, ttl: number) {
     this.store.set(key, {
       data,
       timestamp: Date.now() + ttl,

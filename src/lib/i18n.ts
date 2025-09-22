@@ -383,18 +383,18 @@ class I18nManager {
 
   t(key: string, params?: Record<string, string | number>): string {
     const keys = key.split('.');
-    let value: any = this.translations[this.currentLocale];
+    let value: unknown = this.translations[this.currentLocale];
 
     // Navigate through the nested object
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+        value = (value as Record<string, unknown>)[k];
       } else {
         // Fallback to default locale
         value = this.translations[this.fallbackLocale];
         for (const fallbackKey of keys) {
           if (value && typeof value === 'object' && fallbackKey in value) {
-            value = value[fallbackKey];
+            value = (value as Record<string, unknown>)[fallbackKey];
           } else {
             // Return the key if translation not found
             return key;
@@ -490,7 +490,7 @@ class I18nManager {
     try {
       const translations = await import(`../locales/${locale}.json`);
       this.translations[locale] = translations.default;
-    } catch (error) {
+    } catch {
       console.warn(`Failed to load translations for locale: ${locale}`);
     }
   }

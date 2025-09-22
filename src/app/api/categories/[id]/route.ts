@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Category } from "@/types";
 import { logger, getRequestId } from "@/lib/logger";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
@@ -50,7 +50,7 @@ export async function GET(
     const requestId = getRequestId(request.headers);
     logger.error("Error fetching category", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener la categoría", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
   }
 }
 
@@ -99,7 +99,7 @@ export async function PUT(
     const requestId = getRequestId(request.headers);
     logger.error("Error updating category", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar la categoría", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
   }
 }
 
@@ -132,6 +132,6 @@ export async function DELETE(
     const requestId = getRequestId(request.headers);
     logger.error("Error deleting category", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al eliminar la categoría", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
   }
 }

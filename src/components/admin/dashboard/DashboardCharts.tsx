@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProductCategoryData, MonthlySales } from "@/hooks/useDashboard";
 import {
   Chart as ChartJS,
@@ -64,9 +64,9 @@ export const DashboardCharts = ({
     el.style.visibility = "hidden";
     el.style.pointerEvents = "none";
     document.body.appendChild(el);
-    const color = getComputedStyle(el)[prop as any];
+    const color = getComputedStyle(el)[prop as keyof CSSStyleDeclaration];
     document.body.removeChild(el);
-    return color;
+    return String(color || '');
   };
 
   // Semantic colors
@@ -86,9 +86,9 @@ export const DashboardCharts = ({
         data: monthlySales.map((item) => item.revenue),
         borderColor: primaryColor,
         backgroundColor: primaryColor
-          ? (primaryColor as any).replace(
+          ? String(primaryColor).replace(
               /rgb\(([^)]+)\)/,
-              (_: any, rgb: string) => `rgba(${rgb}, 0.08)`
+              (_: string, rgb: string) => `rgba(${rgb}, 0.08)`
             )
           : "rgba(0,0,0,0.08)",
         tension: 0.3,

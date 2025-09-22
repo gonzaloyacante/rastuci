@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "@/types";
 import { logger, getRequestId } from "@/lib/logger";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
@@ -46,7 +46,7 @@ export async function GET(
     const requestId = getRequestId(request.headers);
     logger.error("Error fetching user", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener el usuario", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
@@ -119,7 +119,7 @@ export async function PATCH(
     const requestId = getRequestId(request.headers);
     logger.error("Error updating user", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el usuario", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
@@ -153,6 +153,6 @@ export async function DELETE(
     const requestId = getRequestId(request.headers);
     logger.error("Error deleting user", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al eliminar el usuario", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
   }
 }

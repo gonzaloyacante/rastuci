@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Optionally attach lastModified to homepage if we computed something
   if (latestUpdatedAt) {
-    staticEntries[0] = { ...staticEntries[0], lastModified: latestUpdatedAt } as any;
+    staticEntries[0] = { ...staticEntries[0], lastModified: latestUpdatedAt };
   }
 
   return [...staticEntries, ...categoryEntries, ...productEntries];

@@ -12,7 +12,7 @@ export interface AppNotificationOptions {
   badge?: string;
   image?: string;
   tag?: string;
-  data?: any;
+  data?: Record<string, unknown>;
   actions?: Array<{
     action: string;
     title: string;
@@ -41,7 +41,7 @@ class PWAManager {
     // Listen for install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      this.deferredPrompt = e as any;
+      this.deferredPrompt = e as unknown as PWAInstallPrompt;
       this.dispatchEvent('installprompt-available');
     });
 
@@ -67,13 +67,13 @@ class PWAManager {
 
     // Check if installed via navigator
     if ('getInstalledRelatedApps' in navigator) {
-      (navigator as any).getInstalledRelatedApps().then((apps: any[]) => {
+      (navigator as { getInstalledRelatedApps?: () => Promise<unknown[]> }).getInstalledRelatedApps?.().then((apps: unknown[]) => {
         this.isInstalled = apps.length > 0;
       });
     }
   }
 
-  private dispatchEvent(type: string, detail?: any) {
+  private dispatchEvent(type: string, detail?: unknown) {
     window.dispatchEvent(new CustomEvent(`pwa-${type}`, { detail }));
   }
 
@@ -189,7 +189,7 @@ class PWAManager {
       requireInteraction: options.requireInteraction,
       silent: options.silent,
       vibrate: options.vibrate,
-    } as any));
+    } as NotificationOptions));
   }
 
   async scheduleNotification(options: AppNotificationOptions, delay: number): Promise<void> {
@@ -261,14 +261,14 @@ class PWAManager {
     if (!('share' in navigator)) {
       // Fallback to clipboard
       if ('clipboard' in navigator && data.url) {
-        await (navigator as any).clipboard.writeText(data.url);
+        await (navigator as { clipboard: { writeText: (text: string) => Promise<void> } }).clipboard.writeText(data.url);
         return true;
       }
       return false;
     }
 
     try {
-      await (navigator as any).share(data);
+      await (navigator as { share: (data: { title?: string; text?: string; url?: string }) => Promise<void> }).share(data);
       return true;
     } catch (error) {
       console.error('Share failed:', error);
@@ -282,7 +282,7 @@ class PWAManager {
       throw new Error('Background sync not supported');
     }
 
-    await (this.swRegistration as any).sync.register(tag);
+    await (this.swRegistration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register(tag);
   }
 
   // Push notifications (requires server setup)

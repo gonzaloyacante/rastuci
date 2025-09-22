@@ -10,7 +10,7 @@ export interface LogEntry {
   timestamp: Date;
   level: LogLevel;
   message: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   userId?: string;
   sessionId?: string;
   requestId?: string;
@@ -43,7 +43,7 @@ class Logger {
   private createLogEntry(
     level: LogLevel,
     message: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     error?: Error
   ): LogEntry {
     return {
@@ -51,9 +51,9 @@ class Logger {
       level,
       message,
       context,
-      userId: context?.userId,
-      sessionId: context?.sessionId,
-      requestId: context?.requestId,
+      userId: context?.userId as string | undefined,
+      sessionId: context?.sessionId as string | undefined,
+      requestId: context?.requestId as string | undefined,
       stack: error?.stack,
     };
   }
@@ -93,7 +93,7 @@ class Logger {
     }, 5000); // Flush every 5 seconds
   }
 
-  private log(level: LogLevel, message: string, context?: Record<string, any>, error?: Error): void {
+  private log(level: LogLevel, message: string, context?: Record<string, unknown>, error?: Error): void {
     if (!this.shouldLog(level)) return;
 
     const entry = this.createLogEntry(level, message, context, error);
@@ -121,19 +121,19 @@ class Logger {
     }
   }
 
-  error(message: string, context?: Record<string, any>, error?: Error): void {
+  error(message: string, context?: Record<string, unknown>, error?: Error): void {
     this.log(LogLevel.ERROR, message, context, error);
   }
 
-  warn(message: string, context?: Record<string, any>): void {
+  warn(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.WARN, message, context);
   }
 
-  info(message: string, context?: Record<string, any>): void {
+  info(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.INFO, message, context);
   }
 
-  debug(message: string, context?: Record<string, any>): void {
+  debug(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.DEBUG, message, context);
   }
 
@@ -142,13 +142,13 @@ class Logger {
     console.time(label);
   }
 
-  timeEnd(label: string, context?: Record<string, any>): void {
+  timeEnd(label: string, context?: Record<string, unknown>): void {
     console.timeEnd(label);
     this.info(`Performance: ${label} completed`, context);
   }
 
   // Structured logging for specific events
-  logUserAction(action: string, userId: string, details?: Record<string, any>): void {
+  logUserAction(action: string, userId: string, details?: Record<string, unknown>): void {
     this.info(`User action: ${action}`, {
       userId,
       action,
@@ -166,11 +166,11 @@ class Logger {
     });
   }
 
-  logError(error: Error, context?: Record<string, any>): void {
+  logError(error: Error, context?: Record<string, unknown>): void {
     this.error(error.message, context, error);
   }
 
-  logSecurityEvent(event: string, details: Record<string, any>): void {
+  logSecurityEvent(event: string, details: Record<string, unknown>): void {
     this.warn(`Security event: ${event}`, {
       event,
       ...details,
@@ -236,14 +236,14 @@ export class PerformanceMonitor {
   }
 
   static getAllMetrics(): Record<string, { avg: number; min: number; max: number; count: number }> {
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     for (const [name] of this.metrics) {
       const metrics = this.getMetrics(name);
       if (metrics) {
         result[name] = metrics;
       }
     }
-    return result;
+    return result as Record<string, { avg: number; min: number; max: number; count: number }>;
   }
 }
 
@@ -251,7 +251,7 @@ export class PerformanceMonitor {
 export class ErrorTracker {
   private static errors: Map<string, { count: number; lastSeen: Date; stack?: string }> = new Map();
 
-  static trackError(error: Error, context?: Record<string, any>): void {
+  static trackError(error: Error, context?: Record<string, unknown>): void {
     const key = `${error.name}: ${error.message}`;
     const existing = this.errors.get(key);
 
@@ -338,7 +338,7 @@ HealthMonitor.registerCheck('database', async () => {
       status: 'healthy',
       message: 'Database connection is healthy',
     };
-  } catch (error) {
+  } catch {
     return {
       name: 'database',
       status: 'unhealthy',

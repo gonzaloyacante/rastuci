@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimiter";
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const setting = await (prisma as any).setting.findUnique({ where: { key: SETTINGS_KEY } });
+    const setting = await prisma.setting.findUnique({ where: { key: SETTINGS_KEY } });
     const value = setting?.value ?? defaultHomeSettings;
 
     const parsed = HomeSettingsSchema.safeParse(value);
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     const e = normalizeApiError(err);
     logger.error("GET /api/home failed", e);
-    const code = (e.code === "INTERNAL" ? "INTERNAL_ERROR" : e.code) as any;
+    const code: ApiErrorCode = e.code === "INTERNAL" ? "INTERNAL_ERROR" : e.code as ApiErrorCode;
     return NextResponse.json(fail(code, e.message, e.status ?? 500));
   }
 }
@@ -51,7 +51,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(fail("BAD_REQUEST", parsed.error.message, 400));
     }
 
-    const saved = await (prisma as any).setting.upsert({
+    const saved = await prisma.setting.upsert({
       where: { key: SETTINGS_KEY },
       update: { value: parsed.data },
       create: { key: SETTINGS_KEY, value: parsed.data },
@@ -61,7 +61,7 @@ export async function PUT(req: NextRequest) {
   } catch (err) {
     const e = normalizeApiError(err);
     logger.error("PUT /api/home failed", e);
-    const code = (e.code === "INTERNAL" ? "INTERNAL_ERROR" : e.code) as any;
+    const code: ApiErrorCode = e.code === "INTERNAL" ? "INTERNAL_ERROR" : e.code as ApiErrorCode;
     return NextResponse.json(fail(code, e.message, e.status ?? 500));
   }
 }

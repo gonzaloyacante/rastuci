@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
@@ -8,7 +7,7 @@ import {
   ProductFilters,
 } from "@/types";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import {
   ProductCreateSchema,
   ProductsQuerySchema,
@@ -103,15 +102,16 @@ export async function GET(
       prisma.product.count({ where }),
     ]);
 
-    const products: Product[] = prismaProducts.map((p: any) => ({
+    const products: Product[] = prismaProducts.map((p) => ({
       ...p,
       description: p.description ?? undefined,
+      salePrice: p.salePrice ?? undefined,
       images: typeof p.images === "string" ? JSON.parse(p.images) : p.images,
       category: {
         ...p.category,
         description: p.category.description ?? undefined,
       },
-    }));
+    } as Product));
 
     const totalPages = Math.ceil(total / filters.limit);
 
@@ -140,7 +140,7 @@ export async function GET(
       "Error al obtener los productos",
       500,
     );
-    return fail(e.code as any, e.message, e.status, e.details as any);
+    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
   }
 }
 
@@ -215,6 +215,6 @@ export async function POST(
       "Error al crear el producto",
       500,
     );
-    return fail(e.code as any, e.message, e.status, e.details as any);
+    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
   }
 }

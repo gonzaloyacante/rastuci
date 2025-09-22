@@ -64,7 +64,7 @@ interface OrderTrackingProps {
 export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [trackingDetails, setTrackingDetails] = useState<any[]>([]);
+  const [trackingDetails, setTrackingDetails] = useState<Array<Record<string, unknown>>>([]);
 
   const loadOrderData = useCallback(async () => {
     try {

@@ -77,7 +77,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
     setUploading(true);
     try {
       const result = await uploadImage(file);
-      const url = (result as any).secure_url;
+      const url = (result as { secure_url: string }).secure_url;
       setValue("image", url, { shouldValidate: true });
       setImagePreview(url);
     } catch (err) {

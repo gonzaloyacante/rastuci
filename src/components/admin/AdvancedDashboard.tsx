@@ -99,7 +99,7 @@ export function AdvancedDashboard() {
             ].map(period => (
               <button
                 key={period.value}
-                onClick={() => setFilters(prev => ({ ...prev, period: period.value as any }))}
+                onClick={() => setFilters(prev => ({ ...prev, period: period.value as '7d' | '30d' | '90d' | '1y' }))}
                 className={`px-3 py-1 text-sm rounded transition-colors ${
                   filters.period === period.value
                     ? 'bg-primary text-white'

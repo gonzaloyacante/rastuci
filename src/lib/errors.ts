@@ -24,8 +24,8 @@ export function normalizeApiError(
   }
 
   // Prisma errors (best-effort)
-  const anyErr = err as any;
-  const prismaCode: string | undefined = anyErr?.code;
+  const errWithCode = err as { code?: string };
+  const prismaCode: string | undefined = errWithCode?.code;
   if (typeof prismaCode === "string" && prismaCode.startsWith("P")) {
     switch (prismaCode) {
       case "P2002": // Unique constraint failed
@@ -33,7 +33,7 @@ export function normalizeApiError(
           code: "CONFLICT",
           message: "Conflicto con datos únicos",
           status: 409,
-          details: safePick(anyErr, ["meta", "target"]),
+          details: safePick(errWithCode, ["meta", "target"]),
         };
       case "P2025": // Record not found
         return {
@@ -59,10 +59,15 @@ export function normalizeApiError(
   };
 }
 
-function safePick(obj: any, keys: string[]) {
+function safePick(obj: unknown, keys: string[]) {
   const out: Record<string, unknown> = {};
-  for (const k of keys) {
-    if (obj && Object.prototype.hasOwnProperty.call(obj, k)) out[k] = obj[k];
+  if (obj && typeof obj === 'object') {
+    const objRecord = obj as Record<string, unknown>;
+    for (const k of keys) {
+      if (Object.prototype.hasOwnProperty.call(objRecord, k)) {
+        out[k] = objRecord[k];
+      }
+    }
   }
   return out;
 }

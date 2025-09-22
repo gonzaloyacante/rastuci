@@ -5,10 +5,10 @@ import { analytics, useAnalytics } from '@/lib/analytics';
 import { useRouter } from 'next/navigation';
 
 interface AnalyticsContextType {
-  trackEvent: (name: string, properties?: Record<string, any>) => void;
+  trackEvent: (name: string, properties?: Record<string, unknown>) => void;
   trackPageView: (url?: string, title?: string) => void;
-  trackConversion: (step: string, properties?: Record<string, any>) => void;
-  trackPurchase: (orderId: string, value: number, currency?: string, items?: any[]) => void;
+  trackConversion: (step: string, properties?: Record<string, unknown>) => void;
+  trackPurchase: (orderId: string, value: number, currency?: string, items?: Array<Record<string, unknown>>) => void;
   trackAddToCart: (productId: string, value: number, currency?: string) => void;
   trackSearch: (query: string, results?: number) => void;
   trackProductView: (productId: string, productName: string, category?: string, value?: number) => void;
@@ -78,7 +78,7 @@ export function useAnalyticsContext() {
 export function withAnalyticsTracking<P extends object>(
   Component: React.ComponentType<P>,
   eventName: string,
-  getProperties?: (props: P) => Record<string, any>
+  getProperties?: (props: P) => Record<string, unknown>
 ) {
   return function AnalyticsWrappedComponent(props: P) {
     const { trackEvent } = useAnalyticsContext();

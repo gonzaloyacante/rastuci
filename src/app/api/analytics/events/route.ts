@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const analyticsEventSchema = z.object({
   name: z.string(),
-  properties: z.record(z.any()).optional(),
+  properties: z.record(z.unknown()).optional(),
   userId: z.string().optional(),
   sessionId: z.string(),
   timestamp: z.string().transform(str => new Date(str)),

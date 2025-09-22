@@ -114,16 +114,17 @@ export const schemas = {
 export function validateAndSanitize<T>(
   schema: z.ZodSchema<T>,
   input: unknown,
-  sanitizers?: Record<string, (value: any) => any>
+  sanitizers?: Record<string, (value: unknown) => unknown>
 ): { success: true; data: T } | { success: false; error: string } {
   try {
     // Apply sanitizers if provided
     let sanitizedInput = input;
     if (sanitizers && typeof input === 'object' && input !== null) {
-      sanitizedInput = { ...input as Record<string, any> };
+      sanitizedInput = { ...input as Record<string, unknown> };
       for (const [key, sanitizer] of Object.entries(sanitizers)) {
-        if (key in (sanitizedInput as Record<string, any>)) {
-          (sanitizedInput as Record<string, any>)[key] = sanitizer((sanitizedInput as Record<string, any>)[key]);
+        const inputRecord = sanitizedInput as Record<string, unknown>;
+        if (key in inputRecord) {
+          inputRecord[key] = sanitizer(inputRecord[key]);
         }
       }
     }
@@ -142,9 +143,9 @@ export function validateAndSanitize<T>(
 // Common sanitizer combinations
 export const sanitizers = {
   product: {
-    name: (value: string) => sanitizeString(value, 200),
-    description: (value: string) => sanitizeString(value, 2000),
-    price: sanitizePrice,
+    name: (value: unknown) => sanitizeString(String(value || ''), 200),
+    description: (value: unknown) => sanitizeString(String(value || ''), 2000),
+    price: (value: unknown) => sanitizePrice(value as string | number),
   },
   user: {
     name: (value: string) => sanitizeString(value, 100),

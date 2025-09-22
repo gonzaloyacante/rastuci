@@ -1,26 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, FieldErrors } from 'react-hook-form';
+import { useForm, FieldErrors, UseFormRegister, FieldValues, UseFormWatch, Path } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
-interface FormFieldProps {
-  name: string;
+interface FormFieldProps<T extends FieldValues = FieldValues> {
+  name: Path<T>;
   label: string;
   type?: string;
   placeholder?: string;
   required?: boolean;
-  validation?: z.ZodSchema;
-  errors?: FieldErrors;
-  register: any;
+  errors?: FieldErrors<T>;
+  register: UseFormRegister<T>;
   realTimeValidation?: boolean;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export function FormField({
+export function FormField<T extends FieldValues = FieldValues>({
   name,
   label,
   type = 'text',
@@ -30,7 +29,7 @@ export function FormField({
   register,
   realTimeValidation = true,
   inputProps,
-}: FormFieldProps) {
+}: FormFieldProps<T>) {
   const [touched, setTouched] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   
@@ -71,24 +70,24 @@ export function FormField({
       
       {hasError && (
         <p id={`${name}-error`} className="text-sm text-error" role="alert">
-          {(error as any)?.message || localError}
+          {(error as { message?: string })?.message || localError}
         </p>
       )}
     </div>
   );
 }
 
-interface EnhancedFormProps {
-  schema: z.ZodSchema<any>;
-  onSubmit: (data: any) => Promise<void> | void;
-  children: React.ReactNode | ((props: { register: any; errors: any; watch: any }) => React.ReactNode);
+interface EnhancedFormProps<T extends FieldValues = FieldValues> {
+  schema: z.ZodSchema<T>;
+  onSubmit: (data: T) => Promise<void> | void;
+  children: React.ReactNode | ((props: { register: UseFormRegister<T>; errors: FieldErrors<T>; watch: UseFormWatch<T> }) => React.ReactNode);
   className?: string;
   submitText?: string;
   isLoading?: boolean;
   resetOnSuccess?: boolean;
 }
 
-export function EnhancedForm({
+export function EnhancedForm<T extends FieldValues = FieldValues>({
   schema,
   onSubmit,
   children,
@@ -96,7 +95,7 @@ export function EnhancedForm({
   submitText = 'Submit',
   isLoading = false,
   resetOnSuccess = false,
-}: EnhancedFormProps) {
+}: EnhancedFormProps<T>) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -106,15 +105,13 @@ export function EnhancedForm({
     formState: { errors, isSubmitting, isValid },
     reset,
     watch,
-  } = useForm({
+  } = useForm<T>({
     resolver: zodResolver(schema),
     mode: 'onChange',
   });
 
-  // Watch all form values for real-time validation
-  const watchedValues = watch();
 
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: T) => {
     try {
       setSubmitError(null);
       setSubmitSuccess(false);
@@ -142,7 +139,7 @@ export function EnhancedForm({
     <form onSubmit={handleSubmit(handleFormSubmit)} className={className} noValidate>
       <div className="space-y-4">
         {typeof children === 'function' 
-          ? children({ register, errors, watch: watchedValues })
+          ? children({ register, errors, watch })
           : children
         }
         

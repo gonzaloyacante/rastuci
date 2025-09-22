@@ -7,7 +7,7 @@ import { sendOrderStatusEmail } from "@/lib/email";
 import { mapOrderToDTO, updateOrderStatus } from "@/lib/orders";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { OrderStatusUpdateSchema } from "@/lib/validation/order";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { logger, getRequestId } from "@/lib/logger";
 
@@ -85,7 +85,7 @@ export async function GET(
     const requestId = getRequestId(request.headers);
     logger.error("Error fetching order", { requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener el pedido", 500);
-    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
   }
 }
 
@@ -115,7 +115,7 @@ export async function PATCH(
 
     // Fire-and-forget email notification (do not block response)
     void sendOrderStatusEmail({
-      to: (order as any).customerEmail ?? null,
+      to: (order as unknown as Record<string, unknown>).customerEmail as string ?? null,
       orderId: order.id,
       status: order.status,
       customerName: order.customerName ?? null,
@@ -128,7 +128,7 @@ export async function PATCH(
     const requestId = getRequestId(request.headers);
     logger.error("Error updating order status (PATCH)", { requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el estado del pedido", 500);
-    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
   }
 }
 
@@ -158,7 +158,7 @@ export async function PUT(
 
     // Fire-and-forget email notification (do not block response)
     void sendOrderStatusEmail({
-      to: (order as any).customerEmail ?? null,
+      to: (order as unknown as Record<string, unknown>).customerEmail as string ?? null,
       orderId: order.id,
       status: order.status,
       customerName: order.customerName ?? null,
@@ -171,7 +171,7 @@ export async function PUT(
     const requestId = getRequestId(request.headers);
     logger.error("Error updating order status (PUT)", { requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el estado del pedido", 500);
-    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
   }
 }
 
@@ -233,6 +233,6 @@ export async function DELETE(
     const requestId = getRequestId(request.headers);
     logger.error("Error canceling order", { requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al cancelar el pedido", 500);
-    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
   }
 }

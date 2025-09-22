@@ -520,8 +520,6 @@ function ProductsContent() {
                 )}
                 -{Math.min(currentPage * pageSize, totalProducts)} de{" "}
                 {totalProducts} productos
-                {Math.min(currentPage * pageSize, totalProducts)} de{" "}
-                {totalProducts} productos
               </div>
 
               <div className="flex items-center space-x-2">

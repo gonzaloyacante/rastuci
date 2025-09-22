@@ -9,7 +9,7 @@ export interface Order {
   status: string;
   createdAt: string;
   updatedAt: string;
-  items: any[];
+  items: Array<Record<string, unknown>>;
 }
 
 interface UseOrdersParams {

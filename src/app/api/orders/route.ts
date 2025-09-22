@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendNotification } from "@/lib/onesignal";
@@ -8,7 +7,7 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 import { mapOrderToDTO } from "@/lib/orders";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { OrdersQuerySchema, OrderCreateSchema } from "@/lib/validation/order";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { logger, getRequestId } from "@/lib/logger";
 
@@ -77,7 +76,7 @@ export async function GET(
       prisma.order.count({ where }),
     ]);
 
-    const orders: Order[] = prismaOrders.map((order: any) => mapOrderToDTO(order));
+    const orders: Order[] = prismaOrders.map((order) => mapOrderToDTO(order));
 
     const totalPages = Math.ceil(total / limit);
 
@@ -94,7 +93,7 @@ export async function GET(
     const requestId = getRequestId(request.headers);
     logger.error("Error fetching orders", { requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los pedidos", 500);
-    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
   }
 }
 
@@ -215,6 +214,6 @@ export async function POST(
     const requestId = getRequestId(request.headers);
     logger.error("Error creating order", { requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el pedido", 500);
-    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
   }
 }

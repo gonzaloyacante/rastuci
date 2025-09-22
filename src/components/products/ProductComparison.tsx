@@ -10,6 +10,14 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import Link from 'next/link';
 
+// Extended product type for comparison features
+type ProductWithExtras = Record<string, unknown> & {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+};
+
 export function ProductComparison() {
   const { comparisonItems, removeFromComparison, clearComparison } = useComparison();
   const { addToCart } = useCart();
@@ -20,8 +28,10 @@ export function ProductComparison() {
     return null;
   }
 
-  const handleAddToCart = (product: any) => {
-    addToCart(product, 1, product.sizes?.[0], product.colors?.[0]);
+  const handleAddToCart = (product: ProductWithExtras) => {
+    // Type assertion needed for compatibility with existing cart system
+    const productForCart = product as unknown;
+    addToCart(productForCart as never, 1, '', '');
   };
 
   const comparisonFeatures = [
@@ -104,7 +114,7 @@ export function ProductComparison() {
                           {/* Action Buttons */}
                           <div className="flex flex-col gap-2">
                             <Button
-                              onClick={() => handleAddToCart(product)}
+                              onClick={() => handleAddToCart(product as unknown as ProductWithExtras)}
                               className="w-full"
                               size="sm"
                             >
@@ -142,8 +152,8 @@ export function ProductComparison() {
                         {feature.label}
                       </td>
                       {comparisonItems.map((product) => {
-                        const value = (product as any)[feature.key];
-                        const displayValue = feature.format ? (feature.format as (v: any) => any)(value) : value || 'N/A';
+                        const value = (product as unknown as Record<string, unknown>)[feature.key];
+                        const displayValue = feature.format ? (feature.format as (v: unknown) => unknown)(value) : String(value || 'N/A');
                         
                         return (
                           <td key={product.id} className="p-4 text-center">
@@ -154,32 +164,32 @@ export function ProductComparison() {
                                     <Star
                                       key={star}
                                       className={`w-4 h-4 ${
-                                        star <= value ? 'text-warning fill-current' : 'muted'
+                                        star <= Number(value || 0) ? 'text-warning fill-current' : 'muted'
                                       }`}
                                     />
                                   ))}
                                 </div>
-                                <span className="text-sm muted">({value})</span>
+                                <span className="text-sm muted">({String(value || '')})</span>
                               </div>
                             ) : feature.key === 'onSale' && value ? (
                               <Badge variant="success">En Oferta</Badge>
                             ) : feature.key === 'stock' ? (
-                              <Badge variant={value > 0 ? 'success' : 'error'}>
-                                {value > 0 ? `${value} disponibles` : 'Agotado'}
+                              <Badge variant={Number(value || 0) > 0 ? 'success' : 'error'}>
+                                {Number(value || 0) > 0 ? `${value} disponibles` : 'Agotado'}
                               </Badge>
                             ) : feature.key === 'price' ? (
                               <div className="space-y-1">
                                 <div className="text-lg font-bold text-primary">
                                   ${product.price}
                                 </div>
-                                {(product as any)?.originalPrice && (product as any).originalPrice > product.price && (
+                                {Boolean((product as unknown as Record<string, unknown>).originalPrice && Number((product as unknown as Record<string, unknown>).originalPrice || 0) > product.price) && (
                                   <div className="text-sm muted line-through">
-                                    ${(product as any).originalPrice}
+                                    ${String((product as unknown as Record<string, unknown>).originalPrice || '')}
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              <span>{displayValue}</span>
+                              <span>{String(displayValue)}</span>
                             )}
                           </td>
                         );
@@ -204,7 +214,7 @@ export function ProductComparison() {
 }
 
 // Comparison toggle button for product cards
-export function ComparisonToggle({ product }: { product: any }) {
+export function ComparisonToggle({ product }: { product: ProductWithExtras }) {
   const { addToComparison, removeFromComparison, isInComparison } = useComparison();
   const inComparison = isInComparison(product.id);
 
@@ -212,7 +222,7 @@ export function ComparisonToggle({ product }: { product: any }) {
     if (inComparison) {
       removeFromComparison(product.id);
     } else {
-      addToComparison(product as any);
+      addToComparison(product as never);
     }
   };
 

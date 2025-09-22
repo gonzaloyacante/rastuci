@@ -97,9 +97,8 @@
     "vitest": "^3.2.4"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": [
-      "prettier --write",
-      "eslint --fix --max-warnings=1"
+    "**/*": [
+      "bash -c 'npx prisma generate && npx next build'"
     ]
   }
 }

@@ -105,7 +105,7 @@ export const validateProductData = async (data: unknown) => {
 };
 
 // Form field validation helpers
-export const validateField = (schema: z.ZodSchema, value: any) => {
+export const validateField = (schema: z.ZodSchema, value: unknown) => {
   try {
     schema.parse(value);
     return { isValid: true, error: null };
@@ -246,14 +246,13 @@ export const rateLimitSchema = z.object({
 
 export const checkRateLimit = async (action: string, userId?: string) => {
   // In a real app, this would check against a rate limiting service
-  const key = `rate_limit:${userId || 'anonymous'}:${action}`;
-
-  // Simple in-memory rate limiting (replace with Redis in production)
-  const now = Date.now();
-  const window = 60 * 1000; // 1 minute
+  // For now, just return success (action and userId would be used in real implementation)
   const limit = 10; // 10 requests per minute
+  
+  // Avoid unused parameter warnings
+  void action;
+  void userId;
 
-  // For now, just return success
   return { success: true, remaining: limit };
 };
 

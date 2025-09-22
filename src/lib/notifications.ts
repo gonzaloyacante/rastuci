@@ -189,7 +189,7 @@ export const notifications = {
 };
 
 // Auto-dismiss notifications for specific actions
-export const withAutoNotification = <T extends any[], R>(
+export const withAutoNotification = <T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   successMessage: string,
   errorMessage: string = "Error al procesar la solicitud",

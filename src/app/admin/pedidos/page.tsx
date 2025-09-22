@@ -122,7 +122,7 @@ export default function OrdersPage() {
       // Datos
       orders.forEach((order: Order) => {
         const products = order.items
-          .map((item) => `${item.quantity}x ${item.product.name}`)
+          .map((item) => `${item.quantity}x ${(item.product as { name: string }).name}`)
           .join("; ");
         const row = [
           order.id,

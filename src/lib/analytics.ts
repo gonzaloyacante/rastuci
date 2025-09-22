@@ -1,7 +1,7 @@
 // Analytics and user behavior tracking utilities
 export interface AnalyticsEvent {
   name: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown> | object;
   userId?: string;
   sessionId?: string;
   timestamp?: Date;
@@ -42,7 +42,7 @@ export interface ConversionFunnel {
   timestamp: Date;
   userId?: string;
   sessionId: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 class AnalyticsManager {
@@ -233,7 +233,7 @@ class AnalyticsManager {
     this.trackEvent('user_identified', { userId });
   }
 
-  trackEvent(name: string, properties?: Record<string, any>) {
+  trackEvent(name: string, properties?: Record<string, unknown> | object) {
     if (!this.isEnabled || !this.session) return;
 
     const event: AnalyticsEvent = {
@@ -278,14 +278,14 @@ class AnalyticsManager {
     this.trackEvent('page_view', pageView);
   }
 
-  trackConversion(step: string, properties?: Record<string, any>) {
+  trackConversion(step: string, properties?: Record<string, unknown>) {
     this.trackEvent('conversion_funnel', {
       step,
       ...properties,
     });
   }
 
-  trackPurchase(orderId: string, value: number, currency: string = 'EUR', items?: any[]) {
+  trackPurchase(orderId: string, value: number, currency: string = 'EUR', items?: Array<Record<string, unknown>>) {
     this.trackEvent('purchase', {
       orderId,
       value,
@@ -417,19 +417,26 @@ class GoogleAnalyticsProvider extends AnalyticsProvider {
     document.head.appendChild(script);
 
     // Initialize gtag
-    (window as any).dataLayer = (window as any).dataLayer || [];
-    const gtag = (...args: any[]) => (window as any).dataLayer.push(args);
-    (window as any).gtag = gtag;
+    interface WindowWithDataLayer extends Window {
+      dataLayer: unknown[];
+      gtag: (...args: unknown[]) => void;
+    }
+    
+    const windowWithDataLayer = window as unknown as WindowWithDataLayer;
+    windowWithDataLayer.dataLayer = windowWithDataLayer.dataLayer || [];
+    const gtag = (...args: unknown[]) => windowWithDataLayer.dataLayer.push(args);
+    windowWithDataLayer.gtag = gtag;
 
     gtag('js', new Date());
     gtag('config', this.measurementId);
   }
 
   async sendEvents(events: AnalyticsEvent[]) {
-    if (!(window as any).gtag) return;
+    const windowWithGtag = window as unknown as { gtag?: (...args: unknown[]) => void };
+    if (!windowWithGtag.gtag) return;
 
     events.forEach(event => {
-      (window as any).gtag('event', event.name, {
+      windowWithGtag.gtag!('event', event.name, {
         ...event.properties,
         custom_parameter_user_id: event.userId,
         custom_parameter_session_id: event.sessionId,
@@ -479,10 +486,10 @@ export function useAnalytics() {
 }
 
 // Utility functions
-export function withAnalytics<T extends (...args: any[]) => any>(
+export function withAnalytics<T extends (...args: unknown[]) => unknown>(
   fn: T,
   eventName: string,
-  getProperties?: (...args: Parameters<T>) => Record<string, any>
+  getProperties?: (...args: Parameters<T>) => Record<string, unknown>
 ): T {
   return ((...args: Parameters<T>) => {
     const properties = getProperties?.(...args);

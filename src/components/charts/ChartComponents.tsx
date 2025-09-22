@@ -468,8 +468,8 @@ export function ProgressRing({
 
 // Wrapper component for dashboard charts
 interface DashboardChartsProps {
-  categoryData?: any[];
-  monthlySales?: any[];
+  categoryData?: ChartDataPoint[];
+  monthlySales?: TimeSeriesPoint[];
   loading?: boolean;
 }
 

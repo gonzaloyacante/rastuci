@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Product } from "@/types";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ProductCreateSchema } from "@/lib/validation/product";
 import { normalizeApiError } from "@/lib/errors";
@@ -62,7 +62,7 @@ export async function GET(
       "Error al obtener el producto",
       500,
     );
-    return fail(e.code as any, e.message, e.status, e.details as any);
+    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
   }
 }
 
@@ -151,7 +151,7 @@ export async function PUT(
       "Error al actualizar el producto",
       500,
     );
-    return fail(e.code as any, e.message, e.status, e.details as any);
+    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
   }
 }
 
@@ -196,6 +196,6 @@ export async function DELETE(
       "Error al eliminar el producto",
       500,
     );
-    return fail(e.code as any, e.message, e.status, e.details as any);
+    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
   }
 }

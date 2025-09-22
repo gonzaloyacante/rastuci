@@ -1,11 +1,18 @@
 // Payment gateway integration utilities
+interface PaymentProcessor {
+  createPaymentIntent(data: PaymentData): Promise<PaymentResult>;
+  confirmPayment?(paymentIntentId: string, cardData: unknown): Promise<PaymentResult>;
+  createOrder?(data: PaymentData): Promise<PaymentResult>;
+  captureOrder?(orderId: string): Promise<PaymentResult>;
+}
+
 export interface PaymentMethod {
   id: string;
   type: 'card' | 'paypal' | 'stripe' | 'bank_transfer';
   name: string;
   icon: string;
   enabled: boolean;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 export interface PaymentData {
@@ -14,7 +21,7 @@ export interface PaymentData {
   orderId: string;
   customerId?: string;
   description: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface PaymentResult {
@@ -167,7 +174,7 @@ export class PayPalPaymentProcessor {
         return { success: false, error: result.error };
       }
 
-      const approvalUrl = result.links?.find((link: any) => link.rel === 'approve')?.href;
+      const approvalUrl = result.links?.find((link: { rel: string; href: string }) => link.rel === 'approve')?.href;
 
       return {
         success: true,
@@ -212,7 +219,7 @@ export class PayPalPaymentProcessor {
 
 // Payment manager
 export class PaymentManager {
-  private processors: Map<string, any> = new Map();
+  private processors: Map<string, unknown> = new Map();
   private defaultProcessor: string = 'stripe';
 
   constructor() {
@@ -278,7 +285,7 @@ export class PaymentManager {
   async processPayment(
     method: string,
     data: PaymentData,
-    additionalData?: any
+    additionalData?: Record<string, unknown>
   ): Promise<PaymentResult> {
     const processor = this.processors.get(method);
 
@@ -292,19 +299,19 @@ export class PaymentManager {
     switch (method) {
       case 'stripe':
         if (additionalData?.cardData) {
-          const intent = await processor.createPaymentIntent(data);
+          const intent = await (processor as PaymentProcessor).createPaymentIntent(data);
           if (!intent.success) return intent;
           
-          return processor.confirmPayment(intent.paymentIntentId!, additionalData.cardData);
+          return (processor as PaymentProcessor).confirmPayment!(intent.paymentIntentId!, additionalData.cardData);
         } else {
-          return processor.createPaymentIntent(data);
+          return (processor as PaymentProcessor).createPaymentIntent(data);
         }
 
       case 'paypal':
         if (additionalData?.orderId) {
-          return processor.captureOrder(additionalData.orderId);
+          return (processor as PaymentProcessor).captureOrder!(additionalData.orderId as string);
         } else {
-          return processor.createOrder(data);
+          return (processor as PaymentProcessor).createOrder!(data);
         }
 
       case 'bank_transfer':

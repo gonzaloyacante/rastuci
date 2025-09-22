@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       return ok({ ok: true });
     }
 
-    const productIds: string[] = metaItems.map((i: any) => String(i.productId));
+    const productIds: string[] = metaItems.map((i: Record<string, unknown>) => String(i.productId));
     const dbProducts = await prisma.product.findMany({
       where: { id: { in: productIds } },
       select: { id: true, name: true, price: true, stock: true },
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
     // Compute order totals and items
     type WebhookItem = { productId: string; quantity: number; unitPrice: number; size?: string; color?: string };
-    const orderItems: WebhookItem[] = metaItems.map((it: any) => {
+    const orderItems: WebhookItem[] = metaItems.map((it: Record<string, unknown>) => {
       const prod = dbProducts.find((p) => p.id === it.productId);
       if (!prod) throw new Error(`Producto no encontrado: ${it.productId}`);
       const unitPrice = Number((prod.price * (1 - safeDiscount)).toFixed(2));
@@ -167,8 +167,8 @@ export async function POST(req: NextRequest) {
     });
 
     return ok({ ok: true });
-  } catch (e: any) {
-    logger.error("[MP webhook] error", { requestId, error: String(e) });
+  } catch (e: unknown) {
+    logger.error("[MP webhook] error", { requestId, error: e instanceof Error ? e.message : String(e) });
     // Always return 200 so MP stops retrying; log for later inspection
     return ok({ ok: true });
   }

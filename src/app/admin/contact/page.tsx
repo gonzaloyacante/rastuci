@@ -17,8 +17,8 @@ export default function AdminContactPage() {
         const json = await res.json();
         if (!json.success) throw new Error(json.error?.message || "Error");
         setSettings(json.data);
-      } catch (e: any) {
-        setError(e.message || "Error al cargar");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Error al cargar");
       } finally {
         setLoading(false);
       }

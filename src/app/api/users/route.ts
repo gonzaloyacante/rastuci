@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "@/types";
 import { logger, getRequestId } from "@/lib/logger";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
@@ -61,14 +61,22 @@ export async function PATCH(
     const requestId = getRequestId(request.headers);
     logger.error("Error updating user via PATCH", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el usuario", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
 // GET /api/users - Obtener todos los usuarios
+type UsersPage = {
+  data: SafeUser[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
 export async function GET(
   request: NextRequest
-): Promise<NextResponse<ApiResponse<any>>> {
+): Promise<NextResponse<ApiResponse<UsersPage>>> {
   try {
     const requestId = getRequestId(request.headers);
     const rl = checkRateLimit(request, { key: makeKey("GET", "/api/users"), ...getPreset("publicRead") });
@@ -80,7 +88,7 @@ export async function GET(
     const page = Math.max(1, Math.min(1000, pageRaw));
     const limit = Math.max(1, Math.min(50, limitRaw));
 
-    const where: Record<string, any> = {};
+    const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -98,7 +106,7 @@ export async function GET(
       prisma.user.count({ where }),
     ]);
 
-    const safeUsers: SafeUser[] = users.map((user: any) => ({
+    const safeUsers: SafeUser[] = users.map((user) => ({
       id: user.id,
       name: user.name || "",
       email: user.email || "",
@@ -117,7 +125,7 @@ export async function GET(
     const requestId = getRequestId(request.headers);
     logger.error("Error fetching users", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los usuarios", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
@@ -172,6 +180,6 @@ export async function POST(
     const requestId = getRequestId(request.headers);
     logger.error("Error creating user", { requestId, error: String(error) });
     const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el usuario", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }

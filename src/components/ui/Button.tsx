@@ -68,9 +68,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Render as child element (e.g., <a>) while applying classes and aria-disabled
     if (asChild && React.isValidElement(children)) {
-      const child = children as React.ReactElement<any>;
+      const child = children as React.ReactElement<Record<string, unknown>>;
       return React.cloneElement(child, {
-        className: cn(child.props.className, combinedClassName),
+        className: cn(child.props.className as string, combinedClassName),
         "aria-disabled": props.disabled ? "true" : undefined,
         ...("onClick" in child.props ? {} : { onClick: props.onClick }),
       });

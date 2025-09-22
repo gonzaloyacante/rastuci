@@ -175,7 +175,7 @@ describe("Utility Functions", () => {
       const debouncedFn = vi.fn().mockImplementation(
         ((func, wait) => {
           let timeout: NodeJS.Timeout;
-          return (...args: any[]) => {
+          return (...args: unknown[]) => {
             clearTimeout(timeout);
             timeout = setTimeout(() => func(...args), wait);
           };
@@ -263,7 +263,7 @@ describe("Error Handling", () => {
   it("should handle invalid props gracefully", () => {
     // Test component with invalid props
     expect(() => {
-      render(<Button variant={"invalid" as any}>Test</Button>);
+      render(<Button variant={"invalid" as 'primary'}>Test</Button>);
     }).not.toThrow();
   });
 });

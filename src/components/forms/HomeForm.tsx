@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { HomeSettings, HomeSettingsSchema, defaultHomeSettings } from "@/lib/validation/home";
-import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 
 type Props = {
@@ -21,10 +20,10 @@ export default function HomeForm({ initial }: Props) {
   const update = <K extends keyof HomeSettings>(key: K, val: HomeSettings[K]) =>
     setValues((v) => ({ ...v, [key]: val }));
 
-  const updateBenefit = (i: number, key: "icon" | "title" | "description", val: any) => {
+  const updateBenefit = (i: number, key: "icon" | "title" | "description", val: string) => {
     setValues((v) => {
       const next = [...v.benefits];
-      next[i] = { ...next[i], [key]: val } as any;
+      next[i] = { ...next[i], [key]: val };
       return { ...v, benefits: next };
     });
   };
@@ -58,8 +57,8 @@ export default function HomeForm({ initial }: Props) {
       const json = await res.json();
       if (!json.success) throw new Error(json.error?.message || "Error al guardar");
       setMessage("Guardado correctamente");
-    } catch (err: any) {
-      setMessage(err.message || "Error inesperado");
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "Error inesperado");
     } finally {
       setSaving(false);
     }
@@ -136,7 +135,7 @@ export default function HomeForm({ initial }: Props) {
                 <select
                   className="w-full border rounded-md px-3 py-2"
                   value={b.icon}
-                  onChange={(e) => updateBenefit(i, "icon", e.target.value as any)}
+                  onChange={(e) => updateBenefit(i, "icon", e.target.value)}
                 >
                   <option value="truck">Camión</option>
                   <option value="credit">Tarjeta</option>

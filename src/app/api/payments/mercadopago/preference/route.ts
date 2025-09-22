@@ -1,10 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { logger, getRequestId } from "@/lib/logger";
 import { normalizeApiError } from "@/lib/errors";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
+
+interface MercadoPagoPreference {
+  items: Array<{
+    id: string;
+    title: string;
+    quantity: number;
+    unit_price: number;
+  }>;
+  payer?: {
+    name?: string;
+    email?: string;
+  };
+  back_urls?: {
+    success?: string;
+    failure?: string;
+    pending?: string;
+  };
+  auto_return?: string;
+  notification_url?: string;
+  metadata?: Record<string, unknown>;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +59,7 @@ export async function POST(req: NextRequest) {
       return fail("BAD_REQUEST", "metadata.items es requerido para validar en el servidor", 400, { requestId });
     }
 
-    const productIds: string[] = metaItems.map((i: any) => String(i.productId));
+    const productIds: string[] = metaItems.map((i: Record<string, unknown>) => String(i.productId));
     const dbProducts = await prisma.product.findMany({
       where: { id: { in: productIds } },
       select: { id: true, name: true, price: true, description: true, images: true },
@@ -49,7 +70,7 @@ export async function POST(req: NextRequest) {
     const discountPercent = Number(metadata?.discountPercent || 0);
     const safeDiscount = isFinite(discountPercent) && discountPercent >= 0 && discountPercent <= 1 ? discountPercent : 0;
 
-    const validatedItems = metaItems.map((it: any) => {
+    const validatedItems = metaItems.map((it: Record<string, unknown>) => {
       const prod = dbProducts.find((p) => p.id === it.productId);
       if (!prod) {
         throw new Error(`Producto no encontrado: ${it.productId}`);
@@ -121,7 +142,7 @@ export async function POST(req: NextRequest) {
       notification_url:
         process.env.MP_WEBHOOK_URL || `${origin}/api/payments/mercadopago/webhook`,
       metadata,
-    } as any;
+    } as MercadoPagoPreference;
 
     const resp = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -141,10 +162,10 @@ export async function POST(req: NextRequest) {
     const data = await resp.json();
     // data.init_point (desktop) / data.sandbox_init_point; data.id preference id
     return ok({ init_point: data.init_point || data.sandbox_init_point, preference_id: data.id });
-  } catch (e: any) {
+  } catch (e: unknown) {
     const requestId = getRequestId(req.headers);
     logger.error("Unexpected error creating MP preference", { requestId, error: String(e) });
     const n = normalizeApiError(e, "INTERNAL_ERROR", "Unexpected error", 500);
-    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
   }
 }

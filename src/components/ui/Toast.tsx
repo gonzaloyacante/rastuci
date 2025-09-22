@@ -29,7 +29,7 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const timers = useRef<Record<string, any>>({});
+  const timers = useRef<Record<string, NodeJS.Timeout>>({});
 
   const show: ToastContextValue["show"] = ({ type, title, message, duration = 3500 }) => {
     const id = Math.random().toString(36).slice(2);
