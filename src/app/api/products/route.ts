@@ -9,13 +9,20 @@ import {
 } from "@/types";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ok, fail } from "@/lib/apiResponse";
-import { ProductCreateSchema, ProductsQuerySchema } from "@/lib/validation/product";
+import {
+  ProductCreateSchema,
+  ProductsQuerySchema,
+} from "@/lib/validation/product";
 import { normalizeApiError } from "@/lib/errors";
-import { validateAndSanitize, sanitizers, schemas } from "@/lib/input-sanitization";
+import {
+  validateAndSanitize,
+  sanitizers,
+  schemas,
+} from "@/lib/input-sanitization";
 
 // GET /api/products - Obtener productos con filtros y paginación
 export async function GET(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<NextResponse<ApiResponse<PaginatedResponse<Product>>>> {
   try {
     // Rate limiting
@@ -37,7 +44,9 @@ export async function GET(
       sortOrder: searchParams.get("sortOrder") ?? undefined,
     });
     if (!parsedQuery.success) {
-      return fail("BAD_REQUEST", "Parámetros inválidos", 400, { issues: parsedQuery.error.issues });
+      return fail("BAD_REQUEST", "Parámetros inválidos", 400, {
+        issues: parsedQuery.error.issues,
+      });
     }
     const filters = parsedQuery.data;
 
@@ -119,20 +128,25 @@ export async function GET(
     // Cache headers para el navegador
     apiResponse.headers.set(
       "Cache-Control",
-      "public, max-age=300, s-maxage=300"
+      "public, max-age=300, s-maxage=300",
     );
 
     return apiResponse;
   } catch (error) {
     console.error("Error fetching products:", error);
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los productos", 500);
+    const e = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al obtener los productos",
+      500,
+    );
     return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }
 
 // POST /api/products - Crear nuevo producto
 export async function POST(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
     // Rate limiting para creación
@@ -142,18 +156,18 @@ export async function POST(
     }
 
     const body = await request.json();
-    
+
     // Sanitize and validate input
     const validation = validateAndSanitize(
       ProductCreateSchema,
       body,
-      sanitizers.product
+      sanitizers.product,
     );
-    
+
     if (!validation.success) {
       return fail("BAD_REQUEST", validation.error, 400);
     }
-    
+
     const productData = validation.data;
 
     // Verificar que la categoría existe
@@ -181,6 +195,7 @@ export async function POST(
     const product: Product = {
       ...newProduct,
       description: newProduct.description ?? undefined,
+      salePrice: newProduct.salePrice ?? undefined,
       images:
         typeof newProduct.images === "string"
           ? JSON.parse(newProduct.images)
@@ -194,7 +209,12 @@ export async function POST(
     return ok(product);
   } catch (error) {
     console.error("Error creating product:", error);
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el producto", 500);
+    const e = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al crear el producto",
+      500,
+    );
     return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }

@@ -60,7 +60,7 @@ export const Select = ({
   const filteredOptions = options.filter((option) =>
     !searchable
       ? true
-      : option.label.toLowerCase().includes(searchTerm.toLowerCase())
+      : option.label.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const selectedOption = options.find((option) => option.value === value);
@@ -101,24 +101,33 @@ export const Select = ({
         name={name}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-invalid={error}>
+        aria-invalid={error}
+      >
         <span className="truncate flex-1 min-w-0 mr-2">
           <span className={value ? "" : "muted"}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
         </span>
         {clearable && value && (
-          <button
-            type="button"
+          <span
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
             }}
-            className="p-1 rounded hover-surface mr-1"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange("");
+              }
+            }}
+            className="p-1 rounded hover-surface mr-1 cursor-pointer inline-flex items-center justify-center"
             aria-label="Limpiar selección"
           >
             <X className="w-4 h-4 muted" />
-          </button>
+          </span>
         )}
         <svg
           className={`w-5 h-5 ml-1 transition-transform duration-200 ${
@@ -126,7 +135,8 @@ export const Select = ({
           } muted`}
           fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24">
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -139,7 +149,8 @@ export const Select = ({
         <ul
           ref={containerRef}
           className="absolute z-20 mt-2 w-full surface border border-muted rounded-lg shadow-lg max-h-60 overflow-auto py-1 text-sm"
-          role="listbox">
+          role="listbox"
+        >
           {searchable && (
             <li className="px-2 pb-1 sticky top-0 surface">
               <input
@@ -166,7 +177,8 @@ export const Select = ({
               } hover-surface`}
               onClick={() => handleOptionClick(option.value)}
               role="option"
-              aria-selected={option.value === value}>
+              aria-selected={option.value === value}
+            >
               <div className="flex items-center gap-2">
                 {option.value === value && (
                   <Check className="w-4 h-4 text-primary" />

@@ -16,7 +16,7 @@ interface RouteParams {
 // GET /api/products/[id] - Obtener producto por ID
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams,
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
     const rl = checkRateLimit(request, {
@@ -42,6 +42,7 @@ export async function GET(
     const responseProduct: Product = {
       ...product,
       description: product.description ?? undefined,
+      salePrice: product.salePrice ?? undefined,
       images:
         typeof product.images === "string"
           ? JSON.parse(product.images)
@@ -55,7 +56,12 @@ export async function GET(
     return ok(responseProduct);
   } catch (error) {
     console.error("Error fetching product:", error);
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener el producto", 500);
+    const e = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al obtener el producto",
+      500,
+    );
     return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }
@@ -63,7 +69,7 @@ export async function GET(
 // PUT /api/products/[id] - Actualizar producto
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams,
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
     const rl = checkRateLimit(request, {
@@ -77,9 +83,22 @@ export async function PUT(
     const body = await request.json();
     const parsed = ProductCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return fail("BAD_REQUEST", "Datos inválidos", 400, { issues: parsed.error.issues });
+      return fail("BAD_REQUEST", "Datos inválidos", 400, {
+        issues: parsed.error.issues,
+      });
     }
-    const { name, description, price, stock, categoryId, images, onSale, sizes, colors, features } = parsed.data;
+    const {
+      name,
+      description,
+      price,
+      stock,
+      categoryId,
+      images,
+      onSale,
+      sizes,
+      colors,
+      features,
+    } = parsed.data;
 
     // Verificar que la categoría existe
     const category = await prisma.category.findUnique({
@@ -112,6 +131,7 @@ export async function PUT(
     const updatedProduct: Product = {
       ...updatedPrismaProduct,
       description: updatedPrismaProduct.description ?? undefined,
+      salePrice: updatedPrismaProduct.salePrice ?? undefined,
       images:
         typeof updatedPrismaProduct.images === "string"
           ? JSON.parse(updatedPrismaProduct.images)
@@ -125,7 +145,12 @@ export async function PUT(
     return ok(updatedProduct, "Producto actualizado exitosamente");
   } catch (error) {
     console.error("Error updating product:", error);
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el producto", 500);
+    const e = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al actualizar el producto",
+      500,
+    );
     return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }
@@ -133,7 +158,7 @@ export async function PUT(
 // DELETE /api/products/[id] - Eliminar producto
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams,
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
     const rl = checkRateLimit(request, {
@@ -154,7 +179,7 @@ export async function DELETE(
       return fail(
         "BAD_REQUEST",
         "No se puede eliminar el producto porque está incluido en pedidos existentes",
-        400
+        400,
       );
     }
 
@@ -165,7 +190,12 @@ export async function DELETE(
     return ok(null, "Producto eliminado exitosamente");
   } catch (error) {
     console.error("Error deleting product:", error);
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al eliminar el producto", 500);
+    const e = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al eliminar el producto",
+      500,
+    );
     return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }
