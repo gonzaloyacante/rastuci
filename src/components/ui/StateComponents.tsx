@@ -3,7 +3,7 @@
 import React from "react";
 import { Button } from "./Button";
 import { LoadingSpinner } from "./LoadingComponents";
-import { AlertCircle, CheckCircle, Info, WifiOff, RefreshCw } from "lucide-react";
+import { AlertCircle, WifiOff, RefreshCw } from "lucide-react";
 
 // Componente para estados de error mejorados
 interface ErrorStateProps {

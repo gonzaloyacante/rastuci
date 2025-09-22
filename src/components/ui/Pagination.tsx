@@ -166,20 +166,19 @@ interface PaginationInfoProps {
   currentPage: number;
   totalPages: number;
   totalItems: number;
-  itemsPerPage: number;
+  startItem: number;
+  endItem: number;
   className?: string;
 }
 
 export function PaginationInfo({
   currentPage,
-  totalPages,
+  totalPages: _totalPages,
   totalItems,
-  itemsPerPage,
-  className = '',
+  startItem,
+  endItem,
+  className,
 }: PaginationInfoProps) {
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-
   return (
     <div className={`text-sm muted ${className}`}>
       Mostrando {startItem} a {endItem} de {totalItems} resultados

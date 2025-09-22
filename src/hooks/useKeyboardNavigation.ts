@@ -19,7 +19,11 @@ export function useKeyboardNavigation({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onEscape?.() || onClose();
+        if (onEscape) {
+          onEscape();
+        } else {
+          onClose();
+        }
       }
     };
 

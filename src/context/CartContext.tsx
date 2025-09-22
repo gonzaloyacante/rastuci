@@ -486,7 +486,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         success: true,
         orderId,
       };
-    } catch (_error) {
+    } catch {
       return {
         success: false,
         error: "Error al procesar el pedido",

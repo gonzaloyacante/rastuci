@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Check, X } from "lucide-react";
+import { Search, X, Check } from "lucide-react";
 
 interface SelectOption {
   value: string;
@@ -71,7 +71,7 @@ export const Select = ({
     setSearchTerm("");
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const _handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
       if (!isOpen) {

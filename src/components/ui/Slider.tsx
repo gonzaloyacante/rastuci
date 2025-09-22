@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface SliderProps {
   value: [number, number];
@@ -32,7 +32,7 @@ export function Slider({
     setIsDragging(thumb);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !sliderRef.current || disabled) return;
 
     const rect = sliderRef.current.getBoundingClientRect();
@@ -45,7 +45,7 @@ export function Slider({
     } else {
       onValueChange([value[0], Math.max(steppedValue, value[0])]);
     }
-  };
+  }, [isDragging, disabled, min, max, step, onValueChange, value]);
 
   const handleMouseUp = () => {
     setIsDragging(null);
