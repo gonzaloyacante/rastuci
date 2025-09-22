@@ -1,38 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { logger, getRequestId } from "@/lib/logger";
+import { normalizeApiError } from "@/lib/errors";
+import { ok, fail } from "@/lib/apiResponse";
 
 export async function POST(req: NextRequest) {
   try {
+    const requestId = getRequestId(req.headers);
     const accessToken = process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
-      return NextResponse.json(
-        { error: "Missing MP_ACCESS_TOKEN env var" },
-        { status: 500 }
-      );
+      return fail("INTERNAL_ERROR", "Missing MP_ACCESS_TOKEN env var", 500, { requestId });
     }
 
     // Basic rate limiting per IP for preference creation
-    const rl = checkRateLimit(req, {
-      key: "mp:preference",
-      limit: 30, // 30 requests / 15 minutes
-      windowMs: 15 * 60 * 1000,
-    });
+    const rl = checkRateLimit(req, { key: makeKey("POST", "/api/payments/mercadopago/preference"), ...getPreset("mutatingLow") });
     if (!rl.ok) {
-      return NextResponse.json(
-        { error: "Too many requests, please try again later." },
-        { status: 429 }
-      );
+      return fail("RATE_LIMITED", "Too many requests, please try again later.", 429, { requestId });
     }
 
     const body = await req.json();
     const { items = [], customer = null, metadata = {} } = body || {};
 
     if (!Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { error: "Items required to create preference" },
-        { status: 400 }
-      );
+      return fail("BAD_REQUEST", "Items required to create preference", 400, { requestId });
     }
 
     const origin =
@@ -43,10 +35,7 @@ export async function POST(req: NextRequest) {
     // Server-side validation: rebuild items from DB using metadata.items
     const metaItems = Array.isArray(metadata?.items) ? metadata.items : [];
     if (metaItems.length === 0) {
-      return NextResponse.json(
-        { error: "metadata.items es requerido para validar en el servidor" },
-        { status: 400 }
-      );
+      return fail("BAD_REQUEST", "metadata.items es requerido para validar en el servidor", 400, { requestId });
     }
 
     const productIds: string[] = metaItems.map((i: any) => String(i.productId));
@@ -145,19 +134,17 @@ export async function POST(req: NextRequest) {
 
     if (!resp.ok) {
       const err = await resp.text();
-      return NextResponse.json(
-        { error: "Failed to create preference", details: err },
-        { status: 500 }
-      );
+      logger.error("MP preference create failed", { requestId, details: err });
+      return fail("INTERNAL_ERROR", "Failed to create preference", 500, { requestId, details: err });
     }
 
     const data = await resp.json();
     // data.init_point (desktop) / data.sandbox_init_point; data.id preference id
-    return NextResponse.json({ init_point: data.init_point || data.sandbox_init_point, preference_id: data.id });
+    return ok({ init_point: data.init_point || data.sandbox_init_point, preference_id: data.id });
   } catch (e: any) {
-    return NextResponse.json(
-      { error: "Unexpected error", details: e?.message },
-      { status: 500 }
-    );
+    const requestId = getRequestId(req.headers);
+    logger.error("Unexpected error creating MP preference", { requestId, error: String(e) });
+    const n = normalizeApiError(e, "INTERNAL_ERROR", "Unexpected error", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }

@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, Montserrat, Poppins } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
-// import { NotificationProvider } from "@/context/NotificationContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import { WishlistProvider } from "@/context/WishlistContext";
+import SiteChrome from "@/components/layout/SiteChrome";
+import { SkipLink } from "@/components/ui/SkipLink";
+import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const inter = Inter({ subsets: ["latin"] });
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-});
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -99,23 +98,34 @@ export default function RootLayout({
         />
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <meta name="theme-color" content="#E91E63" />
+        <meta name="theme-color" content="var(--color-primary)" />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5"
         />
       </head>
-      <body
-        className={`${inter.className} ${montserrat.variable} ${poppins.variable}`}>
-        <CartProvider>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow" role="main">
-              {children}
-            </main>
-            <Footer />
-          </div>
-        </CartProvider>
+      <body className={`${inter.className} ${poppins.variable}`}>
+        <ThemeProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <ToastProvider>
+                <div className="min-h-screen flex flex-col">
+                  <SkipLink href="#main-content">
+                    Saltar al contenido principal
+                  </SkipLink>
+                  <SkipLink href="#navigation">
+                    Saltar a la navegación
+                  </SkipLink>
+                  <SiteChrome>
+                    <main id="main-content" role="main" tabIndex={-1}>
+                      {children}
+                    </main>
+                  </SiteChrome>
+                </div>
+              </ToastProvider>
+            </CartProvider>
+          </WishlistProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

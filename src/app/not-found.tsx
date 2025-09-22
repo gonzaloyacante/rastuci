@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/Button";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4">
+    <div className="flex flex-col items-center justify-center min-h-screen surface px-4">
       <div className="max-w-md text-center">
         <div className="mb-8">
-          <div className="text-[#E91E63] text-9xl font-bold">404</div>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+          <div className="text-primary text-9xl font-bold">404</div>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary">
             Página de la tienda no encontrada
           </h1>
-          <p className="mt-4 text-base text-gray-600">
+          <p className="mt-4 text-base muted">
             Lo sentimos, no pudimos encontrar la página que estás buscando en
             nuestra tienda.
           </p>

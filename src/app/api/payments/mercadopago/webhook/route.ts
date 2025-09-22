@@ -1,23 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { logger, getRequestId } from "@/lib/logger";
+import { normalizeApiError } from "@/lib/errors";
+import { ok, fail } from "@/lib/apiResponse";
 
 // Mercado Pago sends POST for notifications (may also retry). Keep idempotent.
 export async function POST(req: NextRequest) {
+  const requestId = getRequestId(req.headers);
   const accessToken = process.env.MP_ACCESS_TOKEN;
   if (!accessToken) {
-    return NextResponse.json({ error: "Missing MP_ACCESS_TOKEN" }, { status: 200 });
+    logger.error("MP webhook missing access token", { requestId });
+    return ok({ ok: true });
   }
   try {
     // Rate-limit webhook bursts per IP to protect server. If limited, ACK 200 to avoid retries.
-    const rl = checkRateLimit(req, {
-      key: "mp:webhook",
-      limit: 200, // 200 requests / 15 minutes per IP
-      windowMs: 15 * 60 * 1000,
-    });
+    const rl = checkRateLimit(req, { key: makeKey("POST", "/api/payments/mercadopago/webhook"), ...getPreset("publicReadHeavy") });
     if (!rl.ok) {
-      console.warn("[MP webhook] rate-limited", { key: rl.key });
-      return NextResponse.json({ ok: true });
+      logger.warn("[MP webhook] rate-limited", { requestId, key: rl.key });
+      return ok({ ok: true });
     }
 
     const data = await req.json().catch(() => ({}));
@@ -25,14 +27,14 @@ export async function POST(req: NextRequest) {
     const id = req.nextUrl.searchParams.get("data.id") || (data && (data.data?.id || data.id));
 
     if (!id) {
-      console.warn("[MP webhook] Missing payment id", { query: req.nextUrl.searchParams.toString(), body: data });
-      return NextResponse.json({ ok: true });
+      logger.warn("[MP webhook] Missing payment id", { requestId, query: req.nextUrl.searchParams.toString() });
+      return ok({ ok: true });
     }
 
     // Only handle payment notifications
     if (topic && topic !== "payment") {
-      console.log("[MP webhook] Non-payment topic received:", topic);
-      return NextResponse.json({ ok: true });
+      logger.info("[MP webhook] Non-payment topic received", { requestId, topic });
+      return ok({ ok: true });
     }
 
     // Fetch payment details from Mercado Pago
@@ -43,8 +45,8 @@ export async function POST(req: NextRequest) {
 
     if (!paymentResp.ok) {
       const txt = await paymentResp.text();
-      console.error("[MP webhook] Failed to fetch payment", id, txt);
-      return NextResponse.json({ ok: true });
+      logger.error("[MP webhook] Failed to fetch payment", { requestId, id, details: txt });
+      return ok({ ok: true });
     }
 
     const payment = await paymentResp.json();
@@ -62,8 +64,8 @@ export async function POST(req: NextRequest) {
 
     // Early exit if we cannot reconstruct items
     if (metaItems.length === 0) {
-      console.warn("[MP webhook] No metadata.items in payment", mpPaymentId);
-      return NextResponse.json({ ok: true });
+      logger.warn("[MP webhook] No metadata.items in payment", { requestId, mpPaymentId });
+      return ok({ ok: true });
     }
 
     const productIds: string[] = metaItems.map((i: any) => String(i.productId));
@@ -117,12 +119,12 @@ export async function POST(req: NextRequest) {
     // Idempotent upsert using mpPaymentId
     await prisma.$transaction(async (tx) => {
       // If order already exists, update status and return
-      const existing = await tx.order.findFirst({ where: { mpPaymentId } });
+      const existing = await tx.order.findFirst({ where: { mpPaymentId: mpPaymentId } });
       if (existing) {
         await tx.order.update({
           where: { id: existing.id },
           data: {
-            mpStatus,
+            mpStatus: mpStatus,
             status: mapStatus(mpStatus),
             updatedAt: new Date(),
           },
@@ -132,15 +134,15 @@ export async function POST(req: NextRequest) {
 
       const created = await tx.order.create({
         data: {
-          customerName,
-          customerPhone,
-          customerAddress,
-          customerEmail,
-          total,
+          customerName: customerName,
+          customerPhone: customerPhone,
+          customerAddress: customerAddress,
+          customerEmail: customerEmail,
+          total: total,
           status: mapStatus(mpStatus),
-          mpPaymentId,
+          mpPaymentId: mpPaymentId,
           mpPreferenceId: preferenceId,
-          mpStatus,
+          mpStatus: mpStatus,
           items: {
             create: orderItems.map((it) => ({
               productId: it.productId,
@@ -164,11 +166,11 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    return NextResponse.json({ ok: true });
+    return ok({ ok: true });
   } catch (e: any) {
-    console.error("[MP webhook] error", e);
+    logger.error("[MP webhook] error", { requestId, error: String(e) });
     // Always return 200 so MP stops retrying; log for later inspection
-    return NextResponse.json({ ok: true });
+    return ok({ ok: true });
   }
 }
 

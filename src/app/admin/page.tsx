@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -30,6 +30,8 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [capsLockOn, setCapsLockOn] = useState(false);
 
   // Form para login
   const {
@@ -53,6 +55,7 @@ export default function AdminLoginPage() {
   // Manejo de inicio de sesión
   const onLoginSubmit: SubmitHandler<LoginFormValues> = async (data) => {
     setLoading(true);
+    setAuthError(null);
     try {
       const result = await signIn("credentials", {
         redirect: false,
@@ -61,6 +64,7 @@ export default function AdminLoginPage() {
       });
 
       if (result?.error) {
+        setAuthError("Correo o contraseña incorrectos. Intenta nuevamente.");
         toast.error("Credenciales incorrectas");
         setLoading(false);
       } else {
@@ -99,21 +103,23 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+    <div className="flex flex-col items-center justify-center min-h-screen surface-secondary">
+      {/* Toaster para notificaciones */}
+      <Toaster position="top-right" />
+      <div className="w-full max-w-md p-8 space-y-6 surface rounded-xl shadow-lg border border-muted">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             {/* Logo de Rastući */}
-            <div className="h-20 w-20 bg-[#E91E63] rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
+            <div className="h-20 w-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
               R
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-primary">
             {showForgotPassword
               ? "Recuperar Contraseña"
               : "Administración Rastući"}
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="muted mt-2">
             {showForgotPassword
               ? "Ingresa tu correo para recibir instrucciones"
               : "Accede al panel de administración"}
@@ -124,6 +130,11 @@ export default function AdminLoginPage() {
           <form
             onSubmit={handleLoginSubmit(onLoginSubmit)}
             className="space-y-5">
+            {authError && (
+              <div className="surface text-error border border-error/60 rounded-md p-3 text-sm" role="alert" aria-live="assertive">
+                {authError}
+              </div>
+            )}
             <Input
               label="Correo electrónico"
               type="email"
@@ -132,15 +143,30 @@ export default function AdminLoginPage() {
               error={loginErrors.email?.message}
               disabled={loading}
               icon="mail"
+              autoComplete="username"
+              autoFocus
+              aria-invalid={!!loginErrors.email}
             />
             <Input
               label="Contraseña"
               type="password"
               placeholder="••••••••"
               {...registerLogin("password")}
-              error={loginErrors.password?.message}
+              error={loginErrors.password?.message || (authError ? "Credenciales incorrectas" : undefined)}
               disabled={loading}
               icon="lock"
+              autoComplete="current-password"
+              allowPasswordToggle
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                const caps = e.getModifierState && e.getModifierState('CapsLock');
+                if (typeof caps === 'boolean') setCapsLockOn(caps);
+              }}
+              onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                const caps = e.getModifierState && e.getModifierState('CapsLock');
+                if (typeof caps === 'boolean') setCapsLockOn(caps);
+              }}
+              aria-invalid={!!loginErrors.password || !!authError}
+              helpText={capsLockOn && !authError ? "Bloq Mayús está activado" : undefined}
             />
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -148,24 +174,24 @@ export default function AdminLoginPage() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-[#E91E63] focus:ring-[#E91E63] border-gray-300 rounded"
+                  className="h-4 w-4 text-primary focus:ring-primary border-muted rounded"
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-700">
+                  className="ml-2 block text-sm muted">
                   Recordarme
                 </label>
               </div>
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
-                className="text-sm font-medium text-[#E91E63] hover:text-[#C2185B]">
+                className="text-sm font-medium text-primary hover:text-primary/80">
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
             <Button
               type="submit"
-              className="w-full bg-[#E91E63] hover:bg-[#C2185B]"
+              className="w-full bg-primary hover:brightness-90"
               disabled={loading}>
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -194,7 +220,7 @@ export default function AdminLoginPage() {
             </Button>
 
             <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm muted">
                 * El acceso está restringido solo a administradores.
               </p>
             </div>
@@ -203,7 +229,7 @@ export default function AdminLoginPage() {
           <div className="space-y-5">
             {resetEmailSent ? (
               <div className="text-center py-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-500 mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full surface text-success border border-success mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-8 w-8"
@@ -218,16 +244,16 @@ export default function AdminLoginPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-primary">
                   Correo enviado
                 </h3>
-                <p className="text-gray-600 mt-2">
+                <p className="muted mt-2">
                   Revisa tu bandeja de entrada y sigue las instrucciones para
                   restablecer tu contraseña.
                 </p>
                 <Button
                   type="button"
-                  className="mt-6 w-full bg-[#E91E63] hover:bg-[#C2185B]"
+                  className="mt-6 w-full bg-primary hover:brightness-90"
                   onClick={() => {
                     setShowForgotPassword(false);
                     setResetEmailSent(false);
@@ -247,6 +273,7 @@ export default function AdminLoginPage() {
                   error={forgotPasswordErrors.email?.message}
                   disabled={loading}
                   icon="mail"
+                  autoComplete="email"
                 />
                 <div className="flex space-x-3">
                   <Button
@@ -259,7 +286,7 @@ export default function AdminLoginPage() {
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 bg-[#E91E63] hover:bg-[#C2185B]"
+                    className="flex-1 bg-primary hover:brightness-90"
                     disabled={loading}>
                     {loading ? (
                       <span className="flex items-center justify-center">
@@ -293,7 +320,7 @@ export default function AdminLoginPage() {
         )}
       </div>
 
-      <footer className="mt-8 text-center text-gray-600 text-sm">
+      <footer className="mt-8 text-center muted text-sm">
         <p>
           © {new Date().getFullYear()} Rastući. Todos los derechos reservados.
         </p>

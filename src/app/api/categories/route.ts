@@ -1,18 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Category } from "@/types";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { ok, fail } from "@/lib/apiResponse";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { CategoriesQuerySchema, CategoryCreateSchema } from "@/lib/validation/category";
+import { normalizeApiError } from "@/lib/errors";
 
 // GET /api/categories - Obtener todas las categorías con búsqueda y paginación
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<any>>> {
   try {
+    // Rate limit per IP to protect endpoint
+    const rl = checkRateLimit(request, {
+      key: makeKey("GET", "/api/categories"),
+      ...getPreset("publicRead"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
+
     const { searchParams } = new URL(request.url);
-    const page = Number(searchParams.get("page")) || 1;
-    const limit = Number(searchParams.get("limit")) || 20;
-    const search = searchParams.get("search") || "";
-    const includeProductCount =
-      searchParams.get("includeProductCount") === "true";
+    const parsed = CategoriesQuerySchema.safeParse({
+      page: searchParams.get("page") ?? undefined,
+      limit: searchParams.get("limit") ?? undefined,
+      search: searchParams.get("search") ?? undefined,
+      includeProductCount: searchParams.get("includeProductCount") ?? undefined,
+    });
+    if (!parsed.success) {
+      return fail("BAD_REQUEST", "Parámetros inválidos", 400, { issues: parsed.error.issues });
+    }
+    const { page, limit, search, includeProductCount } = parsed.data;
 
     // Filtros de búsqueda
     const where: Record<string, any> = {};
@@ -25,17 +44,19 @@ export async function GET(
 
     const offset = (page - 1) * limit;
 
-    // Obtener categorías con conteo de productos en una sola consulta
+    // Obtener categorías (incluir conteo solo si se solicita)
     const categoriesWithCount = await prisma.category.findMany({
       where,
       orderBy: { name: "asc" },
       skip: offset,
       take: limit,
-      include: {
-        _count: {
-          select: { products: true },
-        },
-      },
+      include: includeProductCount
+        ? {
+            _count: {
+              select: { products: true },
+            },
+          }
+        : undefined,
     });
 
     const total = await prisma.category.count({ where });
@@ -43,20 +64,19 @@ export async function GET(
     const transformedCategories = categoriesWithCount.map((category) => ({
       ...category,
       description: category.description ?? undefined,
-      productCount: category._count.products,
+      ...(includeProductCount
+        ? { productCount: (category as any)._count?.products ?? 0 }
+        : {}),
     }));
 
     const totalPages = Math.ceil(total / limit);
 
-    const response = NextResponse.json({
-      success: true,
-      data: {
-        data: transformedCategories,
-        total,
-        page,
-        limit,
-        totalPages,
-      },
+    const response = ok({
+      data: transformedCategories,
+      total,
+      page,
+      limit,
+      totalPages,
     });
 
     // Cache headers para el navegador
@@ -65,13 +85,8 @@ export async function GET(
     return response;
   } catch (error) {
     console.error("Error fetching categories:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al obtener las categorías",
-      },
-      { status: 500 }
-    );
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener las categorías", 500);
+    return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }
 
@@ -80,32 +95,27 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<Category>>> {
   try {
-    const body = await request.json();
-    const { name, description } = body;
-
-    if (!name) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El nombre de la categoría es requerido",
-        },
-        { status: 400 }
-      );
+    // Rate limit per IP to protect category creation
+    const rl = checkRateLimit(request, {
+      key: makeKey("POST", "/api/categories"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
     }
 
+    const json = await request.json();
+    const parsed = CategoryCreateSchema.safeParse(json);
+    if (!parsed.success) {
+      return fail("BAD_REQUEST", "Datos inválidos", 400, { issues: parsed.error.issues });
+    }
+    const { name, description } = parsed.data;
+
     // Verificar si ya existe una categoría con ese nombre
-    const existingCategory = await prisma.category.findUnique({
-      where: { name },
-    });
+    const existingCategory = await prisma.category.findUnique({ where: { name } });
 
     if (existingCategory) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Ya existe una categoría con ese nombre",
-        },
-        { status: 400 }
-      );
+      return fail("CONFLICT", "Ya existe una categoría con ese nombre", 409);
     }
 
     const category = await prisma.category.create({
@@ -120,19 +130,10 @@ export async function POST(
       description: category.description ?? undefined,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: transformedCategory,
-      message: "Categoría creada exitosamente",
-    });
+    return ok(transformedCategory, "Categoría creada exitosamente");
   } catch (error) {
     console.error("Error creating category:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al crear la categoría",
-      },
-      { status: 500 }
-    );
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear la categoría", 500);
+    return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }

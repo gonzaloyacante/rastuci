@@ -12,11 +12,11 @@ export default function Typography({
   const baseClasses = "font-semibold";
 
   const variantClasses = {
-    h1: "text-3xl font-bold text-[#333333]",
-    h2: "text-2xl font-bold text-[#333333]",
-    h3: "text-lg font-bold text-[#333333]",
-    body: "text-base text-[#666666]",
-    caption: "text-sm text-[#757575]",
+    h1: "text-3xl font-bold text-primary",
+    h2: "text-2xl font-bold text-primary",
+    h3: "text-lg font-bold text-primary",
+    body: "text-base muted",
+    caption: "text-sm muted",
   };
 
   const fontFamily = variant.startsWith("h")

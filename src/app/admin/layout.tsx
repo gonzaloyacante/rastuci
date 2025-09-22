@@ -156,23 +156,12 @@ const SidebarLink = ({
       onClick={onClick}
       className={`flex items-center ${
         isSidebarOpen ? "gap-3 px-4 py-3" : "justify-center p-3"
-      } rounded-lg transition-colors text-base font-medium font-bold cursor-pointer`}
-      style={isActive ? { background: "#fce7f3", color: "#e91e63" } : undefined}
-      onMouseOver={(e) => {
-        if (!isActive) {
-          (e.currentTarget as HTMLElement).style.background = "#fdf2f8";
-          (e.currentTarget as HTMLElement).style.color = "#e91e63";
-        }
-      }}
-      onMouseOut={(e) => {
-        if (!isActive) {
-          (e.currentTarget as HTMLElement).style.background = "";
-          (e.currentTarget as HTMLElement).style.color = "";
-        }
-      }}>
-      <span
-        className={`flex-shrink-0 flex items-center justify-center`}
-        style={isActive ? { color: "#e91e63" } : {}}>
+      } rounded-lg transition-colors text-base font-medium font-bold cursor-pointer ${
+        isActive
+          ? "surface-secondary text-primary"
+          : "hover:surface-secondary hover:text-primary"
+      }`}>
+      <span className={`flex-shrink-0 flex items-center justify-center ${isActive ? "text-primary" : ""}`}>
         {iconMap[link.icon]}
       </span>
       {isSidebarOpen && <span>{link.name}</span>}
@@ -216,7 +205,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <SessionProvider>
-      <div className="flex h-screen bg-[#F7F7FA] relative overflow-x-hidden">
+      <div className="flex h-screen surface relative overflow-x-hidden">
         {/* Sidebar */}
         <div
           className={`
@@ -228,12 +217,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   : "hidden"
                 : "relative"
             }
-            bg-white border-r border-[#ECECEC] transition-all duration-300 ease-in-out flex flex-col z-50 h-full shadow-sm
+            surface border-r border-muted transition-all duration-300 ease-in-out flex flex-col z-50 h-full shadow-sm
             ${isSidebarOpen ? "items-stretch" : "items-center"}
           `}>
           {/* Header */}
           <div
-            className={`p-4 border-b border-[#ECECEC] flex ${
+            className={`p-4 border-b border-muted flex ${
               isSidebarOpen
                 ? "items-center justify-between"
                 : "flex-col items-center justify-center gap-4"
@@ -244,18 +233,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   ? "flex items-center gap-2"
                   : "flex flex-col items-center"
               }>
-              <div className="h-10 w-10 bg-primary-50 rounded-full flex items-center justify-center text-primary-500 text-xl font-bold">
+              <div className="h-10 w-10 surface rounded-full flex items-center justify-center text-primary text-xl font-bold">
                 R
               </div>
               {isSidebarOpen && (
-                <span className="font-bold text-xl text-[#222] ml-2">
+                <span className="font-bold text-xl ml-2">
                   Rastuci
                 </span>
               )}
             </div>
             <button
               onClick={toggleSidebar}
-              className={`p-2 rounded-full hover:bg-primary-50 focus:outline-none transition-colors ${
+              className={`p-2 rounded-full hover-surface focus:outline-none transition-colors ${
                 isSidebarOpen ? "" : "mt-2"
               } cursor-pointer`}>
               {isSidebarOpen ? (
@@ -309,23 +298,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </nav>
           {/* Logout */}
           <div
-            className={`p-4 border-t border-[#ECECEC] mt-2 ${
+            className={`p-4 border-t border-muted mt-2 ${
               isSidebarOpen ? "" : "flex flex-col items-center"
             }`}>
             <button
               onClick={() => signOut({ callbackUrl: "/admin" })}
               className={`flex items-center ${
                 isSidebarOpen ? "w-full px-4 py-3" : "justify-center p-3"
-              } rounded-lg transition-colors text-[#E53935] font-medium gap-3 cursor-pointer`}
-              style={{ fontWeight: 600 }}
-              onMouseOver={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "#fdf2f8";
-                (e.currentTarget as HTMLElement).style.color = "#e91e63";
-              }}
-              onMouseOut={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "";
-                (e.currentTarget as HTMLElement).style.color = "#E53935";
-              }}>
+              } rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary`}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 flex-shrink-0"
@@ -347,7 +327,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
           {/* Mobile Header */}
           {isMobile && (
-            <div className="bg-white shadow-sm border-b border-gray-200 p-3 flex items-center justify-between lg:hidden">
+            <div className="surface shadow-sm border-b border-muted p-3 flex items-center justify-between lg:hidden">
               <h1 className="text-lg font-semibold text-content-primary">
                 Panel de Administración
               </h1>

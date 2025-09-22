@@ -23,6 +23,7 @@ export interface Product {
   name: string;
   description?: string;
   price: number;
+  salePrice?: number; // Precio con descuento
   stock: number;
   images: string[];
   onSale?: boolean;

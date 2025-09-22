@@ -92,37 +92,35 @@ export default function PendingOrdersPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Pedidos Pendientes</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold text-primary">Pedidos Pendientes</h1>
+        <p className="muted">
           Gestiona los pedidos que necesitan ser procesados
         </p>
       </div>
 
       {loading ? (
         <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E91E63]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       ) : orders.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {orders.map((order) => (
             <Card key={order.id} className="overflow-hidden">
-              <CardHeader className="bg-gray-50 border-b">
+              <CardHeader className="surface-secondary border-b border-muted">
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-lg">
                     {order.customerName}
                   </CardTitle>
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                    Pendiente
-                  </span>
+                  <span className="badge-warning text-xs">Pendiente</span>
                 </div>
-                <div className="text-sm text-gray-500 mt-1">
+                <div className="text-sm muted mt-1">
                   {formatDate(order.createdAt)}
                 </div>
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500">
+                    <h3 className="text-sm font-medium muted">
                       Información de contacto
                     </h3>
                     <p className="text-sm">{order.customerPhone}</p>
@@ -132,7 +130,7 @@ export default function PendingOrdersPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500">
+                    <h3 className="text-sm font-medium muted">
                       Productos
                     </h3>
                     <ul className="mt-2 space-y-2">
@@ -151,16 +149,16 @@ export default function PendingOrdersPage() {
                     </ul>
                   </div>
 
-                  <div className="flex justify-between pt-3 border-t">
+                  <div className="flex justify-between pt-3 border-t border-muted">
                     <span className="font-medium">Total:</span>
-                    <span className="font-bold text-[#E91E63]">
+                    <span className="font-bold text-primary">
                       {formatCurrency(order.total)}
                     </span>
                   </div>
 
                   <div className="flex space-x-3 pt-3">
                     <Button
-                      className="flex-1 bg-[#E91E63] hover:bg-[#C2185B]"
+                      className="flex-1"
                       onClick={() => updateOrderStatus(order.id, "PROCESSED")}>
                       Marcar como Procesado
                     </Button>
@@ -182,7 +180,7 @@ export default function PendingOrdersPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 text-gray-400 mb-4"
+              className="h-12 w-12 muted mb-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor">
@@ -193,10 +191,10 @@ export default function PendingOrdersPage() {
                 d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
               />
             </svg>
-            <h2 className="text-xl font-medium text-gray-900 mb-2">
+            <h2 className="text-xl font-medium text-primary mb-2">
               No hay pedidos pendientes
             </h2>
-            <p className="text-gray-500 mb-6 text-center max-w-md">
+            <p className="muted mb-6 text-center max-w-md">
               Todos los pedidos han sido procesados. ¡Buen trabajo!
             </p>
             <Link href="/admin/pedidos">

@@ -23,8 +23,8 @@ export default function SelectionButton({
   };
 
   const stateClasses = isSelected
-    ? "border-[#E91E63] bg-[#E91E63] text-white"
-    : "border-[#E0E0E0] hover:border-[#E91E63] text-[#333333]";
+    ? "border-primary bg-primary text-white"
+    : "border-muted hover:border-primary";
 
   return (
     <button

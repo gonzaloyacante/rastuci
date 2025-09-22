@@ -22,16 +22,16 @@ export const FormField: React.FC<FormFieldProps> = ({
 }) => {
   return (
     <div className={cn("space-y-2", className)}>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700">
+      <label htmlFor={name} className="block text-sm font-medium">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-error ml-1">*</span>}
       </label>
 
       {children}
 
-      {helpText && <p className="text-sm text-gray-500">{helpText}</p>}
+      {helpText && <p className="text-sm muted">{helpText}</p>}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
     </div>
   );
 };
@@ -81,8 +81,8 @@ export const TextField: React.FC<TextFieldProps> = ({
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed",
-          error && "border-red-500 focus:ring-red-500 focus:border-red-500"
+          "w-full px-3 py-2 border border-muted rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:surface-secondary disabled:cursor-not-allowed",
+          error && "border-error focus:ring-error focus:border-error"
         )}
       />
     </FormField>
@@ -134,8 +134,8 @@ export const TextAreaField: React.FC<TextAreaFieldProps> = ({
         rows={rows}
         disabled={disabled}
         className={cn(
-          "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed resize-vertical",
-          error && "border-red-500 focus:ring-red-500 focus:border-red-500"
+          "w-full px-3 py-2 border border-muted rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:surface-secondary disabled:cursor-not-allowed resize-vertical",
+          error && "border-error focus:ring-error focus:border-error"
         )}
       />
     </FormField>
@@ -185,8 +185,8 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={cn(
-          "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed",
-          error && "border-red-500 focus:ring-red-500 focus:border-red-500"
+          "w-full px-3 py-2 border border-muted rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:surface-secondary disabled:cursor-not-allowed",
+          error && "border-error focus:ring-error focus:border-error"
         )}>
         {placeholder && (
           <option value="" disabled>
@@ -241,11 +241,11 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
           onChange={(e) => onChange(e.target.checked)}
           disabled={disabled}
           className={cn(
-            "h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded disabled:bg-gray-100 disabled:cursor-not-allowed",
-            error && "border-red-500"
+            "h-4 w-4 text-primary focus:ring-primary border-muted rounded disabled:surface-secondary disabled:cursor-not-allowed",
+            error && "border-error"
           )}
         />
-        <label htmlFor={name} className="ml-2 block text-sm text-gray-900">
+        <label htmlFor={name} className="ml-2 block text-sm text-primary">
           {label}
         </label>
       </div>
@@ -296,13 +296,13 @@ export const RadioField: React.FC<RadioFieldProps> = ({
               onChange={(e) => onChange(e.target.value)}
               disabled={disabled}
               className={cn(
-                "h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed",
-                error && "border-red-500"
+                "h-4 w-4 text-primary focus:ring-primary border-muted disabled:surface-secondary disabled:cursor-not-allowed",
+                error && "border-error"
               )}
             />
             <label
               htmlFor={`${name}-${option.value}`}
-              className="ml-2 block text-sm text-gray-900">
+              className="ml-2 block text-sm text-primary">
               {option.label}
             </label>
           </div>

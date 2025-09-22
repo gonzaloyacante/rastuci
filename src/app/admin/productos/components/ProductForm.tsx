@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
+import { formatCurrency } from "@/utils/formatters";
 import {
   Package,
   FileText,
@@ -37,6 +38,10 @@ interface Product {
   stock: number;
   images: string;
   categoryId: string;
+  onSale?: boolean;
+  sizes?: string[];
+  colors?: string[];
+  features?: string[];
 }
 
 const productSchema = z.object({
@@ -49,6 +54,11 @@ const productSchema = z.object({
     .min(0, "El stock no puede ser negativo"),
   categoryId: z.string().nonempty("Debes seleccionar una categoría"),
   images: z.array(z.string()).optional(),
+  onSale: z.coerce.boolean().optional(),
+  // Campos de entrada de texto que luego transformaremos a arrays en onSubmit
+  sizesInput: z.string().optional(),
+  colorsInput: z.string().optional(),
+  featuresInput: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -80,6 +90,7 @@ export default function ProductForm({
     handleSubmit,
     formState: { errors },
     setValue,
+    watch,
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: initialData
@@ -90,6 +101,16 @@ export default function ProductForm({
             typeof initialData.images === "string"
               ? JSON.parse(initialData.images)
               : initialData.images || [],
+          onSale: initialData.onSale ?? false,
+          sizesInput: Array.isArray(initialData.sizes)
+            ? initialData.sizes.join(", ")
+            : "",
+          colorsInput: Array.isArray(initialData.colors)
+            ? initialData.colors.join(", ")
+            : "",
+          featuresInput: Array.isArray(initialData.features)
+            ? initialData.features.join("\n")
+            : "",
         }
       : {
           name: "",
@@ -98,6 +119,10 @@ export default function ProductForm({
           stock: 0,
           categoryId: "",
           images: [],
+          onSale: false,
+          sizesInput: "",
+          colorsInput: "",
+          featuresInput: "",
         },
   });
 
@@ -127,10 +152,35 @@ export default function ProductForm({
         imageUrls = [...imageUrls, ...uploadedUrls];
       }
 
-      const productData = { ...data, images: imageUrls };
+      // Transformar campos de texto a arrays limpios
+      const sizes = (data.sizesInput || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const colors = (data.colorsInput || "")
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+      const features = (data.featuresInput || "")
+        .split("\n")
+        .map((f) => f.trim())
+        .filter(Boolean);
+
+      const productData = {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        stock: data.stock,
+        categoryId: data.categoryId,
+        images: imageUrls,
+        onSale: data.onSale ?? false,
+        sizes,
+        colors,
+        features,
+      };
 
       if (initialData) {
-        await axios.patch(`/api/products/${initialData.id}`, productData);
+        await axios.put(`/api/products/${initialData.id}`, productData);
       } else {
         await axios.post("/api/products", productData);
       }
@@ -147,15 +197,15 @@ export default function ProductForm({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen surface py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#E91E63] rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
             <Package className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold">{title}</h1>
+          <p className="muted mt-2">
             {initialData
               ? "Modifica los datos del producto"
               : "Completa la información para crear un nuevo producto"}
@@ -163,7 +213,7 @@ export default function ProductForm({
         </div>
 
         <Card className="shadow-lg border-0">
-          <CardHeader className="bg-[#E91E63] text-white rounded-t-lg">
+          <CardHeader className="bg-primary text-white rounded-t-lg">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Package className="h-5 w-5" />
               Información del Producto
@@ -175,7 +225,7 @@ export default function ProductForm({
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2">
+                  className="block text-sm font-medium mb-2">
                   <Package className="h-4 w-4 inline mr-2" />
                   Nombre del Producto
                 </label>
@@ -183,24 +233,81 @@ export default function ProductForm({
                   id="name"
                   {...register("name")}
                   placeholder="Ej: iPhone 14 Pro, Laptop HP..."
-                  className={`transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] ${
-                    errors.name ? "border-red-300" : ""
+                  className={`transition-all duration-200 ${
+                    errors.name ? "border-error" : ""
                   }`}
                   disabled={loading}
                 />
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                  <p className="mt-1 text-sm text-error flex items-center gap-1">
+                    <span className="w-1 h-1 bg-error rounded-full"></span>
                     {errors.name.message}
                   </p>
                 )}
+              </div>
+
+              {/* Oferta */}
+              <div>
+                <label htmlFor="onSale" className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    id="onSale"
+                    type="checkbox"
+                    className="form-checkbox h-4 w-4"
+                    {...register("onSale")}
+                    disabled={loading}
+                  />
+                  <span>Marcar como oferta</span>
+                </label>
+              </div>
+
+              {/* Talles / Colores */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="sizesInput" className="block text-sm font-medium mb-2">
+                    Talles (separados por coma)
+                  </label>
+                  <Input
+                    id="sizesInput"
+                    placeholder="XS, S, M, L, XL"
+                    {...register("sizesInput")}
+                    disabled={loading}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="colorsInput" className="block text-sm font-medium mb-2">
+                    Colores (separados por coma)
+                  </label>
+                  <Input
+                    id="colorsInput"
+                    placeholder="Rojo, Azul, Negro"
+                    {...register("colorsInput")}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              {/* Características */}
+              <div>
+                <label htmlFor="featuresInput" className="block text-sm font-medium mb-2">
+                  Características (una por línea)
+                </label>
+                <textarea
+                  id="featuresInput"
+                  rows={4}
+                  placeholder={"• Batería de larga duración\n• Pantalla OLED 120Hz\n• Resistente al agua"}
+                  className={`form-input transition-all duration-200 ${
+                    errors.featuresInput ? "border-error" : ""
+                  }`}
+                  {...register("featuresInput")}
+                  disabled={loading}
+                />
               </div>
 
               {/* Descripción */}
               <div>
                 <label
                   htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2">
+                  className="block text-sm font-medium mb-2">
                   <FileText className="h-4 w-4 inline mr-2" />
                   Descripción (Opcional)
                 </label>
@@ -209,14 +316,14 @@ export default function ProductForm({
                   {...register("description")}
                   placeholder="Describe las características del producto..."
                   rows={4}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] ${
-                    errors.description ? "border-red-300" : ""
+                  className={`form-input transition-all duration-200 ${
+                    errors.description ? "border-error" : ""
                   }`}
                   disabled={loading}
                 />
                 {errors.description && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                  <p className="mt-1 text-sm text-error flex items-center gap-1">
+                    <span className="w-1 h-1 bg-error rounded-full"></span>
                     {errors.description.message}
                   </p>
                 )}
@@ -227,7 +334,7 @@ export default function ProductForm({
                 <div>
                   <label
                     htmlFor="price"
-                    className="block text-sm font-medium text-gray-700 mb-2">
+                    className="block text-sm font-medium mb-2">
                     <DollarSign className="h-4 w-4 inline mr-2" />
                     Precio
                   </label>
@@ -237,14 +344,17 @@ export default function ProductForm({
                     step="0.01"
                     {...register("price")}
                     placeholder="0.00"
-                    className={`transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] ${
-                      errors.price ? "border-red-300" : ""
+                    className={`transition-all duration-200 ${
+                      errors.price ? "border-error" : ""
                     }`}
                     disabled={loading}
                   />
+                  <p className="text-xs muted mt-1">
+                    Vista previa: {formatCurrency(Number(watch("price") || 0))}
+                  </p>
                   {errors.price && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                      <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <span className="w-1 h-1 bg-error rounded-full"></span>
                       {errors.price.message}
                     </p>
                   )}
@@ -253,7 +363,7 @@ export default function ProductForm({
                 <div>
                   <label
                     htmlFor="stock"
-                    className="block text-sm font-medium text-gray-700 mb-2">
+                    className="block text-sm font-medium mb-2">
                     <Hash className="h-4 w-4 inline mr-2" />
                     Stock
                   </label>
@@ -262,14 +372,14 @@ export default function ProductForm({
                     type="number"
                     {...register("stock")}
                     placeholder="0"
-                    className={`transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] ${
-                      errors.stock ? "border-red-300" : ""
+                    className={`transition-all duration-200 ${
+                      errors.stock ? "border-error" : ""
                     }`}
                     disabled={loading}
                   />
                   {errors.stock && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                      <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <span className="w-1 h-1 bg-error rounded-full"></span>
                       {errors.stock.message}
                     </p>
                   )}
@@ -280,7 +390,7 @@ export default function ProductForm({
               <div>
                 <label
                   htmlFor="categoryId"
-                  className="block text-sm font-medium text-gray-700 mb-2">
+                  className="block text-sm font-medium mb-2">
                   <Tag className="h-4 w-4 inline mr-2" />
                   Categoría
                 </label>
@@ -298,8 +408,8 @@ export default function ProductForm({
                   error={!!errors.categoryId}
                 />
                 {errors.categoryId && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                  <p className="mt-1 text-sm text-error flex items-center gap-1">
+                    <span className="w-1 h-1 bg-error rounded-full"></span>
                     {errors.categoryId.message}
                   </p>
                 )}
@@ -309,16 +419,16 @@ export default function ProductForm({
               <div>
                 <label
                   htmlFor="images"
-                  className="block text-sm font-medium text-gray-700 mb-2">
+                  className="block text-sm font-medium mb-2">
                   <Upload className="h-4 w-4 inline mr-2" />
                   Imágenes del Producto
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#E91E63] transition-colors duration-200">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <div className="flex text-sm text-gray-600">
+                <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center hover-surface transition-colors duration-200">
+                  <Upload className="mx-auto h-12 w-12 muted mb-4" />
+                  <div className="flex text-sm muted">
                     <label
                       htmlFor="images"
-                      className="relative cursor-pointer bg-white rounded-md font-medium text-[#E91E63] hover:text-[#C2185B] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#E91E63]">
+                      className="relative cursor-pointer surface rounded-md font-medium text-primary hover-surface focus-within:outline-none">
                       <span>Seleccionar archivos</span>
                       <input
                         id="images"
@@ -334,7 +444,7 @@ export default function ProductForm({
                     </label>
                     <p className="pl-1">o arrastra y suelta</p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs muted mt-2">
                     PNG, JPG, GIF hasta 10MB cada una
                   </p>
                   {imageFiles.length > 0 && (
@@ -342,7 +452,7 @@ export default function ProductForm({
                       {imageFiles.map((file, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#E91E63] text-white">
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary text-white">
                           {file.name}
                         </span>
                       ))}
@@ -356,7 +466,8 @@ export default function ProductForm({
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-[#E91E63] hover:bg-[#C2185B] text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                  variant="hero"
+                  className="flex-1">
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -373,7 +484,7 @@ export default function ProductForm({
                   type="button"
                   variant="outline"
                   onClick={() => router.push("/admin/productos")}
-                  className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
+                  className="flex-1 font-semibold flex items-center justify-center gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Volver
                 </Button>

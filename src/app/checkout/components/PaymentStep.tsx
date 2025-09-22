@@ -60,12 +60,12 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-2xl font-bold mb-6">Método de Pago</h2>
+      <div className="surface p-6 rounded-lg shadow-sm border border-muted">
+        <h2 className="text-2xl font-bold mb-6 text-primary">Método de Pago</h2>
 
         {/* Mensaje de error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md mb-4">
+          <div className="surface border border-error text-error p-3 rounded-md mb-4">
             {error}
           </div>
         )}
@@ -77,8 +77,8 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
               key={method.id}
               className={`border rounded-lg p-4 transition-all ${
                 selectedPaymentMethod?.id === method.id
-                  ? "border-[#E91E63] bg-pink-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-primary surface"
+                  : "border-muted surface hover:border-primary"
               }`}
               onClick={() => handleSelectPayment(method)}>
               <div className="flex justify-between items-center">
@@ -86,20 +86,20 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
                   <span
                     className={`mt-1 ${
                       selectedPaymentMethod?.id === method.id
-                        ? "text-[#E91E63]"
-                        : "text-gray-500"
+                        ? "text-primary"
+                        : "muted"
                     }`}>
                     {getPaymentIcon(method.icon)}
                   </span>
                   <div>
                     <h3 className="font-semibold text-lg">{method.name}</h3>
-                    <p className="text-gray-600 text-sm">
+                    <p className="muted text-sm">
                       {method.description}
                     </p>
                   </div>
                 </div>
                 {selectedPaymentMethod?.id === method.id && (
-                  <div className="w-6 h-6 rounded-full bg-[#E91E63] flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full btn-hero flex items-center justify-center">
                     <Check size={16} className="text-white" />
                   </div>
                 )}
@@ -110,22 +110,22 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
 
         {/* Información adicional según el método seleccionado */}
         {selectedPaymentMethod && (
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <div className="mt-6 p-4 surface border border-muted rounded-lg">
             {selectedPaymentMethod.id === "credit" && (
               <div className="space-y-4">
                 <h3 className="font-medium">Información de la Tarjeta</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm muted">
                   Al finalizar la compra, serás redirigido a una pasarela de
                   pago segura para completar la transacción.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <div className="h-8 w-12 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                  <div className="h-8 w-12 surface border border-muted rounded flex items-center justify-center text-primary text-xs font-bold">
                     VISA
                   </div>
-                  <div className="h-8 w-12 bg-red-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                  <div className="h-8 w-12 surface border border-muted rounded flex items-center justify-center text-primary text-xs font-bold">
                     MC
                   </div>
-                  <div className="h-8 w-12 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                  <div className="h-8 w-12 surface border border-muted rounded flex items-center justify-center text-primary text-xs font-bold">
                     AMEX
                   </div>
                 </div>
@@ -135,7 +135,7 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
             {selectedPaymentMethod.id === "mercadopago" && (
               <div className="space-y-4">
                 <h3 className="font-medium">Pago con MercadoPago</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm muted">
                   Al finalizar la compra, serás redirigido a MercadoPago para
                   completar el pago de forma segura.
                 </p>
@@ -145,7 +145,7 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
             {selectedPaymentMethod.id === "transfer" && (
               <div className="space-y-4">
                 <h3 className="font-medium">Transferencia Bancaria</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm muted">
                   Recibirás los datos bancarios por email al finalizar la
                   compra. Tu pedido se procesará una vez confirmado el pago.
                 </p>
@@ -155,7 +155,7 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
             {selectedPaymentMethod.id === "cash" && (
               <div className="space-y-4">
                 <h3 className="font-medium">Pago en Efectivo</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm muted">
                   Pagarás al recibir tu pedido. Asegúrate de tener el importe
                   exacto disponible.
                 </p>
@@ -169,7 +169,7 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
           <Button
             onClick={handleContinue}
             disabled={!selectedPaymentMethod}
-            className="bg-[#E91E63] text-white hover:bg-[#C2185B]">
+            className="btn-hero">
             Continuar
             <ChevronRight className="ml-2" size={16} />
           </Button>

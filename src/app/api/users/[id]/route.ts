@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "@/types";
+import { logger, getRequestId } from "@/lib/logger";
+import { ok, fail } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 interface SafeUser {
   id: string;
@@ -16,6 +21,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("GET", "/api/users/[id]"), ...getPreset("publicRead") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
     const { id } = await params;
 
     const user = await prisma.user.findUnique({
@@ -23,13 +31,7 @@ export async function GET(
     });
 
     if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Usuario no encontrado",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Usuario no encontrado", 404, { requestId });
     }
 
     const safeUser = {
@@ -39,19 +41,12 @@ export async function GET(
       isAdmin: user.isAdmin,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: safeUser,
-    });
+    return ok(safeUser);
   } catch (error) {
-    console.error("Error fetching user:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al obtener el usuario",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error fetching user", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener el usuario", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
@@ -61,6 +56,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("PATCH", "/api/users/[id]"), ...getPreset("mutatingLow") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
     const { id } = await params;
     const body = await request.json();
     const { name, email, password, isAdmin } = body;
@@ -71,13 +69,7 @@ export async function PATCH(
     });
 
     if (!existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Usuario no encontrado",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Usuario no encontrado", 404, { requestId });
     }
 
     // Verificar si el email ya está en uso por otro usuario
@@ -87,13 +79,7 @@ export async function PATCH(
       });
 
       if (emailInUse) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "El email ya está registrado",
-          },
-          { status: 400 }
-        );
+        return fail("CONFLICT", "El email ya está registrado", 400, { requestId });
       }
     }
 
@@ -128,19 +114,12 @@ export async function PATCH(
       isAdmin: user.isAdmin,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: safeUser,
-    });
+    return ok(safeUser);
   } catch (error) {
-    console.error("Error updating user:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al actualizar el usuario",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error updating user", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el usuario", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
@@ -150,6 +129,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("DELETE", "/api/users/[id]"), ...getPreset("mutatingLow") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
     const { id } = await params;
 
     // Verificar si el usuario existe
@@ -158,13 +140,7 @@ export async function DELETE(
     });
 
     if (!existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Usuario no encontrado",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Usuario no encontrado", 404, { requestId });
     }
 
     // Eliminar el usuario
@@ -172,18 +148,11 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: null,
-    });
+    return ok(null);
   } catch (error) {
-    console.error("Error deleting user:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al eliminar el usuario",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error deleting user", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al eliminar el usuario", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }

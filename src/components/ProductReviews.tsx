@@ -83,13 +83,13 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-gray-200 rounded animate-pulse w-1/3" />
+        <div className="h-8 surface border border-muted rounded animate-pulse w-1/3" />
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-4 bg-gray-100 rounded-lg">
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-1/4 mb-2" />
-              <div className="h-3 bg-gray-200 rounded animate-pulse w-full mb-1" />
-              <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4" />
+            <div key={i} className="p-4 surface border border-muted rounded-lg">
+              <div className="h-4 surface border border-muted rounded animate-pulse w-1/4 mb-2" />
+              <div className="h-3 surface border border-muted rounded animate-pulse w-full mb-1" />
+              <div className="h-3 surface border border-muted rounded animate-pulse w-3/4" />
             </div>
           ))}
         </div>
@@ -100,7 +100,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
   return (
     <section className="mb-12" aria-labelledby="reviews-title">
       <div className="flex items-center justify-between mb-6">
-        <h2 id="reviews-title" className="text-2xl font-bold text-gray-900">
+        <h2 id="reviews-title" className="text-2xl font-bold text-primary">
           Reseñas de clientes
         </h2>
         <div className="flex items-center space-x-2">
@@ -109,15 +109,11 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
               <Star
                 key={i}
                 size={20}
-                className={`${
-                  i < Math.round(averageRating)
-                    ? "text-yellow-400 fill-current"
-                    : "text-gray-300"
-                }`}
+                className={`${i < Math.round(averageRating) ? "text-primary fill-current" : "muted"}`}
               />
             ))}
           </div>
-          <span className="text-gray-600">
+          <span className="muted">
             {averageRating.toFixed(1)} ({reviews.length} reseñas)
           </span>
         </div>
@@ -125,7 +121,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
       {reviews.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-500">
+          <p className="muted">
             Aún no hay reseñas para este producto.
           </p>
         </div>
@@ -136,11 +132,11 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-pink-600" />
+                    <div className="w-8 h-8 surface border border-muted rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-primary">
                         {review.userName}
                       </p>
                       <div className="flex items-center space-x-1">
@@ -148,21 +144,17 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                           <Star
                             key={i}
                             size={14}
-                            className={`${
-                              i < review.rating
-                                ? "text-yellow-400 fill-current"
-                                : "text-gray-300"
-                            }`}
+                            className={`${i < review.rating ? "text-primary fill-current" : "muted"}`}
                           />
                         ))}
                       </div>
                     </div>
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm muted">
                     {formatDate(review.createdAt)}
                   </span>
                 </div>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-primary leading-relaxed">
                   {review.comment}
                 </p>
               </CardContent>

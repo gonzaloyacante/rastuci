@@ -21,9 +21,9 @@ export default function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="text-center py-20">
-      <Icon size={64} className="mx-auto text-gray-300 mb-4" />
-      <h2 className="text-2xl font-semibold mb-2 text-gray-900">{title}</h2>
-      <p className="text-gray-600 mb-6 max-w-md mx-auto">{description}</p>
+      <Icon size={64} className="mx-auto muted mb-4" />
+      <h2 className="text-2xl font-semibold mb-2 text-primary">{title}</h2>
+      <p className="muted mb-6 max-w-md mx-auto">{description}</p>
 
       {actionText && actionHref && (
         <Link href={actionHref}>

@@ -1,14 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { DashboardStats as IDashboardStats } from "@/hooks/useDashboard";
+import { formatCurrency } from "@/utils/formatters";
 
 interface DashboardStatsProps {
   stats: IDashboardStats | null;
   loading: boolean;
 }
-
-const formatCurrency = (value: number) => {
-  return `$${value.toLocaleString("es-CO")}`;
-};
 
 export const DashboardStats = ({ stats, loading }: DashboardStatsProps) => {
   const statCards = [

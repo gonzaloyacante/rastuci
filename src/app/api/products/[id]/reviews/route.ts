@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, ProductReview } from "@/types";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { ok, fail } from "@/lib/apiResponse";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { ProductReviewCreateSchema } from "@/lib/validation/product";
 
 interface RouteParams {
   params: Promise<{
@@ -14,6 +18,13 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<ProductReview[]>>> {
   try {
+    const rl = checkRateLimit(request, {
+      key: makeKey("GET", "/api/products/[id]/reviews"),
+      ...getPreset("publicRead"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
     const { id } = await params;
 
     const reviews = await prisma.productReview.findMany({
@@ -21,19 +32,10 @@ export async function GET(
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: reviews,
-    });
+    return ok(reviews);
   } catch (error) {
     console.error("Error fetching reviews:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al obtener las reseñas",
-      },
-      { status: 500 }
-    );
+    return fail("INTERNAL_ERROR", "Error al obtener las reseñas", 500);
   }
 }
 
@@ -43,30 +45,20 @@ export async function POST(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<ProductReview>>> {
   try {
+    const rl = checkRateLimit(request, {
+      key: makeKey("POST", "/api/products/[id]/reviews"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
     const { id } = await params;
     const body = await request.json();
-    const { rating, comment, customerName } = body;
-
-    // Validaciones
-    if (!rating || rating < 1 || rating > 5) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El rating debe estar entre 1 y 5",
-        },
-        { status: 400 }
-      );
+    const parsed = ProductReviewCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return fail("BAD_REQUEST", "Datos inválidos", 400, { issues: parsed.error.issues });
     }
-
-    if (!customerName) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El nombre del cliente es requerido",
-        },
-        { status: 400 }
-      );
-    }
+    const { rating, comment, customerName } = parsed.data;
 
     // Verificar que el producto existe
     const product = await prisma.product.findUnique({
@@ -74,13 +66,7 @@ export async function POST(
     });
 
     if (!product) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Producto no encontrado",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Producto no encontrado", 404);
     }
 
     // Crear la reseña
@@ -109,18 +95,9 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: review,
-    });
+    return ok(review);
   } catch (error) {
     console.error("Error creating review:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al crear la reseña",
-      },
-      { status: 500 }
-    );
+    return fail("INTERNAL_ERROR", "Error al crear la reseña", 500);
   }
 }

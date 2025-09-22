@@ -83,25 +83,25 @@ export default function OrdersPage() {
     switch (status) {
       case "PENDING":
         return (
-          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+          <span className="badge-warning text-xs">
             Pendiente
           </span>
         );
       case "PROCESSED":
         return (
-          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+          <span className="badge-info text-xs">
             Procesado
           </span>
         );
       case "DELIVERED":
         return (
-          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+          <span className="badge-success text-xs">
             Entregado
           </span>
         );
       default:
         return (
-          <span className="px-2 py-1 badge-secondary text-xs font-medium rounded-full">
+          <span className="badge-secondary text-xs">
             Desconocido
           </span>
         );

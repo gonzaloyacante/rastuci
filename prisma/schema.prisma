@@ -12,6 +12,7 @@ model Category {
   id          String    @id @default(cuid())
   name        String    @unique
   description String?
+  imageUrl    String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
@@ -24,6 +25,7 @@ model Product {
   name        String
   description String?
   price       Float
+  salePrice   Float?
   stock       Int         @default(0)
   images      String
   onSale      Boolean     @default(false)
@@ -40,6 +42,12 @@ model Product {
   category    Category    @relation(fields: [categoryId], references: [id])
 
   @@map("products")
+  @@index([name])
+  @@index([categoryId])
+  @@index([onSale])
+  @@index([price])
+  @@index([createdAt])
+  @@index([categoryId, onSale])
 }
 
 model Order {
@@ -54,12 +62,14 @@ model Order {
   items           OrderItem[]
 
   // Mercado Pago integration fields
-  mpPaymentId     String?     @unique
+  mpPaymentId     String?
   mpPreferenceId  String?
   mpStatus        String?
   customerEmail   String?
 
   @@map("orders")
+  @@index([status])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -70,7 +80,7 @@ model OrderItem {
   productId String
   size      String?
   color     String?
-  order     Order   @relation(fields: [orderId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
 
   @@map("order_items")
@@ -138,4 +148,14 @@ enum OrderStatus {
   PENDING
   PROCESSED
   DELIVERED
+}
+
+/// Key-value JSON settings store for CMS-like editable content (e.g., homepage)
+model Setting {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
 }

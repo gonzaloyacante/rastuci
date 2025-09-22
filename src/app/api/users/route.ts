@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "@/types";
+import { logger, getRequestId } from "@/lib/logger";
+import { ok, fail } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 interface SafeUser {
   id: string;
@@ -10,15 +15,70 @@ interface SafeUser {
   isAdmin: boolean;
 }
 
+// PATCH /api/users - Actualizar password/isAdmin por email (para recuperar acceso admin)
+export async function PATCH(
+  request: NextRequest
+): Promise<NextResponse<ApiResponse<SafeUser>>> {
+  try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("PATCH", "/api/users"), ...getPreset("mutatingLow") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+
+    const body = await request.json();
+    const email = (body.email || "").trim();
+    const password = body.password as string | undefined;
+    const isAdmin = body.isAdmin as boolean | undefined;
+
+    if (!email) {
+      return fail("BAD_REQUEST", "Email es requerido", 400, { requestId });
+    }
+    if (!password || password.length < 6) {
+      return fail("BAD_REQUEST", "La contraseña debe tener al menos 6 caracteres", 400, { requestId });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Intentar actualizar si existe, si no crear
+    const existing = await prisma.user.findUnique({ where: { email } });
+    const user = existing
+      ? await prisma.user.update({
+          where: { email },
+          data: { password: hashedPassword, ...(typeof isAdmin === 'boolean' ? { isAdmin } : {}) },
+        })
+      : await prisma.user.create({
+          data: { email, name: body.name || "", password: hashedPassword, isAdmin: !!isAdmin },
+        });
+
+    const safeUser: SafeUser = {
+      id: user.id,
+      name: user.name || "",
+      email: user.email || "",
+      isAdmin: user.isAdmin,
+    };
+
+    return ok(safeUser);
+  } catch (error) {
+    const requestId = getRequestId(request.headers);
+    logger.error("Error updating user via PATCH", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el usuario", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
+  }
+}
+
 // GET /api/users - Obtener todos los usuarios
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<any>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("GET", "/api/users"), ...getPreset("publicRead") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
     const { searchParams } = new URL(request.url);
-    const page = Number(searchParams.get("page")) || 1;
-    const limit = Number(searchParams.get("limit")) || 20;
-    const search = searchParams.get("search") || "";
+    const pageRaw = Number(searchParams.get("page")) || 1;
+    const limitRaw = Number(searchParams.get("limit")) || 20;
+    const search = (searchParams.get("search") || "").trim().slice(0, 100);
+    const page = Math.max(1, Math.min(1000, pageRaw));
+    const limit = Math.max(1, Math.min(50, limitRaw));
 
     const where: Record<string, any> = {};
     if (search) {
@@ -46,25 +106,18 @@ export async function GET(
     }));
 
     const totalPages = Math.ceil(total / limit);
-    return NextResponse.json({
-      success: true,
-      data: {
-        data: safeUsers,
-        total,
-        page,
-        limit,
-        totalPages,
-      },
+    return ok({
+      data: safeUsers,
+      total,
+      page,
+      limit,
+      totalPages,
     });
   } catch (error) {
-    console.error("Error fetching users:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al obtener los usuarios",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error fetching users", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los usuarios", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
@@ -73,18 +126,15 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("POST", "/api/users"), ...getPreset("mutatingLow") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
     const body = await request.json();
     const { name, email, password, isAdmin } = body;
 
     // Validaciones
     if (!name || !email || !password) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Todos los campos son requeridos",
-        },
-        { status: 400 }
-      );
+      return fail("BAD_REQUEST", "Todos los campos son requeridos", 400, { requestId });
     }
 
     // Verificar si el email ya existe
@@ -93,13 +143,7 @@ export async function POST(
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El email ya está registrado",
-        },
-        { status: 400 }
-      );
+      return fail("CONFLICT", "El email ya está registrado", 400, { requestId });
     }
 
     // Encriptar la contraseña
@@ -123,18 +167,11 @@ export async function POST(
       isAdmin: user.isAdmin,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: safeUser,
-    });
+    return ok(safeUser);
   } catch (error) {
-    console.error("Error creating user:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al crear el usuario",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error creating user", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el usuario", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }

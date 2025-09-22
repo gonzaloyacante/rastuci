@@ -253,16 +253,16 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="bg-white text-[#333333] min-h-screen flex flex-col">
+    <div className="surface text-primary min-h-screen flex flex-col">
       <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
         {statusMessage && (
           <div
-            className={`mb-6 rounded-md p-4 text-sm ${
+            className={`mb-6 rounded-md p-4 text-sm surface border ${
               statusType === "success"
-                ? "bg-green-50 text-green-800 border border-green-200"
+                ? "text-success border-success"
                 : statusType === "pending"
-                ? "bg-yellow-50 text-yellow-800 border border-yellow-200"
-                : "bg-red-50 text-red-800 border border-red-200"
+                ? "text-warning border-warning"
+                : "text-error border-error"
             }`}
           >
             {statusMessage}
@@ -270,7 +270,7 @@ export default function CheckoutPage() {
         )}
         {currentStep !== CheckoutStep.CONFIRMATION ? (
           <>
-            <h1 className="text-3xl font-bold text-[#333333] mb-8">Checkout</h1>
+            <h1 className="text-3xl font-bold text-primary mb-8">Checkout</h1>
 
             {/* Indicador de progreso (sin Paso de Pago) */}
             <div className="mb-10">
@@ -286,23 +286,23 @@ export default function CheckoutPage() {
                       className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         // Considerar la posición real del paso visible respecto al currentStep
                         visibleSteps[index] <= currentStep
-                          ? "bg-[#E91E63] text-white"
-                          : "bg-gray-200 text-gray-600"
+                          ? "bg-primary text-white"
+                          : "surface muted"
                       } ${visibleSteps[index] < currentStep ? "cursor-pointer" : ""} z-10`}>
                       {index + 1}
                     </div>
                     <span
                       className={`text-xs mt-2 ${
                         visibleSteps[index] <= currentStep
-                          ? "text-[#333333] font-medium"
-                          : "text-gray-500"
+                          ? "text-primary font-medium"
+                          : "muted"
                       } ${visibleSteps[index] < currentStep ? "cursor-pointer" : ""}`}>
                       {step}
                     </span>
                     {index < stepNames.length - 2 && (
                       <div
                         className={`absolute top-5 w-full h-[2px] ${
-                          visibleSteps[index] < currentStep ? "bg-[#E91E63]" : "bg-gray-200"
+                          visibleSteps[index] < currentStep ? "bg-primary" : "surface"
                         }`}
                         style={{ left: "50%" }}></div>
                     )}
@@ -323,13 +323,13 @@ export default function CheckoutPage() {
             <div className="flex justify-between mt-10">
               <Button
                 onClick={goToPreviousStep}
-                className="bg-gray-200 text-gray-800 hover:bg-gray-300">
+                className="surface text-primary hover:brightness-95">
                 <ChevronLeft className="mr-2" size={16} />
                 Volver
               </Button>
               <Button
                 onClick={goToNextStep}
-                className="bg-[#E91E63] text-white hover:bg-[#C2185B]">
+                className="bg-primary text-white hover:brightness-90">
                 Continuar
                 <ChevronRight className="ml-2" size={16} />
               </Button>

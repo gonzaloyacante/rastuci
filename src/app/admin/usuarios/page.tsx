@@ -121,7 +121,7 @@ export default function UsuariosPage() {
             {users.map((user: User) => (
               <div
                 key={user.id}
-                className="border rounded-lg p-4 space-y-3 bg-white shadow-sm">
+                className="border rounded-lg p-4 space-y-3 surface shadow-sm">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export default function UsuariosPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-border">
+              <tbody className="surface divide-y divide-border">
                 {users.map((user: User) => (
                   <tr key={user.id}>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -53,6 +53,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  const removeNotification = useCallback((id: string) => {
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== id)
+    );
+  }, []);
+
   const addNotification = useCallback(
     (notification: Omit<Notification, "id">) => {
       const id = Math.random().toString(36).substr(2, 9);
@@ -67,14 +73,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         }, notification.duration || 5000);
       }
     },
-    []
+    [removeNotification]
   );
-
-  const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
-  }, []);
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);
@@ -82,56 +82,21 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   const showToast = useCallback(
     (type: NotificationType, message: string, options?: ToastOptions) => {
-      const defaultOptions: ToastOptions = {
+      const base: ToastOptions = {
         duration: 4000,
         position: "top-center",
-        style: {
-          borderRadius: "12px",
-          background: "#fff",
-          color: "#333",
-          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
-          border: "1px solid #e5e7eb",
-          padding: "16px",
-          minWidth: "300px",
-        },
+        className:
+          "surface border border-muted text-primary rounded-xl shadow-md px-4 py-3 min-w-[280px]",
       };
 
-      const typeStyles: Record<NotificationType, ToastOptions> = {
-        success: {
-          ...defaultOptions,
-          icon: "✅",
-          style: {
-            ...defaultOptions.style,
-            borderLeft: "4px solid #10b981",
-          },
-        },
-        error: {
-          ...defaultOptions,
-          icon: "❌",
-          style: {
-            ...defaultOptions.style,
-            borderLeft: "4px solid #ef4444",
-          },
-        },
-        warning: {
-          ...defaultOptions,
-          icon: "⚠️",
-          style: {
-            ...defaultOptions.style,
-            borderLeft: "4px solid #f59e0b",
-          },
-        },
-        info: {
-          ...defaultOptions,
-          icon: "ℹ️",
-          style: {
-            ...defaultOptions.style,
-            borderLeft: "4px solid #3b82f6",
-          },
-        },
+      const byType: Record<NotificationType, ToastOptions> = {
+        success: { ...base, icon: "✅", className: `${base.className} border-success` },
+        error: { ...base, icon: "❌", className: `${base.className} border-error` },
+        warning: { ...base, icon: "⚠️", className: `${base.className} border-warning` },
+        info: { ...base, icon: "ℹ️", className: `${base.className} border-info` },
       };
 
-      toast(message, { ...typeStyles[type], ...options });
+      toast(message, { ...byType[type], ...options });
     },
     []
   );
@@ -183,26 +148,26 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const getIcon = (type: NotificationType) => {
     switch (type) {
       case "success":
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-success" />;
       case "error":
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="w-5 h-5 text-error" />;
       case "warning":
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return <AlertCircle className="w-5 h-5 text-warning" />;
       case "info":
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-5 h-5 text-info" />;
     }
   };
 
   const getBorderColor = (type: NotificationType) => {
     switch (type) {
       case "success":
-        return "border-green-200 bg-green-50";
+        return "border-success surface";
       case "error":
-        return "border-red-200 bg-red-50";
+        return "border-error surface";
       case "warning":
-        return "border-yellow-200 bg-yellow-50";
+        return "border-warning surface";
       case "info":
-        return "border-blue-200 bg-blue-50";
+        return "border-info surface";
     }
   };
 
@@ -214,26 +179,26 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       <div className="flex items-start space-x-3">
         {getIcon(notification.type)}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-gray-900">
+          <h4 className="text-sm font-medium text-primary">
             {notification.title}
           </h4>
           {notification.message && (
-            <p className="mt-1 text-sm text-gray-600">{notification.message}</p>
+            <p className="mt-1 text-sm muted">{notification.message}</p>
           )}
           {notification.action && (
             <button
               onClick={notification.action.onClick}
-              className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-500">
+              className="mt-2 text-sm font-medium text-primary hover:opacity-90">
               {notification.action.label}
             </button>
           )}
         </div>
         <button
           onClick={onRemove}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-600">
+          className="flex-shrink-0 muted hover:text-primary">
           <X className="w-4 h-4" />
         </button>
       </div>
     </div>
   );
-};
+}

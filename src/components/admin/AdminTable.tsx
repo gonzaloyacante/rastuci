@@ -54,7 +54,7 @@ export const AdminTable = <T extends Record<string, unknown>>({
 
   if (loading) {
     return (
-      <Card className={`bg-white rounded-xl shadow ${className}`}>
+      <Card className={`surface rounded-xl shadow ${className}`}>
         {title && (
           <CardHeader>
             <CardTitle>{title}</CardTitle>
@@ -71,14 +71,14 @@ export const AdminTable = <T extends Record<string, unknown>>({
 
   if (data.length === 0) {
     return (
-      <Card className={`bg-white rounded-xl shadow ${className}`}>
+      <Card className={`surface rounded-xl shadow ${className}`}>
         {title && (
           <CardHeader>
             <CardTitle>{title}</CardTitle>
           </CardHeader>
         )}
         <CardContent>
-          <div className="text-center py-8 text-content-secondary">
+          <div className="text-center py-8 muted">
             <p>{emptyMessage}</p>
           </div>
         </CardContent>
@@ -87,10 +87,10 @@ export const AdminTable = <T extends Record<string, unknown>>({
   }
 
   return (
-    <Card className={`bg-white rounded-xl shadow ${className}`}>
+    <Card className={`surface rounded-xl shadow ${className}`}>
       {title && (
         <CardHeader>
-          <CardTitle className="text-lg font-bold text-[#222]">
+          <CardTitle className="text-lg font-bold text-primary">
             {title}
           </CardTitle>
         </CardHeader>
@@ -99,19 +99,19 @@ export const AdminTable = <T extends Record<string, unknown>>({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#ECECEC] bg-[#F7F7FA]">
+              <tr className="border-b border-muted surface">
                 {columns.map((column) => (
                   <th
                     key={column.key}
                     className={`${getAlignClass(
                       column.align
-                    )} p-4 font-semibold text-[#444] tracking-wide`}
+                    )} p-4 font-semibold muted tracking-wide`}
                     style={{ width: column.width }}>
                     {column.label}
                   </th>
                 ))}
                 {actions && actions.length > 0 && (
-                  <th className="text-left p-4 font-semibold text-[#444]">
+                  <th className="text-left p-4 font-semibold muted">
                     Acciones
                   </th>
                 )}
@@ -121,7 +121,7 @@ export const AdminTable = <T extends Record<string, unknown>>({
               {data.map((row, index) => (
                 <tr
                   key={index}
-                  className={`border-b border-[#F0F0F0] hover:bg-[#F5F5F5] transition-colors ${
+                  className={`border-b border-muted hover:surface transition-colors ${
                     onRowClick ? "cursor-pointer" : ""
                   }`}
                   onClick={() => onRowClick?.(row)}>

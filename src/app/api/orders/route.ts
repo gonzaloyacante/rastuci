@@ -4,18 +4,39 @@ import prisma from "@/lib/prisma";
 import { sendNotification } from "@/lib/onesignal";
 import { ApiResponse, Order, PaginatedResponse, OrderStatus } from "@/types";
 import { Prisma } from "@prisma/client";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { mapOrderToDTO } from "@/lib/orders";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { OrdersQuerySchema, OrderCreateSchema } from "@/lib/validation/order";
+import { ok, fail } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
+import { logger, getRequestId } from "@/lib/logger";
 
 // GET /api/orders - Obtener todos los pedidos con paginación
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<PaginatedResponse<Order>>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    // Rate limit per IP
+    const rl = checkRateLimit(request, {
+      key: makeKey("GET", "/api/orders"),
+      ...getPreset("publicRead"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
     const { searchParams } = new URL(request.url);
-
-    const page = Number(searchParams.get("page")) || 1;
-    const limit = Number(searchParams.get("limit")) || 10;
-    const status = searchParams.get("status") || undefined;
-    const search = searchParams.get("search") || undefined;
+    const parsedQuery = OrdersQuerySchema.safeParse({
+      page: searchParams.get("page"),
+      limit: searchParams.get("limit"),
+      status: searchParams.get("status") || undefined,
+      search: searchParams.get("search") || undefined,
+    });
+    if (!parsedQuery.success) {
+      return fail("BAD_REQUEST", "Parámetros inválidos", 400, { issues: parsedQuery.error.issues });
+    }
+    const { page, limit, status, search } = parsedQuery.data;
 
     // Construir filtros
     const where: Record<string, unknown> = {};
@@ -56,26 +77,7 @@ export async function GET(
       prisma.order.count({ where }),
     ]);
 
-    const orders: Order[] = prismaOrders.map((order: any) => ({
-      ...order,
-      status: order.status as OrderStatus,
-      customerAddress: order.customerAddress ?? undefined,
-      items: order.items.map((item: any) => ({
-        ...item,
-        product: {
-          ...item.product,
-          description: item.product.description ?? undefined,
-          images:
-            typeof item.product.images === "string"
-              ? JSON.parse(item.product.images)
-              : item.product.images,
-          category: {
-            ...item.product.category,
-            description: item.product.category.description ?? undefined,
-          },
-        },
-      })),
-    }));
+    const orders: Order[] = prismaOrders.map((order: any) => mapOrderToDTO(order));
 
     const totalPages = Math.ceil(total / limit);
 
@@ -87,19 +89,12 @@ export async function GET(
       totalPages,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: response,
-    });
+    return ok(response);
   } catch (error) {
-    console.error("Error fetching orders:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al obtener los pedidos",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error fetching orders", { requestId, error: String(error) });
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los pedidos", 500);
+    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
   }
 }
 
@@ -108,19 +103,21 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
-    const body = await request.json();
-    const { customerName, customerPhone, customerAddress, items } = body;
-
-    // Validaciones
-    if (!customerName || !customerPhone || !items || items.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Nombre del cliente, teléfono e items son requeridos",
-        },
-        { status: 400 }
-      );
+    const requestId = getRequestId(request.headers);
+    // Rate limit per IP for creating orders
+    const rl = checkRateLimit(request, {
+      key: makeKey("POST", "/api/orders"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
     }
+    const json = await request.json();
+    const parsed = OrderCreateSchema.safeParse(json);
+    if (!parsed.success) {
+      return fail("BAD_REQUEST", "Body inválido", 400, { issues: parsed.error.issues });
+    }
+    const { customerName, customerPhone, customerAddress, items } = parsed.data;
 
     // Validar y calcular el total
     let total = 0;
@@ -136,22 +133,14 @@ export async function POST(
       });
 
       if (!product) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Producto con ID ${item.productId} no encontrado`,
-          },
-          { status: 400 }
-        );
+        return fail("BAD_REQUEST", `Producto con ID ${item.productId} no encontrado`, 400);
       }
 
       if (product.stock < item.quantity) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Stock insuficiente para el producto ${product.name}. Stock disponible: ${product.stock}`,
-          },
-          { status: 400 }
+        return fail(
+          "CONFLICT",
+          `Stock insuficiente para el producto ${product.name}. Stock disponible: ${product.stock}`,
+          400
         );
       }
 
@@ -208,22 +197,7 @@ export async function POST(
       }
     );
 
-    const responseOrder: Order = {
-      ...order,
-      status: order.status as OrderStatus,
-      customerAddress: order.customerAddress ?? undefined,
-      items: order.items.map((item: any) => ({
-        ...item,
-        product: {
-          ...item.product,
-          description: item.product.description ?? undefined,
-          category: {
-            ...item.product.category,
-            description: item.product.category.description ?? undefined,
-          },
-        },
-      })),
-    };
+    const responseOrder: Order = mapOrderToDTO(order);
 
     // Enviar notificación push para nuevos pedidos
     try {
@@ -232,23 +206,15 @@ export async function POST(
         "Nuevo Pedido Recibido"
       );
     } catch (notificationError) {
-      console.error("Error sending notification:", notificationError);
+      logger.error("Error sending notification", { requestId, error: String(notificationError) });
       // No fallar el pedido si la notificación falla
     }
 
-    return NextResponse.json({
-      success: true,
-      data: responseOrder,
-      message: "Pedido creado exitosamente",
-    });
+    return ok(responseOrder, "Pedido creado exitosamente");
   } catch (error) {
-    console.error("Error creating order:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al crear el pedido",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error creating order", { requestId, error: String(error) });
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el pedido", 500);
+    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
   }
 }

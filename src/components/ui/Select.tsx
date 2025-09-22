@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, X } from "lucide-react";
 
 interface SelectOption {
   value: string;
@@ -18,6 +18,8 @@ interface SelectProps {
   error?: boolean;
   name?: string;
   id?: string;
+  searchable?: boolean;
+  clearable?: boolean;
 }
 
 export const Select = ({
@@ -30,6 +32,8 @@ export const Select = ({
   error = false,
   name,
   id,
+  searchable = false,
+  clearable = false,
 }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,9 +56,11 @@ export const Select = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Filtrar opciones basado en la búsqueda
+  // Filtrar opciones basado en la búsqueda (si searchable)
   const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    !searchable
+      ? true
+      : option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const selectedOption = options.find((option) => option.value === value);
@@ -86,11 +92,9 @@ export const Select = ({
     <div className={`relative w-full ${className}`}>
       <button
         type="button"
-        className={`w-full bg-[#FAFAFA] border ${
-          error ? "border-[#E53935]" : "border-[#E0E0E0]"
-        } rounded-lg px-4 py-3 text-left text-sm text-[#222] focus:outline-none focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] transition-all duration-200 flex items-center justify-between ${
+        className={`form-input text-left text-sm transition-all duration-200 flex items-center justify-between ${
           disabled ? "opacity-60 cursor-not-allowed" : ""
-        }`}
+        } ${error ? "border-error" : ""}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         id={id}
@@ -98,13 +102,28 @@ export const Select = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-invalid={error}>
-        <span className={value ? "" : "text-[#BDBDBD]"}>
-          {selectedOption ? selectedOption.label : placeholder}
+        <span className="truncate flex-1 min-w-0 mr-2">
+          <span className={value ? "" : "muted"}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
         </span>
+        {clearable && value && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange("");
+            }}
+            className="p-1 rounded hover-surface mr-1"
+            aria-label="Limpiar selección"
+          >
+            <X className="w-4 h-4 muted" />
+          </button>
+        )}
         <svg
-          className={`w-5 h-5 ml-2 transition-transform duration-200 ${
+          className={`w-5 h-5 ml-1 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
-          } text-[#888]`}
+          } muted`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24">
@@ -119,31 +138,47 @@ export const Select = ({
       {isOpen && (
         <ul
           ref={containerRef}
-          className="absolute z-20 mt-2 w-full bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-60 overflow-auto py-1 text-sm"
+          className="absolute z-20 mt-2 w-full surface border border-muted rounded-lg shadow-lg max-h-60 overflow-auto py-1 text-sm"
           role="listbox">
-          {options.length === 0 && (
-            <li className="px-4 py-2 text-[#888]">Sin opciones</li>
+          {searchable && (
+            <li className="px-2 pb-1 sticky top-0 surface">
+              <input
+                ref={inputRef}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-input w-full text-sm"
+                placeholder="Buscar..."
+                aria-label="Buscar opción"
+                autoFocus
+              />
+            </li>
           )}
-          {options.map((option) => (
+          {options.length === 0 && (
+            <li className="px-4 py-2 muted">Sin opciones</li>
+          )}
+          {filteredOptions.map((option) => (
             <li
               key={option.value}
-              className={`px-4 py-2 hover:bg-[#F5F5F5] transition-colors rounded ${
+              className={`px-4 py-2 transition-colors rounded ${
                 option.value === value
-                  ? "bg-[#F5F5F5] font-semibold text-[#6C63FF]"
-                  : "text-[#222]"
-              }`}
+                  ? "surface font-semibold text-primary"
+                  : ""
+              } hover-surface`}
               onClick={() => handleOptionClick(option.value)}
               role="option"
               aria-selected={option.value === value}>
-              {option.label}
+              <div className="flex items-center gap-2">
+                {option.value === value && (
+                  <Check className="w-4 h-4 text-primary" />
+                )}
+                <span className="truncate">{option.label}</span>
+              </div>
             </li>
           ))}
         </ul>
       )}
       {error && (
-        <p className="mt-1 text-xs text-[#E53935] font-medium">
-          Campo requerido
-        </p>
+        <p className="mt-1 text-xs text-error font-medium">Campo requerido</p>
       )}
     </div>
   );

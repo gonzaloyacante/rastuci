@@ -11,7 +11,7 @@ export default function SearchButton({
     <button
       onClick={onClick}
       aria-label="Buscar productos"
-      className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 h-auto bg-transparent border-0 cursor-pointer ${className}`}>
+      className={`absolute right-3 top-1/2 transform -translate-y-1/2 muted hover:text-primary p-1 h-auto bg-transparent border-0 cursor-pointer ${className}`}>
       <svg
         className="w-4 h-4"
         fill="none"

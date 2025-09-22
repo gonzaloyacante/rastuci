@@ -25,7 +25,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   return (
     <div
       className={cn(
-        "animate-pulse bg-gray-200",
+        "animate-pulse surface-secondary",
         roundedClasses[rounded],
         className
       )}
@@ -39,8 +39,8 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
 // Skeleton específicos para diferentes componentes
 export const ProductCardSkeleton = () => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div className="relative aspect-square bg-gray-100">
+  <div className="surface rounded-xl shadow-sm border border-muted overflow-hidden">
+    <div className="relative aspect-square surface-secondary">
       <Skeleton className="w-full h-full" rounded="none" />
     </div>
     <div className="p-4 space-y-3">
@@ -143,7 +143,7 @@ export const ProductDetailSkeleton = () => (
         <Skeleton className="h-6 w-48" />
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="border-b border-gray-200 pb-4">
+            <div key={i} className="border-b border-muted pb-4">
               <div className="flex items-center justify-between mb-2">
                 <Skeleton className="h-4 w-24" />
                 <div className="flex space-x-1">
@@ -184,7 +184,7 @@ export const ProductListSkeleton = () => (
 );
 
 export const CategorySkeleton = () => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+  <div className="surface rounded-lg shadow-sm border border-muted p-4">
     <div className="flex items-center space-x-3">
       <Skeleton className="h-12 w-12" rounded="lg" />
       <div className="flex-1 space-y-2">
@@ -206,7 +206,7 @@ export const TableRowSkeleton = () => (
 );
 
 export const DashboardCardSkeleton = () => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+  <div className="surface rounded-lg shadow-sm border border-muted p-6">
     <div className="flex items-center justify-between">
       <div className="space-y-2">
         <Skeleton className="h-4 w-24" />

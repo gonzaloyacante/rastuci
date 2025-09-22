@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F7FA] p-4 md:p-8 overflow-x-hidden">
+    <div className="min-h-screen surface p-4 md:p-8 overflow-x-hidden">
       <div className="max-w-7xl mx-auto space-y-10 w-full overflow-x-hidden">
         <AdminPageHeader
           title="Dashboard"
@@ -41,10 +41,10 @@ export default function AdminDashboard() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {/* Total Productos */}
-          <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">
-            <div className="bg-[#F5F5F5] rounded-full p-3 mb-3">
+          <div className="surface rounded-xl shadow p-6 flex flex-col items-center">
+            <div className="surface rounded-full p-3 mb-3">
               <svg
-                className="w-7 h-7 text-[#6C63FF]"
+                className="w-7 h-7 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -56,16 +56,16 @@ export default function AdminDashboard() {
                 />
               </svg>
             </div>
-            <div className="text-3xl font-bold text-[#222]">
+            <div className="text-3xl font-bold text-primary">
               {stats?.totalProducts ?? 0}
             </div>
-            <div className="text-sm text-[#888] mt-1">Productos</div>
+            <div className="text-sm muted mt-1">Productos</div>
           </div>
           {/* Total Categorías */}
-          <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">
-            <div className="bg-[#F5F5F5] rounded-full p-3 mb-3">
+          <div className="surface rounded-xl shadow p-6 flex flex-col items-center">
+            <div className="surface rounded-full p-3 mb-3">
               <svg
-                className="w-7 h-7 text-[#00BFA6]"
+                className="w-7 h-7 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -77,16 +77,16 @@ export default function AdminDashboard() {
                 />
               </svg>
             </div>
-            <div className="text-3xl font-bold text-[#222]">
+            <div className="text-3xl font-bold text-primary">
               {stats?.totalCategories ?? 0}
             </div>
-            <div className="text-sm text-[#888] mt-1">Categorías</div>
+            <div className="text-sm muted mt-1">Categorías</div>
           </div>
           {/* Total Pedidos */}
-          <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">
-            <div className="bg-[#F5F5F5] rounded-full p-3 mb-3">
+          <div className="surface rounded-xl shadow p-6 flex flex-col items-center">
+            <div className="surface rounded-full p-3 mb-3">
               <svg
-                className="w-7 h-7 text-[#FFB300]"
+                className="w-7 h-7 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -98,16 +98,16 @@ export default function AdminDashboard() {
                 />
               </svg>
             </div>
-            <div className="text-3xl font-bold text-[#222]">
+            <div className="text-3xl font-bold text-primary">
               {stats?.totalOrders ?? 0}
             </div>
-            <div className="text-sm text-[#888] mt-1">Pedidos</div>
+            <div className="text-sm muted mt-1">Pedidos</div>
           </div>
           {/* Ingresos */}
-          <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">
-            <div className="bg-[#F5F5F5] rounded-full p-3 mb-3">
+          <div className="surface rounded-xl shadow p-6 flex flex-col items-center">
+            <div className="surface rounded-full p-3 mb-3">
               <svg
-                className="w-7 h-7 text-[#43A047]"
+                className="w-7 h-7 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
                 />
               </svg>
             </div>
-            <div className="text-3xl font-bold text-[#222]">
+            <div className="text-3xl font-bold text-primary">
               $
               {stats?.totalRevenue?.toLocaleString("es-AR", {
                 style: "currency",
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
                 minimumFractionDigits: 2,
               }) ?? "$0"}
             </div>
-            <div className="text-sm text-[#888] mt-1">Ingresos</div>
+            <div className="text-sm muted mt-1">Ingresos</div>
           </div>
         </div>
 
@@ -140,13 +140,13 @@ export default function AdminDashboard() {
 
         {/* Recent Orders and Quick Actions */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          <div className="bg-white rounded-xl shadow p-6">
-            <h3 className="text-lg font-bold text-[#222] mb-4">
+          <div className="surface rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold text-primary mb-4">
               Pedidos Recientes
             </h3>
             <RecentOrders recentOrders={recentOrders} loading={loading} />
           </div>
-          <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-6">
+          <div className="surface rounded-xl shadow p-6 flex flex-col gap-6">
             <QuickActions />
           </div>
         </div>

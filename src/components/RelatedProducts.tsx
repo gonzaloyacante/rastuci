@@ -25,7 +25,7 @@ export default function RelatedProducts({
         // Simular fetch de productos relacionados
         // En producción, esto vendría de tu API con filtros por categoría
         const response = await fetch(
-          `/api/products?limit=4&category=${categoryId || ""}`
+          `/api/products?limit=4&categoryId=${categoryId || ""}`
         );
         const data = await response.json();
 
@@ -52,17 +52,12 @@ export default function RelatedProducts({
   if (loading) {
     return (
       <section className="mb-12" aria-labelledby="related-products-title">
-        <h2
-          id="related-products-title"
-          className="text-2xl font-bold text-gray-900 mb-6">
+        <h2 id="related-products-title" className="text-2xl font-bold text-primary mb-6">
           Productos relacionados
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
           {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="h-64 bg-gray-200 rounded-lg animate-pulse"
-            />
+            <div key={i} className="h-48 surface rounded-lg animate-pulse border border-muted" />
           ))}
         </div>
       </section>
@@ -75,18 +70,12 @@ export default function RelatedProducts({
 
   return (
     <section className="mb-12" aria-labelledby="related-products-title">
-      <h2
-        id="related-products-title"
-        className="text-2xl font-bold text-gray-900 mb-6">
+      <h2 id="related-products-title" className="text-2xl font-bold text-primary mb-6">
         Productos relacionados
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
         {products.map((product, index) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            priority={index < 2} // Prioridad para las primeras 2 imágenes
-          />
+          <ProductCard key={product.id} product={product} priority={index < 2} />
         ))}
       </div>
     </section>

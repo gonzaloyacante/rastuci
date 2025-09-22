@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import useSWR from "swr";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Product, Category } from "@/types";
 import { useCart } from "@/context/CartContext";
-import { toast } from "react-hot-toast";
+import { useToast } from "@/components/ui/Toast";
 import {
   Filter,
   Grid,
@@ -12,47 +14,53 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  ShoppingBag,
+  Grid3X3,
+  ArrowDown,
 } from "lucide-react";
-import CustomSelect from "@/components/ui/CustomSelect";
+import Select from "@/components/ui/Select";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { formatPriceARS } from "@/utils/formatters";
 import ProductCard from "@/components/ProductCard";
+import { ProductCardSkeleton as UISkeletonProductCard } from "@/components/ui/Skeleton";
 
 function ProductsPageSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen surface">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <div className="h-8 bg-gray-200 rounded mb-2 animate-pulse" />
-          <div className="h-4 bg-gray-200 rounded animate-pulse" />
+          <div className="h-8 rounded mb-2 animate-pulse surface" />
+          <div className="h-4 rounded animate-pulse surface" />
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
           <aside className="hidden lg:flex lg:w-1/4">
             <div className="w-full space-y-6">
-              <div className="h-6 bg-gray-200 rounded mb-4 animate-pulse" />
+              <div className="h-6 rounded mb-4 animate-pulse surface" />
               <div>
-                <div className="h-4 bg-gray-200 rounded mb-2 animate-pulse" />
-                <div className="h-10 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 rounded mb-2 animate-pulse surface" />
+                <div className="h-10 rounded animate-pulse surface" />
               </div>
               <div>
-                <div className="h-4 bg-gray-200 rounded mb-2 animate-pulse" />
-                <div className="h-10 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 rounded mb-2 animate-pulse surface" />
+                <div className="h-10 rounded animate-pulse surface" />
               </div>
               <div>
-                <div className="h-4 bg-gray-200 rounded mb-2 animate-pulse" />
-                <div className="h-10 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 rounded mb-2 animate-pulse surface" />
+                <div className="h-10 rounded animate-pulse surface" />
               </div>
             </div>
           </aside>
 
-          <div className="hidden lg:block w-px bg-gray-200 mx-6"></div>
+          <div className="hidden lg:block border-l border-muted mx-6"></div>
 
           <main className="lg:w-3/4">
             <div className="flex justify-between items-center mb-6">
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-32" />
+              <div className="h-4 rounded animate-pulse w-32 surface" />
               <div className="flex items-center space-x-2">
-                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
-                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+                <div className="h-8 w-8 rounded animate-pulse surface" />
+                <div className="h-8 w-8 rounded animate-pulse surface" />
               </div>
             </div>
 
@@ -60,12 +68,12 @@ function ProductsPageSkeleton() {
               {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden">
-                  <div className="aspect-square bg-gray-200 animate-pulse" />
+                  className="rounded-lg shadow-sm overflow-hidden surface">
+                  <div className="aspect-square animate-pulse surface" />
                   <div className="p-4">
-                    <div className="h-5 bg-gray-200 rounded mb-2 animate-pulse" />
-                    <div className="h-6 bg-gray-200 rounded mb-4 animate-pulse" />
-                    <div className="h-10 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-5 rounded mb-2 animate-pulse surface" />
+                    <div className="h-6 rounded mb-4 animate-pulse surface" />
+                    <div className="h-10 rounded animate-pulse surface" />
                   </div>
                 </div>
               ))}
@@ -78,64 +86,116 @@ function ProductsPageSkeleton() {
 }
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const { show } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
+  const [pageSize] = useState(12);
+  // Accumulated product list for "Load more"
+  const [productList, setProductList] = useState<Product[]>([]);
 
   const { addToCart } = useCart();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
+  // Helper to update URL without full reload
+  const updateUrl = (params: URLSearchParams) => {
+    const queryString = params.toString();
+    // Use shallow routing to update URL without reloading
+    router.replace(`${pathname}?${queryString}`, { scroll: false });
+  };
+
+  // Debounce search term into URL and SWR key
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-      try {
-        const params = new URLSearchParams({
-          page: currentPage.toString(),
-          limit: "12",
-          sortBy,
-          sortOrder,
-        });
+  // Build SWR key from filters
+  const swrKey = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", currentPage.toString());
+    params.set("limit", pageSize.toString());
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortOrder);
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (selectedCategory) params.set("categoryId", selectedCategory);
+    return `/api/products?${params.toString()}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize, sortBy, sortOrder, debouncedSearch, selectedCategory]);
 
-        if (searchTerm) {
-          params.append("search", searchTerm);
-        }
+  // Update URL when filters change (separate from SWR key to avoid loops)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("page", currentPage.toString());
+    params.set("limit", pageSize.toString());
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortOrder);
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (selectedCategory) params.set("categoryId", selectedCategory);
 
-        if (selectedCategory) {
-          params.append("categoryId", selectedCategory);
-        }
-
-        const productsRes = await fetch(`/api/products?${params.toString()}`);
-        const productsData = await productsRes.json();
-
-        if (productsData.success) {
-          setProducts(productsData.data.data || []);
-          setTotalPages(productsData.data.totalPages || 1);
-          setTotalProducts(productsData.data.total || 0);
-        }
-
-        const categoriesRes = await fetch("/api/categories");
-        const categoriesData = await categoriesRes.json();
-
-        if (categoriesData.success) {
-          setCategories(categoriesData.data.data || []);
-        }
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setLoading(false);
+    const queryString = params.toString();
+    if (queryString && pathname) {
+      // Use shallow routing to update URL without reloading
+      const newUrl = `${pathname}?${queryString}`;
+      // Only update if URL actually changed
+      if (typeof window !== 'undefined' && window.location.search !== `?${queryString}`) {
+        router.replace(newUrl, { scroll: false });
       }
-    };
+    }
+  }, [currentPage, pageSize, sortBy, sortOrder, debouncedSearch, selectedCategory, pathname, router]);
 
-    fetchData();
-  }, [currentPage, searchTerm, selectedCategory, sortBy, sortOrder]);
+  const fetcher = (url: string) => fetch(url).then((r) => r.json());
+  const { data, isLoading } = useSWR(swrKey, fetcher, { revalidateOnFocus: false });
+
+  // API shape: { success, data: { data: Product[], total, totalPages, ... } }
+  const products: Product[] = data?.data?.data || [];
+  const totalProducts: number = data?.data?.total || 0;
+  const totalPages: number = data?.data?.totalPages || 1;
+
+  // Reset or accumulate products depending on page or filter changes
+  useEffect(() => {
+    if (!data || isLoading) return;
+    
+    if (currentPage === 1) {
+      // Reset list when filters/page reset
+      setProductList(products);
+    } else if (products.length > 0) {
+      // Append when loading subsequent pages
+      setProductList((prev) => {
+        const ids = new Set(prev.map((p) => p.id));
+        const appended = products.filter((p: Product) => !ids.has(p.id));
+        return [...prev, ...appended];
+      });
+    }
+  }, [currentPage, swrKey, data?.data?.data, isLoading]); // Use specific data path to avoid reference changes
+
+  // Load categories once
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/categories");
+        const json = await res.json();
+        if (active && json?.success) {
+          setCategories(json.data?.data || []);
+        }
+      } catch (e) {
+        console.error("Error loading categories", e);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -160,20 +220,18 @@ export default function ProductsPage() {
 
   const handleAddToCart = (product: Product) => {
     addToCart(product, 1, "M", "");
-    toast.success("Producto agregado al carrito");
+    show({ type: "success", title: "Carrito", message: "Producto agregado al carrito" });
   };
 
-  if (loading) {
-    return <ProductsPageSkeleton />;
-  }
+  const loadingGrid = isLoading;
 
   const sortOptions = [
-    { value: "createdAt-desc", label: "Más recientes" },
-    { value: "createdAt-asc", label: "Más antiguos" },
-    { value: "price-asc", label: "Precio: menor a mayor" },
-    { value: "price-desc", label: "Precio: mayor a menor" },
-    { value: "name-asc", label: "Nombre: A-Z" },
-    { value: "name-desc", label: "Nombre: Z-A" },
+    { value: "createdAt-desc", label: "🆕 Más recientes" },
+    { value: "price-asc", label: "💰 Precio: menor a mayor" },
+    { value: "price-desc", label: "💎 Precio: mayor a menor" },
+    { value: "rating-desc", label: "⭐ Mejor valorados" },
+    { value: "name-asc", label: "🔤 Nombre: A-Z" },
+    { value: "name-desc", label: "🔤 Nombre: Z-A" },
   ];
 
   const categoryOptions = [
@@ -188,63 +246,234 @@ export default function ProductsPage() {
   const endItem = Math.min(currentPage * 12, totalProducts);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen surface pb-10">
+      <div className="w-full px-4 lg:px-8">
+        {/* Mobile-first Header */}
+        <div className="pt-6 pb-4">
+          <h1 className="text-2xl lg:text-3xl font-bold mb-1">
             Nuestros Productos
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm lg:text-base muted">
             Descubre nuestra colección de ropa infantil
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6 mb-8">
-          <aside className="hidden lg:flex lg:w-1/4">
-            <div className="w-full space-y-6">
-              <div className="flex items-center">
-                <Filter className="w-5 h-5 mr-2" />
-                <h2 className="text-lg font-semibold">Filtros</h2>
+        {/* Mobile filters - Only visible on mobile */}
+        <div className="mb-4 lg:hidden">
+          <div className="flex gap-3 mb-3">
+            <div className="flex-1">
+              <Input
+                type="text"
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="form-input text-sm py-2.5"
+                aria-label="Buscar productos"
+              />
+            </div>
+            <div className="w-36">
+              <Select
+                options={[
+                  { value: "", label: "Todas" },
+                  ...categories.map((c) => ({ value: c.id, label: c.name })),
+                ]}
+                value={selectedCategory}
+                onChange={handleCategoryChange}
+                placeholder="Categorías"
+                searchable
+                clearable
+              />
+            </div>
+          </div>
+
+          {/* Sort dropdown for mobile */}
+          <div className="w-full">
+            <Select
+              options={sortOptions}
+              value={`${sortBy}-${sortOrder}`}
+              onChange={handleSortChange}
+              placeholder="Ordenar por"
+            />
+          </div>
+        </div>
+
+        {/* Active filter chips */}
+        {(selectedCategory || debouncedSearch) && (
+          <div className="px-4 mb-4">
+            <div className="flex flex-wrap gap-2">
+              {debouncedSearch && (
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
+                  aria-label="Quitar filtro de búsqueda"
+                >
+                  <span>"{debouncedSearch}"</span>
+                  <span className="text-primary">×</span>
+                </button>
+              )}
+              {selectedCategory && (
+                <button
+                  onClick={() => {
+                    setSelectedCategory("");
+                    setCurrentPage(1);
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
+                  aria-label="Quitar filtro de categoría"
+                >
+                  <span>{categories.find((c) => c.id === selectedCategory)?.name || ""}</span>
+                  <span className="text-primary">×</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Results count - Mobile optimized (hidden on desktop) */}
+        <div className="px-4 mb-4 flex justify-between items-center lg:hidden">
+          <div className="text-xs muted">
+            {totalProducts} productos
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded ${
+                viewMode === "grid"
+                  ? "surface text-primary border border-primary"
+                  : "surface muted"
+              }`}>
+              <Grid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded ${
+                viewMode === "list"
+                  ? "surface text-primary border border-primary"
+                  : "surface muted"
+              }`}>
+              <List className="w-3.5 h-3.5" />
+            </button>
+        </div>
+      </div>
+
+      {/* Active filter chips */}
+      {(selectedCategory || debouncedSearch) && (
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-2">
+            {debouncedSearch && (
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setCurrentPage(1);
+                }}
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
+                aria-label="Quitar filtro de búsqueda"
+              >
+                <span>"{debouncedSearch}"</span>
+                <span className="text-primary">×</span>
+              </button>
+            )}
+            {selectedCategory && (
+              <button
+                onClick={() => {
+                  setSelectedCategory("");
+                  setCurrentPage(1);
+                }}
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
+                aria-label="Quitar filtro de categoría"
+              >
+                <span>{categories.find((c) => c.id === selectedCategory)?.name || ""}</span>
+                <span className="text-primary">×</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Results count - Mobile optimized (hidden on desktop) */}
+      <div className="mb-4 flex justify-between items-center lg:hidden">
+        <div className="text-xs muted">
+          {totalProducts} productos
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-1.5 rounded ${
+              viewMode === "grid"
+                ? "surface text-primary border border-primary"
+                : "surface muted"
+            }`}>
+            <Grid className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-1.5 rounded ${
+              viewMode === "list"
+                ? "surface text-primary border border-primary"
+                : "surface muted"
+            }`}>
+            <List className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden lg:flex gap-8">
+        {/* Sidebar Filters */}
+        <aside className="w-80 flex-shrink-0">
+          <div className="sticky top-6 space-y-6">
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">🔍</span>
+                <h2 className="font-semibold text-primary">Filtros</h2>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              {/* Search */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">
                   Buscar productos
                 </label>
                 <div className="relative">
-                  <input
+                  <Input
                     type="text"
                     placeholder="Buscar productos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    className="form-input pr-12 py-2"
                   />
                   <button
                     onClick={handleSearch}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-pink-600 transition-colors">
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 muted">
                     <Search className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              {/* Category Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">
                   Categoría
                 </label>
-                <CustomSelect
+                <Select
                   options={categoryOptions}
                   value={selectedCategory}
                   onChange={handleCategoryChange}
                   placeholder="Todas las categorías"
+                  searchable
+                  clearable
                 />
               </div>
 
+              {/* Sort Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Ordenar por
                 </label>
-                <CustomSelect
+                <Select
                   options={sortOptions}
                   value={`${sortBy}-${sortOrder}`}
                   onChange={handleSortChange}
@@ -252,14 +481,18 @@ export default function ProductsPage() {
                 />
               </div>
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          <div className="hidden lg:block w-px bg-gray-200 mx-6"></div>
+        <div className="border-l border-muted mx-6"></div>
 
-          <main className="lg:w-3/4">
-            <div className="flex justify-between items-center mb-6">
-              <div className="text-sm text-gray-600">
-                Mostrando {startItem}-{endItem} de {totalProducts} productos
+        {/* Desktop Main Content */}
+        <main className="flex-1">
+          <div className="flex justify-between items-center mb-6">
+            <div className="text-sm muted">
+              Mostrando {Math.min((currentPage - 1) * pageSize + 1, Math.max(totalProducts, 0))}-
+              {Math.min(currentPage * pageSize, totalProducts)} de {totalProducts} productos
+                {Math.min(currentPage * pageSize, totalProducts)} de {totalProducts} productos
               </div>
 
               <div className="flex items-center space-x-2">
@@ -267,8 +500,8 @@ export default function ProductsPage() {
                   onClick={() => setViewMode("grid")}
                   className={`p-2 rounded-lg ${
                     viewMode === "grid"
-                      ? "bg-pink-600 text-white"
-                      : "bg-gray-200 text-gray-600"
+                      ? "surface text-primary border border-primary"
+                      : "surface muted border border-transparent"
                   }`}>
                   <Grid className="w-4 h-4" />
                 </button>
@@ -276,21 +509,21 @@ export default function ProductsPage() {
                   onClick={() => setViewMode("list")}
                   className={`p-2 rounded-lg ${
                     viewMode === "list"
-                      ? "bg-pink-600 text-white"
-                      : "bg-gray-200 text-gray-600"
+                      ? "surface text-primary border border-primary"
+                      : "surface muted border border-transparent"
                   }`}>
                   <List className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {products.length === 0 ? (
+            {productList.length === 0 && !loadingGrid ? (
               <div className="text-center py-12">
-                <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <ShoppingCart className="w-12 h-12 muted mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">
                   No se encontraron productos
                 </h3>
-                <p className="text-gray-600">
+                <p className="muted">
                   Intenta ajustar los filtros o buscar con otros términos
                 </p>
               </div>
@@ -302,61 +535,110 @@ export default function ProductsPage() {
                       ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
                       : "grid-cols-1"
                   }`}>
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+                  {loadingGrid && currentPage === 1
+                    ? Array.from({ length: 8 }).map((_, i) => (
+                        <UISkeletonProductCard key={i} />
+                      ))
+                    : productList.map((product) => (
+                        <ProductCard 
+                          key={product.id} 
+                          product={product} 
+                          variant={viewMode === "list" ? "list" : "grid"}
+                        />
+                      ))}
                 </div>
 
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center space-x-2 mt-8">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter((page) => {
-                        return (
-                          page === 1 ||
-                          page === totalPages ||
-                          Math.abs(page - currentPage) <= 1
-                        );
-                      })
-                      .map((page, index, array) => {
-                        const showEllipsis =
-                          index > 0 && page - array[index - 1] > 1;
-
-                        return (
-                          <div key={page} className="flex items-center">
-                            {showEllipsis && (
-                              <span className="px-2 text-gray-500">...</span>
-                            )}
-                            <button
-                              onClick={() => handlePageChange(page)}
-                              className={`px-3 py-2 rounded-lg border ${
-                                currentPage === page
-                                  ? "bg-pink-600 text-white border-pink-600"
-                                  : "border-gray-300 hover:bg-gray-50"
-                              }`}>
-                              {page}
-                            </button>
-                          </div>
-                        );
-                      })}
-
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                {/* Load more */}
+                {currentPage < totalPages && (
+                  <div className="flex justify-center mt-2">
+                    <Button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      variant="hero"
+                      disabled={isLoading}
+                      aria-busy={isLoading}
+                    >
+                      {isLoading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                          </svg>
+                          Cargando...
+                        </span>
+                      ) : (
+                        "Cargar más"
+                      )}
+                    </Button>
                   </div>
                 )}
               </>
             )}
           </main>
+        </div>
+
+        {/* Mobile Product Grid */}
+        <div className="lg:hidden">
+          {productList.length === 0 && !loadingGrid ? (
+            <div className="text-center py-12 px-4">
+              <ShoppingCart className="w-12 h-12 muted mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                No se encontraron productos
+              </h3>
+              <p className="muted text-sm">
+                Intenta ajustar los filtros o buscar con otros términos
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile Grid - 2 columns optimized */}
+              <div>
+                <div
+                  className={`grid gap-4 mb-6 ${
+                    viewMode === "grid"
+                      ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+                      : "grid-cols-1 max-w-sm mx-auto"
+                  }`}>
+                  {loadingGrid && currentPage === 1
+                    ? Array.from({ length: 6 }).map((_, i) => (
+                        <UISkeletonProductCard key={i} />
+                      ))
+                    : productList.map((product) => (
+                        <div key={product.id} className="w-full">
+                          <ProductCard 
+                            product={product} 
+                            variant={viewMode === "list" ? "list" : "grid"}
+                          />
+                        </div>
+                      ))}
+                </div>
+              </div>
+
+              {/* Mobile Load more */}
+              {currentPage < totalPages && (
+                <div className="pb-6">
+                  <Button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    variant="hero"
+                    disabled={isLoading}
+                    aria-busy={isLoading}
+                    className="w-full py-3"
+                  >
+                    {isLoading ? (
+                      <span className="inline-flex items-center justify-center gap-2 w-full">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        Cargando...
+                      </span>
+                    ) : (
+                      "Cargar más productos"
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

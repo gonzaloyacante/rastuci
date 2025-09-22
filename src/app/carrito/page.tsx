@@ -24,10 +24,10 @@ export default function CartPage() {
   const itemCount = getItemCount();
 
   return (
-    <div className="bg-white text-[#333333] min-h-screen flex flex-col">
+    <div className="surface text-primary min-h-screen flex flex-col">
       <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
         <h1
-          className="text-3xl font-bold text-[#333333] mb-8"
+          className="text-3xl font-bold text-primary mb-8"
           style={{ fontFamily: "'Montserrat', sans-serif" }}>
           Mi Carrito ({itemCount} {itemCount === 1 ? "item" : "items"})
         </h1>
@@ -47,7 +47,7 @@ export default function CartPage() {
               {cartItems.map((item) => (
                 <div
                   key={`${item.product.id}-${item.size}-${item.color}`}
-                  className="flex items-center bg-gray-50 p-4 rounded-lg shadow-sm">
+                  className="flex items-center surface p-4 rounded-lg shadow-sm border border-muted">
                   <div
                     className="relative w-24 h-24 mr-4"
                     style={{ position: "relative" }}>
@@ -66,11 +66,11 @@ export default function CartPage() {
                     <h3 className="font-semibold text-lg">
                       {item.product.name}
                     </h3>
-                    <p className="text-sm text-[#666666]">
+                    <p className="text-sm muted">
                       Color: {item.color}
                     </p>
-                    <p className="text-sm text-[#666666]">Talla: {item.size}</p>
-                    <p className="text-lg font-bold text-[#E91E63] mt-1">
+                    <p className="text-sm muted">Talla: {item.size}</p>
+                    <p className="text-lg font-bold text-primary mt-1">
                       {formatPriceARS(item.product.price)}
                     </p>
                   </div>
@@ -97,7 +97,7 @@ export default function CartPage() {
                     onClick={() =>
                       removeFromCart(item.product.id, item.size, item.color)
                     }
-                    className="ml-6 text-red-500 hover:text-red-700 transition">
+                    className="ml-6 text-error hover:text-error transition">
                     <Trash2 size={20} />
                   </button>
                 </div>
@@ -106,7 +106,7 @@ export default function CartPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-gray-50 p-6 rounded-lg shadow-sm sticky top-24">
+              <div className="surface p-6 rounded-lg shadow-sm sticky top-24 border border-muted">
                 <h2
                   className="text-2xl font-bold mb-6"
                   style={{ fontFamily: "'Montserrat', sans-serif" }}>
@@ -119,9 +119,9 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Envío</span>
-                    <span className="text-green-600">Gratis</span>
+                    <span className="text-success">Gratis</span>
                   </div>
-                  <div className="border-t border-gray-200 my-4"></div>
+                  <div className="border-t border-muted my-4"></div>
                   <div className="flex justify-between font-bold text-xl">
                     <span>Total</span>
                     <span>{formatPriceARS(total)}</span>

@@ -15,8 +15,8 @@ const sizeClasses = {
 };
 
 const colorClasses = {
-  primary: "border-pink-600",
-  secondary: "border-gray-600",
+  primary: "border-primary",
+  secondary: "border-muted",
   white: "border-white",
 };
 
@@ -42,10 +42,10 @@ export default function LoadingSpinner({
 // Componente de loading para páginas completas
 export function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center surface">
       <div className="text-center">
         <LoadingSpinner size="xl" />
-        <p className="mt-4 text-gray-600">Cargando...</p>
+        <p className="mt-4 muted">Cargando...</p>
       </div>
     </div>
   );
@@ -57,7 +57,7 @@ export function SectionLoader() {
     <div className="flex items-center justify-center py-12">
       <div className="text-center">
         <LoadingSpinner size="lg" />
-        <p className="mt-2 text-gray-600">Cargando contenido...</p>
+        <p className="mt-2 muted">Cargando contenido...</p>
       </div>
     </div>
   );
@@ -67,11 +67,11 @@ export function SectionLoader() {
 export function CardLoader() {
   return (
     <div className="animate-pulse">
-      <div className="bg-gray-200 rounded-lg h-48 mb-4" />
+      <div className="surface-secondary rounded-lg h-48 mb-4" />
       <div className="space-y-2">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-4 bg-gray-200 rounded w-1/2" />
-        <div className="h-6 bg-gray-200 rounded w-1/3" />
+        <div className="h-4 surface-secondary rounded w-3/4" />
+        <div className="h-4 surface-secondary rounded w-1/2" />
+        <div className="h-6 surface-secondary rounded w-1/3" />
       </div>
     </div>
   );
@@ -84,11 +84,11 @@ export function ListLoader({ count = 3 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="animate-pulse">
           <div className="flex space-x-4">
-            <div className="bg-gray-200 rounded-lg h-16 w-16" />
+            <div className="surface-secondary rounded-lg h-16 w-16" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-3/4" />
-              <div className="h-3 bg-gray-200 rounded w-1/2" />
-              <div className="h-3 bg-gray-200 rounded w-1/4" />
+              <div className="h-4 surface-secondary rounded w-3/4" />
+              <div className="h-3 surface-secondary rounded w-1/2" />
+              <div className="h-3 surface-secondary rounded w-1/4" />
             </div>
           </div>
         </div>

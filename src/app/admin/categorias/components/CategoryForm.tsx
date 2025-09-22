@@ -109,15 +109,15 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen surface py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#E91E63] rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
             <Tag className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-primary">{title}</h1>
+          <p className="muted mt-2">
             {initialData
               ? "Modifica los datos de la categoría"
               : "Completa la información para crear una nueva categoría"}
@@ -125,7 +125,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
         </div>
 
         <Card className="shadow-lg border-0">
-          <CardHeader className="bg-[#E91E63] text-white rounded-t-lg">
+          <CardHeader className="bg-primary text-white rounded-t-lg">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Tag className="h-5 w-5" />
               Información de la Categoría
@@ -137,7 +137,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2">
+                  className="block text-sm font-medium muted mb-2">
                   <Tag className="h-4 w-4 inline mr-2" />
                   Nombre de la Categoría
                 </label>
@@ -145,14 +145,14 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                   id="name"
                   {...register("name")}
                   placeholder="Ej: Electrónicos, Ropa, Hogar..."
-                  className={`transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] ${
-                    errors.name ? "border-red-300" : ""
+                  className={`transition-all duration-200 focus:ring-2 focus:ring-primary focus:border-primary ${
+                    errors.name ? "border-error" : ""
                   }`}
                   disabled={loading}
                 />
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                  <p className="mt-1 text-sm text-error flex items-center gap-1">
+                    <span className="w-1 h-1 bg-error rounded-full"></span>
                     {errors.name.message}
                   </p>
                 )}
@@ -162,7 +162,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
               <div>
                 <label
                   htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2">
+                  className="block text-sm font-medium muted mb-2">
                   <FileText className="h-4 w-4 inline mr-2" />
                   Descripción (Opcional)
                 </label>
@@ -171,14 +171,14 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                   {...register("description")}
                   placeholder="Describe brevemente esta categoría..."
                   rows={4}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] ${
-                    errors.description ? "border-red-300" : ""
+                  className={`w-full px-3 py-2 border border-muted rounded-md shadow-sm focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-primary focus:border-primary ${
+                    errors.description ? "border-error" : ""
                   }`}
                   disabled={loading}
                 />
                 {errors.description && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                  <p className="mt-1 text-sm text-error flex items-center gap-1">
+                    <span className="w-1 h-1 bg-error rounded-full"></span>
                     {errors.description.message}
                   </p>
                 )}
@@ -186,19 +186,19 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
 
               {/* Imagen */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium muted mb-2">
                   <Upload className="h-4 w-4 inline mr-2" />
-                  Imagen de la Categoría <span className="text-red-500">*</span>
+                  Imagen de la Categoría <span className="text-error">*</span>
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 disabled:opacity-50"
+                  className="block w-full text-sm text-primary file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border border-muted file:text-sm file:font-semibold file:surface file:text-primary hover:file:surface disabled:opacity-50"
                   disabled={loading || uploading}
                 />
                 {uploading && (
-                  <div className="mt-2 text-xs text-gray-500">
+                  <div className="mt-2 text-xs muted">
                     Subiendo imagen...
                   </div>
                 )}
@@ -207,13 +207,13 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                     <img
                       src={imagePreview}
                       alt="Vista previa"
-                      className="w-40 h-40 object-cover rounded-lg border border-gray-200 shadow"
+                      className="w-40 h-40 object-cover rounded-lg border border-muted shadow"
                     />
                   </div>
                 )}
                 {errors.image && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                  <p className="mt-1 text-sm text-error flex items-center gap-1">
+                    <span className="w-1 h-1 bg-error rounded-full"></span>
                     {errors.image.message}
                   </p>
                 )}
@@ -224,7 +224,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-[#E91E63] hover:bg-[#C2185B] text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                  className="flex-1 bg-primary hover:brightness-90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -241,7 +241,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                   type="button"
                   variant="outline"
                   onClick={() => router.push("/admin/categorias")}
-                  className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
+                  className="flex-1 border-muted hover:surface text-primary font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Volver
                 </Button>

@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Order, OrderStatus } from "@/types";
 import { Prisma } from "@prisma/client";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { sendOrderStatusEmail } from "@/lib/email";
+import { mapOrderToDTO, updateOrderStatus } from "@/lib/orders";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { OrderStatusUpdateSchema } from "@/lib/validation/order";
+import { ok, fail } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
+import { logger, getRequestId } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -41,6 +49,14 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, {
+      key: makeKey("GET", "/api/orders/[id]"),
+      ...getPreset("publicReadHeavy"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
     const { id } = await params;
 
     const order = await prisma.order.findUnique({
@@ -59,62 +75,60 @@ export async function GET(
     });
 
     if (!order) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Pedido no encontrado",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Pedido no encontrado", 404);
     }
 
-    const responseOrder: Order = {
-      ...order,
-      customerAddress: order.customerAddress ?? undefined,
-      status: order.status as OrderStatus,
-      items: order.items.map((item: OrderItemWithProduct) => ({
-        id: item.id,
-        quantity: item.quantity,
-        price: item.price,
-        orderId: item.orderId,
-        productId: item.productId,
-        product: {
-          id: item.product.id,
-          name: item.product.name,
-          description: item.product.description ?? undefined,
-          price: item.product.price,
-          stock: item.product.stock,
-          images:
-            typeof item.product.images === "string"
-              ? JSON.parse(item.product.images)
-              : item.product.images,
-          categoryId: item.product.categoryId,
-          createdAt: item.product.createdAt,
-          updatedAt: item.product.updatedAt,
-          category: {
-            id: item.product.category.id,
-            name: item.product.category.name,
-            description: item.product.category.description ?? undefined,
-            createdAt: item.product.category.createdAt,
-            updatedAt: item.product.category.updatedAt,
-          },
-        },
-      })),
-    };
+    const responseOrder: Order = mapOrderToDTO(order);
 
-    return NextResponse.json({
-      success: true,
-      data: responseOrder,
-    });
+    return ok(responseOrder);
   } catch (error) {
-    console.error("Error fetching order:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al obtener el pedido",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error fetching order", { requestId, error: String(error) });
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener el pedido", 500);
+    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
+  }
+}
+
+// PATCH /api/orders/[id] - Actualizar estado del pedido (equivalente a PUT)
+export async function PATCH(
+  request: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse<ApiResponse<Order>>> {
+  try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, {
+      key: makeKey("PATCH", "/api/orders/[id]"),
+      ...getPreset("mutatingMedium"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
+    const { id } = await params;
+    const json = await request.json();
+    const parsed = OrderStatusUpdateSchema.safeParse(json);
+    if (!parsed.success) {
+      return fail("BAD_REQUEST", "Estado inválido. Debe ser: PENDING, PROCESSED o DELIVERED", 400, { issues: parsed.error.issues });
+    }
+    const { status } = parsed.data;
+
+    const order = await updateOrderStatus(id, status as OrderStatus);
+
+    // Fire-and-forget email notification (do not block response)
+    void sendOrderStatusEmail({
+      to: (order as any).customerEmail ?? null,
+      orderId: order.id,
+      status: order.status,
+      customerName: order.customerName ?? null,
+    });
+
+    const responseOrder: Order = mapOrderToDTO(order);
+
+    return ok(responseOrder, "Estado del pedido actualizado exitosamente");
+  } catch (error) {
+    const requestId = getRequestId(request.headers);
+    logger.error("Error updating order status (PATCH)", { requestId, error: String(error) });
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el estado del pedido", 500);
+    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
   }
 }
 
@@ -124,86 +138,40 @@ export async function PUT(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
-    const { id } = await params;
-    const body = await request.json();
-    const { status } = body;
-
-    // Validar estado
-    const validStatuses = ["PENDING", "PROCESSED", "DELIVERED"];
-    if (!status || !validStatuses.includes(status)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Estado inválido. Debe ser: PENDING, PROCESSED o DELIVERED",
-        },
-        { status: 400 }
-      );
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, {
+      key: makeKey("PUT", "/api/orders/[id]"),
+      ...getPreset("mutatingMedium"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
     }
+    const { id } = await params;
+    const json = await request.json();
+    const parsed = OrderStatusUpdateSchema.safeParse(json);
+    if (!parsed.success) {
+      return fail("BAD_REQUEST", "Estado inválido. Debe ser: PENDING, PROCESSED o DELIVERED", 400, { issues: parsed.error.issues });
+    }
+    const { status } = parsed.data;
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { status },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                category: true,
-              },
-            },
-          },
-        },
-      },
+    const order = await updateOrderStatus(id, status as OrderStatus);
+
+    // Fire-and-forget email notification (do not block response)
+    void sendOrderStatusEmail({
+      to: (order as any).customerEmail ?? null,
+      orderId: order.id,
+      status: order.status,
+      customerName: order.customerName ?? null,
     });
 
-    const responseOrder: Order = {
-      ...order,
-      customerAddress: order.customerAddress ?? undefined,
-      status: order.status as OrderStatus,
-      items: order.items.map((item: OrderItemWithProduct) => ({
-        id: item.id,
-        quantity: item.quantity,
-        price: item.price,
-        orderId: item.orderId,
-        productId: item.productId,
-        product: {
-          id: item.product.id,
-          name: item.product.name,
-          description: item.product.description ?? undefined,
-          price: item.product.price,
-          stock: item.product.stock,
-          images:
-            typeof item.product.images === "string"
-              ? JSON.parse(item.product.images)
-              : item.product.images,
-          categoryId: item.product.categoryId,
-          createdAt: item.product.createdAt,
-          updatedAt: item.product.updatedAt,
-          category: {
-            id: item.product.category.id,
-            name: item.product.category.name,
-            description: item.product.category.description ?? undefined,
-            createdAt: item.product.category.createdAt,
-            updatedAt: item.product.category.updatedAt,
-          },
-        },
-      })),
-    };
+    const responseOrder: Order = mapOrderToDTO(order);
 
-    return NextResponse.json({
-      success: true,
-      data: responseOrder,
-      message: "Estado del pedido actualizado exitosamente",
-    });
+    return ok(responseOrder, "Estado del pedido actualizado exitosamente");
   } catch (error) {
-    console.error("Error updating order status:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al actualizar el estado del pedido",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error updating order status (PUT)", { requestId, error: String(error) });
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el estado del pedido", 500);
+    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
   }
 }
 
@@ -213,6 +181,14 @@ export async function DELETE(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, {
+      key: makeKey("DELETE", "/api/orders/[id]"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
     const { id } = await params;
 
     // Obtener el pedido con sus items para restaurar el stock si es necesario
@@ -224,24 +200,12 @@ export async function DELETE(
     });
 
     if (!order) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Pedido no encontrado",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Pedido no encontrado", 404);
     }
 
     // Solo permitir cancelar pedidos pendientes
     if (order.status !== "PENDING") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Solo se pueden cancelar pedidos con estado PENDING",
-        },
-        { status: 400 }
-      );
+      return fail("BAD_REQUEST", "Solo se pueden cancelar pedidos con estado PENDING", 400);
     }
 
     // Eliminar el pedido y restaurar stock en transacción
@@ -264,18 +228,11 @@ export async function DELETE(
       });
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Pedido cancelado exitosamente",
-    });
+    return ok(null, "Pedido cancelado exitosamente");
   } catch (error) {
-    console.error("Error canceling order:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al cancelar el pedido",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error canceling order", { requestId, error: String(error) });
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al cancelar el pedido", 500);
+    return fail(e.code as any, e.message, e.status, { requestId, ...(e.details as object) });
   }
 }

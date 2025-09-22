@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Product } from "@/types";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { ok, fail } from "@/lib/apiResponse";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { ProductCreateSchema } from "@/lib/validation/product";
+import { normalizeApiError } from "@/lib/errors";
 
 interface RouteParams {
   params: Promise<{
@@ -14,6 +19,13 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
+    const rl = checkRateLimit(request, {
+      key: makeKey("GET", "/api/products/[id]"),
+      ...getPreset("publicRead"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
     const { id } = await params;
 
     const product = await prisma.product.findUnique({
@@ -24,13 +36,7 @@ export async function GET(
     });
 
     if (!product) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Producto no encontrado",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Producto no encontrado", 404);
     }
 
     const responseProduct: Product = {
@@ -46,19 +52,11 @@ export async function GET(
       },
     };
 
-    return NextResponse.json({
-      success: true,
-      data: responseProduct,
-    });
+    return ok(responseProduct);
   } catch (error) {
     console.error("Error fetching product:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al obtener el producto",
-      },
-      { status: 500 }
-    );
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener el producto", 500);
+    return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }
 
@@ -68,40 +66,20 @@ export async function PUT(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
+    const rl = checkRateLimit(request, {
+      key: makeKey("PUT", "/api/products/[id]"),
+      ...getPreset("mutatingMedium"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
     const { id } = await params;
     const body = await request.json();
-    const { name, description, price, stock, categoryId, images } = body;
-
-    // Validaciones
-    if (!name || !price || !categoryId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Nombre, precio y categoría son requeridos",
-        },
-        { status: 400 }
-      );
+    const parsed = ProductCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return fail("BAD_REQUEST", "Datos inválidos", 400, { issues: parsed.error.issues });
     }
-
-    if (price < 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El precio debe ser mayor o igual a 0",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (stock < 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El stock debe ser mayor o igual a 0",
-        },
-        { status: 400 }
-      );
-    }
+    const { name, description, price, stock, categoryId, images, onSale, sizes, colors, features } = parsed.data;
 
     // Verificar que la categoría existe
     const category = await prisma.category.findUnique({
@@ -109,13 +87,7 @@ export async function PUT(
     });
 
     if (!category) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "La categoría especificada no existe",
-        },
-        { status: 400 }
-      );
+      return fail("BAD_REQUEST", "La categoría especificada no existe", 400);
     }
 
     const updatedPrismaProduct = await prisma.product.update({
@@ -126,7 +98,11 @@ export async function PUT(
         price: Number(price),
         stock: Number(stock),
         categoryId,
-        images: images || [],
+        images: Array.isArray(images) ? JSON.stringify(images) : images,
+        onSale: onSale ?? undefined,
+        sizes: sizes ?? undefined,
+        colors: colors ?? undefined,
+        features: features ?? undefined,
       },
       include: {
         category: true,
@@ -146,20 +122,11 @@ export async function PUT(
       },
     };
 
-    return NextResponse.json({
-      success: true,
-      data: updatedProduct,
-      message: "Producto actualizado exitosamente",
-    });
+    return ok(updatedProduct, "Producto actualizado exitosamente");
   } catch (error) {
     console.error("Error updating product:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al actualizar el producto",
-      },
-      { status: 500 }
-    );
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el producto", 500);
+    return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }
 
@@ -169,6 +136,13 @@ export async function DELETE(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
+    const rl = checkRateLimit(request, {
+      key: makeKey("DELETE", "/api/products/[id]"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
     const { id } = await params;
 
     // Verificar si hay pedidos asociados a este producto
@@ -177,13 +151,10 @@ export async function DELETE(
     });
 
     if (orderItemsCount > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "No se puede eliminar el producto porque está incluido en pedidos existentes",
-        },
-        { status: 400 }
+      return fail(
+        "BAD_REQUEST",
+        "No se puede eliminar el producto porque está incluido en pedidos existentes",
+        400
       );
     }
 
@@ -191,18 +162,10 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Producto eliminado exitosamente",
-    });
+    return ok(null, "Producto eliminado exitosamente");
   } catch (error) {
     console.error("Error deleting product:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al eliminar el producto",
-      },
-      { status: 500 }
-    );
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al eliminar el producto", 500);
+    return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }

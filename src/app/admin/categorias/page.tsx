@@ -10,22 +10,29 @@ import {
 } from "@/components/admin";
 import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/search";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import Image from "next/image";
 
-// Extiendo el tipo Category para incluir image
+// Extiendo el tipo Category para incluir imageUrl
 interface CategoryWithImage {
   id: string;
   name: string;
   description?: string | null;
-  image?: string | null;
+  imageUrl?: string | null;
 }
 
 export default function AdminCategoriasPage() {
   const { categories, isLoading, error, mutate } = useCategories();
   const categoriesWithImage = categories as CategoryWithImage[];
   const [searchInput, setSearchInput] = useState("");
+  const router = useRouter();
+  const { show } = useToast();
 
   // Búsqueda local
-  const filteredCategories = categories.filter(
+  const filteredCategories = categoriesWithImage.filter(
     (category) =>
       category.name.toLowerCase().includes(searchInput.toLowerCase()) ||
       (category.description &&
@@ -43,13 +50,14 @@ export default function AdminCategoriasPage() {
       });
 
       if (response.ok) {
+        show({ type: "success", title: "Categorías", message: "Categoría eliminada" });
         mutate(); // Revalidar datos
       } else {
-        alert("Error al eliminar la categoría");
+        show({ type: "error", title: "Categorías", message: "Error al eliminar la categoría" });
       }
     } catch (error) {
       console.error("Error deleting category:", error);
-      alert("Error al eliminar la categoría");
+      show({ type: "error", title: "Categorías", message: "Error al eliminar la categoría" });
     }
   };
 
@@ -74,16 +82,18 @@ export default function AdminCategoriasPage() {
 
       {/* Barra de búsqueda */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Buscar categorías por nombre o descripción..."
-          className="w-full sm:w-96 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-        />
-        <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors">
+        <div className="w-full sm:w-96">
+          <Input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Buscar categorías por nombre o descripción..."
+            aria-label="Buscar categorías"
+          />
+        </div>
+        <Button variant="primary" onClick={() => { /* no-op: búsqueda local */ }}>
           Buscar
-        </button>
+        </Button>
       </div>
 
       {filteredCategories.length === 0 ? (
@@ -106,15 +116,19 @@ export default function AdminCategoriasPage() {
             {filteredCategories.map((category) => (
               <div
                 key={category.id}
-                className="border rounded-lg p-4 space-y-3 bg-white shadow-sm">
+                className="surface border rounded-lg p-4 space-y-3 shadow-sm">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0 flex items-center gap-3">
-                    {category.image && (
-                      <img
-                        src={category.image}
-                        alt={category.name}
-                        className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow"
-                      />
+                    {category.imageUrl && (
+                      <div className="relative w-14 h-14">
+                        <Image
+                          src={category.imageUrl}
+                          alt={category.name}
+                          fill
+                          className="object-cover rounded-lg border border-muted shadow"
+                          sizes="56px"
+                        />
+                      </div>
                     )}
                     <div>
                       <h3 className="font-medium text-content-primary truncate">
@@ -128,18 +142,18 @@ export default function AdminCategoriasPage() {
                   <span className="badge-info text-xs">0 productos</span>
                 </div>
                 <div className="flex space-x-2 pt-2">
-                  <button
-                    onClick={() => {
-                      window.location.href = `/admin/categorias/${category.id}/editar`;
-                    }}
-                    className="btn-secondary flex-1 text-sm">
+                  <Button
+                    onClick={() => router.push(`/admin/categorias/${category.id}/editar`)}
+                    variant="secondary"
+                    className="flex-1 text-sm">
                     Editar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => handleDelete(category.id)}
-                    className="btn-destructive flex-1 text-sm">
+                    variant="destructive"
+                    className="flex-1 text-sm">
                     Eliminar
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -167,16 +181,20 @@ export default function AdminCategoriasPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-border">
+              <tbody className="surface divide-y divide-border">
                 {filteredCategories.map((category) => (
                   <tr key={category.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {category.image && (
-                        <img
-                          src={category.image}
-                          alt={category.name}
-                          className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow"
-                        />
+                      {category.imageUrl && (
+                        <div className="relative w-14 h-14">
+                          <Image
+                            src={category.imageUrl}
+                            alt={category.name}
+                            fill
+                            className="object-cover rounded-lg border border-muted shadow"
+                            sizes="56px"
+                          />
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -193,18 +211,18 @@ export default function AdminCategoriasPage() {
                       <span className="badge-info text-xs">0 productos</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          window.location.href = `/admin/categorias/${category.id}/editar`;
-                        }}
-                        className="text-primary hover:text-primary/80 mr-4">
+                      <Button
+                        onClick={() => router.push(`/admin/categorias/${category.id}/editar`)}
+                        variant="ghost"
+                        className="mr-4 px-2 py-1">
                         Editar
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleDelete(category.id)}
-                        className="text-error hover:text-error/80">
+                        variant="destructive"
+                        className="px-2 py-1">
                         Eliminar
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}

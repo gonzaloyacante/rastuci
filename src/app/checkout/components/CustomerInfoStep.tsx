@@ -150,8 +150,8 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-2xl font-bold mb-6">Información de Contacto</h2>
+      <div className="surface p-6 rounded-lg shadow-sm border border-muted">
+        <h2 className="text-2xl font-bold mb-6 text-primary">Información de Contacto</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -159,7 +159,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-1">
+                className="block text-sm font-medium muted mb-1">
                 Nombre completo *
               </label>
               <input
@@ -169,12 +169,12 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 value={formData.name}
                 onChange={handleChange}
                 className={`w-full p-3 border rounded-md ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors.name ? "border-error" : "border-muted"
                 }`}
                 placeholder="Ej: Juan Pérez"
               />
               {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                <p className="text-error text-xs mt-1">{errors.name}</p>
               )}
             </div>
 
@@ -182,7 +182,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1">
+                className="block text-sm font-medium muted mb-1">
                 Email *
               </label>
               <input
@@ -192,12 +192,12 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 value={formData.email}
                 onChange={handleChange}
                 className={`w-full p-3 border rounded-md ${
-                  errors.email ? "border-red-500" : "border-gray-300"
+                  errors.email ? "border-error" : "border-muted"
                 }`}
                 placeholder="Ej: juan@ejemplo.com"
               />
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                <p className="text-error text-xs mt-1">{errors.email}</p>
               )}
             </div>
 
@@ -205,7 +205,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-1">
+                className="block text-sm font-medium muted mb-1">
                 Teléfono *
               </label>
               <input
@@ -215,24 +215,24 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 value={formData.phone}
                 onChange={handleChange}
                 className={`w-full p-3 border rounded-md ${
-                  errors.phone ? "border-red-500" : "border-gray-300"
+                  errors.phone ? "border-error" : "border-muted"
                 }`}
                 placeholder="Ej: 1155667788"
               />
               {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                <p className="text-error text-xs mt-1">{errors.phone}</p>
               )}
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold mb-4 mt-8">Dirección de Envío</h2>
+          <h2 className="text-2xl font-bold mb-4 mt-8 text-primary">Dirección de Envío</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Dirección */}
             <div className="col-span-2">
               <label
                 htmlFor="address"
-                className="block text-sm font-medium text-gray-700 mb-1">
+                className="block text-sm font-medium muted mb-1">
                 Dirección *
               </label>
               <input
@@ -242,12 +242,12 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 value={formData.address}
                 onChange={handleChange}
                 className={`w-full p-3 border rounded-md ${
-                  errors.address ? "border-red-500" : "border-gray-300"
+                  errors.address ? "border-error" : "border-muted"
                 }`}
                 placeholder="Calle, número, piso, depto."
               />
               {errors.address && (
-                <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                <p className="text-error text-xs mt-1">{errors.address}</p>
               )}
             </div>
 
@@ -255,7 +255,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="city"
-                className="block text-sm font-medium text-gray-700 mb-1">
+                className="block text-sm font-medium muted mb-1">
                 Ciudad *
               </label>
               <input
@@ -265,12 +265,12 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 value={formData.city}
                 onChange={handleChange}
                 className={`w-full p-3 border rounded-md ${
-                  errors.city ? "border-red-500" : "border-gray-300"
+                  errors.city ? "border-error" : "border-muted"
                 }`}
                 placeholder="Ej: Buenos Aires"
               />
               {errors.city && (
-                <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+                <p className="text-error text-xs mt-1">{errors.city}</p>
               )}
             </div>
 
@@ -278,7 +278,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="province"
-                className="block text-sm font-medium text-gray-700 mb-1">
+                className="block text-sm font-medium muted mb-1">
                 Provincia *
               </label>
               <select
@@ -287,7 +287,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 value={formData.province}
                 onChange={handleChange}
                 className={`w-full p-3 border rounded-md ${
-                  errors.province ? "border-red-500" : "border-gray-300"
+                  errors.province ? "border-error" : "border-muted"
                 }`}>
                 <option value="">Seleccionar provincia</option>
                 {provincias.map((provincia) => (
@@ -297,7 +297,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 ))}
               </select>
               {errors.province && (
-                <p className="text-red-500 text-xs mt-1">{errors.province}</p>
+                <p className="text-error text-xs mt-1">{errors.province}</p>
               )}
             </div>
 
@@ -305,7 +305,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="postalCode"
-                className="block text-sm font-medium text-gray-700 mb-1">
+                className="block text-sm font-medium muted mb-1">
                 Código Postal *
               </label>
               <input
@@ -315,12 +315,12 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 value={formData.postalCode}
                 onChange={handleChange}
                 className={`w-full p-3 border rounded-md ${
-                  errors.postalCode ? "border-red-500" : "border-gray-300"
+                  errors.postalCode ? "border-error" : "border-muted"
                 }`}
                 placeholder="Ej: 1414"
               />
               {errors.postalCode && (
-                <p className="text-red-500 text-xs mt-1">{errors.postalCode}</p>
+                <p className="text-error text-xs mt-1">{errors.postalCode}</p>
               )}
             </div>
 
@@ -328,7 +328,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2">
               <label
                 htmlFor="notes"
-                className="block text-sm font-medium text-gray-700 mb-1">
+                className="block text-sm font-medium muted mb-1">
                 Notas para la entrega (opcional)
               </label>
               <textarea
@@ -336,7 +336,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 name="notes"
                 value={formData.notes || ""}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-muted rounded-md"
                 rows={3}
                 placeholder="Instrucciones especiales para la entrega, referencias, etc."></textarea>
             </div>
@@ -345,7 +345,7 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
           <div className="flex justify-end mt-8">
             <Button
               type="submit"
-              className="bg-[#E91E63] text-white hover:bg-[#C2185B]">
+              className="btn-hero">
               Continuar
               <ChevronRight className="ml-2" size={16} />
             </Button>

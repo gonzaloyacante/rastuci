@@ -1,23 +1,50 @@
 import * as React from "react";
 
+type BadgeVariant =
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "info"
+  | "error"
+  | "destructive"
+  | "outline";
+
+type BadgeSize = "xs" | "sm" | "md" | "lg";
+
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "secondary" | "destructive" | "outline";
+  variant?: BadgeVariant;
+  size?: BadgeSize;
 }
 
-function Badge({ className = "", variant = "default", ...props }: BadgeProps) {
+function Badge({ className = "", variant = "default", size = "sm", ...props }: BadgeProps) {
   // Estilos base para todas las variantes
-  const baseStyles =
-    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors";
+  const baseStyles = "inline-flex items-center rounded-full font-semibold transition-colors";
 
-  // Estilos específicos para cada variante
-  const variantStyles: Record<string, string> = {
-    default: "bg-[#E91E63] text-white hover:bg-[#C2185B]",
-    secondary: "bg-gray-100 text-gray-800 hover:bg-gray-200",
-    destructive: "bg-red-100 text-red-800 hover:bg-red-200",
-    outline: "border border-gray-300 text-gray-800",
+  // Estilos específicos para cada tamaño
+  const sizeStyles: Record<BadgeSize, string> = {
+    xs: "px-1.5 py-0.5 text-xs",
+    sm: "px-2.5 py-0.5 text-xs",
+    md: "px-3 py-1 text-sm",
+    lg: "px-4 py-1.5 text-base",
   };
 
-  const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${
+  // Estilos específicos para cada variante
+  const variantStyles: Record<BadgeVariant, string> = {
+    default: "bg-primary text-white hover:brightness-90",
+    primary: "bg-primary text-white hover:brightness-90",
+    secondary: "surface muted hover:brightness-95",
+    success: "bg-success text-white hover:brightness-90",
+    warning: "bg-warning text-white hover:brightness-90",
+    info: "bg-info text-white hover:brightness-90",
+    error: "bg-error text-white hover:brightness-90",
+    // Mantener 'destructive' por compatibilidad; alias a 'error'
+    destructive: "bg-error text-white hover:brightness-90",
+    outline: "border border-muted text-primary",
+  };
+
+  const combinedClassName = `${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${
     className || ""
   }`;
 
@@ -27,11 +54,17 @@ function Badge({ className = "", variant = "default", ...props }: BadgeProps) {
 // Exportamos una versión simulada de badgeVariants para compatibilidad
 const badgeVariants = {
   variants: {
-    default: "bg-[#E91E63] text-white hover:bg-[#C2185B]",
-    secondary: "bg-gray-100 text-gray-800 hover:bg-gray-200",
-    destructive: "bg-red-100 text-red-800 hover:bg-red-200",
-    outline: "border border-gray-300 text-gray-800",
+    default: "bg-primary text-white hover:brightness-90",
+    primary: "bg-primary text-white hover:brightness-90",
+    secondary: "surface muted hover:brightness-95",
+    success: "bg-success text-white hover:brightness-90",
+    warning: "bg-warning text-white hover:brightness-90",
+    info: "bg-info text-white hover:brightness-90",
+    error: "bg-error text-white hover:brightness-90",
+    destructive: "bg-error text-white hover:brightness-90",
+    outline: "border border-muted text-primary",
   },
 };
 
 export { Badge, badgeVariants };
+export default Badge;

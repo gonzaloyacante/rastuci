@@ -28,7 +28,7 @@ export const AdminLoading: React.FC<AdminLoadingProps> = ({
 
   const getContainerClasses = () => {
     if (fullPage) {
-      return "fixed inset-0 bg-white bg-opacity-75 flex justify-center items-center z-50";
+      return "fixed inset-0 surface bg-opacity-75 flex justify-center items-center z-50";
     }
     return "flex justify-center items-center";
   };

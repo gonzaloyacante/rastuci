@@ -6,6 +6,8 @@ import React, {
   useState,
   ReactNode,
   useCallback,
+  useEffect,
+  useMemo,
 } from "react";
 import { Product } from "@/types";
 
@@ -60,12 +62,10 @@ export interface CartItem {
 interface CartContextType {
   // Carrito y productos
   cartItems: CartItem[];
-  addToCart: (
-    product: Product,
-    quantity: number,
-    size: string,
-    color: string
-  ) => void;
+  addToCart: {
+    (product: Product, quantity: number, size: string, color: string): void;
+    (product: Product, size: string, color: string): void; // cantidad por defecto = 1
+  };
   removeFromCart: (productId: string, size: string, color: string) => void;
   updateQuantity: (
     productId: string,
@@ -138,6 +138,7 @@ interface CartProviderProps {
 export const CartProvider = ({ children }: CartProviderProps) => {
   // Estados del carrito
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
 
   // Estados del checkout - Envío
   const [selectedShippingOption, setSelectedShippingOption] =
@@ -163,7 +164,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
   // Opciones disponibles (estáticas por ahora)
-  const availableShippingOptions: ShippingOption[] = [
+  const availableShippingOptions: ShippingOption[] = useMemo(() => [
     {
       id: "pickup",
       name: "Retiro en tienda",
@@ -185,7 +186,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       price: 2500,
       estimatedDays: "24-48 horas",
     },
-  ];
+  ], []);
 
   const availablePaymentMethods: PaymentMethod[] = [
     {
@@ -215,8 +216,21 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   ];
 
   // Funciones del carrito memoizadas
-  const addToCart = useCallback(
-    (product: Product, quantity: number, size: string, color: string) => {
+  const addToCart = (useCallback(
+    (
+      product: Product,
+      a: number | string,
+      b?: string,
+      c?: string
+    ) => {
+      // Normalizar argumentos: permitir (product, quantity, size, color) o (product, size, color)
+      const isQuantityForm = typeof a === "number";
+      const quantity = isQuantityForm ? (a as number) : 1;
+      const size = isQuantityForm ? (b as string) : (a as string);
+      const color = isQuantityForm ? (c as string) : (b as string);
+
+      if (!size || !color) return; // evitar inserciones inválidas
+
       setCartItems((prevItems) => {
         const existingItemIndex = prevItems.findIndex(
           (item) =>
@@ -240,7 +254,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       });
     },
     []
-  );
+  ) as unknown) as CartContextType["addToCart"];
 
   const removeFromCart = useCallback(
     (productId: string, size: string, color: string) => {
@@ -292,6 +306,32 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const getItemCount = useCallback(() => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
   }, [cartItems]);
+
+  // Persistencia en localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("rastuci-cart");
+      if (saved) {
+        const parsed: CartItem[] = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setCartItems(parsed);
+        }
+      }
+    } catch (_) {
+      // noop
+    }
+    setHasLoadedStorage(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) return;
+    try {
+      localStorage.setItem("rastuci-cart", JSON.stringify(cartItems));
+    } catch (_) {
+      // noop
+    }
+  }, [cartItems, hasLoadedStorage]);
 
   // Envío - Implementación del cálculo por código postal
   const calculateShippingCost = useCallback(
@@ -367,7 +407,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
       return options;
     },
-    []
+    [availableShippingOptions]
   );
 
   // Checkout - Cupones

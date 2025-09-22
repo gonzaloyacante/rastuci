@@ -91,7 +91,7 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
     if (loading) {
       return (
         <div className="flex flex-col items-center justify-center py-10">
-          <Loader2 size={40} className="animate-spin text-[#E91E63] mb-4" />
+          <Loader2 size={40} className="animate-spin text-primary mb-4" />
           <p>Calculando opciones de envío...</p>
         </div>
       );
@@ -104,8 +104,8 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
             key={option.id}
             className={`border rounded-lg p-4 transition-all ${
               selectedShippingOption?.id === option.id
-                ? "border-[#E91E63] bg-pink-50"
-                : "border-gray-200 hover:border-gray-300"
+                ? "border-primary surface"
+                : "border-muted surface hover:border-primary"
             }`}
             onClick={() => handleSelectOption(option)}>
             <div className="flex justify-between items-center">
@@ -115,8 +115,8 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
                     size={24}
                     className={`mt-1 ${
                       selectedShippingOption?.id === option.id
-                        ? "text-[#E91E63]"
-                        : "text-gray-500"
+                        ? "text-primary"
+                        : "muted"
                     }`}
                   />
                 ) : (
@@ -124,15 +124,15 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
                     size={24}
                     className={`mt-1 ${
                       selectedShippingOption?.id === option.id
-                        ? "text-[#E91E63]"
-                        : "text-gray-500"
+                        ? "text-primary"
+                        : "muted"
                     }`}
                   />
                 )}
                 <div>
                   <h3 className="font-semibold text-lg">{option.name}</h3>
-                  <p className="text-gray-600 text-sm">{option.description}</p>
-                  <p className="text-gray-600 text-sm mt-1">
+                  <p className="muted text-sm">{option.description}</p>
+                  <p className="muted text-sm mt-1">
                     Tiempo estimado: {option.estimatedDays}
                   </p>
                 </div>
@@ -142,7 +142,7 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
                   {option.price === 0 ? "Gratis" : formatPriceARS(option.price)}
                 </span>
                 {selectedShippingOption?.id === option.id && (
-                  <div className="w-6 h-6 rounded-full bg-[#E91E63] flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full btn-hero flex items-center justify-center">
                     <Check size={16} className="text-white" />
                   </div>
                 )}
@@ -156,22 +156,22 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-2xl font-bold mb-2">Opciones de Envío</h2>
+      <div className="surface p-6 rounded-lg shadow-sm border border-muted">
+        <h2 className="text-2xl font-bold mb-2 text-primary">Opciones de Envío</h2>
 
         {/* Resumen de dirección */}
         {customerInfo && (
-          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <div className="surface p-4 rounded-lg mb-6 border border-muted">
             <div className="flex items-start gap-3">
-              <MapPin size={20} className="text-gray-500 mt-1" />
+              <MapPin size={20} className="muted mt-1" />
               <div>
                 <p className="font-medium">{customerInfo.name}</p>
-                <p className="text-gray-600 text-sm">{customerInfo.address}</p>
-                <p className="text-gray-600 text-sm">
+                <p className="muted text-sm">{customerInfo.address}</p>
+                <p className="muted text-sm">
                   {customerInfo.city}, {customerInfo.province}, CP:{" "}
                   {customerInfo.postalCode}
                 </p>
-                <p className="text-gray-600 text-sm">{customerInfo.phone}</p>
+                <p className="muted text-sm">{customerInfo.phone}</p>
               </div>
             </div>
           </div>
@@ -179,7 +179,7 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
 
         {/* Mensaje de error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md mb-4">
+          <div className="surface border border-error text-error p-3 rounded-md mb-4">
             {error}
           </div>
         )}
@@ -192,7 +192,7 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
           <Button
             onClick={handleContinue}
             disabled={!selectedShippingOption || loading}
-            className="bg-[#E91E63] text-white hover:bg-[#C2185B]">
+            className="btn-hero">
             Continuar
             <ChevronRight className="ml-2" size={16} />
           </Button>

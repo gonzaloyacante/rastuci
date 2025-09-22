@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Product } from "@/types";
 
 interface UseProductsOptions {
@@ -37,7 +37,7 @@ export function useProducts(options: UseProductsOptions = {}) {
   const [isMounted, setIsMounted] = useState(false);
 
   // Construir la URL de la API con query parameters
-  const buildApiUrl = () => {
+  const buildApiUrl = useCallback(() => {
     const params = new URLSearchParams();
 
     if (category) params.append("categoryId", category);
@@ -48,7 +48,7 @@ export function useProducts(options: UseProductsOptions = {}) {
     params.append("sortOrder", sortOrder);
 
     return `/api/products?${params.toString()}`;
-  };
+  }, [category, search, page, limit, sortBy, sortOrder]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -81,7 +81,7 @@ export function useProducts(options: UseProductsOptions = {}) {
     };
 
     fetchProducts();
-  }, [isMounted, category, search, page, limit, sortBy, sortOrder]);
+  }, [isMounted, category, search, page, limit, sortBy, sortOrder, buildApiUrl]);
 
   return {
     products: data?.data?.data || [],

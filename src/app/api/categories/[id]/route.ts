@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Category } from "@/types";
+import { logger, getRequestId } from "@/lib/logger";
+import { ok, fail } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 interface RouteParams {
   params: Promise<{
@@ -14,6 +19,9 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Category>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("GET", "/api/categories/[id]"), ...getPreset("publicRead") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
     const { id } = await params;
 
     const category = await prisma.category.findUnique({
@@ -27,35 +35,22 @@ export async function GET(
     });
 
     if (!category) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Categoría no encontrada",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Categoría no encontrada", 404, { requestId });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        ...category,
-        description: category.description ?? undefined,
-        products: category.products.map((product) => ({
-          ...product,
-          description: product.description ?? undefined,
-        })),
-      },
+    return ok({
+      ...category,
+      description: category.description ?? undefined,
+      products: category.products.map((product) => ({
+        ...product,
+        description: product.description ?? undefined,
+      })),
     });
   } catch (error) {
-    console.error("Error fetching category:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al obtener la categoría",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error fetching category", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener la categoría", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
@@ -65,18 +60,15 @@ export async function PUT(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Category>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("PUT", "/api/categories/[id]"), ...getPreset("mutatingLow") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
     const { id } = await params;
     const body = await request.json();
     const { name, description } = body;
 
     if (!name) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El nombre de la categoría es requerido",
-        },
-        { status: 400 }
-      );
+      return fail("BAD_REQUEST", "El nombre de la categoría es requerido", 400, { requestId });
     }
 
     // Verificar si existe otra categoría con ese nombre
@@ -88,13 +80,7 @@ export async function PUT(
     });
 
     if (existingCategory) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Ya existe otra categoría con ese nombre",
-        },
-        { status: 400 }
-      );
+      return fail("CONFLICT", "Ya existe otra categoría con ese nombre", 400, { requestId });
     }
 
     const category = await prisma.category.update({
@@ -105,23 +91,15 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        ...category,
-        description: category.description ?? undefined,
-      },
-      message: "Categoría actualizada exitosamente",
+    return ok({
+      ...category,
+      description: category.description ?? undefined,
     });
   } catch (error) {
-    console.error("Error updating category:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al actualizar la categoría",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error updating category", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar la categoría", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }
 
@@ -131,6 +109,9 @@ export async function DELETE(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
+    const requestId = getRequestId(request.headers);
+    const rl = checkRateLimit(request, { key: makeKey("DELETE", "/api/categories/[id]"), ...getPreset("mutatingLow") });
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
     const { id } = await params;
 
     // Verificar si hay productos asociados a esta categoría
@@ -139,31 +120,18 @@ export async function DELETE(
     });
 
     if (productsCount > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `No se puede eliminar la categoría porque tiene ${productsCount} producto(s) asociado(s)`,
-        },
-        { status: 400 }
-      );
+      return fail("BAD_REQUEST", `No se puede eliminar la categoría porque tiene ${productsCount} producto(s) asociado(s)`, 400, { requestId });
     }
 
     await prisma.category.delete({
       where: { id },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Categoría eliminada exitosamente",
-    });
+    return ok(null);
   } catch (error) {
-    console.error("Error deleting category:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Error al eliminar la categoría",
-      },
-      { status: 500 }
-    );
+    const requestId = getRequestId(request.headers);
+    logger.error("Error deleting category", { requestId, error: String(error) });
+    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al eliminar la categoría", 500);
+    return fail(n.code as any, n.message, n.status, { requestId, ...(n.details as object) });
   }
 }

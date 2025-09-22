@@ -59,7 +59,7 @@ export const AdminCard: React.FC<AdminCardProps> = ({
 
   return (
     <Card
-      className={`bg-white rounded-xl shadow ${
+      className={`surface rounded-xl shadow ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
       onClick={onClick}>
@@ -72,7 +72,7 @@ export const AdminCard: React.FC<AdminCardProps> = ({
               alt={title}
               width={400}
               height={128}
-              className="w-full h-32 object-cover rounded-xl shadow-sm border-2 border-primary-100"
+              className="w-full h-32 object-cover rounded-xl shadow-sm border-2 border-muted"
             />
           </div>
         )}
@@ -80,16 +80,16 @@ export const AdminCard: React.FC<AdminCardProps> = ({
         {/* Contenido principal */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base truncate text-primary-600">
+            <h3 className="font-semibold text-base truncate text-primary">
               {title}
             </h3>
             {subtitle && (
-              <p className="text-xs sm:text-sm text-primary-400 truncate">
+              <p className="text-xs sm:text-sm muted truncate">
                 {subtitle}
               </p>
             )}
             {description && (
-              <p className="text-xs text-primary-300 mt-1 line-clamp-2">
+              <p className="text-xs muted mt-1 line-clamp-2">
                 {description}
               </p>
             )}
@@ -99,8 +99,7 @@ export const AdminCard: React.FC<AdminCardProps> = ({
             <span
               className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ml-2 ${getBadgeClass(
                 badge.variant
-              )}`}
-              style={{ background: "#fce7f3", color: "#e91e63" }}>
+              )}`}>
               {badge.label}
             </span>
           )}

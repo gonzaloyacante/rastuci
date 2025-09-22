@@ -7,37 +7,39 @@ import {
   PaginatedResponse,
   ProductFilters,
 } from "@/types";
-import { validateProduct } from "@/lib/validations";
-import { handleApiError, validateApiResponse } from "@/lib/errorHandler";
-import { apiLimiter, createContentLimiter } from "@/middleware/rateLimit";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { ok, fail } from "@/lib/apiResponse";
+import { ProductCreateSchema, ProductsQuerySchema } from "@/lib/validation/product";
+import { normalizeApiError } from "@/lib/errors";
+import { validateAndSanitize, sanitizers, schemas } from "@/lib/input-sanitization";
 
 // GET /api/products - Obtener productos con filtros y paginación
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<PaginatedResponse<Product>>>> {
   try {
-    // Aplicar rate limiting
-    // await apiLimiter(request);
+    // Rate limiting
+    const rateLimitPassed = await checkRateLimit(request, RATE_LIMITS.products);
+    if (!rateLimitPassed) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
 
     const { searchParams } = new URL(request.url);
-
-    const filters: ProductFilters = {
-      categoryId: searchParams.get("categoryId") || undefined,
-      search: searchParams.get("search") || undefined,
-      minPrice: searchParams.get("minPrice")
-        ? Number(searchParams.get("minPrice"))
-        : undefined,
-      maxPrice: searchParams.get("maxPrice")
-        ? Number(searchParams.get("maxPrice"))
-        : undefined,
-      onSale: searchParams.get("onSale") === "true",
-      page: Number(searchParams.get("page")) || 1,
-      limit: Number(searchParams.get("limit")) || 12,
-    };
-
-    // Obtener parámetros de ordenamiento
-    const sortBy = searchParams.get("sortBy") || "createdAt";
-    const sortOrder = searchParams.get("sortOrder") || "desc";
+    const parsedQuery = ProductsQuerySchema.safeParse({
+      categoryId: searchParams.get("categoryId") ?? undefined,
+      search: searchParams.get("search") ?? undefined,
+      minPrice: searchParams.get("minPrice") ?? undefined,
+      maxPrice: searchParams.get("maxPrice") ?? undefined,
+      onSale: searchParams.get("onSale") ?? undefined,
+      page: searchParams.get("page") ?? undefined,
+      limit: searchParams.get("limit") ?? undefined,
+      sortBy: searchParams.get("sortBy") ?? undefined,
+      sortOrder: searchParams.get("sortOrder") ?? undefined,
+    });
+    if (!parsedQuery.success) {
+      return fail("BAD_REQUEST", "Parámetros inválidos", 400, { issues: parsedQuery.error.issues });
+    }
+    const filters = parsedQuery.data;
 
     // Construir filtros para Prisma
     const where: Record<string, unknown> = {};
@@ -66,11 +68,11 @@ export async function GET(
     }
 
     // Calcular offset para paginación
-    const offset = (filters.page! - 1) * filters.limit!;
+    const offset = (filters.page - 1) * filters.limit;
 
     // Construir ordenamiento dinámico
     const orderBy: Record<string, "asc" | "desc"> = {};
-    orderBy[sortBy] = sortOrder as "asc" | "desc";
+    orderBy[filters.sortBy] = filters.sortOrder;
 
     // Obtener productos y total en paralelo
     const [prismaProducts, total] = await Promise.all([
@@ -102,20 +104,17 @@ export async function GET(
       },
     }));
 
-    const totalPages = Math.ceil(total / filters.limit!);
+    const totalPages = Math.ceil(total / filters.limit);
 
     const response: PaginatedResponse<Product> = {
       data: products,
       total,
-      page: filters.page!,
-      limit: filters.limit!,
+      page: filters.page,
+      limit: filters.limit,
       totalPages,
     };
 
-    const apiResponse = NextResponse.json({
-      success: true,
-      data: response,
-    });
+    const apiResponse = ok(response);
 
     // Cache headers para el navegador
     apiResponse.headers.set(
@@ -125,14 +124,9 @@ export async function GET(
 
     return apiResponse;
   } catch (error) {
-    const appError = handleApiError(error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: appError.message,
-      },
-      { status: 500 }
-    );
+    console.error("Error fetching products:", error);
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los productos", 500);
+    return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }
 
@@ -141,24 +135,25 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
-    // Aplicar rate limiting para creación
-    await createContentLimiter(request);
-
-    const body = await request.json();
-
-    // Validar datos con Zod
-    const validation = validateProduct(body);
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Datos inválidos",
-          details: validation.error.errors,
-        },
-        { status: 400 }
-      );
+    // Rate limiting para creación
+    const rateLimitPassed = await checkRateLimit(request, RATE_LIMITS.adminApi);
+    if (!rateLimitPassed) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
     }
 
+    const body = await request.json();
+    
+    // Sanitize and validate input
+    const validation = validateAndSanitize(
+      ProductCreateSchema,
+      body,
+      sanitizers.product
+    );
+    
+    if (!validation.success) {
+      return fail("BAD_REQUEST", validation.error, 400);
+    }
+    
     const productData = validation.data;
 
     // Verificar que la categoría existe
@@ -167,13 +162,7 @@ export async function POST(
     });
 
     if (!category) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Categoría no encontrada",
-        },
-        { status: 404 }
-      );
+      return fail("NOT_FOUND", "Categoría no encontrada", 404);
     }
 
     // Crear el producto
@@ -202,18 +191,10 @@ export async function POST(
       },
     };
 
-    return NextResponse.json({
-      success: true,
-      data: product,
-    });
+    return ok(product);
   } catch (error) {
-    const appError = handleApiError(error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: appError.message,
-      },
-      { status: 500 }
-    );
+    console.error("Error creating product:", error);
+    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el producto", 500);
+    return fail(e.code as any, e.message, e.status, e.details as any);
   }
 }

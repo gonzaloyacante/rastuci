@@ -57,15 +57,15 @@ interface Order {
 const statusInfo = {
   PENDING: {
     label: "Pendiente",
-    color: "bg-yellow-100 text-yellow-800",
+    color: "surface border border-muted text-primary",
   },
   PROCESSED: {
     label: "Procesado",
-    color: "bg-blue-100 text-blue-800",
+    color: "surface border border-muted text-primary",
   },
   DELIVERED: {
     label: "Entregado",
-    color: "bg-green-100 text-green-800",
+    color: "surface border border-muted text-primary",
   },
 };
 
@@ -179,19 +179,19 @@ export default function OrderDetailPage() {
 
   const getProductImage = (item: OrderItem) => {
     if (!item.product.images)
-      return "https://placehold.co/100x100/E91E63/FFFFFF?text=No+imagen";
+      return "/placeholder.jpg";
 
     if (Array.isArray(item.product.images) && item.product.images.length > 0) {
       return item.product.images[0];
     }
 
-    return "https://placehold.co/100x100/E91E63/FFFFFF?text=No+imagen";
+    return "/placeholder.jpg";
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E91E63]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -199,7 +199,7 @@ export default function OrderDetailPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <div className="text-red-500 text-2xl mb-4">
+        <div className="text-error text-2xl mb-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-12 w-12 mx-auto mb-2"
@@ -216,7 +216,7 @@ export default function OrderDetailPage() {
           {error}
         </div>
         <Link href="/admin/pedidos/pendientes">
-          <Button className="bg-[#E91E63] hover:bg-[#C2185B]">
+          <Button className="btn-hero">
             Volver a Pedidos Pendientes
           </Button>
         </Link>
@@ -227,9 +227,9 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <div className="text-gray-500 text-2xl mb-4">Pedido no encontrado</div>
+        <div className="muted text-2xl mb-4">Pedido no encontrado</div>
         <Link href="/admin/pedidos/pendientes">
-          <Button className="bg-[#E91E63] hover:bg-[#C2185B]">
+          <Button className="btn-hero">
             Volver a Pedidos Pendientes
           </Button>
         </Link>
@@ -243,11 +243,11 @@ export default function OrderDetailPage() {
         <div>
           <Link
             href="/admin/pedidos/pendientes"
-            className="inline-flex items-center text-gray-600 hover:text-[#E91E63] mb-2">
+            className="inline-flex items-center muted hover:text-primary mb-2">
             <ArrowLeft size={16} className="mr-2" />
             Volver a Pedidos Pendientes
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-primary">
             Detalles del Pedido #{order.id.substring(0, 8)}
           </h1>
         </div>
@@ -265,7 +265,7 @@ export default function OrderDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Información general del pedido */}
           <Card>
-            <CardHeader className="bg-gray-50 border-b">
+            <CardHeader className="surface border-b border-muted">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-lg">Información General</CardTitle>
                 <Badge className={statusInfo[order.status].color}>
@@ -276,25 +276,27 @@ export default function OrderDetailPage() {
             <CardContent className="pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">
+                  <h3 className="text-sm font-medium muted">
                     ID del Pedido
                   </h3>
                   <p className="text-sm font-mono">{order.id}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">
+                  <h3 className="text-sm font-medium muted">
                     Fecha del Pedido
                   </h3>
                   <p className="text-sm">{formatDate(order.createdAt)}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Total</h3>
-                  <p className="text-lg font-bold text-[#E91E63]">
+                  <h3 className="text-sm font-medium muted">
+                    Total
+                  </h3>
+                  <p className="text-lg font-bold text-primary">
                     {formatCurrency(order.total)}
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">
+                  <h3 className="text-sm font-medium muted">
                     Última Actualización
                   </h3>
                   <p className="text-sm">{formatDate(order.updatedAt)}</p>
@@ -305,7 +307,7 @@ export default function OrderDetailPage() {
 
           {/* Productos */}
           <Card>
-            <CardHeader className="bg-gray-50 border-b">
+            <CardHeader className="surface border-b border-muted">
               <CardTitle className="text-lg">
                 Productos ({order.items.length})
               </CardTitle>
@@ -314,7 +316,7 @@ export default function OrderDetailPage() {
               <div className="divide-y">
                 {order.items.map((item) => (
                   <div key={item.id} className="p-4 flex items-center gap-4">
-                    <div className="relative w-16 h-16 bg-gray-100 rounded overflow-hidden">
+                    <div className="relative w-16 h-16 surface rounded overflow-hidden">
                       <Image
                         src={getProductImage(item)}
                         alt={item.product.name}
@@ -325,13 +327,13 @@ export default function OrderDetailPage() {
                     <div className="flex-grow">
                       <Link
                         href={`/admin/productos/editar/${item.product.id}`}
-                        className="font-medium text-gray-900 hover:text-[#E91E63]">
+                        className="font-medium text-primary hover:underline">
                         {item.product.name}
                       </Link>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm muted">
                         Categoría: {item.product.category.name}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm muted">
                         {item.quantity} x {formatCurrency(item.price)}
                       </div>
                     </div>
@@ -341,9 +343,9 @@ export default function OrderDetailPage() {
                   </div>
                 ))}
               </div>
-              <div className="p-4 bg-gray-50 flex justify-between items-center border-t">
+              <div className="p-4 surface flex justify-between items-center border-t border-muted">
                 <span className="font-medium">Total:</span>
-                <span className="font-bold text-[#E91E63]">
+                <span className="font-bold text-primary">
                   {formatCurrency(order.total)}
                 </span>
               </div>
@@ -355,24 +357,24 @@ export default function OrderDetailPage() {
         <div className="space-y-6">
           {/* Información del cliente */}
           <Card>
-            <CardHeader className="bg-gray-50 border-b">
+            <CardHeader className="surface border-b border-muted">
               <CardTitle className="text-lg">Cliente</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="space-y-3">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Nombre</h3>
+                  <h3 className="text-sm font-medium muted">Nombre</h3>
                   <p className="text-sm">{order.customerName}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">
+                  <h3 className="text-sm font-medium muted">
                     Teléfono
                   </h3>
                   <p className="text-sm">{order.customerPhone}</p>
                 </div>
                 {order.customerAddress && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500">
+                    <h3 className="text-sm font-medium muted">
                       Dirección
                     </h3>
                     <p className="text-sm">{order.customerAddress}</p>
@@ -384,14 +386,14 @@ export default function OrderDetailPage() {
 
           {/* Acciones */}
           <Card>
-            <CardHeader className="bg-gray-50 border-b">
+            <CardHeader className="surface border-b border-muted">
               <CardTitle className="text-lg">Acciones</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="space-y-3">
                 {order.status === "PENDING" && (
                   <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2"
+                    className="w-full btn-hero flex items-center justify-center gap-2"
                     onClick={() => updateOrderStatus("PROCESSED")}
                     disabled={updating}>
                     {updating ? (
@@ -404,7 +406,7 @@ export default function OrderDetailPage() {
                 )}
                 {order.status === "PROCESSED" && (
                   <Button
-                    className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
+                    className="w-full btn-hero flex items-center justify-center gap-2"
                     onClick={() => updateOrderStatus("DELIVERED")}
                     disabled={updating}>
                     {updating ? (
@@ -416,7 +418,7 @@ export default function OrderDetailPage() {
                   </Button>
                 )}
                 {order.status === "DELIVERED" && (
-                  <div className="p-4 bg-green-50 text-green-700 rounded-lg flex items-center justify-center gap-2">
+                  <div className="p-4 surface text-primary border border-muted rounded-lg flex items-center justify-center gap-2">
                     <CheckCircle size={16} />
                     Pedido completado
                   </div>

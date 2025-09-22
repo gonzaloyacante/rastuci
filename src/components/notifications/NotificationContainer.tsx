@@ -14,13 +14,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const getIcon = () => {
     switch (notification.type) {
       case "success":
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-success" />;
       case "error":
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="w-5 h-5 text-error" />;
       case "warning":
-        return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+        return <AlertTriangle className="w-5 h-5 text-warning" />;
       case "info":
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-5 h-5 text-info" />;
       default:
         return null;
     }
@@ -29,30 +29,30 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const getBorderColor = () => {
     switch (notification.type) {
       case "success":
-        return "border-l-green-500";
+        return "border-success";
       case "error":
-        return "border-l-red-500";
+        return "border-error";
       case "warning":
-        return "border-l-yellow-500";
+        return "border-warning";
       case "info":
-        return "border-l-blue-500";
+        return "border-info";
       default:
-        return "border-l-gray-500";
+        return "border-muted";
     }
   };
 
   return (
     <div
-      className={`bg-white border-l-4 ${getBorderColor()} rounded-lg shadow-lg p-4 mb-3 max-w-sm`}>
+      className={`surface border ${getBorderColor()} rounded-lg shadow-lg p-4 mb-3 max-w-sm`}>
       <div className="flex items-start">
         <div className="flex-shrink-0">{getIcon()}</div>
         <div className="ml-3 flex-1">
           {notification.title && (
-            <h3 className="text-sm font-medium text-content-primary mb-1">
+            <h3 className="text-sm font-medium text-primary mb-1">
               {notification.title}
             </h3>
           )}
-          <p className="text-sm text-content-secondary">
+          <p className="text-sm muted">
             {notification.message}
           </p>
           {notification.actions && notification.actions.length > 0 && (
@@ -63,10 +63,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                   onClick={action.onClick}
                   className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
                     action.variant === "primary"
-                      ? "bg-primary text-white hover:bg-primary/90"
+                      ? "bg-primary text-white hover:brightness-95"
                       : action.variant === "secondary"
-                      ? "bg-surface-secondary text-content-primary hover:bg-surface-tertiary"
-                      : "border border-border text-content-secondary hover:bg-surface-secondary"
+                      ? "surface-secondary text-primary hover:brightness-95"
+                      : "border border-muted text-primary hover:brightness-95"
                   }`}>
                   {action.label}
                 </button>
@@ -76,13 +76,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         </div>
         <button
           onClick={() => removeNotification(notification.id)}
-          className="flex-shrink-0 ml-3 text-content-secondary hover:text-content-primary">
+          className="flex-shrink-0 ml-3 muted hover:text-primary">
           <X className="w-4 h-4" />
         </button>
       </div>
     </div>
   );
-};
+}
 
 export const NotificationContainer: React.FC = () => {
   const { notifications } = useNotifications();

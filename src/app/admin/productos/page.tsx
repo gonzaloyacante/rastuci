@@ -12,6 +12,9 @@ import {
 } from "@/components/admin";
 import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/search";
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { ColorChip } from "@/components/ui/ColorChip";
 
 export default function AdminProductsPage() {
   const [searchInput, setSearchInput] = useState("");
@@ -88,47 +91,52 @@ export default function AdminProductsPage() {
       />
 
       {/* Barra de búsqueda */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleSearch();
-          }}
-          placeholder="Buscar productos por nombre, descripción o categoría..."
-          className="w-full sm:w-96 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-        />
+      <div className="mb-8 flex flex-col sm:flex-row gap-4 items-center">
+        <div className="flex-1 w-full sm:max-w-md">
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
+            placeholder="Buscar productos por nombre, descripción o categoría..."
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+          />
+        </div>
         <button
           onClick={handleSearch}
-          className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors">
+          className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors font-medium">
           Buscar
         </button>
       </div>
 
       {/* Filtro de categoría */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        <button
-          onClick={() => handleCategoryChange("")}
-          className={`px-4 py-2 rounded-lg border transition-colors ${
-            selectedCategory === ""
-              ? "bg-[#E91E63] text-white border-[#E91E63]"
-              : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#FCE4EC]"
-          }`}>
-          Todas las categorías
-        </button>
-        {categories.map((cat) => (
+      <div className="mb-8">
+        <h3 className="text-sm font-medium text-content-primary mb-3">Filtrar por categoría</h3>
+        <div className="flex flex-wrap gap-2">
           <button
-            key={cat.id}
-            onClick={() => handleCategoryChange(cat.id)}
-            className={`px-4 py-2 rounded-lg border transition-colors ${
-              selectedCategory === cat.id
-                ? "bg-[#E91E63] text-white border-[#E91E63]"
-                : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#FCE4EC]"
+            onClick={() => handleCategoryChange("")}
+            className={`px-4 py-2 rounded-lg border font-medium transition-colors ${
+              selectedCategory === ""
+                ? "bg-primary text-white border-primary"
+                : "surface muted border-muted hover:surface-secondary"
             }`}>
-            {cat.name}
+            Todas las categorías
           </button>
-        ))}
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => handleCategoryChange(cat.id)}
+              className={`px-4 py-2 rounded-lg border font-medium transition-colors ${
+                selectedCategory === cat.id
+                  ? "bg-primary text-white border-primary"
+                  : "surface muted border-muted hover:surface-secondary"
+              }`}>
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {products.length === 0 ? (
@@ -151,7 +159,7 @@ export default function AdminProductsPage() {
             {products.map((product: Product) => (
               <div
                 key={product.id}
-                className="border rounded-lg p-4 space-y-3 bg-white shadow-sm">
+                className="border rounded-lg p-4 space-y-3 surface shadow-sm">
                 <div className="flex gap-4">
                   {/* Imagen del producto */}
                   <div className="flex-shrink-0">
@@ -183,35 +191,43 @@ export default function AdminProductsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-content-primary truncate">
+                        <h3 className="font-medium text-content-primary truncate flex items-center gap-2">
                           {product.name}
+                          {product.onSale && (
+                            <Badge variant="success">Oferta</Badge>
+                          )}
                         </h3>
                         <p className="text-sm text-content-secondary">
                           {product.category?.name || "Sin categoría"}
                         </p>
+                        {Array.isArray(product.colors) && product.colors.length > 0 && (
+                          <div className="mt-1 flex items-center gap-1">
+                            {product.colors.slice(0, 6).map((c: string, idx: number) => (
+                              <ColorChip key={idx} color={c} size="xs" />
+                            ))}
+                            {product.colors.length > 6 && (
+                              <span className="text-xs text-content-secondary">+{product.colors.length - 6}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <span
-                        className={`badge-${
+                      <Badge
+                        variant={
                           product.stock === 0
                             ? "error"
                             : product.stock < 10
                             ? "warning"
                             : "success"
-                        } text-xs ml-2`}>
+                        }>
                         {product.stock === 0
                           ? "Sin stock"
                           : `${product.stock} en stock`}
-                      </span>
+                      </Badge>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-primary">
-                        ${" "}
-                        {product.price.toLocaleString("es-AR", {
-                          style: "currency",
-                          currency: "ARS",
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(product.price)}
                       </span>
                       <div className="flex space-x-2">
                         <button
@@ -256,7 +272,7 @@ export default function AdminProductsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-border">
+              <tbody className="surface divide-y divide-border">
                 {products.map((product: Product) => (
                   <tr key={product.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -286,14 +302,27 @@ export default function AdminProductsPage() {
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-content-primary">
+                          <div className="text-sm font-medium text-content-primary flex items-center gap-2">
                             {product.name}
+                            {product.onSale && (
+                              <Badge variant="success">Oferta</Badge>
+                            )}
                           </div>
                           <div className="text-sm text-content-secondary">
                             {product.description
                               ? product.description.substring(0, 50) + "..."
                               : "Sin descripción"}
                           </div>
+                          {Array.isArray(product.colors) && product.colors.length > 0 && (
+                            <div className="mt-1 flex items-center gap-1">
+                              {product.colors.slice(0, 8).map((c: string, idx: number) => (
+                                <ColorChip key={idx} color={c} size="xs" />
+                              ))}
+                              {product.colors.length > 8 && (
+                                <span className="text-xs text-content-secondary">+{product.colors.length - 8}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -304,27 +333,22 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-content-primary">
-                        ${" "}
-                        {product.price.toLocaleString("es-AR", {
-                          style: "currency",
-                          currency: "ARS",
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(product.price)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`badge-${
+                      <Badge
+                        variant={
                           product.stock === 0
                             ? "error"
                             : product.stock < 10
                             ? "warning"
                             : "success"
-                        } text-xs`}>
+                        }>
                         {product.stock === 0
                           ? "Sin stock"
                           : `${product.stock} en stock`}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button

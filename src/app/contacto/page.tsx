@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
+import { type ContactSettings, defaultContactSettings } from "@/lib/validation/contact";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,21 @@ export default function ContactPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [contact, setContact] = useState<ContactSettings>(defaultContactSettings);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/contact");
+        const json = await res.json();
+        if (json?.success && json.data) setContact(json.data as ContactSettings);
+        else setContact(defaultContactSettings);
+      } catch {
+        setContact(defaultContactSettings);
+      }
+    };
+    load();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,19 +54,17 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="bg-white text-[#333333] min-h-screen">
+    <div className="min-h-screen">
       <main className="max-w-[1200px] mx-auto py-8 px-6">
-        {/* Page Header */}
+        {/* Page Header */
+        }
         <div className="text-center mb-12">
           <h1
-            className="text-4xl font-bold text-[#333333] mb-4"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}>
-            Contactanos
+            className="text-4xl mb-4 font-montserrat">
+            {contact.headerTitle}
           </h1>
-          <p className="text-[#666666] text-lg max-w-2xl mx-auto">
-            ¿Tienes alguna pregunta o necesitas ayuda? Estamos aquí para
-            ayudarte. Ponte en contacto con nosotros y te responderemos lo antes
-            posible.
+          <p className="muted text-lg max-w-2xl mx-auto">
+            {contact.headerSubtitle}
           </p>
         </div>
 
@@ -58,86 +72,83 @@ export default function ContactPage() {
           {/* Contact Information */}
           <div>
             <h2
-              className="text-2xl font-bold text-[#333333] mb-6"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}>
+              className="text-2xl mb-6 font-montserrat">
               Información de Contacto
             </h2>
 
             <div className="space-y-6">
-              <Card className="bg-[#FAFAFA] border-0 shadow-md">
+              <Card className="surface border-0 shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="bg-[#E91E63] p-3 rounded-lg">
-                      <Mail className="text-white" size={24} />
+                    <div className="pill-icon">
+                      <Mail size={24} />
                     </div>
                     <div>
                       <h3
-                        className="font-bold text-lg text-[#333333] mb-2"
-                        style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                        className="text-lg mb-2 font-montserrat">
                         Email
                       </h3>
-                      <p className="text-[#666666]">contacto@rastući.com</p>
-                      <p className="text-[#666666]">ventas@rastući.com</p>
+                      {contact.emails.map((em, i) => (
+                        <p className="muted" key={i}>{em}</p>
+                      ))}
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#FAFAFA] border-0 shadow-md">
+              <Card className="surface border-0 shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="bg-[#E91E63] p-3 rounded-lg">
-                      <Phone className="text-white" size={24} />
+                    <div className="pill-icon">
+                      <Phone size={24} />
                     </div>
                     <div>
                       <h3
-                        className="font-bold text-lg text-[#333333] mb-2"
-                        style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                        className="text-lg mb-2 font-montserrat">
                         Teléfono
                       </h3>
-                      <p className="text-[#666666]">+54 9 11 1234-5678</p>
-                      <p className="text-[#666666]">+54 9 11 8765-4321</p>
+                      {contact.phones.map((ph, i) => (
+                        <p className="muted" key={i}>{ph}</p>
+                      ))}
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#FAFAFA] border-0 shadow-md">
+              <Card className="surface border-0 shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="bg-[#E91E63] p-3 rounded-lg">
-                      <MapPin className="text-white" size={24} />
+                    <div className="pill-icon">
+                      <MapPin size={24} />
                     </div>
                     <div>
                       <h3
-                        className="font-bold text-lg text-[#333333] mb-2"
-                        style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                        className="text-lg mb-2 font-montserrat">
                         Dirección
                       </h3>
-                      <p className="text-[#666666]">Av. Corrientes 1234</p>
-                      <p className="text-[#666666]">Buenos Aires, Argentina</p>
+                      {contact.address.lines.map((ln, i) => (
+                        <p className="muted" key={i}>{ln}</p>
+                      ))}
+                      <p className="muted">{contact.address.cityCountry}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#FAFAFA] border-0 shadow-md">
+              <Card className="surface border-0 shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="bg-[#E91E63] p-3 rounded-lg">
-                      <Clock className="text-white" size={24} />
+                    <div className="pill-icon">
+                      <Clock size={24} />
                     </div>
                     <div>
                       <h3
-                        className="font-bold text-lg text-[#333333] mb-2"
-                        style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                        Horarios de Atención
+                        className="text-lg mb-2 font-montserrat">
+                        {contact.hours.title}
                       </h3>
-                      <p className="text-[#666666]">
-                        Lunes a Viernes: 9:00 - 18:00
-                      </p>
-                      <p className="text-[#666666]">Sábados: 9:00 - 14:00</p>
-                      <p className="text-[#666666]">Domingos: Cerrado</p>
+                      <p className="muted">{contact.hours.weekdays}</p>
+                      <p className="muted">{contact.hours.saturday}</p>
+                      <p className="muted">{contact.hours.sunday}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -148,42 +159,36 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div>
             <h2
-              className="text-2xl font-bold text-[#333333] mb-6"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              Envíanos un Mensaje
+              className="text-2xl mb-6 font-montserrat">
+              {contact.form.title}
             </h2>
 
             {submitted ? (
-              <Card className="bg-[#FCE4EC] border-0 shadow-md">
+              <Card className="surface border-0 shadow-md">
                 <CardContent className="p-8 text-center">
-                  <div className="text-[#E91E63] mb-4">
+                  <div className="muted mb-4">
                     <Send size={48} className="mx-auto" />
                   </div>
                   <h3
-                    className="text-xl font-bold text-[#333333] mb-2"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                    ¡Mensaje Enviado!
+                    className="text-xl mb-2 font-montserrat">
+                    {contact.form.successTitle}
                   </h3>
-                  <p className="text-[#666666] mb-4">
-                    Gracias por contactarnos. Te responderemos dentro de las
-                    próximas 24 horas.
-                  </p>
+                  <p className="muted mb-4">{contact.form.successMessage}</p>
                   <Button onClick={() => setSubmitted(false)} variant="hero">
-                    Enviar otro mensaje
+                    {contact.form.sendAnotherLabel}
                   </Button>
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-[#FAFAFA] border-0 shadow-md">
+              <Card className="surface border-0 shadow-md">
                 <CardContent className="p-8">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label
                           htmlFor="name"
-                          className="block text-sm font-semibold text-[#333333] mb-2"
-                          style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                          Nombre *
+                          className="block text-sm font-semibold mb-2 font-montserrat">
+                          {contact.form.nameLabel}
                         </label>
                         <Input
                           id="name"
@@ -192,16 +197,16 @@ export default function ContactPage() {
                           required
                           value={formData.name}
                           onChange={handleChange}
-                          className="h-12 border-2 border-[#E0E0E0] focus:border-[#E91E63] rounded-lg"
+                          className="form-input h-12"
                           placeholder="Tu nombre completo"
+                          autoComplete="name"
                         />
                       </div>
                       <div>
                         <label
                           htmlFor="email"
-                          className="block text-sm font-semibold text-[#333333] mb-2"
-                          style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                          Email *
+                          className="block text-sm font-semibold mb-2 font-montserrat">
+                          {contact.form.emailLabel}
                         </label>
                         <Input
                           id="email"
@@ -210,8 +215,9 @@ export default function ContactPage() {
                           required
                           value={formData.email}
                           onChange={handleChange}
-                          className="h-12 border-2 border-[#E0E0E0] focus:border-[#E91E63] rounded-lg"
+                          className="form-input h-12"
                           placeholder="tu@email.com"
+                          autoComplete="email"
                         />
                       </div>
                     </div>
@@ -219,9 +225,8 @@ export default function ContactPage() {
                     <div>
                       <label
                         htmlFor="phone"
-                        className="block text-sm font-semibold text-[#333333] mb-2"
-                        style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                        Teléfono
+                        className="block text-sm font-semibold mb-2 font-montserrat">
+                        {contact.form.phoneLabel}
                       </label>
                       <Input
                         id="phone"
@@ -229,17 +234,17 @@ export default function ContactPage() {
                         type="tel"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="h-12 border-2 border-[#E0E0E0] focus:border-[#E91E63] rounded-lg"
+                        className="form-input h-12"
                         placeholder="+54 9 11 1234-5678"
+                        autoComplete="tel"
                       />
                     </div>
 
                     <div>
                       <label
                         htmlFor="message"
-                        className="block text-sm font-semibold text-[#333333] mb-2"
-                        style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                        Mensaje *
+                        className="block text-sm font-semibold mb-2 font-montserrat">
+                        {contact.form.messageLabel}
                       </label>
                       <textarea
                         id="message"
@@ -248,8 +253,9 @@ export default function ContactPage() {
                         rows={6}
                         value={formData.message}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border-2 border-[#E0E0E0] focus:border-[#E91E63] focus:outline-none rounded-lg resize-none"
+                        className="form-input w-full px-4 py-3 resize-none"
                         placeholder="Escribe tu mensaje aquí..."
+                        autoComplete="off"
                       />
                     </div>
 
@@ -261,19 +267,16 @@ export default function ContactPage() {
                       disabled={isSubmitting}
                       loading={isSubmitting}>
                       {isSubmitting ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Enviando...</span>
-                        </div>
+                        <span>Enviando...</span>
                       ) : (
                         <div className="flex items-center space-x-2">
                           <Send size={20} />
-                          <span>Enviar Mensaje</span>
+                          <span>{contact.form.submitLabel}</span>
                         </div>
                       )}
                     </Button>
 
-                    <p className="text-xs text-[#757575] text-center">
+                    <p className="text-xs muted text-center">
                       * Campos obligatorios
                     </p>
                   </form>
@@ -286,47 +289,38 @@ export default function ContactPage() {
         {/* FAQ Section */}
         <div className="mt-16">
           <h2
-            className="text-3xl font-bold text-[#333333] text-center mb-8"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}>
+            className="text-3xl text-center mb-8 font-montserrat">
             Preguntas Frecuentes
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              {
-                question: "¿Cuál es el tiempo de entrega?",
-                answer:
-                  "Los envíos a todo el país tardan entre 3 a 7 días hábiles, dependiendo de la ubicación.",
-              },
-              {
-                question: "¿Puedo cambiar o devolver un producto?",
-                answer:
-                  "Sí, aceptamos cambios y devoluciones dentro de los 30 días posteriores a la compra.",
-              },
-              {
-                question: "¿Qué métodos de pago aceptan?",
-                answer:
-                  "Aceptamos todas las tarjetas de crédito y débito, transferencias bancarias y efectivo.",
-              },
-              {
-                question: "¿Las prendas vienen con garantía?",
-                answer:
-                  "Todas nuestras prendas cuentan con garantía de calidad por defectos de fabricación.",
-              },
-            ].map((faq, index) => (
-              <Card key={index} className="bg-[#FAFAFA] border-0 shadow-md">
+            {contact.faqs.map((faq, index) => (
+              <Card key={index} className="surface border-0 shadow-md">
                 <CardContent className="p-6">
                   <h3
-                    className="font-bold text-lg text-[#333333] mb-3"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                    className="text-lg mb-3 font-montserrat">
                     {faq.question}
                   </h3>
-                  <p className="text-[#666666]">{faq.answer}</p>
+                  <p className="muted">{faq.answer}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
         </div>
+
+        {/* Social links (optional) */}
+        {(contact.social.instagram || contact.social.facebook || contact.social.whatsapp || contact.social.tiktok || contact.social.youtube) && (
+          <div className="mt-12 text-center">
+            <h3 className="text-xl font-semibold mb-4 font-montserrat">Seguinos</h3>
+            <div className="flex items-center justify-center gap-4 text-sm muted">
+              {contact.social.instagram && <a className="underline" href={contact.social.instagram} target="_blank" rel="noreferrer">Instagram</a>}
+              {contact.social.facebook && <a className="underline" href={contact.social.facebook} target="_blank" rel="noreferrer">Facebook</a>}
+              {contact.social.whatsapp && <a className="underline" href={contact.social.whatsapp} target="_blank" rel="noreferrer">WhatsApp</a>}
+              {contact.social.tiktok && <a className="underline" href={contact.social.tiktok} target="_blank" rel="noreferrer">TikTok</a>}
+              {contact.social.youtube && <a className="underline" href={contact.social.youtube} target="_blank" rel="noreferrer">YouTube</a>}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

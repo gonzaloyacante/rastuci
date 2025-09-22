@@ -133,21 +133,21 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
       formData.confirmPassword.length > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#E91E63] rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 pill-icon mb-4">
             <User className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Editar Usuario</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-primary">Editar Usuario</h1>
+          <p className="muted mt-2">
             Modifica la información del usuario
           </p>
         </div>
 
-        <Card className="shadow-lg border-0">
-          <CardHeader className="bg-[#E91E63] text-white rounded-t-lg">
+        <Card className="shadow-lg border border-muted">
+          <CardHeader className="surface text-primary rounded-t-lg border-b border-muted">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Shield className="h-5 w-5" />
               Información del Usuario
@@ -159,7 +159,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2">
+                  className="block text-sm font-medium muted mb-2">
                   <User className="h-4 w-4 inline mr-2" />
                   Nombre Completo
                 </label>
@@ -171,7 +171,6 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                   onChange={handleChange}
                   required
                   placeholder="Ingresa el nombre completo"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63]"
                 />
               </div>
 
@@ -179,7 +178,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2">
+                  className="block text-sm font-medium muted mb-2">
                   <Mail className="h-4 w-4 inline mr-2" />
                   Correo Electrónico
                 </label>
@@ -191,23 +190,22 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                   onChange={handleChange}
                   required
                   placeholder="usuario@ejemplo.com"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63]"
                 />
               </div>
 
               {/* Cambiar Contraseña */}
-              <div className="flex items-center p-4 bg-blue-50 rounded-md border border-blue-200">
+              <div className="flex items-center p-4 surface rounded-md border border-muted">
                 <input
                   id="changePassword"
                   name="changePassword"
                   type="checkbox"
                   checked={formData.changePassword}
                   onChange={handleChange}
-                  className="h-4 w-4 text-[#E91E63] focus:ring-[#E91E63] border-gray-300 rounded"
+                  className="h-4 w-4 rounded"
                 />
                 <label
                   htmlFor="changePassword"
-                  className="ml-3 block text-sm text-gray-900">
+                  className="ml-3 block text-sm text-primary">
                   <Lock className="h-4 w-4 inline mr-1" />
                   Cambiar contraseña
                 </label>
@@ -219,7 +217,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                   <div>
                     <label
                       htmlFor="password"
-                      className="block text-sm font-medium text-gray-700 mb-2">
+                      className="block text-sm font-medium muted mb-2">
                       <Lock className="h-4 w-4 inline mr-2" />
                       Nueva Contraseña
                     </label>
@@ -232,16 +230,16 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                         onChange={handleChange}
                         required
                         placeholder="Ingresa una nueva contraseña"
-                        className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63]"
+                        className="pr-10"
                       />
                       <button
                         type="button"
                         className="absolute inset-y-0 right-0 flex items-center pr-3"
                         onClick={() => setShowPassword(!showPassword)}>
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                          <EyeOff className="h-4 w-4 muted hover:text-primary" />
                         ) : (
-                          <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                          <Eye className="h-4 w-4 muted hover:text-primary" />
                         )}
                       </button>
                     </div>
@@ -250,7 +248,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                   <div>
                     <label
                       htmlFor="confirmPassword"
-                      className="block text-sm font-medium text-gray-700 mb-2">
+                      className="block text-sm font-medium muted mb-2">
                       <Lock className="h-4 w-4 inline mr-2" />
                       Confirmar Nueva Contraseña
                     </label>
@@ -263,9 +261,9 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                         onChange={handleChange}
                         required
                         placeholder="Confirma la nueva contraseña"
-                        className={`pr-10 transition-all duration-200 focus:ring-2 focus:ring-[#E91E63] focus:border-[#E91E63] ${
+                        className={`pr-10 ${
                           formData.confirmPassword && !passwordsMatch
-                            ? "border-red-300"
+                            ? "border-error"
                             : ""
                         }`}
                       />
@@ -276,9 +274,9 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                           setShowConfirmPassword(!showConfirmPassword)
                         }>
                         {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                          <EyeOff className="h-4 w-4 muted hover:text-primary" />
                         ) : (
-                          <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                          <Eye className="h-4 w-4 muted hover:text-primary" />
                         )}
                       </button>
                     </div>
@@ -287,18 +285,18 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
               )}
 
               {/* Checkbox Admin */}
-              <div className="flex items-center p-4 bg-yellow-50 rounded-md border border-yellow-200">
+              <div className="flex items-center p-4 surface rounded-md border border-muted">
                 <input
                   id="isAdmin"
                   name="isAdmin"
                   type="checkbox"
                   checked={formData.isAdmin}
                   onChange={handleChange}
-                  className="h-4 w-4 text-[#E91E63] focus:ring-[#E91E63] border-gray-300 rounded"
+                  className="h-4 w-4 rounded"
                 />
                 <label
                   htmlFor="isAdmin"
-                  className="ml-3 block text-sm text-gray-900">
+                  className="ml-3 block text-sm text-primary">
                   <Shield className="h-4 w-4 inline mr-1" />
                   Permisos de administrador
                 </label>
@@ -309,7 +307,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                 <Button
                   type="submit"
                   disabled={loading || !isPasswordValid || !passwordsMatch}
-                  className="flex-1 bg-[#E91E63] hover:bg-[#C2185B] text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                  className="flex-1 btn-hero">
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -326,7 +324,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                   type="button"
                   variant="outline"
                   onClick={() => router.push("/admin/usuarios")}
-                  className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
+                  className="flex-1 flex items-center justify-center gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Volver
                 </Button>

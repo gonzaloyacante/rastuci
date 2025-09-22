@@ -17,8 +17,8 @@ export default function ProductImageGallery({
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
-        <p className="text-gray-500">No hay imágenes disponibles</p>
+      <div className="w-full h-96 surface border border-muted rounded-lg flex items-center justify-center">
+        <p className="muted">No hay imágenes disponibles</p>
       </div>
     );
   }
@@ -44,7 +44,7 @@ export default function ProductImageGallery({
       role="region"
       aria-label={`Galería de imágenes de ${productName}`}>
       {/* Imagen principal */}
-      <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden group" style={{ position: 'relative' }}>
+      <div className="relative w-full aspect-square md:h-96 surface border border-muted rounded-lg overflow-hidden group" style={{ position: 'relative' }}>
         <Image
           src={images[selectedImage]}
           alt={`${productName} - Imagen ${selectedImage + 1} de ${
@@ -64,14 +64,14 @@ export default function ProductImageGallery({
               onClick={prevImage}
               onKeyDown={(e) => handleKeyDown(e, prevImage)}
               aria-label={`Imagen anterior de ${productName}`}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2">
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
               <ChevronLeft className="w-5 h-5" aria-hidden="true" />
             </button>
             <button
               onClick={nextImage}
               onKeyDown={(e) => handleKeyDown(e, nextImage)}
               aria-label={`Siguiente imagen de ${productName}`}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2">
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
               <ChevronRight className="w-5 h-5" aria-hidden="true" />
             </button>
           </>
@@ -101,10 +101,10 @@ export default function ProductImageGallery({
               aria-label={`Ver imagen ${index + 1} de ${productName}`}
               aria-selected={index === selectedImage}
               role="tab"
-              className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 ${
+              className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                 index === selectedImage
-                  ? "border-pink-500 ring-2 ring-pink-200"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-primary ring-2"
+                  : "border-muted hover:border-muted"
               }`} style={{ position: 'relative' }}>
               <Image
                 src={image}
