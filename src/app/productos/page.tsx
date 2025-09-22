@@ -263,10 +263,10 @@ function ProductsContent() {
 
   return (
     <div className="min-h-screen surface pb-10">
-      <div className="w-full px-4 lg:px-8">
-        {/* Mobile-first Header */}
-        <div className="pt-6 pb-4">
-          <h1 className="text-2xl lg:text-3xl font-bold mb-1">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
+        {/* Header alineado con el contenido */}
+        <div className="pt-6 pb-6">
+          <h1 className="text-2xl lg:text-3xl font-bold mb-2">
             Nuestros Productos
           </h1>
           <p className="text-sm lg:text-base muted">
@@ -447,6 +447,35 @@ function ProductsContent() {
           {/* Sidebar Filters */}
           <aside className="w-80 flex-shrink-0">
             <div className="sticky top-6 space-y-6">
+              {/* View Mode Selector */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium mb-3 text-primary">Vista de productos</h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      viewMode === "grid"
+                        ? "surface text-primary border border-primary"
+                        : "surface muted hover:text-primary"
+                    }`}
+                  >
+                    <Grid className="w-4 h-4" />
+                    Cuadrícula
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      viewMode === "list"
+                        ? "surface text-primary border border-primary"
+                        : "surface muted hover:text-primary"
+                    }`}
+                  >
+                    <List className="w-4 h-4" />
+                    Lista
+                  </button>
+                </div>
+              </div>
+              
               <div className="space-y-6">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-lg">🔍</span>
@@ -511,7 +540,7 @@ function ProductsContent() {
 
           {/* Desktop Main Content */}
           <main className="flex-1">
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-6">
               <div className="text-sm muted">
                 Mostrando{" "}
                 {Math.min(
@@ -520,29 +549,6 @@ function ProductsContent() {
                 )}
                 -{Math.min(currentPage * pageSize, totalProducts)} de{" "}
                 {totalProducts} productos
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "grid"
-                      ? "surface text-primary border border-primary"
-                      : "surface muted border border-transparent"
-                  }`}
-                >
-                  <Grid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "list"
-                      ? "surface text-primary border border-primary"
-                      : "surface muted border border-transparent"
-                  }`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
               </div>
             </div>
 
@@ -561,7 +567,7 @@ function ProductsContent() {
                 <div
                   className={`grid gap-6 mb-8 ${
                     viewMode === "grid"
-                      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                       : "grid-cols-1"
                   }`}
                 >
