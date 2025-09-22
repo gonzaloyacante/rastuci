@@ -3,8 +3,7 @@ import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { logger, getRequestId } from "@/lib/logger";
-import { normalizeApiError } from "@/lib/errors";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok } from "@/lib/apiResponse";
 
 // Mercado Pago sends POST for notifications (may also retry). Keep idempotent.
 export async function POST(req: NextRequest) {
@@ -132,7 +131,7 @@ export async function POST(req: NextRequest) {
         return;
       }
 
-      const created = await tx.order.create({
+      await tx.order.create({
         data: {
           customerName: customerName,
           customerPhone: customerPhone,

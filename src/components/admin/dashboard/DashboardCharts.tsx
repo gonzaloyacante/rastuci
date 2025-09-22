@@ -1,4 +1,3 @@
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProductCategoryData, MonthlySales } from "@/hooks/useDashboard";
 import {
   Chart as ChartJS,

@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useProducts, Product, useCategories, Category } from "@/hooks";
+import { useProducts, useCategories } from "@/hooks";
+import { Product } from "@/types";
 import { formatCurrency } from "@/utils/formatters";
 import {
   AdminPageHeader,
@@ -10,9 +11,9 @@ import {
   AdminLoading,
   AdminError,
 } from "@/components/admin";
-import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/search";
+// import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/admin/SearchAndFilter"; // TODO: Implement when needed
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+// import { Button } from "@/components/ui/Button"; // TODO: Implement when needed
 import { Badge } from "@/components/ui/Badge";
 import { ColorChip } from "@/components/ui/ColorChip";
 
@@ -30,7 +31,7 @@ export default function AdminProductsPage() {
   const { categories } = useCategories();
 
   // Búsqueda local
-  const filteredProducts = products.filter(
+  const _filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchInput.toLowerCase()) ||
       (product.description &&
@@ -46,7 +47,7 @@ export default function AdminProductsPage() {
     setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
+  const _handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 

@@ -8,7 +8,7 @@ import {
   AdminLoading,
   AdminError,
 } from "@/components/admin";
-import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/search";
+// import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/admin/SearchAndFilter"; // TODO: Implement when needed
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";

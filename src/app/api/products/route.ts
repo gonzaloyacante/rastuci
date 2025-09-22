@@ -4,7 +4,6 @@ import {
   ApiResponse,
   Product,
   PaginatedResponse,
-  ProductFilters,
 } from "@/types";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
@@ -16,7 +15,6 @@ import { normalizeApiError } from "@/lib/errors";
 import {
   validateAndSanitize,
   sanitizers,
-  schemas,
 } from "@/lib/input-sanitization";
 
 // GET /api/products - Obtener productos con filtros y paginación

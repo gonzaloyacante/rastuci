@@ -159,7 +159,8 @@ export function ProductGrid({
             currentPage={currentPage}
             totalPages={totalPages!}
             totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
+            startItem={Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}
+            endItem={Math.min(currentPage * itemsPerPage, totalItems)}
           />
         )}
 

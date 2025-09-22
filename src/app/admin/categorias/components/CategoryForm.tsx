@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -69,7 +70,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
         },
   });
 
-  const imageValue = watch("image");
+  const _imageValue = watch("image");
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -80,7 +81,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
       const url = (result as { secure_url: string }).secure_url;
       setValue("image", url, { shouldValidate: true });
       setImagePreview(url);
-    } catch (err) {
+    } catch {
       toast.error("Error al subir la imagen. Intenta nuevamente.");
     } finally {
       setUploading(false);
@@ -204,9 +205,11 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                 )}
                 {imagePreview && (
                   <div className="mt-3">
-                    <img
+                    <Image
                       src={imagePreview}
                       alt="Vista previa"
+                      width={160}
+                      height={160}
                       className="w-40 h-40 object-cover rounded-lg border border-muted shadow"
                     />
                   </div>

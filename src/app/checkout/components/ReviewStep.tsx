@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
 import {
-  Check,
   CreditCard,
   Truck,
   FileText,
@@ -64,7 +63,7 @@ export default function ReviewStep({
       } else {
         setCouponError("Cupón inválido o expirado");
       }
-    } catch (error) {
+    } catch {
       setCouponError("Error al aplicar el cupón");
     } finally {
       setCouponLoading(false);

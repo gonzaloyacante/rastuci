@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { LineChart, BarChart, PieChart, MetricCard, ProgressRing } from '@/components/charts/ChartComponents';
 import { 
   MockDataGenerator, 
@@ -13,10 +13,6 @@ import {
   Users, 
   ShoppingCart, 
   DollarSign, 
-  Package, 
-  Eye,
-  Calendar,
-  Filter,
   Download,
   RefreshCw
 } from 'lucide-react';
@@ -45,7 +41,6 @@ export function AdvancedDashboard() {
   const customerSegments = MockDataGenerator.generateCustomerSegmentData();
 
   // Process data for charts
-  const dailySales = ChartDataProcessor.processTimeSeriesData(salesData, 'day');
   const topProducts = ChartDataProcessor.processTopItems(
     productData,
     item => item.value,
@@ -55,7 +50,6 @@ export function AdvancedDashboard() {
 
   // Calculate metrics
   const totalRevenue = salesData.reduce((sum, point) => sum + point.value, 0);
-  const averageDailyRevenue = totalRevenue / salesData.length;
   const totalOrders = Math.floor(totalRevenue / 85); // Assuming avg order value of 85€
   const totalCustomers = Math.floor(totalOrders * 0.7); // Assuming some repeat customers
   const conversionRate = (totalOrders / 50000) * 100; // Assuming 50k visitors

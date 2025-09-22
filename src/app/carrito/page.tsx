@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+// import Link from "next/link"; // TODO: Implement when needed
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
-import { Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
+import { Trash2, ShoppingCart } from "lucide-react";
+// import { ArrowLeft } from "lucide-react"; // TODO: Implement when needed
 import QuantityButton from "@/components/ui/QuantityButton";
 import EmptyState from "@/components/ui/EmptyState";
 import { formatPriceARS } from "@/utils/formatters";

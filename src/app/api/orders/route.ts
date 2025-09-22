@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendNotification } from "@/lib/onesignal";
-import { ApiResponse, Order, PaginatedResponse, OrderStatus } from "@/types";
+import { ApiResponse, Order, PaginatedResponse } from "@/types";
 import { Prisma } from "@prisma/client";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { mapOrderToDTO } from "@/lib/orders";
@@ -16,7 +16,7 @@ export async function GET(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<PaginatedResponse<Order>>>> {
   try {
-    const requestId = getRequestId(request.headers);
+    const _requestId = getRequestId(request.headers);
     // Rate limit per IP
     const rl = checkRateLimit(request, {
       key: makeKey("GET", "/api/orders"),
@@ -90,10 +90,10 @@ export async function GET(
 
     return ok(response);
   } catch (error) {
-    const requestId = getRequestId(request.headers);
-    logger.error("Error fetching orders", { requestId, error: String(error) });
+    const _requestId = getRequestId(request.headers);
+    logger.error("Error fetching orders", { requestId: _requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los pedidos", 500);
-    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId: _requestId, ...(e.details as Record<string, unknown>) });
   }
 }
 
@@ -102,7 +102,7 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
-    const requestId = getRequestId(request.headers);
+    const _requestId = getRequestId(request.headers);
     // Rate limit per IP for creating orders
     const rl = checkRateLimit(request, {
       key: makeKey("POST", "/api/orders"),
@@ -205,15 +205,15 @@ export async function POST(
         "Nuevo Pedido Recibido"
       );
     } catch (notificationError) {
-      logger.error("Error sending notification", { requestId, error: String(notificationError) });
+      logger.error("Error sending notification", { requestId: _requestId, error: String(notificationError) });
       // No fallar el pedido si la notificación falla
     }
 
     return ok(responseOrder, "Pedido creado exitosamente");
   } catch (error) {
-    const requestId = getRequestId(request.headers);
-    logger.error("Error creating order", { requestId, error: String(error) });
+    const _requestId = getRequestId(request.headers);
+    logger.error("Error creating order", { requestId: _requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el pedido", 500);
-    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId: _requestId, ...(e.details as Record<string, unknown>) });
   }
 }

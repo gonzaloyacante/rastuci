@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
-import { NotificationProvider } from "@/context/NotificationContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import SiteChrome from "@/components/layout/SiteChrome";
 import { SkipLink } from "@/components/ui/SkipLink";

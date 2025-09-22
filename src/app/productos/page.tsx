@@ -169,7 +169,7 @@ function ProductsContent() {
   });
 
   // API shape: { success, data: { data: Product[], total, totalPages, ... } }
-  const products: Product[] = data?.data?.data || [];
+  const products: Product[] = useMemo(() => data?.data?.data || [], [data?.data?.data]);
   const totalProducts: number = data?.data?.total || 0;
   const totalPages: number = data?.data?.totalPages || 1;
 
@@ -188,7 +188,7 @@ function ProductsContent() {
         return [...prev, ...appended];
       });
     }
-  }, [currentPage, swrKey, data?.data?.data, isLoading, products]); // Use specific data path to avoid reference changes
+  }, [currentPage, swrKey, data, isLoading, products]); // Include data to satisfy exhaustive-deps
 
   // Load categories once
   useEffect(() => {

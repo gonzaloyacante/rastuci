@@ -2,8 +2,8 @@
 
 import { useDashboard } from "@/hooks";
 import { AdminPageHeader, AdminLoading, AdminError } from "@/components/admin";
+// import { DashboardStats } from "@/components/admin/dashboard/DashboardStats"; // TODO: Implement when needed
 import {
-  DashboardStats,
   DashboardCharts,
   RecentOrders,
   LowStockProducts,

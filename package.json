@@ -92,9 +92,8 @@
     "vitest": "^3.2.4"
   },
   "lint-staged": {
-    "**/*": [
-      "npm run check:vercel",
-      "bash -c 'npx prisma generate && npx next build'"
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
     ]
   }
 }

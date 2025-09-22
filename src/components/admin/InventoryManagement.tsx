@@ -11,7 +11,6 @@ import {
   TrendingUp, 
   TrendingDown, 
   Search,
-  Filter,
   Download,
   Upload,
   Edit,
@@ -143,7 +142,7 @@ export function InventoryManagement() {
 
       setInventory(mockInventory);
       setStats(mockStats);
-    } catch (error) {
+    } catch {
       toast.error('Error al cargar el inventario');
     } finally {
       setLoading(false);
@@ -182,7 +181,7 @@ export function InventoryManagement() {
       setShowAdjustmentForm(false);
       setSelectedItem(null);
       toast.success('Ajuste de stock realizado correctamente');
-    } catch (error) {
+    } catch {
       toast.error('Error al realizar el ajuste de stock');
     }
   };

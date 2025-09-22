@@ -4,7 +4,7 @@ import React from 'react';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/Button';
-import { LoadingPage } from '@/components/ui/LoadingStates';
+// import { LoadingPage } from "@/components/ui/LoadingComponents"; // TODO: Implement when needed
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';

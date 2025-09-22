@@ -17,7 +17,7 @@ interface RouteParams {
   }>;
 }
 
-type OrderItemWithProduct = {
+type _OrderItemWithProduct = {
   id: string;
   productId: string;
   orderId: string;
@@ -49,7 +49,7 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
-    const requestId = getRequestId(request.headers);
+    const _requestId = getRequestId(request.headers);
     const rl = checkRateLimit(request, {
       key: makeKey("GET", "/api/orders/[id]"),
       ...getPreset("publicReadHeavy"),
@@ -82,10 +82,10 @@ export async function GET(
 
     return ok(responseOrder);
   } catch (error) {
-    const requestId = getRequestId(request.headers);
-    logger.error("Error fetching order", { requestId, error: String(error) });
+    const _requestId = getRequestId(request.headers);
+    logger.error("Error fetching order", { requestId: _requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener el pedido", 500);
-    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId: _requestId, ...(e.details as Record<string, unknown>) });
   }
 }
 
@@ -95,7 +95,7 @@ export async function PATCH(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
-    const requestId = getRequestId(request.headers);
+    const _requestId = getRequestId(request.headers);
     const rl = checkRateLimit(request, {
       key: makeKey("PATCH", "/api/orders/[id]"),
       ...getPreset("mutatingMedium"),
@@ -125,10 +125,10 @@ export async function PATCH(
 
     return ok(responseOrder, "Estado del pedido actualizado exitosamente");
   } catch (error) {
-    const requestId = getRequestId(request.headers);
-    logger.error("Error updating order status (PATCH)", { requestId, error: String(error) });
+    const _requestId = getRequestId(request.headers);
+    logger.error("Error updating order status (PATCH)", { requestId: _requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el estado del pedido", 500);
-    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId: _requestId, ...(e.details as Record<string, unknown>) });
   }
 }
 
@@ -138,7 +138,7 @@ export async function PUT(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
-    const requestId = getRequestId(request.headers);
+    const _requestId = getRequestId(request.headers);
     const rl = checkRateLimit(request, {
       key: makeKey("PUT", "/api/orders/[id]"),
       ...getPreset("mutatingMedium"),
@@ -168,10 +168,10 @@ export async function PUT(
 
     return ok(responseOrder, "Estado del pedido actualizado exitosamente");
   } catch (error) {
-    const requestId = getRequestId(request.headers);
-    logger.error("Error updating order status (PUT)", { requestId, error: String(error) });
+    const _requestId = getRequestId(request.headers);
+    logger.error("Error updating order status (PUT)", { requestId: _requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el estado del pedido", 500);
-    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId: _requestId, ...(e.details as Record<string, unknown>) });
   }
 }
 
@@ -181,7 +181,7 @@ export async function DELETE(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
-    const requestId = getRequestId(request.headers);
+    const _requestId = getRequestId(request.headers);
     const rl = checkRateLimit(request, {
       key: makeKey("DELETE", "/api/orders/[id]"),
       ...getPreset("mutatingLow"),
@@ -230,9 +230,9 @@ export async function DELETE(
 
     return ok(null, "Pedido cancelado exitosamente");
   } catch (error) {
-    const requestId = getRequestId(request.headers);
-    logger.error("Error canceling order", { requestId, error: String(error) });
+    const _requestId = getRequestId(request.headers);
+    logger.error("Error canceling order", { requestId: _requestId, error: String(error) });
     const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al cancelar el pedido", 500);
-    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId, ...(e.details as Record<string, unknown>) });
+    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId: _requestId, ...(e.details as Record<string, unknown>) });
   }
 }

@@ -19,43 +19,6 @@ type Category = {
   imageUrl?: string;
 };
 
-// --- Skeleton Components ---
-function ProductCardSkeleton() {
-  return (
-    <Card className="surface rounded-xl shadow-lg overflow-hidden">
-      <div className="relative aspect-square surface-secondary skeleton-pulse" />
-      <CardContent className="p-4 text-center">
-        <div className="h-6 surface-secondary rounded mb-2 skeleton-pulse" />
-        <div className="h-8 surface-secondary rounded mb-4 skeleton-pulse" />
-        <div className="h-10 surface-secondary rounded skeleton-pulse" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function CategoryCardSkeleton() {
-  return (
-    <div className="surface rounded-xl shadow-lg overflow-hidden">
-      <div className="relative aspect-square surface-secondary skeleton-pulse" />
-      <div className="p-4">
-        <div className="h-6 surface-secondary rounded mb-2 skeleton-pulse" />
-        <div className="h-4 surface-secondary rounded skeleton-pulse" />
-      </div>
-    </div>
-  );
-}
-
-function HeroSkeleton() {
-  return (
-    <section className="relative surface py-20 px-6">
-      <div className="max-w-[1200px] mx-auto text-center">
-        <div className="h-12 surface-secondary rounded mb-4 skeleton-pulse max-w-2xl mx-auto" />
-        <div className="h-6 surface-secondary rounded mb-8 skeleton-pulse max-w-xl mx-auto" />
-        <div className="h-12 surface-secondary rounded skeleton-pulse max-w-xs mx-auto" />
-      </div>
-    </section>
-  );
-}
 
 // --- Componente de Tarjeta de Producto ---
 function ProductCard({

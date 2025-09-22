@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { generateProductMetadata } from "@/lib/seo";
 import ProductDetailClient from "./client-page";
 import type { Product } from "@/types";
@@ -66,7 +65,7 @@ export async function generateMetadata({
 // Force dynamic rendering para productos
 export const dynamic = "force-dynamic";
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default async function ProductPage({ params: _ }: ProductPageProps) {
   // El componente client usa useParams() internamente
   return <ProductDetailClient />;
 }

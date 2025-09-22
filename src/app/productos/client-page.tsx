@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -9,19 +9,8 @@ import { ColorChip } from "@/components/ui/ColorChip";
 import { Product, useProducts, useCategories } from "@/hooks";
 import { formatCurrency } from "@/utils/formatters";
 import {
-  AdminPageHeader,
-  AdminEmpty,
-  AdminEmptyIcons,
-  AdminLoading,
-  AdminError,
-} from "@/components/admin";
-import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/search";
-import {
   ShoppingCart,
   Heart,
-  Star,
-  Eye,
-  Filter,
   Grid3X3,
   List,
   SlidersHorizontal,
@@ -220,12 +209,9 @@ const ProductGridSkeleton = () => (
 
 export default function ProductsPageClient({ searchParams }: ProductsPageClientProps) {
   const router = useRouter();
-  const searchParamsHook = useSearchParams();
-  const { addToCart } = useCart();
-  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<string>('name');
+  const [sortBy] = useState<string>('name');
   const [showFilters, setShowFilters] = useState(false);
 
   // Get initial values from search params
@@ -265,9 +251,6 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
     router.push(`/productos?${params.toString()}`);
   };
 
-  const handleSortChange = (newSortBy: string) => {
-    setSortBy(newSortBy);
-  };
 
   if (isLoading) {
     return (

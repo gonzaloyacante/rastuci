@@ -8,7 +8,7 @@ export async function GET() {
     // Lightweight DB ping
     await prisma.$queryRaw`SELECT 1`;
     return NextResponse.json({ success: true, status: "ready" });
-  } catch (e) {
+  } catch {
     return NextResponse.json(
       { success: false, status: "degraded", error: "db_unreachable" },
       { status: 503 }

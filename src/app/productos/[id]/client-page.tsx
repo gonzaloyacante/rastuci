@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ColorChip } from "@/components/ui/ColorChip";
-import { Badge } from "@/components/ui/Badge";
 import { Product } from "@/types";
 import {
   ShoppingCart,

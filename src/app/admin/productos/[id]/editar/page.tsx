@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ProductForm } from "@/components/forms";
+// import { Product } from "@/types"; // TODO: Implement when needed
 import { AdminPageHeader, AdminLoading, AdminError } from "@/components/admin";
-import { useProduct, useCategories, Product } from "@/hooks";
+import { useProduct, useCategories } from "@/hooks";
+import { ProductForm } from "@/components/forms";
 
 export default function EditProductPage() {
   const params = useParams();

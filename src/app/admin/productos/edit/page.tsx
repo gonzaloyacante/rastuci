@@ -2,9 +2,10 @@
 
 import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+// import { Product } from "@/types"; // TODO: Implement when needed
 import { ProductForm } from "@/components/forms";
 import { AdminPageHeader, AdminLoading, AdminError } from "@/components/admin";
-import { useProduct, useCategories, Product } from "@/hooks";
+import { useProduct, useCategories } from "@/hooks";
 
 function EditProductPageContent() {
   const searchParams = useSearchParams();
