@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
-import { WifiOff, RefreshCw, Home, ShoppingBag } from 'lucide-react';
+import { WifiOff, Home, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { RetryButton } from '@/components/offline/RetryButton';
 
 export const metadata: Metadata = {
   title: 'Sin Conexión - Rastuci',
@@ -44,13 +45,7 @@ export default function OfflinePage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="flex items-center justify-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Reintentar
-          </Button>
+          <RetryButton />
           
           <Link href="/" className="flex-1">
             <Button variant="outline" className="w-full flex items-center justify-center gap-2">

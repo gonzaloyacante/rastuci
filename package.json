@@ -9,6 +9,7 @@
     "lint": "next lint",
     "lint:vercel": "next lint --max-warnings 0",
     "check:vercel": "npm run lint:vercel && npx tsc --noEmit",
+    "build:check": "npm run check:vercel && next build",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -94,6 +95,9 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
       "eslint --fix"
+    ],
+    "src/**/*.{ts,tsx}": [
+      "bash -c 'npm run check:vercel'"
     ]
   }
 }
