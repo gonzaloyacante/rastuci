@@ -81,11 +81,10 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       } else {
         throw new Error(data.error || "Error desconocido");
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      setError(errorMessage);
-      // notifyError(errorMessage);
+    } catch (error) {
+      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(_errorMessage);
+      // notifyError(_errorMessage);
     } finally {
       setLoading(false);
     }
@@ -121,10 +120,9 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       } else {
         throw new Error(data.error || "Error desconocido");
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      // notifyError(errorMessage);
+    } catch (error) {
+      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      // notifyError(_errorMessage);
       return null;
     }
   };
@@ -163,10 +161,9 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       } else {
         throw new Error(data.error || "Error desconocido");
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      // notifyError(errorMessage);
+    } catch (error) {
+      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      // notifyError(_errorMessage);
       return false;
     }
   };
@@ -190,10 +187,9 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       } else {
         throw new Error(data.error || "Error desconocido");
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      // notifyError(errorMessage);
+    } catch (error) {
+      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      // notifyError(_errorMessage);
       return false;
     }
   };
@@ -213,10 +209,9 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       } else {
         throw new Error(data.error || "Error desconocido");
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      // notifyError(errorMessage);
+    } catch (error) {
+      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      // notifyError(_errorMessage);
       return null;
     }
   };

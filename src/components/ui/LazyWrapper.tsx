@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, ComponentType } from "react";
-import { LoadingSpinner } from "./LoadingComponents";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface LazyWrapperProps {
   fallback?: React.ReactNode;
@@ -23,16 +23,16 @@ export const LazyWrapper: React.FC<LazyWrapperProps> = ({
   return <Suspense fallback={fallback || defaultFallback}>{children}</Suspense>;
 };
 
-// HOC para crear componentes lazy con fallback personalizado
-export function withLazyLoading<P extends React.JSX.IntrinsicAttributes = Record<string, unknown>>(
-  Component: ComponentType<P>,
+// HOC para crear componentes lazy con fallback personalizado - versión simplificada
+export function withLazyLoading(
+  Component: ComponentType<Record<string, unknown>>,
   fallback?: React.ReactNode,
 ) {
   const LazyComponent = React.lazy(() =>
     Promise.resolve({ default: Component }),
   );
 
-  const WrappedComponent = (props: P) => (
+  const WrappedComponent = (props: Record<string, unknown>) => (
     <LazyWrapper fallback={fallback}>
       <LazyComponent {...props} />
     </LazyWrapper>
@@ -42,14 +42,14 @@ export function withLazyLoading<P extends React.JSX.IntrinsicAttributes = Record
   return WrappedComponent;
 }
 
-// Utilidad para crear lazy imports con mejor UX - versión simplificada y robusta
-export function createLazyComponent<P extends React.JSX.IntrinsicAttributes = Record<string, unknown>>(
-  importFn: () => Promise<{ default: ComponentType<P> }>,
+// Utilidad para crear lazy imports con mejor UX - versión simplificada
+export function createLazyComponent(
+  importFn: () => Promise<{ default: ComponentType<Record<string, unknown>> }>,
   fallback?: React.ReactNode,
 ) {
   const LazyComponent = React.lazy(importFn);
 
-  const WrappedComponent = (props: P) => (
+  const WrappedComponent = (props: Record<string, unknown>) => (
     <LazyWrapper fallback={fallback}>
       <LazyComponent {...props} />
     </LazyWrapper>
@@ -60,17 +60,17 @@ export function createLazyComponent<P extends React.JSX.IntrinsicAttributes = Re
 }
 
 // Utilidad específica para componentes que no tienen default export
-export function createLazyComponentFromNamed<P extends React.JSX.IntrinsicAttributes = Record<string, unknown>>(
+export function createLazyComponentFromNamed(
   importFn: () => Promise<Record<string, unknown>>,
   componentName: string,
   fallback?: React.ReactNode,
 ) {
   const LazyComponent = React.lazy(async () => {
     const moduleImport = await importFn();
-    return { default: moduleImport[componentName] as ComponentType<P> };
+    return { default: moduleImport[componentName] as ComponentType<Record<string, unknown>> };
   });
 
-  const WrappedComponent = (props: P) => (
+  const WrappedComponent = (props: Record<string, unknown>) => (
     <LazyWrapper fallback={fallback}>
       <LazyComponent {...props} />
     </LazyWrapper>

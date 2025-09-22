@@ -1,6 +1,6 @@
 "use client";
 
-import { createLazyComponent } from "@/components/ui/LazyWrapper";
+import React from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 // Fallback específico para ChartComponents
@@ -61,9 +61,6 @@ const ChartComponentsFallback = () => (
 );
 
 // Lazy component with proper typing
-export const LazyChartComponents = createLazyComponent(
-  () => import("./ChartComponents"),
-  <ChartComponentsFallback />,
-);
+export const LazyChartComponents = React.lazy(() => import("./ChartComponents"));
 
 export default LazyChartComponents;

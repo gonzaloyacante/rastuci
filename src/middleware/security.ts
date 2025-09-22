@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export function securityHeaders(request: NextRequest) {
+export function securityHeaders(_request: NextRequest) {
   const response = NextResponse.next();
 
   // Content Security Policy

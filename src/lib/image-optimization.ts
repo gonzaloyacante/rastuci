@@ -11,7 +11,7 @@ export interface ImageOptimizationOptions {
 }
 
 // Hook for lazy loading images
-export function useLazyImage(src: string, options: ImageOptimizationOptions = {}) {
+export function useOptimizeImage(src: string, _options: ImageOptimizationOptions = {}) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,20 +34,15 @@ export function useLazyImage(src: string, options: ImageOptimizationOptions = {}
 }
 
 // Generate optimized image URLs
-export function getOptimizedImageUrl(
-  src: string,
-  width: number,
-  height?: number,
-  options: ImageOptimizationOptions = {}
-): string {
+export function getOptimizedImageUrl(src: string, width?: number, height?: number, _format?: string, options: ImageOptimizationOptions = {}) {
   if (!src) return '';
 
-  const { quality = 75, format = 'webp' } = options;
+  const { quality = 75 } = options;
   
   // For Next.js Image optimization
   const params = new URLSearchParams({
     url: src,
-    w: width.toString(),
+    w: (width || 800).toString(),
     q: quality.toString(),
   });
 

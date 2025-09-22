@@ -89,7 +89,7 @@ export function useProductSearch(initialFilters: SearchFilters = {}): UseProduct
     return `/api/products?${params.toString()}`;
   }, []);
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, mutate: _mutate, isLoading } = useSWR(
     buildUrl(filters),
     fetcher,
     {
