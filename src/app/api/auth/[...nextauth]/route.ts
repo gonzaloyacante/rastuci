@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 
 const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -88,7 +89,6 @@ const authOptions: AuthOptions = {
   pages: {
     signIn: "/admin",
   },
-  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
