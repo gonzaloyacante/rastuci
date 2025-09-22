@@ -314,9 +314,9 @@ function ProductsContent() {
           </div>
         </div>
 
-        {/* Active filter chips */}
+        {/* Active filter chips - Mobile only */}
         {(selectedCategory || debouncedSearch) && (
-          <div className="px-4 mb-4">
+          <div className="px-4 mb-4 lg:hidden">
             <div className="flex flex-wrap gap-2">
               {debouncedSearch && (
                 <button
@@ -353,71 +353,13 @@ function ProductsContent() {
 
         {/* Results count - Mobile optimized (hidden on desktop) */}
         <div className="px-4 mb-4 flex justify-between items-center lg:hidden">
-          <div className="text-xs muted">{totalProducts} productos</div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded ${
-                viewMode === "grid"
-                  ? "surface text-primary border border-primary"
-                  : "surface muted"
-              }`}
-            >
-              <Grid className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded ${
-                viewMode === "list"
-                  ? "surface text-primary border border-primary"
-                  : "surface muted"
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-            </button>
+          <div className="text-xs muted">
+            {isLoading && totalProducts === 0 ? (
+              <span className="animate-pulse">Cargando productos...</span>
+            ) : (
+              `${totalProducts} productos`
+            )}
           </div>
-        </div>
-
-        {/* Active filter chips */}
-        {(selectedCategory || debouncedSearch) && (
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-2">
-              {debouncedSearch && (
-                <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setCurrentPage(1);
-                  }}
-                  className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
-                  aria-label="Quitar filtro de búsqueda"
-                >
-                  <span>"{debouncedSearch}"</span>
-                  <span className="text-primary">×</span>
-                </button>
-              )}
-              {selectedCategory && (
-                <button
-                  onClick={() => {
-                    setSelectedCategory("");
-                    setCurrentPage(1);
-                  }}
-                  className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
-                  aria-label="Quitar filtro de categoría"
-                >
-                  <span>
-                    {categories.find((c) => c.id === selectedCategory)?.name ||
-                      ""}
-                  </span>
-                  <span className="text-primary">×</span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Results count - Mobile optimized (hidden on desktop) */}
-        <div className="mb-4 flex justify-between items-center lg:hidden">
-          <div className="text-xs muted">{totalProducts} productos</div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setViewMode("grid")}
@@ -552,13 +494,21 @@ function ProductsContent() {
           <main className="flex-1">
             <div className="mb-6">
               <div className="text-sm muted">
-                Mostrando{" "}
-                {Math.min(
-                  (currentPage - 1) * pageSize + 1,
-                  Math.max(totalProducts, 0),
+                {isLoading && totalProducts === 0 ? (
+                  <span className="animate-pulse">Cargando productos...</span>
+                ) : totalProducts === 0 ? (
+                  "No se encontraron productos"
+                ) : (
+                  <>
+                    Mostrando{" "}
+                    {Math.min(
+                      (currentPage - 1) * pageSize + 1,
+                      totalProducts
+                    )}
+                    -{Math.min(currentPage * pageSize, totalProducts)} de{" "}
+                    {totalProducts} productos
+                  </>
                 )}
-                -{Math.min(currentPage * pageSize, totalProducts)} de{" "}
-                {totalProducts} productos
               </div>
             </div>
 
