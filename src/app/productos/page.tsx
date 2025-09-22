@@ -1,31 +1,20 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Product, Category } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/components/ui/Toast";
-import {
-  Filter,
-  Grid,
-  List,
-  ShoppingCart,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  ShoppingBag,
-  Grid3X3,
-  ArrowDown,
-} from "lucide-react";
+import { Grid, List, ShoppingCart, Search } from "lucide-react";
 import Select from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { formatPriceARS } from "@/utils/formatters";
+import { formatPriceARS as _formatPriceARS } from "@/utils/formatters";
 import ProductCard from "@/components/ProductCard";
 import { ProductCardSkeleton as UISkeletonProductCard } from "@/components/ui/Skeleton";
 
-function ProductsPageSkeleton() {
+function _ProductsPageSkeleton() {
   return (
     <div className="min-h-screen surface">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -68,7 +57,8 @@ function ProductsPageSkeleton() {
               {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
-                  className="rounded-lg shadow-sm overflow-hidden surface">
+                  className="rounded-lg shadow-sm overflow-hidden surface"
+                >
                   <div className="aspect-square animate-pulse surface" />
                   <div className="p-4">
                     <div className="h-5 rounded mb-2 animate-pulse surface" />
@@ -85,7 +75,8 @@ function ProductsPageSkeleton() {
   );
 }
 
-export default function ProductsPage() {
+// Componente que usa useSearchParams
+function ProductsContent() {
   const { show } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -101,10 +92,10 @@ export default function ProductsPage() {
   const { addToCart } = useCart();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
 
   // Helper to update URL without full reload
-  const updateUrl = (params: URLSearchParams) => {
+  const _updateUrl = (params: URLSearchParams) => {
     const queryString = params.toString();
     // Use shallow routing to update URL without reloading
     router.replace(`${pathname}?${queryString}`, { scroll: false });
@@ -130,7 +121,14 @@ export default function ProductsPage() {
     if (selectedCategory) params.set("categoryId", selectedCategory);
     return `/api/products?${params.toString()}`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize, sortBy, sortOrder, debouncedSearch, selectedCategory]);
+  }, [
+    currentPage,
+    pageSize,
+    sortBy,
+    sortOrder,
+    debouncedSearch,
+    selectedCategory,
+  ]);
 
   // Update URL when filters change (separate from SWR key to avoid loops)
   useEffect(() => {
@@ -147,14 +145,28 @@ export default function ProductsPage() {
       // Use shallow routing to update URL without reloading
       const newUrl = `${pathname}?${queryString}`;
       // Only update if URL actually changed
-      if (typeof window !== 'undefined' && window.location.search !== `?${queryString}`) {
+      if (
+        typeof window !== "undefined" &&
+        window.location.search !== `?${queryString}`
+      ) {
         router.replace(newUrl, { scroll: false });
       }
     }
-  }, [currentPage, pageSize, sortBy, sortOrder, debouncedSearch, selectedCategory, pathname, router]);
+  }, [
+    currentPage,
+    pageSize,
+    sortBy,
+    sortOrder,
+    debouncedSearch,
+    selectedCategory,
+    pathname,
+    router,
+  ]);
 
   const fetcher = (url: string) => fetch(url).then((r) => r.json());
-  const { data, isLoading } = useSWR(swrKey, fetcher, { revalidateOnFocus: false });
+  const { data, isLoading } = useSWR(swrKey, fetcher, {
+    revalidateOnFocus: false,
+  });
 
   // API shape: { success, data: { data: Product[], total, totalPages, ... } }
   const products: Product[] = data?.data?.data || [];
@@ -164,7 +176,7 @@ export default function ProductsPage() {
   // Reset or accumulate products depending on page or filter changes
   useEffect(() => {
     if (!data || isLoading) return;
-    
+
     if (currentPage === 1) {
       // Reset list when filters/page reset
       setProductList(products);
@@ -176,7 +188,7 @@ export default function ProductsPage() {
         return [...prev, ...appended];
       });
     }
-  }, [currentPage, swrKey, data?.data?.data, isLoading]); // Use specific data path to avoid reference changes
+  }, [currentPage, swrKey, data?.data?.data, isLoading, products]); // Use specific data path to avoid reference changes
 
   // Load categories once
   useEffect(() => {
@@ -213,14 +225,18 @@ export default function ProductsPage() {
     setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
+  const _handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleAddToCart = (product: Product) => {
+  const _handleAddToCart = (product: Product) => {
     addToCart(product, 1, "M", "");
-    show({ type: "success", title: "Carrito", message: "Producto agregado al carrito" });
+    show({
+      type: "success",
+      title: "Carrito",
+      message: "Producto agregado al carrito",
+    });
   };
 
   const loadingGrid = isLoading;
@@ -242,8 +258,8 @@ export default function ProductsPage() {
     })),
   ];
 
-  const startItem = (currentPage - 1) * 12 + 1;
-  const endItem = Math.min(currentPage * 12, totalProducts);
+  const _startItem = (currentPage - 1) * 12 + 1;
+  const _endItem = Math.min(currentPage * 12, totalProducts);
 
   return (
     <div className="min-h-screen surface pb-10">
@@ -324,7 +340,10 @@ export default function ProductsPage() {
                   className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
                   aria-label="Quitar filtro de categoría"
                 >
-                  <span>{categories.find((c) => c.id === selectedCategory)?.name || ""}</span>
+                  <span>
+                    {categories.find((c) => c.id === selectedCategory)?.name ||
+                      ""}
+                  </span>
                   <span className="text-primary">×</span>
                 </button>
               )}
@@ -334,9 +353,7 @@ export default function ProductsPage() {
 
         {/* Results count - Mobile optimized (hidden on desktop) */}
         <div className="px-4 mb-4 flex justify-between items-center lg:hidden">
-          <div className="text-xs muted">
-            {totalProducts} productos
-          </div>
+          <div className="text-xs muted">{totalProducts} productos</div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setViewMode("grid")}
@@ -344,7 +361,8 @@ export default function ProductsPage() {
                 viewMode === "grid"
                   ? "surface text-primary border border-primary"
                   : "surface muted"
-              }`}>
+              }`}
+            >
               <Grid className="w-3.5 h-3.5" />
             </button>
             <button
@@ -353,146 +371,157 @@ export default function ProductsPage() {
                 viewMode === "list"
                   ? "surface text-primary border border-primary"
                   : "surface muted"
-              }`}>
+              }`}
+            >
               <List className="w-3.5 h-3.5" />
             </button>
-        </div>
-      </div>
-
-      {/* Active filter chips */}
-      {(selectedCategory || debouncedSearch) && (
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-2">
-            {debouncedSearch && (
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setCurrentPage(1);
-                }}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
-                aria-label="Quitar filtro de búsqueda"
-              >
-                <span>"{debouncedSearch}"</span>
-                <span className="text-primary">×</span>
-              </button>
-            )}
-            {selectedCategory && (
-              <button
-                onClick={() => {
-                  setSelectedCategory("");
-                  setCurrentPage(1);
-                }}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
-                aria-label="Quitar filtro de categoría"
-              >
-                <span>{categories.find((c) => c.id === selectedCategory)?.name || ""}</span>
-                <span className="text-primary">×</span>
-              </button>
-            )}
           </div>
         </div>
-      )}
 
-      {/* Results count - Mobile optimized (hidden on desktop) */}
-      <div className="mb-4 flex justify-between items-center lg:hidden">
-        <div className="text-xs muted">
-          {totalProducts} productos
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`p-1.5 rounded ${
-              viewMode === "grid"
-                ? "surface text-primary border border-primary"
-                : "surface muted"
-            }`}>
-            <Grid className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={`p-1.5 rounded ${
-              viewMode === "list"
-                ? "surface text-primary border border-primary"
-                : "surface muted"
-            }`}>
-            <List className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Desktop Layout */}
-      <div className="hidden lg:flex gap-8">
-        {/* Sidebar Filters */}
-        <aside className="w-80 flex-shrink-0">
-          <div className="sticky top-6 space-y-6">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">🔍</span>
-                <h2 className="font-semibold text-primary">Filtros</h2>
-              </div>
-
-              {/* Search */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">
-                  Buscar productos
-                </label>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    placeholder="Buscar productos..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="form-input pr-12 py-2"
-                  />
-                  <button
-                    onClick={handleSearch}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 muted">
-                    <Search className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Category Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">
-                  Categoría
-                </label>
-                <Select
-                  options={categoryOptions}
-                  value={selectedCategory}
-                  onChange={handleCategoryChange}
-                  placeholder="Todas las categorías"
-                  searchable
-                  clearable
-                />
-              </div>
-
-              {/* Sort Filter */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Ordenar por
-                </label>
-                <Select
-                  options={sortOptions}
-                  value={`${sortBy}-${sortOrder}`}
-                  onChange={handleSortChange}
-                  placeholder="Ordenar por"
-                />
-              </div>
+        {/* Active filter chips */}
+        {(selectedCategory || debouncedSearch) && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-2">
+              {debouncedSearch && (
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
+                  aria-label="Quitar filtro de búsqueda"
+                >
+                  <span>"{debouncedSearch}"</span>
+                  <span className="text-primary">×</span>
+                </button>
+              )}
+              {selectedCategory && (
+                <button
+                  onClick={() => {
+                    setSelectedCategory("");
+                    setCurrentPage(1);
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full surface text-primary border border-primary"
+                  aria-label="Quitar filtro de categoría"
+                >
+                  <span>
+                    {categories.find((c) => c.id === selectedCategory)?.name ||
+                      ""}
+                  </span>
+                  <span className="text-primary">×</span>
+                </button>
+              )}
             </div>
           </div>
-        </aside>
+        )}
 
-        <div className="border-l border-muted mx-6"></div>
+        {/* Results count - Mobile optimized (hidden on desktop) */}
+        <div className="mb-4 flex justify-between items-center lg:hidden">
+          <div className="text-xs muted">{totalProducts} productos</div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded ${
+                viewMode === "grid"
+                  ? "surface text-primary border border-primary"
+                  : "surface muted"
+              }`}
+            >
+              <Grid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded ${
+                viewMode === "list"
+                  ? "surface text-primary border border-primary"
+                  : "surface muted"
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
 
-        {/* Desktop Main Content */}
-        <main className="flex-1">
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-sm muted">
-              Mostrando {Math.min((currentPage - 1) * pageSize + 1, Math.max(totalProducts, 0))}-
-              {Math.min(currentPage * pageSize, totalProducts)} de {totalProducts} productos
-                {Math.min(currentPage * pageSize, totalProducts)} de {totalProducts} productos
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex gap-8">
+          {/* Sidebar Filters */}
+          <aside className="w-80 flex-shrink-0">
+            <div className="sticky top-6 space-y-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-lg">🔍</span>
+                  <h2 className="font-semibold text-primary">Filtros</h2>
+                </div>
+
+                {/* Search */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">
+                    Buscar productos
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Buscar productos..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      className="form-input pr-12 py-2"
+                    />
+                    <button
+                      onClick={handleSearch}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 muted"
+                    >
+                      <Search className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Category Filter */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">
+                    Categoría
+                  </label>
+                  <Select
+                    options={categoryOptions}
+                    value={selectedCategory}
+                    onChange={handleCategoryChange}
+                    placeholder="Todas las categorías"
+                    searchable
+                    clearable
+                  />
+                </div>
+
+                {/* Sort Filter */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Ordenar por
+                  </label>
+                  <Select
+                    options={sortOptions}
+                    value={`${sortBy}-${sortOrder}`}
+                    onChange={handleSortChange}
+                    placeholder="Ordenar por"
+                  />
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div className="border-l border-muted mx-6"></div>
+
+          {/* Desktop Main Content */}
+          <main className="flex-1">
+            <div className="flex justify-between items-center mb-6">
+              <div className="text-sm muted">
+                Mostrando{" "}
+                {Math.min(
+                  (currentPage - 1) * pageSize + 1,
+                  Math.max(totalProducts, 0),
+                )}
+                -{Math.min(currentPage * pageSize, totalProducts)} de{" "}
+                {totalProducts} productos
+                {Math.min(currentPage * pageSize, totalProducts)} de{" "}
+                {totalProducts} productos
               </div>
 
               <div className="flex items-center space-x-2">
@@ -502,7 +531,8 @@ export default function ProductsPage() {
                     viewMode === "grid"
                       ? "surface text-primary border border-primary"
                       : "surface muted border border-transparent"
-                  }`}>
+                  }`}
+                >
                   <Grid className="w-4 h-4" />
                 </button>
                 <button
@@ -511,7 +541,8 @@ export default function ProductsPage() {
                     viewMode === "list"
                       ? "surface text-primary border border-primary"
                       : "surface muted border border-transparent"
-                  }`}>
+                  }`}
+                >
                   <List className="w-4 h-4" />
                 </button>
               </div>
@@ -534,15 +565,16 @@ export default function ProductsPage() {
                     viewMode === "grid"
                       ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
                       : "grid-cols-1"
-                  }`}>
+                  }`}
+                >
                   {loadingGrid && currentPage === 1
                     ? Array.from({ length: 8 }).map((_, i) => (
                         <UISkeletonProductCard key={i} />
                       ))
                     : productList.map((product) => (
-                        <ProductCard 
-                          key={product.id} 
-                          product={product} 
+                        <ProductCard
+                          key={product.id}
+                          product={product}
                           variant={viewMode === "list" ? "list" : "grid"}
                         />
                       ))}
@@ -552,16 +584,33 @@ export default function ProductsPage() {
                 {currentPage < totalPages && (
                   <div className="flex justify-center mt-2">
                     <Button
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
                       variant="hero"
                       disabled={isLoading}
                       aria-busy={isLoading}
                     >
                       {isLoading ? (
                         <span className="inline-flex items-center gap-2">
-                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                          <svg
+                            className="animate-spin h-4 w-4"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                            ></path>
                           </svg>
                           Cargando...
                         </span>
@@ -597,15 +646,16 @@ export default function ProductsPage() {
                     viewMode === "grid"
                       ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
                       : "grid-cols-1 max-w-sm mx-auto"
-                  }`}>
+                  }`}
+                >
                   {loadingGrid && currentPage === 1
                     ? Array.from({ length: 6 }).map((_, i) => (
                         <UISkeletonProductCard key={i} />
                       ))
                     : productList.map((product) => (
                         <div key={product.id} className="w-full">
-                          <ProductCard 
-                            product={product} 
+                          <ProductCard
+                            product={product}
                             variant={viewMode === "list" ? "list" : "grid"}
                           />
                         </div>
@@ -617,7 +667,9 @@ export default function ProductsPage() {
               {currentPage < totalPages && (
                 <div className="pb-6">
                   <Button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     variant="hero"
                     disabled={isLoading}
                     aria-busy={isLoading}
@@ -625,9 +677,24 @@ export default function ProductsPage() {
                   >
                     {isLoading ? (
                       <span className="inline-flex items-center justify-center gap-2 w-full">
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        <svg
+                          className="animate-spin h-4 w-4"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                          ></path>
                         </svg>
                         Cargando...
                       </span>
@@ -642,5 +709,23 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Componente principal con Suspense
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen surface flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="muted">Cargando productos...</p>
+          </div>
+        </div>
+      }
+    >
+      <ProductsContent />
+    </Suspense>
   );
 }
