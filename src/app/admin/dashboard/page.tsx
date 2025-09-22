@@ -9,6 +9,7 @@ import {
   LowStockProducts,
   QuickActions,
 } from "@/components/admin/dashboard";
+import { LazySection } from "@/components/ui/LazySection";
 
 export default function AdminDashboard() {
   const {
@@ -47,7 +48,8 @@ export default function AdminDashboard() {
                 className="w-7 h-7 text-primary"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24">
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -68,7 +70,8 @@ export default function AdminDashboard() {
                 className="w-7 h-7 text-primary"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24">
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -89,7 +92,8 @@ export default function AdminDashboard() {
                 className="w-7 h-7 text-primary"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24">
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -110,7 +114,8 @@ export default function AdminDashboard() {
                 className="w-7 h-7 text-primary"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24">
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -132,11 +137,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Charts */}
-        <DashboardCharts
-          categoryData={categoryData}
-          monthlySales={monthlySales}
-          loading={loading}
-        />
+        <LazySection className="space-y-6">
+          <DashboardCharts
+            categoryData={categoryData}
+            monthlySales={monthlySales}
+            loading={loading}
+          />
+        </LazySection>
 
         {/* Recent Orders and Quick Actions */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
