@@ -1,65 +1,91 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
-interface UseLazyLoadOptions {
-  threshold?: number;
+interface UseIntersectionObserverOptions {
+  threshold?: number | number[];
   rootMargin?: string;
+  root?: Element | null;
   triggerOnce?: boolean;
+  enabled?: boolean;
 }
 
 /**
- * Hook para lazy loading basado en Intersection Observer
- * Útil para cargar componentes cuando entran en viewport
+ * Hook consolidado para Intersection Observer
+ * Combina funcionalidad de lazy loading y detección de viewport
  */
-export function useLazyLoad(options: UseLazyLoadOptions = {}) {
-  const { threshold = 0.1, rootMargin = "50px", triggerOnce = true } = options;
+export function useIntersectionObserver(
+  options: UseIntersectionObserverOptions = {},
+) {
+  const {
+    threshold = 0.1,
+    rootMargin = "0px",
+    root = null,
+    triggerOnce = false,
+    enabled = true,
+  } = options;
 
-  const [isVisible, setIsVisible] = useState(false);
-  const [hasTriggered, setHasTriggered] = useState(false);
+  const [isIntersecting, setIsIntersecting] = useState(false);
+  const [hasIntersected, setHasIntersected] = useState(false);
   const elementRef = useRef<HTMLElement>(null);
+
+  const callback = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      const isCurrentlyIntersecting = entry.isIntersecting;
+
+      setIsIntersecting(isCurrentlyIntersecting);
+
+      if (isCurrentlyIntersecting && !hasIntersected) {
+        setHasIntersected(true);
+      }
+    },
+    [hasIntersected],
+  );
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element || (triggerOnce && hasTriggered)) return;
+    if (!element || !enabled || (triggerOnce && hasIntersected)) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          if (triggerOnce) {
-            setHasTriggered(true);
-            observer.unobserve(element);
-          }
-        } else if (!triggerOnce) {
-          setIsVisible(false);
-        }
-      },
-      {
-        threshold,
-        rootMargin,
-      },
-    );
+    const observer = new IntersectionObserver(callback, {
+      threshold,
+      rootMargin,
+      root,
+    });
 
     observer.observe(element);
 
     return () => {
-      observer.unobserve(element);
+      observer.disconnect();
     };
-  }, [threshold, rootMargin, triggerOnce, hasTriggered]);
+  }, [
+    callback,
+    threshold,
+    rootMargin,
+    root,
+    enabled,
+    triggerOnce,
+    hasIntersected,
+  ]);
 
   return {
-    elementRef,
-    isVisible: isVisible || hasTriggered,
+    ref: elementRef,
+    elementRef, // Alias para compatibilidad
+    isIntersecting,
+    isVisible: isIntersecting, // Alias para compatibilidad
+    hasIntersected,
   };
 }
+
+// Alias para compatibilidad con código existente
+export const useLazyLoad = useIntersectionObserver;
 
 /**
  * Hook para precargar componentes cuando el usuario está cerca
  * Útil para mejorar la UX precargando antes de que sea necesario
  */
-export function usePreload(options: UseLazyLoadOptions = {}) {
+export function usePreload(options: UseIntersectionObserverOptions = {}) {
   const { threshold = 0.3, rootMargin = "200px", triggerOnce = true } = options;
 
-  return useLazyLoad({ threshold, rootMargin, triggerOnce });
+  return useIntersectionObserver({ threshold, rootMargin, triggerOnce });
 }
 
 /**
@@ -68,9 +94,9 @@ export function usePreload(options: UseLazyLoadOptions = {}) {
  */
 export function useLazyLoadWithDelay(
   delay: number = 150,
-  options: UseLazyLoadOptions = {},
+  options: UseIntersectionObserverOptions = {},
 ) {
-  const { elementRef, isVisible } = useLazyLoad(options);
+  const { elementRef, isVisible } = useIntersectionObserver(options);
   const [shouldLoad, setShouldLoad] = useState(false);
 
   useEffect(() => {
