@@ -15,7 +15,7 @@ export function useProductReviews(productId: string) {
     {
       revalidateOnFocus: false,
       dedupingInterval: 300000, // 5 minutos
-    }
+    },
   );
 
   return {
@@ -25,3 +25,6 @@ export function useProductReviews(productId: string) {
     mutate,
   };
 }
+
+// Export alias para compatibilidad
+export { useProductReviews as useReviews };

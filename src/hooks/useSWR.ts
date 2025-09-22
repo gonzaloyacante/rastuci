@@ -1,5 +1,5 @@
-import useSWR, { SWRConfiguration, SWRResponse } from 'swr';
-import { useCallback } from 'react';
+import useSWR, { SWRConfiguration, SWRResponse } from "swr";
+import { useCallback } from "react";
 
 // Generic fetcher function
 const fetcher = async (url: string) => {
@@ -13,7 +13,7 @@ const fetcher = async (url: string) => {
 // Custom hook for API calls with SWR
 export function useAPI<T = any>(
   url: string | null,
-  config?: SWRConfiguration
+  config?: SWRConfiguration,
 ): SWRResponse<T, Error> & { refetch: () => void } {
   const { mutate, ...swr } = useSWR<T, Error>(url, fetcher, {
     revalidateOnFocus: false,
@@ -36,9 +36,9 @@ export function useProducts(params?: {
   page?: number;
   limit?: number;
 }) {
-  const query = params ? new URLSearchParams(params as any).toString() : '';
-  const url = `/api/products${query ? `?${query}` : ''}`;
-  
+  const query = params ? new URLSearchParams(params as any).toString() : "";
+  const url = `/api/products${query ? `?${query}` : ""}`;
+
   return useAPI(url, {
     revalidateOnFocus: false,
     dedupingInterval: 10000,
@@ -57,7 +57,7 @@ export function useProductReviews(productId: string | null) {
 
 // Categories API hooks
 export function useCategories() {
-  return useAPI('/api/categories', {
+  return useAPI("/api/categories", {
     revalidateOnFocus: false,
     dedupingInterval: 30000, // Categories don't change often
   });
@@ -74,7 +74,7 @@ export function useOrder(orderId: string | null) {
 
 // Admin API hooks
 export function useAdminStats() {
-  return useAPI('/api/admin/stats', {
+  return useAPI("/api/admin/stats", {
     refreshInterval: 30000, // Refresh every 30 seconds
   });
 }
@@ -84,9 +84,9 @@ export function useAdminProducts(params?: {
   limit?: number;
   search?: string;
 }) {
-  const query = params ? new URLSearchParams(params as any).toString() : '';
-  const url = `/api/admin/products${query ? `?${query}` : ''}`;
-  
+  const query = params ? new URLSearchParams(params as any).toString() : "";
+  const url = `/api/admin/products${query ? `?${query}` : ""}`;
+
   return useAPI(url);
 }
 
@@ -95,19 +95,22 @@ export function useAdminUsers(params?: {
   limit?: number;
   search?: string;
 }) {
-  const query = params ? new URLSearchParams(params as any).toString() : '';
-  const url = `/api/admin/users${query ? `?${query}` : ''}`;
-  
+  const query = params ? new URLSearchParams(params as any).toString() : "";
+  const url = `/api/admin/users${query ? `?${query}` : ""}`;
+
   return useAPI(url);
 }
 
 // Search API hook
-export function useSearch(query: string, options?: {
-  category?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  sortBy?: string;
-}) {
+export function useSearch(
+  query: string,
+  options?: {
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sortBy?: string;
+  },
+) {
   const searchParams = new URLSearchParams({
     q: query,
     ...options,
@@ -118,7 +121,7 @@ export function useSearch(query: string, options?: {
     {
       dedupingInterval: 2000,
       revalidateOnFocus: false,
-    }
+    },
   );
 }
 
@@ -133,16 +136,13 @@ export function useCart(userId: string | null) {
 }
 
 // Generic mutation hook
-export function useMutation<T = any>(
-  url: string,
-  options?: RequestInit
-) {
+export function useMutation<T = any>(url: string, options?: RequestInit) {
   return useCallback(
     async (data?: any): Promise<T> => {
       const res = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...options?.headers,
         },
         body: data ? JSON.stringify(data) : undefined,
@@ -155,31 +155,34 @@ export function useMutation<T = any>(
 
       return res.json();
     },
-    [url, options]
+    [url, options],
   );
 }
 
 // Specific mutation hooks
 export function useCreateProduct() {
-  return useMutation('/api/admin/products', { method: 'POST' });
+  return useMutation("/api/admin/products", { method: "POST" });
 }
 
 export function useUpdateProduct(id: string) {
-  return useMutation(`/api/admin/products/${id}`, { method: 'PUT' });
+  return useMutation(`/api/admin/products/${id}`, { method: "PUT" });
 }
 
 export function useDeleteProduct(id: string) {
-  return useMutation(`/api/admin/products/${id}`, { method: 'DELETE' });
+  return useMutation(`/api/admin/products/${id}`, { method: "DELETE" });
 }
 
 export function useCreateOrder() {
-  return useMutation('/api/orders', { method: 'POST' });
+  return useMutation("/api/orders", { method: "POST" });
 }
 
 export function useAddToWishlist() {
-  return useMutation('/api/wishlist', { method: 'POST' });
+  return useMutation("/api/wishlist", { method: "POST" });
 }
 
 export function useRemoveFromWishlist() {
-  return useMutation('/api/wishlist', { method: 'DELETE' });
+  return useMutation("/api/wishlist", { method: "DELETE" });
 }
+
+// Export default para compatibilidad
+export { useAPI as useSWR };
