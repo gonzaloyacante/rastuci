@@ -47,7 +47,7 @@ export async function verifySession(token: string): Promise<SessionData | null> 
     });
 
     return payload as unknown as SessionData;
-  } catch (_error) {
+  } catch {
     return null;
   }
 }

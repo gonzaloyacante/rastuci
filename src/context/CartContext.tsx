@@ -317,7 +317,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           setCartItems(parsed);
         }
       }
-    } catch (_) {
+    } catch {
       // noop
     }
     setHasLoadedStorage(true);
@@ -328,7 +328,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     if (!hasLoadedStorage) return;
     try {
       localStorage.setItem("rastuci-cart", JSON.stringify(cartItems));
-    } catch (_) {
+    } catch {
       // noop
     }
   }, [cartItems, hasLoadedStorage]);
@@ -486,7 +486,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         success: true,
         orderId,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: "Error al procesar el pedido",

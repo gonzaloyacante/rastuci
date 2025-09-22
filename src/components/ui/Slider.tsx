@@ -60,7 +60,7 @@ export function Slider({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, value, min, max, step]);
+  }, [isDragging, value, min, max, step, handleMouseMove]);
 
   const minPercentage = getPercentage(value[0]);
   const maxPercentage = getPercentage(value[1]);

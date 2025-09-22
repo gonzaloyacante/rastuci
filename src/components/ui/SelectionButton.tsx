@@ -8,7 +8,7 @@ interface SelectionButtonProps {
 }
 
 export default function SelectionButton({
-  value,
+  value: _value,
   label,
   isSelected,
   onClick,
