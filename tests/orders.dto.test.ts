@@ -47,8 +47,8 @@ describe("mapOrderToDTO", () => {
     expect(dto.customerAddress).toBeUndefined();
     expect(Array.isArray(dto.items)).toBe(true);
     const first = dto.items![0]!;
-    expect(first.product.description).toBeUndefined();
-    expect(Array.isArray(first.product.images)).toBe(true);
-    expect((first.product.images as any[])[0]).toBe("/img1.jpg");
+    expect(first.product?.description).toBeUndefined();
+    expect(Array.isArray(first.product?.images)).toBe(true);
+    expect((first.product?.images as any[])?.[0]).toBe("/img1.jpg");
   });
 });

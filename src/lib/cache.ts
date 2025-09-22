@@ -1,4 +1,4 @@
-import { cache } from 'react';
+import { cache } from "react";
 
 // Cache configuration
 const CACHE_TTL = {
@@ -38,6 +38,10 @@ class CacheStore {
   delete(key: string) {
     this.store.delete(key);
   }
+
+  keys() {
+    return this.store.keys();
+  }
 }
 
 export const cacheStore = new CacheStore();
@@ -59,31 +63,31 @@ export const getCachedProducts = cache(
     }
 
     const params = new URLSearchParams();
-    if (filters?.category) params.set('categoryId', filters.category);
-    if (filters?.search) params.set('search', filters.search);
-    if (filters?.page) params.set('page', filters.page.toString());
-    if (filters?.sortBy) params.set('sortBy', filters.sortBy);
-    if (filters?.limit) params.set('limit', filters.limit.toString());
+    if (filters?.category) params.set("categoryId", filters.category);
+    if (filters?.search) params.set("search", filters.search);
+    if (filters?.page) params.set("page", filters.page.toString());
+    if (filters?.sortBy) params.set("sortBy", filters.sortBy);
+    if (filters?.limit) params.set("limit", filters.limit.toString());
 
     const response = await fetch(
-      `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/products?${params}`,
+      `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/products?${params}`,
       {
         next: { revalidate: CACHE_TTL.PRODUCTS / 1000 },
-      }
+      },
     );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch products');
+      throw new Error("Failed to fetch products");
     }
 
     const data = await response.json();
     cacheStore.set(cacheKey, data, CACHE_TTL.PRODUCTS);
     return data;
-  }
+  },
 );
 
 export const getCachedCategories = cache(async () => {
-  const cacheKey = 'categories';
+  const cacheKey = "categories";
   const cached = cacheStore.get(cacheKey);
 
   if (cached) {
@@ -91,14 +95,14 @@ export const getCachedCategories = cache(async () => {
   }
 
   const response = await fetch(
-    `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/categories`,
+    `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/categories`,
     {
       next: { revalidate: CACHE_TTL.CATEGORIES / 1000 },
-    }
+    },
   );
 
   if (!response.ok) {
-    throw new Error('Failed to fetch categories');
+    throw new Error("Failed to fetch categories");
   }
 
   const data = await response.json();
@@ -115,14 +119,14 @@ export const getCachedProduct = cache(async (id: string) => {
   }
 
   const response = await fetch(
-    `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/products/${id}`,
+    `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/products/${id}`,
     {
       next: { revalidate: CACHE_TTL.PRODUCT_DETAIL / 1000 },
-    }
+    },
   );
 
   if (!response.ok) {
-    throw new Error('Failed to fetch product');
+    throw new Error("Failed to fetch product");
   }
 
   const data = await response.json();
@@ -132,13 +136,13 @@ export const getCachedProduct = cache(async (id: string) => {
 
 // Cache invalidation utilities
 export const invalidateCache = (pattern: string) => {
-  if (pattern === 'all') {
+  if (pattern === "all") {
     cacheStore.clear();
     return;
   }
 
   // Simple pattern matching (could be enhanced with regex)
-  for (const key of cacheStore.store.keys()) {
+  for (const key of cacheStore.keys()) {
     if (key.includes(pattern)) {
       cacheStore.delete(key);
     }
@@ -148,12 +152,12 @@ export const invalidateCache = (pattern: string) => {
 export const invalidateProductCache = (productId?: string) => {
   if (productId) {
     cacheStore.delete(`product:${productId}`);
-    invalidateCache('products');
+    invalidateCache("products");
   } else {
-    invalidateCache('products');
+    invalidateCache("products");
   }
 };
 
 export const invalidateCategoriesCache = () => {
-  invalidateCache('categories');
+  invalidateCache("categories");
 };

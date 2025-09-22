@@ -1,34 +1,40 @@
-import { toast, ToastOptions } from 'react-hot-toast';
+import { toast, ToastOptions } from "react-hot-toast";
 
 // Enhanced toast configuration
-export const toastConfig: ToastOptions = {
+interface CustomToastConfig extends ToastOptions {
+  success?: ToastOptions;
+  error?: ToastOptions;
+  loading?: ToastOptions;
+}
+
+export const toastConfig: CustomToastConfig = {
   duration: 4000,
-  position: 'top-right',
+  position: "top-right",
   style: {
-    background: '#363636',
-    color: '#fff',
-    fontSize: '14px',
-    borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    background: "#363636",
+    color: "#fff",
+    fontSize: "14px",
+    borderRadius: "8px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
   },
   success: {
     style: {
-      background: '#10B981',
-      color: '#fff',
+      background: "#10B981",
+      color: "#fff",
     },
-    icon: '✅',
+    icon: "✅",
   },
   error: {
     style: {
-      background: '#EF4444',
-      color: '#fff',
+      background: "#EF4444",
+      color: "#fff",
     },
-    icon: '❌',
+    icon: "❌",
   },
   loading: {
     style: {
-      background: '#3B82F6',
-      color: '#fff',
+      background: "#3B82F6",
+      color: "#fff",
     },
   },
 };
@@ -55,7 +61,10 @@ export const showInfo = (message: string, options?: ToastOptions) => {
   });
 };
 
-export const showLoading = (message: string = 'Cargando...', options?: ToastOptions) => {
+export const showLoading = (
+  message: string = "Cargando...",
+  options?: ToastOptions,
+) => {
   return toast.loading(message, {
     ...toastConfig.loading,
     ...options,
@@ -78,7 +87,7 @@ export const showPromise = async <T>(
     success: string;
     error: string;
   },
-  options?: ToastOptions
+  options?: ToastOptions,
 ) => {
   const toastId = showLoading(messages.loading, options);
   try {
@@ -106,8 +115,7 @@ export const notifications = {
     updateQuantity: (productName: string, quantity: number) =>
       showInfo(`Cantidad de "${productName}" actualizada a ${quantity}`),
 
-    clearCart: () =>
-      showInfo('Carrito vaciado'),
+    clearCart: () => showInfo("Carrito vaciado"),
   },
 
   // Wishlist actions
@@ -139,8 +147,7 @@ export const notifications = {
     saveSuccess: (itemType: string) =>
       showSuccess(`${itemType} guardado exitosamente`),
 
-    saveError: (itemType: string) =>
-      showError(`Error al guardar ${itemType}`),
+    saveError: (itemType: string) => showError(`Error al guardar ${itemType}`),
 
     updateSuccess: (itemType: string) =>
       showSuccess(`${itemType} actualizado exitosamente`),
@@ -160,26 +167,24 @@ export const notifications = {
 
   // API actions
   api: {
-    loading: (action: string) =>
-      showLoading(`Procesando ${action}...`),
+    loading: (action: string) => showLoading(`Procesando ${action}...`),
 
     success: (action: string) =>
       showSuccess(`${action} completado exitosamente`),
 
     error: (action: string, details?: string) =>
-      showError(`Error al ${action}${details ? `: ${details}` : ''}`),
+      showError(`Error al ${action}${details ? `: ${details}` : ""}`),
   },
 
   // Network actions
   network: {
-    offline: () =>
-      showError('Sin conexión a internet. Verifica tu conexión.'),
+    offline: () => showError("Sin conexión a internet. Verifica tu conexión."),
 
     timeout: (action: string) =>
       showError(`Tiempo agotado al ${action}. Intenta nuevamente.`),
 
     serverError: () =>
-      showError('Error del servidor. Intenta nuevamente en unos minutos.'),
+      showError("Error del servidor. Intenta nuevamente en unos minutos."),
   },
 };
 
@@ -187,10 +192,10 @@ export const notifications = {
 export const withAutoNotification = <T extends any[], R>(
   fn: (...args: T) => Promise<R>,
   successMessage: string,
-  errorMessage: string = 'Error al procesar la solicitud'
+  errorMessage: string = "Error al procesar la solicitud",
 ) => {
   return async (...args: T): Promise<R> => {
-    const toastId = showLoading('Procesando...');
+    const toastId = showLoading("Procesando...");
     try {
       const result = await fn(...args);
       dismissToast(toastId);
