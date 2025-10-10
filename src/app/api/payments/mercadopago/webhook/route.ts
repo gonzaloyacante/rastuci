@@ -4,7 +4,7 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { logger, getRequestId } from "@/lib/logger";
 import { ok } from "@/lib/apiResponse";
-import { validateWebhookSignature, PaymentStatus } from "@/lib/mercadopago";
+import { validateWebhookSignature } from "@/lib/mercadopago";
 
 // Tipos para el webhook de MercadoPago
 interface MercadoPagoPayment {
@@ -44,7 +44,7 @@ interface MercadoPagoPayment {
 }
 
 // Mapeo de estados de MercadoPago a estados internos
-const mapPaymentStatus = (status: string, statusDetail: string) => {
+const _mapPaymentStatus = (status: string, statusDetail: string) => {
   switch (status) {
     case 'approved':
       return 'COMPLETED';
@@ -76,7 +76,7 @@ const mapPaymentStatus = (status: string, statusDetail: string) => {
 };
 
 // Función para notificar al cliente por email/SMS
-async function notifyCustomer(orderId: string, status: string, paymentDetails: MercadoPagoPayment) {
+async function _notifyCustomer(orderId: string, status: string, paymentDetails: MercadoPagoPayment) {
   try {
     // Aquí se puede integrar con servicios de email (SendGrid, Resend, etc.)
     // y notificaciones push (OneSignal)
@@ -88,7 +88,7 @@ async function notifyCustomer(orderId: string, status: string, paymentDetails: M
 
     if (!order?.customerEmail) return;
 
-    const notifications = [];
+    const _notifications = [];
 
     // Log para desarrollo
     logger.info('[Webhook] Customer notification', {

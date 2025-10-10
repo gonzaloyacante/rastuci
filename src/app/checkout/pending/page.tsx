@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Clock, Package, Phone, MapPin, Loader2, AlertCircle, CreditCard, FileText } from "lucide-react";
+import { Clock, Package, Phone, MapPin, Loader2, AlertCircle, FileText } from "lucide-react";
 import Link from "next/link";
 
 function CheckoutPendingContent() {
@@ -77,7 +77,7 @@ function CheckoutPendingContent() {
         <div className="max-w-2xl mx-auto">
           {/* Ícono de pendiente */}
           <div className="text-center mb-8">
-            <Clock className="w-20 h-20 text-yellow-600 mx-auto mb-4" />
+            <Clock className="w-20 h-20 text-warning mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-primary mb-2">
               Pago Pendiente
             </h1>
@@ -92,9 +92,9 @@ function CheckoutPendingContent() {
           </div>
 
           {/* Estado del pago */}
-          <div className="surface-secondary rounded-lg p-6 mb-6 border border-yellow-200">
+          <div className="surface-secondary rounded-lg p-6 mb-6 border muted">
             <div className="flex items-start">
-              <AlertCircle className="w-6 h-6 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-6 h-6 text-warning mr-3 mt-0.5 flex-shrink-0" />
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-2">
                   Tu pago está en proceso
@@ -103,7 +103,7 @@ function CheckoutPendingContent() {
                   Hemos recibido tu pedido y estamos procesando el pago. 
                   Te notificaremos por email cuando se confirme.
                 </p>
-                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                <div className="badge-warning">
                   <Clock className="w-4 h-4 mr-1" />
                   Tiempo estimado: {paymentInstructions.timeFrame}
                 </div>
@@ -136,7 +136,7 @@ function CheckoutPendingContent() {
             </h3>
             <div className="space-y-4">
               <div className="flex items-start">
-                <Package className="w-5 h-5 text-blue-500 mr-3 mt-0.5" />
+                <Package className="w-5 h-5 text-primary mr-3 mt-0.5" />
                 <div>
                   <p className="font-medium">Preparación del pedido</p>
                   <p className="text-sm muted">
@@ -145,7 +145,7 @@ function CheckoutPendingContent() {
                 </div>
               </div>
               <div className="flex items-start">
-                <Phone className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
+                <Phone className="w-5 h-5 text-success mr-3 mt-0.5" />
                 <div>
                   <p className="font-medium">Te mantendremos informado</p>
                   <p className="text-sm muted">
@@ -162,14 +162,14 @@ function CheckoutPendingContent() {
               <h3 className="text-lg font-semibold text-primary mb-4">
                 Información Importante
               </h3>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="surface-secondary border muted rounded-lg p-4">
                 <div className="flex items-start">
-                  <AlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
-                    <p className="font-medium text-blue-800 mb-1">
+                    <p className="font-medium text-primary mb-1">
                       Conserva tu comprobante de pago
                     </p>
-                    <p className="text-blue-700">
+                    <p className="muted">
                       Guarda el comprobante hasta que se confirme el pago. 
                       Si necesitas ayuda, podrás enviárnoslo por WhatsApp.
                     </p>
@@ -215,8 +215,8 @@ function CheckoutPendingContent() {
                 </a>
               </div>
             </div>
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
+            <div className="mt-4 p-3 surface-secondary rounded-lg">
+              <p className="text-sm muted">
                 <strong>Horarios de atención:</strong><br />
                 Lunes a Viernes: 9:00 - 18:00<br />
                 Sábados: 9:00 - 13:00

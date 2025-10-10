@@ -9,7 +9,7 @@ import Link from "next/link";
 
 function CheckoutFailureContent() {
   const searchParams = useSearchParams();
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [_paymentMethod, setPaymentMethod] = useState<string>("");
   const [orderId, setOrderId] = useState<string>("");
   const [errorReason, setErrorReason] = useState<string>("");
 
@@ -107,14 +107,14 @@ function CheckoutFailureContent() {
           </div>
 
           {/* Mensaje de error específico */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+          <div className="surface-secondary rounded-lg border muted p-6 mb-6">
             <div className="flex items-start">
-              <AlertTriangle className="w-6 h-6 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="w-6 h-6 text-error mr-3 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="text-lg font-semibold text-red-800 mb-2">
+                <h3 className="text-lg font-semibold text-primary mb-2">
                   {getErrorMessage(errorReason)}
                 </h3>
-                <div className="text-red-700">
+                <div className="muted">
                   <p className="mb-3">¿Qué puedes hacer?</p>
                   <ul className="list-disc list-inside space-y-1">
                     {getRecommendations(errorReason).map((rec, index) => (
@@ -132,15 +132,15 @@ function CheckoutFailureContent() {
               Métodos de Pago Disponibles
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center p-3 border border-gray-200 rounded-lg">
-                <CreditCard className="w-6 h-6 text-blue-600 mr-3" />
+              <div className="flex items-center p-3 border muted rounded-lg">
+                <CreditCard className="w-6 h-6 text-primary mr-3" />
                 <div>
                   <p className="font-medium">Tarjetas de Crédito/Débito</p>
                   <p className="text-sm muted">Visa, Mastercard, American Express</p>
                 </div>
               </div>
-              <div className="flex items-center p-3 border border-gray-200 rounded-lg">
-                <div className="w-6 h-6 bg-blue-500 rounded mr-3 flex items-center justify-center">
+              <div className="flex items-center p-3 border muted rounded-lg">
+                <div className="w-6 h-6 bg-primary rounded mr-3 flex items-center justify-center">
                   <span className="text-white text-xs font-bold">MP</span>
                 </div>
                 <div>
