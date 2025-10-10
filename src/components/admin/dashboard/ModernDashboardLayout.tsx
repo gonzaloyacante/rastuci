@@ -1,13 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 interface ModernDashboardLayoutProps {
   children: ReactNode;
 }
 
 export default function ModernDashboardLayout({ children }: ModernDashboardLayoutProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -31,6 +37,16 @@ export default function ModernDashboardLayout({ children }: ModernDashboardLayou
       },
     },
   };
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen surface p-4 md:p-8 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto space-y-10 w-full overflow-x-hidden">
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
