@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { CheckCircle, Package, Phone, MapPin } from "lucide-react";
+import { CheckCircle, Package, Phone, MapPin, Loader2 } from "lucide-react";
 import Link from "next/link";
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<string>("");
@@ -158,5 +158,30 @@ export default function CheckoutSuccessPage() {
 
       <Footer />
     </div>
+  );
+}
+
+// Loading component para Suspense
+function CheckoutSuccessLoading() {
+  return (
+    <div className="min-h-screen surface">
+      <Header />
+      <div className="py-12 px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="muted">Procesando información del pedido...</p>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
+// Componente principal con Suspense
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<CheckoutSuccessLoading />}>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

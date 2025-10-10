@@ -1,11 +1,17 @@
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
+import crypto from 'crypto';
 
-// Configuración del cliente de MercadoPago
+// Configuración del cliente de MercadoPago con manejo de errores
+const accessToken = process.env.MP_ACCESS_TOKEN;
+if (!accessToken) {
+  throw new Error('MP_ACCESS_TOKEN is required in environment variables');
+}
+
 const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN!,
+  accessToken,
   options: {
-    timeout: 5000,
-    idempotencyKey: 'abc'
+    timeout: 10000, // Incrementado para mejor estabilidad
+    idempotencyKey: undefined // Se generará dinámicamente por transacción
   }
 });
 
@@ -13,7 +19,25 @@ const client = new MercadoPagoConfig({
 export const payment = new Payment(client);
 export const preference = new Preference(client);
 
-// Tipos para TypeScript
+// Enums para estados y tipos
+export enum PaymentStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  CANCELLED = 'cancelled',
+  REFUNDED = 'refunded',
+  CHARGED_BACK = 'charged_back'
+}
+
+export enum PaymentMethod {
+  CARD = 'credit_card',
+  DEBIT_CARD = 'debit_card',
+  BANK_TRANSFER = 'bank_transfer',
+  TICKET = 'ticket',
+  WALLET_PURCHASE = 'wallet_purchase'
+}
+
+// Tipos para TypeScript extendidos
 export interface PaymentData {
   token: string;
   installments: number;
@@ -24,17 +48,55 @@ export interface PaymentData {
       type: string;
       number: string;
     };
+    first_name?: string;
+    last_name?: string;
   };
   transaction_amount: number;
   description: string;
   external_reference?: string;
   metadata?: Record<string, unknown>;
+  additional_info?: {
+    items?: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      picture_url?: string;
+      category_id?: string;
+      quantity: number;
+      unit_price: number;
+    }>;
+    payer?: {
+      first_name?: string;
+      last_name?: string;
+      phone?: {
+        area_code?: string;
+        number?: string;
+      };
+      address?: {
+        street_name?: string;
+        street_number?: string;
+        zip_code?: string;
+      };
+    };
+    shipments?: {
+      receiver_address?: {
+        zip_code?: string;
+        state_name?: string;
+        city_name?: string;
+        street_name?: string;
+        street_number?: string;
+      };
+    };
+  };
 }
 
 export interface PreferenceData {
   items: Array<{
     id: string;
     title: string;
+    description?: string;
+    picture_url?: string;
+    category_id?: string;
     quantity: number;
     unit_price: number;
     currency_id?: string;
@@ -55,6 +117,8 @@ export interface PreferenceData {
       street_name?: string;
       street_number?: string;
       zip_code?: string;
+      city_name?: string;
+      state_name?: string;
     };
   };
   back_urls?: {
@@ -66,57 +130,180 @@ export interface PreferenceData {
   external_reference?: string;
   notification_url?: string;
   metadata?: Record<string, unknown>;
+  payment_methods?: {
+    excluded_payment_methods?: Array<{ id: string }>;
+    excluded_payment_types?: Array<{ id: string }>;
+    installments?: number;
+    default_installments?: number;
+  };
+  shipments?: {
+    mode?: string;
+    local_pickup?: boolean;
+    dimensions?: string;
+    default_shipping_method?: number;
+    free_methods?: Array<{ id: number }>;
+    cost?: number;
+    free_shipping?: boolean;
+  };
+  expires?: boolean;
+  expiration_date_from?: string;
+  expiration_date_to?: string;
+  statement_descriptor?: string;
 }
 
-// Función para crear un pago
-export async function createPayment(paymentData: PaymentData) {
+export interface WebhookNotification {
+  action: string;
+  api_version: string;
+  data: {
+    id: string;
+  };
+  date_created: string;
+  id: number;
+  live_mode: boolean;
+  type: 'payment' | 'merchant_order' | 'chargebacks' | 'point_integration_wh';
+  user_id: string;
+}
+
+// Función para crear un pago con manejo completo de errores
+export async function createPayment(paymentData: PaymentData, idempotencyKey?: string) {
   try {
-    const result = await payment.create({
+    const enhancedClient = new MercadoPagoConfig({
+      accessToken: accessToken as string,
+      options: {
+        timeout: 10000,
+        idempotencyKey: idempotencyKey || generateIdempotencyKey(),
+      }
+    });
+
+    const paymentInstance = new Payment(enhancedClient);
+    
+    const result = await paymentInstance.create({
       body: {
         ...paymentData,
         notification_url: process.env.MP_WEBHOOK_URL,
+        binary_mode: false, // Permite estados pending
+        capture: true, // Captura automática del pago
       }
     });
+    
     return result;
   } catch (error) {
     console.error('Error creating payment:', error);
-    throw error;
+    throw new Error(`Payment creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-// Función para crear una preferencia (Checkout Pro)
-export async function createPreference(preferenceData: PreferenceData) {
+// Función para crear una preferencia (Checkout Pro) con configuración completa
+export async function createPreference(preferenceData: PreferenceData, idempotencyKey?: string) {
   try {
-    const result = await preference.create({
+    const enhancedClient = new MercadoPagoConfig({
+      accessToken: accessToken as string,
+      options: {
+        timeout: 10000,
+        idempotencyKey: idempotencyKey || generateIdempotencyKey(),
+      }
+    });
+
+    const preferenceInstance = new Preference(enhancedClient);
+    
+    // Configuración base para Argentina
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
+    const result = await preferenceInstance.create({
       body: {
         ...preferenceData,
         notification_url: process.env.MP_WEBHOOK_URL,
+        back_urls: {
+          success: `${baseUrl}/checkout/success`,
+          failure: `${baseUrl}/checkout/failure`,
+          pending: `${baseUrl}/checkout/pending`,
+          ...preferenceData.back_urls,
+        },
+        auto_return: 'approved',
+        binary_mode: false,
+        expires: true,
+        expiration_date_from: new Date().toISOString(),
+        expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
+        statement_descriptor: 'RASTUCI',
+        // Configurar métodos de pago permitidos
+        payment_methods: {
+          excluded_payment_methods: [], // Permitir todos
+          excluded_payment_types: [], // Permitir todos los tipos
+          installments: 12, // Máximo 12 cuotas
+          default_installments: 1,
+          ...preferenceData.payment_methods,
+        },
       }
     });
+    
     return result;
   } catch (error) {
     console.error('Error creating preference:', error);
-    throw error;
+    throw new Error(`Preference creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-// Función para obtener información de un pago
-export async function getPayment(paymentId: string) {
+// Función para obtener información de un pago con reintento
+export async function getPayment(paymentId: string, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await payment.get({ id: paymentId });
+      return result;
+    } catch (error) {
+      console.error(`Error getting payment (attempt ${i + 1}):`, error);
+      if (i === retries - 1) {
+        throw new Error(`Payment retrieval failed after ${retries} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      // Esperar antes del siguiente intento
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+}
+
+// Función para generar clave de idempotencia única
+function generateIdempotencyKey(): string {
+  return `rastuci_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+}
+
+// Función para validar webhook de MercadoPago
+export function validateWebhookSignature(
+  xSignature: string,
+  xRequestId: string,
+  dataId: string,
+  ts: string
+): boolean {
   try {
-    const result = await payment.get({ id: paymentId });
-    return result;
+    const webhookSecret = process.env.MP_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.warn('MP_WEBHOOK_SECRET not configured');
+      return true; // En desarrollo permitir sin validación
+    }
+
+    const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+    const hmac = crypto.createHmac('sha256', webhookSecret);
+    hmac.update(manifest);
+    const expectedSignature = hmac.digest('hex');
+    
+    // Extraer la firma del header x-signature
+    const signature = xSignature.split(',').find((s: string) => s.trim().startsWith('v1='))?.split('=')[1];
+    
+    return signature === expectedSignature;
   } catch (error) {
-    console.error('Error getting payment:', error);
-    throw error;
+    console.error('Error validating webhook signature:', error);
+    return false;
   }
 }
 
 // Configuración pública para el frontend
 export const mercadoPagoConfig = {
-  publicKey: process.env.MP_PUBLIC_KEY!,
+  publicKey: process.env.MP_PUBLIC_KEY || '',
   locale: 'es-AR' as const,
   theme: {
     elementsColor: '#e91e63', // Color primario de Rastuci
     headerColor: '#e91e63',
-  }
+  },
+  // URLs para diferentes ambientes
+  checkoutUrl: process.env.NODE_ENV === 'production' 
+    ? 'https://www.mercadopago.com.ar/checkout/v1/redirect'
+    : 'https://sandbox.mercadopago.com.ar/checkout/v1/redirect',
 };
