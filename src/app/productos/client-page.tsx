@@ -348,7 +348,7 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
               className={`px-4 py-2 rounded-lg border font-medium transition-colors ${
                 !selectedCategory
                   ? 'bg-primary text-white border-primary'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  : 'surface muted border hover:surface-secondary'
               }`}
             >
               Todas las categorías

@@ -44,6 +44,16 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { items = [], customer = null, metadata = {} } = body || {};
 
+    // Log para debugging (solo en desarrollo)
+    if (process.env.NODE_ENV === 'development') {
+      logger.info("Creating MP preference", { 
+        requestId, 
+        itemsCount: items.length,
+        hasCustomer: !!customer,
+        accessTokenPrefix: accessToken.substring(0, 10) + '...'
+      });
+    }
+
     if (!Array.isArray(items) || items.length === 0) {
       return fail("BAD_REQUEST", "Items required to create preference", 400, { requestId });
     }

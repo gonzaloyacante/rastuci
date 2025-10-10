@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCart, ShippingOption } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
-import { Check, Truck, MapPin, ChevronRight, Loader2 } from "lucide-react";
+import { Check, Truck, MapPin, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
 import { formatPriceARS } from "@/utils/formatters";
 
 interface ShippingStepProps {
@@ -11,12 +11,12 @@ interface ShippingStepProps {
   onBack: () => void;
 }
 
-export default function ShippingStep({ onNext }: ShippingStepProps) {
+export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
   const {
     customerInfo,
     selectedShippingOption,
     setSelectedShippingOption,
-    calculateShippingCost,
+    calculateShippingCost: _calculateShippingCost,
     availableShippingOptions,
   } = useCart();
 
@@ -25,7 +25,7 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
   const [error, setError] = useState<string | null>(null);
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
 
-  // Calcular costos de envío según código postal
+  // Calcular costos de envío según código postal usando Correo Argentino
   const calculateShippingByPostalCode = useCallback(async () => {
     if (!customerInfo?.postalCode) return;
 
@@ -33,11 +33,38 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
     setError(null);
 
     try {
-      const options = await calculateShippingCost(customerInfo.postalCode);
+      // Llamar a la API de Correo Argentino (simulada)
+      const response = await fetch('/api/shipping/correo-argentino/calculate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postalCode: customerInfo.postalCode,
+          weight: 1000, // 1kg por defecto
+          dimensions: {
+            height: 10,
+            width: 20,
+            length: 30,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Error calculando el envío');
+      }
+
+      const options = result.data.options;
       setShippingOptions(options);
 
       // Si no hay opción seleccionada, seleccionar la primera por defecto
-      if (!selectedShippingOption) {
+      if (!selectedShippingOption && options.length > 0) {
         setSelectedShippingOption(options[0]);
       }
     } catch (error) {
@@ -52,7 +79,6 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
     }
   }, [
     customerInfo?.postalCode,
-    calculateShippingCost,
     selectedShippingOption,
     setSelectedShippingOption,
     availableShippingOptions,
@@ -187,8 +213,15 @@ export default function ShippingStep({ onNext }: ShippingStepProps) {
         {/* Opciones de envío */}
         {renderShippingOptions()}
 
-        {/* Botón para continuar */}
-        <div className="flex justify-end mt-8">
+        {/* Botones de navegación */}
+        <div className="flex justify-between mt-8">
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="surface text-primary hover:brightness-95">
+            <ChevronLeft className="mr-2" size={16} />
+            Volver
+          </Button>
           <Button
             onClick={handleContinue}
             disabled={!selectedShippingOption || loading}

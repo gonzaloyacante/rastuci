@@ -25,6 +25,7 @@ export interface PaymentMethod {
   name: string;
   icon: string;
   description: string;
+  requiresShipping?: boolean; // Nueva propiedad para determinar si requiere envío
 }
 
 export interface BillingOption {
@@ -118,6 +119,8 @@ interface CartContextType {
     success: boolean;
     orderId?: string;
     error?: string;
+    redirectUrl?: string;
+    paymentMethod?: string;
   }>;
 }
 
@@ -193,7 +196,15 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       id: "mercadopago",
       name: "MercadoPago",
       icon: "wallet",
-      description: "Paga con Mercado Pago usando tu cuenta o billetera",
+      description: "Tarjetas, transferencias y más - Redirección a MercadoPago",
+      requiresShipping: true,
+    },
+    {
+      id: "cash",
+      name: "Efectivo - Retiro en Local",
+      icon: "dollar-sign", 
+      description: "Retiro en nuestro local de Buenos Aires - Sin costo de envío",
+      requiresShipping: false,
     },
   ];
 
@@ -473,26 +484,117 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     success: boolean;
     orderId?: string;
     error?: string;
+    redirectUrl?: string;
+    paymentMethod?: string;
   }> => {
     try {
-      // Simular creación de pedido
-      // En producción, esto se haría contra una API
-      const orderId = `ORD-${Date.now()}`;
+      // Validar que tengamos toda la información necesaria
+      if (!customerInfo) {
+        return {
+          success: false,
+          error: "Falta información del cliente",
+        };
+      }
 
-      // Simular delay de procesamiento
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (!selectedPaymentMethod) {
+        return {
+          success: false,
+          error: "Por favor selecciona un método de pago",
+        };
+      }
+
+      // Si es pago en efectivo, solo requiere pickup
+      if (selectedPaymentMethod.id === "cash") {
+        if (!selectedShippingOption || selectedShippingOption.id !== "pickup") {
+          return {
+            success: false,
+            error: "Para pago en efectivo debe seleccionar retiro en tienda",
+          };
+        }
+      } else {
+        // Para otros métodos, requiere método de envío
+        if (!selectedShippingOption) {
+          return {
+            success: false,
+            error: "Por favor selecciona un método de envío",
+          };
+        }
+      }
+
+      const orderSummary = getOrderSummary();
+
+      // Preparar datos para el API
+      const orderData = {
+        items: cartItems.map(item => ({
+          productId: item.product.id,
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          size: item.size,
+          color: item.color,
+        })),
+        customer: customerInfo,
+        shippingMethod: selectedShippingOption,
+        paymentMethod: selectedPaymentMethod.id,
+        orderData: {
+          subtotal: orderSummary.subtotal,
+          shippingCost: orderSummary.shippingCost,
+          discount: orderSummary.discount,
+          total: orderSummary.total,
+        },
+      };
+
+      // Llamar al API de checkout
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error || "Error al procesar el pedido",
+        };
+      }
+
+      // Si es MercadoPago, devolver URL de redirección
+      if (result.paymentMethod === "mercadopago" && result.initPoint) {
+        return {
+          success: true,
+          redirectUrl: result.initPoint,
+          paymentMethod: "mercadopago",
+        };
+      }
+
+      // Si es efectivo, devolver orderId
+      if (result.paymentMethod === "cash") {
+        // Limpiar carrito después de pedido exitoso
+        clearCart();
+        return {
+          success: true,
+          orderId: result.orderId,
+          paymentMethod: "cash",
+        };
+      }
 
       return {
         success: true,
-        orderId,
+        orderId: result.orderId,
       };
-    } catch {
+
+    } catch (error) {
+      console.error("Error al procesar pedido:", error);
       return {
         success: false,
-        error: "Error al procesar el pedido",
+        error: "Error de conexión. Por favor intenta nuevamente.",
       };
     }
-  }, []);
+  }, [customerInfo, selectedPaymentMethod, selectedShippingOption, cartItems, getOrderSummary, clearCart]);
 
   const value: CartContextType = {
     // Carrito y productos

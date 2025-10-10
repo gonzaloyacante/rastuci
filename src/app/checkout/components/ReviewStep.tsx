@@ -3,16 +3,10 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
-import {
-  CreditCard,
-  Truck,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  Tag,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, X, Truck, CreditCard, FileText } from "lucide-react";
 import { formatPriceARS } from "@/utils/formatters";
+// import { OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
+// import { PaymentProcessor } from "@/components/checkout/PaymentProcessor";
 
 interface ReviewStepProps {
   onPlaceOrder: () => Promise<void>;
@@ -246,16 +240,21 @@ export default function ReviewStep({
           <Button
             onClick={onPlaceOrder}
             disabled={isSubmitting}
-            className="btn-hero">
+            className="btn-hero relative overflow-hidden">
             {isSubmitting ? (
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Procesando...</span>
+                <span>Procesando con MercadoPago...</span>
               </div>
             ) : (
               <>
-                <span>Confirmar Pedido</span>
-                <ChevronRight className="ml-2" size={16} />
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  <span>Pagar con MercadoPago</span>
+                  <ChevronRight className="ml-2" size={16} />
+                </div>
               </>
             )}
           </Button>

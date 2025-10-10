@@ -1,61 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { useCart, PaymentMethod } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
-import {
-  Check,
-  CreditCard,
-  Wallet,
-  Building,
-  DollarSign,
-  ChevronRight,
-} from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
+import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
+import { CardForm } from "@/components/checkout/CardForm";
+import { SavedCardsSelector } from "@/components/checkout/SavedCardsSelector";
 
 interface PaymentStepProps {
   onNext: () => void;
   onBack: () => void;
 }
 
-export default function PaymentStep({ onNext }: PaymentStepProps) {
-  const {
-    selectedPaymentMethod,
-    setSelectedPaymentMethod,
-    availablePaymentMethods,
-  } = useCart();
-
-  // Estado de error
+export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
+  // Estados para el formulario de pago
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [useNewCard, setUseNewCard] = useState(false);
+  const [cardData, setCardData] = useState({
+    cardNumber: '',
+    expiryMonth: '',
+    expiryYear: '',
+    securityCode: '',
+    cardholderName: '',
+    installments: 1,
+  });
+  
   const [error, setError] = useState<string | null>(null);
-
-  // Manejar selección de método de pago
-  const handleSelectPayment = (method: PaymentMethod) => {
-    setSelectedPaymentMethod(method);
-    setError(null);
-  };
 
   // Manejar continuar al siguiente paso
   const handleContinue = () => {
-    if (selectedPaymentMethod) {
-      onNext();
-    } else {
+    if (!selectedPaymentMethod) {
       setError("Por favor, selecciona un método de pago para continuar");
+      return;
     }
-  };
 
-  // Devolver el ícono correcto según el tipo de pago
-  const getPaymentIcon = (icon: string) => {
-    switch (icon) {
-      case "credit-card":
-        return <CreditCard size={24} />;
-      case "wallet":
-        return <Wallet size={24} />;
-      case "bank":
-        return <Building size={24} />;
-      case "dollar-sign":
-        return <DollarSign size={24} />;
-      default:
-        return <CreditCard size={24} />;
+    if ((selectedPaymentMethod === 'credit_card' || selectedPaymentMethod === 'debit_card') && 
+        (!cardData.cardNumber || !cardData.expiryMonth || !cardData.expiryYear || !cardData.securityCode)) {
+      setError("Por favor, completa todos los datos de la tarjeta");
+      return;
     }
+
+    // Guardar datos de pago en el contexto si es necesario
+    onNext();
   };
 
   return (
@@ -70,102 +57,99 @@ export default function PaymentStep({ onNext }: PaymentStepProps) {
           </div>
         )}
 
-        {/* Opciones de pago */}
-        <div className="space-y-4 mt-6">
-          {availablePaymentMethods.map((method) => (
-            <div
-              key={method.id}
-              className={`border rounded-lg p-4 transition-all ${
-                selectedPaymentMethod?.id === method.id
-                  ? "border-primary surface"
-                  : "border-muted surface hover:border-primary"
-              }`}
-              onClick={() => handleSelectPayment(method)}>
-              <div className="flex justify-between items-center">
-                <div className="flex items-start gap-3">
-                  <span
-                    className={`mt-1 ${
-                      selectedPaymentMethod?.id === method.id
-                        ? "text-primary"
-                        : "muted"
-                    }`}>
-                    {getPaymentIcon(method.icon)}
-                  </span>
-                  <div>
-                    <h3 className="font-semibold text-lg">{method.name}</h3>
-                    <p className="muted text-sm">
-                      {method.description}
-                    </p>
-                  </div>
-                </div>
-                {selectedPaymentMethod?.id === method.id && (
-                  <div className="w-6 h-6 rounded-full btn-hero flex items-center justify-center">
-                    <Check size={16} className="text-white" />
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Selector de método de pago */}
+        <PaymentMethodSelector
+          selectedMethod={selectedPaymentMethod}
+          onMethodChange={setSelectedPaymentMethod}
+        />
 
-        {/* Información adicional según el método seleccionado */}
-        {selectedPaymentMethod && (
-          <div className="mt-6 p-4 surface border border-muted rounded-lg">
-            {selectedPaymentMethod.id === "credit" && (
-              <div className="space-y-4">
-                <h3 className="font-medium">Información de la Tarjeta</h3>
-                <p className="text-sm muted">
-                  Al finalizar la compra, serás redirigido a una pasarela de
-                  pago segura para completar la transacción.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <div className="h-8 w-12 surface border border-muted rounded flex items-center justify-center text-primary text-xs font-bold">
-                    VISA
-                  </div>
-                  <div className="h-8 w-12 surface border border-muted rounded flex items-center justify-center text-primary text-xs font-bold">
-                    MC
-                  </div>
-                  <div className="h-8 w-12 surface border border-muted rounded flex items-center justify-center text-primary text-xs font-bold">
-                    AMEX
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedPaymentMethod.id === "mercadopago" && (
-              <div className="space-y-4">
-                <h3 className="font-medium">Pago con MercadoPago</h3>
-                <p className="text-sm muted">
-                  Al finalizar la compra, serás redirigido a MercadoPago para
-                  completar el pago de forma segura.
-                </p>
-              </div>
-            )}
-
-            {selectedPaymentMethod.id === "transfer" && (
-              <div className="space-y-4">
-                <h3 className="font-medium">Transferencia Bancaria</h3>
-                <p className="text-sm muted">
-                  Recibirás los datos bancarios por email al finalizar la
-                  compra. Tu pedido se procesará una vez confirmado el pago.
-                </p>
-              </div>
-            )}
-
-            {selectedPaymentMethod.id === "cash" && (
-              <div className="space-y-4">
-                <h3 className="font-medium">Pago en Efectivo</h3>
-                <p className="text-sm muted">
-                  Pagarás al recibir tu pedido. Asegúrate de tener el importe
-                  exacto disponible.
-                </p>
+        {/* Selector de tarjetas guardadas o nueva tarjeta */}
+        {(selectedPaymentMethod === 'credit_card' || selectedPaymentMethod === 'debit_card') && (
+          <div className="mt-6">
+            <SavedCardsSelector
+              selectedCardId={selectedCardId}
+              onCardSelect={(cardId) => {
+                setSelectedCardId(cardId);
+                setUseNewCard(false);
+              }}
+              onNewCardSelect={() => {
+                setSelectedCardId(null);
+                setUseNewCard(true);
+              }}
+            />
+            
+            {/* Formulario de tarjeta nueva */}
+            {useNewCard && (
+              <div className="mt-6">
+                <CardForm
+                  data={cardData}
+                  onChange={setCardData}
+                  paymentMethod={selectedPaymentMethod}
+                />
               </div>
             )}
           </div>
         )}
 
-        {/* Botón para continuar */}
-        <div className="flex justify-end mt-8">
+        {/* Información de efectivo */}
+        {selectedPaymentMethod === 'cash' && (
+          <div className="mt-6 p-4 surface rounded-lg border border-muted">
+            <h4 className="font-medium mb-2">Pago en efectivo</h4>
+            <p className="text-sm muted mb-3">
+              Podrás pagar en Rapipago, Pago Fácil y otros centros de pago.
+            </p>
+            <p className="text-sm muted">
+              Te enviaremos las instrucciones por email después de confirmar la compra.
+            </p>
+          </div>
+        )}
+
+        {/* Información de transferencia */}
+        {selectedPaymentMethod === 'bank_transfer' && (
+          <div className="mt-6 p-4 surface rounded-lg border border-muted">
+            <h4 className="font-medium mb-2">Transferencia bancaria</h4>
+            <p className="text-sm muted">
+              Recibirás los datos bancarios por email al finalizar la compra. 
+              Tu pedido se procesará una vez confirmado el pago.
+            </p>
+          </div>
+        )}
+
+        {/* Información sobre tarjetas guardadas */}
+        {(selectedPaymentMethod === 'credit_card' || selectedPaymentMethod === 'debit_card') && (
+          <div className="mt-6 p-4 surface-secondary rounded-lg border border-primary/20">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium text-primary mb-1">💳 Tarjetas guardadas</h4>
+                <p className="text-sm muted mb-2">
+                  Si ya tienes una cuenta de MercadoPago, podrás ver y usar tus tarjetas guardadas al procesar el pago.
+                </p>
+                <div className="text-xs muted">
+                  <span className="font-medium">✓</span> Pago con 1 clic
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">✓</span> Datos seguros
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">✓</span> Sin salir de la web
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Botones de navegación */}
+        <div className="flex justify-between mt-8">
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="surface text-primary hover:brightness-95">
+            <ChevronLeft className="mr-2" size={16} />
+            Volver
+          </Button>
           <Button
             onClick={handleContinue}
             disabled={!selectedPaymentMethod}

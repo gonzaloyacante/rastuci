@@ -1,66 +1,16 @@
 "use client";
 
 import { Suspense } from "react";
-import { ProductForm } from "@/components/forms";
-import { AdminPageHeader, AdminLoading } from "@/components/admin";
+import ProductForm from "../components/ProductForm";
+import { AdminLoading } from "@/components/admin";
 import { useCategories } from "@/hooks";
 
 function CreateProductContent() {
   const { categories } = useCategories();
 
-  const handleSubmit = async (data: {
-    name: string;
-    description: string;
-    price: number;
-    stock: number;
-    categoryId: string;
-    images: string[];
-  }) => {
-    try {
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al crear el producto");
-      }
-
-      window.location.href = "/admin/productos";
-    } catch (error) {
-      console.error("Error:", error);
-      throw error;
-    }
-  };
-
-  const handleCancel = () => {
-    window.location.href = "/admin/productos";
-  };
-
   return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="Crear Producto"
-        subtitle="Agrega un nuevo producto al catálogo"
-        actions={[
-          {
-            label: "Volver",
-            onClick: handleCancel,
-            variant: "outline",
-          },
-        ]}
-      />
-
-      <div className="card">
-        <ProductForm
-          categories={categories}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-        />
-      </div>
+    <div className="min-h-screen">
+      <ProductForm categories={categories} />
     </div>
   );
 }

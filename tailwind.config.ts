@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   content: [
@@ -109,7 +110,43 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addUtilities }) => {
+      const newUtilities = {
+        '.surface': {
+          '@apply bg-white': {},
+        },
+        '.surface-secondary': {
+          '@apply bg-gray-50': {},
+        },
+        '.muted': {
+          '@apply text-gray-500': {},
+        },
+        '.text-primary': {
+          '@apply text-gray-900': {},
+        },
+        '.text-success': {
+          '@apply text-success-600': {},
+        },
+        '.text-error': {
+          '@apply text-error-600': {},
+        },
+        '.text-warning': {
+          '@apply text-warning-600': {},
+        },
+        '.border-success': {
+          '@apply border-success-600': {},
+        },
+        '.border-error': {
+          '@apply border-error-600': {},
+        },
+        '.border-warning': {
+          '@apply border-warning-600': {},
+        },
+      }
+      addUtilities(newUtilities)
+    })
+  ],
 };
 
 export default config;
