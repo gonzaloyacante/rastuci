@@ -172,8 +172,8 @@ export async function POST(req: NextRequest) {
       return ok({ ok: true });
     }
 
-    // Fetch payment details from Mercado Pago con reintento
-    let paymentResp;
+  // Fetch payment details from Mercado Pago con reintento
+  let paymentResp: Response | undefined = undefined;
     let retries = 3;
     
     while (retries > 0) {
@@ -191,6 +191,11 @@ export async function POST(req: NextRequest) {
       if (retries > 0) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
+    }
+
+    if (!paymentResp) {
+      logger.error("[MP webhook] No response when fetching payment", { requestId, id });
+      return ok({ ok: true });
     }
 
     if (!paymentResp.ok) {

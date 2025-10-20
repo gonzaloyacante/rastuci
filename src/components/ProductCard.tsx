@@ -36,7 +36,7 @@ const ProductCard = React.memo(
       () =>
         productImages.length > 0
           ? productImages[0]
-          : "/placeholder-product.jpg",
+          : "/placeholder.jpg",
       [productImages]
     );
 
@@ -74,7 +74,7 @@ const ProductCard = React.memo(
             href={`/productos/${product.id}`}
             aria-label={`Ver detalles de ${product.name}`}>
             <Image
-              src={imageError ? "/placeholder-product.jpg" : mainImage}
+              src={imageError ? "/placeholder.jpg" : mainImage}
               alt={`${product.name} - ${
                 product.category?.name || "Producto"
               } - ${formattedPrice}`}
@@ -187,7 +187,7 @@ const ProductCard = React.memo(
           <div className="relative w-32 sm:w-40 md:w-48 h-32 sm:h-40 md:h-48 flex-shrink-0 overflow-hidden">
             <Link href={`/productos/${product.id}`} aria-label={`Ver detalles de ${product.name}`}>
               <Image
-                src={imageError ? "/placeholder-product.jpg" : mainImage}
+                src={imageError ? "/placeholder.jpg" : mainImage}
                 alt={`${product.name} - ${product.category?.name || "Producto"} - ${formattedPrice}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-200"

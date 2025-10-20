@@ -59,6 +59,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   generateEtags: true,
+  // Evitar advertencia sobre lockfiles múltiples (inferred workspace root)
+  outputFileTracingRoot: __dirname,
   // Headers de seguridad y cache
   async headers() {
     return [

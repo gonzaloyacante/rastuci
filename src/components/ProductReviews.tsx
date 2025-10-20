@@ -26,42 +26,18 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
     const fetchReviews = async () => {
       try {
         setLoading(true);
-        // Simular fetch de reseñas - en producción esto vendría de tu API
-        const mockReviews: Review[] = [
-          {
-            id: "1",
-            userId: "user1",
-            userName: "María G.",
-            rating: 5,
-            comment:
-              "Excelente calidad, mi hija la ama. Perfecta para el verano.",
-            createdAt: "2024-01-15T10:30:00Z",
-          },
-          {
-            id: "2",
-            userId: "user2",
-            userName: "Carlos M.",
-            rating: 4,
-            comment:
-              "Muy buena ropa, se ve exactamente como en las fotos. Envío rápido.",
-            createdAt: "2024-01-10T14:20:00Z",
-          },
-          {
-            id: "3",
-            userId: "user3",
-            userName: "Ana L.",
-            rating: 5,
-            comment:
-              "Super cómoda y de buena calidad. Definitivamente volveré a comprar.",
-            createdAt: "2024-01-08T09:15:00Z",
-          },
-        ];
-
-        setReviews(mockReviews);
-        const avg =
-          mockReviews.reduce((sum, review) => sum + review.rating, 0) /
-          mockReviews.length;
-        setAverageRating(avg);
+        // Obtener reseñas reales desde la API
+        const res = await fetch(`/api/products/${productId}/reviews`);
+        if (!res.ok) throw new Error('Failed to fetch reviews');
+        const json = await res.json();
+        const data: Review[] = json.data || [];
+        setReviews(data);
+        if (data.length > 0) {
+          const avg = data.reduce((sum, review) => sum + review.rating, 0) / data.length;
+          setAverageRating(avg);
+        } else {
+          setAverageRating(0);
+        }
       } catch (error) {
         console.error("Error fetching reviews:", error);
       } finally {

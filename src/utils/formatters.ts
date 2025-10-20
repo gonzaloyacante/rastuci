@@ -14,10 +14,19 @@ export const formatPrice = (price: number): string => {
  * Formatear precio en pesos argentinos
  */
 export function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-AR", {
+  // Mostrar sin decimales cuando el monto es entero, y con 2 decimales cuando tiene fracción.
+  const hasDecimals = Math.abs(amount % 1) > 0;
+  const formatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
-  }).format(amount);
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: hasDecimals ? 2 : 0,
+  });
+
+  // Algunos locales insertan un espacio NBSP entre el símbolo de moneda y el número.
+  // Los tests esperan el símbolo pegado al número (por ejemplo: "$1.234,56" o "$1.000").
+  // Reemplazar únicamente NBSP (u00A0) que algunos locales insertan entre símbolo y número
+  return formatter.format(amount).replace(/\u00A0/g, "");
 }
 
 /**
@@ -122,15 +131,11 @@ export const formatPriceARS = (
   price: number,
   showDecimals: boolean = false
 ): string => {
-  if (showDecimals) {
-    return `$${price.toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  } else {
-    return `$${price.toLocaleString("es-AR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })}`;
-  }
+  const formatter = new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: showDecimals ? 2 : 0,
+    maximumFractionDigits: showDecimals ? 2 : 0,
+  });
+  return formatter.format(price).replace(/\u00A0/g, "");
 };

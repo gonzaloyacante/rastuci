@@ -177,19 +177,48 @@ export async function createPayment(paymentData: PaymentData, idempotencyKey?: s
 
     const paymentInstance = new Payment(enhancedClient);
     
-    const result = await paymentInstance.create({
-      body: {
-        ...paymentData,
-        notification_url: process.env.MP_WEBHOOK_URL,
-        binary_mode: false, // Permite estados pending
-        capture: true, // Captura automática del pago
+    // Determine a safe notification_url: prefer env var, fallback to local dev webhook
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const candidateNotificationUrl = process.env.MP_WEBHOOK_URL || `${baseUrl}/api/payments/mercadopago/webhook`;
+    let notification_url: string | undefined;
+    // Validate candidate URL by attempting to construct a URL object
+    try { new URL(candidateNotificationUrl); notification_url = candidateNotificationUrl; } catch { notification_url = undefined; }
+
+    // MercadoPago may reject localhost notification URLs. Only send notification_url
+    // if MP_WEBHOOK_URL is explicitly set and is not a localhost URL.
+    if (process.env.MP_WEBHOOK_URL) {
+      try {
+        const parsed = new URL(process.env.MP_WEBHOOK_URL);
+        if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+          // don't send localhost webhook URLs to MercadoPago
+          notification_url = undefined;
+        } else {
+          notification_url = process.env.MP_WEBHOOK_URL;
+        }
+      } catch {
+        notification_url = undefined;
       }
-    });
+    }
+
+    const body: Record<string, unknown> = {
+      ...paymentData,
+      binary_mode: false, // Permite estados pending
+      capture: true, // Captura automática del pago
+    };
+
+    if (notification_url) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (body as any).notification_url = notification_url;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await paymentInstance.create({ body: body as any });
     
     return result;
   } catch (error) {
     console.error('Error creating payment:', error);
-    throw new Error(`Payment creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errMsg = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error));
+    throw new Error(`Payment creation failed: ${errMsg}`);
   }
 }
 

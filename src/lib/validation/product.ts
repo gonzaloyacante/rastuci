@@ -10,7 +10,7 @@ export const ProductsQuerySchema = z.object({
     .transform((v) => v === "true")
     .optional(),
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(50).default(12),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
   sortBy: z
     .enum(["createdAt", "price", "name", "rating", "reviewCount"]).default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
@@ -23,7 +23,8 @@ export const ProductCreateSchema = z.object({
   description: z.string().trim().max(2000).optional(),
   price: z.number().finite().nonnegative(),
   stock: z.number().int().min(0).default(0),
-  images: z.union([z.string(), z.array(z.string().url())]),
+  // Aceptar cadenas simples (rutas relativas) o arrays de strings.
+  images: z.union([z.string(), z.array(z.string())]),
   onSale: z.boolean().optional(),
   sizes: z.array(z.string()).optional(),
   colors: z.array(z.string()).optional(),

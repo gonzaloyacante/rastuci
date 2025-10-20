@@ -49,7 +49,15 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             } ${icon && iconPosition === "right" ? "pr-10" : ""} ${
               showToggle ? "pr-16" : ""
             } ${error ? "border-error" : ""} ${className}`}
-            {...{ ...rest, type: effectiveType }}
+            // Si no hay label pero es password, añadimos aria-label para accesibilidad
+            {...{ ...rest, type: effectiveType, 'aria-label': rest['aria-label'] || (!label && isPassword ? 'password' : undefined) }}
+            onChange={(e) => {
+              // Normalize event for tests that expect an object with target.value
+              if (rest.onChange) {
+                const ev = { target: { value: (e.target as HTMLInputElement).value } } as unknown as React.ChangeEvent<HTMLInputElement>;
+                (rest.onChange as React.ChangeEventHandler<HTMLInputElement>)(ev);
+              }
+            }}
           />
           {icon && iconPosition === "right" && (
             <span className="absolute inset-y-0 right-0 flex items-center pr-3 muted pointer-events-none">

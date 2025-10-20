@@ -127,6 +127,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Build Mercado Pago preference con items validados
+    // Determine a safe notification_url: only send to MP if explicitly configured and not localhost
+    let mpNotificationUrl: string | undefined = undefined;
+    if (process.env.MP_WEBHOOK_URL) {
+      try {
+        const parsed = new URL(process.env.MP_WEBHOOK_URL);
+        if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+          mpNotificationUrl = process.env.MP_WEBHOOK_URL;
+        }
+      } catch {
+        mpNotificationUrl = undefined;
+      }
+    }
+
     const preferencePayload = {
       items: validatedItems,
       payer: customer
@@ -149,10 +162,15 @@ export async function POST(req: NextRequest) {
         pending: `${origin}/checkout?status=pending`,
       },
       auto_return: "approved",
-      notification_url:
-        process.env.MP_WEBHOOK_URL || `${origin}/api/payments/mercadopago/webhook`,
+      // Only include notification_url if it's a non-local MP webhook URL
+      ...(mpNotificationUrl ? { notification_url: mpNotificationUrl } : {}),
       metadata,
     } as MercadoPagoPreference;
+
+    // Log payload in development to help debug MP errors
+    if (process.env.NODE_ENV === 'development') {
+      logger.info('MP preference payload', { requestId, payload: preferencePayload });
+    }
 
     const resp = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -165,8 +183,9 @@ export async function POST(req: NextRequest) {
 
     if (!resp.ok) {
       const err = await resp.text();
-      logger.error("MP preference create failed", { requestId, details: err });
-      return fail("INTERNAL_ERROR", "Failed to create preference", 500, { requestId, details: err });
+      logger.error("MP preference create failed", { requestId, details: err, payload: preferencePayload });
+      const details = process.env.NODE_ENV === 'development' ? { error: err, payload: preferencePayload } : { error: err };
+      return fail("INTERNAL_ERROR", "Failed to create preference", 500, { requestId, details });
     }
 
     const data = await resp.json();

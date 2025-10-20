@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
 import { useState, useEffect } from 'react';
+import type { Product } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -84,64 +85,60 @@ export function InventoryManagement() {
   const loadInventoryData = async () => {
     try {
       setLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data
-      const mockInventory: InventoryItem[] = [
-        {
-          id: '1',
-          productId: 'prod-1',
-          productName: 'Camiseta Premium',
-          productImage: '/placeholder.jpg',
-          sku: 'CAM-001',
-          category: 'Ropa',
-          currentStock: 25,
-          minStock: 10,
-          maxStock: 100,
-          reservedStock: 5,
-          availableStock: 20,
-          unitCost: 15,
-          unitPrice: 35,
-          supplier: 'Proveedor A',
-          location: 'Almacén Principal',
-          lastRestocked: new Date('2024-01-15'),
-          status: 'in_stock',
-          movements: []
-        },
-        {
-          id: '2',
-          productId: 'prod-2',
-          productName: 'Pantalón Deportivo',
-          productImage: '/placeholder.jpg',
-          sku: 'PAN-002',
-          category: 'Ropa',
-          currentStock: 8,
-          minStock: 15,
-          maxStock: 80,
-          reservedStock: 2,
-          availableStock: 6,
-          unitCost: 25,
-          unitPrice: 55,
-          supplier: 'Proveedor B',
-          location: 'Almacén Principal',
-          lastRestocked: new Date('2024-01-10'),
-          status: 'low_stock',
-          movements: []
-        }
-      ];
+      // Load real products from the API and map them to the inventory model.
+      // Nota: asumimos que la API de productos no expone campos específicos de inventario
+      // (sku, supplier, location, minStock). Para no usar datos "mock" inventados,
+      // hacemos las siguientes asunciones mínimas documentadas en el código:
+      //  - sku: se usa el id del producto cuando no existe SKU explícito
+      //  - supplier/location: se marcan como 'Desconocido' si no están disponibles
+      //  - minStock: se aplica un valor por defecto de 5 para detectar stock bajo
+      // Estas elecciones son derivadas y no contienen datos falsos sobre ventas o movimientos.
 
-      const mockStats: InventoryStats = {
-        totalProducts: mockInventory.length,
-        totalValue: mockInventory.reduce((sum, item) => sum + (item.currentStock * item.unitCost), 0),
-        lowStockItems: mockInventory.filter(item => item.status === 'low_stock').length,
-        outOfStockItems: mockInventory.filter(item => item.status === 'out_of_stock').length,
-        topMovingProducts: mockInventory.slice(0, 5),
-        slowMovingProducts: mockInventory.slice(-5)
+      const res = await fetch('/api/products?page=1&limit=1000');
+      if (!res.ok) throw new Error('Error fetching products');
+      const json = await res.json();
+      const products = Array.isArray(json?.data?.data) ? json.data.data : [];
+
+      const mapped: InventoryItem[] = products.map((p: Product) => {
+        const images = Array.isArray(p.images) ? p.images : (typeof p.images === 'string' ? JSON.parse(p.images || '[]') : []);
+        const img = images?.[0] ?? '/placeholder.jpg';
+
+        const currentStock = typeof p.stock === 'number' ? p.stock : 0;
+
+        return {
+          id: p.id,
+          productId: p.id,
+          productName: p.name,
+          productImage: img,
+          sku: p.id,
+          category: p.category?.name ?? 'Sin categoría',
+          currentStock,
+          minStock: 5,
+          maxStock: Math.max(100, currentStock),
+          reservedStock: 0,
+          availableStock: currentStock,
+          unitCost: typeof p.price === 'number' ? p.price : 0,
+          unitPrice: typeof p.price === 'number' ? p.price : 0,
+          supplier: 'Desconocido',
+          location: 'Desconocido',
+          lastRestocked: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+          status: currentStock > 0 ? 'in_stock' : 'out_of_stock',
+          movements: []
+        } as InventoryItem;
+      });
+
+      const computedStats: InventoryStats = {
+        totalProducts: mapped.length,
+        // Valor del inventario calculado a precio de venta (stock * price)
+        totalValue: mapped.reduce((sum, it) => sum + (it.currentStock * (it.unitPrice ?? 0)), 0),
+        lowStockItems: mapped.filter(item => item.currentStock > 0 && item.currentStock <= item.minStock).length,
+        outOfStockItems: mapped.filter(item => item.currentStock === 0).length,
+        topMovingProducts: mapped.slice(0, 5),
+        slowMovingProducts: mapped.slice(-5)
       };
 
-      setInventory(mockInventory);
-      setStats(mockStats);
+      setInventory(mapped);
+      setStats(computedStats);
     } catch {
       toast.error('Error al cargar el inventario');
     } finally {

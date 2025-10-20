@@ -17,7 +17,7 @@ const paymentSchema = z.object({
   transaction_amount: z.number().positive(),
   description: z.string(),
   external_reference: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -46,22 +46,35 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('Error processing payment:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Datos de pago inválidos',
-          details: error.errors 
+          details: error.errors,
         },
         { status: 400 }
       );
     }
-    
+
+    // In development, return stack trace to help debugging
+    if (process.env.NODE_ENV !== 'production') {
+      const stack = error instanceof Error ? error.stack : String(error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Error interno del servidor',
+          details: stack,
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Error interno del servidor' 
+      {
+        success: false,
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

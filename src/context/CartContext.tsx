@@ -126,12 +126,54 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Fallback seguro para usar los hooks fuera de un provider (no lanzar)
+const _defaultCart: CartContextType = {
+  cartItems: [],
+  addToCart: (() => {}) as unknown as CartContextType['addToCart'],
+  removeFromCart: () => {},
+  updateQuantity: () => {},
+  clearCart: () => {},
+  getCartTotal: () => 0,
+  getItemCount: () => 0,
+
+  availableShippingOptions: [],
+  selectedShippingOption: null,
+  setSelectedShippingOption: () => {},
+  calculateShippingCost: async () => [],
+
+  availablePaymentMethods: [],
+  selectedPaymentMethod: null,
+  setSelectedPaymentMethod: () => {},
+
+  availableBillingOptions: [],
+  selectedBillingOption: null,
+  setSelectedBillingOption: () => {},
+
+  appliedCoupon: null,
+  applyCoupon: async () => false,
+  removeCoupon: () => {},
+
+  customerInfo: null,
+  updateCustomerInfo: () => {},
+
+  getOrderSummary: () => ({
+    items: [],
+    subtotal: 0,
+    shippingCost: 0,
+    discount: 0,
+    total: 0,
+    customer: null,
+    shippingOption: null,
+    payment: null,
+    billing: null,
+  }),
+
+  placeOrder: async () => ({ success: false, error: 'CartProvider missing' }),
+};
+
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
-  return context;
+  return context === undefined ? _defaultCart : context;
 };
 
 interface CartProviderProps {

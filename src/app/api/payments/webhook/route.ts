@@ -19,30 +19,35 @@ export async function POST(request: NextRequest) {
       
       // Obtener información completa del pago
       const paymentInfo = await getPayment(paymentId);
-      
+
+      if (!paymentInfo) {
+        console.warn('[Payment webhook] Empty payment info for id', paymentId);
+        return NextResponse.json({ received: true });
+      }
+
       // Procesar según el estado del pago
       switch (paymentInfo.status) {
         case 'approved':
           // Pago aprobado - actualizar orden
           await handleApprovedPayment(paymentInfo);
           break;
-          
+
         case 'rejected':
           // Pago rechazado - notificar al usuario
           await handleRejectedPayment(paymentInfo);
           break;
-          
+
         case 'pending':
           // Pago pendiente - esperar confirmación
           await handlePendingPayment(paymentInfo);
           break;
-          
+
         case 'cancelled':
           // Pago cancelado
           await handleCancelledPayment(paymentInfo);
           break;
       }
-      
+
       // Log para debugging
       console.log('Payment webhook processed:', {
         id: paymentInfo.id,

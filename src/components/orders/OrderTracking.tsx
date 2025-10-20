@@ -69,89 +69,42 @@ interface OrderTrackingProps {
 export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [_trackingDetails, _setTrackingDetails] = useState<TrackingDetails | null>(null);
 
   const loadOrderData = useCallback(async () => {
     try {
       setLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setError(null);
+      // Intentar obtener el pedido real desde la API
+      if (!orderId) {
+        setError('ID de pedido inválido');
+        setOrder(null);
+        return;
+      }
 
-      const mockOrder: Order = {
-        id: orderId,
-        orderNumber: `ORD-${orderId.slice(-6).toUpperCase()}`,
-        status: 'shipped',
-        items: [
-          {
-            id: '1',
-            productId: 'prod-1',
-            name: 'Camiseta Premium',
-            image: '/placeholder.jpg',
-            quantity: 2,
-            price: 35,
-            size: 'M',
-            color: 'Azul'
-          },
-          {
-            id: '2',
-            productId: 'prod-2',
-            name: 'Pantalón Deportivo',
-            image: '/placeholder.jpg',
-            quantity: 1,
-            price: 55,
-            size: 'L',
-            color: 'Negro'
-          }
-        ],
-        total: 125,
-        shippingAddress: {
-          name: 'Juan Pérez',
-          street: 'Calle Principal 123',
-          city: 'Madrid',
-          state: 'Madrid',
-          zipCode: '28001',
-          country: 'España',
-          phone: '+34 600 123 456'
-        },
-        trackingNumber: 'TRK123456789',
-        estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-        statusHistory: [
-          {
-            id: '1',
-            status: 'pending',
-            timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-            description: 'Pedido recibido',
-            location: 'Centro de Procesamiento'
-          },
-          {
-            id: '2',
-            status: 'confirmed',
-            timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-            description: 'Pedido confirmado y en preparación',
-            location: 'Almacén Central'
-          },
-          {
-            id: '3',
-            status: 'processing',
-            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-            description: 'Productos empaquetados',
-            location: 'Almacén Central'
-          },
-          {
-            id: '4',
-            status: 'shipped',
-            timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            description: 'Paquete en tránsito',
-            location: 'Centro de Distribución Madrid'
-          }
-        ],
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
-      };
+      const res = await fetch(`/api/orders/${orderId}`);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        setError(`No se pudo obtener el pedido (status ${res.status})${text ? `: ${text}` : ''}`);
+        setOrder(null);
+        return;
+      }
 
-      setOrder(mockOrder);
-      onOrderUpdate?.(mockOrder);
+      const json = await res.json();
+      const apiOrder = json.data as Order | undefined | null;
+      if (!apiOrder) {
+        setError('La API devolvió datos vacíos para el pedido');
+        setOrder(null);
+        return;
+      }
+
+      setOrder(apiOrder);
+      onOrderUpdate?.(apiOrder);
     } catch (error) {
       console.error('Error loading order:', error);
+      setError((error as Error)?.message ?? 'Error desconocido al cargar el pedido');
+      setOrder(null);
     } finally {
       setLoading(false);
     }
@@ -229,7 +182,21 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
   if (!order) {
     return (
       <div className="text-center p-8">
-        <p className="muted">No se pudo cargar la información del pedido</p>
+        {error ? (
+          <div className="space-y-4">
+            <p className="text-sm text-error">{error}</p>
+            <div className="flex items-center justify-center gap-2">
+              <Button onClick={loadOrderData}>Reintentar</Button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="muted">No se encontró información del pedido.</p>
+            <div className="mt-3">
+              <Button onClick={loadOrderData}>Reintentar</Button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
