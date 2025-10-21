@@ -143,30 +143,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Crear preferencia en MercadoPago
       let preference;
       try {
-        preference = await createPreference({
-          items: mpItems,
-          payer: {
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone ? { number: customer.phone } : undefined,
-            address: {
-              street_name: customer.address,
-              zip_code: customer.postalCode,
-            },
+        const payer = {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone ? { number: customer.phone } : undefined,
+          address: {
+            street_name: customer.address,
+            zip_code: customer.postalCode,
           },
-          back_urls: {
-            success: `${origin}/checkout/success`,
-            failure: `${origin}/checkout/failure`,
-            pending: `${origin}/checkout/pending`,
-          },
-          auto_return: "approved",
-          external_reference: `order_${Date.now()}`,
-          metadata: {
-            customer,
-            shipping: shippingMethod,
-            orderData,
-          },
-        });
+        };
+
+        preference = await createPreference(mpItems, payer);
       } catch (mpError) {
         console.error(
           "[checkout] MercadoPago preference creation error:",
