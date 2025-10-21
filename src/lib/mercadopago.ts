@@ -1,18 +1,18 @@
-import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
-import crypto from 'crypto';
+import { MercadoPagoConfig, Payment, Preference } from "mercadopago";
+import crypto from "crypto";
 
 // Configuración del cliente de MercadoPago con manejo de errores
 const accessToken = process.env.MP_ACCESS_TOKEN;
 if (!accessToken) {
-  throw new Error('MP_ACCESS_TOKEN is required in environment variables');
+  throw new Error("MP_ACCESS_TOKEN is required in environment variables");
 }
 
 const client = new MercadoPagoConfig({
   accessToken,
   options: {
     timeout: 10000, // Incrementado para mejor estabilidad
-    idempotencyKey: undefined // Se generará dinámicamente por transacción
-  }
+    idempotencyKey: undefined, // Se generará dinámicamente por transacción
+  },
 });
 
 // Instancias de los servicios
@@ -21,20 +21,20 @@ export const preference = new Preference(client);
 
 // Enums para estados y tipos
 export enum PaymentStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  CANCELLED = 'cancelled',
-  REFUNDED = 'refunded',
-  CHARGED_BACK = 'charged_back'
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  CANCELLED = "cancelled",
+  REFUNDED = "refunded",
+  CHARGED_BACK = "charged_back",
 }
 
 export enum PaymentMethod {
-  CARD = 'credit_card',
-  DEBIT_CARD = 'debit_card',
-  BANK_TRANSFER = 'bank_transfer',
-  TICKET = 'ticket',
-  WALLET_PURCHASE = 'wallet_purchase'
+  CARD = "credit_card",
+  DEBIT_CARD = "debit_card",
+  BANK_TRANSFER = "bank_transfer",
+  TICKET = "ticket",
+  WALLET_PURCHASE = "wallet_purchase",
 }
 
 // Tipos para TypeScript extendidos
@@ -126,7 +126,7 @@ export interface PreferenceData {
     failure?: string;
     pending?: string;
   };
-  auto_return?: 'approved' | 'all';
+  auto_return?: "approved" | "all";
   external_reference?: string;
   notification_url?: string;
   metadata?: Record<string, unknown>;
@@ -160,36 +160,49 @@ export interface WebhookNotification {
   date_created: string;
   id: number;
   live_mode: boolean;
-  type: 'payment' | 'merchant_order' | 'chargebacks' | 'point_integration_wh';
+  type: "payment" | "merchant_order" | "chargebacks" | "point_integration_wh";
   user_id: string;
 }
 
 // Función para crear un pago con manejo completo de errores
-export async function createPayment(paymentData: PaymentData, idempotencyKey?: string) {
+export async function createPayment(
+  paymentData: PaymentData,
+  idempotencyKey?: string,
+) {
   try {
     const enhancedClient = new MercadoPagoConfig({
       accessToken: accessToken as string,
       options: {
         timeout: 10000,
         idempotencyKey: idempotencyKey || generateIdempotencyKey(),
-      }
+      },
     });
 
     const paymentInstance = new Payment(enhancedClient);
-    
+
     // Determine a safe notification_url: prefer env var, fallback to local dev webhook
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const candidateNotificationUrl = process.env.MP_WEBHOOK_URL || `${baseUrl}/api/payments/mercadopago/webhook`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const candidateNotificationUrl =
+      process.env.MP_WEBHOOK_URL ||
+      `${baseUrl}/api/payments/mercadopago/webhook`;
     let notification_url: string | undefined;
     // Validate candidate URL by attempting to construct a URL object
-    try { new URL(candidateNotificationUrl); notification_url = candidateNotificationUrl; } catch { notification_url = undefined; }
+    try {
+      new URL(candidateNotificationUrl);
+      notification_url = candidateNotificationUrl;
+    } catch {
+      notification_url = undefined;
+    }
 
     // MercadoPago may reject localhost notification URLs. Only send notification_url
     // if MP_WEBHOOK_URL is explicitly set and is not a localhost URL.
     if (process.env.MP_WEBHOOK_URL) {
       try {
         const parsed = new URL(process.env.MP_WEBHOOK_URL);
-        if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+        if (
+          parsed.hostname === "localhost" ||
+          parsed.hostname === "127.0.0.1"
+        ) {
           // don't send localhost webhook URLs to MercadoPago
           notification_url = undefined;
         } else {
@@ -213,31 +226,39 @@ export async function createPayment(paymentData: PaymentData, idempotencyKey?: s
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await paymentInstance.create({ body: body as any });
-    
+
     return result;
   } catch (error) {
-    console.error('Error creating payment:', error);
-    const errMsg = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error));
+    console.error("Error creating payment:", error);
+    const errMsg =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object"
+          ? JSON.stringify(error)
+          : String(error);
     throw new Error(`Payment creation failed: ${errMsg}`);
   }
 }
 
 // Función para crear una preferencia (Checkout Pro) con configuración completa
-export async function createPreference(preferenceData: PreferenceData, idempotencyKey?: string) {
+export async function createPreference(
+  preferenceData: PreferenceData,
+  idempotencyKey?: string,
+) {
   try {
     const enhancedClient = new MercadoPagoConfig({
       accessToken: accessToken as string,
       options: {
         timeout: 10000,
         idempotencyKey: idempotencyKey || generateIdempotencyKey(),
-      }
+      },
     });
 
     const preferenceInstance = new Preference(enhancedClient);
-    
+
     // Configuración base para Argentina
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     const result = await preferenceInstance.create({
       body: {
         ...preferenceData,
@@ -248,12 +269,12 @@ export async function createPreference(preferenceData: PreferenceData, idempoten
           pending: `${baseUrl}/checkout/pending`,
           ...preferenceData.back_urls,
         },
-        auto_return: 'approved',
+        auto_return: "approved",
         binary_mode: false,
         expires: true,
         expiration_date_from: new Date().toISOString(),
         expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
-        statement_descriptor: 'RASTUCI',
+        statement_descriptor: "RASTUCI",
         // Configurar métodos de pago permitidos
         payment_methods: {
           excluded_payment_methods: [], // Permitir todos
@@ -262,13 +283,38 @@ export async function createPreference(preferenceData: PreferenceData, idempoten
           default_installments: 1,
           ...preferenceData.payment_methods,
         },
-      }
+      },
     });
-    
+
     return result;
   } catch (error) {
-    console.error('Error creating preference:', error);
-    throw new Error(`Preference creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // Log error detail for diagnostics. Avoid printing full env or tokens.
+    try {
+      // Some SDK errors include response/data fields
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anyErr = error as any;
+      if (anyErr?.response) {
+        console.error(
+          "Preference creation error response status:",
+          anyErr.response?.status,
+        );
+        console.error(
+          "Preference creation error response data:",
+          anyErr.response?.data || anyErr.response?.body || anyErr.response,
+        );
+      } else {
+        console.error(
+          "Error creating preference:",
+          error instanceof Error ? error.message : error,
+        );
+      }
+    } catch (logErr) {
+      console.error("Error while logging preference error:", logErr);
+    }
+
+    throw new Error(
+      `Preference creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
@@ -281,10 +327,12 @@ export async function getPayment(paymentId: string, retries = 3) {
     } catch (error) {
       console.error(`Error getting payment (attempt ${i + 1}):`, error);
       if (i === retries - 1) {
-        throw new Error(`Payment retrieval failed after ${retries} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Payment retrieval failed after ${retries} attempts: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
       }
       // Esperar antes del siguiente intento
-      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
     }
   }
 }
@@ -299,40 +347,44 @@ export function validateWebhookSignature(
   xSignature: string,
   xRequestId: string,
   dataId: string,
-  ts: string
+  ts: string,
 ): boolean {
   try {
     const webhookSecret = process.env.MP_WEBHOOK_SECRET;
     if (!webhookSecret) {
-      console.warn('MP_WEBHOOK_SECRET not configured');
+      console.warn("MP_WEBHOOK_SECRET not configured");
       return true; // En desarrollo permitir sin validación
     }
 
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-    const hmac = crypto.createHmac('sha256', webhookSecret);
+    const hmac = crypto.createHmac("sha256", webhookSecret);
     hmac.update(manifest);
-    const expectedSignature = hmac.digest('hex');
-    
+    const expectedSignature = hmac.digest("hex");
+
     // Extraer la firma del header x-signature
-    const signature = xSignature.split(',').find((s: string) => s.trim().startsWith('v1='))?.split('=')[1];
-    
+    const signature = xSignature
+      .split(",")
+      .find((s: string) => s.trim().startsWith("v1="))
+      ?.split("=")[1];
+
     return signature === expectedSignature;
   } catch (error) {
-    console.error('Error validating webhook signature:', error);
+    console.error("Error validating webhook signature:", error);
     return false;
   }
 }
 
 // Configuración pública para el frontend
 export const mercadoPagoConfig = {
-  publicKey: process.env.MP_PUBLIC_KEY || '',
-  locale: 'es-AR' as const,
+  publicKey: process.env.MP_PUBLIC_KEY || "",
+  locale: "es-AR" as const,
   theme: {
-    elementsColor: '#e91e63', // Color primario de Rastuci
-    headerColor: '#e91e63',
+    elementsColor: "#e91e63", // Color primario de Rastuci
+    headerColor: "#e91e63",
   },
   // URLs para diferentes ambientes
-  checkoutUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://www.mercadopago.com.ar/checkout/v1/redirect'
-    : 'https://sandbox.mercadopago.com.ar/checkout/v1/redirect',
+  checkoutUrl:
+    process.env.NODE_ENV === "production"
+      ? "https://www.mercadopago.com.ar/checkout/v1/redirect"
+      : "https://sandbox.mercadopago.com.ar/checkout/v1/redirect",
 };

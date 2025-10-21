@@ -19,8 +19,8 @@ interface _CreateOrderRequest {
     address?: string;
     notes?: string;
   };
-  paymentMethod: 'cash' | 'mercadopago';
-  shippingMethod: 'pickup' | 'delivery';
+  paymentMethod: "cash" | "mercadopago";
+  shippingMethod: "pickup" | "delivery";
 }
 
 interface _Customer {
@@ -36,32 +36,36 @@ interface _Customer {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
-    const { 
-      items, 
-      customer, 
-      shippingMethod, 
-      paymentMethod,
-      orderData 
-    } = body;
+    // Log incoming request minimally for diagnostics (avoid logging secrets)
+    try {
+      console.info("[checkout] Incoming request:", {
+        origin: request.headers.get("origin"),
+        paymentMethod: body?.paymentMethod,
+        itemsCount: Array.isArray(body?.items) ? body.items.length : 0,
+      });
+    } catch (e) {
+      console.warn("[checkout] Failed to log incoming request summary", e);
+    }
+    const { items, customer, shippingMethod, paymentMethod, orderData } = body;
 
     // Validar datos requeridos
     if (!items || items.length === 0) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "No hay productos en el carrito" 
+        {
+          success: false,
+          error: "No hay productos en el carrito",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!customer || !paymentMethod) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "Faltan datos del cliente o método de pago" 
+        {
+          success: false,
+          error: "Faltan datos del cliente o método de pago",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -102,14 +106,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: true,
         orderId: order.id,
         paymentMethod: "cash",
-        message: "Pedido creado exitosamente. Te confirmaremos por WhatsApp cuando esté listo para retirar.",
+        message:
+          "Pedido creado exitosamente. Te confirmaremos por WhatsApp cuando esté listo para retirar.",
       });
     }
 
     // Si es MercadoPago, crear preferencia y redirigir
     if (paymentMethod === "mercadopago") {
-      const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
-      
+      const origin =
+        request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
+
       // Preparar items para MercadoPago
       const mpItems = items.map((item: OrderItem) => ({
         id: item.productId,
@@ -119,8 +125,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         currency_id: "ARS",
       }));
 
-      // Agregar envío si aplica
-      if (shippingMethod && shippingMethod.price > 0) {
+      // Agregar envío si aplica (validar shape primero)
+      if (
+        shippingMethod &&
+        typeof shippingMethod.price === "number" &&
+        shippingMethod.price > 0
+      ) {
         mpItems.push({
           id: "shipping",
           title: `Envío - ${shippingMethod.name}`,
@@ -131,30 +141,58 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       // Crear preferencia en MercadoPago
-      const preference = await createPreference({
-        items: mpItems,
-        payer: {
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone ? { number: customer.phone } : undefined,
-          address: {
-            street_name: customer.address,
-            zip_code: customer.postalCode,
+      let preference;
+      try {
+        preference = await createPreference({
+          items: mpItems,
+          payer: {
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone ? { number: customer.phone } : undefined,
+            address: {
+              street_name: customer.address,
+              zip_code: customer.postalCode,
+            },
           },
-        },
-        back_urls: {
-          success: `${origin}/checkout/success`,
-          failure: `${origin}/checkout/failure`,
-          pending: `${origin}/checkout/pending`,
-        },
-        auto_return: "approved",
-        external_reference: `order_${Date.now()}`,
-        metadata: {
-          customer,
-          shipping: shippingMethod,
-          orderData,
-        },
-      });
+          back_urls: {
+            success: `${origin}/checkout/success`,
+            failure: `${origin}/checkout/failure`,
+            pending: `${origin}/checkout/pending`,
+          },
+          auto_return: "approved",
+          external_reference: `order_${Date.now()}`,
+          metadata: {
+            customer,
+            shipping: shippingMethod,
+            orderData,
+          },
+        });
+      } catch (mpError) {
+        console.error(
+          "[checkout] MercadoPago preference creation error:",
+          mpError,
+        );
+        // Include some context to help debugging
+        console.error("[checkout] preference payload summary:", {
+          itemsCount: mpItems.length,
+          back_urls: {
+            success: `${origin}/checkout/success`,
+            failure: `${origin}/checkout/failure`,
+            pending: `${origin}/checkout/pending`,
+          },
+          notification_url: process.env.MP_WEBHOOK_URL,
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Error creating MercadoPago preference",
+            details:
+              mpError instanceof Error ? mpError.message : String(mpError),
+          },
+          { status: 500 },
+        );
+      }
 
       return NextResponse.json({
         success: true,
@@ -165,21 +203,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "Método de pago no válido" 
+      {
+        success: false,
+        error: "Método de pago no válido",
       },
-      { status: 400 }
+      { status: 400 },
     );
-
   } catch (error) {
     console.error("Error processing checkout:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "Error interno del servidor" 
+      {
+        success: false,
+        error: "Error interno del servidor",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
