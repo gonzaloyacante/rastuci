@@ -1,32 +1,38 @@
 "use client";
 
-import { useMemo } from 'react';
-import { Check } from 'lucide-react';
+import { useMemo } from "react";
+import { Check } from "lucide-react";
 
 interface CheckoutStepperProps {
   currentStep: number;
   onStepClick: (step: number) => void;
 }
 
-export default function CheckoutStepper({ currentStep, onStepClick }: CheckoutStepperProps) {
-  const stepNames = useMemo(() => [
-    "Información Personal",
-    "Envío", 
-    "Método de Pago",
-    "Revisar Pedido",
-  ], []);
+export default function CheckoutStepper({
+  currentStep,
+  onStepClick,
+}: CheckoutStepperProps) {
+  const stepNames = useMemo(
+    () => [
+      "Información Personal",
+      "Método de Pago",
+      "Entrega / Retiro",
+      "Revisar Pedido",
+    ],
+    [],
+  );
 
   return (
     <div className="mb-10">
       <div className="flex items-center justify-between relative">
         {/* Línea de progreso de fondo */}
         <div className="absolute top-5 left-0 right-0 h-[2px] surface z-0" />
-        
+
         {/* Línea de progreso activa */}
-        <div 
+        <div
           className="absolute top-5 left-0 h-[2px] bg-primary z-0 transition-all duration-500 ease-in-out"
-          style={{ 
-            width: `${(currentStep / (stepNames.length - 1)) * 100}%` 
+          style={{
+            width: `${(currentStep / (stepNames.length - 1)) * 100}%`,
           }}
         />
 
@@ -49,8 +55,8 @@ export default function CheckoutStepper({ currentStep, onStepClick }: CheckoutSt
                   isCompleted
                     ? "bg-primary text-white scale-110 shadow-lg"
                     : isCurrent
-                    ? "bg-primary text-white ring-4 ring-primary/20 shadow-md"
-                    : "surface muted border-2 border-muted"
+                      ? "bg-primary text-white ring-4 ring-primary/20 shadow-md"
+                      : "surface muted border-2 border-muted"
                 } ${isClickable ? "hover:scale-105" : ""}`}
               >
                 {isCompleted ? (

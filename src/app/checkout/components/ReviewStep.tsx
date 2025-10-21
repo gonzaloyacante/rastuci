@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
-import { ChevronLeft, ChevronRight, Tag, X, Truck, CreditCard, FileText } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Tag,
+  X,
+  Truck,
+  CreditCard,
+  FileText,
+} from "lucide-react";
 import { formatPriceARS } from "@/utils/formatters";
 // import { OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
 // import { PaymentProcessor } from "@/components/checkout/PaymentProcessor";
@@ -71,7 +79,9 @@ export default function ReviewStep({
   return (
     <div className="max-w-4xl mx-auto">
       <div className="surface p-4 md:p-6 rounded-lg shadow-sm border border-muted">
-        <h2 className="text-2xl font-bold mb-4 md:mb-6 text-primary">Revisar Pedido</h2>
+        <h2 className="text-2xl font-bold mb-4 md:mb-6 text-primary">
+          Revisar Pedido
+        </h2>
 
         {/* Mensaje de error */}
         {error && (
@@ -83,14 +93,17 @@ export default function ReviewStep({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
           {/* Detalles del pedido */}
           <div>
-            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Detalles del Pedido</h3>
+            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">
+              Detalles del Pedido
+            </h3>
 
             {/* Productos */}
             <div className="space-y-3 mb-5 md:mb-6">
               {cartItems.map((item) => (
                 <div
                   key={`${item.product.id}-${item.size}-${item.color}`}
-                  className="flex items-center justify-between p-2.5 md:p-3 surface border border-muted rounded-lg">
+                  className="flex items-center justify-between p-2.5 md:p-3 surface border border-muted rounded-lg"
+                >
                   <div className="flex items-center space-x-2.5 md:space-x-3">
                     <div className="w-10 h-10 md:w-12 md:h-12 surface border border-muted rounded" />
                     <div>
@@ -121,7 +134,8 @@ export default function ReviewStep({
                   </div>
                   <button
                     onClick={handleRemoveCoupon}
-                    className="text-error hover:text-error">
+                    className="text-error hover:text-error"
+                  >
                     <X size={16} />
                   </button>
                 </div>
@@ -137,7 +151,8 @@ export default function ReviewStep({
                   <Button
                     onClick={handleApplyCoupon}
                     disabled={couponLoading || !couponCode.trim()}
-                    size="sm">
+                    size="sm"
+                  >
                     {couponLoading ? "Aplicando..." : "Aplicar"}
                   </Button>
                 </div>
@@ -150,7 +165,9 @@ export default function ReviewStep({
 
           {/* Resumen */}
           <div>
-            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Resumen</h3>
+            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">
+              Resumen
+            </h3>
 
             {/* Información del cliente */}
             <div className="surface border border-muted p-4 rounded-lg mb-4">
@@ -183,7 +200,12 @@ export default function ReviewStep({
             {selectedPaymentMethod && (
               <div className="surface border border-muted p-4 rounded-lg mb-4">
                 <div className="flex items-center space-x-2 mb-2">
-                  <CreditCard size={16} className="text-primary" />
+                  {/* Icono sensible según método */}
+                  {selectedPaymentMethod.id === "mercadopago" ? (
+                    <CreditCard size={16} className="text-primary" />
+                  ) : (
+                    <Tag size={16} className="text-primary" />
+                  )}
                   <h4 className="font-medium">Pago</h4>
                 </div>
                 <p className="text-sm">{selectedPaymentMethod.name}</p>
@@ -240,19 +262,38 @@ export default function ReviewStep({
           <Button
             onClick={onPlaceOrder}
             disabled={isSubmitting}
-            className="btn-hero relative overflow-hidden">
+            className="btn-hero relative overflow-hidden"
+          >
             {isSubmitting ? (
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Procesando con MercadoPago...</span>
+                <span>
+                  {selectedPaymentMethod?.id === "mercadopago"
+                    ? "Procesando con MercadoPago..."
+                    : "Procesando pedido..."}
+                </span>
               </div>
             ) : (
               <>
                 <div className="flex items-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                    />
                   </svg>
-                  <span>Pagar con MercadoPago</span>
+                  <span>
+                    {selectedPaymentMethod?.id === "mercadopago"
+                      ? "Pagar con MercadoPago"
+                      : "Finalizar compra (Pago en efectivo y retiro)"}
+                  </span>
                   <ChevronRight className="ml-2" size={16} />
                 </div>
               </>

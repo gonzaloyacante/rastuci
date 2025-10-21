@@ -3,7 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCart, ShippingOption } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
-import { Check, Truck, MapPin, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import {
+  Check,
+  Truck,
+  MapPin,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+} from "lucide-react";
 import { formatPriceARS } from "@/utils/formatters";
 
 interface ShippingStepProps {
@@ -18,6 +25,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     setSelectedShippingOption,
     calculateShippingCost: _calculateShippingCost,
     availableShippingOptions,
+    selectedPaymentMethod,
   } = useCart();
 
   // Estado local
@@ -34,10 +42,10 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
     try {
       // Llamar a la API de Correo Argentino (simulada)
-      const response = await fetch('/api/shipping/correo-argentino/calculate', {
-        method: 'POST',
+      const response = await fetch("/api/shipping/correo-argentino/calculate", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           postalCode: customerInfo.postalCode,
@@ -51,13 +59,13 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Error en la respuesta del servidor');
+        throw new Error("Error en la respuesta del servidor");
       }
 
       const result = await response.json();
-      
+
       if (!result.success) {
-        throw new Error(result.error || 'Error calculando el envío');
+        throw new Error(result.error || "Error calculando el envío");
       }
 
       const options = result.data.options;
@@ -70,7 +78,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     } catch (error) {
       console.error("Error al calcular el costo de envío:", error);
       setError(
-        "No se pudo calcular el costo de envío. Por favor verifica el código postal."
+        "No se pudo calcular el costo de envío. Por favor verifica el código postal.",
       );
       // Usar opciones predeterminadas en caso de error
       setShippingOptions(availableShippingOptions);
@@ -125,57 +133,65 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
     return (
       <div className="space-y-4 mt-6">
-        {shippingOptions.map((option) => (
-          <div
-            key={option.id}
-            className={`border rounded-lg p-4 transition-all ${
-              selectedShippingOption?.id === option.id
-                ? "border-primary surface"
-                : "border-muted surface hover:border-primary"
-            }`}
-            onClick={() => handleSelectOption(option)}>
-            <div className="flex justify-between items-center">
-              <div className="flex items-start gap-3">
-                {option.id === "pickup" ? (
-                  <MapPin
-                    size={24}
-                    className={`mt-1 ${
-                      selectedShippingOption?.id === option.id
-                        ? "text-primary"
-                        : "muted"
-                    }`}
-                  />
-                ) : (
-                  <Truck
-                    size={24}
-                    className={`mt-1 ${
-                      selectedShippingOption?.id === option.id
-                        ? "text-primary"
-                        : "muted"
-                    }`}
-                  />
-                )}
-                <div>
-                  <h3 className="font-semibold text-lg">{option.name}</h3>
-                  <p className="muted text-sm">{option.description}</p>
-                  <p className="muted text-sm mt-1">
-                    Tiempo estimado: {option.estimatedDays}
-                  </p>
+        {shippingOptions.map((option) => {
+          const disabled =
+            String(selectedPaymentMethod) === "cash" && option.id !== "pickup";
+
+          return (
+            <div
+              key={option.id}
+              className={`border rounded-lg p-4 transition-all ${
+                selectedShippingOption?.id === option.id
+                  ? "border-primary surface"
+                  : "border-muted surface"
+              } ${disabled ? "opacity-50 cursor-not-allowed" : "hover:border-primary"}`}
+              onClick={() => !disabled && handleSelectOption(option)}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-start gap-3">
+                  {option.id === "pickup" ? (
+                    <MapPin
+                      size={24}
+                      className={`mt-1 ${
+                        selectedShippingOption?.id === option.id
+                          ? "text-primary"
+                          : "muted"
+                      }`}
+                    />
+                  ) : (
+                    <Truck
+                      size={24}
+                      className={`mt-1 ${
+                        selectedShippingOption?.id === option.id
+                          ? "text-primary"
+                          : "muted"
+                      }`}
+                    />
+                  )}
+                  <div>
+                    <h3 className="font-semibold text-lg">{option.name}</h3>
+                    <p className="muted text-sm">{option.description}</p>
+                    <p className="muted text-sm mt-1">
+                      Tiempo estimado: {option.estimatedDays}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-lg">
+                    {option.price === 0
+                      ? "Gratis"
+                      : formatPriceARS(option.price)}
+                  </span>
+                  {selectedShippingOption?.id === option.id && (
+                    <div className="w-6 h-6 rounded-full btn-hero flex items-center justify-center">
+                      <Check size={16} className="text-white" />
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="font-bold text-lg">
-                  {option.price === 0 ? "Gratis" : formatPriceARS(option.price)}
-                </span>
-                {selectedShippingOption?.id === option.id && (
-                  <div className="w-6 h-6 rounded-full btn-hero flex items-center justify-center">
-                    <Check size={16} className="text-white" />
-                  </div>
-                )}
-              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -183,7 +199,9 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="surface p-6 rounded-lg shadow-sm border border-muted">
-        <h2 className="text-2xl font-bold mb-2 text-primary">Opciones de Envío</h2>
+        <h2 className="text-2xl font-bold mb-2 text-primary">
+          Entrega / Retiro
+        </h2>
 
         {/* Resumen de dirección */}
         {customerInfo && (
@@ -203,6 +221,16 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
           </div>
         )}
 
+        {/* Aviso: si el pago es en efectivo, solo retiro está disponible */}
+        {String(selectedPaymentMethod) === "cash" && (
+          <div className="mb-4 p-3 rounded-md surface-secondary border border-muted text-primary">
+            Has seleccionado <strong>Pago en efectivo</strong>. El envío a
+            domicilio no está disponible para este método de pago. Solo está
+            disponible la opción de <strong>Retiro en local</strong>. Las demás
+            opciones aparecen deshabilitadas.
+          </div>
+        )}
+
         {/* Mensaje de error */}
         {error && (
           <div className="surface border border-error text-error p-3 rounded-md mb-4">
@@ -218,14 +246,16 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
           <Button
             onClick={onBack}
             variant="outline"
-            className="surface text-primary hover:brightness-95">
+            className="surface text-primary hover:brightness-95"
+          >
             <ChevronLeft className="mr-2" size={16} />
             Volver
           </Button>
           <Button
             onClick={handleContinue}
             disabled={!selectedShippingOption || loading}
-            className="btn-hero">
+            className="btn-hero"
+          >
             Continuar
             <ChevronRight className="ml-2" size={16} />
           </Button>
