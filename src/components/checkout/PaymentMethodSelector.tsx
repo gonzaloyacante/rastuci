@@ -10,25 +10,20 @@ interface PaymentMethodSelectorProps {
   allowedMethods?: string[];
 }
 
+// Lista canónica de métodos de pago disponibles en la UI. Los ids deben
+// coincidir con los usados en `CartContext` y en la API ('mercadopago', 'cash', ...)
 const paymentMethods = [
   {
-    id: "credit_card",
-    name: "Tarjeta de crédito",
-    description: "Visa, Mastercard, American Express",
+    id: "mercadopago",
+    name: "MercadoPago",
+    description: "Paga con MercadoPago (redirección)",
     icon: CreditCard,
     popular: true,
   },
   {
-    id: "debit_card",
-    name: "Tarjeta de débito",
-    description: "Débito inmediato",
-    icon: CreditCard,
-    popular: false,
-  },
-  {
     id: "cash",
     name: "Efectivo",
-    description: "Rapipago, Pago Fácil",
+    description: "Retiro en local - pagar en efectivo",
     icon: Banknote,
     popular: false,
   },

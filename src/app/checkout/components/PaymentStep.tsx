@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
+import { useCart } from "@/context/CartContext";
 
 interface PaymentStepProps {
   onNext: () => void;
@@ -12,14 +13,17 @@ interface PaymentStepProps {
 
 export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
   // Estados para el formulario de pago
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<string>("");
+  const { selectedPaymentMethod: ctxSelected, setSelectedPaymentMethod } =
+    useCart();
+
+  const [selectedPaymentMethodLocal, setSelectedPaymentMethodLocal] =
+    useState<string>(ctxSelected?.id || "");
 
   const [error, setError] = useState<string | null>(null);
 
   // Manejar continuar al siguiente paso
   const handleContinue = () => {
-    if (!selectedPaymentMethod) {
+    if (!selectedPaymentMethodLocal) {
       setError("Por favor, selecciona un método de pago para continuar");
       return;
     }
@@ -27,8 +31,8 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
     // Solo permitir continuar si se seleccionó MercadoPago o Efectivo
     if (
       !(
-        selectedPaymentMethod === "mercadopago" ||
-        selectedPaymentMethod === "cash"
+        selectedPaymentMethodLocal === "mercadopago" ||
+        selectedPaymentMethodLocal === "cash"
       )
     ) {
       setError("Por favor, selecciona MercadoPago o Efectivo para continuar");
@@ -36,6 +40,23 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
     }
 
     // Guardar datos de pago en el contexto si es necesario
+    // Persistir en contexto
+    setSelectedPaymentMethod(
+      selectedPaymentMethodLocal === "mercadopago"
+        ? {
+            id: "mercadopago",
+            name: "MercadoPago",
+            icon: "wallet",
+            description: "Paga con MercadoPago",
+          }
+        : {
+            id: "cash",
+            name: "Efectivo - Retiro en Local",
+            icon: "dollar-sign",
+            description: "Retiro y pago en efectivo",
+          },
+    );
+
     onNext();
   };
 
@@ -53,27 +74,13 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
 
         {/* Selector de método de pago (solo MercadoPago y Efectivo) */}
         <PaymentMethodSelector
-          selectedMethod={selectedPaymentMethod}
-          onMethodChange={setSelectedPaymentMethod}
+          selectedMethod={selectedPaymentMethodLocal}
+          onMethodChange={setSelectedPaymentMethodLocal}
           allowedMethods={["mercadopago", "cash"]}
         />
 
         {/* Información de efectivo */}
-        {selectedPaymentMethod === "cash" && (
-          <div className="mt-6 p-4 surface rounded-lg border border-muted">
-            <h4 className="font-medium mb-2">Pago en efectivo</h4>
-            <p className="text-sm muted mb-3">
-              Podrás pagar en Rapipago, Pago Fácil y otros centros de pago.
-            </p>
-            <p className="text-sm muted">
-              Te enviaremos las instrucciones por email después de confirmar la
-              compra.
-            </p>
-          </div>
-        )}
-
-        {/* Información de efectivo */}
-        {selectedPaymentMethod === "cash" && (
+        {selectedPaymentMethodLocal === "cash" && (
           <div className="mt-6 p-4 surface rounded-lg border border-muted">
             <h4 className="font-medium mb-2">Pago en efectivo</h4>
             <p className="text-sm muted mb-3">
@@ -98,7 +105,7 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
           </Button>
           <Button
             onClick={handleContinue}
-            disabled={!selectedPaymentMethod}
+            disabled={!selectedPaymentMethodLocal}
             className="btn-hero"
           >
             Continuar

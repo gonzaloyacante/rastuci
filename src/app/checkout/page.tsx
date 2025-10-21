@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import {
   CustomerInfoStep,
-  // ShippingStep, // COMENTADO: Envíos deshabilitados temporalmente - falta API Correo Argentino
   PaymentStep,
   ReviewStep,
   OrderConfirmation,
 } from "@/app/checkout/components";
+import ShippingStep from "@/app/checkout/components/ShippingStep";
 import CheckoutStepper from "@/app/checkout/components/CheckoutStepper";
 
 enum CheckoutStep {
   CUSTOMER_INFO = 0,
-  // SHIPPING = 1, // COMENTADO: Envíos deshabilitados temporalmente
-  PAYMENT = 2,
+  PAYMENT = 1,
+  SHIPPING = 2,
   REVIEW = 3,
   CONFIRMATION = 4,
 }
@@ -23,7 +23,9 @@ enum CheckoutStep {
 function CheckoutContent() {
   const router = useRouter();
   const { cartItems, placeOrder } = useCart();
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>(CheckoutStep.CUSTOMER_INFO);
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>(
+    CheckoutStep.CUSTOMER_INFO,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -77,8 +79,6 @@ function CheckoutContent() {
     switch (currentStep) {
       case CheckoutStep.CUSTOMER_INFO:
         return <CustomerInfoStep onNext={goToNextStep} />;
-      // case CheckoutStep.SHIPPING: // COMENTADO: Envíos deshabilitados temporalmente
-      //   return <ShippingStep onNext={goToNextStep} onBack={goToPreviousStep} />;
       case CheckoutStep.PAYMENT:
         return <PaymentStep onNext={goToNextStep} onBack={goToPreviousStep} />;
       case CheckoutStep.REVIEW:
@@ -90,6 +90,8 @@ function CheckoutContent() {
             error={error}
           />
         );
+      case CheckoutStep.SHIPPING:
+        return <ShippingStep onNext={goToNextStep} onBack={goToPreviousStep} />;
       case CheckoutStep.CONFIRMATION:
         return <OrderConfirmation orderId={orderId} />;
       default:

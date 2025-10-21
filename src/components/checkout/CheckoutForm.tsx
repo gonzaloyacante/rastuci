@@ -1,60 +1,64 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useCart } from '@/context/CartContext';
-import { useToast } from '@/components/ui/Toast';
-import { Button } from '@/components/ui/Button';
-import { CreditCard, Loader2, Shield, Lock } from 'lucide-react';
-import { PaymentMethodSelector } from './PaymentMethodSelector';
-import { CardForm } from './CardForm';
-import { CustomerForm } from './CustomerForm';
+import React, { useState } from "react";
+import { useCart } from "@/context/CartContext";
+import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
+import { CreditCard, Loader2, Shield, Lock } from "lucide-react";
+import { PaymentMethodSelector } from "./PaymentMethodSelector";
+import { CustomerForm } from "./CustomerForm";
 
 interface CheckoutFormProps {
   onPaymentSuccess?: (paymentId: string) => void;
   onPaymentError?: (error: string) => void;
 }
 
-export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentError }: CheckoutFormProps) {
+export function CheckoutForm({
+  onPaymentSuccess: _onPaymentSuccess,
+  onPaymentError,
+}: CheckoutFormProps) {
   const { cartItems, getCartTotal, clearCart: _clearCart } = useCart();
   const { show } = useToast();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<string>("");
   const [customerData, setCustomerData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    identificationType: 'DNI',
-    identificationNumber: '',
+    email: "",
+    firstName: "",
+    lastName: "",
+    identificationType: "DNI",
+    identificationNumber: "",
   });
-  
-  const [cardData, setCardData] = useState({
-    cardNumber: '',
-    expiryMonth: '',
-    expiryYear: '',
-    securityCode: '',
-    cardholderName: '',
-    installments: 1,
-  });
+
+  // Card data state removed: tarjetas no están visibles en el flujo simplificado
 
   const total = getCartTotal();
 
   const handlePayment = async () => {
     if (!selectedPaymentMethod) {
-      show({ type: 'error', title: 'Error', message: 'Selecciona un método de pago' });
+      show({
+        type: "error",
+        title: "Error",
+        message: "Selecciona un método de pago",
+      });
       return;
     }
 
-    if (!customerData.email || !customerData.firstName || !customerData.lastName) {
-      show({ type: 'error', title: 'Error', message: 'Completa todos los datos personales' });
+    if (
+      !customerData.email ||
+      !customerData.firstName ||
+      !customerData.lastName
+    ) {
+      show({
+        type: "error",
+        title: "Error",
+        message: "Completa todos los datos personales",
+      });
       return;
     }
 
-    if ((selectedPaymentMethod === 'credit_card' || selectedPaymentMethod === 'debit_card') && 
-        (!cardData.cardNumber || !cardData.expiryMonth || !cardData.expiryYear || !cardData.securityCode)) {
-      show({ type: 'error', title: 'Error', message: 'Completa todos los datos de la tarjeta' });
-      return;
-    }
+    // En el flujo simplificado sólo se permiten MercadoPago y Efectivo
 
     setIsProcessing(true);
 
@@ -64,9 +68,9 @@ export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentErr
         title: `${item.product.name} (${item.size} - ${item.color})`,
         quantity: item.quantity,
         unit_price: item.product.price,
-        currency_id: 'ARS',
-        picture_url: Array.isArray(item.product.images) 
-          ? item.product.images[0] 
+        currency_id: "ARS",
+        picture_url: Array.isArray(item.product.images)
+          ? item.product.images[0]
           : undefined,
         description: item.product.description || undefined,
       }));
@@ -91,10 +95,10 @@ export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentErr
       };
 
       // Crear preferencia en MercadoPago
-      const response = await fetch('/api/payments/mercadopago/preference', {
-        method: 'POST',
+      const response = await fetch("/api/payments/mercadopago/preference", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           items,
@@ -105,28 +109,30 @@ export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentErr
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error creando la preferencia de pago');
+        throw new Error(
+          errorData.message || "Error creando la preferencia de pago",
+        );
       }
 
       const data = await response.json();
-      
+
       if (!data.data?.init_point) {
-        throw new Error('Respuesta inválida del servidor');
+        throw new Error("Respuesta inválida del servidor");
       }
 
       // Redirigir a MercadoPago
       window.location.href = data.data.init_point;
-      
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error procesando el pago';
-      console.error('Error en checkout:', error);
-      
-      show({ 
-        type: 'error', 
-        title: 'Error de pago', 
-        message: errorMessage 
+      const errorMessage =
+        error instanceof Error ? error.message : "Error procesando el pago";
+      console.error("Error en checkout:", error);
+
+      show({
+        type: "error",
+        title: "Error de pago",
+        message: errorMessage,
       });
-      
+
       onPaymentError?.(errorMessage);
     } finally {
       setIsProcessing(false);
@@ -154,35 +160,27 @@ export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentErr
           </div>
 
           {/* Datos del cliente */}
-          <CustomerForm 
-            data={customerData}
-            onChange={setCustomerData}
-          />
+          <CustomerForm data={customerData} onChange={setCustomerData} />
 
-          {/* Método de pago */}
+          {/* Método de pago (solo MercadoPago y Efectivo) */}
           <PaymentMethodSelector
             selectedMethod={selectedPaymentMethod}
             onMethodChange={setSelectedPaymentMethod}
+            allowedMethods={["mercadopago", "cash"]}
           />
 
-          {/* Formulario de tarjeta */}
-          {(selectedPaymentMethod === 'credit_card' || selectedPaymentMethod === 'debit_card') && (
-            <CardForm
-              data={cardData}
-              onChange={setCardData}
-              paymentMethod={selectedPaymentMethod}
-            />
-          )}
+          {/* Nota: el formulario de tarjeta se mantiene en el repo pero no se muestra en el flujo simplificado */}
 
           {/* Información de efectivo */}
-          {selectedPaymentMethod === 'cash' && (
+          {selectedPaymentMethod === "cash" && (
             <div className="p-4 surface rounded-lg border border-muted">
               <h4 className="font-medium mb-2">Pago en efectivo</h4>
               <p className="text-sm muted mb-3">
                 Podrás pagar en Rapipago, Pago Fácil y otros centros de pago.
               </p>
               <p className="text-sm muted">
-                Te enviaremos las instrucciones por email después de confirmar la compra.
+                Te enviaremos las instrucciones por email después de confirmar
+                la compra.
               </p>
             </div>
           )}
@@ -201,7 +199,7 @@ export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentErr
             ) : (
               <>
                 <Lock className="w-5 h-5 mr-2" />
-                Pagar ${total.toLocaleString('es-AR')}
+                Pagar ${total.toLocaleString("es-AR")}
               </>
             )}
           </Button>
@@ -217,18 +215,25 @@ export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentErr
         <div className="lg:sticky lg:top-6">
           <div className="surface rounded-lg border border-muted p-6">
             <h3 className="text-lg font-semibold mb-4">Resumen del pedido</h3>
-            
+
             <div className="space-y-3 mb-4">
               {cartItems.map((item) => (
-                <div key={`${item.product.id}-${item.size}-${item.color}`} className="flex justify-between">
+                <div
+                  key={`${item.product.id}-${item.size}-${item.color}`}
+                  className="flex justify-between"
+                >
                   <div className="flex-1">
                     <p className="font-medium text-sm">{item.product.name}</p>
                     <p className="text-xs muted">
-                      Talle: {item.size} • Color: {item.color} • Cant: {item.quantity}
+                      Talle: {item.size} • Color: {item.color} • Cant:{" "}
+                      {item.quantity}
                     </p>
                   </div>
                   <p className="font-medium">
-                    ${(item.product.price * item.quantity).toLocaleString('es-AR')}
+                    $
+                    {(item.product.price * item.quantity).toLocaleString(
+                      "es-AR",
+                    )}
                   </p>
                 </div>
               ))}
@@ -237,7 +242,7 @@ export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentErr
             <div className="border-t border-muted pt-4 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${total.toLocaleString('es-AR')}</span>
+                <span>${total.toLocaleString("es-AR")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Envío</span>
@@ -245,7 +250,7 @@ export function CheckoutForm({ onPaymentSuccess: _onPaymentSuccess, onPaymentErr
               </div>
               <div className="flex justify-between text-lg font-bold border-t border-muted pt-2">
                 <span>Total</span>
-                <span>${total.toLocaleString('es-AR')}</span>
+                <span>${total.toLocaleString("es-AR")}</span>
               </div>
             </div>
           </div>
