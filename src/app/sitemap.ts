@@ -1,74 +1,139 @@
 import type { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
 
-export const revalidate = 3600; // 1h
+export const revalidate = 3600; // 1 hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = (process.env.NEXT_PUBLIC_SITE_URL || "https://rastuci.com").replace(/\/$/, "");
 
-  // Static routes
+  // Static routes with SEO priorities
   const staticEntries: MetadataRoute.Sitemap = [
     {
       url: `${base}/`,
       changeFrequency: "daily",
-      priority: 1,
+      priority: 1.0,
+      lastModified: new Date(),
     },
     {
       url: `${base}/productos`,
-      changeFrequency: "daily",
+      changeFrequency: "daily", 
       priority: 0.9,
+      lastModified: new Date(),
+    },
+    {
+      url: `${base}/contacto`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+      lastModified: new Date(),
+    },
+    {
+      url: `${base}/carrito`,
+      changeFrequency: "always",
+      priority: 0.3,
+      lastModified: new Date(),
+    },
+    {
+      url: `${base}/checkout`,
+      changeFrequency: "always", 
+      priority: 0.1,
+      lastModified: new Date(),
+    },
+    {
+      url: `${base}/favoritos`,
+      changeFrequency: "always",
+      priority: 0.4,
+      lastModified: new Date(),
+    },
+    {
+      url: `${base}/offline`,
+      changeFrequency: "never",
+      priority: 0.1,
+      lastModified: new Date(),
     },
   ];
 
-  // Categories
-  let categoryEntries: MetadataRoute.Sitemap = [];
   let latestUpdatedAt: Date | null = null;
+
+  // Categories - optimized query
+  let categoryEntries: MetadataRoute.Sitemap = [];
   try {
     const categories = await prisma.category.findMany({
-      select: { id: true, updatedAt: true },
+      select: { 
+        id: true, 
+        name: true,
+        updatedAt: true,
+        _count: {
+          select: { products: true }
+        }
+      },
       orderBy: { updatedAt: "desc" },
-      take: 200,
+      take: 100, // Limit for performance
     });
+
     if (categories.length > 0) {
       latestUpdatedAt = categories[0].updatedAt;
     }
-    categoryEntries = categories.map((c) => ({
-      url: `${base}/productos?categoryId=${c.id}`,
-      lastModified: c.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    }));
-  } catch {
-    // Fallback silent; static entries still work
+
+    categoryEntries = categories
+      .filter((c: typeof categories[0]) => c._count.products > 0) // Only categories with products
+      .map((category: typeof categories[0]) => ({
+        url: `${base}/productos?categoryId=${category.id}`,
+        lastModified: category.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: Math.min(0.8, 0.5 + (category._count.products * 0.01)), // Dynamic priority based on product count
+      }));
+  } catch (error) {
+    console.warn('Error fetching categories for sitemap:', error);
   }
 
-  // Products (detail pages)
+  // Products - optimized query with stock filter
   let productEntries: MetadataRoute.Sitemap = [];
   try {
     const products = await prisma.product.findMany({
-      select: { id: true, updatedAt: true },
+      select: { 
+        id: true, 
+        name: true,
+        updatedAt: true,
+        stock: true,
+        onSale: true
+      },
+      where: {
+        stock: { gt: 0 } // Only products in stock
+      },
       orderBy: { updatedAt: "desc" },
-      take: 1000,
+      take: 2000, // Increased for better coverage
     });
-    if (products.length > 0) {
-      latestUpdatedAt = latestUpdatedAt
-        ? new Date(Math.max(latestUpdatedAt.getTime(), products[0].updatedAt.getTime()))
-        : products[0].updatedAt;
+
+    if (products.length > 0 && (!latestUpdatedAt || products[0].updatedAt > latestUpdatedAt)) {
+      latestUpdatedAt = products[0].updatedAt;
     }
-    productEntries = products.map((p) => ({
-      url: `${base}/productos/${p.id}`,
-      lastModified: p.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
+
+    productEntries = products.map((product: typeof products[0]) => ({
+      url: `${base}/productos/${product.id}`,
+      lastModified: product.updatedAt,
+      changeFrequency: product.onSale ? "daily" as const : "weekly" as const,
+      priority: product.onSale ? 0.8 : 0.7, // Higher priority for sale items
     }));
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn('Error fetching products for sitemap:', error);
   }
 
-  // Optionally attach lastModified to homepage if we computed something
+  // Update homepage lastModified with latest content change
   if (latestUpdatedAt) {
-    staticEntries[0] = { ...staticEntries[0], lastModified: latestUpdatedAt };
+    staticEntries[0] = { 
+      ...staticEntries[0], 
+      lastModified: latestUpdatedAt 
+    };
+    staticEntries[1] = { 
+      ...staticEntries[1], 
+      lastModified: latestUpdatedAt 
+    };
   }
 
-  return [...staticEntries, ...categoryEntries, ...productEntries];
+  const allEntries = [...staticEntries, ...categoryEntries, ...productEntries];
+
+  // Sort by priority for better SEO (higher priority first)
+  allEntries.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+
+  return allEntries;
 }

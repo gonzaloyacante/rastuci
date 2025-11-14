@@ -10,7 +10,7 @@ export const sendNotification = async (message: string, heading: string) => {
   try {
     if (!process.env.ONESIGNAL_APP_ID) {
       console.warn("OneSignal App ID not configured");
-      return;
+      return null;
     }
 
     const notification = new OneSignal.Notification();
@@ -24,6 +24,7 @@ export const sendNotification = async (message: string, heading: string) => {
     return response;
   } catch (error) {
     console.error("Error sending notification:", error);
+    return null;
   }
 };
 

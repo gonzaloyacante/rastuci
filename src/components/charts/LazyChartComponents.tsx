@@ -42,8 +42,8 @@ const _ChartComponentsFallback = () => (
 
     {/* Stats cards skeleton */}
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="surface rounded-lg p-4 border border-muted">
+      {[...Array(3)].map(() => (
+        <div key={`stats-card-${Math.random()}`} className="surface rounded-lg p-4 border border-muted">
           <div className="flex items-center justify-between">
             <div>
               <Skeleton className="h-4 w-24 mb-2" />

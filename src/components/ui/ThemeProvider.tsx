@@ -69,6 +69,7 @@ export function ThemeProvider({
       root.classList.add(theme);
       root.setAttribute('data-theme', theme);
     }
+    return undefined;
   }, [theme]);
 
   const value = {

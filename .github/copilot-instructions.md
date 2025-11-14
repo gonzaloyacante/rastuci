@@ -121,4 +121,34 @@ src/
 - Variables de entorno para credenciales
 - Rate limiting para APIs públicas
 
+## Tarjetas de Prueba MercadoPago
+
+### Argentina
+
+**Mastercard**: 5031 7557 3453 0604 | CVV: 123 | Vencimiento: 11/30 ❌ NO FUNCIONA EN SANDBOX
+**Visa**: 4509 9535 6623 3704 | CVV: 123 | Vencimiento: 11/30 ✅ FUNCIONA
+**American Express**: 3711 803032 57522 | CVV: 1234 | Vencimiento: 11/30
+**Mastercard Débito**: 5287 3383 1025 3304 | CVV: 123 | Vencimiento: 11/30
+**Visa Débito**: 4002 7686 9439 5619 | CVV: 123 | Vencimiento: 11/30
+
+### Estados de Pago por Nombre del Titular
+
+- **APRO**: Pago aprobado (DNI: 12345678) ✅ USAR ESTE
+- **OTHE**: Rechazado por error general
+- **CONT**: Pendiente de pago
+- **CALL**: Rechazado con validación para autorizar
+- **FUND**: Rechazado por importe insuficiente
+- **SECU**: Rechazado por código de seguridad inválido
+- **EXPI**: Rechazado debido a un problema de fecha de vencimiento
+- **FORM**: Rechazado debido a un error de formulario
+
+### Recordatorio Crítico
+
+- USAR ÚNICAMENTE tarjetas de test oficiales de MercadoPago
+- NO usar tarjetas reales o inventadas (generan errores)
+- SIEMPRE completar pruebas E2E con MercadoPago antes de aprobar cambios
+- MASTERCARD 5031 NO FUNCIONA: usar VISA 4509 o otras alternativas
+- Estado de frustración del usuario: EXTREMO - completar pruebas RÁPIDO
+- NO usar Codacy automáticamente - solo cuando sea explícitamente solicitado
+
 Cuando generes código, sigue estos patrones y mantén la consistencia con la arquitectura existente.

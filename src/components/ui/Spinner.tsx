@@ -5,6 +5,7 @@ export type SpinnerProps = {
   size?: "xs" | "sm" | "md" | "lg";
   className?: string;
   ariaLabel?: string;
+  color?: "primary" | "white" | "gray";
 };
 
 const sizeMap = {
@@ -14,10 +15,21 @@ const sizeMap = {
   lg: "h-6 w-6",
 } as const;
 
-export const Spinner: React.FC<SpinnerProps> = ({ size = "sm", className, ariaLabel }) => {
+const colorClasses = {
+  primary: "text-primary",
+  white: "text-white",
+  gray: "text-gray-500",
+};
+
+export const Spinner: React.FC<SpinnerProps> = ({ 
+  size = "sm", 
+  className, 
+  ariaLabel = "Cargando",
+  color = "primary"
+}) => {
   return (
     <svg
-      className={cn("animate-spin", sizeMap[size], className)}
+      className={cn("animate-spin", sizeMap[size], colorClasses[color], className)}
       viewBox="0 0 24 24"
       role="status"
       aria-label={ariaLabel}
@@ -29,5 +41,29 @@ export const Spinner: React.FC<SpinnerProps> = ({ size = "sm", className, ariaLa
     </svg>
   );
 };
+
+// Componente de loading para páginas completas
+export function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center surface">
+      <div className="text-center">
+        <Spinner size="lg" />
+        <p className="mt-4 text-muted-foreground">Cargando...</p>
+      </div>
+    </div>
+  );
+}
+
+// Componente de loading para secciones
+export function SectionLoader() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <Spinner size="md" />
+        <p className="mt-2 text-muted-foreground">Cargando contenido...</p>
+      </div>
+    </div>
+  );
+}
 
 export default Spinner;

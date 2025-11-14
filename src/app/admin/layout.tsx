@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import React from "react";
 import SessionProvider from "@/components/providers/SessionProvider";
+import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -105,6 +106,57 @@ const iconMap: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  tracking: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  ),
+  logistics: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+      />
+    </svg>
+  ),
+  metrics: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+      />
+    </svg>
+  ),
   user: (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -117,6 +169,21 @@ const iconMap: Record<string, React.ReactNode> = {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
+    </svg>
+  ),
+  support: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
       />
     </svg>
   ),
@@ -185,7 +252,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  if (pathname === "/admin") return <>{children}</>;
+  if (pathname === "/admin") {
+    return <>{children}</>;
+  }
 
   const toggleSidebar = () => setIsSidebarOpen((open) => !open);
   const closeSidebar = () => isMobile && setIsSidebarOpen(false);
@@ -200,12 +269,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: "/admin/pedidos/pendientes",
       icon: "pending",
     },
+    { name: "Tracking", href: "/admin/tracking", icon: "tracking" },
+    { name: "Logística", href: "/admin/logistica", icon: "logistics" },
+    { name: "Métricas", href: "/admin/metricas", icon: "metrics" },
     { name: "Usuarios", href: "/admin/usuarios", icon: "user" },
+    { name: "Soporte", href: "/admin/soporte", icon: "support" },
   ];
 
   return (
     <SessionProvider>
-      <div className="flex h-screen surface relative overflow-x-hidden">
+      <AdminAuthWrapper>
+        <div className="flex h-screen surface relative overflow-x-hidden">
         {/* Sidebar */}
         <div
           className={`
@@ -351,6 +425,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <main className="p-2 sm:p-3 lg:p-4">{children}</main>
         </div>
       </div>
+      </AdminAuthWrapper>
     </SessionProvider>
   );
 }

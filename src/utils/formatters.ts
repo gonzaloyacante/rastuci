@@ -73,7 +73,7 @@ export const capitalize = (str: string): string => {
  * Truncar texto
  */
 export const truncateText = (text: string, maxLength: number): string => {
-  if (text.length <= maxLength) return text;
+  if (text.length <= maxLength) {return text;}
   return text.substring(0, maxLength) + "...";
 };
 
@@ -129,7 +129,7 @@ export const formatPhone = (phone: string): string => {
  */
 export const formatPriceARS = (
   price: number,
-  showDecimals: boolean = false
+  showDecimals = false
 ): string => {
   const formatter = new Intl.NumberFormat("es-AR", {
     style: "currency",

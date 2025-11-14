@@ -32,6 +32,7 @@ export default function AdminLoginPage() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [capsLockOn, setCapsLockOn] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Form para login
   const {
@@ -56,16 +57,43 @@ export default function AdminLoginPage() {
   const onLoginSubmit: SubmitHandler<LoginFormValues> = async (data) => {
     setLoading(true);
     setAuthError(null);
+
     try {
+      // Primero validar credenciales con nuestra API
+      const validationResponse = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password
+        })
+      });
+
+      const validationResult = await validationResponse.json();
+
+      if (!validationResult.success) {
+        // Mostrar error específico según el campo
+        if (validationResult.error.field === 'email') {
+          toast.error(validationResult.error.message);
+        } else if (validationResult.error.field === 'password') {
+          toast.error(validationResult.error.message);
+        } else {
+          toast.error(validationResult.error.message);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Si la validación es exitosa, proceder con NextAuth
       const result = await signIn("credentials", {
         redirect: false,
         email: data.email,
         password: data.password,
+        remember: rememberMe.toString(),
       });
 
       if (result?.error) {
-        setAuthError("Correo o contraseña incorrectos. Intenta nuevamente.");
-        toast.error("Credenciales incorrectas");
+        toast.error("Error de autenticación");
         setLoading(false);
       } else {
         toast.success("¡Bienvenido al panel de administración!");
@@ -130,11 +158,6 @@ export default function AdminLoginPage() {
           <form
             onSubmit={handleLoginSubmit(onLoginSubmit)}
             className="space-y-5">
-            {authError && (
-              <div className="surface text-error border border-error/60 rounded-md p-3 text-sm" role="alert" aria-live="assertive">
-                {authError}
-              </div>
-            )}
             <Input
               label="Correo electrónico"
               type="email"
@@ -152,7 +175,7 @@ export default function AdminLoginPage() {
               type="password"
               placeholder="••••••••"
               {...registerLogin("password")}
-              error={loginErrors.password?.message || (authError ? "Credenciales incorrectas" : undefined)}
+              error={loginErrors.password?.message}
               disabled={loading}
               icon="lock"
               autoComplete="current-password"
@@ -165,8 +188,8 @@ export default function AdminLoginPage() {
                 const caps = e.getModifierState && e.getModifierState('CapsLock');
                 if (typeof caps === 'boolean') setCapsLockOn(caps);
               }}
-              aria-invalid={!!loginErrors.password || !!authError}
-              helpText={capsLockOn && !authError ? "Bloq Mayús está activado" : undefined}
+              aria-invalid={!!loginErrors.password}
+              helpText={capsLockOn ? "Bloq Mayús está activado" : undefined}
             />
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -174,12 +197,14 @@ export default function AdminLoginPage() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-primary focus:ring-primary border-muted rounded"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-primary focus:ring-primary border-muted rounded cursor-pointer"
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm muted">
-                  Recordarme
+                  className="ml-2 block text-sm muted cursor-pointer">
+                  Recordarme por 30 días
                 </label>
               </div>
               <button

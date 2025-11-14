@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.yarn/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Coverage
+coverage/
+
+# Environment files
+.env*
+
+# Database
+*.db
+*.db-journal
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Generated files
+.next/types/
+next-env.d.ts
+*.tsbuildinfo
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Prisma generated
+prisma/generated/
+
+# Specific files that shouldn't be formatted
+CHANGELOG.md
+LICENSE
+*.min.js
+*.min.css

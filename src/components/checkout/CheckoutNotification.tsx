@@ -84,6 +84,8 @@ export function CheckoutNotification({
     } else {
       setShow(false);
     }
+    // Importante: devolver undefined explícitamente
+    return undefined;
   }, [isVisible, autoClose, duration, onClose, type]);
 
   if (!isVisible) return null;

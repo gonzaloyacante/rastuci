@@ -29,9 +29,11 @@ nul
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # local env files
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
@@ -50,6 +52,30 @@ yarn-error.log*
 # documentation and guides (archivos privados)
 SETUP-PRIVADO.md
 WORKFLOW.md
+ANALISIS_*.md
+ACCIONES_URGENTES.md
+LEEME_PRIMERO.md
+RESUMEN_*.md
+*.docs.md
+*.private.md
+/docs/
+/scripts/
+/docs/private/
+/docs/internal/
+
+# scripts privados y temporales
+/scripts/
+create-admin.ts
+reset-admin-password.ts
+/script/create-admin.ts
+/script/reset-admin-password.ts
+seed-*.ts
+seed-*.sql
+update-*.sql
+*.backup
+temp-*
+*.tmp
+*.temp
 
 # IDE
 .vscode/
@@ -68,26 +94,9 @@ Thumbs.db
 *.tsbuildinfo
 next-env.d.ts
 
-# temporary files
-*.tmp
-*.temp
-temp-*
-.pnpm-debug.log*
+# generated files
+/src/generated/
+/generated/
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-/src/generated/prisma
-
-.vercel
-
-
-#Ignore vscode AI rules
-.github\instructions\codacy.instructions.md
+# AI rules (privado)
+.github/instructions/codacy.instructions.md

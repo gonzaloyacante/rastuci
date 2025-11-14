@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useParams } from "next/navigation";
+import React, { useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import { Button } from "@/components/ui/Button";
 import { ColorChip } from "@/components/ui/ColorChip";
 import { Product } from "@/types";
@@ -20,34 +21,29 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useToast } from "@/components/ui/Toast";
 import { formatPriceARS } from "@/utils/formatters";
 import Link from "next/link";
-import React from "react";
+
 
 // Dynamic imports para componentes no críticos
-const ProductImageGallery = React.lazy(
-  () => import("@/components/ProductImageGallery")
-);
+const ProductImageGallery = React.lazy(() => import("@/components/ProductImageGallery"));
 const ProductReviews = React.lazy(() => import("@/components/ProductReviews"));
-const RelatedProducts = React.lazy(
-  () => import("@/components/RelatedProducts")
-);
+const RelatedProducts = React.lazy(() => import("@/components/RelatedProducts"));
+
+interface ProductDetailClientProps {
+  productId: string;
+}
 
 // Loading components
 const ProductDetailSkeleton = () => (
   <div className="min-h-screen surface">
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Breadcrumb - No skeleton para texto fijo */}
       <nav className="mb-6" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-2 text-sm muted">
           <li>
-            <Link href="/" className="hover:text-primary">
-              Inicio
-            </Link>
+            <Link href="/" className="hover:text-primary">Inicio</Link>
           </li>
           <li>/</li>
           <li>
-            <Link href="/productos" className="hover:text-primary">
-              Productos
-            </Link>
+            <Link href="/productos" className="hover:text-primary">Productos</Link>
           </li>
           <li>/</li>
           <li className="text-primary font-medium">Cargando...</li>
@@ -60,10 +56,7 @@ const ProductDetailSkeleton = () => (
           <div className="aspect-square surface rounded-lg animate-pulse" />
           <div className="grid grid-cols-4 gap-2">
             {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square surface rounded animate-pulse"
-              />
+              <div key={`skeleton-thumbnail-${i}`} className="aspect-square surface rounded animate-pulse" />
             ))}
           </div>
         </div>
@@ -97,7 +90,7 @@ const ReviewsSkeleton = () => (
     <div className="h-8 surface rounded animate-pulse w-1/3" />
     <div className="space-y-3">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="p-4 surface rounded-lg">
+        <div key={`skeleton-review-${i}`} className="p-4 surface rounded-lg">
           <div className="h-4 surface rounded animate-pulse w-1/4 mb-2" />
           <div className="h-3 surface rounded animate-pulse w-full mb-1" />
           <div className="h-3 surface rounded animate-pulse w-3/4" />
@@ -112,64 +105,62 @@ const RelatedProductsSkeleton = () => (
     <div className="h-8 surface rounded animate-pulse w-1/3" />
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-48 surface border border-muted rounded-lg animate-pulse" />
+        <div key={`skeleton-related-${i}`} className="h-48 surface border border-muted rounded-lg animate-pulse" />
       ))}
     </div>
   </div>
 );
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const productId = params.id as string;
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function ProductDetailClient({ productId }: ProductDetailClientProps) {
+  const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
 
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { show } = useToast();
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/products/${productId}`);
-        const data = await response.json();
-
-        if (data.success) {
-          setProduct(data.data);
-        } else {
-          setError("Producto no encontrado");
-        }
-      } catch (err) {
-        setError("Error al cargar el producto");
-        console.error("Error fetching product:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (productId) {
-      fetchProduct();
+  // SWR para fetch del producto
+  const fetcher = (url: string) => fetch(url).then(res => res.json());
+  const { data, isLoading, error } = useSWR(
+    productId ? `/api/products/${productId}` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // 1 minuto
     }
-  }, [productId]);
+  );
+
+  const product: Product | null = data?.success ? data.data : null;
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product) {return;}
 
     if (selectedSize === "") {
       show({ type: "error", title: "Talle", message: "Por favor selecciona un talle" });
       return;
     }
 
-    addToCart(product, quantity, selectedSize, "Sin color");
+    // Validar color si hay colores disponibles
+    const availableColors = Array.isArray(product.colors) && product.colors.length > 0 
+      ? product.colors 
+      : [];
+    
+    if (availableColors.length > 0 && selectedColor === "") {
+      show({ type: "error", title: "Color", message: "Por favor selecciona un color" });
+      return;
+    }
+
+    // Usar el color seleccionado o "Sin color" si no hay colores disponibles
+    const colorToUse = availableColors.length > 0 ? selectedColor : "Sin color";
+    
+    addToCart(product, quantity, selectedSize, colorToUse);
     show({ type: "success", title: "Carrito", message: "Producto agregado al carrito" });
   };
 
   const handleToggleFavorite = () => {
-    if (!product) return;
+    if (!product) {return;}
 
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
@@ -203,7 +194,11 @@ export default function ProductDetailPage() {
     }
   };
 
-  if (loading) {
+  const goBack = () => {
+    router.back();
+  };
+
+  if (isLoading) {
     return <ProductDetailSkeleton />;
   }
 
@@ -213,14 +208,20 @@ export default function ProductDetailPage() {
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-primary mb-4">
-              {error || "Producto no encontrado"}
+              {error?.message || "Producto no encontrado"}
             </h1>
-            <Link href="/productos">
-              <Button className="flex items-center">
+            <p className="muted mb-6">
+              El producto que buscas no está disponible o ha sido eliminado.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={goBack} variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver a productos
+                Volver
               </Button>
-            </Link>
+              <Link href="/productos">
+                <Button>Ver todos los productos</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -231,12 +232,13 @@ export default function ProductDetailPage() {
   const productImages = Array.isArray(product.images)
     ? product.images
     : typeof product.images === "string"
-    ? JSON.parse(product.images)
-    : [];
+      ? JSON.parse(product.images)
+      : [];
 
   const sizes = Array.isArray(product.sizes) && product.sizes.length > 0
     ? product.sizes
     : ["XS", "S", "M", "L", "XL"];
+  
   const isProductFavorite = isInWishlist(product.id);
 
   return (
@@ -246,15 +248,11 @@ export default function ProductDetailPage() {
         <nav className="mb-6" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2 text-sm muted">
             <li>
-              <Link href="/" className="hover:text-primary">
-                Inicio
-              </Link>
+              <Link href="/" className="hover:text-primary">Inicio</Link>
             </li>
             <li>/</li>
             <li>
-              <Link href="/productos" className="hover:text-primary">
-                Productos
-              </Link>
+              <Link href="/productos" className="hover:text-primary">Productos</Link>
             </li>
             <li>/</li>
             <li className="text-primary font-medium">{product.name}</li>
@@ -287,7 +285,7 @@ export default function ProductDetailPage() {
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
                   <Star
-                    key={i}
+                    key={`rating-star-${i}`}
                     size={20}
                     className="text-primary fill-current"
                   />
@@ -319,7 +317,7 @@ export default function ProductDetailPage() {
                 <h2 className="text-lg font-semibold text-primary mt-2 mb-2">Características</h2>
                 <ul className="list-disc pl-5 space-y-1">
                   {product.features.map((f: string, idx: number) => (
-                    <li key={idx} className="text-primary/90">{f}</li>
+                    <li key={`feature-${idx}-${f.slice(0, 10)}`} className="text-primary/90">{f}</li>
                   ))}
                 </ul>
               </div>
@@ -328,10 +326,30 @@ export default function ProductDetailPage() {
             {/* Colores */}
             {Array.isArray(product.colors) && product.colors.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-primary mt-2 mb-2">Colores</h2>
+                <h2 className="text-lg font-semibold text-primary mt-2 mb-2">
+                  Colores {selectedColor && <span className="text-sm font-normal muted">- {selectedColor}</span>}
+                </h2>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {product.colors.map((c: string, idx: number) => (
-                    <ColorChip key={idx} color={c} size="md" />
+                  {product.colors.map((color: string, idx: number) => (
+                    <button
+                      key={`color-${color}-${idx}`}
+                      onClick={() => setSelectedColor(color)}
+                      className={`relative transition-all ${
+                        selectedColor === color 
+                          ? 'ring-2 ring-primary ring-offset-2' 
+                          : 'hover:ring-1 hover:ring-primary/50'
+                      }`}
+                      title={`Seleccionar color ${color}`}
+                    >
+                      <ColorChip color={color} size="md" />
+                      {selectedColor === color && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-3 h-3 bg-white rounded-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                          </div>
+                        </div>
+                      )}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -342,7 +360,7 @@ export default function ProductDetailPage() {
               <label className="block text-sm font-medium text-primary mb-2">
                 Talle
               </label>
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 flex-wrap">
                 {sizes.map((size) => (
                   <button
                     key={size}
@@ -366,26 +384,26 @@ export default function ProductDetailPage() {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8 h-8 border border-muted rounded flex items-center justify-center">
+                  className="w-8 h-8 border border-muted rounded flex items-center justify-center hover:surface-secondary">
                   -
                 </button>
-                <span className="w-12 text-center">{quantity}</span>
+                <span className="w-12 text-center font-medium">{quantity}</span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-8 h-8 border border-muted rounded flex items-center justify-center">
+                  className="w-8 h-8 border border-muted rounded flex items-center justify-center hover:surface-secondary">
                   +
                 </button>
               </div>
             </div>
 
             {/* Stock */}
-            <div className="text-sm muted">
+            <div className="text-sm">
               {product.stock > 0 ? (
-                <span className="text-success">
+                <span className="text-success font-medium">
                   ✓ {product.stock} disponibles
                 </span>
               ) : (
-                <span className="text-error">✗ Agotado</span>
+                <span className="text-error font-medium">✗ Agotado</span>
               )}
             </div>
 

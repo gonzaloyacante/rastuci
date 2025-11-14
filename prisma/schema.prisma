@@ -67,9 +67,19 @@ model Order {
   mpStatus        String?
   customerEmail   String?
 
+  // OCA Tracking fields
+  ocaTrackingNumber String?
+  ocaOrderId        String?
+  shippingMethod    String? // 'domicilio' | 'sucursal'
+  trackingNumber    String? // Generic tracking field
+  estimatedDelivery DateTime?
+  shippingCost      Float?
+
   @@map("orders")
   @@index([status])
   @@index([createdAt])
+  @@index([ocaTrackingNumber])
+  @@index([trackingNumber])
 }
 
 model OrderItem {

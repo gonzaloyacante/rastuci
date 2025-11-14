@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-// import { cn } from "@/lib/utils"; // TODO: Implement when needed
+// import { cn } from "@/lib/utils"; // Available when needed
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;

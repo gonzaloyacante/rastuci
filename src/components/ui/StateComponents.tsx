@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "./Button";
-import { LoadingSpinner } from "./LoadingComponents";
+import { Spinner } from "./Spinner";
 import { AlertCircle, WifiOff, RefreshCw } from "lucide-react";
 
 // Componente para estados de error mejorados
@@ -104,7 +104,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           <div className="flex space-x-1">
             {[0, 1, 2].map((i) => (
               <div
-                key={i}
+                key={`dot-${i}`}
                 className="w-2 h-2 bg-primary rounded-full animate-bounce"
                 style={{ animationDelay: `${i * 0.1}s` }}
               />
@@ -116,7 +116,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           <div className="w-8 h-8 bg-primary rounded-full animate-pulse" />
         );
       default:
-        return <LoadingSpinner size={size} />;
+        return <Spinner size={size === "sm" ? "xs" : size === "md" ? "sm" : "md"} />;
     }
   };
 

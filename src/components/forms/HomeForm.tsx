@@ -8,35 +8,77 @@ type Props = {
   initial?: HomeSettings;
 };
 
+interface BenefitItem {
+  id: string;
+  icon: "truck" | "credit" | "shield";
+  title: string;
+  description: string;
+}
+
 export default function HomeForm({ initial }: Props) {
   const [values, setValues] = useState<HomeSettings>(initial ?? defaultHomeSettings);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  // Estado para manejar beneficios con IDs únicos
+  const [benefitItems, setBenefitItems] = useState<BenefitItem[]>([]);
+
   useEffect(() => {
-    if (initial) setValues(initial);
+    if (initial) {
+      setValues(initial);
+      // Convertir array a objetos con ID
+      setBenefitItems(initial.benefits.map((benefit, idx) => ({
+        id: `benefit-${Date.now()}-${idx}-${Math.random()}`,
+        icon: benefit.icon,
+        title: benefit.title,
+        description: benefit.description
+      })));
+    } else {
+      // Inicializar con beneficios por defecto
+      setBenefitItems(defaultHomeSettings.benefits.map((benefit, idx) => ({
+        id: `benefit-default-${idx}-${Math.random()}`,
+        icon: benefit.icon,
+        title: benefit.title,
+        description: benefit.description
+      })));
+    }
   }, [initial]);
+
+  // Sincronizar los beneficios con IDs con el estado principal
+  useEffect(() => {
+    setValues(v => ({
+      ...v,
+      benefits: benefitItems.map(item => ({
+        icon: item.icon,
+        title: item.title,
+        description: item.description
+      }))
+    }));
+  }, [benefitItems]);
 
   const update = <K extends keyof HomeSettings>(key: K, val: HomeSettings[K]) =>
     setValues((v) => ({ ...v, [key]: val }));
 
-  const updateBenefit = (i: number, key: "icon" | "title" | "description", val: string) => {
-    setValues((v) => {
-      const next = [...v.benefits];
-      next[i] = { ...next[i], [key]: val };
-      return { ...v, benefits: next };
-    });
+  const updateBenefitItem = (id: string, key: "icon" | "title" | "description", value: string) => {
+    setBenefitItems(items => items.map(item => 
+      item.id === id ? { 
+        ...item, 
+        [key]: key === "icon" ? value as "truck" | "credit" | "shield" : value 
+      } : item
+    ));
   };
 
-  const addBenefit = () => {
-    setValues((v) => ({
-      ...v,
-      benefits: [...v.benefits, { icon: "truck", title: "Nuevo", description: "Descripción" }],
-    }));
+  const addBenefitItem = () => {
+    setBenefitItems(items => [...items, {
+      id: `benefit-new-${Date.now()}-${Math.random()}`,
+      icon: "truck",
+      title: "Nuevo",
+      description: "Descripción"
+    }]);
   };
 
-  const removeBenefit = (i: number) => {
-    setValues((v) => ({ ...v, benefits: v.benefits.filter((_, idx) => idx !== i) }));
+  const removeBenefitItem = (id: string) => {
+    setBenefitItems(items => items.filter(item => item.id !== id));
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -55,7 +97,7 @@ export default function HomeForm({ initial }: Props) {
         body: JSON.stringify(parsed.data),
       });
       const json = await res.json();
-      if (!json.success) throw new Error(json.error?.message || "Error al guardar");
+      if (!json.success) {throw new Error(json.error?.message || "Error al guardar");}
       setMessage("Guardado correctamente");
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : "Error inesperado");
@@ -128,14 +170,14 @@ export default function HomeForm({ initial }: Props) {
       <section>
         <h3 className="text-lg font-semibold mb-3">Beneficios</h3>
         <div className="space-y-4">
-          {values.benefits.map((b, i) => (
-            <div key={i} className="grid md:grid-cols-12 gap-3 items-end">
+          {benefitItems.map((benefitItem) => (
+            <div key={benefitItem.id} className="grid md:grid-cols-12 gap-3 items-end">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Ícono</label>
                 <select
                   className="w-full border rounded-md px-3 py-2"
-                  value={b.icon}
-                  onChange={(e) => updateBenefit(i, "icon", e.target.value)}
+                  value={benefitItem.icon}
+                  onChange={(e) => updateBenefitItem(benefitItem.id, "icon", e.target.value)}
                 >
                   <option value="truck">Camión</option>
                   <option value="credit">Tarjeta</option>
@@ -146,20 +188,20 @@ export default function HomeForm({ initial }: Props) {
                 <label className="block text-sm font-medium mb-1">Título</label>
                 <input
                   className="w-full border rounded-md px-3 py-2"
-                  value={b.title}
-                  onChange={(e) => updateBenefit(i, "title", e.target.value)}
+                  value={benefitItem.title}
+                  onChange={(e) => updateBenefitItem(benefitItem.id, "title", e.target.value)}
                 />
               </div>
               <div className="md:col-span-5">
                 <label className="block text-sm font-medium mb-1">Descripción</label>
                 <input
                   className="w-full border rounded-md px-3 py-2"
-                  value={b.description}
-                  onChange={(e) => updateBenefit(i, "description", e.target.value)}
+                  value={benefitItem.description}
+                  onChange={(e) => updateBenefitItem(benefitItem.id, "description", e.target.value)}
                 />
               </div>
               <div className="md:col-span-1">
-                <Button type="button" variant="destructive" onClick={() => removeBenefit(i)}>
+                <Button type="button" variant="destructive" onClick={() => removeBenefitItem(benefitItem.id)}>
                   Quitar
                 </Button>
               </div>
@@ -167,7 +209,7 @@ export default function HomeForm({ initial }: Props) {
           ))}
         </div>
         <div className="mt-3">
-          <Button type="button" onClick={addBenefit}>Agregar beneficio</Button>
+          <Button type="button" onClick={addBenefitItem}>Agregar beneficio</Button>
         </div>
       </section>
 

@@ -372,11 +372,11 @@ function ReviewCard({ review, onHelpful, onReport, currentUserId }: ReviewCardPr
           {/* Images */}
           {review.images && review.images.length > 0 && (
             <div className="flex gap-2 mb-4">
-              {review.images.map((image, index) => (
+              {review.images.map((image) => (
                 <OptimizedImage
-                  key={index}
+                  key={`review-image-${image}`}
                   src={image}
-                  alt={`Review image ${index + 1}`}
+                  alt={`Review image`}
                   width={80}
                   height={80}
                   className="rounded border border-muted"

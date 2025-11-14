@@ -7,5 +7,14 @@ export default function SessionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  return <NextAuthSessionProvider>{children}</NextAuthSessionProvider>;
+  return (
+    <NextAuthSessionProvider 
+      // Configuración optimizada para persistencia
+      refetchInterval={5 * 60} // Refrescar cada 5 minutos
+      refetchOnWindowFocus={true} // Refrescar al enfocar ventana
+      refetchWhenOffline={false} // No refrescar cuando esté offline
+    >
+      {children}
+    </NextAuthSessionProvider>
+  );
 }

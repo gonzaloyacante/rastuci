@@ -26,7 +26,7 @@ export const handleApiResponse = async <T>(response: Response): Promise<T> => {
 export class ApiClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = "/api") {
+  constructor(baseUrl = "/api") {
     this.baseUrl = baseUrl;
   }
 

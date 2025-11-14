@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, ComponentType } from "react";
-import LoadingSpinner from "./LoadingSpinner";
+import { LoadingSpinner } from "./LoadingStates";
 
 interface LazyWrapperProps {
   fallback?: React.ReactNode;

@@ -167,18 +167,18 @@ export const Select = ({
           {filteredOptions.map((option) => (
             <li
               key={option.value}
-              className={`px-4 py-2 transition-colors rounded ${
+              className={`px-4 py-2 cursor-pointer transition-colors rounded mx-1 ${
                 option.value === value
-                  ? "surface font-semibold text-primary"
-                  : ""
-              } hover-surface`}
+                  ? "bg-primary text-white font-semibold"
+                  : "hover:bg-surface-secondary hover:text-primary"
+              }`}
               onClick={() => handleOptionClick(option.value)}
               role="option"
               aria-selected={option.value === value}
             >
               <div className="flex items-center gap-2">
                 {option.value === value && (
-                  <Check className="w-4 h-4 text-primary" />
+                  <Check className="w-4 h-4 text-white" />
                 )}
                 <span className="truncate">{option.label}</span>
               </div>

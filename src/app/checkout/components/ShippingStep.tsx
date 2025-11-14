@@ -92,7 +92,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     availableShippingOptions,
   ]);
 
-  // Cargar opciones de envío al montar el componente
+  // Cargar opciones de envío SOLO cuando cambia el código postal
   useEffect(() => {
     if (customerInfo?.postalCode) {
       calculateShippingByPostalCode();
@@ -100,11 +100,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
       // Si no hay código postal, usar opciones predeterminadas
       setShippingOptions(availableShippingOptions);
     }
-  }, [
-    customerInfo?.postalCode,
-    calculateShippingByPostalCode,
-    availableShippingOptions,
-  ]);
+  }, [customerInfo?.postalCode, calculateShippingByPostalCode, availableShippingOptions]);
 
   // Manejar selección de opción de envío
   const handleSelectOption = (option: ShippingOption) => {

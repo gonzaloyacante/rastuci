@@ -57,9 +57,9 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           </p>
           {notification.actions && notification.actions.length > 0 && (
             <div className="mt-3 flex gap-2">
-              {notification.actions.map((action, index) => (
+              {notification.actions.map((action) => (
                 <button
-                  key={index}
+                  key={`action-${action.label}-${Math.random()}`}
                   onClick={action.onClick}
                   className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
                     action.variant === "primary"

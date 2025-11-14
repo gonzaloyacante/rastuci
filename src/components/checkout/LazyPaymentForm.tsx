@@ -10,9 +10,9 @@ const PaymentFormFallback = () => (
     <div className="surface rounded-lg p-6 border border-muted">
       <Skeleton className="h-6 w-48 mb-4" />
       <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
+        {[...Array(3)].map(() => (
           <div
-            key={i}
+            key={`payment-skeleton-${Math.random()}`}
             className="flex items-center space-x-3 p-3 border border-muted rounded-lg"
           >
             <Skeleton className="h-5 w-5 rounded-full" />

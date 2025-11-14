@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { useOCAService } from '@/hooks/useOCA';
+// import { useTrackingValidation } from '@/hooks/useTrackingValidation';
+import { type TrackingCompleto } from '@/lib/oca-service';
+// import { type EstadoEnvio } from '@/lib/oca-service';
 import { 
   Package, 
   Truck, 
@@ -13,7 +17,12 @@ import {
   Phone,
   Mail,
   Calendar,
-  Download
+  Download,
+  RefreshCw,
+  AlertCircle,
+  Info,
+  Navigation,
+  Loader2
 } from 'lucide-react';
 
 interface OrderStatus {
@@ -54,11 +63,18 @@ interface Order {
   estimatedDelivery?: Date;
   statusHistory: OrderStatus[];
   createdAt: Date;
+  // Nuevos campos para OCA
+  ocaTrackingNumber?: string;
+  mpPaymentId?: string;
+  shippingMethod?: 'domicilio' | 'sucursal';
+  ocaOrderId?: string;
 }
 
-interface TrackingDetails {
-  status: string;
-  location?: string;
+interface OCATrackingEvent {
+  fecha: string;
+  descripcion: string;
+  ubicacion?: string;
+  estado: string;
 }
 
 interface OrderTrackingProps {
@@ -70,13 +86,47 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [_trackingDetails, _setTrackingDetails] = useState<TrackingDetails | null>(null);
+  const [ocaTracking, setOcaTracking] = useState<TrackingCompleto | null>(null);
+  const [ocaTrackingLoading, setOcaTrackingLoading] = useState(false);
+  const [lastTrackingUpdate, setLastTrackingUpdate] = useState<Date | null>(null);
+  
+  const { obtenerTracking, obtenerEstadoEnvio, isLoading: ocaServiceLoading, error: ocaError } = useOCAService();
+
+  const loadOCATracking = useCallback(async (trackingNumber: string) => {
+    if (!trackingNumber) {
+      return;
+    }
+    
+    try {
+      setOcaTrackingLoading(true);
+      
+      // Intentar obtener tracking completo primero
+      try {
+        const trackingData = await obtenerTracking(trackingNumber);
+        setOcaTracking(trackingData);
+        setLastTrackingUpdate(new Date());
+      } catch {
+        // Si el tracking completo falla, intentar solo estado
+        try {
+          await obtenerEstadoEnvio(trackingNumber);
+          setLastTrackingUpdate(new Date());
+        } catch {
+          // Si ambos fallan, no es crítico
+        }
+      }
+      
+    } catch {
+      // Error silencioso - el tracking de OCA es opcional
+    } finally {
+      setOcaTrackingLoading(false);
+    }
+  }, [obtenerTracking, obtenerEstadoEnvio]);
 
   const loadOrderData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      // Intentar obtener el pedido real desde la API
+      
       if (!orderId) {
         setError('ID de pedido inválido');
         setOrder(null);
@@ -101,18 +151,42 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
 
       setOrder(apiOrder);
       onOrderUpdate?.(apiOrder);
+      
+      // Si el pedido tiene tracking de OCA, cargar información adicional
+      if (apiOrder.ocaTrackingNumber || apiOrder.trackingNumber) {
+        await loadOCATracking(apiOrder.ocaTrackingNumber || apiOrder.trackingNumber!);
+      }
+      
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading order:', error);
       setError((error as Error)?.message ?? 'Error desconocido al cargar el pedido');
       setOrder(null);
     } finally {
       setLoading(false);
     }
-  }, [orderId, onOrderUpdate]);
+  }, [orderId, onOrderUpdate, loadOCATracking]);
+
+  const refreshTracking = useCallback(async () => {
+    if (!order?.trackingNumber && !order?.ocaTrackingNumber) {
+      return;
+    }
+    const trackingNumber = order.ocaTrackingNumber || order.trackingNumber!;
+    await loadOCATracking(trackingNumber);
+  }, [order, loadOCATracking]);
 
   useEffect(() => {
     loadOrderData();
   }, [loadOrderData]);
+
+  // Auto-refresh tracking cada 5 minutos si el pedido está en estado shipped
+  useEffect(() => {
+    if (order?.status === 'shipped' && (order.trackingNumber || order.ocaTrackingNumber)) {
+      const interval = setInterval(refreshTracking, 5 * 60 * 1000); // 5 minutos
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [order, refreshTracking]);
 
   const getStatusIcon = (status: OrderStatus['status']) => {
     switch (status) {
@@ -127,7 +201,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       case 'delivered':
         return <CheckCircle className="w-5 h-5 text-success" />;
       case 'cancelled':
-        return <CheckCircle className="w-5 h-5 text-error" />;
+        return <AlertCircle className="w-5 h-5 text-error" />;
       default:
         return <Clock className="w-5 h-5 muted" />;
     }
@@ -140,7 +214,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       case 'confirmed':
         return <Badge variant="info">Confirmado</Badge>;
       case 'processing':
-        return <Badge variant="primary">Procesando</Badge>;
+        return <Badge variant="primary">Preparando</Badge>;
       case 'shipped':
         return <Badge variant="primary">Enviado</Badge>;
       case 'delivered':
@@ -171,10 +245,25 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     }
   };
 
+  const getOCAStatusLabel = (estado: string) => {
+    const estadosMap: Record<string, string> = {
+      'EN_TRANSITO': 'En tránsito',
+      'ENTREGADO': 'Entregado',
+      'EN_DISTRIBUCION': 'En distribución',
+      'EN_SUCURSAL': 'En sucursal',
+      'RETENIDO': 'Retenido',
+      'DEVUELTO': 'Devuelto',
+      'PENDIENTE': 'Pendiente',
+      'PREPARACION': 'En preparación'
+    };
+    return estadosMap[estado] || estado;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 muted">Cargando información del pedido...</span>
       </div>
     );
   }
@@ -184,22 +273,42 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       <div className="text-center p-8">
         {error ? (
           <div className="space-y-4">
+            <AlertCircle className="w-16 h-16 text-error mx-auto" />
+            <h3 className="text-lg font-medium">Error al cargar el pedido</h3>
             <p className="text-sm text-error">{error}</p>
-            <div className="flex items-center justify-center gap-2">
-              <Button onClick={loadOrderData}>Reintentar</Button>
-            </div>
+            <Button onClick={loadOrderData}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reintentar
+            </Button>
           </div>
         ) : (
           <div>
-            <p className="muted">No se encontró información del pedido.</p>
-            <div className="mt-3">
-              <Button onClick={loadOrderData}>Reintentar</Button>
-            </div>
+            <Package className="w-16 h-16 muted mx-auto mb-4" />
+            <h3 className="text-lg font-medium">Pedido no encontrado</h3>
+            <p className="muted mb-4">No se encontró información del pedido.</p>
+            <Button onClick={loadOrderData}>Reintentar</Button>
           </div>
         )}
       </div>
     );
   }
+
+  // Combinar historial del pedido con tracking de OCA
+  const combinedHistory = [...order.statusHistory];
+  
+  if (ocaTracking?.historial) {
+    const ocaEvents: OrderStatus[] = ocaTracking.historial.map((event: OCATrackingEvent, index: number) => ({
+      id: `oca-${index}`,
+      status: 'shipped' as const,
+      timestamp: new Date(event.fecha),
+      description: `OCA: ${event.descripcion}`,
+      location: event.ubicacion
+    }));
+    combinedHistory.push(...ocaEvents);
+  }
+
+  // Ordenar por fecha
+  combinedHistory.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
   return (
     <div className="space-y-6">
@@ -207,8 +316,8 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       <div className="surface border border-muted rounded-lg p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Pedido {order.orderNumber}</h1>
-            <p className="muted">Realizado el {order.createdAt.toLocaleDateString()}</p>
+            <h1 className="text-2xl font-bold">Pedido #{order.orderNumber}</h1>
+            <p className="muted">Realizado el {order.createdAt.toLocaleDateString('es-ES')}</p>
           </div>
           <div className="flex items-center gap-3">
             {getStatusBadge(order.status)}
@@ -219,37 +328,88 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
           </div>
         </div>
 
-        {order.trackingNumber && (
-          <div className="mt-4 p-4 surface border border-muted rounded">
-            <div className="flex items-center gap-2 mb-2">
-              <Truck className="w-5 h-5 text-primary" />
-              <span className="font-medium">Número de Seguimiento</span>
-            </div>
-            <p className="font-mono text-lg">{order.trackingNumber}</p>
-            {order.estimatedDelivery && (
-              <p className="text-sm muted mt-1">
-                Entrega estimada: {order.estimatedDelivery.toLocaleDateString()}
+        {/* Tracking Information */}
+        {(order.trackingNumber || order.ocaTrackingNumber) && (
+          <div className="mt-6 grid md:grid-cols-2 gap-4">
+            <div className="surface-secondary rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Truck className="w-5 h-5 text-primary" />
+                <span className="font-medium">Número de Seguimiento</span>
+              </div>
+              <p className="font-mono text-lg">
+                {order.ocaTrackingNumber || order.trackingNumber}
               </p>
-            )}
+              {order.estimatedDelivery && (
+                <p className="text-sm muted mt-1">
+                  Entrega estimada: {order.estimatedDelivery.toLocaleDateString('es-ES')}
+                </p>
+              )}
+            </div>
+
+            <div className="surface-secondary rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Info className="w-5 h-5 text-primary" />
+                  <span className="font-medium">Estado de Envío</span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={refreshTracking}
+                  disabled={ocaTrackingLoading || ocaServiceLoading}
+                >
+                  {(ocaTrackingLoading || ocaServiceLoading) ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              
+              {ocaTracking?.estadoActual ? (
+                <div>
+                  <p className="font-medium">
+                    {getOCAStatusLabel(ocaTracking.estadoActual.estado)}
+                  </p>
+                  <p className="text-sm muted">
+                    {ocaTracking.estadoActual.descripcionEstado}
+                  </p>
+                </div>
+              ) : (
+                <p className="muted">Información de seguimiento no disponible</p>
+              )}
+              
+              {lastTrackingUpdate && (
+                <p className="text-xs muted mt-2">
+                  Última actualización: {lastTrackingUpdate.toLocaleTimeString('es-ES')}
+                </p>
+              )}
+              
+              {ocaError && (
+                <p className="text-xs text-error mt-2">
+                  Error: {ocaError}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
 
       {/* Order Progress */}
       <div className="surface border border-muted rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-6">Estado del Pedido</h2>
+        <h2 className="text-lg font-semibold mb-6">Historial del Pedido</h2>
         
         <div className="relative">
           {/* Progress Line */}
           <div className="absolute left-6 top-8 bottom-8 w-0.5 surface-secondary"></div>
           
           <div className="space-y-6">
-            {order.statusHistory.map((event, _index) => (
+            {combinedHistory.map((event, index) => (
               <div key={event.id} className="relative flex items-start gap-4">
                 {/* Status Icon */}
                 <div className={`
                   relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2
-                  ${_index < order.statusHistory.length - 1 
+                  ${event.status === order.status && index === combinedHistory.length - 1
                     ? 'bg-primary border-primary text-white' 
                     : 'surface border-muted'
                   }
@@ -261,7 +421,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="font-medium">{getStatusLabel(event.status)}</h3>
-                    {_index === order.statusHistory.length - 1 && (
+                    {event.status === order.status && index === combinedHistory.length - 1 && (
                       <Badge variant="primary" className="text-xs">Actual</Badge>
                     )}
                   </div>
@@ -269,7 +429,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
                   <div className="flex items-center gap-4 text-xs muted">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {event.timestamp.toLocaleString()}
+                      {event.timestamp.toLocaleString('es-ES')}
                     </span>
                     {event.location && (
                       <span className="flex items-center gap-1">
@@ -359,20 +519,51 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
           </div>
         </div>
       </div>
+      
+      {/* Real-time tracking updates */}
+      {order.status === 'shipped' && (order.trackingNumber || order.ocaTrackingNumber) && (
+        <div className="surface border border-muted rounded-lg p-4">
+          <div className="flex items-center gap-2 text-sm muted">
+            <Navigation className="w-4 h-4" />
+            <span>
+              Este pedido se actualiza automáticamente cada 5 minutos mientras está en tránsito
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // Order tracking list component
 export function OrderTrackingList({ orders }: { orders: Order[] }) {
+  const getStatusBadge = (status: OrderStatus['status']) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="warning">Pendiente</Badge>;
+      case 'confirmed':
+        return <Badge variant="info">Confirmado</Badge>;
+      case 'processing':
+        return <Badge variant="primary">Preparando</Badge>;
+      case 'shipped':
+        return <Badge variant="primary">Enviado</Badge>;
+      case 'delivered':
+        return <Badge variant="success">Entregado</Badge>;
+      case 'cancelled':
+        return <Badge variant="error">Cancelado</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-4">
       {orders.map((order) => (
         <div key={order.id} className="surface border border-muted rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="font-medium">Pedido {order.orderNumber}</h3>
-              <p className="text-sm muted">{order.createdAt.toLocaleDateString()}</p>
+              <h3 className="font-medium">Pedido #{order.orderNumber}</h3>
+              <p className="text-sm muted">{order.createdAt.toLocaleDateString('es-ES')}</p>
             </div>
             <div className="text-right">
               {getStatusBadge(order.status)}
@@ -382,7 +573,7 @@ export function OrderTrackingList({ orders }: { orders: Order[] }) {
           
           <div className="flex items-center gap-4">
             <div className="flex -space-x-2">
-              {order.items.slice(0, 3).map((item, _index) => (
+              {order.items.slice(0, 3).map((item) => (
                 <OptimizedImage
                   key={item.id}
                   src={item.image}
@@ -403,8 +594,10 @@ export function OrderTrackingList({ orders }: { orders: Order[] }) {
               <p className="text-sm">
                 {order.items.length} producto{order.items.length !== 1 ? 's' : ''}
               </p>
-              {order.trackingNumber && (
-                <p className="text-xs muted">Tracking: {order.trackingNumber}</p>
+              {(order.trackingNumber || order.ocaTrackingNumber) && (
+                <p className="text-xs muted">
+                  Tracking: {order.ocaTrackingNumber || order.trackingNumber}
+                </p>
               )}
             </div>
             
@@ -416,23 +609,4 @@ export function OrderTrackingList({ orders }: { orders: Order[] }) {
       ))}
     </div>
   );
-
-  function getStatusBadge(status: OrderStatus['status']) {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="warning">Pendiente</Badge>;
-      case 'confirmed':
-        return <Badge variant="info">Confirmado</Badge>;
-      case 'processing':
-        return <Badge variant="primary">Procesando</Badge>;
-      case 'shipped':
-        return <Badge variant="primary">Enviado</Badge>;
-      case 'delivered':
-        return <Badge variant="success">Entregado</Badge>;
-      case 'cancelled':
-        return <Badge variant="error">Cancelado</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  }
 }

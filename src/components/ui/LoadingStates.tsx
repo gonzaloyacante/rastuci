@@ -1,114 +1,166 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "@/lib/utils";
 
 interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
+  color?: "primary" | "white" | "gray";
   className?: string;
 }
 
-export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) {
-  const sizes = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6', 
-    lg: 'w-8 h-8'
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = "md",
+  color = "primary",
+  className,
+}) => {
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-6 h-6",
+    lg: "w-8 h-8",
+  };
+
+  const colorClasses = {
+    primary: "text-blue-600",
+    white: "text-white",
+    gray: "text-gray-500",
   };
 
   return (
     <div
       className={cn(
-        'animate-spin rounded-full border-2 border-muted border-t-primary',
-        sizes[size],
+        "animate-spin rounded-full border-2 border-current border-t-transparent",
+        sizeClasses[size],
+        colorClasses[color],
         className
       )}
       role="status"
-      aria-label="Cargando"
+      aria-label="Cargando..."
     >
       <span className="sr-only">Cargando...</span>
     </div>
   );
-}
+};
 
 interface LoadingSkeletonProps {
   className?: string;
+  width?: string | number;
+  height?: string | number;
+  rounded?: "none" | "sm" | "md" | "lg" | "full";
   lines?: number;
 }
 
-export function LoadingSkeleton({ className, lines = 1 }: LoadingSkeletonProps) {
+export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
+  className,
+  width,
+  height,
+  rounded = "md",
+  lines = 1,
+}) => {
+  const roundedClasses = {
+    none: "",
+    sm: "rounded-sm",
+    md: "rounded-md",
+    lg: "rounded-lg",
+    full: "rounded-full",
+  };
+
+  if (lines > 1) {
+    return (
+      <div className="space-y-2">
+        {[...Array(lines)].map((_, i) => (
+          <div
+            key={`skeleton-line-${i}`}
+            className={cn(
+              "animate-pulse surface-secondary",
+              roundedClasses[rounded],
+              "h-4 w-full"
+            )}
+            style={{
+              width: i === lines - 1 ? "75%" : width,
+              height: height,
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className={cn('animate-pulse', className)}>
-      {Array.from({ length: lines }).map((_, i) => (
-        <div
-          key={i}
-          className={cn(
-            'h-4 surface-secondary rounded',
-            i > 0 && 'mt-2',
-            i === lines - 1 && lines > 1 && 'w-3/4'
-          )}
-        />
+    <div
+      className={cn(
+        "animate-pulse surface-secondary",
+        roundedClasses[rounded],
+        className
+      )}
+      style={{
+        width: width,
+        height: height,
+      }}
+    />
+  );
+};
+
+// Alias para compatibilidad con Skeleton
+export const Skeleton = LoadingSkeleton;
+
+// Componente para múltiples skeletons en grid
+interface LoadingGridProps {
+  count?: number;
+  columns?: number;
+  className?: string;
+  itemClassName?: string;
+}
+
+export const LoadingGrid: React.FC<LoadingGridProps> = ({
+  count = 8,
+  columns = 4,
+  className,
+  itemClassName,
+}) => {
+  const gridCols = {
+    1: "grid-cols-1",
+    2: "grid-cols-1 md:grid-cols-2",
+    3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+  };
+
+  return (
+    <div className={cn("grid gap-6", gridCols[columns as keyof typeof gridCols], className)}>
+      {[...Array(count)].map((_, i) => (
+        <div key={`loading-grid-${count}-${i}`} className={cn("space-y-3", itemClassName)}>
+          <LoadingSkeleton className="aspect-square w-full" rounded="lg" />
+          <LoadingSkeleton className="h-4 w-3/4" />
+          <LoadingSkeleton className="h-4 w-1/2" />
+          <LoadingSkeleton className="h-6 w-2/3" />
+        </div>
       ))}
     </div>
   );
-}
+};
 
-interface LoadingCardProps {
-  className?: string;
-}
-
-export function LoadingCard({ className }: LoadingCardProps) {
-  return (
-    <div className={cn('surface p-6 rounded-lg border border-muted animate-pulse', className)}>
-      <div className="flex items-center space-x-4">
-        <div className="w-12 h-12 surface-secondary rounded-full" />
-        <div className="flex-1 space-y-2">
-          <div className="h-4 surface-secondary rounded w-3/4" />
-          <div className="h-3 surface-secondary rounded w-1/2" />
-        </div>
-      </div>
-      <div className="mt-4 space-y-2">
-        <div className="h-3 surface-secondary rounded" />
-        <div className="h-3 surface-secondary rounded w-5/6" />
-      </div>
+// Estados de carga específicos para diferentes contextos
+export const LoadingCard = () => (
+  <div className="surface rounded-lg shadow-sm border border-muted p-6 space-y-4">
+    <LoadingSkeleton className="h-6 w-1/3" />
+    <LoadingSkeleton lines={3} />
+    <div className="flex justify-between items-center">
+      <LoadingSkeleton className="h-4 w-1/4" />
+      <LoadingSkeleton className="h-8 w-20" rounded="md" />
     </div>
-  );
-}
+  </div>
+);
 
-interface LoadingPageProps {
-  title?: string;
-  description?: string;
-}
+export const LoadingButton = () => (
+  <div className="flex items-center justify-center space-x-2">
+    <LoadingSpinner size="sm" />
+    <span>Cargando...</span>
+  </div>
+);
 
-export function LoadingPage({ title = 'Cargando...', description }: LoadingPageProps) {
-  return (
-    <div className="min-h-[400px] flex items-center justify-center p-8">
-      <div className="text-center">
-        <LoadingSpinner size="lg" className="mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2">{title}</h2>
-        {description && (
-          <p className="muted max-w-md">{description}</p>
-        )}
-      </div>
+export const LoadingPage = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center space-y-4">
+      <LoadingSpinner size="lg" />
+      <p className="text-muted">Cargando contenido...</p>
     </div>
-  );
-}
-
-interface LoadingButtonProps {
-  children: React.ReactNode;
-  loading?: boolean;
-  className?: string;
-}
-
-export function LoadingButton({ children, loading, className, ...props }: LoadingButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      className={cn(
-        'inline-flex items-center justify-center gap-2 disabled:opacity-60',
-        className
-      )}
-      disabled={loading}
-      {...props}
-    >
-      {loading && <LoadingSpinner size="sm" />}
-      {children}
-    </button>
-  );
-}
+  </div>
+);

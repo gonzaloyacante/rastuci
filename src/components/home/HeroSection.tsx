@@ -1,0 +1,51 @@
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
+
+interface HeroSectionProps {
+  home?: HomeSettings;
+  loading?: boolean;
+}
+
+export function HeroSection({ home, loading = false }: HeroSectionProps) {
+  return (
+    <section className="w-full" aria-labelledby="hero-title">
+      <div className="relative h-[calc(100svh-4rem)] overflow-hidden surface flex items-center justify-center">
+        <div className="relative z-10 flex flex-col items-center justify-center text-center p-6 max-w-4xl mx-auto">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full surface backdrop-blur border border-muted text-primary text-sm font-medium mb-6 shadow-sm">
+            ✨ Nueva temporada
+          </span>
+          
+          {/* Logo SVG Principal - Carga independiente */}
+          <div className="mb-8">
+            <Image 
+              src="/Rastući full logo.svg" 
+              alt="Rastući - Ropa Infantil de Calidad"
+              width={160}
+              height={96}
+              className="h-24 md:h-32 lg:h-40 w-auto mx-auto"
+              priority
+            />
+          </div>
+          
+          <p className="text-base md:text-xl muted mb-8 max-w-2xl">
+            {loading ? "Ropa infantil de calidad, comodidad y estilo para los más pequeños" : (home?.heroSubtitle || defaultHomeSettings.heroSubtitle)}
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Link href="/productos">
+              <Button variant="hero">
+                {loading ? "Ver Productos" : (home?.ctaPrimaryLabel || defaultHomeSettings.ctaPrimaryLabel)}
+              </Button>
+            </Link>
+            <Link href="#categorias" className="inline-flex">
+              <Button variant="product">
+                {loading ? "Explorar Categorías" : (home?.ctaSecondaryLabel || defaultHomeSettings.ctaSecondaryLabel)}
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

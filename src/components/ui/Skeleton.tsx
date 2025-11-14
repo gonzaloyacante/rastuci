@@ -64,8 +64,8 @@ export const ProductDetailSkeleton = () => (
       <div className="space-y-4">
         <Skeleton className="aspect-square w-full" rounded="lg" />
         <div className="grid grid-cols-4 gap-2">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="aspect-square" rounded="md" />
+          {[...Array(4)].map(() => (
+            <Skeleton key={`image-thumb-${Math.random()}`} className="aspect-square" rounded="md" />
           ))}
         </div>
       </div>
@@ -86,8 +86,8 @@ export const ProductDetailSkeleton = () => (
         <div className="space-y-3">
           <Skeleton className="h-5 w-20" />
           <div className="flex space-x-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-10 w-16" rounded="md" />
+            {[...Array(4)].map(() => (
+              <Skeleton key={`size-option-${Math.random()}`} className="h-10 w-16" rounded="md" />
             ))}
           </div>
         </div>
@@ -96,8 +96,8 @@ export const ProductDetailSkeleton = () => (
         <div className="space-y-3">
           <Skeleton className="h-5 w-20" />
           <div className="flex space-x-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-10 w-10" rounded="full" />
+            {[...Array(4)].map(() => (
+              <Skeleton key={`color-option-${Math.random()}`} className="h-10 w-10" rounded="full" />
             ))}
           </div>
         </div>
@@ -129,8 +129,8 @@ export const ProductDetailSkeleton = () => (
       <div className="space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="flex items-center space-x-2">
+          {[...Array(6)].map(() => (
+            <div key={`feature-${Math.random()}`} className="flex items-center space-x-2">
               <Skeleton className="h-4 w-4" rounded="full" />
               <Skeleton className="h-4 w-32" />
             </div>
@@ -142,13 +142,13 @@ export const ProductDetailSkeleton = () => (
       <div className="space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="border-b border-muted pb-4">
+          {[...Array(3)].map(() => (
+            <div key={`review-${Math.random()}`} className="border-b border-muted pb-4">
               <div className="flex items-center justify-between mb-2">
                 <Skeleton className="h-4 w-24" />
                 <div className="flex space-x-1">
-                  {[...Array(5)].map((_, j) => (
-                    <Skeleton key={j} className="h-3 w-3" rounded="full" />
+                  {[...Array(5)].map(() => (
+                    <Skeleton key={`star-${Math.random()}`} className="h-3 w-3" rounded="full" />
                   ))}
                 </div>
               </div>
@@ -166,8 +166,8 @@ export const ProductDetailSkeleton = () => (
       <div className="space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <ProductCardSkeleton key={i} />
+          {[...Array(4)].map(() => (
+            <ProductCardSkeleton key={`related-product-${Math.random()}`} />
           ))}
         </div>
       </div>
@@ -177,8 +177,8 @@ export const ProductDetailSkeleton = () => (
 
 export const ProductListSkeleton = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-    {[...Array(8)].map((_, i) => (
-      <ProductCardSkeleton key={i} />
+    {[...Array(8)].map(() => (
+      <ProductCardSkeleton key={`product-list-${Math.random()}`} />
     ))}
   </div>
 );
@@ -197,8 +197,8 @@ export const CategorySkeleton = () => (
 
 export const TableRowSkeleton = () => (
   <tr className="animate-pulse">
-    {[...Array(5)].map((_, i) => (
-      <td key={i} className="px-6 py-4">
+    {[...Array(5)].map(() => (
+      <td key={`table-cell-${Math.random()}`} className="px-6 py-4">
         <Skeleton className="h-4 w-20" />
       </td>
     ))}

@@ -13,8 +13,8 @@ const ReviewSystemFallback = () => (
         <div className="text-center">
           <Skeleton className="h-12 w-16 mx-auto mb-2" />
           <div className="flex justify-center mb-2 space-x-1">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-6 w-6" />
+            {[...Array(5)].map(() => (
+              <Skeleton key={`star-skeleton-${Math.random()}`} className="h-6 w-6" />
             ))}
           </div>
           <Skeleton className="h-4 w-32 mx-auto" />
@@ -22,8 +22,8 @@ const ReviewSystemFallback = () => (
 
         {/* Rating distribution */}
         <div className="space-y-2">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3">
+          {[...Array(5)].map(() => (
+            <div key={`rating-bar-${Math.random()}`} className="flex items-center gap-3">
               <Skeleton className="h-4 w-8" />
               <Skeleton className="flex-1 h-2 rounded-full" />
               <Skeleton className="h-4 w-8" />
@@ -38,8 +38,8 @@ const ReviewSystemFallback = () => (
       <Skeleton className="h-6 w-40 mb-4" />
       <div className="space-y-4">
         <div className="flex space-x-2">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-8 w-8" />
+          {[...Array(5)].map(() => (
+            <Skeleton key={`form-star-${Math.random()}`} className="h-8 w-8" />
           ))}
         </div>
         <Skeleton className="h-10 w-full" />
@@ -50,8 +50,8 @@ const ReviewSystemFallback = () => (
 
     {/* Reviews list skeleton */}
     <div className="space-y-4">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="surface rounded-lg p-6 border border-muted">
+      {[...Array(3)].map(() => (
+        <div key={`review-skeleton-${Math.random()}`} className="surface rounded-lg p-6 border border-muted">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-3">
               <Skeleton className="h-10 w-10 rounded-full" />
@@ -61,8 +61,8 @@ const ReviewSystemFallback = () => (
               </div>
             </div>
             <div className="flex space-x-1">
-              {[...Array(5)].map((_, j) => (
-                <Skeleton key={j} className="h-4 w-4" />
+              {[...Array(5)].map(() => (
+                <Skeleton key={`review-star-${Math.random()}`} className="h-4 w-4" />
               ))}
             </div>
           </div>

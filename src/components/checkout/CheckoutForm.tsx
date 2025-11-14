@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { CreditCard, Loader2, Shield, Lock } from "lucide-react";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import { CustomerForm } from "./CustomerForm";
+import { ShippingCostCalculator, type ShippingOption } from "./ShippingCostCalculator";
 
 interface CheckoutFormProps {
   onPaymentSuccess?: (paymentId: string) => void;
@@ -23,6 +24,7 @@ export function CheckoutForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("");
+  const [shippingOption, setShippingOption] = useState<ShippingOption | null>(null);
   const [customerData, setCustomerData] = useState({
     email: "",
     firstName: "",
@@ -33,7 +35,9 @@ export function CheckoutForm({
 
   // Card data state removed: tarjetas no están visibles en el flujo simplificado
 
-  const total = getCartTotal();
+  const subtotal = getCartTotal();
+  const shippingCost = shippingOption?.cost || 0;
+  const total = subtotal + shippingCost;
 
   const handlePayment = async () => {
     if (!selectedPaymentMethod) {
@@ -125,6 +129,7 @@ export function CheckoutForm({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Error procesando el pago";
+      // eslint-disable-next-line no-console
       console.error("Error en checkout:", error);
 
       show({
@@ -161,6 +166,12 @@ export function CheckoutForm({
 
           {/* Datos del cliente */}
           <CustomerForm data={customerData} onChange={setCustomerData} />
+
+          {/* Calculadora de envío */}
+          <ShippingCostCalculator
+            onShippingChange={setShippingOption}
+            className="border border-muted rounded-lg p-4"
+          />
 
           {/* Método de pago (solo MercadoPago y Efectivo) */}
           <PaymentMethodSelector
@@ -242,11 +253,20 @@ export function CheckoutForm({
             <div className="border-t border-muted pt-4 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${total.toLocaleString("es-AR")}</span>
+                <span>${subtotal.toLocaleString("es-AR")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Envío</span>
-                <span className="text-success">Gratis</span>
+                {shippingOption ? (
+                  <div className="text-right">
+                    <div className={shippingOption.cost === 0 ? 'text-success font-medium' : ''}>
+                      {shippingOption.cost === 0 ? 'Gratis' : `$${shippingOption.cost.toLocaleString("es-AR")}`}
+                    </div>
+                    <div className="text-xs text-muted">{shippingOption.description}</div>
+                  </div>
+                ) : (
+                  <span className="text-muted">Calcular envío</span>
+                )}
               </div>
               <div className="flex justify-between text-lg font-bold border-t border-muted pt-2">
                 <span>Total</span>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useLazyLoad } from "@/hooks/useLazyLoad";
-import { LoadingSpinner } from "./LoadingComponents";
+import { LoadingSpinner } from "./LoadingStates";
 
 interface LazySectionProps {
   children: React.ReactNode;

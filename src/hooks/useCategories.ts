@@ -1,73 +1,42 @@
 import { useState, useEffect } from "react";
 import { Category } from "@/types";
+import useGlobalCache from "./useGlobalCache";
 
+// Hook optimizado para categorías con cache global
 export function useCategories() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    data: categories,
+    isLoading,
+    error,
+    mutate
+  } = useGlobalCache<Category[]>(
+    'categories',
+    async () => {
+      const response = await fetch("/api/categories");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      return result.data?.data || [];
+    },
+    {
+      ttl: 10 * 60 * 1000, // 10 minutos para categorías
+      revalidateOnMount: false, // No revalidar en cada mount
+      revalidateOnFocus: false // No revalidar en focus para mejor UX
+    }
+  );
+
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!isMounted) return;
-
-    const fetchCategories = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/categories");
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        setCategories(result.data?.data || []);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Error al cargar categorías"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, [isMounted]);
-
   return {
-    categories,
+    categories: categories || [],
     isLoading: !isMounted || isLoading,
-    error,
-    mutate: () => {
-      const fetchCategories = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-          const response = await fetch("/api/categories");
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const result = await response.json();
-          setCategories(result.data?.data || []);
-        } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "Error al cargar categorías"
-          );
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchCategories();
-    },
+    error: error?.message || null,
+    mutate: () => mutate(), // Forzar refetch si es necesario
   };
 }
 
@@ -76,12 +45,30 @@ export function useCategory(id: string) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Primero intentar obtener de categorías cacheadas
+  const { data: cachedCategories } = useGlobalCache<Category[]>(
+    'categories',
+    async () => [],
+    { ttl: 10 * 60 * 1000 }
+  );
+
   useEffect(() => {
     const fetchCategory = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
+        // Primero buscar en cache de categorías
+        if (cachedCategories) {
+          const cachedCategory = cachedCategories.find(cat => cat.id === id);
+          if (cachedCategory) {
+            setCategory(cachedCategory);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Si no está en cache, hacer fetch individual
         const response = await fetch(`/api/categories/${id}`);
 
         if (!response.ok) {
@@ -102,7 +89,7 @@ export function useCategory(id: string) {
     if (id) {
       fetchCategory();
     }
-  }, [id]);
+  }, [id, cachedCategories]);
 
   return { category, isLoading, error };
 }

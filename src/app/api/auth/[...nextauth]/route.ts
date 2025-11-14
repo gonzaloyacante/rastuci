@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 // import { Session } from "next-auth";
 // import { User } from "@prisma/client";
 
-const authOptions: AuthOptions = {
+export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
@@ -16,27 +16,20 @@ const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
+        remember: { label: "Remember", type: "checkbox" },
       },
       async authorize(credentials) {
-        console.log(
-          "Authorize function started for email:",
-          credentials?.email
-        );
         try {
           if (!credentials?.email || !credentials?.password) {
-            console.log("Missing credentials");
-            return null;
+            throw new Error("MISSING_CREDENTIALS");
           }
 
           const user = await prisma.user.findUnique({
             where: { email: credentials.email },
           });
 
-          console.log("Prisma user found:", user);
-
           if (!user || !user.password) {
-            console.log("User not found or user has no password.");
-            return null;
+            throw new Error("USER_NOT_FOUND");
           }
 
           const isPasswordCorrect = await bcrypt.compare(
@@ -44,30 +37,39 @@ const authOptions: AuthOptions = {
             user.password
           );
 
-          console.log("Password comparison result:", isPasswordCorrect);
-
-          if (isPasswordCorrect) {
-            console.log("Authorization successful");
-            return {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              image: user.image,
-              isAdmin: user.isAdmin,
-            };
-          } else {
-            console.log("Password incorrect");
-            return null;
+          if (!isPasswordCorrect) {
+            throw new Error("INVALID_PASSWORD");
           }
+
+          if (!user.isAdmin) {
+            throw new Error("NOT_ADMIN");
+          }
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            isAdmin: user.isAdmin,
+            remember: credentials.remember === "true",
+          };
         } catch (error) {
-          console.error("Error in authorize function:", error);
-          return null; // Important to return null on error
+          // Retornar null para que NextAuth no rediriga
+          // eslint-disable-next-line no-console
+          console.error("Authentication error:", error);
+          return null;
         }
       },
     }),
   ],
   session: {
     strategy: "jwt",
+    // Configurar duración de sesión basada en "recordarme"
+    maxAge: 30 * 24 * 60 * 60, // 30 días por defecto
+  },
+  jwt: {
+    // Token durará según la opción "recordarme"
+    maxAge: 30 * 24 * 60 * 60, // 30 días máximo
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -75,6 +77,16 @@ const authOptions: AuthOptions = {
       if (user) {
         token.id = user.id;
         token.isAdmin = user.isAdmin;
+        token.remember = user.remember;
+        
+        // Configurar expiración basada en "recordarme"
+        if (user.remember) {
+          // Si "recordarme" está marcado, sesión de 30 días
+          token.exp = Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60);
+        } else {
+          // Si no está marcado, sesión de 1 día
+          token.exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
+        }
       }
       return token;
     },
@@ -82,12 +94,14 @@ const authOptions: AuthOptions = {
       if (session.user && token) {
         session.user.id = token.id;
         session.user.isAdmin = token.isAdmin;
+        session.user.remember = token.remember;
       }
       return session;
     },
   },
   pages: {
     signIn: "/admin",
+    error: "/admin", // Redirigir errores de vuelta al login
   },
 };
 

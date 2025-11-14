@@ -8,7 +8,7 @@ import { Product } from '@/types';
 import { Button } from '../ui/Button';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { LoadingSkeleton } from '../ui/LoadingStates';
+import { Skeleton } from '../ui/Skeleton';
 
 interface ProductCardProps {
   product: Product;
@@ -53,16 +53,23 @@ export function ProductCard({
       <div className={`surface rounded-lg border border-muted overflow-hidden ${className}`}>
         {viewMode === 'grid' ? (
           <div className="space-y-3 p-4">
-            <LoadingSkeleton className="aspect-square rounded-lg" />
-            <LoadingSkeleton lines={2} />
-            <LoadingSkeleton className="h-8 w-20" />
+            <Skeleton className="aspect-square rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+            <Skeleton className="h-8 w-20" />
           </div>
         ) : (
           <div className="flex space-x-4 p-4">
-            <LoadingSkeleton className="w-24 h-24 rounded-lg flex-shrink-0" />
+            <Skeleton className="w-24 h-24 rounded-lg flex-shrink-0" />
             <div className="flex-1 space-y-2">
-              <LoadingSkeleton lines={3} />
-              <LoadingSkeleton className="h-8 w-20" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+              <Skeleton className="h-8 w-20" />
             </div>
           </div>
         )}
@@ -125,7 +132,7 @@ export function ProductCard({
                     <div className="flex items-center space-x-1">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star
-                          key={i}
+                          key={`star-${product.id}-${i}`}
                           className={`w-3 h-3 ${
                             i < 4 ? 'text-yellow-400 fill-current' : 'muted'
                           }`}
@@ -247,7 +254,7 @@ export function ProductCard({
             <div className="flex items-center space-x-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
-                  key={i}
+                  key={`star-grid-${product.id}-${i}`}
                   className={`w-3 h-3 ${
                     i < 4 ? 'text-yellow-400 fill-current' : 'muted'
                   }`}

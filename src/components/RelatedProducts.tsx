@@ -56,8 +56,8 @@ export default function RelatedProducts({
           Productos relacionados
         </h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-48 surface rounded-lg animate-pulse border border-muted" />
+          {[...Array(4)].map(() => (
+            <div key={`related-skeleton-${Math.random()}`} className="h-48 surface rounded-lg animate-pulse border border-muted" />
           ))}
         </div>
       </section>

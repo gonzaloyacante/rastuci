@@ -6,30 +6,131 @@ import { ContactSettings, ContactSettingsSchema, defaultContactSettings } from "
 
 type Props = { initial?: ContactSettings };
 
+interface EmailItem {
+  id: string;
+  value: string;
+}
+
+interface PhoneItem {
+  id: string;
+  value: string;
+}
+
+interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
 export default function ContactForm({ initial }: Props) {
   const [values, setValues] = useState<ContactSettings>(initial ?? defaultContactSettings);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => { if (initial) setValues(initial); }, [initial]);
+  // Estados para manejar arrays con IDs únicos
+  const [emailItems, setEmailItems] = useState<EmailItem[]>([]);
+  const [phoneItems, setPhoneItems] = useState<PhoneItem[]>([]);
+  const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
+
+  useEffect(() => { 
+    if (initial) {
+      setValues(initial);
+      // Convertir arrays a objetos con ID
+      setEmailItems(initial.emails.map((email, idx) => ({
+        id: `email-${Date.now()}-${idx}-${Math.random()}`,
+        value: email
+      })));
+      setPhoneItems(initial.phones.map((phone, idx) => ({
+        id: `phone-${Date.now()}-${idx}-${Math.random()}`,
+        value: phone
+      })));
+      setFaqItems(initial.faqs.map((faq, idx) => ({
+        id: `faq-${Date.now()}-${idx}-${Math.random()}`,
+        question: faq.question,
+        answer: faq.answer
+      })));
+    } else {
+      // Inicializar con arrays vacíos o por defecto
+      setEmailItems(defaultContactSettings.emails.map((email, idx) => ({
+        id: `email-default-${idx}-${Math.random()}`,
+        value: email
+      })));
+      setPhoneItems(defaultContactSettings.phones.map((phone, idx) => ({
+        id: `phone-default-${idx}-${Math.random()}`,
+        value: phone
+      })));
+      setFaqItems(defaultContactSettings.faqs.map((faq, idx) => ({
+        id: `faq-default-${idx}-${Math.random()}`,
+        question: faq.question,
+        answer: faq.answer
+      })));
+    }
+  }, [initial]);
+
+  // Sincronizar los arrays con IDs con el estado principal
+  useEffect(() => {
+    setValues(v => ({
+      ...v,
+      emails: emailItems.map(item => item.value),
+      phones: phoneItems.map(item => item.value),
+      faqs: faqItems.map(item => ({ question: item.question, answer: item.answer }))
+    }));
+  }, [emailItems, phoneItems, faqItems]);
 
   const update = <K extends keyof ContactSettings>(key: K, val: ContactSettings[K]) =>
     setValues((v) => ({ ...v, [key]: val }));
 
-  const updateArray = (key: "emails" | "phones", idx: number, val: string) =>
-    setValues((v) => ({ ...v, [key]: v[key].map((x, i) => (i === idx ? val : x)) }));
+  const updateEmailItem = (id: string, value: string) => {
+    setEmailItems(items => items.map(item => 
+      item.id === id ? { ...item, value } : item
+    ));
+  };
 
-  const addArrayItem = (key: "emails" | "phones") =>
-    setValues((v) => ({ ...v, [key]: [...v[key], ""] }));
+  const updatePhoneItem = (id: string, value: string) => {
+    setPhoneItems(items => items.map(item => 
+      item.id === id ? { ...item, value } : item
+    ));
+  };
 
-  const removeArrayItem = (key: "emails" | "phones", idx: number) =>
-    setValues((v) => ({ ...v, [key]: v[key].filter((_, i) => i !== idx) }));
+  const addEmailItem = () => {
+    setEmailItems(items => [...items, {
+      id: `email-new-${Date.now()}-${Math.random()}`,
+      value: ""
+    }]);
+  };
 
-  const updateFaq = (idx: number, field: "question" | "answer", val: string) =>
-    setValues((v) => ({ ...v, faqs: v.faqs.map((f, i) => (i === idx ? { ...f, [field]: val } : f)) }));
+  const addPhoneItem = () => {
+    setPhoneItems(items => [...items, {
+      id: `phone-new-${Date.now()}-${Math.random()}`,
+      value: ""
+    }]);
+  };
 
-  const addFaq = () => setValues((v) => ({ ...v, faqs: [...v.faqs, { question: "", answer: "" }] }));
-  const removeFaq = (idx: number) => setValues((v) => ({ ...v, faqs: v.faqs.filter((_, i) => i !== idx) }));
+  const removeEmailItem = (id: string) => {
+    setEmailItems(items => items.filter(item => item.id !== id));
+  };
+
+  const removePhoneItem = (id: string) => {
+    setPhoneItems(items => items.filter(item => item.id !== id));
+  };
+
+  const updateFaqItem = (id: string, field: "question" | "answer", value: string) => {
+    setFaqItems(items => items.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const addFaqItem = () => {
+    setFaqItems(items => [...items, {
+      id: `faq-new-${Date.now()}-${Math.random()}`,
+      question: "",
+      answer: ""
+    }]);
+  };
+
+  const removeFaqItem = (id: string) => {
+    setFaqItems(items => items.filter(item => item.id !== id));
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setMessage(null);
@@ -39,7 +140,7 @@ export default function ContactForm({ initial }: Props) {
     try {
       const res = await fetch("/api/contact", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
       const json = await res.json();
-      if (!json.success) throw new Error(json.error || "Error al guardar");
+      if (!json.success) {throw new Error(json.error || "Error al guardar");}
       setMessage("Guardado correctamente");
     } catch (err: unknown) { setMessage(err instanceof Error ? err.message : "Error inesperado"); } finally { setSaving(false); }
   };
@@ -61,25 +162,25 @@ export default function ContactForm({ initial }: Props) {
         <div>
           <h3 className="font-semibold mb-2">Emails</h3>
           <div className="space-y-2">
-            {values.emails.map((em, i) => (
-              <div key={i} className="flex gap-2">
-                <input className="flex-1 border rounded-md px-3 py-2" value={em} onChange={(e) => updateArray("emails", i, e.target.value)} />
-                <Button type="button" variant="destructive" onClick={() => removeArrayItem("emails", i)}>Quitar</Button>
+            {emailItems.map((emailItem) => (
+              <div key={emailItem.id} className="flex gap-2">
+                <input className="flex-1 border rounded-md px-3 py-2" value={emailItem.value} onChange={(e) => updateEmailItem(emailItem.id, e.target.value)} />
+                <Button type="button" variant="destructive" onClick={() => removeEmailItem(emailItem.id)}>Quitar</Button>
               </div>
             ))}
-            <Button type="button" onClick={() => addArrayItem("emails")}>Agregar email</Button>
+            <Button type="button" onClick={addEmailItem}>Agregar email</Button>
           </div>
         </div>
         <div>
           <h3 className="font-semibold mb-2">Teléfonos</h3>
           <div className="space-y-2">
-            {values.phones.map((ph, i) => (
-              <div key={i} className="flex gap-2">
-                <input className="flex-1 border rounded-md px-3 py-2" value={ph} onChange={(e) => updateArray("phones", i, e.target.value)} />
-                <Button type="button" variant="destructive" onClick={() => removeArrayItem("phones", i)}>Quitar</Button>
+            {phoneItems.map((phoneItem) => (
+              <div key={phoneItem.id} className="flex gap-2">
+                <input className="flex-1 border rounded-md px-3 py-2" value={phoneItem.value} onChange={(e) => updatePhoneItem(phoneItem.id, e.target.value)} />
+                <Button type="button" variant="destructive" onClick={() => removePhoneItem(phoneItem.id)}>Quitar</Button>
               </div>
             ))}
-            <Button type="button" onClick={() => addArrayItem("phones")}>Agregar teléfono</Button>
+            <Button type="button" onClick={addPhoneItem}>Agregar teléfono</Button>
           </div>
         </div>
       </section>
@@ -88,9 +189,8 @@ export default function ContactForm({ initial }: Props) {
         <div>
           <h3 className="font-semibold mb-2">Dirección</h3>
           <div className="space-y-2">
-            {values.address.lines.map((ln, i) => (
-              <input key={i} className="w-full border rounded-md px-3 py-2" value={ln} onChange={(e) => update("address", { ...values.address, lines: values.address.lines.map((x, j) => (j === i ? e.target.value : x)) })} />
-            ))}
+            <input key="address-line-0" className="w-full border rounded-md px-3 py-2" placeholder="Línea 1" value={values.address.lines[0] || ""} onChange={(e) => update("address", { ...values.address, lines: [e.target.value, values.address.lines[1] || ""] })} />
+            <input key="address-line-1" className="w-full border rounded-md px-3 py-2" placeholder="Línea 2" value={values.address.lines[1] || ""} onChange={(e) => update("address", { ...values.address, lines: [values.address.lines[0] || "", e.target.value] })} />
             <input className="w-full border rounded-md px-3 py-2" value={values.address.cityCountry} onChange={(e) => update("address", { ...values.address, cityCountry: e.target.value })} />
           </div>
         </div>
@@ -123,21 +223,21 @@ export default function ContactForm({ initial }: Props) {
       <section>
         <h3 className="font-semibold mb-2">Preguntas Frecuentes</h3>
         <div className="space-y-4">
-          {values.faqs.map((f, i) => (
-            <div key={i} className="grid md:grid-cols-12 gap-3 items-end">
+          {faqItems.map((faqItem) => (
+            <div key={faqItem.id} className="grid md:grid-cols-12 gap-3 items-end">
               <div className="md:col-span-5">
-                <input className="w-full border rounded-md px-3 py-2" placeholder="Pregunta" value={f.question} onChange={(e) => updateFaq(i, "question", e.target.value)} />
+                <input className="w-full border rounded-md px-3 py-2" placeholder="Pregunta" value={faqItem.question} onChange={(e) => updateFaqItem(faqItem.id, "question", e.target.value)} />
               </div>
               <div className="md:col-span-6">
-                <input className="w-full border rounded-md px-3 py-2" placeholder="Respuesta" value={f.answer} onChange={(e) => updateFaq(i, "answer", e.target.value)} />
+                <input className="w-full border rounded-md px-3 py-2" placeholder="Respuesta" value={faqItem.answer} onChange={(e) => updateFaqItem(faqItem.id, "answer", e.target.value)} />
               </div>
               <div className="md:col-span-1">
-                <Button type="button" variant="destructive" onClick={() => removeFaq(i)}>Quitar</Button>
+                <Button type="button" variant="destructive" onClick={() => removeFaqItem(faqItem.id)}>Quitar</Button>
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-3"><Button type="button" onClick={addFaq}>Agregar FAQ</Button></div>
+        <div className="mt-3"><Button type="button" onClick={addFaqItem}>Agregar FAQ</Button></div>
       </section>
 
       <section className="grid md:grid-cols-2 gap-6">

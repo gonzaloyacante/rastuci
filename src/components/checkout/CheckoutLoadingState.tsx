@@ -70,7 +70,7 @@ export function CheckoutLoadingState({
       <div className="flex space-x-1 mt-4">
         {[0, 1, 2].map((i) => (
           <div
-            key={i}
+            key={`loading-dot-${i}`}
             className="w-2 h-2 bg-primary rounded-full animate-pulse"
             style={{
               animationDelay: `${i * 0.2}s`,

@@ -170,8 +170,8 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
             {renderFieldIcon('cardNumber')}
           </div>
         </div>
-        {validationErrors.cardNumber?.map((error, index) => (
-          <p key={index} className="text-xs text-error mt-1">{error}</p>
+        {validationErrors.cardNumber?.map((error) => (
+          <p key={`card-error-${error}`} className="text-xs text-error mt-1">{error}</p>
         ))}
       </div>
 
@@ -209,8 +209,8 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
             }}
             placeholder="AA"
           />
-          {validationErrors.expiryDate?.map((error, index) => (
-            <p key={index} className="text-xs text-error mt-1">{error}</p>
+          {validationErrors.expiryDate?.map((error) => (
+            <p key={`expiry-error-${error}`} className="text-xs text-error mt-1">{error}</p>
           ))}
         </div>
         
@@ -244,8 +244,8 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
               <Lock className="w-3 h-3 muted" />
             </div>
           </div>
-          {validationErrors.securityCode?.map((error, index) => (
-            <p key={index} className="text-xs text-error mt-1">{error}</p>
+          {validationErrors.securityCode?.map((error) => (
+            <p key={`security-error-${error}`} className="text-xs text-error mt-1">{error}</p>
           ))}
         </div>
       </div>
@@ -274,8 +274,8 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
             {renderFieldIcon('cardholderName')}
           </div>
         </div>
-        {validationErrors.cardholderName?.map((error, index) => (
-          <p key={index} className="text-xs text-error mt-1">{error}</p>
+        {validationErrors.cardholderName?.map((error) => (
+          <p key={`cardholder-error-${error}`} className="text-xs text-error mt-1">{error}</p>
         ))}
       </div>
 

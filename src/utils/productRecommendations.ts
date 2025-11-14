@@ -12,7 +12,7 @@ interface ProductScore {
 export function getRelatedProducts(
   currentProduct: Product,
   allProducts: Product[],
-  limit: number = 4
+  limit = 4
 ): Product[] {
   if (!currentProduct || allProducts.length === 0) {
     return [];
@@ -87,7 +87,7 @@ export function getRelatedProducts(
  */
 export async function fetchRelatedProducts(
   currentProductId: string,
-  limit: number = 4
+  limit = 4
 ): Promise<Product[]> {
   try {
     // Primero obtener el producto actual para tener sus datos

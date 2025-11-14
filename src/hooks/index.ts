@@ -23,6 +23,7 @@ export { useCart } from "./useCart";
 export { useDashboard } from "./useDashboard";
 export { useFavorites } from "./useFavorites";
 export { useKeyboardNavigation } from "./useKeyboardNavigation";
+export { useOCAService } from "./useOCA";
 export { useProductSearch } from "./useProductSearch";
 export { useReviews } from "./useReviews";
 export { useSWR } from "./useSWR";

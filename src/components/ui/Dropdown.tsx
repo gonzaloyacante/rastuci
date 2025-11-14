@@ -23,7 +23,7 @@ const DropdownContext = createContext<DropdownContextType | null>(null);
 
 export function useDropdown() {
   const ctx = useContext(DropdownContext);
-  if (!ctx) throw new Error("useDropdown must be used within <Dropdown>");
+  if (!ctx) {throw new Error("useDropdown must be used within <Dropdown>");}
   return ctx;
 }
 
@@ -37,11 +37,11 @@ export const Dropdown = ({ children, className }: { children: React.ReactNode; c
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {setOpen(false);}
     };
     const onClick = (e: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) setOpen(false);
+      if (!menuRef.current) {return;}
+      if (!menuRef.current.contains(e.target as Node)) {setOpen(false);}
     };
     if (open) {
       document.addEventListener("keydown", onKey);
@@ -89,7 +89,7 @@ DropdownTrigger.displayName = "DropdownTrigger";
 export const DropdownMenu = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, role = "menu", ...props }, ref) => {
     const { open, menuId, triggerId } = useDropdown();
-    if (!open) return null;
+    if (!open) {return null;}
     return (
       <div
         ref={ref}
@@ -126,7 +126,10 @@ export const DropdownItem = React.forwardRef<HTMLButtonElement, DropdownItemProp
           setOpen(false);
         }}
         className={cn(
-          "w-full text-left px-3 py-2 rounded-md text-sm hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+          "w-full text-left px-3 py-2 rounded-md text-sm cursor-pointer transition-colors duration-200",
+          "hover:bg-primary hover:text-white",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+          "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-current",
           className
         )}
         {...props}

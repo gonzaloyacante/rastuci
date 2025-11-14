@@ -31,6 +31,7 @@ export function PWAInstallPrompt({
       const timer = setTimeout(() => setIsVisible(true), 3000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [canInstall, autoShow, isDismissed]);
 
   useEffect(() => {
@@ -134,8 +135,8 @@ export function PWAInstallPrompt({
 
           {showFeatures && (
             <div className="space-y-3 mb-6">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-start gap-3">
+              {features.map((feature) => (
+                <div key={`feature-${feature.title}`} className="flex items-start gap-3">
                   <div className="text-primary mt-0.5">{feature.icon}</div>
                   <div>
                     <h4 className="font-medium text-sm">{feature.title}</h4>
@@ -178,8 +179,8 @@ export function PWAInstallPrompt({
 
       {showFeatures && (
         <div className="grid grid-cols-2 gap-3 mb-6">
-          {features.map((feature, index) => (
-            <div key={index} className="flex items-center gap-2">
+          {features.map((feature) => (
+            <div key={`compact-feature-${feature.title}`} className="flex items-center gap-2">
               <div className="text-primary">{feature.icon}</div>
               <span className="text-sm font-medium">{feature.title}</span>
             </div>

@@ -153,21 +153,33 @@
   font-weight: 500;
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   border: none;
   cursor: pointer;
   transform: scale(1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary:hover {
   background-color: var(--color-primary-dark);
-  transform: scale(1.05);
+  transform: scale(1.05) translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.25);
+}
+
+.btn-primary:active {
+  transform: scale(1.02) translateY(0);
 }
 
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: scale(1);
+  background-color: var(--color-primary);
 }
 
 /* Botones con gradiente */
@@ -182,7 +194,7 @@
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
   box-shadow: var(--shadow-primary);
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   border: none;
   cursor: pointer;
   transform: scale(1);
@@ -194,7 +206,17 @@
     var(--color-primary-dark),
     var(--color-primary-darker)
   );
-  transform: scale(1.05);
+  transform: scale(1.05) translateY(-1px);
+  box-shadow: 0 8px 15px rgba(233, 30, 99, 0.3);
+}
+
+.btn-primary-gradient:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.25);
+}
+
+.btn-primary-gradient:active {
+  transform: scale(1.02) translateY(0);
 }
 
 /* Inputs */
@@ -488,15 +510,39 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 0.5rem;
   font-weight: 600;
   box-shadow: 0 10px 15px -3px rgba(233, 30, 99, 0.25), 0 4px 6px -4px rgba(233, 30, 99, 0.2);
-  transition: transform 150ms ease, filter 150ms ease, background-color 150ms ease;
+  transition: all 300ms ease;
+  cursor: pointer;
 }
 .btn-hero:hover,
 .btn-product:hover {
   filter: brightness(0.92);
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 12px 20px -3px rgba(233, 30, 99, 0.35), 0 6px 8px -4px rgba(233, 30, 99, 0.25);
 }
 .btn-hero:focus,
 .btn-product:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.25);
+}
+.btn-hero:active,
+.btn-product:active {
+  transform: translateY(0) scale(1);
+}
+
+/* Asegurar que todos los elementos interactivos tengan cursor pointer */
+button,
+[role="button"],
+a[href],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+select,
+label {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled {
+  cursor: not-allowed;
 }

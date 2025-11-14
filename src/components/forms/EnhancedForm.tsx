@@ -133,6 +133,8 @@ export function EnhancedForm<T extends FieldValues = FieldValues>({
       const timer = setTimeout(() => setSubmitSuccess(false), 3000);
       return () => clearTimeout(timer);
     }
+    // Importante: devolver undefined explícitamente
+    return undefined;
   }, [submitSuccess]);
 
   return (

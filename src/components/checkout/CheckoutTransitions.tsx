@@ -85,13 +85,13 @@ interface SkeletonLoaderProps {
 export function SkeletonLoader({ lines = 3, className = '' }: SkeletonLoaderProps) {
   return (
     <div className={`space-y-3 ${className}`}>
-      {Array.from({ length: lines }).map((_, i) => (
-        <div key={i} className="animate-pulse">
+      {Array.from({ length: lines }).map(() => (
+        <div key={`skeleton-line-${Math.random()}`} className="animate-pulse">
           <div 
             className="h-4 surface-secondary rounded"
             style={{ 
               width: `${Math.random() * 40 + 60}%`,
-              animationDelay: `${i * 0.1}s`
+              animationDelay: `${Math.random() * 0.5}s`
             }}
           />
         </div>
@@ -125,6 +125,8 @@ export function ProgressBar({
     } else {
       setAnimatedProgress(progress);
     }
+    // Importante: devolver undefined explícitamente
+    return undefined;
   }, [progress, animated]);
 
   const colorClasses = {
@@ -177,6 +179,8 @@ export function FloatingNotification({
       const timer = setTimeout(onClose, duration);
       return () => clearTimeout(timer);
     }
+    // Importante: devolver undefined explícitamente
+    return undefined;
   }, [isVisible, duration, onClose]);
 
   const typeStyles = {

@@ -111,7 +111,7 @@ export function ProductGrid({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="surface rounded-lg border border-muted overflow-hidden animate-pulse product-card">
+          <div key={`loading-skeleton-${index}`} className="surface rounded-lg border border-muted overflow-hidden animate-pulse product-card">
             <div className="aspect-square bg-muted"></div>
             <div className="p-4 space-y-3">
               <div className="h-4 bg-muted rounded w-3/4"></div>
@@ -198,9 +198,10 @@ export function ProductGrid({
         {loading && products.length === 0 && (
           <>
             {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="space-y-3">
+              <div key={`product-skeleton-${index}`} className="space-y-3">
                 <LoadingSkeleton className="aspect-square rounded-lg" />
-                <LoadingSkeleton lines={2} />
+                <LoadingSkeleton className="h-4 w-full" />
+                <LoadingSkeleton className="h-4 w-3/4" />
               </div>
             ))}
           </>

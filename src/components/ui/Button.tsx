@@ -38,18 +38,18 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const base =
-      "inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer";
+      "inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transform hover:scale-105 hover:shadow-lg";
 
     const variants = {
-      primary: "btn-primary", // uses var(--color-primary)
-      secondary: "surface text-primary hover-surface",
+      primary: "btn-primary hover:bg-primary/90 hover:shadow-primary/30", // uses var(--color-primary)
+      secondary: "surface text-primary hover-surface hover:shadow-md hover:border-primary/50",
       // Include btn-* aliases to satisfy tests expecting utility classes
-      outline: "surface border border-primary text-primary hover-surface btn-outline",
-      ghost: "bg-transparent text-primary hover-surface btn-ghost",
-      destructive: "surface border border-error text-error hover-surface btn-destructive",
-      hero: "btn-hero uppercase",
-      product: "btn-product uppercase",
-      category: "surface text-primary border border-muted hover-surface",
+      outline: "surface border border-primary text-primary hover-surface btn-outline hover:bg-primary/5 hover:shadow-md",
+      ghost: "bg-transparent text-primary hover-surface btn-ghost hover:bg-primary/10",
+      destructive: "surface border border-error text-error hover-surface btn-destructive hover:bg-error/5 hover:shadow-error/30",
+      hero: "btn-hero uppercase hover:shadow-primary/40",
+      product: "btn-product uppercase hover:shadow-primary/30",
+      category: "surface text-primary border border-muted hover-surface hover:border-primary/50 hover:shadow-md",
     } as const;
 
     const sizes = {

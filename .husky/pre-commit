@@ -1,17 +1,61 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Ejecutar lint-staged
-npx lint-staged
+echo "🚀 Iniciando pre-commit hooks..."
 
-# Verificar build sin errores
-echo "🔍 Verificando build de Next.js..."
-npm run build:check
-
-# Ejecutar tests si existen
-if [ -d "src/__tests__" ] || [ -d "tests" ]; then
-  echo "🧪 Ejecutando tests..."
-  npm test -- --run
+# Verificar que estamos en el workspace correcto
+if [ ! -f "package.json" ]; then
+  echo "❌ Error: package.json no encontrado. Ejecutar desde la raíz del proyecto."
+  exit 1
 fi
 
-echo "✅ Pre-commit checks completados exitosamente"
+# 1. Ejecutar lint-staged para archivos staged
+echo "📋 Ejecutando lint-staged para archivos modificados..."
+if ! npx lint-staged; then
+  echo "❌ Error en lint-staged. Revisa los errores de formato/linting."
+  exit 1
+fi
+
+# 2. Type checking completo con TypeScript
+echo "🔍 Verificando tipos TypeScript..."
+if ! npm run type-check; then
+  echo "❌ Error en type checking. Revisa los errores de TypeScript."
+  exit 1
+fi
+
+# 3. Linting estricto (cero warnings)
+echo "🧹 Ejecutando linting estricto..."
+if ! npm run lint:strict; then
+  echo "❌ Error en linting estricto. Revisa warnings/errores de ESLint."
+  exit 1
+fi
+
+# 4. Verificar build sin errores
+echo "� Verificando build de Next.js..."
+if ! npm run build:check; then
+  echo "❌ Error en build verification. El código no compila correctamente."
+  exit 1
+fi
+
+# 5. Ejecutar tests si existen
+if [ -d "src/__tests__" ] || [ -d "tests" ]; then
+  echo "🧪 Ejecutando tests..."
+  if ! npm test -- --run; then
+    echo "❌ Error en tests. Algunos tests están fallando."
+    exit 1
+  fi
+else
+  echo "ℹ️  No se encontraron directorios de tests, saltando tests..."
+fi
+
+# 6. Verificar que no hay archivos de configuración corruptos
+echo "⚙️  Verificando archivos de configuración..."
+if [ -f "next.config.ts" ]; then
+  echo "✓ next.config.ts existe"
+fi
+if [ -f "tsconfig.json" ]; then
+  echo "✓ tsconfig.json existe"
+fi
+
+echo "✅ Todos los pre-commit checks completados exitosamente!"
+echo "📦 Listo para commit seguro."

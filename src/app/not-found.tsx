@@ -1,33 +1,28 @@
-"use client";
+import { Suspense } from "react";
+import { Metadata } from "next";
+import NotFoundClient from "./not-found-client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+export const metadata: Metadata = {
+  title: "Página no encontrada (404) - Rastuci",
+  description: "La página que buscas no existe. Explora nuestros productos y ofertas especiales.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen surface px-4">
-      <div className="max-w-md text-center">
-        <div className="mb-8">
-          <div className="text-primary text-9xl font-bold">404</div>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary">
-            Página de la tienda no encontrada
-          </h1>
-          <p className="mt-4 text-base muted">
-            Lo sentimos, no pudimos encontrar la página que estás buscando en
-            nuestra tienda.
-          </p>
-        </div>
-        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
-          <Link href="/">
-            <Button variant="hero">
-              Volver al inicio
-            </Button>
-          </Link>
-          <Link href="/productos">
-            <Button variant="outline">Ver productos</Button>
-          </Link>
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-screen surface px-4">
+        <div className="animate-pulse">
+          <div className="w-32 h-32 bg-surface-secondary rounded mb-8"></div>
+          <div className="w-64 h-8 bg-surface-secondary rounded mb-4"></div>
+          <div className="w-48 h-6 bg-surface-secondary rounded"></div>
         </div>
       </div>
-    </div>
+    }>
+      <NotFoundClient />
+    </Suspense>
   );
 }

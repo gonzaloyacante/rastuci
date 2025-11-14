@@ -107,6 +107,7 @@ export function useLazyLoadWithDelay(
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isVisible, shouldLoad, delay]);
 
   return {

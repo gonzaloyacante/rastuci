@@ -7,3 +7,17 @@ export { AdminTable } from "./AdminTable";
 
 // Dashboard components
 export * from "./dashboard";
+
+// Tipos comunes para reutilizar en las páginas
+export interface AdminAction {
+  label: string;
+  onClick: () => void;
+  variant?: "outline" | "destructive" | "primary" | "secondary" | "ghost";
+  icon?: React.ReactNode;
+  className?: string;
+}
+
+export interface AdminBadge {
+  label: string;
+  variant: "success" | "warning" | "error" | "info" | "neutral";
+}

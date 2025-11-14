@@ -121,13 +121,11 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
           </li>
         )}
 
-        {displayItems.map((item, index) => (
-          <li key={index} className="flex items-center">
-            {index > 0 && (
-              <span className="mx-2" aria-hidden="true">
-                {separator}
-              </span>
-            )}
+        {displayItems.map((item) => (
+          <li key={`breadcrumb-${item.href}-${item.label}`} className="flex items-center">
+            <span className="mx-2" aria-hidden="true">
+              {separator}
+            </span>
 
             {item.href && !item.isActive ? (
               <Link
