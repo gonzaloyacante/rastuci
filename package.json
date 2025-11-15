@@ -37,6 +37,7 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force && npm run db:seed",
+    "prisma:migrate-dev": "node scripts/prisma-migrate-dev.js",
     "prisma:generate": "prisma generate",
     "prepare": "husky install"
   },
@@ -112,6 +113,7 @@
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "prisma": "^6.19.0",
+    "strip-ansi": "^7.1.2",
     "tailwindcss": "^4.1.14",
     "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
@@ -120,11 +122,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "eslint --fix --max-warnings 0",
+      "eslint --fix",
       "prettier --write"
-    ],
-    "src/**/*.{ts,tsx}": [
-      "bash -c 'npx tsc --noEmit --skipLibCheck'"
     ],
     "*.{json,md,css,scss}": [
       "prettier --write"

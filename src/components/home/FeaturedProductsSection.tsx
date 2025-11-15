@@ -9,7 +9,11 @@ interface FeaturedProductsSectionProps {
   loading?: boolean;
 }
 
-export function FeaturedProductsSection({ products, home, loading = false }: FeaturedProductsSectionProps) {
+export function FeaturedProductsSection({
+  products,
+  home,
+  loading = false,
+}: FeaturedProductsSectionProps) {
   if (loading) {
     return (
       <section className="surface py-16 px-6">
@@ -19,7 +23,7 @@ export function FeaturedProductsSection({ products, home, loading = false }: Fea
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {[...Array(4)].map((_, index) => (
-              <UISkeletonProductCard key={index} />
+              <UISkeletonProductCard key={`item-${index}`} />
             ))}
           </div>
         </div>
@@ -34,12 +38,14 @@ export function FeaturedProductsSection({ products, home, loading = false }: Fea
   return (
     <section
       className="surface py-16 px-6"
-      aria-labelledby="featured-products-title">
+      aria-labelledby="featured-products-title"
+    >
       <div className="max-w-[1200px] mx-auto">
         <h2
           id="featured-products-title"
           className="text-3xl font-bold text-center mb-3"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}>
+          style={{ fontFamily: "'Montserrat', sans-serif" }}
+        >
           {home?.featuredTitle || defaultHomeSettings.featuredTitle}
         </h2>
         <p className="text-center text-sm muted mb-10">

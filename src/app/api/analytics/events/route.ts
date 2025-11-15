@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const analyticsEventSchema = z.object({
   name: z.string(),
   properties: z.record(z.unknown()).optional(),
   userId: z.string().optional(),
   sessionId: z.string(),
-  timestamp: z.string().transform(str => new Date(str)),
+  timestamp: z.string().transform((str) => new Date(str)),
 });
 
 const analyticsRequestSchema = z.object({
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Here you would typically save to your analytics database
     // For demo purposes, we'll just log the events
-    console.log('Analytics events received:', events);
+    logger.info("Analytics events received:", { data: events });
 
     // In a real implementation, you might:
     // 1. Save to a time-series database like InfluxDB or TimescaleDB
@@ -34,23 +35,22 @@ export async function POST(request: NextRequest) {
     // Example: Send to external service
     // await sendToExternalAnalytics(events);
 
-    return NextResponse.json({ 
-      success: true, 
-      eventsProcessed: events.length 
+    return NextResponse.json({
+      success: true,
+      eventsProcessed: events.length,
     });
-
   } catch (error) {
-    console.error('Analytics API error:', error);
-    
+    logger.error("Analytics API error:", { error: error });
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid request format', details: error.errors },
+        { error: "Invalid request format", details: error.errors },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
 
 // Health check endpoint
 export async function GET() {
-  return NextResponse.json({ 
-    status: 'healthy',
-    timestamp: new Date().toISOString() 
+  return NextResponse.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
   });
 }

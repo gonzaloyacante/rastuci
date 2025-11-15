@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Star, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
+import { logger } from "@/lib/logger";
+import { Star, User } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface Review {
   id: string;
@@ -28,18 +29,21 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
         setLoading(true);
         // Obtener reseñas reales desde la API
         const res = await fetch(`/api/products/${productId}/reviews`);
-        if (!res.ok) throw new Error('Failed to fetch reviews');
+        if (!res.ok) {
+          throw new Error("Failed to fetch reviews");
+        }
         const json = await res.json();
         const data: Review[] = json.data || [];
         setReviews(data);
         if (data.length > 0) {
-          const avg = data.reduce((sum, review) => sum + review.rating, 0) / data.length;
+          const avg =
+            data.reduce((sum, review) => sum + review.rating, 0) / data.length;
           setAverageRating(avg);
         } else {
           setAverageRating(0);
         }
       } catch (error) {
-        console.error("Error fetching reviews:", error);
+        logger.error("Error fetching reviews", { error });
       } finally {
         setLoading(false);
       }
@@ -62,7 +66,10 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
         <div className="h-8 surface border border-muted rounded animate-pulse w-1/3" />
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-4 surface border border-muted rounded-lg">
+            <div
+              key={`item-${i}`}
+              className="p-4 surface border border-muted rounded-lg"
+            >
               <div className="h-4 surface border border-muted rounded animate-pulse w-1/4 mb-2" />
               <div className="h-3 surface border border-muted rounded animate-pulse w-full mb-1" />
               <div className="h-3 surface border border-muted rounded animate-pulse w-3/4" />
@@ -83,7 +90,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
           <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
               <Star
-                key={i}
+                key={`item-${i}`}
                 size={20}
                 className={`${i < Math.round(averageRating) ? "text-primary fill-current" : "muted"}`}
               />
@@ -97,9 +104,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
       {reviews.length === 0 ? (
         <div className="text-center py-8">
-          <p className="muted">
-            Aún no hay reseñas para este producto.
-          </p>
+          <p className="muted">Aún no hay reseñas para este producto.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -118,7 +123,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                       <div className="flex items-center space-x-1">
                         {[...Array(5)].map((_, i) => (
                           <Star
-                            key={i}
+                            key={`item-${i}`}
                             size={14}
                             className={`${i < review.rating ? "text-primary fill-current" : "muted"}`}
                           />
@@ -130,9 +135,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                     {formatDate(review.createdAt)}
                   </span>
                 </div>
-                <p className="text-primary leading-relaxed">
-                  {review.comment}
-                </p>
+                <p className="text-primary leading-relaxed">{review.comment}</p>
               </CardContent>
             </Card>
           ))}

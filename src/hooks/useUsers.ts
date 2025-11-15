@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 // import { useNotifications } from "@/context/NotificationContext";
 
 export interface User {
@@ -59,12 +59,18 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
 
       const urlParams = new URLSearchParams();
 
-      if (finalParams.page)
+      if (finalParams.page) {
         urlParams.append("page", finalParams.page.toString());
-      if (finalParams.limit)
+      }
+      if (finalParams.limit) {
         urlParams.append("limit", finalParams.limit.toString());
-      if (finalParams.role) urlParams.append("role", finalParams.role);
-      if (finalParams.search) urlParams.append("search", finalParams.search);
+      }
+      if (finalParams.role) {
+        urlParams.append("role", finalParams.role);
+      }
+      if (finalParams.search) {
+        urlParams.append("search", finalParams.search);
+      }
 
       const response = await fetch(`/api/users?${urlParams}`);
 
@@ -82,7 +88,8 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
         throw new Error(data.error || "Error desconocido");
       }
     } catch (error) {
-      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      const _errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
       setError(_errorMessage);
       // notifyError(_errorMessage);
     } finally {
@@ -121,7 +128,8 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
         throw new Error(data.error || "Error desconocido");
       }
     } catch (error) {
-      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      const _errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
       // notifyError(_errorMessage);
       return null;
     }
@@ -162,7 +170,8 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
         throw new Error(data.error || "Error desconocido");
       }
     } catch (error) {
-      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      const _errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
       // notifyError(_errorMessage);
       return false;
     }
@@ -188,7 +197,8 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
         throw new Error(data.error || "Error desconocido");
       }
     } catch (error) {
-      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      const _errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
       // notifyError(_errorMessage);
       return false;
     }
@@ -210,7 +220,8 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
         throw new Error(data.error || "Error desconocido");
       }
     } catch (error) {
-      const _errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      const _errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
       // notifyError(_errorMessage);
       return null;
     }

@@ -1,20 +1,20 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { TrendingUp, PieChart } from "lucide-react";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
   ArcElement,
   BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
 } from "chart.js";
-import { Line, Doughnut } from "react-chartjs-2";
+import { motion } from "framer-motion";
+import { PieChart, TrendingUp } from "lucide-react";
+import { Doughnut, Line } from "react-chartjs-2";
 
 // Registrar componentes de Chart.js
 ChartJS.register(
@@ -36,14 +36,30 @@ interface ChartData {
 }
 
 const monthNames = [
-  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
 ];
 
-export default function ModernDashboardCharts({ categoryData, monthlySales, loading = false }: ChartData) {
+export default function ModernDashboardCharts({
+  categoryData,
+  monthlySales,
+  loading = false,
+}: ChartData) {
   // Datos de ventas mensuales
   const salesChartData = {
-    labels: monthlySales.map((item) => monthNames[parseInt(item.month) - 1] || item.month),
+    labels: monthlySales.map(
+      (item) => monthNames[parseInt(item.month) - 1] || item.month
+    ),
     datasets: [
       {
         label: "Ventas ($)",
@@ -69,12 +85,12 @@ export default function ModernDashboardCharts({ categoryData, monthlySales, load
         label: "Productos",
         data: categoryData.map((item) => item.count),
         backgroundColor: [
-          "rgba(59, 130, 246, 0.8)",   // Blue
-          "rgba(16, 185, 129, 0.8)",   // Green
-          "rgba(245, 158, 11, 0.8)",   // Yellow
-          "rgba(239, 68, 68, 0.8)",    // Red
-          "rgba(139, 92, 246, 0.8)",   // Purple
-          "rgba(6, 182, 212, 0.8)",    // Cyan
+          "rgba(59, 130, 246, 0.8)", // Blue
+          "rgba(16, 185, 129, 0.8)", // Green
+          "rgba(245, 158, 11, 0.8)", // Yellow
+          "rgba(239, 68, 68, 0.8)", // Red
+          "rgba(139, 92, 246, 0.8)", // Purple
+          "rgba(6, 182, 212, 0.8)", // Cyan
         ],
         borderColor: [
           "rgb(59, 130, 246)",
@@ -117,20 +133,20 @@ export default function ModernDashboardCharts({ categoryData, monthlySales, load
     },
     scales: {
       x: {
-        grid: { 
+        grid: {
           color: "rgba(209, 213, 219, 0.3)",
           display: false,
         },
-        ticks: { 
+        ticks: {
           color: "rgb(107, 114, 128)",
           font: { size: 12 },
         },
       },
       y: {
-        grid: { 
+        grid: {
           color: "rgba(209, 213, 219, 0.3)",
         },
-        ticks: { 
+        ticks: {
           color: "rgb(107, 114, 128)",
           font: { size: 12 },
         },
@@ -170,7 +186,10 @@ export default function ModernDashboardCharts({ categoryData, monthlySales, load
     return (
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {[1, 2].map((i) => (
-          <div key={i} className="surface rounded-2xl shadow-sm border muted p-6">
+          <div
+            key={`item-${i}`}
+            className="surface rounded-2xl shadow-sm border muted p-6"
+          >
             <div className="animate-pulse">
               <div className="h-6 surface-secondary rounded w-1/3 mb-4"></div>
               <div className="h-64 surface-secondary rounded"></div>
@@ -186,22 +205,26 @@ export default function ModernDashboardCharts({ categoryData, monthlySales, load
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.6 }}
-      className="grid grid-cols-1 xl:grid-cols-2 gap-8"
+      className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-8"
     >
       {/* Ventas Mensuales */}
-      <div className="relative overflow-hidden surface rounded-2xl shadow-sm border muted p-6 group">
+      <div className="relative overflow-hidden surface rounded-lg sm:rounded-2xl shadow-sm border muted p-3 sm:p-4 lg:p-6 group">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
             <div>
-              <h3 className="text-lg font-bold text-primary">Ventas Mensuales</h3>
-              <p className="text-sm muted mt-1">Evolución de ingresos por mes</p>
+              <h3 className="text-sm sm:text-base lg:text-lg font-bold text-primary">
+                Ventas Mensuales
+              </h3>
+              <p className="text-xs sm:text-sm muted mt-0.5 sm:mt-1">
+                Evolución de ingresos por mes
+              </p>
             </div>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white" />
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
           </div>
-          <div className="h-64">
+          <div className="h-48 sm:h-56 lg:h-64">
             {monthlySales.length > 0 ? (
               <Line data={salesChartData} options={chartOptions} />
             ) : (
@@ -217,19 +240,23 @@ export default function ModernDashboardCharts({ categoryData, monthlySales, load
       </div>
 
       {/* Productos por Categoría */}
-      <div className="relative overflow-hidden surface rounded-2xl shadow-sm border muted p-6 group">
+      <div className="relative overflow-hidden surface rounded-lg sm:rounded-2xl shadow-sm border muted p-3 sm:p-4 lg:p-6 group">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
             <div>
-              <h3 className="text-lg font-bold text-primary">Productos por Categoría</h3>
-              <p className="text-sm muted mt-1">Distribución del catálogo</p>
+              <h3 className="text-sm sm:text-base lg:text-lg font-bold text-primary">
+                Productos por Categoría
+              </h3>
+              <p className="text-xs sm:text-sm muted mt-0.5 sm:mt-1">
+                Distribución del catálogo
+              </p>
             </div>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-              <PieChart className="h-5 w-5 text-white" />
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shrink-0">
+              <PieChart className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
           </div>
-          <div className="h-64">
+          <div className="h-48 sm:h-56 lg:h-64">
             {categoryData.length > 0 ? (
               <Doughnut data={categoryChartData} options={doughnutOptions} />
             ) : (

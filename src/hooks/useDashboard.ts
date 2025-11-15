@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { logger } from "@/lib/logger";
+import { useCallback, useEffect, useState } from "react";
 
 export interface DashboardStats {
   totalProducts: number;
@@ -59,6 +60,11 @@ export const useDashboard = (): UseDashboardReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchDashboardData = useCallback(async () => {
+    // Prevenir múltiples llamadas simultáneas
+    if (loading) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -159,10 +165,13 @@ export const useDashboard = (): UseDashboardReturn => {
       ]);
 
       // En lugar de usar notificaciones, solo registrar el error
-      console.error("Error al cargar datos del dashboard:", errorMessage);
+      logger.error("Error al cargar datos del dashboard", {
+        error: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshDashboard = async () => {
@@ -171,8 +180,21 @@ export const useDashboard = (): UseDashboardReturn => {
 
   // Cargar datos del dashboard al montar el componente
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    let isMounted = true;
+
+    const loadData = async () => {
+      if (isMounted) {
+        await fetchDashboardData();
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar al montar, no cuando fetchDashboardData cambie
 
   return {
     stats,

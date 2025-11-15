@@ -1,17 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { ApiResponse, Category } from "@/types";
-import { checkRateLimit } from "@/lib/rateLimiter";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
-import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
-import { CategoriesQuerySchema, CategoryCreateSchema } from "@/lib/validation/category";
+import { withAdminAuth } from "@/lib/adminAuth";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
-import { logger, getRequestId } from "@/lib/logger";
+import { getRequestId, logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import {
+  CategoriesQuerySchema,
+  CategoryCreateSchema,
+} from "@/lib/validation/category";
+import { ApiResponse, Category } from "@/types";
+import { NextRequest, NextResponse } from "next/server";
 
 // GET /api/categories - Obtener todas las categorías con búsqueda y paginación
-export async function GET(
-  request: NextRequest
-): Promise<NextResponse<ApiResponse<{ data: Category[]; total: number; page: number; limit: number; totalPages: number }>>> {
+export async function GET(request: NextRequest): Promise<
+  NextResponse<
+    ApiResponse<{
+      data: Category[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  >
+> {
   try {
     // Rate limit per IP to protect endpoint
     const rl = checkRateLimit(request, {
@@ -30,7 +42,9 @@ export async function GET(
       includeProductCount: searchParams.get("includeProductCount") ?? undefined,
     });
     if (!parsed.success) {
-      return fail("BAD_REQUEST", "Parámetros inválidos", 400, { issues: parsed.error.issues });
+      return fail("BAD_REQUEST", "Parámetros inválidos", 400, {
+        issues: parsed.error.issues,
+      });
     }
     const { page, limit, search, includeProductCount } = parsed.data;
 
@@ -66,7 +80,11 @@ export async function GET(
       ...category,
       description: category.description ?? undefined,
       ...(includeProductCount
-        ? { productCount: ((category as unknown as { _count?: { products?: number } })._count?.products ?? 0) }
+        ? {
+            productCount:
+              (category as unknown as { _count?: { products?: number } })._count
+                ?.products ?? 0,
+          }
         : {}),
     }));
 
@@ -86,57 +104,85 @@ export async function GET(
     return response;
   } catch (error) {
     const requestId = getRequestId(request.headers);
-    logger.error("Error fetching categories", { requestId, error: String(error) });
-    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener las categorías", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
+    logger.error("Error fetching categories", {
+      requestId,
+      error: String(error),
+    });
+    const n = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al obtener las categorías",
+      500
+    );
+    return fail(n.code as ApiErrorCode, n.message, n.status, {
+      requestId,
+      ...(n.details as Record<string, unknown>),
+    });
   }
 }
 
 // POST /api/categories - Crear nueva categoría
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse<ApiResponse<Category>>> {
-  try {
-    // Rate limit per IP to protect category creation
-    const rl = checkRateLimit(request, {
-      key: makeKey("POST", "/api/categories"),
-      ...getPreset("mutatingLow"),
-    });
-    if (!rl.ok) {
-      return fail("RATE_LIMITED", "Too many requests", 429);
+export const POST = withAdminAuth(
+  async (
+    request: NextRequest
+  ): Promise<NextResponse<ApiResponse<Category>>> => {
+    try {
+      // Rate limit per IP to protect category creation
+      const rl = checkRateLimit(request, {
+        key: makeKey("POST", "/api/categories"),
+        ...getPreset("mutatingLow"),
+      });
+      if (!rl.ok) {
+        return fail("RATE_LIMITED", "Too many requests", 429);
+      }
+
+      const json = await request.json();
+      const parsed = CategoryCreateSchema.safeParse(json);
+      if (!parsed.success) {
+        return fail("BAD_REQUEST", "Datos inválidos", 400, {
+          issues: parsed.error.issues,
+        });
+      }
+      const { name, description } = parsed.data;
+
+      // Verificar si ya existe una categoría con ese nombre
+      const existingCategory = await prisma.category.findUnique({
+        where: { name },
+      });
+
+      if (existingCategory) {
+        return fail("CONFLICT", "Ya existe una categoría con ese nombre", 409);
+      }
+
+      const category = await prisma.category.create({
+        data: {
+          name,
+          description,
+        },
+      });
+
+      const transformedCategory = {
+        ...category,
+        description: category.description ?? undefined,
+      };
+
+      return ok(transformedCategory, "Categoría creada exitosamente");
+    } catch (error) {
+      const requestId = getRequestId(request.headers);
+      logger.error("Error creating category", {
+        requestId,
+        error: String(error),
+      });
+      const n = normalizeApiError(
+        error,
+        "INTERNAL_ERROR",
+        "Error al crear la categoría",
+        500
+      );
+      return fail(n.code as ApiErrorCode, n.message, n.status, {
+        requestId,
+        ...(n.details as Record<string, unknown>),
+      });
     }
-
-    const json = await request.json();
-    const parsed = CategoryCreateSchema.safeParse(json);
-    if (!parsed.success) {
-      return fail("BAD_REQUEST", "Datos inválidos", 400, { issues: parsed.error.issues });
-    }
-    const { name, description } = parsed.data;
-
-    // Verificar si ya existe una categoría con ese nombre
-    const existingCategory = await prisma.category.findUnique({ where: { name } });
-
-    if (existingCategory) {
-      return fail("CONFLICT", "Ya existe una categoría con ese nombre", 409);
-    }
-
-    const category = await prisma.category.create({
-      data: {
-        name,
-        description,
-      },
-    });
-
-    const transformedCategory = {
-      ...category,
-      description: category.description ?? undefined,
-    };
-
-    return ok(transformedCategory, "Categoría creada exitosamente");
-  } catch (error) {
-    const requestId = getRequestId(request.headers);
-    logger.error("Error creating category", { requestId, error: String(error) });
-    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear la categoría", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
   }
-}
+);

@@ -38,13 +38,15 @@ export interface PasswordResetData {
 }
 
 // Order confirmation email template
-export function createOrderConfirmationEmail(data: OrderEmailData): EmailTemplate {
+export function createOrderConfirmationEmail(
+  data: OrderEmailData
+): EmailTemplate {
   const itemsHtml = data.items
     .map(
       (item) => `
         <tr>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
-            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 12px;">` : ''}
+            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 12px;">` : ""}
             <strong>${item.name}</strong>
           </td>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
@@ -56,7 +58,7 @@ export function createOrderConfirmationEmail(data: OrderEmailData): EmailTemplat
         </tr>
       `
     )
-    .join('');
+    .join("");
 
   const html = `
     <!DOCTYPE html>
@@ -76,7 +78,7 @@ export function createOrderConfirmationEmail(data: OrderEmailData): EmailTemplat
         <h2 style="margin: 0 0 15px 0; color: #333;">Order Confirmation</h2>
         <p style="margin: 5px 0;"><strong>Order Number:</strong> #${data.orderNumber}</p>
         <p style="margin: 5px 0;"><strong>Customer:</strong> ${data.customerName}</p>
-        ${data.estimatedDelivery ? `<p style="margin: 5px 0;"><strong>Estimated Delivery:</strong> ${data.estimatedDelivery}</p>` : ''}
+        ${data.estimatedDelivery ? `<p style="margin: 5px 0;"><strong>Estimated Delivery:</strong> ${data.estimatedDelivery}</p>` : ""}
       </div>
 
       <div style="margin-bottom: 30px;">
@@ -122,10 +124,10 @@ export function createOrderConfirmationEmail(data: OrderEmailData): EmailTemplat
     Thank you for your order, ${data.customerName}!
 
     Order Number: #${data.orderNumber}
-    ${data.estimatedDelivery ? `Estimated Delivery: ${data.estimatedDelivery}` : ''}
+    ${data.estimatedDelivery ? `Estimated Delivery: ${data.estimatedDelivery}` : ""}
 
     Order Items:
-    ${data.items.map(item => `- ${item.name} (Qty: ${item.quantity}) - $${item.price.toFixed(2)}`).join('\n')}
+    ${data.items.map((item) => `- ${item.name} (Qty: ${item.quantity}) - $${item.price.toFixed(2)}`).join("\n")}
 
     Total: $${data.total.toFixed(2)}
 
@@ -162,7 +164,7 @@ export function createWelcomeEmail(data: WelcomeEmailData): EmailTemplate {
       <div style="margin-bottom: 30px;">
         <h2 style="color: #333;">Hello ${data.customerName},</h2>
         <p>Welcome to Rastuci! We're excited to have you join our community of fashion enthusiasts.</p>
-        
+
         <p>Here's what you can do with your new account:</p>
         <ul style="padding-left: 20px;">
           <li>Browse our latest collections</li>
@@ -205,14 +207,16 @@ export function createWelcomeEmail(data: WelcomeEmailData): EmailTemplate {
   `;
 
   return {
-    subject: 'Welcome to Rastuci!',
+    subject: "Welcome to Rastuci!",
     html,
     text,
   };
 }
 
 // Password reset email template
-export function createPasswordResetEmail(data: PasswordResetData): EmailTemplate {
+export function createPasswordResetEmail(
+  data: PasswordResetData
+): EmailTemplate {
   const html = `
     <!DOCTYPE html>
     <html>
@@ -265,7 +269,7 @@ export function createPasswordResetEmail(data: PasswordResetData): EmailTemplate
   `;
 
   return {
-    subject: 'Reset Your Password - Rastuci',
+    subject: "Reset Your Password - Rastuci",
     html,
     text,
   };
@@ -273,7 +277,7 @@ export function createPasswordResetEmail(data: PasswordResetData): EmailTemplate
 
 // Email service configuration
 export interface EmailConfig {
-  provider: 'sendgrid' | 'nodemailer' | 'resend';
+  provider: "sendgrid" | "nodemailer" | "resend";
   apiKey?: string;
   from: {
     email: string;
@@ -284,25 +288,16 @@ export interface EmailConfig {
 
 // Email sending utility
 export async function sendEmail(
-  to: string,
-  template: EmailTemplate,
-  config: EmailConfig
+  _to: string,
+  _template: EmailTemplate,
+  _config: EmailConfig
 ): Promise<boolean> {
   try {
     // This would integrate with your chosen email service
     // Example for SendGrid, Resend, or Nodemailer
-    console.log('Sending email:', {
-      to,
-      from: config.from,
-      subject: template.subject,
-      // html: template.html,
-      // text: template.text,
-    });
-
     // Actual implementation would go here
     return true;
-  } catch (error) {
-    console.error('Failed to send email:', error);
+  } catch {
     return false;
   }
 }

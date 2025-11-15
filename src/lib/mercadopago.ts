@@ -1,5 +1,6 @@
-import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
+import { logger } from "@/lib/logger";
 import crypto from "crypto";
+import { MercadoPagoConfig, Payment, Preference } from "mercadopago";
 
 // Clean, single implementation of MercadoPago helper for server-side use.
 // Includes diagnostic logging for SDK errors to help triage 500s from /api/checkout.
@@ -42,7 +43,9 @@ function getBaseUrl() {
 
 function getNotificationUrl() {
   const candidate = process.env.MP_WEBHOOK_URL;
-  if (candidate) return candidate;
+  if (candidate) {
+    return candidate;
+  }
   return `${getBaseUrl()}/api/payments/mercadopago/webhook`;
 }
 
@@ -54,21 +57,28 @@ async function safeCreate<T>(fn: () => Promise<T>): Promise<T> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = err as any;
     try {
-      console.error("[mercadopago] SDK error:", e?.message ?? e);
+      logger.error("[mercadopago] SDK error", { message: e?.message ?? e });
       if (e?.response) {
-        console.error("[mercadopago] SDK response status:", e.response.status);
-        console.error(
-          "[mercadopago] SDK response data:",
-          e.response.data ?? e.response,
-        );
+        logger.error("[mercadopago] SDK response status", {
+          status: e.response.status,
+        });
+        logger.error("[mercadopago] SDK response data", {
+          data: e.response.data ?? e.response,
+        });
       }
     } catch (logErr) {
-      console.error("[mercadopago] error while logging SDK error", logErr);
+      logger.error("[mercadopago] error while logging SDK error", {
+        error: logErr,
+      });
     }
 
     const parts: string[] = [];
-    if (e?.message) parts.push(String(e.message));
-    if (e?.response?.status) parts.push(`status:${e.response.status}`);
+    if (e?.message) {
+      parts.push(String(e.message));
+    }
+    if (e?.response?.status) {
+      parts.push(`status:${e.response.status}`);
+    }
     if (e?.response?.data) {
       try {
         parts.push(`response:${JSON.stringify(e.response.data)}`);
@@ -78,7 +88,7 @@ async function safeCreate<T>(fn: () => Promise<T>): Promise<T> {
     }
 
     throw new Error(
-      parts.length ? parts.join(" | ") : "Unknown MercadoPago error",
+      parts.length ? parts.join(" | ") : "Unknown MercadoPago error"
     );
   }
 }
@@ -86,10 +96,12 @@ async function safeCreate<T>(fn: () => Promise<T>): Promise<T> {
 export async function createPreference(
   items: MPItem[],
   payer?: Record<string, unknown>,
-  idempotencyKey?: string,
+  idempotencyKey?: string
 ) {
   const token = process.env.MP_ACCESS_TOKEN;
-  if (!token) throw new Error("MP_ACCESS_TOKEN is not set");
+  if (!token) {
+    throw new Error("MP_ACCESS_TOKEN is not set");
+  }
 
   const client = new MercadoPagoConfig({
     accessToken: token,
@@ -121,16 +133,18 @@ export async function createPreference(
   } as Record<string, unknown>;
 
   return await safeCreate(
-    async () => await pref.create({ body: body as PreferenceRequestLike }),
+    async () => await pref.create({ body: body as PreferenceRequestLike })
   );
 }
 
 export async function createPayment(
   paymentBody: Record<string, unknown>,
-  idempotencyKey?: string,
+  idempotencyKey?: string
 ) {
   const token = process.env.MP_ACCESS_TOKEN;
-  if (!token) throw new Error("MP_ACCESS_TOKEN is not set");
+  if (!token) {
+    throw new Error("MP_ACCESS_TOKEN is not set");
+  }
 
   const client = new MercadoPagoConfig({
     accessToken: token,
@@ -148,16 +162,20 @@ export async function createPayment(
     new URL(candidate);
     (paymentBody as unknown as Record<string, unknown>).notification_url =
       candidate;
-  } catch {}
+  } catch {
+    /* empty */
+  }
 
   return await safeCreate(
-    async () => await pay.create({ body: paymentBody as PaymentCreateLike }),
+    async () => await pay.create({ body: paymentBody as PaymentCreateLike })
   );
 }
 
 export async function getPayment(paymentId: string) {
   const token = process.env.MP_ACCESS_TOKEN;
-  if (!token) throw new Error("MP_ACCESS_TOKEN is not set");
+  if (!token) {
+    throw new Error("MP_ACCESS_TOKEN is not set");
+  }
 
   const client = new MercadoPagoConfig({
     accessToken: token,
@@ -168,7 +186,7 @@ export async function getPayment(paymentId: string) {
   try {
     return await pay.get({ id: paymentId } as PaymentGetDataLike);
   } catch (err) {
-    console.error("[mercadopago] getPayment error:", err);
+    logger.error("[mercadopago] getPayment error", { error: err });
     throw err;
   }
 }
@@ -177,10 +195,12 @@ export function validateWebhookSignature(
   xSignature: string,
   xRequestId: string,
   dataId: string,
-  ts: string,
+  ts: string
 ): boolean {
   const secret = process.env.MP_WEBHOOK_SECRET;
-  if (!secret) return true; // allow if secret not configured (dev)
+  if (!secret) {
+    return true;
+  } // allow if secret not configured (dev)
 
   try {
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
@@ -193,7 +213,7 @@ export function validateWebhookSignature(
       ?.split("=")[1];
     return signature === expected;
   } catch (e) {
-    console.error("[mercadopago] validateWebhookSignature error", e);
+    logger.error("[mercadopago] validateWebhookSignature error", { error: e });
     return false;
   }
 }

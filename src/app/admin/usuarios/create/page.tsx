@@ -1,13 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin";
 import { UserForm } from "@/components/forms";
+import { useAlert } from "@/components/ui/Alert";
 import { useUsers } from "@/hooks/useUsers";
+import { logger } from "@/lib/logger";
+import { useRouter } from "next/navigation";
 
 export default function CreateUserPage() {
   const router = useRouter();
   const { loading } = useUsers();
+  const { showAlert, Alert: AlertComponent } = useAlert();
 
   const handleSubmit = async (data: {
     name: string;
@@ -17,7 +20,11 @@ export default function CreateUserPage() {
   }) => {
     // Para crear usuarios, necesitamos password
     if (!data.password) {
-      alert("La contraseña es requerida para crear un usuario");
+      showAlert({
+        title: "Campo requerido",
+        message: "La contraseña es requerida para crear un usuario",
+        variant: "warning",
+      });
       return;
     }
 
@@ -44,11 +51,19 @@ export default function CreateUserPage() {
       if (result.success) {
         router.push("/admin/usuarios");
       } else {
-        alert(result.error || "Error al crear el usuario");
+        showAlert({
+          title: "Error",
+          message: result.error || "Error al crear el usuario",
+          variant: "error",
+        });
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error al crear el usuario");
+      logger.error("Error creating user", { error });
+      showAlert({
+        title: "Error",
+        message: "Error al crear el usuario",
+        variant: "error",
+      });
     }
   };
 
@@ -70,6 +85,7 @@ export default function CreateUserPage() {
           loading={loading}
         />
       </div>
+      {AlertComponent}
     </div>
   );
 }

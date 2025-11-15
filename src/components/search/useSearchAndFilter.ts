@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export interface UseSearchAndFilterOptions<T> {
   data: T[];
@@ -67,7 +67,9 @@ export function useSearchAndFilter<T extends Record<string, unknown>>({
       result = result.filter((item) =>
         searchFields.some((field) => {
           const fieldValue = item[field];
-          if (fieldValue == null) return false;
+          if (fieldValue === null) {
+            return false;
+          }
           return String(fieldValue).toLowerCase().includes(query);
         })
       );

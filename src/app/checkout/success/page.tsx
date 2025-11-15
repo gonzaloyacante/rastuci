@@ -1,13 +1,23 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 import { useCart } from "@/context/CartContext";
 import { useOCAService } from "@/hooks/useOCA";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { CheckCircle, Package, Phone, MapPin, Loader2, Truck, Copy, ExternalLink, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  Copy,
+  ExternalLink,
+  Loader2,
+  MapPin,
+  Package,
+  Phone,
+  Truck,
+} from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 interface OrderInfo {
   id: string;
@@ -27,8 +37,12 @@ interface OrderInfo {
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
-  const { obtenerEstadoEnvio, isLoading: ocaLoading, error: ocaError } = useOCAService();
-  
+  const {
+    obtenerEstadoEnvio,
+    isLoading: ocaLoading,
+    error: ocaError,
+  } = useOCAService();
+
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [orderId, setOrderId] = useState<string>("");
   const [orderInfo, setOrderInfo] = useState<OrderInfo | null>(null);
@@ -39,11 +53,14 @@ function CheckoutSuccessContent() {
   useEffect(() => {
     // Obtener datos de la URL
     const method = searchParams.get("method") || "mercadopago";
-    const id = searchParams.get("order_id") || searchParams.get("external_reference") || "";
-    
+    const id =
+      searchParams.get("order_id") ||
+      searchParams.get("external_reference") ||
+      "";
+
     setPaymentMethod(method);
     setOrderId(id);
-    
+
     // Limpiar carrito después de compra exitosa
     clearCart();
   }, [searchParams, clearCart]);
@@ -59,18 +76,21 @@ function CheckoutSuccessContent() {
       try {
         setLoadingOrder(true);
         const response = await fetch(`/api/orders/${orderId}`);
-        
+
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.data) {
             setOrderInfo(result.data);
-            
+
             // Si hay tracking number, obtener estado inicial
-            const trackingNumber = result.data.ocaTrackingNumber || result.data.trackingNumber;
+            const trackingNumber =
+              result.data.ocaTrackingNumber || result.data.trackingNumber;
             if (trackingNumber) {
               try {
                 const estadoEnvio = await obtenerEstadoEnvio(trackingNumber);
-                setTrackingStatus(estadoEnvio.descripcionEstado || estadoEnvio.estado);
+                setTrackingStatus(
+                  estadoEnvio.descripcionEstado || estadoEnvio.estado
+                );
               } catch {
                 // Error silencioso - el tracking es opcional
               }
@@ -103,7 +123,7 @@ function CheckoutSuccessContent() {
   return (
     <div className="min-h-screen surface">
       <Header />
-      
+
       <div className="py-12 px-6">
         <div className="max-w-2xl mx-auto">
           {/* Ícono de éxito */}
@@ -115,17 +135,23 @@ function CheckoutSuccessContent() {
             <p className="muted">
               {orderInfo ? (
                 <>
-                  Número de pedido: <span className="font-semibold">#{orderInfo.orderNumber || orderId}</span>
+                  Número de pedido:{" "}
+                  <span className="font-semibold">
+                    #{orderInfo.orderNumber || orderId}
+                  </span>
                   {orderInfo.total && (
                     <span className="block mt-1">
-                      Total: <span className="font-semibold">${orderInfo.total.toFixed(2)}</span>
+                      Total:{" "}
+                      <span className="font-semibold">
+                        ${orderInfo.total.toFixed(2)}
+                      </span>
                     </span>
                   )}
                 </>
               ) : orderId ? (
                 `Número de pedido: #${orderId}`
               ) : (
-                'Tu pedido ha sido procesado exitosamente'
+                "Tu pedido ha sido procesado exitosamente"
               )}
             </p>
           </div>
@@ -140,7 +166,8 @@ function CheckoutSuccessContent() {
                     Información de Seguimiento
                   </h3>
                   <p className="muted mt-1">
-                    Tu pedido será enviado por OCA. Podrás hacer seguimiento del envío con el número de tracking.
+                    Tu pedido será enviado por OCA. Podrás hacer seguimiento del
+                    envío con el número de tracking.
                   </p>
                 </div>
               </div>
@@ -149,14 +176,16 @@ function CheckoutSuccessContent() {
                 {/* Número de tracking */}
                 <div className="surface-secondary rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-primary">Número de Seguimiento:</span>
+                    <span className="text-sm font-medium text-primary">
+                      Número de Seguimiento:
+                    </span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => copyTrackingNumber(hasTracking)}
                         className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
                       >
                         <Copy className="w-3 h-3" />
-                        {copySuccess ? 'Copiado!' : 'Copiar'}
+                        {copySuccess ? "Copiado!" : "Copiar"}
                       </button>
                       <a
                         href={`https://www.oca.com.ar/seguimiento?numero=${hasTracking}`}
@@ -178,11 +207,17 @@ function CheckoutSuccessContent() {
                 {(trackingStatus || ocaLoading) && (
                   <div className="surface-secondary rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-medium text-primary">Estado Actual:</span>
-                      {ocaLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                      <span className="text-sm font-medium text-primary">
+                        Estado Actual:
+                      </span>
+                      {ocaLoading && (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      )}
                     </div>
                     {trackingStatus ? (
-                      <p className="text-success font-medium">{trackingStatus}</p>
+                      <p className="text-success font-medium">
+                        {trackingStatus}
+                      </p>
                     ) : ocaError ? (
                       <p className="text-error text-sm">
                         <AlertCircle className="w-4 h-4 inline mr-1" />
@@ -198,25 +233,37 @@ function CheckoutSuccessContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   {orderInfo?.shippingMethod && (
                     <div>
-                      <span className="font-medium text-primary block">Método de envío:</span>
-                      <span className="muted capitalize">{orderInfo.shippingMethod}</span>
+                      <span className="font-medium text-primary block">
+                        Método de envío:
+                      </span>
+                      <span className="muted capitalize">
+                        {orderInfo.shippingMethod}
+                      </span>
                     </div>
                   )}
                   {orderInfo?.shippingCost && (
                     <div>
-                      <span className="font-medium text-primary block">Costo de envío:</span>
-                      <span className="muted">${orderInfo.shippingCost.toFixed(2)}</span>
+                      <span className="font-medium text-primary block">
+                        Costo de envío:
+                      </span>
+                      <span className="muted">
+                        ${orderInfo.shippingCost.toFixed(2)}
+                      </span>
                     </div>
                   )}
                   {orderInfo?.estimatedDelivery && (
                     <div className="md:col-span-2">
-                      <span className="font-medium text-primary block">Entrega estimada:</span>
+                      <span className="font-medium text-primary block">
+                        Entrega estimada:
+                      </span>
                       <span className="muted">
-                        {new Date(orderInfo.estimatedDelivery).toLocaleDateString('es-ES', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
+                        {new Date(
+                          orderInfo.estimatedDelivery
+                        ).toLocaleDateString("es-ES", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
                         })}
                       </span>
                     </div>
@@ -249,8 +296,8 @@ function CheckoutSuccessContent() {
                       Retiro en Local - Pago en Efectivo
                     </h3>
                     <p className="muted mt-1">
-                      Tu pedido está siendo preparado. Te contactaremos por WhatsApp 
-                      cuando esté listo para retirar.
+                      Tu pedido está siendo preparado. Te contactaremos por
+                      WhatsApp cuando esté listo para retirar.
                     </p>
                   </div>
                 </div>
@@ -269,11 +316,13 @@ function CheckoutSuccessContent() {
                       <span>Nos comunicaremos contigo pronto</span>
                     </div>
                   </div>
-                  
+
                   <div className="mt-3 p-3 surface-secondary rounded-md">
                     <p className="text-sm text-primary">
-                      <strong>Proceso de retiro:</strong><br />
-                      Te contactaremos por WhatsApp una vez que tu pedido esté listo para coordinar la entrega.
+                      <strong>Proceso de retiro:</strong>
+                      <br />
+                      Te contactaremos por WhatsApp una vez que tu pedido esté
+                      listo para coordinar la entrega.
                     </p>
                   </div>
                 </div>
@@ -300,16 +349,14 @@ function CheckoutSuccessContent() {
                       Pago Procesado con MercadoPago
                     </h3>
                     <p className="muted mt-1">
-                      Tu pago ha sido procesado exitosamente. Te enviaremos 
+                      Tu pago ha sido procesado exitosamente. Te enviaremos
                       actualizaciones sobre el estado de tu pedido por email.
                     </p>
                   </div>
                 </div>
 
                 <div className="border-t border-muted pt-4">
-                  <h4 className="font-medium text-primary mb-2">
-                    ¿Qué sigue?
-                  </h4>
+                  <h4 className="font-medium text-primary mb-2">¿Qué sigue?</h4>
                   <ol className="list-decimal list-inside space-y-1 text-sm muted">
                     <li>Recibirás un email de confirmación</li>
                     <li>Prepararemos tu pedido (1-2 días hábiles)</li>
@@ -326,29 +373,35 @@ function CheckoutSuccessContent() {
             <div className="surface border border-muted rounded-lg p-6 mb-6">
               <div className="flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary mr-3" />
-                <span className="muted">Cargando información del pedido...</span>
+                <span className="muted">
+                  Cargando información del pedido...
+                </span>
               </div>
             </div>
-          ) : orderInfo && (
-            <div className="surface border border-muted rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-primary mb-3">Resumen del Pedido</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="muted">Cliente:</span>
-                  <p className="font-medium">{orderInfo.customerName}</p>
-                </div>
-                <div>
-                  <span className="muted">Teléfono:</span>
-                  <p className="font-medium">{orderInfo.customerPhone}</p>
-                </div>
-                {orderInfo.customerEmail && (
-                  <div className="col-span-2">
-                    <span className="muted">Email:</span>
-                    <p className="font-medium">{orderInfo.customerEmail}</p>
+          ) : (
+            orderInfo && (
+              <div className="surface border border-muted rounded-lg p-4 mb-6">
+                <h4 className="font-medium text-primary mb-3">
+                  Resumen del Pedido
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="muted">Cliente:</span>
+                    <p className="font-medium">{orderInfo.customerName}</p>
                   </div>
-                )}
+                  <div>
+                    <span className="muted">Teléfono:</span>
+                    <p className="font-medium">{orderInfo.customerPhone}</p>
+                  </div>
+                  {orderInfo.customerEmail && (
+                    <div className="col-span-2">
+                      <span className="muted">Email:</span>
+                      <p className="font-medium">{orderInfo.customerEmail}</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )
           )}
 
           {/* Botones de acción */}
@@ -386,7 +439,7 @@ function CheckoutSuccessContent() {
             {hasTracking && (
               <p className="mt-2">
                 También puedes hacer seguimiento en{" "}
-                <a 
+                <a
                   href={`https://www.oca.com.ar/seguimiento?numero=${hasTracking}`}
                   target="_blank"
                   rel="noopener noreferrer"

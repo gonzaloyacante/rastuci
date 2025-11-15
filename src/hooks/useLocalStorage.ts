@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function useLocalStorage<T>(
   key: string,
@@ -13,8 +13,7 @@ export default function useLocalStorage<T>(
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.log(error);
+    } catch {
       return initialValue;
     }
   });
@@ -31,8 +30,8 @@ export default function useLocalStorage<T>(
         if (typeof window !== "undefined") {
           window.localStorage.setItem(key, JSON.stringify(valueToStore));
         }
-      } catch (error) {
-        console.log(error);
+      } catch {
+        // Silent fail
       }
     },
     [key, storedValue]
@@ -40,14 +39,16 @@ export default function useLocalStorage<T>(
 
   // Sincronizar con otros tabs/ventanas
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue !== null) {
         try {
           setStoredValue(JSON.parse(e.newValue));
-        } catch (error) {
-          console.log(error);
+        } catch {
+          // Silent fail
         }
       }
     };

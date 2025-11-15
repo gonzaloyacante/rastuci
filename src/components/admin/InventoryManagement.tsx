@@ -1,25 +1,25 @@
- 'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import type { Product } from '@/types';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/Badge';
-import { OptimizedImage } from '@/components/ui/OptimizedImage';
-import { 
-  Package, 
-  AlertTriangle, 
-  TrendingUp, 
-  TrendingDown, 
-  Search,
+import { EnhancedForm, FormField } from "@/components/forms/EnhancedForm";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import type { Product } from "@/types";
+import {
+  AlertTriangle,
   Download,
-  Upload,
   Edit,
-  Eye
-} from 'lucide-react';
-import { EnhancedForm, FormField } from '@/components/forms/EnhancedForm';
-import { z } from 'zod';
-import toast from 'react-hot-toast';
+  Eye,
+  Package,
+  Search,
+  TrendingDown,
+  TrendingUp,
+  Upload,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { z } from "zod";
 
 interface InventoryItem {
   id: string;
@@ -38,13 +38,13 @@ interface InventoryItem {
   supplier: string;
   location: string;
   lastRestocked: Date;
-  status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'discontinued';
+  status: "in_stock" | "low_stock" | "out_of_stock" | "discontinued";
   movements: StockMovement[];
 }
 
 interface StockMovement {
   id: string;
-  type: 'in' | 'out' | 'adjustment' | 'transfer';
+  type: "in" | "out" | "adjustment" | "transfer";
   quantity: number;
   reason: string;
   reference?: string;
@@ -64,7 +64,7 @@ interface InventoryStats {
 
 const stockAdjustmentSchema = z.object({
   quantity: z.number().int(),
-  reason: z.string().min(5, 'La razón debe tener al menos 5 caracteres'),
+  reason: z.string().min(5, "La razón debe tener al menos 5 caracteres"),
   reference: z.string().optional(),
 });
 
@@ -72,9 +72,9 @@ export function InventoryManagement() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [showAdjustmentForm, setShowAdjustmentForm] = useState(false);
 
@@ -94,16 +94,22 @@ export function InventoryManagement() {
       //  - minStock: se aplica un valor por defecto de 5 para detectar stock bajo
       // Estas elecciones son derivadas y no contienen datos falsos sobre ventas o movimientos.
 
-      const res = await fetch('/api/products?page=1&limit=1000');
-      if (!res.ok) throw new Error('Error fetching products');
+      const res = await fetch("/api/products?page=1&limit=1000");
+      if (!res.ok) {
+        throw new Error("Error fetching products");
+      }
       const json = await res.json();
       const products = Array.isArray(json?.data?.data) ? json.data.data : [];
 
       const mapped: InventoryItem[] = products.map((p: Product) => {
-        const images = Array.isArray(p.images) ? p.images : (typeof p.images === 'string' ? JSON.parse(p.images || '[]') : []);
-        const img = images?.[0] ?? '/placeholder.jpg';
+        const images = Array.isArray(p.images)
+          ? p.images
+          : typeof p.images === "string"
+            ? JSON.parse(p.images || "[]")
+            : [];
+        const img = images?.[0] ?? "/placeholder.jpg";
 
-        const currentStock = typeof p.stock === 'number' ? p.stock : 0;
+        const currentStock = typeof p.stock === "number" ? p.stock : 0;
 
         return {
           id: p.id,
@@ -111,103 +117,118 @@ export function InventoryManagement() {
           productName: p.name,
           productImage: img,
           sku: p.id,
-          category: p.category?.name ?? 'Sin categoría',
+          category: p.category?.name ?? "Sin categoría",
           currentStock,
           minStock: 5,
           maxStock: Math.max(100, currentStock),
           reservedStock: 0,
           availableStock: currentStock,
-          unitCost: typeof p.price === 'number' ? p.price : 0,
-          unitPrice: typeof p.price === 'number' ? p.price : 0,
-          supplier: 'Desconocido',
-          location: 'Desconocido',
+          unitCost: typeof p.price === "number" ? p.price : 0,
+          unitPrice: typeof p.price === "number" ? p.price : 0,
+          supplier: "Desconocido",
+          location: "Desconocido",
           lastRestocked: p.updatedAt ? new Date(p.updatedAt) : new Date(),
-          status: currentStock > 0 ? 'in_stock' : 'out_of_stock',
-          movements: []
+          status: currentStock > 0 ? "in_stock" : "out_of_stock",
+          movements: [],
         } as InventoryItem;
       });
 
       const computedStats: InventoryStats = {
         totalProducts: mapped.length,
         // Valor del inventario calculado a precio de venta (stock * price)
-        totalValue: mapped.reduce((sum, it) => sum + (it.currentStock * (it.unitPrice ?? 0)), 0),
-        lowStockItems: mapped.filter(item => item.currentStock > 0 && item.currentStock <= item.minStock).length,
-        outOfStockItems: mapped.filter(item => item.currentStock === 0).length,
+        totalValue: mapped.reduce(
+          (sum, it) => sum + it.currentStock * (it.unitPrice ?? 0),
+          0
+        ),
+        lowStockItems: mapped.filter(
+          (item) => item.currentStock > 0 && item.currentStock <= item.minStock
+        ).length,
+        outOfStockItems: mapped.filter((item) => item.currentStock === 0)
+          .length,
         topMovingProducts: mapped.slice(0, 5),
-        slowMovingProducts: mapped.slice(-5)
+        slowMovingProducts: mapped.slice(-5),
       };
 
       setInventory(mapped);
       setStats(computedStats);
     } catch {
-      toast.error('Error al cargar el inventario');
+      toast.error("Error al cargar el inventario");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStockAdjustment = async (data: z.infer<typeof stockAdjustmentSchema>) => {
-    if (!selectedItem) return;
+  const handleStockAdjustment = async (
+    data: z.infer<typeof stockAdjustmentSchema>
+  ) => {
+    if (!selectedItem) {
+      return;
+    }
 
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const newMovement: StockMovement = {
         id: Date.now().toString(),
-        type: 'adjustment',
+        type: "adjustment",
         quantity: data.quantity,
         reason: data.reason,
         reference: data.reference,
-        userId: 'admin-1',
-        userName: 'Admin',
-        createdAt: new Date()
+        userId: "admin-1",
+        userName: "Admin",
+        createdAt: new Date(),
       };
 
-      setInventory(prev => prev.map(item => 
-        item.id === selectedItem.id 
-          ? {
-              ...item,
-              currentStock: item.currentStock + data.quantity,
-              availableStock: item.availableStock + data.quantity,
-              movements: [newMovement, ...item.movements]
-            }
-          : item
-      ));
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.id === selectedItem.id
+            ? {
+                ...item,
+                currentStock: item.currentStock + data.quantity,
+                availableStock: item.availableStock + data.quantity,
+                movements: [newMovement, ...item.movements],
+              }
+            : item
+        )
+      );
 
       setShowAdjustmentForm(false);
       setSelectedItem(null);
-      toast.success('Ajuste de stock realizado correctamente');
+      toast.success("Ajuste de stock realizado correctamente");
     } catch {
-      toast.error('Error al realizar el ajuste de stock');
+      toast.error("Error al realizar el ajuste de stock");
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'in_stock':
+      case "in_stock":
         return <Badge variant="success">En Stock</Badge>;
-      case 'low_stock':
+      case "low_stock":
         return <Badge variant="warning">Stock Bajo</Badge>;
-      case 'out_of_stock':
+      case "out_of_stock":
         return <Badge variant="error">Agotado</Badge>;
-      case 'discontinued':
+      case "discontinued":
         return <Badge variant="secondary">Descontinuado</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
-  const filteredInventory = inventory.filter(item => {
-    const matchesSearch = item.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
-    
+  const filteredInventory = inventory.filter((item) => {
+    const matchesSearch =
+      item.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || item.status === statusFilter;
+    const matchesCategory =
+      categoryFilter === "all" || item.category === categoryFilter;
+
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const categories = [...new Set(inventory.map(item => item.category))];
+  const categories = [...new Set(inventory.map((item) => item.category))];
 
   if (loading) {
     return <div className="p-6">Cargando inventario...</div>;
@@ -233,7 +254,9 @@ export function InventoryManagement() {
               <TrendingUp className="w-8 h-8 text-success" />
               <div>
                 <p className="text-sm muted">Valor Total</p>
-                <p className="text-2xl font-bold">${stats.totalValue.toFixed(2)}</p>
+                <p className="text-2xl font-bold">
+                  ${stats.totalValue.toFixed(2)}
+                </p>
               </div>
             </div>
           </div>
@@ -293,8 +316,10 @@ export function InventoryManagement() {
             className="px-3 py-2 border border-muted rounded surface"
           >
             <option value="all">Todas las categorías</option>
-            {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
             ))}
           </select>
 
@@ -329,7 +354,10 @@ export function InventoryManagement() {
             </thead>
             <tbody>
               {filteredInventory.map((item) => (
-                <tr key={item.id} className="border-b border-muted hover-surface">
+                <tr
+                  key={item.id}
+                  className="border-b border-muted hover-surface"
+                >
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <OptimizedImage
@@ -348,15 +376,19 @@ export function InventoryManagement() {
                   <td className="p-4 font-mono text-sm">{item.sku}</td>
                   <td className="p-4">{item.category}</td>
                   <td className="p-4 text-center">
-                    <span className={`font-bold ${
-                      item.currentStock <= item.minStock ? 'text-error' : ''
-                    }`}>
+                    <span
+                      className={`font-bold ${
+                        item.currentStock <= item.minStock ? "text-error" : ""
+                      }`}
+                    >
                       {item.currentStock}
                     </span>
                   </td>
                   <td className="p-4 text-center">{item.minStock}</td>
                   <td className="p-4 text-center">{item.availableStock}</td>
-                  <td className="p-4 text-center">{getStatusBadge(item.status)}</td>
+                  <td className="p-4 text-center">
+                    {getStatusBadge(item.status)}
+                  </td>
                   <td className="p-4 text-center">
                     ${(item.currentStock * item.unitCost).toFixed(2)}
                   </td>
@@ -395,10 +427,16 @@ export function InventoryManagement() {
             <h3 className="text-lg font-semibold mb-4">
               Ajustar Stock - {selectedItem.productName}
             </h3>
-            
+
             <div className="mb-4 p-3 surface border border-muted rounded">
-              <p className="text-sm muted">Stock actual: <span className="font-bold">{selectedItem.currentStock}</span></p>
-              <p className="text-sm muted">Stock disponible: <span className="font-bold">{selectedItem.availableStock}</span></p>
+              <p className="text-sm muted">
+                Stock actual:{" "}
+                <span className="font-bold">{selectedItem.currentStock}</span>
+              </p>
+              <p className="text-sm muted">
+                Stock disponible:{" "}
+                <span className="font-bold">{selectedItem.availableStock}</span>
+              </p>
             </div>
 
             <EnhancedForm
@@ -486,7 +524,9 @@ export function InventoryManagement() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="muted">Stock Actual</p>
-                    <p className="font-bold text-lg">{selectedItem.currentStock}</p>
+                    <p className="font-bold text-lg">
+                      {selectedItem.currentStock}
+                    </p>
                   </div>
                   <div>
                     <p className="muted">Stock Mínimo</p>
@@ -522,7 +562,9 @@ export function InventoryManagement() {
 
                 <div>
                   <p className="muted">Último Restock</p>
-                  <p className="font-medium">{selectedItem.lastRestocked.toLocaleDateString()}</p>
+                  <p className="font-medium">
+                    {selectedItem.lastRestocked.toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             </div>

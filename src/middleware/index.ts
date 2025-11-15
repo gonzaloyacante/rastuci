@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { securityHeaders, csrfProtection } from './security';
 import { getRequestId } from "@/lib/logger";
+import { getToken } from "next-auth/jwt";
+import { NextRequest, NextResponse } from "next/server";
+import { csrfProtection, securityHeaders } from "./security";
 
 export async function middleware(request: NextRequest) {
   // Apply security headers to all requests
   securityHeaders(request);
-  
+
   // Apply CSRF protection to API routes
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
     const csrfError = csrfProtection(request);
     if (csrfError) {
       return csrfError;
@@ -25,7 +24,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   // Rutas públicas que cualquiera puede acceder (página de login/admin landing)
-  const publicRoutes = ["/admin"]; 
+  const publicRoutes = ["/admin"];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   const isAdminPage = pathname.startsWith("/admin");

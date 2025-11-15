@@ -1,15 +1,14 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from 'react';
-import React from 'react';
-import { CheckCircle, AlertTriangle, Info, X, AlertCircle } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
+import React, { ReactNode, useCallback, useEffect, useState } from "react";
 
 interface AlertProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   message: string;
-  variant?: 'info' | 'success' | 'warning' | 'error';
+  variant?: "info" | "success" | "warning" | "error";
   icon?: ReactNode;
   autoClose?: number; // milliseconds
   showCloseButton?: boolean;
@@ -17,27 +16,27 @@ interface AlertProps {
 
 const variantStyles = {
   info: {
-    bgColor: 'bg-blue-50 border-blue-200',
-    textColor: 'text-blue-900',
-    iconColor: 'text-blue-600',
+    bgColor: "bg-blue-50 border-blue-200",
+    textColor: "text-blue-900",
+    iconColor: "text-blue-600",
     defaultIcon: Info,
   },
   success: {
-    bgColor: 'bg-green-50 border-green-200',
-    textColor: 'text-green-900',
-    iconColor: 'text-green-600',
+    bgColor: "bg-green-50 border-green-200",
+    textColor: "text-green-900",
+    iconColor: "text-green-600",
     defaultIcon: CheckCircle,
   },
   warning: {
-    bgColor: 'bg-yellow-50 border-yellow-200',
-    textColor: 'text-yellow-900',
-    iconColor: 'text-yellow-600',
+    bgColor: "bg-yellow-50 border-yellow-200",
+    textColor: "text-yellow-900",
+    iconColor: "text-yellow-600",
     defaultIcon: AlertTriangle,
   },
   error: {
-    bgColor: 'bg-red-50 border-red-200',
-    textColor: 'text-red-900',
-    iconColor: 'text-red-600',
+    bgColor: "bg-red-50 border-red-200",
+    textColor: "text-red-900",
+    iconColor: "text-red-600",
     defaultIcon: AlertCircle,
   },
 };
@@ -47,7 +46,7 @@ export default function Alert({
   onClose,
   title,
   message,
-  variant = 'info',
+  variant = "info",
   icon,
   autoClose,
   showCloseButton = true,
@@ -66,11 +65,13 @@ export default function Alert({
     return undefined;
   }, [isOpen, autoClose, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-      <div 
+      <div
         className={`
           ${variantConfig.bgColor} ${variantConfig.textColor}
           rounded-lg shadow-2xl max-w-md w-full mx-auto border-2
@@ -83,23 +84,22 @@ export default function Alert({
         <div className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className={`flex-shrink-0 ${variantConfig.iconColor}`}>
-                {React.isValidElement(IconComponent) 
-                  ? IconComponent 
-                  : IconComponent && React.createElement(IconComponent as any, { size: 24 })
-                }
+              <div className={`shrink-0 ${variantConfig.iconColor}`}>
+                {React.isValidElement(IconComponent)
+                  ? IconComponent
+                  : IconComponent &&
+                    React.createElement(IconComponent as React.ElementType, {
+                      size: 24,
+                    })}
               </div>
               <div>
-                <h3 
+                <h3
                   id="alert-title"
                   className="text-lg font-semibold leading-6"
                 >
                   {title}
                 </h3>
-                <p 
-                  id="alert-message"
-                  className="text-sm mt-2 opacity-90"
-                >
+                <p id="alert-message" className="text-sm mt-2 opacity-90">
                   {message}
                 </p>
               </div>
@@ -120,12 +120,10 @@ export default function Alert({
 }
 
 // Hook para usar el componente Alert
-import { useCallback } from 'react';
-
 interface UseAlertOptions {
   title: string;
   message: string;
-  variant?: 'info' | 'success' | 'warning' | 'error';
+  variant?: "info" | "success" | "warning" | "error";
   autoClose?: number;
   showCloseButton?: boolean;
 }
@@ -133,8 +131,8 @@ interface UseAlertOptions {
 export function useAlert() {
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState<UseAlertOptions>({
-    title: '',
-    message: '',
+    title: "",
+    message: "",
   });
 
   const showAlert = useCallback((options: UseAlertOptions) => {

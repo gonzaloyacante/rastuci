@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 
 interface ProductScore {
@@ -97,10 +98,9 @@ export async function fetchRelatedProducts(
     const currentProductData = await currentProductResponse.json();
 
     if (!currentProductData.success) {
-      console.error(
-        "Error fetching current product:",
-        currentProductData.error
-      );
+      logger.error("Error fetching current product", {
+        error: currentProductData.error,
+      });
       return [];
     }
 
@@ -111,7 +111,9 @@ export async function fetchRelatedProducts(
     const allProductsData = await allProductsResponse.json();
 
     if (!allProductsData.success) {
-      console.error("Error fetching all products:", allProductsData.error);
+      logger.error("Error fetching all products", {
+        error: allProductsData.error,
+      });
       return [];
     }
 
@@ -120,7 +122,7 @@ export async function fetchRelatedProducts(
     // Aplicar el algoritmo híbrido
     return getRelatedProducts(currentProduct, allProducts, limit);
   } catch (error) {
-    console.error("Error in fetchRelatedProducts:", error);
+    logger.error("Error in fetchRelatedProducts", { error });
     return [];
   }
 }

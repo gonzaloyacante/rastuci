@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseApiOptions<T> {
   initialData?: T;
@@ -23,7 +23,7 @@ interface ApiResponse<T> {
  */
 export function useApi<T = unknown>(
   url: string | (() => string),
-  options: UseApiOptions<T> = {},
+  options: UseApiOptions<T> = {}
 ): ApiResponse<T> {
   const {
     initialData,
@@ -41,7 +41,9 @@ export function useApi<T = unknown>(
 
   const fetchData = useCallback(
     async (showLoading = true) => {
-      if (!enabled) return;
+      if (!enabled) {
+        return;
+      }
 
       // Cancel previous request
       if (abortControllerRef.current) {
@@ -100,7 +102,7 @@ export function useApi<T = unknown>(
         abortControllerRef.current = null;
       }
     },
-    [url, enabled, onSuccess, onError, transform],
+    [url, enabled, onSuccess, onError, transform]
   );
 
   const mutate = useCallback(() => fetchData(false), [fetchData]);
@@ -148,7 +150,7 @@ interface PaginatedApiResponse<T> extends Omit<ApiResponse<T[]>, "data"> {
 
 export function usePaginatedApi<T = unknown>(
   baseUrl: string | (() => string),
-  options: UsePaginatedApiOptions<T> = {},
+  options: UsePaginatedApiOptions<T> = {}
 ): PaginatedApiResponse<T> {
   const {
     page = 1,
@@ -166,12 +168,15 @@ export function usePaginatedApi<T = unknown>(
     return `${base}?${params.toString()}`;
   }, [baseUrl, page, limit]);
 
-  const { data: response, ...rest } = useApi<Record<string, unknown>>(buildUrl, {
-    enabled: apiOptions.enabled,
-    onSuccess: undefined,
-    onError: apiOptions.onError,
-    transform: (data) => data as Record<string, unknown>,
-  });
+  const { data: response, ...rest } = useApi<Record<string, unknown>>(
+    buildUrl,
+    {
+      enabled: apiOptions.enabled,
+      onSuccess: undefined,
+      onError: apiOptions.onError,
+      transform: (data) => data as Record<string, unknown>,
+    }
+  );
 
   const data = (response?.[dataKey] as T[]) || [];
   const total = (response?.[totalKey] as number) || 0;

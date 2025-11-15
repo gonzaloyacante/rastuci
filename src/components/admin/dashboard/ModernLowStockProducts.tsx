@@ -2,15 +2,15 @@
 
 import { motion } from "framer-motion";
 import {
-  Package,
   AlertTriangle,
-  TrendingDown,
+  Archive,
   ArrowRight,
   ImageIcon,
-  Archive,
+  Package,
+  TrendingDown,
 } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
 interface LowStockProduct {
   id: string;
@@ -54,10 +54,36 @@ export default function ModernLowStockProducts({
   };
 
   const getStockLevel = (stock: number) => {
-    if (stock === 0) return { label: "Sin stock", color: "text-error", bg: "bg-red-50", border: "border-red-200" };
-    if (stock <= 5) return { label: "Crítico", color: "text-error", bg: "bg-red-50", border: "border-red-200" };
-    if (stock <= 10) return { label: "Bajo", color: "text-warning", bg: "bg-amber-50", border: "border-amber-200" };
-    return { label: "Normal", color: "text-success", bg: "bg-green-50", border: "border-green-200" };
+    if (stock === 0) {
+      return {
+        label: "Sin stock",
+        color: "text-error",
+        bg: "bg-red-50",
+        border: "border-red-200",
+      };
+    }
+    if (stock <= 5) {
+      return {
+        label: "Crítico",
+        color: "text-error",
+        bg: "bg-red-50",
+        border: "border-red-200",
+      };
+    }
+    if (stock <= 10) {
+      return {
+        label: "Bajo",
+        color: "text-warning",
+        bg: "bg-amber-50",
+        border: "border-amber-200",
+      };
+    }
+    return {
+      label: "Normal",
+      color: "text-success",
+      bg: "bg-green-50",
+      border: "border-green-200",
+    };
   };
 
   if (loading) {
@@ -67,7 +93,10 @@ export default function ModernLowStockProducts({
           <div className="h-6 surface-secondary rounded w-1/3 mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-24 surface-secondary rounded-xl"></div>
+              <div
+                key={`item-${i}`}
+                className="h-24 surface-secondary rounded-xl"
+              ></div>
             ))}
           </div>
         </div>
@@ -79,7 +108,9 @@ export default function ModernLowStockProducts({
     <div className="surface rounded-2xl shadow-sm border muted p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-primary">Productos con Bajo Stock</h2>
+          <h2 className="text-xl font-bold text-primary">
+            Productos con Bajo Stock
+          </h2>
           <p className="text-sm muted mt-1">
             Productos que requieren reposición urgente
           </p>
@@ -101,7 +132,9 @@ export default function ModernLowStockProducts({
       {products.length === 0 ? (
         <div className="text-center py-8">
           <Package className="h-12 w-12 muted mx-auto mb-3" />
-          <p className="text-sm muted">Todos los productos tienen stock suficiente</p>
+          <p className="text-sm muted">
+            Todos los productos tienen stock suficiente
+          </p>
         </div>
       ) : (
         <motion.div
@@ -146,9 +179,11 @@ export default function ModernLowStockProducts({
                         <h3 className="text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors line-clamp-1">
                           {product.name}
                         </h3>
-                        
+
                         {product.category && (
-                          <p className="text-xs muted mt-1">{product.category}</p>
+                          <p className="text-xs muted mt-1">
+                            {product.category}
+                          </p>
                         )}
 
                         <div className="flex items-center justify-between mt-2">
@@ -158,7 +193,7 @@ export default function ModernLowStockProducts({
                               {product.stock} unidades
                             </span>
                           </div>
-                          
+
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${stockLevel.bg} ${stockLevel.color} ${stockLevel.border} border`}
                           >

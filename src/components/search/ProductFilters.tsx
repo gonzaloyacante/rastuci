@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Category } from "@/types";
+import { Filter, X } from "lucide-react";
+import { useState } from "react";
 
 interface ProductFiltersProps {
   categories: Category[];
@@ -44,7 +44,8 @@ export default function ProductFilters({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
-            aria-hidden="true">
+            aria-hidden="true"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -57,7 +58,9 @@ export default function ProductFilters({
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") onSearchSubmit();
+              if (e.key === "Enter") {
+                onSearchSubmit();
+              }
             }}
             placeholder="Buscar productos..."
             className="pl-10"
@@ -67,7 +70,8 @@ export default function ProductFilters({
         <div className="flex gap-2">
           <Button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            variant="outline">
+            variant="outline"
+          >
             <Filter size={16} className="mr-2" />
             Filtros
           </Button>
@@ -92,7 +96,8 @@ export default function ProductFilters({
             <select
               value={selectedCategory}
               onChange={(e) => onCategoryChange(e.target.value)}
-              className="w-full p-2 border border-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+              className="w-full p-2 border border-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            >
               <option value="">Todas las categorías</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>

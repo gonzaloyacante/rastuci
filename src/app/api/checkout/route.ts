@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import { createPreference } from "@/lib/mercadopago";
+import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
 interface OrderItem {
   productId: string;
@@ -38,13 +39,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = await request.json();
     // Log incoming request minimally for diagnostics (avoid logging secrets)
     try {
-      console.info("[checkout] Incoming request:", {
+      logger.info("[checkout] Incoming request:", {
         origin: request.headers.get("origin"),
         paymentMethod: body?.paymentMethod,
         itemsCount: Array.isArray(body?.items) ? body.items.length : 0,
       });
     } catch (e) {
-      console.warn("[checkout] Failed to log incoming request summary", e);
+      logger.warn("[checkout] Failed to log incoming request summary", {
+        data: e,
+      });
     }
     const { items, customer, shippingMethod, paymentMethod, orderData } = body;
 
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           success: false,
           error: "No hay productos en el carrito",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -65,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           success: false,
           error: "Faltan datos del cliente o método de pago",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -155,19 +158,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         preference = await createPreference(mpItems, payer);
       } catch (mpError) {
-        console.error(
-          "[checkout] MercadoPago preference creation error:",
-          mpError,
-        );
+        logger.error("[checkout] MercadoPago preference creation error:", {
+          error: mpError,
+        });
         // Include some context to help debugging
-        console.error("[checkout] preference payload summary:", {
-          itemsCount: mpItems.length,
-          back_urls: {
-            success: `${origin}/checkout/success`,
-            failure: `${origin}/checkout/failure`,
-            pending: `${origin}/checkout/pending`,
+        logger.error("[checkout] preference payload summary:", {
+          error: {
+            itemsCount: mpItems.length,
+            back_urls: {
+              success: `${origin}/checkout/success`,
+              failure: `${origin}/checkout/failure`,
+              pending: `${origin}/checkout/pending`,
+            },
+            notification_url: process.env.MP_WEBHOOK_URL,
           },
-          notification_url: process.env.MP_WEBHOOK_URL,
         });
 
         return NextResponse.json(
@@ -177,7 +181,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             details:
               mpError instanceof Error ? mpError.message : String(mpError),
           },
-          { status: 500 },
+          { status: 500 }
         );
       }
 
@@ -194,16 +198,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: false,
         error: "Método de pago no válido",
       },
-      { status: 400 },
+      { status: 400 }
     );
   } catch (error) {
-    console.error("Error processing checkout:", error);
+    logger.error("Error processing checkout:", { error: error });
     return NextResponse.json(
       {
         success: false,
         error: "Error interno del servidor",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

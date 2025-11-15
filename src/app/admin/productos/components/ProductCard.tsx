@@ -1,22 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { formatCurrency } from "@/utils/formatters";
+import { Button } from "@/components/ui/Button";
 import { Product } from "@/types";
+import { formatCurrency } from "@/utils/formatters";
 import {
+  AlertTriangle,
+  CheckCircle,
   Edit,
-  Trash2,
   Eye,
   ImageIcon,
   Package,
   Star,
+  Trash2,
   TrendingUp,
-  AlertTriangle,
-  CheckCircle,
 } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -27,7 +27,9 @@ interface ProductCardProps {
 }
 
 const ProductImagePlaceholder = ({ className }: { className?: string }) => (
-  <div className={`bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center ${className || 'w-full h-48'}`}>
+  <div
+    className={`bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
+  >
     <div className="text-center opacity-60">
       <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
       <p className="text-sm text-muted-foreground font-medium">Sin imagen</p>
@@ -44,7 +46,7 @@ const StockBadge = ({ stock }: { stock: number }) => {
       </Badge>
     );
   }
-  
+
   if (stock <= 5) {
     return (
       <Badge variant="warning" className="flex items-center gap-1">
@@ -53,7 +55,7 @@ const StockBadge = ({ stock }: { stock: number }) => {
       </Badge>
     );
   }
-  
+
   if (stock <= 10) {
     return (
       <Badge variant="info" className="flex items-center gap-1">
@@ -62,7 +64,7 @@ const StockBadge = ({ stock }: { stock: number }) => {
       </Badge>
     );
   }
-  
+
   return (
     <Badge variant="success" className="flex items-center gap-1">
       <CheckCircle className="h-3 w-3" />
@@ -71,9 +73,19 @@ const StockBadge = ({ stock }: { stock: number }) => {
   );
 };
 
-const PriceBadge = ({ price, salePrice, onSale }: { price: number; salePrice?: number | null; onSale?: boolean }) => {
+const PriceBadge = ({
+  price,
+  salePrice,
+  onSale,
+}: {
+  price: number;
+  salePrice?: number | null;
+  onSale?: boolean;
+}) => {
   const hasDiscount = onSale && salePrice && salePrice < price;
-  const discountPercentage = hasDiscount ? Math.round(((price - salePrice!) / price) * 100) : 0;
+  const discountPercentage = hasDiscount
+    ? Math.round(((price - salePrice!) / price) * 100)
+    : 0;
 
   return (
     <div className="space-y-1">
@@ -94,9 +106,7 @@ const PriceBadge = ({ price, salePrice, onSale }: { price: number; salePrice?: n
           </span>
         </div>
       ) : (
-        <span className="text-lg font-bold">
-          {formatCurrency(price)}
-        </span>
+        <span className="text-lg font-bold">{formatCurrency(price)}</span>
       )}
     </div>
   );
@@ -111,12 +121,12 @@ export default function ProductCard({
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
-  const productImages = Array.isArray(product.images) 
-    ? product.images 
-    : typeof product.images === 'string' 
-      ? JSON.parse(product.images) 
+  const productImages = Array.isArray(product.images)
+    ? product.images
+    : typeof product.images === "string"
+      ? JSON.parse(product.images)
       : [];
-  
+
   const mainImage = productImages[0];
 
   const handleImageLoad = () => {
@@ -145,7 +155,7 @@ export default function ProductCard({
                 alt={product.name}
                 fill
                 className={`object-cover transition-opacity duration-300 ${
-                  imageLoading ? 'opacity-0' : 'opacity-100'
+                  imageLoading ? "opacity-0" : "opacity-100"
                 }`}
                 onLoad={handleImageLoad}
                 onError={handleImageError}
@@ -194,7 +204,7 @@ export default function ProductCard({
               {product.name}
             </h3>
           </div>
-          
+
           {product.category && (
             <Badge variant="outline" className="text-xs">
               {product.category.name}
@@ -218,7 +228,8 @@ export default function ProductCard({
                 <span className="text-muted-foreground">Talles:</span>
                 <span className="font-medium">
                   {product.sizes.slice(0, 3).join(", ")}
-                  {product.sizes.length > 3 && `... +${product.sizes.length - 3}`}
+                  {product.sizes.length > 3 &&
+                    `... +${product.sizes.length - 3}`}
                 </span>
               </div>
             )}
@@ -230,7 +241,7 @@ export default function ProductCard({
               <div className="flex gap-1">
                 {product.colors.slice(0, 4).map((color, index) => (
                   <div
-                    key={index}
+                    key={`item-${index}`}
                     className="w-4 h-4 rounded-full border border-muted"
                     style={{ backgroundColor: color.toLowerCase() }}
                     title={color}
@@ -249,11 +260,13 @@ export default function ProductCard({
         {/* Stock and Rating */}
         <div className="flex items-center justify-between">
           <StockBadge stock={product.stock} />
-          
+
           {product.rating && product.reviewCount && product.reviewCount > 0 && (
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-warning text-warning" />
-              <span className="text-sm font-medium">{product.rating.toFixed(1)}</span>
+              <span className="text-sm font-medium">
+                {product.rating.toFixed(1)}
+              </span>
               <span className="text-xs text-muted-foreground">
                 ({product.reviewCount})
               </span>
@@ -263,10 +276,10 @@ export default function ProductCard({
 
         {/* Price */}
         <div className="pt-2 border-t border-muted">
-          <PriceBadge 
-            price={product.price} 
-            salePrice={product.salePrice} 
-            onSale={product.onSale} 
+          <PriceBadge
+            price={product.price}
+            salePrice={product.salePrice}
+            onSale={product.onSale}
           />
         </div>
 

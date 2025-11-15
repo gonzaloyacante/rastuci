@@ -106,7 +106,8 @@ export const AdminTable = <T extends Record<string, unknown>>({
                     className={`${getAlignClass(
                       column.align
                     )} p-4 font-semibold muted tracking-wide`}
-                    style={{ width: column.width }}>
+                    style={{ width: column.width }}
+                  >
                     {column.label}
                   </th>
                 ))}
@@ -120,17 +121,19 @@ export const AdminTable = <T extends Record<string, unknown>>({
             <tbody>
               {data.map((row, index) => (
                 <tr
-                  key={index}
+                  key={`item-${index}`}
                   className={`border-b border-muted hover:surface transition-colors ${
                     onRowClick ? "cursor-pointer" : ""
                   }`}
-                  onClick={() => onRowClick?.(row)}>
+                  onClick={() => onRowClick?.(row)}
+                >
                   {columns.map((column) => (
                     <td
                       key={column.key}
                       className={`${getAlignClass(
                         column.align
-                      )} p-4 align-middle`}>
+                      )} p-4 align-middle`}
+                    >
                       {column.render
                         ? column.render(row[column.key], row)
                         : (row[column.key] as React.ReactNode)}
@@ -155,7 +158,8 @@ export const AdminTable = <T extends Record<string, unknown>>({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 action.onClick(row);
-                              }}>
+                              }}
+                            >
                               {action.icon && <span>{action.icon}</span>}
                               {action.label}
                             </Button>

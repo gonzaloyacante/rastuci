@@ -2,6 +2,7 @@
 
 import { UserForm } from "@/components/forms";
 import { AdminPageHeader } from "@/components/admin";
+import { logger } from "@/lib/logger";
 
 export default function CreateUserPage() {
   const handleSubmit = async (data: {
@@ -35,7 +36,7 @@ export default function CreateUserPage() {
         throw new Error(result.error || "Error desconocido");
       }
     } catch (error) {
-      console.error("Error al crear usuario:", error);
+      logger.error("Error al crear usuario:", { error: error });
       // El error será manejado por el sistema de notificaciones
     }
   };

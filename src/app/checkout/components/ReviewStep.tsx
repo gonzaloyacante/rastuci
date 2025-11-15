@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
+import { useCart } from "@/context/CartContext";
+import { formatPriceARS } from "@/utils/formatters";
 import {
   ChevronLeft,
   ChevronRight,
-  Tag,
-  X,
-  Truck,
   CreditCard,
   FileText,
+  Tag,
+  Truck,
+  X,
 } from "lucide-react";
-import { formatPriceARS } from "@/utils/formatters";
+import { useState } from "react";
 // import { OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
 // import { PaymentProcessor } from "@/components/checkout/PaymentProcessor";
 
@@ -53,7 +53,9 @@ export default function ReviewStep({
   const total = subtotal + shippingCost - discount;
 
   const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
+    if (!couponCode.trim()) {
+      return;
+    }
 
     setCouponLoading(true);
     setCouponError(null);

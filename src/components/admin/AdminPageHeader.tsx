@@ -26,7 +26,8 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
 }) => {
   return (
     <div
-      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6 ${className}`}>
+      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6 ${className}`}
+    >
       <div className="flex-1">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-content-primary">
           {title}
@@ -41,10 +42,11 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
         <div className="flex gap-2 flex-wrap">
           {actions.map((action, index) => (
             <Button
-              key={index}
+              key={`item-${index}`}
               variant={action.variant || "primary"}
               className={`btn-primary w-full sm:w-auto ${action.className || ""}`}
-              onClick={action.onClick}>
+              onClick={action.onClick}
+            >
               {action.icon && <span className="mr-2">{action.icon}</span>}
               {action.label}
             </Button>

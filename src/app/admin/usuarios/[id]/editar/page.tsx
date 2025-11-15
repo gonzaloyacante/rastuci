@@ -1,8 +1,9 @@
-import { Suspense } from "react";
-import prisma from "@/lib/prisma";
+import { AdminLoading, AdminPageHeader } from "@/components/admin";
 import { UserForm } from "@/components/forms";
-import { AdminPageHeader, AdminLoading } from "@/components/admin";
+import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { logger } from "../../../../../lib/logger";
 
 interface UserEditPageProps {
   params: Promise<{
@@ -40,7 +41,7 @@ async function EditUserContent({ userId }: { userId: string }) {
 
       window.location.href = "/admin/usuarios";
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error updating user:", { error });
       throw error;
     }
   };

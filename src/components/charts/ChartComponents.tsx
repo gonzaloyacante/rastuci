@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
 import {
-  ChartDataPoint,
-  TimeSeriesPoint,
   ChartConfig,
+  ChartDataPoint,
   formatChartValue,
   getChartColor,
+  TimeSeriesPoint,
 } from "@/lib/charts";
+import { useMemo } from "react";
 
 interface BaseChartProps {
   data: ChartDataPoint[] | TimeSeriesPoint[];
@@ -26,7 +26,9 @@ export function LineChart({
   const chartData = data as TimeSeriesPoint[];
 
   const { minValue, maxValue, points } = useMemo(() => {
-    if (!chartData.length) return { minValue: 0, maxValue: 0, points: [] };
+    if (!chartData.length) {
+      return { minValue: 0, maxValue: 0, points: [] };
+    }
 
     const values = chartData.map((d) => d.value);
     const min = Math.min(...values);
@@ -151,7 +153,7 @@ export function BarChart({
 
   const maxValue = useMemo(
     () => Math.max(...chartData.map((d) => d.value), 1),
-    [chartData],
+    [chartData]
   );
 
   return (
@@ -233,7 +235,7 @@ export function PieChart({
     centerY: number,
     radius: number,
     startAngle: number,
-    endAngle: number,
+    endAngle: number
   ) => {
     const start = polarToCartesian(centerX, centerY, radius, endAngle);
     const end = polarToCartesian(centerX, centerY, radius, startAngle);
@@ -262,7 +264,7 @@ export function PieChart({
     centerX: number,
     centerY: number,
     radius: number,
-    angleInDegrees: number,
+    angleInDegrees: number
   ) => {
     const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
     return {
@@ -291,7 +293,7 @@ export function PieChart({
                   100,
                   80,
                   segment.startAngle,
-                  segment.startAngle + segment.angle,
+                  segment.startAngle + segment.angle
                 )}
                 fill={segment.color}
                 className="hover:opacity-80 transition-opacity cursor-pointer"

@@ -1,15 +1,16 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { toast, Toaster } from "react-hot-toast";
+import * as z from "zod";
 
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { logger } from "@/lib/logger";
 
 // Esquema para validación del formulario de login
 const loginSchema = z.object({
@@ -30,7 +31,7 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [_authError, setAuthError] = useState<string | null>(null);
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -60,22 +61,22 @@ export default function AdminLoginPage() {
 
     try {
       // Primero validar credenciales con nuestra API
-      const validationResponse = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const validationResponse = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: data.email,
-          password: data.password
-        })
+          password: data.password,
+        }),
       });
 
       const validationResult = await validationResponse.json();
 
       if (!validationResult.success) {
         // Mostrar error específico según el campo
-        if (validationResult.error.field === 'email') {
+        if (validationResult.error.field === "email") {
           toast.error(validationResult.error.message);
-        } else if (validationResult.error.field === 'password') {
+        } else if (validationResult.error.field === "password") {
           toast.error(validationResult.error.message);
         } else {
           toast.error(validationResult.error.message);
@@ -100,7 +101,7 @@ export default function AdminLoginPage() {
         router.push("/admin/dashboard");
       }
     } catch (error) {
-      console.error("Error de inicio de sesión:", error);
+      logger.error("Error de inicio de sesión", { error });
       toast.error("Ha ocurrido un error al iniciar sesión");
       setLoading(false);
     }
@@ -113,8 +114,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       // Aquí implementarías la lógica real para enviar el correo de recuperación
-      // Por ahora, solo simulamos un éxito
-      console.log("Enviando correo de recuperación a:", formData.email);
+      logger.info("Enviando correo de recuperación", { email: formData.email });
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       toast.success(
@@ -123,7 +123,7 @@ export default function AdminLoginPage() {
       setResetEmailSent(true);
       resetForgotPasswordForm();
     } catch (error) {
-      console.error("Error al enviar correo de recuperación:", error);
+      logger.error("Error al enviar correo de recuperación", { error });
       toast.error("No se pudo enviar el correo de recuperación");
     } finally {
       setLoading(false);
@@ -157,7 +157,8 @@ export default function AdminLoginPage() {
         {!showForgotPassword ? (
           <form
             onSubmit={handleLoginSubmit(onLoginSubmit)}
-            className="space-y-5">
+            className="space-y-5"
+          >
             <Input
               label="Correo electrónico"
               type="email"
@@ -181,12 +182,18 @@ export default function AdminLoginPage() {
               autoComplete="current-password"
               allowPasswordToggle
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                const caps = e.getModifierState && e.getModifierState('CapsLock');
-                if (typeof caps === 'boolean') setCapsLockOn(caps);
+                const caps =
+                  e.getModifierState && e.getModifierState("CapsLock");
+                if (typeof caps === "boolean") {
+                  setCapsLockOn(caps);
+                }
               }}
               onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                const caps = e.getModifierState && e.getModifierState('CapsLock');
-                if (typeof caps === 'boolean') setCapsLockOn(caps);
+                const caps =
+                  e.getModifierState && e.getModifierState("CapsLock");
+                if (typeof caps === "boolean") {
+                  setCapsLockOn(caps);
+                }
               }}
               aria-invalid={!!loginErrors.password}
               helpText={capsLockOn ? "Bloq Mayús está activado" : undefined}
@@ -203,39 +210,45 @@ export default function AdminLoginPage() {
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm muted cursor-pointer">
+                  className="ml-2 block text-sm muted cursor-pointer"
+                >
                   Recordarme por 30 días
                 </label>
               </div>
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
-                className="text-sm font-medium text-primary hover:text-primary/80">
+                className="text-sm font-medium text-primary hover:text-primary/80"
+              >
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
             <Button
               type="submit"
               className="w-full bg-primary hover:brightness-90"
-              disabled={loading}>
+              disabled={loading}
+            >
               {loading ? (
                 <span className="flex items-center justify-center">
                   <svg
                     className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
-                    viewBox="0 0 24 24">
+                    viewBox="0 0 24 24"
+                  >
                     <circle
                       className="opacity-25"
                       cx="12"
                       cy="12"
                       r="10"
                       stroke="currentColor"
-                      strokeWidth="4"></circle>
+                      strokeWidth="4"
+                    ></circle>
                     <path
                       className="opacity-75"
                       fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Iniciando sesión...
                 </span>
@@ -260,7 +273,8 @@ export default function AdminLoginPage() {
                     className="h-8 w-8"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -282,14 +296,16 @@ export default function AdminLoginPage() {
                   onClick={() => {
                     setShowForgotPassword(false);
                     setResetEmailSent(false);
-                  }}>
+                  }}
+                >
                   Volver al inicio de sesión
                 </Button>
               </div>
             ) : (
               <form
                 onSubmit={handleForgotPasswordSubmit(onForgotPasswordSubmit)}
-                className="space-y-5">
+                className="space-y-5"
+              >
                 <Input
                   label="Correo electrónico"
                   type="email"
@@ -306,31 +322,36 @@ export default function AdminLoginPage() {
                     variant="outline"
                     className="flex-1"
                     onClick={() => setShowForgotPassword(false)}
-                    disabled={loading}>
+                    disabled={loading}
+                  >
                     Cancelar
                   </Button>
                   <Button
                     type="submit"
                     className="flex-1 bg-primary hover:brightness-90"
-                    disabled={loading}>
+                    disabled={loading}
+                  >
                     {loading ? (
                       <span className="flex items-center justify-center">
                         <svg
                           className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
-                          viewBox="0 0 24 24">
+                          viewBox="0 0 24 24"
+                        >
                           <circle
                             className="opacity-25"
                             cx="12"
                             cy="12"
                             r="10"
                             stroke="currentColor"
-                            strokeWidth="4"></circle>
+                            strokeWidth="4"
+                          ></circle>
                           <path
                             className="opacity-75"
                             fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         Enviando...
                       </span>

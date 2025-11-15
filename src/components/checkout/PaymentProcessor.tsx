@@ -1,27 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Check, X, CreditCard, Shield, Clock, AlertCircle } from 'lucide-react';
+import { AlertCircle, Check, Clock, CreditCard, Shield, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface PaymentProcessorProps {
   isProcessing: boolean;
   onComplete: (success: boolean, paymentId?: string, error?: string) => void;
   amount: number;
-  paymentMethod?: 'saved_card' | 'new_card';
+  paymentMethod?: "saved_card" | "new_card";
   cardInfo?: {
     last4?: string;
     brand?: string;
   };
 }
 
-type ProcessingStep = 'validating' | 'authorizing' | 'processing' | 'completed' | 'failed';
+type ProcessingStep =
+  | "validating"
+  | "authorizing"
+  | "processing"
+  | "completed"
+  | "failed";
 
 const stepMessages = {
-  validating: 'Validando datos de la tarjeta...',
-  authorizing: 'Autorizando con el banco...',
-  processing: 'Procesando el pago...',
-  completed: '¡Pago procesado exitosamente!',
-  failed: 'Error en el procesamiento'
+  validating: "Validando datos de la tarjeta...",
+  authorizing: "Autorizando con el banco...",
+  processing: "Procesando el pago...",
+  completed: "¡Pago procesado exitosamente!",
+  failed: "Error en el procesamiento",
 };
 
 const stepIcons = {
@@ -29,23 +34,23 @@ const stepIcons = {
   authorizing: Shield,
   processing: Clock,
   completed: Check,
-  failed: X
+  failed: X,
 };
 
-export function PaymentProcessor({ 
-  isProcessing, 
-  onComplete, 
-  amount, 
-  paymentMethod: _paymentMethod, 
-  cardInfo 
+export function PaymentProcessor({
+  isProcessing,
+  onComplete,
+  amount,
+  paymentMethod: _paymentMethod,
+  cardInfo,
 }: PaymentProcessorProps) {
-  const [currentStep, setCurrentStep] = useState<ProcessingStep>('validating');
+  const [currentStep, setCurrentStep] = useState<ProcessingStep>("validating");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isProcessing) {
-      setCurrentStep('validating');
+      setCurrentStep("validating");
       setProgress(0);
       setError(null);
       return;
@@ -54,58 +59,63 @@ export function PaymentProcessor({
     const processPayment = async () => {
       try {
         // Paso 1: Validando
-        setCurrentStep('validating');
+        setCurrentStep("validating");
         setProgress(10);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 800));
         setProgress(25);
 
         // Paso 2: Autorizando
-        setCurrentStep('authorizing');
+        setCurrentStep("authorizing");
         setProgress(40);
-        await new Promise(resolve => setTimeout(resolve, 600));
+        await new Promise((resolve) => setTimeout(resolve, 600));
         setProgress(60);
 
         // Paso 3: Procesando
-        setCurrentStep('processing');
+        setCurrentStep("processing");
         setProgress(75);
-        await new Promise(resolve => setTimeout(resolve, 600));
+        await new Promise((resolve) => setTimeout(resolve, 600));
         setProgress(90);
 
         // Simular resultado
         const success = Math.random() > 0.15; // 85% éxito
-        
+
         if (success) {
-          setCurrentStep('completed');
+          setCurrentStep("completed");
           setProgress(100);
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
           onComplete(true, `payment_${Date.now()}`);
         } else {
           const errorTypes = {
-            'invalid_card': 'Tarjeta inválida o expirada',
-            'insufficient_funds': 'Fondos insuficientes',
-            'expired_card': 'Tarjeta vencida',
-            'security_code_invalid': 'Código de seguridad incorrecto'
+            invalid_card: "Tarjeta inválida o expirada",
+            insufficient_funds: "Fondos insuficientes",
+            expired_card: "Tarjeta vencida",
+            security_code_invalid: "Código de seguridad incorrecto",
           };
-          const errorKeys = Object.keys(errorTypes) as Array<keyof typeof errorTypes>;
-          const randomError = errorKeys[Math.floor(Math.random() * errorKeys.length)];
+          const errorKeys = Object.keys(errorTypes) as Array<
+            keyof typeof errorTypes
+          >;
+          const randomError =
+            errorKeys[Math.floor(Math.random() * errorKeys.length)];
           const errorMessage = errorTypes[randomError];
-          
-          setCurrentStep('failed');
+
+          setCurrentStep("failed");
           setError(errorMessage);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           onComplete(false, undefined, errorMessage);
         }
       } catch {
-        setCurrentStep('failed');
-        setError('Error inesperado en el procesamiento');
-        onComplete(false, undefined, 'Error inesperado');
+        setCurrentStep("failed");
+        setError("Error inesperado en el procesamiento");
+        onComplete(false, undefined, "Error inesperado");
       }
     };
 
     processPayment();
   }, [isProcessing, onComplete]);
 
-  if (!isProcessing) return null;
+  if (!isProcessing) {
+    return null;
+  }
 
   const CurrentIcon = stepIcons[currentStep];
 
@@ -114,27 +124,36 @@ export function PaymentProcessor({
       <div className="surface rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
         {/* Icono animado */}
         <div className="relative mb-6">
-          <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center transition-all duration-500 ${
-            currentStep === 'completed' 
-              ? 'surface-secondary text-success' 
-              : currentStep === 'failed'
-              ? 'surface-secondary text-error'
-              : 'bg-primary/10 text-primary'
-          }`}>
-            <CurrentIcon 
-              size={32} 
+          <div
+            className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center transition-all duration-500 ${
+              currentStep === "completed"
+                ? "surface-secondary text-success"
+                : currentStep === "failed"
+                  ? "surface-secondary text-error"
+                  : "bg-primary/10 text-primary"
+            }`}
+          >
+            <CurrentIcon
+              size={32}
               className={`transition-all duration-300 ${
-                currentStep === 'validating' || currentStep === 'authorizing' || currentStep === 'processing'
-                  ? 'animate-pulse'
-                  : ''
-              }`} 
+                currentStep === "validating" ||
+                currentStep === "authorizing" ||
+                currentStep === "processing"
+                  ? "animate-pulse"
+                  : ""
+              }`}
             />
           </div>
-          
+
           {/* Anillo de progreso */}
-          {(currentStep === 'validating' || currentStep === 'authorizing' || currentStep === 'processing') && (
+          {(currentStep === "validating" ||
+            currentStep === "authorizing" ||
+            currentStep === "processing") && (
             <div className="absolute inset-0 w-20 h-20 mx-auto">
-              <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
+              <svg
+                className="w-20 h-20 transform -rotate-90"
+                viewBox="0 0 80 80"
+              >
                 <circle
                   cx="40"
                   cy="40"
@@ -162,19 +181,23 @@ export function PaymentProcessor({
         </div>
 
         {/* Mensaje principal */}
-        <h3 className={`text-xl font-semibold mb-2 transition-colors duration-300 ${
-          currentStep === 'completed' 
-            ? 'text-success' 
-            : currentStep === 'failed'
-            ? 'text-error'
-            : 'text-primary'
-        }`}>
-          {currentStep === 'failed' && error ? error : stepMessages[currentStep]}
+        <h3
+          className={`text-xl font-semibold mb-2 transition-colors duration-300 ${
+            currentStep === "completed"
+              ? "text-success"
+              : currentStep === "failed"
+                ? "text-error"
+                : "text-primary"
+          }`}
+        >
+          {currentStep === "failed" && error
+            ? error
+            : stepMessages[currentStep]}
         </h3>
 
         {/* Información del pago */}
         <div className="text-sm muted mb-4">
-          <p className="font-medium">${amount.toLocaleString('es-AR')}</p>
+          <p className="font-medium">${amount.toLocaleString("es-AR")}</p>
           {cardInfo && (
             <p>
               {cardInfo.brand} •••• {cardInfo.last4}
@@ -183,9 +206,9 @@ export function PaymentProcessor({
         </div>
 
         {/* Barra de progreso */}
-        {currentStep !== 'completed' && currentStep !== 'failed' && (
+        {currentStep !== "completed" && currentStep !== "failed" && (
           <div className="w-full surface-secondary rounded-full h-2 mb-4">
-            <div 
+            <div
               className="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
@@ -193,7 +216,9 @@ export function PaymentProcessor({
         )}
 
         {/* Mensaje de seguridad */}
-        {(currentStep === 'validating' || currentStep === 'authorizing' || currentStep === 'processing') && (
+        {(currentStep === "validating" ||
+          currentStep === "authorizing" ||
+          currentStep === "processing") && (
           <div className="flex items-center justify-center text-xs muted mt-4">
             <Shield size={12} className="mr-1" />
             <span>Conexión segura SSL</span>
@@ -201,7 +226,7 @@ export function PaymentProcessor({
         )}
 
         {/* Mensaje de error con opción de reintentar */}
-        {currentStep === 'failed' && (
+        {currentStep === "failed" && (
           <div className="mt-4 p-3 surface-secondary rounded-lg border border-error">
             <div className="flex items-center justify-center text-error mb-2">
               <AlertCircle size={16} className="mr-2" />
@@ -214,7 +239,7 @@ export function PaymentProcessor({
         )}
 
         {/* Mensaje de éxito */}
-        {currentStep === 'completed' && (
+        {currentStep === "completed" && (
           <div className="mt-4 p-3 surface-secondary rounded-lg border border-success">
             <div className="flex items-center justify-center text-success mb-2">
               <Check size={16} className="mr-2" />

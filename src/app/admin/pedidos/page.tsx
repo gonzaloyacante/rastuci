@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { DownloadIcon } from "lucide-react";
-import toast from "react-hot-toast";
-import Link from "next/link";
 import {
-  AdminPageHeader,
   AdminEmpty,
   AdminEmptyIcons,
-  AdminLoading,
   AdminError,
+  AdminLoading,
+  AdminPageHeader,
 } from "@/components/admin";
-import { SearchBar, FilterBar } from "@/components/search";
-import { useOrders } from "@/hooks/useOrders";
-import type { Order } from "@/hooks/useOrders";
+import { FilterBar, SearchBar } from "@/components/search";
+import { useOrders, type Order } from "@/hooks/useOrders";
+import { logger } from "@/lib/logger";
+import { DownloadIcon } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,7 +60,9 @@ export default function OrdersPage() {
   };
 
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
+    if (page < 1 || page > totalPages) {
+      return;
+    }
     setCurrentPage(page);
   };
 
@@ -82,29 +84,13 @@ export default function OrdersPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
-        return (
-          <span className="badge-warning text-xs">
-            Pendiente
-          </span>
-        );
+        return <span className="badge-warning text-xs">Pendiente</span>;
       case "PROCESSED":
-        return (
-          <span className="badge-info text-xs">
-            Procesado
-          </span>
-        );
+        return <span className="badge-info text-xs">Procesado</span>;
       case "DELIVERED":
-        return (
-          <span className="badge-success text-xs">
-            Entregado
-          </span>
-        );
+        return <span className="badge-success text-xs">Entregado</span>;
       default:
-        return (
-          <span className="badge-secondary text-xs">
-            Desconocido
-          </span>
-        );
+        return <span className="badge-secondary text-xs">Desconocido</span>;
     }
   };
 
@@ -122,7 +108,10 @@ export default function OrdersPage() {
       // Datos
       orders.forEach((order: Order) => {
         const products = order.items
-          .map((item) => `${item.quantity}x ${(item.product as { name: string }).name}`)
+          .map(
+            (item) =>
+              `${item.quantity}x ${(item.product as { name: string }).name}`
+          )
           .join("; ");
         const row = [
           order.id,
@@ -133,10 +122,10 @@ export default function OrdersPage() {
           order.status === "PENDING"
             ? "Pendiente"
             : order.status === "PROCESSED"
-            ? "Procesado"
-            : order.status === "DELIVERED"
-            ? "Entregado"
-            : "Desconocido",
+              ? "Procesado"
+              : order.status === "DELIVERED"
+                ? "Entregado"
+                : "Desconocido",
           formatDate(order.createdAt),
           products,
         ]
@@ -161,7 +150,7 @@ export default function OrdersPage() {
 
       toast.success("Pedidos exportados correctamente");
     } catch (error) {
-      console.error("Error al exportar pedidos:", error);
+      logger.error("Error al exportar pedidos", { error });
       toast.error("Error al exportar pedidos");
     }
   };
@@ -242,14 +231,14 @@ export default function OrdersPage() {
             searchTerm
               ? "No se encontraron pedidos con ese criterio de búsqueda."
               : statusFilter !== "ALL"
-              ? `No hay pedidos con estado ${
-                  statusFilter === "PENDING"
-                    ? "pendiente"
-                    : statusFilter === "PROCESSED"
-                    ? "procesado"
-                    : "entregado"
-                }.`
-              : "Aún no hay pedidos registrados en el sistema."
+                ? `No hay pedidos con estado ${
+                    statusFilter === "PENDING"
+                      ? "pendiente"
+                      : statusFilter === "PROCESSED"
+                        ? "procesado"
+                        : "entregado"
+                  }.`
+                : "Aún no hay pedidos registrados en el sistema."
           }
           action={
             searchTerm || statusFilter !== "ALL"
@@ -335,7 +324,8 @@ export default function OrdersPage() {
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1 || loading}
-                className="btn-secondary disabled:opacity-50">
+                className="btn-secondary disabled:opacity-50"
+              >
                 Anterior
               </button>
               <span className="text-sm text-content-secondary">
@@ -344,7 +334,8 @@ export default function OrdersPage() {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages || loading}
-                className="btn-secondary disabled:opacity-50">
+                className="btn-secondary disabled:opacity-50"
+              >
                 Siguiente
               </button>
             </div>

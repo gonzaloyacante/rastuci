@@ -25,7 +25,12 @@ export class AppError extends Error {
   public code?: string;
   public details?: Record<string, unknown>;
 
-  constructor(type: ErrorType, message: string, code?: string, details?: Record<string, unknown>) {
+  constructor(
+    type: ErrorType,
+    message: string,
+    code?: string,
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.type = type;
     this.code = code;
@@ -45,12 +50,21 @@ export const createError = (
 };
 
 // Type guards
-function isErrorWithName(error: unknown): error is { name: string; message: string } {
-  return typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
+function isErrorWithName(
+  error: unknown
+): error is { name: string; message: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    "message" in error
+  );
 }
 
-function isErrorWithStatus(error: unknown): error is { status: number; message?: string } {
-  return typeof error === 'object' && error !== null && 'status' in error;
+function isErrorWithStatus(
+  error: unknown
+): error is { status: number; message?: string } {
+  return typeof error === "object" && error !== null && "status" in error;
 }
 
 // Función para manejar errores de API
@@ -60,7 +74,11 @@ export const handleApiError = (error: unknown): AppError => {
   }
 
   // Error de red
-  if (isErrorWithName(error) && error.name === "TypeError" && error.message.includes("fetch")) {
+  if (
+    isErrorWithName(error) &&
+    error.name === "TypeError" &&
+    error.message.includes("fetch")
+  ) {
     return createError(
       ErrorType.NETWORK,
       "Error de conexión. Verifica tu conexión a internet.",
@@ -169,17 +187,8 @@ export const useErrorHandler = () => {
 };
 
 // Función para logging de errores (para desarrollo)
-export const logError = (error: AppError, context?: string) => {
-  if (process.env.NODE_ENV === "development") {
-    console.group(`🚨 Error${context ? ` in ${context}` : ""}`);
-    console.error("Type:", error.type);
-    console.error("Message:", error.message);
-    console.error("Code:", error.code);
-    if (error.details) {
-      console.error("Details:", error.details);
-    }
-    console.groupEnd();
-  }
+export const logError = (_error: AppError, _context?: string) => {
+  // Error logging handled by logger in production
 };
 
 // Función para validar respuestas de API

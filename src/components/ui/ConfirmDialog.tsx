@@ -1,9 +1,8 @@
 "use client";
 
-import { ReactNode } from 'react';
-import React from 'react';
-import { Button } from './Button';
-import { AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, X } from "lucide-react";
+import React, { ReactNode, useCallback, useState } from "react";
+import { Button } from "./Button";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -13,38 +12,38 @@ interface ConfirmDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'default' | 'danger' | 'warning' | 'success';
+  variant?: "default" | "danger" | "warning" | "success";
   icon?: ReactNode;
   loading?: boolean;
 }
 
 const variantStyles = {
   default: {
-    bgColor: 'bg-background',
-    textColor: 'text-foreground',
-    iconColor: 'text-primary',
-    confirmVariant: 'primary' as const,
+    bgColor: "bg-background",
+    textColor: "text-foreground",
+    iconColor: "text-primary",
+    confirmVariant: "primary" as const,
     defaultIcon: Info,
   },
   danger: {
-    bgColor: 'bg-background',
-    textColor: 'text-foreground',
-    iconColor: 'text-destructive',
-    confirmVariant: 'destructive' as const,
+    bgColor: "bg-background",
+    textColor: "text-foreground",
+    iconColor: "text-destructive",
+    confirmVariant: "destructive" as const,
     defaultIcon: AlertTriangle,
   },
   warning: {
-    bgColor: 'bg-background',
-    textColor: 'text-foreground',
-    iconColor: 'text-warning',
-    confirmVariant: 'secondary' as const,
+    bgColor: "bg-background",
+    textColor: "text-foreground",
+    iconColor: "text-warning",
+    confirmVariant: "secondary" as const,
     defaultIcon: AlertTriangle,
   },
   success: {
-    bgColor: 'bg-background',
-    textColor: 'text-foreground',
-    iconColor: 'text-success',
-    confirmVariant: 'primary' as const,
+    bgColor: "bg-background",
+    textColor: "text-foreground",
+    iconColor: "text-success",
+    confirmVariant: "primary" as const,
     defaultIcon: CheckCircle,
   },
 };
@@ -55,16 +54,18 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
-  variant = 'default',
+  confirmText = "Confirmar",
+  cancelText = "Cancelar",
+  variant = "default",
   icon,
   loading = false,
 }: ConfirmDialogProps) {
   const variantConfig = variantStyles[variant];
   const IconComponent = icon || variantConfig.defaultIcon;
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const handleConfirm = () => {
     onConfirm();
@@ -73,7 +74,7 @@ export default function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-      <div 
+      <div
         className={`
           ${variantConfig.bgColor} ${variantConfig.textColor}
           rounded-lg shadow-2xl max-w-md w-full mx-auto
@@ -88,13 +89,15 @@ export default function ConfirmDialog({
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className={`flex-shrink-0 ${variantConfig.iconColor}`}>
-                {React.isValidElement(IconComponent) 
-                  ? IconComponent 
-                  : IconComponent && React.createElement(IconComponent as any, { size: 24 })
-                }
+              <div className={`shrink-0 ${variantConfig.iconColor}`}>
+                {React.isValidElement(IconComponent)
+                  ? IconComponent
+                  : IconComponent &&
+                    React.createElement(IconComponent as React.ElementType, {
+                      size: 24,
+                    })}
               </div>
-              <h3 
+              <h3
                 id="confirm-dialog-title"
                 className="text-lg font-semibold leading-6"
               >
@@ -112,7 +115,7 @@ export default function ConfirmDialog({
 
           {/* Message */}
           <div className="mb-6">
-            <p 
+            <p
               id="confirm-dialog-message"
               className="text-sm text-muted-foreground leading-relaxed"
             >
@@ -126,7 +129,7 @@ export default function ConfirmDialog({
               variant="ghost"
               onClick={onClose}
               disabled={loading}
-              className="min-w-[80px]"
+              className="min-w-20"
             >
               {cancelText}
             </Button>
@@ -134,7 +137,7 @@ export default function ConfirmDialog({
               variant={variantConfig.confirmVariant}
               onClick={handleConfirm}
               loading={loading}
-              className="min-w-[80px]"
+              className="min-w-20"
             >
               {confirmText}
             </Button>
@@ -146,31 +149,34 @@ export default function ConfirmDialog({
 }
 
 // Hook para usar el diálogo de confirmación
-import { useState, useCallback } from 'react';
-
 interface UseConfirmDialogOptions {
   title: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'default' | 'danger' | 'warning' | 'success';
+  variant?: "default" | "danger" | "warning" | "success";
 }
 
 export function useConfirmDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState<UseConfirmDialogOptions>({
-    title: '',
-    message: '',
+    title: "",
+    message: "",
   });
-  const [resolvePromise, setResolvePromise] = useState<((value: boolean) => void) | null>(null);
+  const [resolvePromise, setResolvePromise] = useState<
+    ((value: boolean) => void) | null
+  >(null);
 
-  const confirm = useCallback((options: UseConfirmDialogOptions): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setConfig(options);
-      setResolvePromise(() => resolve);
-      setIsOpen(true);
-    });
-  }, []);
+  const confirm = useCallback(
+    (options: UseConfirmDialogOptions): Promise<boolean> => {
+      return new Promise((resolve) => {
+        setConfig(options);
+        setResolvePromise(() => resolve);
+        setIsOpen(true);
+      });
+    },
+    []
+  );
 
   const handleConfirm = useCallback(() => {
     if (resolvePromise) {

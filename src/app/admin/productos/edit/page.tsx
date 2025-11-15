@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
+import { AdminError, AdminLoading } from "@/components/admin";
+import { useCategories, useProduct } from "@/hooks";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import ProductForm from "../components/ProductForm";
-import { AdminLoading, AdminError } from "@/components/admin";
-import { useProduct, useCategories } from "@/hooks";
 
 function EditProductPageContent() {
   const searchParams = useSearchParams();
@@ -12,16 +12,19 @@ function EditProductPageContent() {
   const { product, isLoading, error } = useProduct(productId || "");
   const { categories } = useCategories();
 
-  if (isLoading) return <AdminLoading />;
-  if (error) return <AdminError message={error || "Error desconocido"} />;
-  if (!product) return <AdminError message="Producto no encontrado" />;
+  if (isLoading) {
+    return <AdminLoading />;
+  }
+  if (error) {
+    return <AdminError message={error || "Error desconocido"} />;
+  }
+  if (!product) {
+    return <AdminError message="Producto no encontrado" />;
+  }
 
   return (
     <div className="min-h-screen">
-      <ProductForm
-        initialData={product}
-        categories={categories}
-      />
+      <ProductForm initialData={product} categories={categories} />
     </div>
   );
 }

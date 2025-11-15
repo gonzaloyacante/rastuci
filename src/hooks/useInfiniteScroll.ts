@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseInfiniteScrollOptions {
   threshold?: number;
@@ -19,21 +19,21 @@ export function useInfiniteScroll(
   hasMore: boolean,
   options: UseInfiniteScrollOptions = {}
 ): UseInfiniteScrollReturn {
-  const {
-    threshold = 1.0,
-    rootMargin = '100px',
-    enabled = true,
-  } = options;
+  const { threshold = 1.0, rootMargin = "100px", enabled = true } = options;
 
   const [isFetching, setIsFetching] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
 
   const lastElementRef = useCallback(
     (node: HTMLElement | null) => {
-      if (isFetching || !enabled || !hasMore) return;
-      
-      if (observer.current) observer.current.disconnect();
-      
+      if (isFetching || !enabled || !hasMore) {
+        return;
+      }
+
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+
       observer.current = new IntersectionObserver(
         (entries) => {
           if (entries[0].isIntersecting && hasMore && !isFetching) {
@@ -46,8 +46,10 @@ export function useInfiniteScroll(
           rootMargin,
         }
       );
-      
-      if (node) observer.current.observe(node);
+
+      if (node) {
+        observer.current.observe(node);
+      }
     },
     [isFetching, hasMore, enabled, fetchMore, threshold, rootMargin]
   );

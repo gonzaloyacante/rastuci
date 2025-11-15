@@ -21,7 +21,9 @@ class CacheStore {
 
   get(key: string) {
     const item = this.store.get(key);
-    if (!item) return null;
+    if (!item) {
+      return null;
+    }
 
     if (Date.now() > item.timestamp) {
       this.store.delete(key);
@@ -63,17 +65,27 @@ export const getCachedProducts = cache(
     }
 
     const params = new URLSearchParams();
-    if (filters?.category) params.set("categoryId", filters.category);
-    if (filters?.search) params.set("search", filters.search);
-    if (filters?.page) params.set("page", filters.page.toString());
-    if (filters?.sortBy) params.set("sortBy", filters.sortBy);
-    if (filters?.limit) params.set("limit", filters.limit.toString());
+    if (filters?.category) {
+      params.set("categoryId", filters.category);
+    }
+    if (filters?.search) {
+      params.set("search", filters.search);
+    }
+    if (filters?.page) {
+      params.set("page", filters.page.toString());
+    }
+    if (filters?.sortBy) {
+      params.set("sortBy", filters.sortBy);
+    }
+    if (filters?.limit) {
+      params.set("limit", filters.limit.toString());
+    }
 
     const response = await fetch(
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/products?${params}`,
       {
         next: { revalidate: CACHE_TTL.PRODUCTS / 1000 },
-      },
+      }
     );
 
     if (!response.ok) {
@@ -83,7 +95,7 @@ export const getCachedProducts = cache(
     const data = await response.json();
     cacheStore.set(cacheKey, data, CACHE_TTL.PRODUCTS);
     return data;
-  },
+  }
 );
 
 export const getCachedCategories = cache(async () => {
@@ -98,7 +110,7 @@ export const getCachedCategories = cache(async () => {
     `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/categories`,
     {
       next: { revalidate: CACHE_TTL.CATEGORIES / 1000 },
-    },
+    }
   );
 
   if (!response.ok) {
@@ -122,7 +134,7 @@ export const getCachedProduct = cache(async (id: string) => {
     `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/products/${id}`,
     {
       next: { revalidate: CACHE_TTL.PRODUCT_DETAIL / 1000 },
-    },
+    }
   );
 
   if (!response.ok) {

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -9,7 +10,7 @@ cloudinary.config({
 export default cloudinary;
 
 // Función para subir una imagen
-export async function uploadImage(file: File, folder: string = "rastuci") {
+export async function uploadImage(file: File, folder = "rastuci") {
   try {
     // Convertir File a Buffer
     const bytes = await file.arrayBuffer();
@@ -41,7 +42,7 @@ export async function uploadImage(file: File, folder: string = "rastuci") {
 
     return result;
   } catch (error) {
-    console.error("Error uploading to Cloudinary:", error);
+    logger.error("Error uploading to Cloudinary", { error });
     throw error;
   }
 }
@@ -52,7 +53,7 @@ export async function deleteImage(publicId: string) {
     const result = await cloudinary.uploader.destroy(publicId);
     return result;
   } catch (error) {
-    console.error("Error deleting from Cloudinary:", error);
+    logger.error("Error deleting from Cloudinary", { error });
     throw error;
   }
 }

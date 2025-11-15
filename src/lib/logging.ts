@@ -44,7 +44,7 @@ class Logger {
     level: LogLevel,
     message: string,
     context?: Record<string, unknown>,
-    error?: Error
+    logError?: Error
   ): LogEntry {
     return {
       timestamp: new Date(),
@@ -54,19 +54,21 @@ class Logger {
       userId: context?.userId as string | undefined,
       sessionId: context?.sessionId as string | undefined,
       requestId: context?.requestId as string | undefined,
-      stack: error?.stack,
+      stack: logError?.stack,
     };
   }
 
   private formatLogMessage(entry: LogEntry): string {
     const timestamp = entry.timestamp.toISOString();
     const level = LogLevel[entry.level];
-    const context = entry.context ? JSON.stringify(entry.context) : '';
+    const context = entry.context ? JSON.stringify(entry.context) : "";
     return `[${timestamp}] ${level}: ${entry.message} ${context}`;
   }
 
   private async flushLogs(): Promise<void> {
-    if (this.buffer.length === 0) return;
+    if (this.buffer.length === 0) {
+      return;
+    }
 
     const logs = [...this.buffer];
     this.buffer = [];
@@ -74,15 +76,15 @@ class Logger {
     if (this.config.enableRemote && this.config.remoteEndpoint) {
       try {
         await fetch(this.config.remoteEndpoint, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.config.apiKey}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.config.apiKey}`,
           },
           body: JSON.stringify({ logs }),
         });
-      } catch (error) {
-        console.error('Failed to send logs to remote endpoint:', error);
+      } catch {
+        // Silent fail for remote logging
       }
     }
   }
@@ -93,16 +95,27 @@ class Logger {
     }, 5000); // Flush every 5 seconds
   }
 
-  private log(level: LogLevel, message: string, context?: Record<string, unknown>, error?: Error): void {
-    if (!this.shouldLog(level)) return;
+  private log(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, unknown>,
+    logError?: Error
+  ): void {
+    if (!this.shouldLog(level)) {
+      return;
+    }
 
-    const entry = this.createLogEntry(level, message, context, error);
+    const entry = this.createLogEntry(level, message, context, logError);
 
     if (this.config.enableConsole) {
       const formattedMessage = this.formatLogMessage(entry);
       switch (level) {
         case LogLevel.ERROR:
-          console.error(formattedMessage, error);
+          if (logError) {
+            console.error(formattedMessage, logError);
+          } else {
+            console.error(formattedMessage);
+          }
           break;
         case LogLevel.WARN:
           console.warn(formattedMessage);
@@ -121,8 +134,12 @@ class Logger {
     }
   }
 
-  error(message: string, context?: Record<string, unknown>, error?: Error): void {
-    this.log(LogLevel.ERROR, message, context, error);
+  error(
+    message: string,
+    context?: Record<string, unknown>,
+    logError?: Error
+  ): void {
+    this.log(LogLevel.ERROR, message, context, logError);
   }
 
   warn(message: string, context?: Record<string, unknown>): void {
@@ -148,7 +165,11 @@ class Logger {
   }
 
   // Structured logging for specific events
-  logUserAction(action: string, userId: string, details?: Record<string, unknown>): void {
+  logUserAction(
+    action: string,
+    userId: string,
+    details?: Record<string, unknown>
+  ): void {
     this.info(`User action: ${action}`, {
       userId,
       action,
@@ -156,7 +177,13 @@ class Logger {
     });
   }
 
-  logAPIRequest(method: string, path: string, statusCode: number, duration: number, userId?: string): void {
+  logAPIRequest(
+    method: string,
+    path: string,
+    statusCode: number,
+    duration: number,
+    userId?: string
+  ): void {
     this.info(`API request: ${method} ${path}`, {
       method,
       path,
@@ -166,8 +193,8 @@ class Logger {
     });
   }
 
-  logError(error: Error, context?: Record<string, unknown>): void {
-    this.error(error.message, context, error);
+  logError(logError: Error, context?: Record<string, unknown>): void {
+    this.error(logError.message, context, logError);
   }
 
   logSecurityEvent(event: string, details: Record<string, unknown>): void {
@@ -187,10 +214,10 @@ class Logger {
 
 // Default logger configuration
 const defaultConfig: LoggerConfig = {
-  level: process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG,
+  level: process.env.NODE_ENV === "production" ? LogLevel.INFO : LogLevel.DEBUG,
   enableConsole: true,
   enableFile: false,
-  enableRemote: process.env.NODE_ENV === 'production',
+  enableRemote: process.env.NODE_ENV === "production",
   remoteEndpoint: process.env.LOG_ENDPOINT,
   apiKey: process.env.LOG_API_KEY,
 };
@@ -216,7 +243,7 @@ export class PerformanceMonitor {
       this.metrics.set(name, []);
     }
     this.metrics.get(name)!.push(value);
-    
+
     // Keep only last 100 measurements
     const values = this.metrics.get(name)!;
     if (values.length > 100) {
@@ -224,9 +251,13 @@ export class PerformanceMonitor {
     }
   }
 
-  static getMetrics(name: string): { avg: number; min: number; max: number; count: number } | null {
+  static getMetrics(
+    name: string
+  ): { avg: number; min: number; max: number; count: number } | null {
     const values = this.metrics.get(name);
-    if (!values || values.length === 0) return null;
+    if (!values || values.length === 0) {
+      return null;
+    }
 
     const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
     const min = Math.min(...values);
@@ -235,7 +266,10 @@ export class PerformanceMonitor {
     return { avg, min, max, count: values.length };
   }
 
-  static getAllMetrics(): Record<string, { avg: number; min: number; max: number; count: number }> {
+  static getAllMetrics(): Record<
+    string,
+    { avg: number; min: number; max: number; count: number }
+  > {
     const result: Record<string, unknown> = {};
     for (const [name] of this.metrics) {
       const metrics = this.getMetrics(name);
@@ -243,16 +277,25 @@ export class PerformanceMonitor {
         result[name] = metrics;
       }
     }
-    return result as Record<string, { avg: number; min: number; max: number; count: number }>;
+    return result as Record<
+      string,
+      { avg: number; min: number; max: number; count: number }
+    >;
   }
 }
 
 // Error tracking utilities
 export class ErrorTracker {
-  private static errors: Map<string, { count: number; lastSeen: Date; stack?: string }> = new Map();
+  private static errors: Map<
+    string,
+    { count: number; lastSeen: Date; stack?: string }
+  > = new Map();
 
-  static trackError(error: Error, context?: Record<string, unknown>): void {
-    const key = `${error.name}: ${error.message}`;
+  static trackError(
+    trackedError: Error,
+    context?: Record<string, unknown>
+  ): void {
+    const key = `${trackedError.name}: ${trackedError.message}`;
     const existing = this.errors.get(key);
 
     if (existing) {
@@ -262,16 +305,21 @@ export class ErrorTracker {
       this.errors.set(key, {
         count: 1,
         lastSeen: new Date(),
-        stack: error.stack,
+        stack: trackedError.stack,
       });
     }
 
-    logger.logError(error, context);
+    logger.logError(trackedError, context);
   }
 
-  static getErrorStats(): Array<{ error: string; count: number; lastSeen: Date; stack?: string }> {
-    return Array.from(this.errors.entries()).map(([error, stats]) => ({
-      error,
+  static getErrorStats(): Array<{
+    error: string;
+    count: number;
+    lastSeen: Date;
+    stack?: string;
+  }> {
+    return Array.from(this.errors.entries()).map(([errorKey, stats]) => ({
+      error: errorKey,
       ...stats,
     }));
   }
@@ -284,7 +332,7 @@ export class ErrorTracker {
 // Health check utilities
 export interface HealthCheck {
   name: string;
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   message?: string;
   responseTime?: number;
 }
@@ -305,11 +353,11 @@ export class HealthMonitor {
         const result = await check();
         result.responseTime = endTimer();
         results.push(result);
-      } catch (error) {
+      } catch (_error) {
         results.push({
           name,
-          status: 'unhealthy',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          status: "unhealthy",
+          message: _error instanceof Error ? _error.message : "Unknown error",
         });
       }
     }
@@ -317,48 +365,53 @@ export class HealthMonitor {
     return results;
   }
 
-  static getOverallHealth(checks: HealthCheck[]): 'healthy' | 'degraded' | 'unhealthy' {
-    if (checks.some(check => check.status === 'unhealthy')) {
-      return 'unhealthy';
+  static getOverallHealth(
+    checks: HealthCheck[]
+  ): "healthy" | "degraded" | "unhealthy" {
+    if (checks.some((check) => check.status === "unhealthy")) {
+      return "unhealthy";
     }
-    if (checks.some(check => check.status === 'degraded')) {
-      return 'degraded';
+    if (checks.some((check) => check.status === "degraded")) {
+      return "degraded";
     }
-    return 'healthy';
+    return "healthy";
   }
 }
 
 // Default health checks
-HealthMonitor.registerCheck('database', async () => {
+HealthMonitor.registerCheck("database", async () => {
   try {
     // This would check database connectivity
     // const result = await prisma.$queryRaw`SELECT 1`;
     return {
-      name: 'database',
-      status: 'healthy',
-      message: 'Database connection is healthy',
+      name: "database",
+      status: "healthy",
+      message: "Database connection is healthy",
     };
   } catch {
     return {
-      name: 'database',
-      status: 'unhealthy',
-      message: 'Database connection failed',
+      name: "database",
+      status: "unhealthy",
+      message: "Database connection failed",
     };
   }
 });
 
-HealthMonitor.registerCheck('memory', async () => {
+HealthMonitor.registerCheck("memory", async () => {
   const usage = process.memoryUsage();
   const heapUsedMB = usage.heapUsed / 1024 / 1024;
   const heapTotalMB = usage.heapTotal / 1024 / 1024;
   const usagePercent = (heapUsedMB / heapTotalMB) * 100;
 
-  let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-  if (usagePercent > 90) status = 'unhealthy';
-  else if (usagePercent > 75) status = 'degraded';
+  let status: "healthy" | "degraded" | "unhealthy" = "healthy";
+  if (usagePercent > 90) {
+    status = "unhealthy";
+  } else if (usagePercent > 75) {
+    status = "degraded";
+  }
 
   return {
-    name: 'memory',
+    name: "memory",
     status,
     message: `Memory usage: ${heapUsedMB.toFixed(2)}MB / ${heapTotalMB.toFixed(2)}MB (${usagePercent.toFixed(1)}%)`,
   };

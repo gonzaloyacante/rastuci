@@ -1,7 +1,7 @@
-import React from "react";
-import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import Image from "next/image";
+import React from "react";
 
 interface AdminCardAction {
   label: string;
@@ -62,7 +62,8 @@ export const AdminCard: React.FC<AdminCardProps> = ({
       className={`surface rounded-xl shadow ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
-      onClick={onClick}>
+      onClick={onClick}
+    >
       <CardContent className="p-6 flex flex-col gap-3">
         {/* Header con imagen opcional */}
         {image && (
@@ -84,14 +85,10 @@ export const AdminCard: React.FC<AdminCardProps> = ({
               {title}
             </h3>
             {subtitle && (
-              <p className="text-xs sm:text-sm muted truncate">
-                {subtitle}
-              </p>
+              <p className="text-xs sm:text-sm muted truncate">{subtitle}</p>
             )}
             {description && (
-              <p className="text-xs muted mt-1 line-clamp-2">
-                {description}
-              </p>
+              <p className="text-xs muted mt-1 line-clamp-2">{description}</p>
             )}
           </div>
 
@@ -99,7 +96,8 @@ export const AdminCard: React.FC<AdminCardProps> = ({
             <span
               className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ml-2 ${getBadgeClass(
                 badge.variant
-              )}`}>
+              )}`}
+            >
               {badge.label}
             </span>
           )}
@@ -113,7 +111,7 @@ export const AdminCard: React.FC<AdminCardProps> = ({
           <div className="flex items-center gap-3 flex-wrap mt-2">
             {actions.map((action, index) => (
               <Button
-                key={index}
+                key={`item-${index}`}
                 variant={action.variant || "outline"}
                 size={action.size || "sm"}
                 className={`text-xs flex items-center gap-1 ${
@@ -122,7 +120,8 @@ export const AdminCard: React.FC<AdminCardProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   action.onClick();
-                }}>
+                }}
+              >
                 {action.icon && <span>{action.icon}</span>}
                 {action.label}
               </Button>

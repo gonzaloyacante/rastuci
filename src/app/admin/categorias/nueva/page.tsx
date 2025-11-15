@@ -1,7 +1,8 @@
 "use client";
 
-import { CategoryForm } from "@/components/forms";
 import { AdminPageHeader } from "@/components/admin";
+import { CategoryForm } from "@/components/forms";
+import { logger } from "@/lib/logger";
 
 export default function CreateCategoryPage() {
   const handleSubmit = async (data: { name: string; description?: string }) => {
@@ -20,7 +21,7 @@ export default function CreateCategoryPage() {
 
       window.location.href = "/admin/categorias";
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", { error: error });
       throw error;
     }
   };

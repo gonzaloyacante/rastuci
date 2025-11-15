@@ -1,13 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
-import { useCart } from "@/context/CartContext";
-import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { CreditCard, Loader2, Shield, Lock } from "lucide-react";
-import { PaymentMethodSelector } from "./PaymentMethodSelector";
+import { useToast } from "@/components/ui/Toast";
+import { useCart } from "@/context/CartContext";
+import { logger } from "@/lib/logger";
+import { CreditCard, Loader2, Lock, Shield } from "lucide-react";
+import { useState } from "react";
 import { CustomerForm } from "./CustomerForm";
-import { ShippingCostCalculator, type ShippingOption } from "./ShippingCostCalculator";
+import { PaymentMethodSelector } from "./PaymentMethodSelector";
+import {
+  ShippingCostCalculator,
+  type ShippingOption,
+} from "./ShippingCostCalculator";
 
 interface CheckoutFormProps {
   onPaymentSuccess?: (paymentId: string) => void;
@@ -24,7 +28,9 @@ export function CheckoutForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("");
-  const [shippingOption, setShippingOption] = useState<ShippingOption | null>(null);
+  const [shippingOption, setShippingOption] = useState<ShippingOption | null>(
+    null
+  );
   const [customerData, setCustomerData] = useState({
     email: "",
     firstName: "",
@@ -114,7 +120,7 @@ export function CheckoutForm({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || "Error creando la preferencia de pago",
+          errorData.message || "Error creando la preferencia de pago"
         );
       }
 
@@ -129,8 +135,7 @@ export function CheckoutForm({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Error procesando el pago";
-      // eslint-disable-next-line no-console
-      console.error("Error en checkout:", error);
+      logger.error("Error en checkout", { error });
 
       show({
         type: "error",
@@ -243,7 +248,7 @@ export function CheckoutForm({
                   <p className="font-medium">
                     $
                     {(item.product.price * item.quantity).toLocaleString(
-                      "es-AR",
+                      "es-AR"
                     )}
                   </p>
                 </div>
@@ -259,10 +264,20 @@ export function CheckoutForm({
                 <span>Envío</span>
                 {shippingOption ? (
                   <div className="text-right">
-                    <div className={shippingOption.cost === 0 ? 'text-success font-medium' : ''}>
-                      {shippingOption.cost === 0 ? 'Gratis' : `$${shippingOption.cost.toLocaleString("es-AR")}`}
+                    <div
+                      className={
+                        shippingOption.cost === 0
+                          ? "text-success font-medium"
+                          : ""
+                      }
+                    >
+                      {shippingOption.cost === 0
+                        ? "Gratis"
+                        : `$${shippingOption.cost.toLocaleString("es-AR")}`}
                     </div>
-                    <div className="text-xs text-muted">{shippingOption.description}</div>
+                    <div className="text-xs text-muted">
+                      {shippingOption.description}
+                    </div>
                   </div>
                 ) : (
                   <span className="text-muted">Calcular envío</span>

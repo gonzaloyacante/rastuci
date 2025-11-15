@@ -1,8 +1,9 @@
-import { Suspense } from "react";
-import prisma from "@/lib/prisma";
+import { AdminLoading, AdminPageHeader } from "@/components/admin";
 import { CategoryForm } from "@/components/forms";
-import { AdminPageHeader, AdminLoading } from "@/components/admin";
+import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 interface CategoryEditPageProps {
   params: Promise<{
@@ -35,7 +36,7 @@ async function EditCategoryContent({ categoryId }: { categoryId: string }) {
 
       window.location.href = "/admin/categorias";
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", { error });
       throw error;
     }
   };

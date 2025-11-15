@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import useSWR from "swr";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Mail, Phone, MapPin, Clock, Send, Loader2 } from "lucide-react";
-import { type ContactSettings, defaultContactSettings } from "@/lib/validation/contact";
+import { Input } from "@/components/ui/Input";
+import { logger } from "@/lib/logger";
+import {
+  type ContactSettings,
+  defaultContactSettings,
+} from "@/lib/validation/contact";
+import { Clock, Loader2, Mail, MapPin, Phone, Send } from "lucide-react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
+import useSWR from "swr";
 
 interface ContactFormData {
   name: string;
@@ -35,9 +39,7 @@ const fetcher = async (url: string): Promise<ContactSettings> => {
 
 const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
   <div>
-    <h2 className="text-2xl mb-6 font-montserrat">
-      Información de Contacto
-    </h2>
+    <h2 className="text-2xl mb-6 font-montserrat">Información de Contacto</h2>
 
     <div className="space-y-6">
       <Card className="surface border-0 shadow-md">
@@ -47,11 +49,11 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
               <Mail size={24} />
             </div>
             <div>
-              <h3 className="text-lg mb-2 font-montserrat">
-                Email
-              </h3>
+              <h3 className="text-lg mb-2 font-montserrat">Email</h3>
               {contact.emails.map((em) => (
-                <p className="muted" key={`email-${em}`}>{em}</p>
+                <p className="muted" key={`email-${em}`}>
+                  {em}
+                </p>
               ))}
             </div>
           </div>
@@ -65,11 +67,11 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
               <Phone size={24} />
             </div>
             <div>
-              <h3 className="text-lg mb-2 font-montserrat">
-                Teléfono
-              </h3>
+              <h3 className="text-lg mb-2 font-montserrat">Teléfono</h3>
               {contact.phones.map((ph) => (
-                <p className="muted" key={`phone-${ph}`}>{ph}</p>
+                <p className="muted" key={`phone-${ph}`}>
+                  {ph}
+                </p>
               ))}
             </div>
           </div>
@@ -83,11 +85,11 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
               <MapPin size={24} />
             </div>
             <div>
-              <h3 className="text-lg mb-2 font-montserrat">
-                Dirección
-              </h3>
+              <h3 className="text-lg mb-2 font-montserrat">Dirección</h3>
               {contact.address.lines.map((ln) => (
-                <p className="muted" key={`address-line-${ln}`}>{ln}</p>
+                <p className="muted" key={`address-line-${ln}`}>
+                  {ln}
+                </p>
               ))}
               <p className="muted">{contact.address.cityCountry}</p>
             </div>
@@ -147,7 +149,7 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
       setFormData(initialFormData);
       toast.success("¡Mensaje enviado exitosamente!");
     } catch (error) {
-      console.error('Error al enviar formulario:', error);
+      logger.error("Error al enviar formulario:", { error: error });
       toast.error("Error al enviar el mensaje. Por favor, inténtalo de nuevo.");
     } finally {
       setIsSubmitting(false);
@@ -170,9 +172,7 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
 
   return (
     <div>
-      <h2 className="text-2xl mb-6 font-montserrat">
-        {contact.form.title}
-      </h2>
+      <h2 className="text-2xl mb-6 font-montserrat">{contact.form.title}</h2>
 
       {submitted ? (
         <Card className="surface border-0 shadow-md">
@@ -197,7 +197,8 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-sm font-semibold mb-2 font-montserrat">
+                    className="block text-sm font-semibold mb-2 font-montserrat"
+                  >
                     {contact.form.nameLabel}
                   </label>
                   <Input
@@ -215,7 +216,8 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-semibold mb-2 font-montserrat">
+                    className="block text-sm font-semibold mb-2 font-montserrat"
+                  >
                     {contact.form.emailLabel}
                   </label>
                   <Input
@@ -235,7 +237,8 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
               <div>
                 <label
                   htmlFor="phone"
-                  className="block text-sm font-semibold mb-2 font-montserrat">
+                  className="block text-sm font-semibold mb-2 font-montserrat"
+                >
                   {contact.form.phoneLabel}
                 </label>
                 <Input
@@ -253,7 +256,8 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-semibold mb-2 font-montserrat">
+                  className="block text-sm font-semibold mb-2 font-montserrat"
+                >
                   {contact.form.messageLabel}
                 </label>
                 <textarea
@@ -274,7 +278,8 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
                 variant="hero"
                 size="xl"
                 fullWidth
-                disabled={isSubmitting}>
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center space-x-2">
                     <Loader2 size={20} className="animate-spin" />
@@ -288,9 +293,7 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
                 )}
               </Button>
 
-              <p className="text-xs muted text-center">
-                * Campos obligatorios
-              </p>
+              <p className="text-xs muted text-center">* Campos obligatorios</p>
             </form>
           </CardContent>
         </Card>
@@ -307,11 +310,12 @@ const FaqSection = ({ contact }: { contact: ContactSettings }) => (
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {contact.faqs.map((faq) => (
-        <Card key={`faq-${faq.question.slice(0, 20)}`} className="surface border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <Card
+          key={`faq-${faq.question.slice(0, 20)}`}
+          className="surface border-0 shadow-md hover:shadow-lg transition-shadow duration-300"
+        >
           <CardContent className="p-6">
-            <h3 className="text-lg mb-3 font-montserrat">
-              {faq.question}
-            </h3>
+            <h3 className="text-lg mb-3 font-montserrat">{faq.question}</h3>
             <p className="muted">{faq.answer}</p>
           </CardContent>
         </Card>
@@ -321,63 +325,66 @@ const FaqSection = ({ contact }: { contact: ContactSettings }) => (
 );
 
 const SocialLinks = ({ contact }: { contact: ContactSettings }) => {
-  const hasSocialLinks = contact.social.instagram || 
-                        contact.social.facebook || 
-                        contact.social.whatsapp || 
-                        contact.social.tiktok || 
-                        contact.social.youtube;
+  const hasSocialLinks =
+    contact.social.instagram ||
+    contact.social.facebook ||
+    contact.social.whatsapp ||
+    contact.social.tiktok ||
+    contact.social.youtube;
 
-  if (!hasSocialLinks) {return null;}
+  if (!hasSocialLinks) {
+    return null;
+  }
 
   return (
     <div className="mt-12 text-center">
       <h3 className="text-xl font-semibold mb-4 font-montserrat">Seguinos</h3>
       <div className="flex items-center justify-center gap-4 text-sm muted">
         {contact.social.instagram && (
-          <a 
-            className="underline hover:text-primary transition-colors duration-200" 
-            href={contact.social.instagram} 
-            target="_blank" 
+          <a
+            className="underline hover:text-primary transition-colors duration-200"
+            href={contact.social.instagram}
+            target="_blank"
             rel="noopener noreferrer"
           >
             Instagram
           </a>
         )}
         {contact.social.facebook && (
-          <a 
-            className="underline hover:text-primary transition-colors duration-200" 
-            href={contact.social.facebook} 
-            target="_blank" 
+          <a
+            className="underline hover:text-primary transition-colors duration-200"
+            href={contact.social.facebook}
+            target="_blank"
             rel="noopener noreferrer"
           >
             Facebook
           </a>
         )}
         {contact.social.whatsapp && (
-          <a 
-            className="underline hover:text-primary transition-colors duration-200" 
-            href={contact.social.whatsapp} 
-            target="_blank" 
+          <a
+            className="underline hover:text-primary transition-colors duration-200"
+            href={contact.social.whatsapp}
+            target="_blank"
             rel="noopener noreferrer"
           >
             WhatsApp
           </a>
         )}
         {contact.social.tiktok && (
-          <a 
-            className="underline hover:text-primary transition-colors duration-200" 
-            href={contact.social.tiktok} 
-            target="_blank" 
+          <a
+            className="underline hover:text-primary transition-colors duration-200"
+            href={contact.social.tiktok}
+            target="_blank"
             rel="noopener noreferrer"
           >
             TikTok
           </a>
         )}
         {contact.social.youtube && (
-          <a 
-            className="underline hover:text-primary transition-colors duration-200" 
-            href={contact.social.youtube} 
-            target="_blank" 
+          <a
+            className="underline hover:text-primary transition-colors duration-200"
+            href={contact.social.youtube}
+            target="_blank"
             rel="noopener noreferrer"
           >
             YouTube
@@ -390,18 +397,18 @@ const SocialLinks = ({ contact }: { contact: ContactSettings }) => {
 
 export default function ContactPageClient() {
   // Usar SWR para cargar la configuración de contacto
-  const { data: contact, error, isLoading } = useSWR<ContactSettings>(
-    '/api/contact',
-    fetcher,
-    {
-      fallbackData: defaultContactSettings,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    }
-  );
+  const {
+    data: contact,
+    error,
+    isLoading,
+  } = useSWR<ContactSettings>("/api/contact", fetcher, {
+    fallbackData: defaultContactSettings,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
 
   if (error) {
-    console.error('Error loading contact settings:', error);
+    logger.error("Error loading contact settings:", { error: error });
   }
 
   const contactData = contact || defaultContactSettings;

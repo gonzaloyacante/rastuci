@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useCart, ShippingOption } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
+import { ShippingOption, useCart } from "@/context/CartContext";
+import { logger } from "@/lib/logger";
+import { formatPriceARS } from "@/utils/formatters";
 import {
   Check,
-  Truck,
-  MapPin,
-  ChevronRight,
   ChevronLeft,
+  ChevronRight,
   Loader2,
+  MapPin,
+  Truck,
 } from "lucide-react";
-import { formatPriceARS } from "@/utils/formatters";
+import { useCallback, useEffect, useState } from "react";
 
 interface ShippingStepProps {
   onNext: () => void;
@@ -35,7 +36,9 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
   // Calcular costos de envío según código postal usando Correo Argentino
   const calculateShippingByPostalCode = useCallback(async () => {
-    if (!customerInfo?.postalCode) return;
+    if (!customerInfo?.postalCode) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -76,9 +79,9 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         setSelectedShippingOption(options[0]);
       }
     } catch (error) {
-      console.error("Error al calcular el costo de envío:", error);
+      logger.error("Error al calcular el costo de envío:", { error: error });
       setError(
-        "No se pudo calcular el costo de envío. Por favor verifica el código postal.",
+        "No se pudo calcular el costo de envío. Por favor verifica el código postal."
       );
       // Usar opciones predeterminadas en caso de error
       setShippingOptions(availableShippingOptions);
@@ -100,7 +103,11 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
       // Si no hay código postal, usar opciones predeterminadas
       setShippingOptions(availableShippingOptions);
     }
-  }, [customerInfo?.postalCode, calculateShippingByPostalCode, availableShippingOptions]);
+  }, [
+    customerInfo?.postalCode,
+    calculateShippingByPostalCode,
+    availableShippingOptions,
+  ]);
 
   // Manejar selección de opción de envío
   const handleSelectOption = (option: ShippingOption) => {

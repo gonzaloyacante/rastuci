@@ -1,22 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Download, X, Smartphone, Monitor, Zap, Wifi, Bell } from 'lucide-react';
-import { usePWA } from '@/lib/pwa';
-import { useTranslation } from '@/lib/i18n';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import {
+  Download,
+  X,
+  Smartphone,
+  Monitor,
+  Zap,
+  Wifi,
+  Bell,
+} from "lucide-react";
+import { usePWA } from "@/lib/pwa";
+import { useTranslation } from "@/lib/i18n";
 
 interface PWAInstallPromptProps {
   className?: string;
-  variant?: 'banner' | 'modal' | 'card';
+  variant?: "banner" | "modal" | "card";
   autoShow?: boolean;
   showFeatures?: boolean;
 }
 
 export function PWAInstallPrompt({
-  className = '',
-  variant = 'banner',
+  className = "",
+  variant = "banner",
   autoShow = true,
   showFeatures = true,
 }: PWAInstallPromptProps) {
@@ -36,7 +44,7 @@ export function PWAInstallPrompt({
 
   useEffect(() => {
     // Check if user has dismissed before
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
+    const dismissed = localStorage.getItem("pwa-install-dismissed");
     if (dismissed) {
       setIsDismissed(true);
     }
@@ -52,7 +60,7 @@ export function PWAInstallPrompt({
   const handleDismiss = () => {
     setIsVisible(false);
     setIsDismissed(true);
-    localStorage.setItem('pwa-install-dismissed', 'true');
+    localStorage.setItem("pwa-install-dismissed", "true");
   };
 
   if (!canInstall || isDismissed || !isVisible) {
@@ -62,29 +70,31 @@ export function PWAInstallPrompt({
   const features = [
     {
       icon: <Zap className="w-5 h-5" />,
-      title: t('pwa.features.faster'),
-      description: t('pwa.features.fasterDesc'),
+      title: t("pwa.features.faster"),
+      description: t("pwa.features.fasterDesc"),
     },
     {
       icon: <Wifi className="w-5 h-5" />,
-      title: t('pwa.features.offline'),
-      description: t('pwa.features.offlineDesc'),
+      title: t("pwa.features.offline"),
+      description: t("pwa.features.offlineDesc"),
     },
     {
       icon: <Bell className="w-5 h-5" />,
-      title: t('pwa.features.notifications'),
-      description: t('pwa.features.notificationsDesc'),
+      title: t("pwa.features.notifications"),
+      description: t("pwa.features.notificationsDesc"),
     },
     {
       icon: <Smartphone className="w-5 h-5" />,
-      title: t('pwa.features.native'),
-      description: t('pwa.features.nativeDesc'),
+      title: t("pwa.features.native"),
+      description: t("pwa.features.nativeDesc"),
     },
   ];
 
-  if (variant === 'banner') {
+  if (variant === "banner") {
     return (
-      <div className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ${isVisible ? 'translate-y-0' : 'translate-y-full'} ${className}`}>
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ${isVisible ? "translate-y-0" : "translate-y-full"} ${className}`}
+      >
         <div className="surface border-t border-muted p-4 shadow-lg">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -92,18 +102,23 @@ export function PWAInstallPrompt({
                 <Download className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold">{t('pwa.install.title')}</h3>
-                <p className="text-sm text-muted">{t('pwa.install.subtitle')}</p>
+                <h3 className="font-semibold">{t("pwa.install.title")}</h3>
+                <p className="text-sm text-muted">
+                  {t("pwa.install.subtitle")}
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleDismiss}>
-                {t('common.cancel')}
+                {t("common.cancel")}
               </Button>
-              <Button onClick={handleInstall} className="flex items-center gap-2">
+              <Button
+                onClick={handleInstall}
+                className="flex items-center gap-2"
+              >
                 <Download className="w-4 h-4" />
-                {t('pwa.install.button')}
+                {t("pwa.install.button")}
               </Button>
             </div>
           </div>
@@ -112,9 +127,11 @@ export function PWAInstallPrompt({
     );
   }
 
-  if (variant === 'modal') {
+  if (variant === "modal") {
     return (
-      <div className={`fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 ${className}`}>
+      <div
+        className={`fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 ${className}`}
+      >
         <div className="surface rounded-lg max-w-md w-full p-6 relative">
           <Button
             variant="ghost"
@@ -129,14 +146,17 @@ export function PWAInstallPrompt({
             <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
               <Download className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-xl font-bold mb-2">{t('pwa.install.title')}</h2>
-            <p className="text-muted">{t('pwa.install.description')}</p>
+            <h2 className="text-xl font-bold mb-2">{t("pwa.install.title")}</h2>
+            <p className="text-muted">{t("pwa.install.description")}</p>
           </div>
 
           {showFeatures && (
             <div className="space-y-3 mb-6">
               {features.map((feature) => (
-                <div key={`feature-${feature.title}`} className="flex items-start gap-3">
+                <div
+                  key={`feature-${feature.title}`}
+                  className="flex items-start gap-3"
+                >
                   <div className="text-primary mt-0.5">{feature.icon}</div>
                   <div>
                     <h4 className="font-medium text-sm">{feature.title}</h4>
@@ -148,12 +168,19 @@ export function PWAInstallPrompt({
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={handleDismiss} className="flex-1">
-              {t('common.cancel')}
+            <Button
+              variant="outline"
+              onClick={handleDismiss}
+              className="flex-1"
+            >
+              {t("common.cancel")}
             </Button>
-            <Button onClick={handleInstall} className="flex-1 flex items-center justify-center gap-2">
+            <Button
+              onClick={handleInstall}
+              className="flex-1 flex items-center justify-center gap-2"
+            >
               <Download className="w-4 h-4" />
-              {t('pwa.install.button')}
+              {t("pwa.install.button")}
             </Button>
           </div>
         </div>
@@ -170,17 +197,20 @@ export function PWAInstallPrompt({
             <Download className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="font-bold">{t('pwa.install.title')}</h3>
-            <p className="text-sm text-muted">{t('pwa.install.subtitle')}</p>
+            <h3 className="font-bold">{t("pwa.install.title")}</h3>
+            <p className="text-sm text-muted">{t("pwa.install.subtitle")}</p>
           </div>
         </div>
-        <Badge variant="secondary">{t('pwa.install.recommended')}</Badge>
+        <Badge variant="secondary">{t("pwa.install.recommended")}</Badge>
       </div>
 
       {showFeatures && (
         <div className="grid grid-cols-2 gap-3 mb-6">
           {features.map((feature) => (
-            <div key={`compact-feature-${feature.title}`} className="flex items-center gap-2">
+            <div
+              key={`compact-feature-${feature.title}`}
+              className="flex items-center gap-2"
+            >
               <div className="text-primary">{feature.icon}</div>
               <span className="text-sm font-medium">{feature.title}</span>
             </div>
@@ -190,11 +220,14 @@ export function PWAInstallPrompt({
 
       <div className="flex gap-3">
         <Button variant="outline" onClick={handleDismiss} className="flex-1">
-          {t('common.cancel')}
+          {t("common.cancel")}
         </Button>
-        <Button onClick={handleInstall} className="flex-1 flex items-center justify-center gap-2">
+        <Button
+          onClick={handleInstall}
+          className="flex-1 flex items-center justify-center gap-2"
+        >
           <Download className="w-4 h-4" />
-          {t('pwa.install.button')}
+          {t("pwa.install.button")}
         </Button>
       </div>
     </div>
@@ -202,11 +235,13 @@ export function PWAInstallPrompt({
 }
 
 // Compact install button for header/navigation
-export function PWAInstallButton({ className = '' }: { className?: string }) {
+export function PWAInstallButton({ className = "" }: { className?: string }) {
   const { canInstall, promptInstall } = usePWA();
   const { t } = useTranslation();
 
-  if (!canInstall) return null;
+  if (!canInstall) {
+    return null;
+  }
 
   return (
     <Button
@@ -216,13 +251,13 @@ export function PWAInstallButton({ className = '' }: { className?: string }) {
       className={`flex items-center gap-2 ${className}`}
     >
       <Download className="w-4 h-4" />
-      <span className="hidden sm:inline">{t('pwa.install.button')}</span>
+      <span className="hidden sm:inline">{t("pwa.install.button")}</span>
     </Button>
   );
 }
 
 // Install status indicator
-export function PWAStatus({ className = '' }: { className?: string }) {
+export function PWAStatus({ className = "" }: { className?: string }) {
   const { isInstalled, canInstall } = usePWA();
   const { t } = useTranslation();
 
@@ -230,7 +265,7 @@ export function PWAStatus({ className = '' }: { className?: string }) {
     return (
       <Badge variant="success" className={className}>
         <Monitor className="w-3 h-3 mr-1" />
-        {t('pwa.status.installed')}
+        {t("pwa.status.installed")}
       </Badge>
     );
   }
@@ -239,7 +274,7 @@ export function PWAStatus({ className = '' }: { className?: string }) {
     return (
       <Badge variant="secondary" className={className}>
         <Download className="w-3 h-3 mr-1" />
-        {t('pwa.status.installable')}
+        {t("pwa.status.installable")}
       </Badge>
     );
   }

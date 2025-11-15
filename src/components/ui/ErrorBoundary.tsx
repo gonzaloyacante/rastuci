@@ -1,7 +1,8 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Button } from './Button';
+import { logger } from "@/lib/logger";
+import { Component, ErrorInfo, ReactNode } from "react";
+import { Button } from "./Button";
 
 interface Props {
   children: ReactNode;
@@ -24,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    logger.error("Error caught by boundary", { error, errorInfo });
   }
 
   handleReset = () => {
@@ -57,7 +58,8 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <h2 className="text-xl font-semibold mb-2">Algo salió mal</h2>
             <p className="muted mb-6">
-              Ha ocurrido un error inesperado. Por favor, intenta recargar la página.
+              Ha ocurrido un error inesperado. Por favor, intenta recargar la
+              página.
             </p>
             <div className="space-y-3">
               <Button onClick={this.handleReset} variant="primary">
@@ -70,7 +72,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Recargar página
               </Button>
             </div>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-sm muted">
                   Detalles del error (desarrollo)

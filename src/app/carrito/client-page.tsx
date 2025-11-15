@@ -1,16 +1,17 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
+import EmptyState from "@/components/ui/EmptyState";
+import QuantityButton from "@/components/ui/QuantityButton";
+import { useCart } from "@/context/CartContext";
+import { formatPriceARS } from "@/utils/formatters";
+import { AlertCircle, Check, ShoppingCart, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useMemo, useCallback } from "react";
-import { useCart } from "@/context/CartContext";
-import { Button } from "@/components/ui/Button";
-import { Trash2, ShoppingCart, AlertCircle, X, Check } from "lucide-react";
-import QuantityButton from "@/components/ui/QuantityButton";
-import EmptyState from "@/components/ui/EmptyState";
-import { formatPriceARS } from "@/utils/formatters";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { logger } from "@/lib/logger";
 
 interface CartItem {
   product: {
@@ -25,13 +26,18 @@ interface CartItem {
   color: string;
 }
 
-const CartItemComponent = ({ 
-  item, 
-  onUpdateQuantity, 
-  onRemove 
-}: { 
+const CartItemComponent = ({
+  item,
+  onUpdateQuantity,
+  onRemove,
+}: {
   item: CartItem;
-  onUpdateQuantity: (id: string, size: string, color: string, quantity: number) => void;
+  onUpdateQuantity: (
+    id: string,
+    size: string,
+    color: string,
+    quantity: number
+  ) => void;
   onRemove: (id: string, size: string, color: string) => void;
 }) => {
   const [isRemoving, setIsRemoving] = useState(false);
@@ -39,38 +45,41 @@ const CartItemComponent = ({
 
   const handleRemove = useCallback(async () => {
     setIsRemoving(true);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 300)); // Animación
+      await new Promise((resolve) => setTimeout(resolve, 300)); // Animación
       onRemove(item.product.id, item.size, item.color);
       toast.success(`${item.product.name} eliminado del carrito`);
     } catch (error) {
-      console.error('Error removing item:', error);
-      toast.error('Error al eliminar el producto');
+      logger.error("Error removing item:", { error: error });
+      toast.error("Error al eliminar el producto");
       setIsRemoving(false);
     }
   }, [item, onRemove]);
 
-  const handleQuantityChange = useCallback((newQuantity: number) => {
-    if (newQuantity < 1) {
-      handleRemove();
-      return;
-    }
-    
-    if (newQuantity > item.product.stock) {
-      toast.error(`Stock máximo disponible: ${item.product.stock}`);
-      return;
-    }
+  const handleQuantityChange = useCallback(
+    (newQuantity: number) => {
+      if (newQuantity < 1) {
+        handleRemove();
+        return;
+      }
 
-    setPendingQuantity(newQuantity);
-    
-    // Debounce la actualización
-    const timeoutId = setTimeout(() => {
-      onUpdateQuantity(item.product.id, item.size, item.color, newQuantity);
-    }, 300);
+      if (newQuantity > item.product.stock) {
+        toast.error(`Stock máximo disponible: ${item.product.stock}`);
+        return;
+      }
 
-    return () => clearTimeout(timeoutId);
-  }, [item, onUpdateQuantity, handleRemove]);
+      setPendingQuantity(newQuantity);
+
+      // Debounce la actualización
+      const timeoutId = setTimeout(() => {
+        onUpdateQuantity(item.product.id, item.size, item.color, newQuantity);
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    },
+    [item, onUpdateQuantity, handleRemove]
+  );
 
   const imageUrl = useMemo(() => {
     return Array.isArray(item.product.images) && item.product.images.length > 0
@@ -82,11 +91,11 @@ const CartItemComponent = ({
   const itemTotal = item.product.price * (pendingQuantity || item.quantity);
 
   return (
-    <div 
+    <div
       className={`
         flex items-center surface p-4 rounded-lg shadow-sm border border-muted
         transition-all duration-300 hover:shadow-md
-        ${isRemoving ? 'opacity-50 scale-95' : ''}
+        ${isRemoving ? "opacity-50 scale-95" : ""}
       `}
     >
       <div className="relative w-24 h-24 mr-4 flex-shrink-0">
@@ -105,7 +114,10 @@ const CartItemComponent = ({
       </div>
 
       <div className="flex-grow min-w-0">
-        <h3 className="font-semibold text-lg truncate" title={item.product.name}>
+        <h3
+          className="font-semibold text-lg truncate"
+          title={item.product.name}
+        >
           {item.product.name}
         </h3>
         <div className="flex flex-wrap gap-2 text-sm muted mb-2">
@@ -117,9 +129,7 @@ const CartItemComponent = ({
           {formatPriceARS(item.product.price)}
         </p>
         {pendingQuantity > 1 && (
-          <p className="text-sm muted">
-            Total: {formatPriceARS(itemTotal)}
-          </p>
+          <p className="text-sm muted">Total: {formatPriceARS(itemTotal)}</p>
         )}
         {isLowStock && (
           <p className="text-xs text-warning flex items-center gap-1 mt-1">
@@ -136,26 +146,30 @@ const CartItemComponent = ({
           onDecrement={() => handleQuantityChange(pendingQuantity - 1)}
           disabled={isRemoving}
         />
-        
+
         <button
           onClick={handleRemove}
           disabled={isRemoving}
           className="text-error hover:text-error transition-colors p-2 rounded-full hover:bg-error/10 disabled:opacity-50"
           title="Eliminar producto"
         >
-          {isRemoving ? <X size={20} className="animate-spin" /> : <Trash2 size={20} />}
+          {isRemoving ? (
+            <X size={20} className="animate-spin" />
+          ) : (
+            <Trash2 size={20} />
+          )}
         </button>
       </div>
     </div>
   );
 };
 
-const OrderSummary = ({ 
-  total, 
-  itemCount, 
+const OrderSummary = ({
+  total,
+  itemCount,
   onCheckout,
-  isLoading 
-}: { 
+  isLoading,
+}: {
   total: number;
   itemCount: number;
   onCheckout: () => void;
@@ -169,7 +183,7 @@ const OrderSummary = ({
       <h2 className="text-2xl font-bold mb-6 font-montserrat">
         Resumen del Pedido
       </h2>
-      
+
       <div className="space-y-3 mb-6">
         <div className="flex justify-between text-sm">
           <span>Productos ({itemCount})</span>
@@ -226,56 +240,56 @@ export default function CartPageClient() {
   const total = useMemo(() => getCartTotal(), [getCartTotal]);
   const itemCount = useMemo(() => getItemCount(), [getItemCount]);
 
-  const handleUpdateQuantity = useCallback((
-    id: string, 
-    size: string, 
-    color: string, 
-    quantity: number
-  ) => {
-    updateQuantity(id, size, color, quantity);
-  }, [updateQuantity]);
+  const handleUpdateQuantity = useCallback(
+    (id: string, size: string, color: string, quantity: number) => {
+      updateQuantity(id, size, color, quantity);
+    },
+    [updateQuantity]
+  );
 
-  const handleRemoveItem = useCallback((
-    id: string, 
-    size: string, 
-    color: string
-  ) => {
-    removeFromCart(id, size, color);
-  }, [removeFromCart]);
+  const handleRemoveItem = useCallback(
+    (id: string, size: string, color: string) => {
+      removeFromCart(id, size, color);
+    },
+    [removeFromCart]
+  );
 
   const handleCheckout = useCallback(async () => {
     setIsCheckingOut(true);
-    
+
     try {
       // Validar stock antes del checkout
-      const outOfStockItems = cartItems.filter(item => item.quantity > item.product.stock);
-      
+      const outOfStockItems = cartItems.filter(
+        (item) => item.quantity > item.product.stock
+      );
+
       if (outOfStockItems.length > 0) {
-        toast.error('Algunos productos no tienen stock suficiente');
+        toast.error("Algunos productos no tienen stock suficiente");
         setIsCheckingOut(false);
         return;
       }
 
       router.push("/checkout");
     } catch (error) {
-      console.error('Error during checkout:', error);
-      toast.error('Error al proceder al checkout');
+      logger.error("Error during checkout:", { error: error });
+      toast.error("Error al proceder al checkout");
       setIsCheckingOut(false);
     }
   }, [cartItems, router]);
 
   const handleClearCart = useCallback(async () => {
     const confirmed = await confirm({
-      title: 'Vaciar carrito',
-      message: '¿Estás seguro de que quieres vaciar el carrito? Esta acción no se puede deshacer.',
-      confirmText: 'Sí, vaciar',
-      cancelText: 'Cancelar',
-      variant: 'danger',
+      title: "Vaciar carrito",
+      message:
+        "¿Estás seguro de que quieres vaciar el carrito? Esta acción no se puede deshacer.",
+      confirmText: "Sí, vaciar",
+      cancelText: "Cancelar",
+      variant: "danger",
     });
 
     if (confirmed) {
       clearCart();
-      toast.success('Carrito vaciado');
+      toast.success("Carrito vaciado");
     }
   }, [clearCart, confirm]);
 
@@ -286,7 +300,7 @@ export default function CartPageClient() {
           <h1 className="text-3xl font-bold text-primary mb-8 font-montserrat">
             Mi Carrito (0 items)
           </h1>
-          
+
           <EmptyState
             icon={ShoppingCart}
             title="Tu carrito está vacío"
@@ -306,10 +320,10 @@ export default function CartPageClient() {
           <h1 className="text-3xl font-bold text-primary font-montserrat">
             Mi Carrito ({itemCount} {itemCount === 1 ? "item" : "items"})
           </h1>
-          
+
           {cartItems.length > 0 && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={handleClearCart}
               className="text-muted hover:text-error"
             >

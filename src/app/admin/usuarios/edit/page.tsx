@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { AdminError, AdminLoading, AdminPageHeader } from "@/components/admin";
 import { UserForm } from "@/components/forms";
-import { AdminPageHeader, AdminLoading, AdminError } from "@/components/admin";
-import { useUsers, User } from "@/hooks/useUsers";
+import { User, useUsers } from "@/hooks/useUsers";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 function EditUserPageContent() {
   const searchParams = useSearchParams();
@@ -43,7 +43,9 @@ function EditUserPageContent() {
     isAdmin: boolean;
     password?: string;
   }) => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     const success = await updateUser(userId, data);
     if (success) {
@@ -55,9 +57,15 @@ function EditUserPageContent() {
     router.push("/admin/usuarios");
   };
 
-  if (loading) return <AdminLoading />;
-  if (error) return <AdminError message={error} />;
-  if (!user) return <AdminError message="Usuario no encontrado" />;
+  if (loading) {
+    return <AdminLoading />;
+  }
+  if (error) {
+    return <AdminError message={error} />;
+  }
+  if (!user) {
+    return <AdminError message="Usuario no encontrado" />;
+  }
 
   return (
     <div className="space-y-6">

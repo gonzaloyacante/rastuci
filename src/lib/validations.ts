@@ -130,7 +130,9 @@ export const validateReview = (data: unknown) => {
 export const getValidationErrors = (
   result: z.SafeParseReturnType<unknown, unknown>
 ) => {
-  if (result.success) return {};
+  if (result.success) {
+    return {};
+  }
 
   const errors: Record<string, string> = {};
   result.error.errors.forEach((error) => {

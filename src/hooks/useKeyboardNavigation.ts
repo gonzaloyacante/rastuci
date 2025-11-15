@@ -14,7 +14,9 @@ export function useKeyboardNavigation({
   onEscape,
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -39,17 +41,23 @@ interface UseFocusTrapProps {
 
 export function useFocusTrap({ isActive, containerRef }: UseFocusTrapProps) {
   useEffect(() => {
-    if (!isActive || !containerRef.current) return;
+    if (!isActive || !containerRef.current) {
+      return;
+    }
 
     const container = containerRef.current;
     const focusableElements = container.querySelectorAll(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+    const lastElement = focusableElements[
+      focusableElements.length - 1
+    ] as HTMLElement;
 
     const handleTabKey = (event: KeyboardEvent) => {
-      if (event.key !== "Tab") return;
+      if (event.key !== "Tab") {
+        return;
+      }
 
       if (event.shiftKey) {
         if (document.activeElement === firstElement) {

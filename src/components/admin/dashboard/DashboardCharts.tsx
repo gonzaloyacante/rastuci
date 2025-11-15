@@ -1,17 +1,17 @@
-import { ProductCategoryData, MonthlySales } from "@/hooks/useDashboard";
+import { AdminEmpty } from "@/components/admin";
+import { MonthlySales, ProductCategoryData } from "@/hooks/useDashboard";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
   ArcElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
 } from "chart.js";
-import { Line, Doughnut } from "react-chartjs-2";
-import { AdminEmpty } from "@/components/admin";
+import { Doughnut, Line } from "react-chartjs-2";
 
 // Registrar componentes de Chart.js
 ChartJS.register(
@@ -56,7 +56,9 @@ export const DashboardCharts = ({
     className: string,
     prop: "color" | "backgroundColor" | "borderLeftColor" = "color"
   ) => {
-    if (typeof window === "undefined") return undefined as unknown as string;
+    if (typeof window === "undefined") {
+      return undefined as unknown as string;
+    }
     const el = document.createElement("span");
     el.className = className;
     el.style.position = "absolute";
@@ -65,7 +67,7 @@ export const DashboardCharts = ({
     document.body.appendChild(el);
     const color = getComputedStyle(el)[prop as keyof CSSStyleDeclaration];
     document.body.removeChild(el);
-    return String(color || '');
+    return String(color || "");
   };
 
   // Semantic colors
@@ -111,7 +113,7 @@ export const DashboardCharts = ({
           getStyleColor("text-warning-600") || getStyleColor("text-warning"),
           getStyleColor("text-success") || getStyleColor("text-primary"),
           getStyleColor("text-error") || getStyleColor("text-primary"),
-          getStyleColor("muted")
+          getStyleColor("muted"),
         ],
         borderWidth: 1,
       },
@@ -155,26 +157,28 @@ export const DashboardCharts = ({
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
       <div className="surface rounded-xl shadow p-6">
-        <h3 className="text-lg font-bold text-primary mb-4">Ventas Mensuales</h3>
+        <h3 className="text-lg font-bold text-primary mb-4">
+          Ventas Mensuales
+        </h3>
         <div className="h-64">
           {!loading && monthlySales.length > 0 ? (
-              <Line data={salesChartData} options={chartOptions} />
+            <Line data={salesChartData} options={chartOptions} />
           ) : (
             <AdminEmpty title="Sin datos para mostrar" />
-            )}
-          </div>
+          )}
+        </div>
       </div>
       <div className="surface rounded-xl shadow p-6">
         <h3 className="text-lg font-bold text-primary mb-4">
-            Productos por Categoría
+          Productos por Categoría
         </h3>
         <div className="h-64">
           {!loading && categoryData.length > 0 ? (
-              <Doughnut data={categoryChartData} options={chartOptions} />
+            <Doughnut data={categoryChartData} options={chartOptions} />
           ) : (
             <AdminEmpty title="Sin datos para mostrar" />
-            )}
-          </div>
+          )}
+        </div>
       </div>
     </div>
   );

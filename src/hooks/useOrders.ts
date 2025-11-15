@@ -36,14 +36,22 @@ export const useOrders = (initialParams?: UseOrdersParams) => {
       const finalParams = { ...lastParams, ...params };
       setLastParams(finalParams);
       const urlParams = new URLSearchParams();
-      if (finalParams.page)
+      if (finalParams.page) {
         urlParams.append("page", finalParams.page.toString());
-      if (finalParams.limit)
+      }
+      if (finalParams.limit) {
         urlParams.append("limit", finalParams.limit.toString());
-      if (finalParams.status) urlParams.append("status", finalParams.status);
-      if (finalParams.search) urlParams.append("search", finalParams.search);
+      }
+      if (finalParams.status) {
+        urlParams.append("status", finalParams.status);
+      }
+      if (finalParams.search) {
+        urlParams.append("search", finalParams.search);
+      }
       const response = await fetch(`/api/orders?${urlParams}`);
-      if (!response.ok) throw new Error("Error al cargar los pedidos");
+      if (!response.ok) {
+        throw new Error("Error al cargar los pedidos");
+      }
       const data = await response.json();
       if (data.success) {
         setOrders(data.data.data);

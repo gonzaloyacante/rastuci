@@ -1,14 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 import { useEffect } from "react";
+import { logger } from "../../../lib/logger";
 
 export default function CatchAllNotFound() {
   useEffect(() => {
     // Verificamos si estamos en modo de desarrollo
     if (process.env.NODE_ENV === "development") {
-      console.log("404 Admin - Ruta no encontrada");
+      logger.info("404 Admin - Ruta no encontrada", {
+        path: window.location.pathname,
+      });
     }
   }, []);
 
@@ -29,9 +32,7 @@ export default function CatchAllNotFound() {
         </div>
         <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
           <Link href="/admin/dashboard">
-            <Button variant="primary">
-              Volver al Dashboard
-            </Button>
+            <Button variant="primary">Volver al Dashboard</Button>
           </Link>
           <Link href="/">
             <Button variant="outline">Ver tienda</Button>

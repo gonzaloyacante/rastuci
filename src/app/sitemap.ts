@@ -1,10 +1,13 @@
 import type { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export const revalidate = 3600; // 1 hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || "https://rastuci.com").replace(/\/$/, "");
+  const base = (
+    process.env.NEXT_PUBLIC_SITE_URL || "https://rastuci.com"
+  ).replace(/\/$/, "");
 
   // Static routes with SEO priorities
   const staticEntries: MetadataRoute.Sitemap = [
@@ -16,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${base}/productos`,
-      changeFrequency: "daily", 
+      changeFrequency: "daily",
       priority: 0.9,
       lastModified: new Date(),
     },
@@ -34,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${base}/checkout`,
-      changeFrequency: "always", 
+      changeFrequency: "always",
       priority: 0.1,
       lastModified: new Date(),
     },
@@ -58,13 +61,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let categoryEntries: MetadataRoute.Sitemap = [];
   try {
     const categories = await prisma.category.findMany({
-      select: { 
-        id: true, 
+      select: {
+        id: true,
         name: true,
         updatedAt: true,
         _count: {
-          select: { products: true }
-        }
+          select: { products: true },
+        },
       },
       orderBy: { updatedAt: "desc" },
       take: 100, // Limit for performance
@@ -75,58 +78,63 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     categoryEntries = categories
-      .filter((c: typeof categories[0]) => c._count.products > 0) // Only categories with products
-      .map((category: typeof categories[0]) => ({
+      .filter((c: (typeof categories)[0]) => c._count.products > 0) // Only categories with products
+      .map((category: (typeof categories)[0]) => ({
         url: `${base}/productos?categoryId=${category.id}`,
         lastModified: category.updatedAt,
         changeFrequency: "weekly" as const,
-        priority: Math.min(0.8, 0.5 + (category._count.products * 0.01)), // Dynamic priority based on product count
+        priority: Math.min(0.8, 0.5 + category._count.products * 0.01), // Dynamic priority based on product count
       }));
   } catch (error) {
-    console.warn('Error fetching categories for sitemap:', error);
+    logger.warn("Error fetching categories for sitemap:", { data: error });
   }
 
   // Products - optimized query with stock filter
   let productEntries: MetadataRoute.Sitemap = [];
   try {
     const products = await prisma.product.findMany({
-      select: { 
-        id: true, 
+      select: {
+        id: true,
         name: true,
         updatedAt: true,
         stock: true,
-        onSale: true
+        onSale: true,
       },
       where: {
-        stock: { gt: 0 } // Only products in stock
+        stock: { gt: 0 }, // Only products in stock
       },
       orderBy: { updatedAt: "desc" },
       take: 2000, // Increased for better coverage
     });
 
-    if (products.length > 0 && (!latestUpdatedAt || products[0].updatedAt > latestUpdatedAt)) {
+    if (
+      products.length > 0 &&
+      (!latestUpdatedAt || products[0].updatedAt > latestUpdatedAt)
+    ) {
       latestUpdatedAt = products[0].updatedAt;
     }
 
-    productEntries = products.map((product: typeof products[0]) => ({
+    productEntries = products.map((product: (typeof products)[0]) => ({
       url: `${base}/productos/${product.id}`,
       lastModified: product.updatedAt,
-      changeFrequency: product.onSale ? "daily" as const : "weekly" as const,
+      changeFrequency: product.onSale
+        ? ("daily" as const)
+        : ("weekly" as const),
       priority: product.onSale ? 0.8 : 0.7, // Higher priority for sale items
     }));
   } catch (error) {
-    console.warn('Error fetching products for sitemap:', error);
+    logger.warn("Error fetching products for sitemap:", { data: error });
   }
 
   // Update homepage lastModified with latest content change
   if (latestUpdatedAt) {
-    staticEntries[0] = { 
-      ...staticEntries[0], 
-      lastModified: latestUpdatedAt 
+    staticEntries[0] = {
+      ...staticEntries[0],
+      lastModified: latestUpdatedAt,
     };
-    staticEntries[1] = { 
-      ...staticEntries[1], 
-      lastModified: latestUpdatedAt 
+    staticEntries[1] = {
+      ...staticEntries[1],
+      lastModified: latestUpdatedAt,
     };
   }
 

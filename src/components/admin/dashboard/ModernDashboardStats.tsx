@@ -33,7 +33,15 @@ interface DashboardStatsProps {
   };
 }
 
-const StatCard = ({ title, value, change, changeType, icon: Icon, trend, color = "primary" }: StatCardProps) => {
+const StatCard = ({
+  title,
+  value,
+  change,
+  changeType,
+  icon: Icon,
+  trend,
+  color = "primary",
+}: StatCardProps) => {
   const colorClasses = {
     primary: "bg-gradient-to-br from-blue-500 to-blue-600 text-white",
     success: "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white",
@@ -53,19 +61,23 @@ const StatCard = ({ title, value, change, changeType, icon: Icon, trend, color =
     >
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-transparent opacity-50"></div>
-      
+
       {/* Content */}
       <div className="relative p-6">
         <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-xl ${colorClasses[color]} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+          <div
+            className={`p-3 rounded-xl ${colorClasses[color]} shadow-lg group-hover:scale-110 transition-transform duration-300`}
+          >
             <Icon className="w-6 h-6" />
           </div>
-          
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-            changeType === "positive" 
-              ? "bg-emerald-50 text-emerald-700" 
-              : "bg-red-50 text-red-700"
-          }`}>
+
+          <div
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+              changeType === "positive"
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-red-50 text-red-700"
+            }`}
+          >
             <ArrowIcon className="w-3 h-3" />
             <span>{Math.abs(change)}%</span>
           </div>
@@ -81,11 +93,17 @@ const StatCard = ({ title, value, change, changeType, icon: Icon, trend, color =
           <div className="mt-4 flex items-end justify-between h-8">
             {trend.map((point, index) => (
               <div
-                key={index}
-                className={`w-1 rounded-full ${colorClasses[color].includes('blue') ? 'bg-blue-200' : 
-                  colorClasses[color].includes('emerald') ? 'bg-emerald-200' :
-                  colorClasses[color].includes('amber') ? 'bg-amber-200' :
-                  colorClasses[color].includes('red') ? 'bg-red-200' : 'bg-cyan-200'
+                key={`item-${index}`}
+                className={`w-1 rounded-full ${
+                  colorClasses[color].includes("blue")
+                    ? "bg-blue-200"
+                    : colorClasses[color].includes("emerald")
+                      ? "bg-emerald-200"
+                      : colorClasses[color].includes("amber")
+                        ? "bg-amber-200"
+                        : colorClasses[color].includes("red")
+                          ? "bg-red-200"
+                          : "bg-cyan-200"
                 }`}
                 style={{ height: `${(point / Math.max(...trend)) * 100}%` }}
               />
@@ -143,10 +161,7 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       {statsData.map((stat) => (
-        <StatCard
-          key={stat.title}
-          {...stat}
-        />
+        <StatCard key={stat.title} {...stat} />
       ))}
     </div>
   );

@@ -17,7 +17,8 @@ export const DashboardStats = ({ stats, loading }: DashboardStatsProps) => {
           className="h-3 w-3 sm:h-4 sm:w-4 text-primary-500"
           fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24">
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -36,7 +37,8 @@ export const DashboardStats = ({ stats, loading }: DashboardStatsProps) => {
           className="h-3 w-3 sm:h-4 sm:w-4 text-primary-400"
           fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24">
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -55,7 +57,8 @@ export const DashboardStats = ({ stats, loading }: DashboardStatsProps) => {
           className="h-3 w-3 sm:h-4 sm:w-4 text-primary-300"
           fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24">
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -75,7 +78,8 @@ export const DashboardStats = ({ stats, loading }: DashboardStatsProps) => {
           className="h-3 w-3 sm:h-4 sm:w-4 text-primary-200"
           fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24">
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -91,7 +95,10 @@ export const DashboardStats = ({ stats, loading }: DashboardStatsProps) => {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
       {statCards.map((card, index) => (
-        <Card key={index} className="hover:shadow-lg transition-shadow">
+        <Card
+          key={`item-${index}`}
+          className="hover:shadow-lg transition-shadow"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
             <CardTitle className="text-xs sm:text-sm font-medium">
               {card.title}

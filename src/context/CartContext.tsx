@@ -1,15 +1,16 @@
 "use client";
 
-import React, {
+import { logger } from "@/lib/logger";
+import { Product } from "@/types";
+import {
   createContext,
-  useContext,
-  useState,
   ReactNode,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
+  useState,
 } from "react";
-import { Product } from "@/types";
 
 // Interfaces para el checkout
 export interface ShippingOption {
@@ -129,7 +130,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Fallback seguro para usar los hooks fuera de un provider (no lanzar)
 const _defaultCart: CartContextType = {
   cartItems: [],
-  addToCart: (() => {}) as unknown as CartContextType['addToCart'],
+  addToCart: (() => {}) as unknown as CartContextType["addToCart"],
   removeFromCart: () => {},
   updateQuantity: () => {},
   clearCart: () => {},
@@ -168,7 +169,7 @@ const _defaultCart: CartContextType = {
     billing: null,
   }),
 
-  placeOrder: async () => ({ success: false, error: 'CartProvider missing' }),
+  placeOrder: async () => ({ success: false, error: "CartProvider missing" }),
 };
 
 export const useCart = () => {
@@ -209,29 +210,32 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
   // Opciones disponibles (estáticas por ahora)
-  const availableShippingOptions: ShippingOption[] = useMemo(() => [
-    {
-      id: "pickup",
-      name: "Retiro en tienda",
-      description: "Retira tu pedido en nuestra tienda física",
-      price: 0,
-      estimatedDays: "Inmediato",
-    },
-    {
-      id: "standard",
-      name: "Envío estándar",
-      description: "Envío a domicilio en 3-5 días hábiles",
-      price: 1500,
-      estimatedDays: "3-5 días",
-    },
-    {
-      id: "express",
-      name: "Envío express",
-      description: "Envío prioritario en 24-48 horas",
-      price: 2500,
-      estimatedDays: "24-48 horas",
-    },
-  ], []);
+  const availableShippingOptions: ShippingOption[] = useMemo(
+    () => [
+      {
+        id: "pickup",
+        name: "Retiro en tienda",
+        description: "Retira tu pedido en nuestra tienda física",
+        price: 0,
+        estimatedDays: "Inmediato",
+      },
+      {
+        id: "standard",
+        name: "Envío estándar",
+        description: "Envío a domicilio en 3-5 días hábiles",
+        price: 1500,
+        estimatedDays: "3-5 días",
+      },
+      {
+        id: "express",
+        name: "Envío express",
+        description: "Envío prioritario en 24-48 horas",
+        price: 2500,
+        estimatedDays: "24-48 horas",
+      },
+    ],
+    []
+  );
 
   const availablePaymentMethods: PaymentMethod[] = [
     {
@@ -244,8 +248,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     {
       id: "cash",
       name: "Efectivo - Retiro en Local",
-      icon: "dollar-sign", 
-      description: "Retiro en nuestro local de Buenos Aires - Sin costo de envío",
+      icon: "dollar-sign",
+      description:
+        "Retiro en nuestro local de Buenos Aires - Sin costo de envío",
       requiresShipping: false,
     },
   ];
@@ -269,20 +274,17 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   ];
 
   // Funciones del carrito memoizadas
-  const addToCart = (useCallback(
-    (
-      product: Product,
-      a: number | string,
-      b?: string,
-      c?: string
-    ) => {
+  const addToCart = useCallback(
+    (product: Product, a: number | string, b?: string, c?: string) => {
       // Normalizar argumentos: permitir (product, quantity, size, color) o (product, size, color)
       const isQuantityForm = typeof a === "number";
       const quantity = isQuantityForm ? (a as number) : 1;
       const size = isQuantityForm ? (b as string) : (a as string);
       const color = isQuantityForm ? (c as string) : (b as string);
 
-      if (!size) return; // evitar inserciones inválidas (color puede ser opcional)
+      if (!size) {
+        return;
+      } // evitar inserciones inválidas (color puede ser opcional)
 
       setCartItems((prevItems) => {
         const existingItemIndex = prevItems.findIndex(
@@ -307,7 +309,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       });
     },
     []
-  ) as unknown) as CartContextType["addToCart"];
+  ) as unknown as CartContextType["addToCart"];
 
   const removeFromCart = useCallback(
     (productId: string, size: string, color: string) => {
@@ -378,7 +380,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   }, []);
 
   useEffect(() => {
-    if (!hasLoadedStorage) return;
+    if (!hasLoadedStorage) {
+      return;
+    }
     try {
       localStorage.setItem("rastuci-cart", JSON.stringify(cartItems));
     } catch {
@@ -567,7 +571,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
       // Preparar datos para el API
       const orderData = {
-        items: cartItems.map(item => ({
+        items: cartItems.map((item) => ({
           productId: item.product.id,
           name: item.product.name,
           quantity: item.quantity,
@@ -587,10 +591,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       };
 
       // Llamar al API de checkout
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
+      const response = await fetch("/api/checkout", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(orderData),
       });
@@ -628,15 +632,21 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         success: true,
         orderId: result.orderId,
       };
-
     } catch (error) {
-      console.error("Error al procesar pedido:", error);
+      logger.error("Error al procesar pedido", { error });
       return {
         success: false,
         error: "Error de conexión. Por favor intenta nuevamente.",
       };
     }
-  }, [customerInfo, selectedPaymentMethod, selectedShippingOption, cartItems, getOrderSummary, clearCart]);
+  }, [
+    customerInfo,
+    selectedPaymentMethod,
+    selectedShippingOption,
+    cartItems,
+    getOrderSummary,
+    clearCart,
+  ]);
 
   const value: CartContextType = {
     // Carrito y productos

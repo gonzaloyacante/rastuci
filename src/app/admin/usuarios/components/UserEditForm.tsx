@@ -1,20 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { logger } from "@/lib/logger";
 import {
-  User,
-  Mail,
-  Lock,
-  Shield,
-  Save,
   ArrowLeft,
   Eye,
   EyeOff,
+  Lock,
+  Mail,
+  Save,
+  Shield,
+  User,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 // Interface local para tipado
@@ -47,7 +48,9 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const validatePassword = (password: string) => {
-    if (!formData.changePassword) return true;
+    if (!formData.changePassword) {
+      return true;
+    }
     const requirements = [
       password.length >= 8,
       /[A-Z]/.test(password),
@@ -110,7 +113,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
         toast.error(data.error || "Error al actualizar el usuario");
       }
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", { error: error });
       toast.error("Error al actualizar el usuario");
     } finally {
       setLoading(false);
@@ -141,9 +144,7 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
             <User className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-primary">Editar Usuario</h1>
-          <p className="muted mt-2">
-            Modifica la información del usuario
-          </p>
+          <p className="muted mt-2">Modifica la información del usuario</p>
         </div>
 
         <Card className="shadow-lg border border-muted">
@@ -159,7 +160,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium muted mb-2">
+                  className="block text-sm font-medium muted mb-2"
+                >
                   <User className="h-4 w-4 inline mr-2" />
                   Nombre Completo
                 </label>
@@ -178,7 +180,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium muted mb-2">
+                  className="block text-sm font-medium muted mb-2"
+                >
                   <Mail className="h-4 w-4 inline mr-2" />
                   Correo Electrónico
                 </label>
@@ -205,7 +208,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                 />
                 <label
                   htmlFor="changePassword"
-                  className="ml-3 block text-sm text-primary">
+                  className="ml-3 block text-sm text-primary"
+                >
                   <Lock className="h-4 w-4 inline mr-1" />
                   Cambiar contraseña
                 </label>
@@ -217,7 +221,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                   <div>
                     <label
                       htmlFor="password"
-                      className="block text-sm font-medium muted mb-2">
+                      className="block text-sm font-medium muted mb-2"
+                    >
                       <Lock className="h-4 w-4 inline mr-2" />
                       Nueva Contraseña
                     </label>
@@ -235,7 +240,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                       <button
                         type="button"
                         className="absolute inset-y-0 right-0 flex items-center pr-3"
-                        onClick={() => setShowPassword(!showPassword)}>
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4 muted hover:text-primary" />
                         ) : (
@@ -248,7 +254,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                   <div>
                     <label
                       htmlFor="confirmPassword"
-                      className="block text-sm font-medium muted mb-2">
+                      className="block text-sm font-medium muted mb-2"
+                    >
                       <Lock className="h-4 w-4 inline mr-2" />
                       Confirmar Nueva Contraseña
                     </label>
@@ -272,7 +279,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                         className="absolute inset-y-0 right-0 flex items-center pr-3"
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
-                        }>
+                        }
+                      >
                         {showConfirmPassword ? (
                           <EyeOff className="h-4 w-4 muted hover:text-primary" />
                         ) : (
@@ -296,7 +304,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                 />
                 <label
                   htmlFor="isAdmin"
-                  className="ml-3 block text-sm text-primary">
+                  className="ml-3 block text-sm text-primary"
+                >
                   <Shield className="h-4 w-4 inline mr-1" />
                   Permisos de administrador
                 </label>
@@ -307,7 +316,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                 <Button
                   type="submit"
                   disabled={loading || !isPasswordValid || !passwordsMatch}
-                  className="flex-1 btn-hero">
+                  className="flex-1 btn-hero"
+                >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -324,7 +334,8 @@ export default function UserEditForm({ initialData }: UserEditFormProps) {
                   type="button"
                   variant="outline"
                   onClick={() => router.push("/admin/usuarios")}
-                  className="flex-1 flex items-center justify-center gap-2">
+                  className="flex-1 flex items-center justify-center gap-2"
+                >
                   <ArrowLeft className="h-4 w-4" />
                   Volver
                 </Button>

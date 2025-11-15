@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
 import {
   CustomerInfoStep,
+  OrderConfirmation,
   PaymentStep,
   ReviewStep,
-  OrderConfirmation,
 } from "@/app/checkout/components";
-import ShippingStep from "@/app/checkout/components/ShippingStep";
 import CheckoutStepper from "@/app/checkout/components/CheckoutStepper";
+import ShippingStep from "@/app/checkout/components/ShippingStep";
+import { useCart } from "@/context/CartContext";
+import { logger } from "@/lib/logger";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 export enum CheckoutStep {
@@ -23,16 +24,18 @@ export enum CheckoutStep {
 
 const stepLabels = [
   "Datos Personales",
-  "Método de Pago", 
+  "Método de Pago",
   "Envío",
   "Revisar",
-  "Confirmación"
+  "Confirmación",
 ];
 
 export default function CheckoutPageClient() {
   const router = useRouter();
   const { cartItems, placeOrder, getCartTotal } = useCart();
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>(CheckoutStep.CUSTOMER_INFO);
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>(
+    CheckoutStep.CUSTOMER_INFO
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -55,25 +58,28 @@ export default function CheckoutPageClient() {
 
   const goToNextStep = useCallback(() => {
     if (currentStep < CheckoutStep.CONFIRMATION) {
-      setCurrentStep(prev => (prev + 1) as CheckoutStep);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setCurrentStep((prev) => (prev + 1) as CheckoutStep);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentStep]);
 
   const goToPreviousStep = useCallback(() => {
     if (currentStep > CheckoutStep.CUSTOMER_INFO) {
-      setCurrentStep(prev => (prev - 1) as CheckoutStep);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setCurrentStep((prev) => (prev - 1) as CheckoutStep);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentStep]);
 
-  const goToStep = useCallback((step: CheckoutStep) => {
-    // Only allow going to previous steps
-    if (step < currentStep) {
-      setCurrentStep(step);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [currentStep]);
+  const goToStep = useCallback(
+    (step: CheckoutStep) => {
+      // Only allow going to previous steps
+      if (step < currentStep) {
+        setCurrentStep(step);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
+    [currentStep]
+  );
 
   const handlePlaceOrder = async () => {
     setIsSubmitting(true);
@@ -81,7 +87,7 @@ export default function CheckoutPageClient() {
 
     try {
       const result = await placeOrder();
-      
+
       if (result.success) {
         // Handle MercadoPago redirect
         if (result.paymentMethod === "mercadopago" && result.redirectUrl) {
@@ -97,15 +103,19 @@ export default function CheckoutPageClient() {
           toast.success("¡Pedido realizado con éxito!");
         }
       } else {
-        const errorMessage = result.error || "Ocurrió un error al procesar tu pedido.";
+        const errorMessage =
+          result.error || "Ocurrió un error al procesar tu pedido.";
         setError(errorMessage);
         toast.error(errorMessage);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error inesperado. Por favor intenta nuevamente.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Ocurrió un error inesperado. Por favor intenta nuevamente.";
       setError(errorMessage);
       toast.error(errorMessage);
-      console.error("Error al finalizar la compra:", error);
+      logger.error("Error al finalizar la compra:", { error: error });
     } finally {
       setIsSubmitting(false);
     }
@@ -161,19 +171,17 @@ export default function CheckoutPageClient() {
           <div className="text-right">
             <p className="text-sm muted">Total a pagar</p>
             <p className="text-2xl font-bold text-primary">
-              {total.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
+              {total.toLocaleString("es-AR", {
+                style: "currency",
+                currency: "ARS",
+              })}
             </p>
           </div>
         </div>
 
-        <CheckoutStepper 
-          currentStep={currentStep} 
-          onStepClick={goToStep}
-        />
+        <CheckoutStepper currentStep={currentStep} onStepClick={goToStep} />
 
-        <div className="my-8">
-          {renderCurrentStep()}
-        </div>
+        <div className="my-8">{renderCurrentStep()}</div>
 
         {/* Progress indicator */}
         {currentStep !== CheckoutStep.CONFIRMATION && (
@@ -182,9 +190,11 @@ export default function CheckoutPageClient() {
               Paso {currentStep + 1} de {stepLabels.length}
             </p>
             <div className="w-full bg-surface-secondary rounded-full h-2 mt-2">
-              <div 
+              <div
                 className="bg-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentStep + 1) / stepLabels.length) * 100}%` }}
+                style={{
+                  width: `${((currentStep + 1) / stepLabels.length) * 100}%`,
+                }}
               ></div>
             </div>
           </div>
@@ -195,13 +205,21 @@ export default function CheckoutPageClient() {
           <div className="flex justify-center items-center gap-6 text-sm muted">
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clipRule="evenodd"
+                />
               </svg>
               <span>Pago 100% seguro</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
               <span>Envío gratis</span>
             </div>

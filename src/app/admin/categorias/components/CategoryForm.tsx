@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import axios from "axios";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import * as z from "zod";
+import { logger } from "@/lib/logger";
 
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Tag, FileText, Save, ArrowLeft, Upload } from "lucide-react";
+import { Input } from "@/components/ui/Input";
 import { uploadImage } from "@/lib/cloudinary";
+import { ArrowLeft, FileText, Save, Tag, Upload } from "lucide-react";
 
 // Interface local para tipado
 interface Category {
@@ -74,7 +75,9 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     setUploading(true);
     try {
       const result = await uploadImage(file);
@@ -102,7 +105,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
       router.refresh();
       toast.success(toastMessage);
     } catch (error) {
-      console.error("Error al guardar la categoría:", error);
+      logger.error("Error al guardar la categoría:", { error: error });
       toast.error("Error al procesar la solicitud. Intenta nuevamente.");
     } finally {
       setLoading(false);
@@ -138,7 +141,8 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium muted mb-2">
+                  className="block text-sm font-medium muted mb-2"
+                >
                   <Tag className="h-4 w-4 inline mr-2" />
                   Nombre de la Categoría
                 </label>
@@ -163,7 +167,8 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
               <div>
                 <label
                   htmlFor="description"
-                  className="block text-sm font-medium muted mb-2">
+                  className="block text-sm font-medium muted mb-2"
+                >
                   <FileText className="h-4 w-4 inline mr-2" />
                   Descripción (Opcional)
                 </label>
@@ -199,9 +204,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                   disabled={loading || uploading}
                 />
                 {uploading && (
-                  <div className="mt-2 text-xs muted">
-                    Subiendo imagen...
-                  </div>
+                  <div className="mt-2 text-xs muted">Subiendo imagen...</div>
                 )}
                 {imagePreview && (
                   <div className="mt-3">
@@ -227,7 +230,8 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-primary hover:brightness-90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                  className="flex-1 bg-primary hover:brightness-90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -244,7 +248,8 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
                   type="button"
                   variant="outline"
                   onClick={() => router.push("/admin/categorias")}
-                  className="flex-1 border-muted hover:surface text-primary font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
+                  className="flex-1 border-muted hover:surface text-primary font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
                   <ArrowLeft className="h-4 w-4" />
                   Volver
                 </Button>

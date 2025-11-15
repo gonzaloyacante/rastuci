@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 // Interfaces para tipado
 interface OrderWithItems {
@@ -116,7 +117,9 @@ export async function GET() {
       monthlySales: [], // Simplificado por ahora
     });
   } catch (error) {
-    console.error("Error al obtener estadísticas del dashboard:", error);
+    logger.error("Error al obtener estadísticas del dashboard:", {
+      error: error,
+    });
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

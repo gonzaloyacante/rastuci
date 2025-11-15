@@ -14,10 +14,14 @@ function getIp(req: NextRequest): string {
   const xff = req.headers.get("x-forwarded-for");
   if (xff) {
     const ip = xff.split(",")[0]?.trim();
-    if (ip) return ip;
+    if (ip) {
+      return ip;
+    }
   }
   const realIp = req.headers.get("x-real-ip");
-  if (realIp) return realIp;
+  if (realIp) {
+    return realIp;
+  }
   // NextRequest does not expose req.ip; fall back to user-agent as last resort
   return "unknown";
 }
@@ -55,9 +59,18 @@ export function checkRateLimit(
 
   if (bucket.count < limit) {
     bucket.count += 1;
-    return { ok: true, remaining: Math.max(0, limit - bucket.count), key: compositeKey };
+    return {
+      ok: true,
+      remaining: Math.max(0, limit - bucket.count),
+      key: compositeKey,
+    };
   }
 
   // Limited
-  return { ok: false, remaining: 0, retryAfterMs: Math.max(1, bucket.resetAt - now), key: compositeKey };
+  return {
+    ok: false,
+    remaining: 0,
+    retryAfterMs: Math.max(1, bucket.resetAt - now),
+    key: compositeKey,
+  };
 }

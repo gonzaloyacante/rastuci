@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
 import prisma from "@/lib/prisma";
-import { ApiResponse, Product } from "@/types";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ProductCreateSchema } from "@/lib/validation/product";
-import { normalizeApiError } from "@/lib/errors";
+import { ApiResponse, Product } from "@/types";
+import { NextRequest, NextResponse } from "next/server";
+import { logger } from "../../../../lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -16,7 +17,7 @@ interface RouteParams {
 // GET /api/products/[id] - Obtener producto por ID
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams,
+  { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
     const rl = checkRateLimit(request, {
@@ -55,21 +56,26 @@ export async function GET(
 
     return ok(responseProduct);
   } catch (error) {
-    console.error("Error fetching product:", error);
+    logger.error("Error fetching product:", { error });
     const e = normalizeApiError(
       error,
       "INTERNAL_ERROR",
       "Error al obtener el producto",
-      500,
+      500
     );
-    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
+    return fail(
+      e.code as ApiErrorCode,
+      e.message,
+      e.status,
+      e.details as Record<string, unknown>
+    );
   }
 }
 
 // PUT /api/products/[id] - Actualizar producto
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams,
+  { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
     const rl = checkRateLimit(request, {
@@ -144,21 +150,26 @@ export async function PUT(
 
     return ok(updatedProduct, "Producto actualizado exitosamente");
   } catch (error) {
-    console.error("Error updating product:", error);
+    logger.error("Error updating product:", { error });
     const e = normalizeApiError(
       error,
       "INTERNAL_ERROR",
       "Error al actualizar el producto",
-      500,
+      500
     );
-    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
+    return fail(
+      e.code as ApiErrorCode,
+      e.message,
+      e.status,
+      e.details as Record<string, unknown>
+    );
   }
 }
 
 // DELETE /api/products/[id] - Eliminar producto
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams,
+  { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
     const rl = checkRateLimit(request, {
@@ -179,7 +190,7 @@ export async function DELETE(
       return fail(
         "BAD_REQUEST",
         "No se puede eliminar el producto porque está incluido en pedidos existentes",
-        400,
+        400
       );
     }
 
@@ -189,13 +200,18 @@ export async function DELETE(
 
     return ok(null, "Producto eliminado exitosamente");
   } catch (error) {
-    console.error("Error deleting product:", error);
+    logger.error("Error deleting product:", { error });
     const e = normalizeApiError(
       error,
       "INTERNAL_ERROR",
       "Error al eliminar el producto",
-      500,
+      500
     );
-    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
+    return fail(
+      e.code as ApiErrorCode,
+      e.message,
+      e.status,
+      e.details as Record<string, unknown>
+    );
   }
 }

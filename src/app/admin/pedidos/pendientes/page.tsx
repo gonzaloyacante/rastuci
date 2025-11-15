@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { logger } from "@/lib/logger";
 
 interface OrderItem {
   id: string;
@@ -44,7 +45,7 @@ export default function PendingOrdersPage() {
         const data = await response.json();
         setOrders(data.data?.data || []);
       } catch (error) {
-        console.error("Error al cargar pedidos:", error);
+        logger.error("Error al cargar pedidos:", { error: error });
       } finally {
         setLoading(false);
       }
@@ -70,7 +71,7 @@ export default function PendingOrdersPage() {
       // Actualizar la lista local de pedidos
       setOrders(orders.filter((order) => order.id !== orderId));
     } catch (error) {
-      console.error("Error al actualizar pedido:", error);
+      logger.error("Error al actualizar pedido:", { error: error });
     }
   };
 
@@ -130,14 +131,13 @@ export default function PendingOrdersPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium muted">
-                      Productos
-                    </h3>
+                    <h3 className="text-sm font-medium muted">Productos</h3>
                     <ul className="mt-2 space-y-2">
                       {order.items.map((item) => (
                         <li
                           key={item.id}
-                          className="flex justify-between text-sm">
+                          className="flex justify-between text-sm"
+                        >
                           <span>
                             {item.quantity} x {item.product.name}
                           </span>
@@ -159,12 +159,14 @@ export default function PendingOrdersPage() {
                   <div className="flex space-x-3 pt-3">
                     <Button
                       className="flex-1"
-                      onClick={() => updateOrderStatus(order.id, "PROCESSED")}>
+                      onClick={() => updateOrderStatus(order.id, "PROCESSED")}
+                    >
                       Marcar como Procesado
                     </Button>
                     <Link
                       href={`/admin/pedidos/${order.id}`}
-                      className="flex-1">
+                      className="flex-1"
+                    >
                       <Button variant="outline" className="w-full">
                         Ver Detalles
                       </Button>
@@ -183,7 +185,8 @@ export default function PendingOrdersPage() {
               className="h-12 w-12 muted mb-4"
               fill="none"
               viewBox="0 0 24 24"
-              stroke="currentColor">
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

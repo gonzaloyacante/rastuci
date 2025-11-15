@@ -1,5 +1,5 @@
-import React from "react";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
@@ -124,9 +124,18 @@ export const LoadingGrid: React.FC<LoadingGridProps> = ({
   };
 
   return (
-    <div className={cn("grid gap-6", gridCols[columns as keyof typeof gridCols], className)}>
+    <div
+      className={cn(
+        "grid gap-6",
+        gridCols[columns as keyof typeof gridCols],
+        className
+      )}
+    >
       {[...Array(count)].map((_, i) => (
-        <div key={`loading-grid-${count}-${i}`} className={cn("space-y-3", itemClassName)}>
+        <div
+          key={`loading-grid-${count}-${i}`}
+          className={cn("space-y-3", itemClassName)}
+        >
           <LoadingSkeleton className="aspect-square w-full" rounded="lg" />
           <LoadingSkeleton className="h-4 w-3/4" />
           <LoadingSkeleton className="h-4 w-1/2" />

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { logger } from "@/lib/logger";
 import { Product } from "@/types";
+import { useCallback, useEffect, useState } from "react";
 
 interface UseProductsOptions {
   category?: string;
@@ -40,8 +41,12 @@ export function useProducts(options: UseProductsOptions = {}) {
   const buildApiUrl = useCallback(() => {
     const params = new URLSearchParams();
 
-    if (category) params.append("categoryId", category);
-    if (search) params.append("search", search);
+    if (category) {
+      params.append("categoryId", category);
+    }
+    if (search) {
+      params.append("search", search);
+    }
     params.append("page", page.toString());
     params.append("limit", limit.toString());
     params.append("sortBy", sortBy);
@@ -55,7 +60,9 @@ export function useProducts(options: UseProductsOptions = {}) {
   }, []);
 
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted) {
+      return;
+    }
 
     const fetchProducts = async () => {
       setIsLoading(true);
@@ -81,7 +88,16 @@ export function useProducts(options: UseProductsOptions = {}) {
     };
 
     fetchProducts();
-  }, [isMounted, category, search, page, limit, sortBy, sortOrder, buildApiUrl]);
+  }, [
+    isMounted,
+    category,
+    search,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+    buildApiUrl,
+  ]);
 
   return {
     products: data?.data?.data || [],
@@ -167,7 +183,9 @@ export function useRelatedProducts(productId: string, categoryId?: string) {
 
       try {
         const params = new URLSearchParams();
-        if (categoryId) params.append("categoryId", categoryId);
+        if (categoryId) {
+          params.append("categoryId", categoryId);
+        }
         params.append("limit", "4");
 
         const response = await fetch(`/api/products?${params.toString()}`);
@@ -181,7 +199,7 @@ export function useRelatedProducts(productId: string, categoryId?: string) {
           setProducts(filteredProducts.slice(0, 3));
         }
       } catch (err) {
-        console.error("Error fetching related products:", err);
+        logger.error("Error fetching related products", { error: err });
       } finally {
         setIsLoading(false);
       }

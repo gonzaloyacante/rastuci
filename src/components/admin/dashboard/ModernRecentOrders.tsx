@@ -99,7 +99,10 @@ export default function ModernRecentOrders({
           <div className="h-6 surface-secondary rounded w-1/3 mb-4"></div>
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 surface-secondary rounded-xl"></div>
+              <div
+                key={`item-${i}`}
+                className="h-16 surface-secondary rounded-xl"
+              ></div>
             ))}
           </div>
         </div>
@@ -143,7 +146,9 @@ export default function ModernRecentOrders({
           className="space-y-3"
         >
           {orders.slice(0, 5).map((order) => {
-            const status = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.pending;
+            const status =
+              statusConfig[order.status as keyof typeof statusConfig] ||
+              statusConfig.pending;
             const StatusIcon = status.icon;
 
             return (
@@ -209,7 +214,7 @@ export default function ModernRecentOrders({
                             })}
                           </span>
                         </div>
-                        
+
                         {/* Hover Arrow */}
                         <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="w-6 h-6 rounded-full surface-secondary flex items-center justify-center ml-auto">

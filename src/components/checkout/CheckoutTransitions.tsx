@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CheckoutTransitionsProps {
   children: React.ReactNode;
   currentStep: number;
-  direction?: 'forward' | 'backward';
+  direction?: "forward" | "backward";
 }
 
 // Variantes de animación para los pasos
@@ -14,7 +14,7 @@ const stepVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 300 : -300,
     opacity: 0,
-    scale: 0.95
+    scale: 0.95,
   }),
   center: {
     x: 0,
@@ -22,8 +22,8 @@ const stepVariants = {
     scale: 1,
     transition: {
       duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94]
-    }
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
   },
   exit: (direction: number) => ({
     x: direction < 0 ? 300 : -300,
@@ -31,16 +31,16 @@ const stepVariants = {
     scale: 0.95,
     transition: {
       duration: 0.3,
-      ease: [0.25, 0.46, 0.45, 0.94]
-    }
-  })
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  }),
 };
 
 // Componente de transición suave entre pasos
-export function StepTransition({ 
-  children, 
-  currentStep, 
-  direction = 'forward' 
+export function StepTransition({
+  children,
+  currentStep,
+  direction = "forward",
 }: CheckoutTransitionsProps) {
   const [prevStep, setPrevStep] = useState(currentStep);
 
@@ -49,7 +49,7 @@ export function StepTransition({
       ? 1
       : currentStep < prevStep
         ? -1
-        : direction === 'forward'
+        : direction === "forward"
           ? 1
           : -1;
 
@@ -82,16 +82,19 @@ interface SkeletonLoaderProps {
   className?: string;
 }
 
-export function SkeletonLoader({ lines = 3, className = '' }: SkeletonLoaderProps) {
+export function SkeletonLoader({
+  lines = 3,
+  className = "",
+}: SkeletonLoaderProps) {
   return (
     <div className={`space-y-3 ${className}`}>
       {Array.from({ length: lines }).map(() => (
         <div key={`skeleton-line-${Math.random()}`} className="animate-pulse">
-          <div 
+          <div
             className="h-4 surface-secondary rounded"
-            style={{ 
+            style={{
               width: `${Math.random() * 40 + 60}%`,
-              animationDelay: `${Math.random() * 0.5}s`
+              animationDelay: `${Math.random() * 0.5}s`,
             }}
           />
         </div>
@@ -104,15 +107,15 @@ export function SkeletonLoader({ lines = 3, className = '' }: SkeletonLoaderProp
 interface ProgressBarProps {
   progress: number;
   showPercentage?: boolean;
-  color?: 'primary' | 'success' | 'error';
+  color?: "primary" | "success" | "error";
   animated?: boolean;
 }
 
-export function ProgressBar({ 
-  progress, 
-  showPercentage = false, 
-  color = 'primary',
-  animated = true 
+export function ProgressBar({
+  progress,
+  showPercentage = false,
+  color = "primary",
+  animated = true,
 }: ProgressBarProps) {
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
@@ -130,9 +133,9 @@ export function ProgressBar({
   }, [progress, animated]);
 
   const colorClasses = {
-    primary: 'bg-primary',
-    success: 'bg-success',
-    error: 'bg-error'
+    primary: "bg-primary",
+    success: "bg-success",
+    error: "bg-error",
   };
 
   return (
@@ -148,9 +151,9 @@ export function ProgressBar({
           className={`h-full rounded-full ${colorClasses[color]}`}
           initial={{ width: 0 }}
           animate={{ width: `${animatedProgress}%` }}
-          transition={{ 
+          transition={{
             duration: animated ? 0.8 : 0,
-            ease: "easeOut" 
+            ease: "easeOut",
           }}
         />
       </div>
@@ -161,7 +164,7 @@ export function ProgressBar({
 // Componente de notificación flotante
 interface FloatingNotificationProps {
   message: string;
-  type: 'success' | 'error' | 'info';
+  type: "success" | "error" | "info";
   isVisible: boolean;
   onClose: () => void;
   duration?: number;
@@ -172,7 +175,7 @@ export function FloatingNotification({
   type,
   isVisible,
   onClose,
-  duration = 3000
+  duration = 3000,
 }: FloatingNotificationProps) {
   useEffect(() => {
     if (isVisible && duration > 0) {
@@ -184,9 +187,9 @@ export function FloatingNotification({
   }, [isVisible, duration, onClose]);
 
   const typeStyles = {
-    success: 'surface-secondary border-success text-success',
-    error: 'surface-secondary border-error text-error',
-    info: 'surface-secondary border-primary text-primary'
+    success: "surface-secondary border-success text-success",
+    error: "surface-secondary border-error text-error",
+    info: "surface-secondary border-primary text-primary",
   };
 
   return (
@@ -217,34 +220,38 @@ export function FloatingNotification({
 interface PulseHighlightProps {
   children: React.ReactNode;
   isActive?: boolean;
-  color?: 'primary' | 'error' | 'success';
+  color?: "primary" | "error" | "success";
 }
 
-export function PulseHighlight({ 
-  children, 
-  isActive = false, 
-  color = 'primary' 
+export function PulseHighlight({
+  children,
+  isActive = false,
+  color = "primary",
 }: PulseHighlightProps) {
   const pulseColors = {
-    primary: 'ring-primary/20',
-    error: 'ring-error/20',
-    success: 'ring-success/20'
+    primary: "ring-primary/20",
+    error: "ring-error/20",
+    success: "ring-success/20",
   };
 
   return (
     <motion.div
-      animate={isActive ? {
-        boxShadow: [
-          `0 0 0 0px rgba(var(--${color}), 0.4)`,
-          `0 0 0 10px rgba(var(--${color}), 0)`,
-        ]
-      } : {}}
+      animate={
+        isActive
+          ? {
+              boxShadow: [
+                `0 0 0 0px rgba(var(--${color}), 0.4)`,
+                `0 0 0 10px rgba(var(--${color}), 0)`,
+              ],
+            }
+          : {}
+      }
       transition={{
         duration: 1.5,
         repeat: isActive ? Infinity : 0,
-        ease: "easeOut"
+        ease: "easeOut",
       }}
-      className={isActive ? `ring-4 ${pulseColors[color]} rounded-lg` : ''}
+      className={isActive ? `ring-4 ${pulseColors[color]} rounded-lg` : ""}
     >
       {children}
     </motion.div>
@@ -260,12 +267,12 @@ interface AnimatedCounterProps {
   suffix?: string;
 }
 
-export function AnimatedCounter({ 
-  from, 
-  to, 
-  duration = 1000, 
-  prefix = '', 
-  suffix = '' 
+export function AnimatedCounter({
+  from,
+  to,
+  duration = 1000,
+  prefix = "",
+  suffix = "",
 }: AnimatedCounterProps) {
   const [count, setCount] = useState(from);
 
@@ -276,11 +283,11 @@ export function AnimatedCounter({
     const updateCount = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // Easing function (ease-out)
       const easeOut = 1 - Math.pow(1 - progress, 3);
-      const currentCount = from + (difference * easeOut);
-      
+      const currentCount = from + difference * easeOut;
+
       setCount(Math.round(currentCount));
 
       if (progress < 1) {
@@ -293,23 +300,25 @@ export function AnimatedCounter({
 
   return (
     <span>
-      {prefix}{count.toLocaleString()}{suffix}
+      {prefix}
+      {count.toLocaleString()}
+      {suffix}
     </span>
   );
 }
 
 // Hook para animaciones de entrada escalonada
-export function useStaggeredAnimation(itemCount: number, delay: number = 100) {
+export function useStaggeredAnimation(itemCount: number, delay = 100) {
   const [visibleItems, setVisibleItems] = useState<number[]>([]);
 
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
-    
+
     for (let i = 0; i < itemCount; i++) {
       const timer = setTimeout(() => {
-        setVisibleItems(prev => [...prev, i]);
+        setVisibleItems((prev) => [...prev, i]);
       }, i * delay);
-      
+
       timers.push(timer);
     }
 

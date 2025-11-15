@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { fail, ok } from "@/lib/apiResponse";
 import prisma from "@/lib/prisma";
-import { ok, fail } from "@/lib/apiResponse";
 import { ApiResponse } from "@/types";
+import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 // GET /api/products/stats - Estadísticas para filtros dinámicos
-export async function GET(): Promise<NextResponse<ApiResponse<Record<string, unknown>>>> {
+export async function GET(): Promise<
+  NextResponse<ApiResponse<Record<string, unknown>>>
+> {
   try {
     // Min/Max price
     const priceAgg = await prisma.product.aggregate({
@@ -13,7 +16,9 @@ export async function GET(): Promise<NextResponse<ApiResponse<Record<string, unk
     });
 
     // Sizes and colors aggregation (scan products)
-  const products = await prisma.product.findMany({ select: { sizes: true, colors: true, rating: true, categoryId: true } });
+    const products = await prisma.product.findMany({
+      select: { sizes: true, colors: true, rating: true, categoryId: true },
+    });
 
     const sizeCounts: Record<string, number> = {};
     const colorCounts: Record<string, number> = {};
@@ -21,19 +26,25 @@ export async function GET(): Promise<NextResponse<ApiResponse<Record<string, unk
     const categoryCounts: Record<string, number> = {};
     let hasRatings = false;
 
-    products.forEach(p => {
+    products.forEach((p) => {
       // sizes
-      (p.sizes || []).forEach(s => { sizeCounts[s] = (sizeCounts[s] || 0) + 1; });
+      (p.sizes || []).forEach((s) => {
+        sizeCounts[s] = (sizeCounts[s] || 0) + 1;
+      });
       // colors
-      (p.colors || []).forEach(c => { colorCounts[c] = (colorCounts[c] || 0) + 1; });
+      (p.colors || []).forEach((c) => {
+        colorCounts[c] = (colorCounts[c] || 0) + 1;
+      });
       // rating
-      if (typeof p.rating === 'number') {
+      if (typeof p.rating === "number") {
         hasRatings = true;
         const key = Math.floor(p.rating).toString();
         ratingCounts[key] = (ratingCounts[key] || 0) + 1;
       }
       // category
-      if (p.categoryId) categoryCounts[p.categoryId] = (categoryCounts[p.categoryId] || 0) + 1;
+      if (p.categoryId) {
+        categoryCounts[p.categoryId] = (categoryCounts[p.categoryId] || 0) + 1;
+      }
     });
 
     // Transform keys into arrays
@@ -56,7 +67,11 @@ export async function GET(): Promise<NextResponse<ApiResponse<Record<string, unk
 
     return response;
   } catch (error) {
-    console.error('Error fetching product stats', error);
-    return fail('INTERNAL_ERROR', 'Error al obtener estadísticas de productos', 500);
+    logger.error("Error fetching product stats", { error: error });
+    return fail(
+      "INTERNAL_ERROR",
+      "Error al obtener estadísticas de productos",
+      500
+    );
   }
 }

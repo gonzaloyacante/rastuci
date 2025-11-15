@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { ApiResponse } from "@/types";
-import { logger, getRequestId } from "@/lib/logger";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
+import { getRequestId, logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { ApiResponse } from "@/types";
+import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server";
 
 interface SafeUser {
   id: string;
@@ -21,8 +21,13 @@ export async function PATCH(
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, { key: makeKey("PATCH", "/api/users"), ...getPreset("mutatingLow") });
-    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    const rl = checkRateLimit(request, {
+      key: makeKey("PATCH", "/api/users"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    }
 
     const body = await request.json();
     const email = (body.email || "").trim();
@@ -33,7 +38,12 @@ export async function PATCH(
       return fail("BAD_REQUEST", "Email es requerido", 400, { requestId });
     }
     if (!password || password.length < 6) {
-      return fail("BAD_REQUEST", "La contraseña debe tener al menos 6 caracteres", 400, { requestId });
+      return fail(
+        "BAD_REQUEST",
+        "La contraseña debe tener al menos 6 caracteres",
+        400,
+        { requestId }
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,10 +53,18 @@ export async function PATCH(
     const user = existing
       ? await prisma.user.update({
           where: { email },
-          data: { password: hashedPassword, ...(typeof isAdmin === 'boolean' ? { isAdmin } : {}) },
+          data: {
+            password: hashedPassword,
+            ...(typeof isAdmin === "boolean" ? { isAdmin } : {}),
+          },
         })
       : await prisma.user.create({
-          data: { email, name: body.name || "", password: hashedPassword, isAdmin: !!isAdmin },
+          data: {
+            email,
+            name: body.name || "",
+            password: hashedPassword,
+            isAdmin: !!isAdmin,
+          },
         });
 
     const safeUser: SafeUser = {
@@ -59,9 +77,20 @@ export async function PATCH(
     return ok(safeUser);
   } catch (error) {
     const requestId = getRequestId(request.headers);
-    logger.error("Error updating user via PATCH", { requestId, error: String(error) });
-    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el usuario", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
+    logger.error("Error updating user via PATCH", {
+      requestId,
+      error: String(error),
+    });
+    const n = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al actualizar el usuario",
+      500
+    );
+    return fail(n.code as ApiErrorCode, n.message, n.status, {
+      requestId,
+      ...(n.details as object),
+    });
   }
 }
 
@@ -79,8 +108,13 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<UsersPage>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, { key: makeKey("GET", "/api/users"), ...getPreset("publicRead") });
-    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    const rl = checkRateLimit(request, {
+      key: makeKey("GET", "/api/users"),
+      ...getPreset("publicRead"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    }
     const { searchParams } = new URL(request.url);
     const pageRaw = Number(searchParams.get("page")) || 1;
     const limitRaw = Number(searchParams.get("limit")) || 20;
@@ -124,8 +158,16 @@ export async function GET(
   } catch (error) {
     const requestId = getRequestId(request.headers);
     logger.error("Error fetching users", { requestId, error: String(error) });
-    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los usuarios", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
+    const n = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al obtener los usuarios",
+      500
+    );
+    return fail(n.code as ApiErrorCode, n.message, n.status, {
+      requestId,
+      ...(n.details as object),
+    });
   }
 }
 
@@ -135,14 +177,21 @@ export async function POST(
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, { key: makeKey("POST", "/api/users"), ...getPreset("mutatingLow") });
-    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    const rl = checkRateLimit(request, {
+      key: makeKey("POST", "/api/users"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    }
     const body = await request.json();
     const { name, email, password, isAdmin } = body;
 
     // Validaciones
     if (!name || !email || !password) {
-      return fail("BAD_REQUEST", "Todos los campos son requeridos", 400, { requestId });
+      return fail("BAD_REQUEST", "Todos los campos son requeridos", 400, {
+        requestId,
+      });
     }
 
     // Verificar si el email ya existe
@@ -151,7 +200,9 @@ export async function POST(
     });
 
     if (existingUser) {
-      return fail("CONFLICT", "El email ya está registrado", 400, { requestId });
+      return fail("CONFLICT", "El email ya está registrado", 400, {
+        requestId,
+      });
     }
 
     // Encriptar la contraseña
@@ -179,7 +230,15 @@ export async function POST(
   } catch (error) {
     const requestId = getRequestId(request.headers);
     logger.error("Error creating user", { requestId, error: String(error) });
-    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el usuario", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
+    const n = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al crear el usuario",
+      500
+    );
+    return fail(n.code as ApiErrorCode, n.message, n.status, {
+      requestId,
+      ...(n.details as object),
+    });
   }
 }

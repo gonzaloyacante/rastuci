@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import * as OneSignal from "@onesignal/node-onesignal";
 
 const configuration = OneSignal.createConfiguration({
@@ -9,7 +10,7 @@ const client = new OneSignal.DefaultApi(configuration);
 export const sendNotification = async (message: string, heading: string) => {
   try {
     if (!process.env.ONESIGNAL_APP_ID) {
-      console.warn("OneSignal App ID not configured");
+      logger.warn("OneSignal App ID not configured");
       return null;
     }
 
@@ -20,10 +21,10 @@ export const sendNotification = async (message: string, heading: string) => {
     notification.headings = { en: heading };
 
     const response = await client.createNotification(notification);
-    console.log("Notification sent successfully:", response.id);
+    logger.info("Notification sent successfully", { id: response.id });
     return response;
   } catch (error) {
-    console.error("Error sending notification:", error);
+    logger.error("Error sending notification", { error });
     return null;
   }
 };

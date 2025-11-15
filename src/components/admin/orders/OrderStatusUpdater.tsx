@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import { useState } from "react";
+import { logger } from "@/lib/logger";
 
 interface OrderStatusUpdaterProps {
   orderId: string;
@@ -25,7 +26,9 @@ export const OrderStatusUpdater: React.FC<OrderStatusUpdaterProps> = ({
   const [loading, setLoading] = useState(false);
 
   const handleStatusChange = async () => {
-    if (selectedStatus === currentStatus) return;
+    if (selectedStatus === currentStatus) {
+      return;
+    }
 
     setLoading(true);
     try {
@@ -45,7 +48,7 @@ export const OrderStatusUpdater: React.FC<OrderStatusUpdaterProps> = ({
 
       onStatusUpdate(selectedStatus);
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", { error: error });
       // Revertir selección
       setSelectedStatus(currentStatus);
     } finally {
@@ -61,13 +64,9 @@ export const OrderStatusUpdater: React.FC<OrderStatusUpdaterProps> = ({
         onChange={setSelectedStatus}
         disabled={loading}
       />
-      
+
       {selectedStatus !== currentStatus && (
-        <Button
-          onClick={handleStatusChange}
-          disabled={loading}
-          size="sm"
-        >
+        <Button onClick={handleStatusChange} disabled={loading} size="sm">
           {loading ? "Actualizando..." : "Actualizar"}
         </Button>
       )}

@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { ApiResponse } from "@/types";
-import { logger, getRequestId } from "@/lib/logger";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
+import { getRequestId, logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { ApiResponse } from "@/types";
+import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server";
 
 interface SafeUser {
   id: string;
@@ -22,8 +22,13 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, { key: makeKey("GET", "/api/users/[id]"), ...getPreset("publicRead") });
-    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    const rl = checkRateLimit(request, {
+      key: makeKey("GET", "/api/users/[id]"),
+      ...getPreset("publicRead"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    }
     const { id } = await params;
 
     const user = await prisma.user.findUnique({
@@ -45,8 +50,16 @@ export async function GET(
   } catch (error) {
     const requestId = getRequestId(request.headers);
     logger.error("Error fetching user", { requestId, error: String(error) });
-    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener el usuario", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
+    const n = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al obtener el usuario",
+      500
+    );
+    return fail(n.code as ApiErrorCode, n.message, n.status, {
+      requestId,
+      ...(n.details as object),
+    });
   }
 }
 
@@ -57,8 +70,13 @@ export async function PATCH(
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, { key: makeKey("PATCH", "/api/users/[id]"), ...getPreset("mutatingLow") });
-    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    const rl = checkRateLimit(request, {
+      key: makeKey("PATCH", "/api/users/[id]"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    }
     const { id } = await params;
     const body = await request.json();
     const { name, email, password, isAdmin } = body;
@@ -79,7 +97,9 @@ export async function PATCH(
       });
 
       if (emailInUse) {
-        return fail("CONFLICT", "El email ya está registrado", 400, { requestId });
+        return fail("CONFLICT", "El email ya está registrado", 400, {
+          requestId,
+        });
       }
     }
 
@@ -91,9 +111,15 @@ export async function PATCH(
       isAdmin?: boolean;
     } = {};
 
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (isAdmin !== undefined) updateData.isAdmin = isAdmin;
+    if (name) {
+      updateData.name = name;
+    }
+    if (email) {
+      updateData.email = email;
+    }
+    if (isAdmin !== undefined) {
+      updateData.isAdmin = isAdmin;
+    }
 
     // Encriptar nueva contraseña si se proporciona
     if (password) {
@@ -118,8 +144,16 @@ export async function PATCH(
   } catch (error) {
     const requestId = getRequestId(request.headers);
     logger.error("Error updating user", { requestId, error: String(error) });
-    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al actualizar el usuario", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as object) });
+    const n = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al actualizar el usuario",
+      500
+    );
+    return fail(n.code as ApiErrorCode, n.message, n.status, {
+      requestId,
+      ...(n.details as object),
+    });
   }
 }
 
@@ -130,8 +164,13 @@ export async function DELETE(
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, { key: makeKey("DELETE", "/api/users/[id]"), ...getPreset("mutatingLow") });
-    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    const rl = checkRateLimit(request, {
+      key: makeKey("DELETE", "/api/users/[id]"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
+    }
     const { id } = await params;
 
     // Verificar si el usuario existe
@@ -152,7 +191,15 @@ export async function DELETE(
   } catch (error) {
     const requestId = getRequestId(request.headers);
     logger.error("Error deleting user", { requestId, error: String(error) });
-    const n = normalizeApiError(error, "INTERNAL_ERROR", "Error al eliminar el usuario", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
+    const n = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al eliminar el usuario",
+      500
+    );
+    return fail(n.code as ApiErrorCode, n.message, n.status, {
+      requestId,
+      ...(n.details as Record<string, unknown>),
+    });
   }
 }

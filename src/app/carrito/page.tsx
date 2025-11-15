@@ -1,24 +1,25 @@
-import { Metadata } from 'next';
-import { Suspense } from 'react';
-import CartPageClient from './client-page';
+import { Metadata } from "next";
+import { Suspense } from "react";
+import CartPageClient from "./client-page";
 
 export const metadata: Metadata = {
-  title: 'Carrito de Compras - Rastuci',
-  description: 'Revisa y gestiona los productos en tu carrito de compras. Procede al checkout cuando estés listo.',
-  keywords: 'carrito, compras, checkout, productos, pago, envío gratis',
+  title: "Carrito de Compras - Rastuci",
+  description:
+    "Revisa y gestiona los productos en tu carrito de compras. Procede al checkout cuando estés listo.",
+  keywords: "carrito, compras, checkout, productos, pago, envío gratis",
   openGraph: {
-    title: 'Carrito de Compras - Rastuci',
-    description: 'Gestiona tu carrito de compras y procede al checkout.',
-    type: 'website',
+    title: "Carrito de Compras - Rastuci",
+    description: "Gestiona tu carrito de compras y procede al checkout.",
+    type: "website",
   },
   alternates: {
-    canonical: '/carrito',
+    canonical: "/carrito",
   },
 };
 
 const CartPageSkeleton = () => (
   <div className="surface text-primary min-h-screen flex flex-col">
-    <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
+    <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
       {/* Header Skeleton */}
       <div className="h-10 surface-secondary rounded animate-pulse w-64 mb-8" />
 
@@ -26,9 +27,12 @@ const CartPageSkeleton = () => (
         {/* Cart Items Skeleton */}
         <div className="lg:col-span-2 space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={`cart-skeleton-${i}`} className="flex items-center surface p-4 rounded-lg shadow-sm border border-muted">
+            <div
+              key={`cart-skeleton-${i}`}
+              className="flex items-center surface p-4 rounded-lg shadow-sm border border-muted"
+            >
               <div className="w-24 h-24 surface-secondary rounded animate-pulse mr-4" />
-              <div className="flex-grow">
+              <div className="grow">
                 <div className="h-6 surface-secondary rounded animate-pulse w-48 mb-2" />
                 <div className="h-4 surface-secondary rounded animate-pulse w-32 mb-1" />
                 <div className="h-4 surface-secondary rounded animate-pulse w-24 mb-2" />

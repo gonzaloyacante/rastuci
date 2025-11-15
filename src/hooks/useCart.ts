@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 import { CartItem, Product } from "@/types";
+import { useEffect, useState } from "react";
 
 const CART_STORAGE_KEY = "rastuci_cart";
 
@@ -15,7 +16,7 @@ export const useCart = () => {
         const parsedCart = JSON.parse(savedCart);
         setItems(parsedCart);
       } catch (error) {
-        console.error("Error loading cart from localStorage:", error);
+        logger.error("Error loading cart from localStorage", { error });
       }
     }
     setIsLoaded(true);
@@ -29,7 +30,7 @@ export const useCart = () => {
   }, [items, isLoaded]);
 
   // Agregar producto al carrito
-  const addItem = (product: Product, quantity: number = 1) => {
+  const addItem = (product: Product, quantity = 1) => {
     setItems((currentItems) => {
       const existingItem = currentItems.find(
         (item) => item.productId === product.id

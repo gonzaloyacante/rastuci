@@ -15,7 +15,10 @@ const EMAIL_RE = /([A-Z0-9._%+-]+)@([A-Z0-9.-]+\.[A-Z]{2,})/gi;
 const PHONE_RE = /\b\+?\d[\d\s().-]{6,}\b/g; // crude phone matcher
 
 function redactEmail(val: string): string {
-  return val.replace(EMAIL_RE, (_m, user, host) => `${String(user).slice(0, 2)}***@${host}`);
+  return val.replace(
+    EMAIL_RE,
+    (_m, user, host) => `${String(user).slice(0, 2)}***@${host}`
+  );
 }
 
 function redactPhone(val: string): string {
@@ -29,8 +32,12 @@ function maskValue(v: unknown): unknown {
     s = redactPhone(s);
     return s;
   }
-  if (Array.isArray(v)) return v.map(maskValue);
-  if (v && typeof v === "object") return maskObject(v as Record<string, unknown>);
+  if (Array.isArray(v)) {
+    return v.map(maskValue);
+  }
+  if (v && typeof v === "object") {
+    return maskObject(v as Record<string, unknown>);
+  }
   return v;
 }
 
@@ -48,7 +55,9 @@ function maskObject(obj: Record<string, unknown>): Record<string, unknown> {
 }
 
 export function safeCtx(ctx?: LogContext): LogContext {
-  if (!ctx) return ctx;
+  if (!ctx) {
+    return ctx;
+  }
   try {
     return maskObject(ctx as Record<string, unknown>);
   } catch {
@@ -73,11 +82,16 @@ export const logger = {
 
 export function getRequestId(headers: Headers): string {
   // Prefer existing header (from proxy/edge), else generate
-  const existing = headers.get("x-request-id") || headers.get("x-correlation-id");
-  if (existing) return existing;
+  const existing =
+    headers.get("x-request-id") || headers.get("x-correlation-id");
+  if (existing) {
+    return existing;
+  }
   // Node/Edge has crypto.randomUUID
   try {
-    return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    return (
+      globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`
+    );
   } catch {
     return `${Date.now()}-${Math.random()}`;
   }

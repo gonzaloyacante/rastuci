@@ -1,8 +1,10 @@
 // PWA utilities and service worker management
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { logger } from "./logger";
+
 export interface PWAInstallPrompt {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
 export interface AppNotificationOptions {
@@ -33,23 +35,25 @@ class PWAManager {
   }
 
   private async init() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") {
+      return;
+    }
 
     // Check if already installed
     this.checkInstallStatus();
 
     // Listen for install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       this.deferredPrompt = e as unknown as PWAInstallPrompt;
-      this.dispatchEvent('installprompt-available');
+      this.dispatchEvent("installprompt-available");
     });
 
     // Listen for app installed
-    window.addEventListener('appinstalled', () => {
+    window.addEventListener("appinstalled", () => {
       this.isInstalled = true;
       this.deferredPrompt = null;
-      this.dispatchEvent('app-installed');
+      this.dispatchEvent("app-installed");
     });
 
     // Register service worker
@@ -61,15 +65,20 @@ class PWAManager {
 
   private checkInstallStatus() {
     // Check if running in standalone mode
-    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+    if (
+      window.matchMedia &&
+      window.matchMedia("(display-mode: standalone)").matches
+    ) {
       this.isInstalled = true;
     }
 
     // Check if installed via navigator
-    if ('getInstalledRelatedApps' in navigator) {
-      (navigator as { getInstalledRelatedApps?: () => Promise<unknown[]> }).getInstalledRelatedApps?.().then((apps: unknown[]) => {
-        this.isInstalled = apps.length > 0;
-      });
+    if ("getInstalledRelatedApps" in navigator) {
+      (navigator as { getInstalledRelatedApps?: () => Promise<unknown[]> })
+        .getInstalledRelatedApps?.()
+        .then((apps: unknown[]) => {
+          this.isInstalled = apps.length > 0;
+        });
     }
   }
 
@@ -78,57 +87,57 @@ class PWAManager {
   }
 
   async registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-    if (!('serviceWorker' in navigator)) {
-      console.warn('Service workers not supported');
+    if (!("serviceWorker" in navigator)) {
+      logger.warn("Service workers not supported");
       return null;
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/',
+      const registration = await navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
       });
 
       this.swRegistration = registration;
 
       // Handle updates
-      registration.addEventListener('updatefound', () => {
+      registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
         if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              this.dispatchEvent('update-available');
+          newWorker.addEventListener("statechange", () => {
+            if (
+              newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              this.dispatchEvent("update-available");
             }
           });
         }
       });
 
-      console.log('Service worker registered successfully');
       return registration;
-    } catch (error) {
-      console.error('Service worker registration failed:', error);
+    } catch {
       return null;
     }
   }
 
   async promptInstall(): Promise<boolean> {
     if (!this.deferredPrompt) {
-      console.warn('Install prompt not available');
+      logger.warn("Install prompt not available");
       return false;
     }
 
     try {
       await this.deferredPrompt.prompt();
       const choice = await this.deferredPrompt.userChoice;
-      
-      if (choice.outcome === 'accepted') {
+
+      if (choice.outcome === "accepted") {
         this.isInstalled = true;
         this.deferredPrompt = null;
         return true;
       }
-      
+
       return false;
-    } catch (error) {
-      console.error('Install prompt failed:', error);
+    } catch {
       return false;
     }
   }
@@ -142,27 +151,29 @@ class PWAManager {
   }
 
   async updateServiceWorker(): Promise<void> {
-    if (!this.swRegistration) return;
+    if (!this.swRegistration) {
+      return;
+    }
 
     try {
       await this.swRegistration.update();
-      
+
       // Skip waiting and activate new service worker
       if (this.swRegistration.waiting) {
-        this.swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        this.swRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
       }
-    } catch (error) {
-      console.error('Service worker update failed:', error);
+    } catch {
+      // Silent fail for service worker update
     }
   }
 
   async requestNotificationPermission(): Promise<NotificationPermission> {
-    if (!('Notification' in window)) {
-      console.warn('Notifications not supported');
-      return 'denied';
+    if (!("Notification" in window)) {
+      logger.warn("Notifications not supported");
+      return "denied";
     }
 
-    if (Notification.permission === 'default') {
+    if (Notification.permission === "default") {
       return await Notification.requestPermission();
     }
 
@@ -171,17 +182,17 @@ class PWAManager {
 
   async showNotification(options: AppNotificationOptions): Promise<void> {
     if (!this.swRegistration) {
-      throw new Error('Service worker not registered');
+      throw new Error("Service worker not registered");
     }
 
-    if (Notification.permission !== 'granted') {
-      throw new Error('Notification permission not granted');
+    if (Notification.permission !== "granted") {
+      throw new Error("Notification permission not granted");
     }
 
-    await this.swRegistration.showNotification(options.title, ({
+    await this.swRegistration.showNotification(options.title, {
       body: options.body,
-      icon: options.icon || '/icons/icon-192x192.png',
-      badge: options.badge || '/icons/icon-72x72.png',
+      icon: options.icon || "/icons/icon-192x192.png",
+      badge: options.badge || "/icons/icon-72x72.png",
       image: options.image,
       tag: options.tag,
       data: options.data,
@@ -189,17 +200,20 @@ class PWAManager {
       requireInteraction: options.requireInteraction,
       silent: options.silent,
       vibrate: options.vibrate,
-    } as NotificationOptions));
+    } as NotificationOptions);
   }
 
-  async scheduleNotification(options: AppNotificationOptions, delay: number): Promise<void> {
+  async scheduleNotification(
+    options: AppNotificationOptions,
+    delay: number
+  ): Promise<void> {
     if (!this.swRegistration) {
-      throw new Error('Service worker not registered');
+      throw new Error("Service worker not registered");
     }
 
     // Send message to service worker to schedule notification
     this.swRegistration.active?.postMessage({
-      type: 'SCHEDULE_NOTIFICATION',
+      type: "SCHEDULE_NOTIFICATION",
       payload: { options, delay },
     });
   }
@@ -213,29 +227,33 @@ class PWAManager {
     const handleOnline = () => callback(true);
     const handleOffline = () => callback(false);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }
 
   // Cache management
   async clearCache(cacheName?: string): Promise<void> {
-    if (!('caches' in window)) return;
+    if (!("caches" in window)) {
+      return;
+    }
 
     if (cacheName) {
       await caches.delete(cacheName);
     } else {
       const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
     }
   }
 
   async getCacheSize(): Promise<number> {
-    if (!('caches' in window)) return 0;
+    if (!("caches" in window)) {
+      return 0;
+    }
 
     let totalSize = 0;
     const cacheNames = await caches.keys();
@@ -243,7 +261,7 @@ class PWAManager {
     for (const cacheName of cacheNames) {
       const cache = await caches.open(cacheName);
       const requests = await cache.keys();
-      
+
       for (const request of requests) {
         const response = await cache.match(request);
         if (response) {
@@ -257,42 +275,61 @@ class PWAManager {
   }
 
   // Share API
-  async share(data: { title?: string; text?: string; url?: string }): Promise<boolean> {
-    if (!('share' in navigator)) {
+  async share(data: {
+    title?: string;
+    text?: string;
+    url?: string;
+  }): Promise<boolean> {
+    if (!("share" in navigator)) {
       // Fallback to clipboard
-      if ('clipboard' in navigator && data.url) {
-        await (navigator as { clipboard: { writeText: (text: string) => Promise<void> } }).clipboard.writeText(data.url);
+      if ("clipboard" in navigator && data.url) {
+        await (
+          navigator as {
+            clipboard: { writeText: (text: string) => Promise<void> };
+          }
+        ).clipboard.writeText(data.url);
         return true;
       }
       return false;
     }
 
     try {
-      await (navigator as { share: (data: { title?: string; text?: string; url?: string }) => Promise<void> }).share(data);
+      await (
+        navigator as {
+          share: (data: {
+            title?: string;
+            text?: string;
+            url?: string;
+          }) => Promise<void>;
+        }
+      ).share(data);
       return true;
-    } catch (error) {
-      console.error('Share failed:', error);
+    } catch {
       return false;
     }
   }
 
   // Background sync
   async registerBackgroundSync(tag: string): Promise<void> {
-    if (!this.swRegistration || !('sync' in this.swRegistration)) {
-      throw new Error('Background sync not supported');
+    if (!this.swRegistration || !("sync" in this.swRegistration)) {
+      throw new Error("Background sync not supported");
     }
 
-    await (this.swRegistration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register(tag);
+    await (
+      this.swRegistration as ServiceWorkerRegistration & {
+        sync: { register: (tag: string) => Promise<void> };
+      }
+    ).sync.register(tag);
   }
 
   // Push notifications (requires server setup)
   async subscribeToPush(): Promise<PushSubscription | null> {
     if (!this.swRegistration) {
-      throw new Error('Service worker not registered');
+      throw new Error("Service worker not registered");
     }
 
-    if (!('PushManager' in window)) {
-      throw new Error('Push notifications not supported');
+    if (!("PushManager" in window)) {
+      throw new Error("Push notifications not supported");
     }
 
     try {
@@ -302,37 +339,38 @@ class PWAManager {
       });
 
       // Send subscription to server
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(subscription),
       });
 
       return subscription;
-    } catch (error) {
-      console.error('Push subscription failed:', error);
+    } catch {
       return null;
     }
   }
 
   async unsubscribeFromPush(): Promise<boolean> {
-    if (!this.swRegistration) return false;
+    if (!this.swRegistration) {
+      return false;
+    }
 
     try {
-      const subscription = await this.swRegistration.pushManager.getSubscription();
+      const subscription =
+        await this.swRegistration.pushManager.getSubscription();
       if (subscription) {
         await subscription.unsubscribe();
-        
+
         // Notify server
-        await fetch('/api/push/unsubscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        await fetch("/api/push/unsubscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ endpoint: subscription.endpoint }),
         });
       }
       return true;
-    } catch (error) {
-      console.error('Push unsubscribe failed:', error);
+    } catch {
       return false;
     }
   }
@@ -354,14 +392,17 @@ export function usePWA() {
       setCanInstall(false);
     };
 
-    window.addEventListener('pwa-installprompt-available', handleInstallPrompt);
-    window.addEventListener('pwa-app-installed', handleAppInstalled);
+    window.addEventListener("pwa-installprompt-available", handleInstallPrompt);
+    window.addEventListener("pwa-app-installed", handleAppInstalled);
 
     const unsubscribeOnline = pwaManager.onOnlineStatusChange(setIsOnline);
 
     return () => {
-      window.removeEventListener('pwa-installprompt-available', handleInstallPrompt);
-      window.removeEventListener('pwa-app-installed', handleAppInstalled);
+      window.removeEventListener(
+        "pwa-installprompt-available",
+        handleInstallPrompt
+      );
+      window.removeEventListener("pwa-app-installed", handleAppInstalled);
       unsubscribeOnline();
     };
   }, []);
@@ -379,10 +420,11 @@ export function usePWA() {
 }
 
 export function useNotifications() {
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [permission, setPermission] =
+    useState<NotificationPermission>("default");
 
   useEffect(() => {
-    if ('Notification' in window) {
+    if ("Notification" in window) {
       setPermission(Notification.permission);
     }
   }, []);
@@ -403,7 +445,7 @@ export function useNotifications() {
 
 // Utility functions
 export function formatCacheSize(bytes: number): string {
-  const units = ['B', 'KB', 'MB', 'GB'];
+  const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
   let unitIndex = 0;
 

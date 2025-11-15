@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { CreditCard, Lock, Check, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { CreditCard, Lock, Check, AlertCircle } from "lucide-react";
 import {
   validateCardNumber,
   validateExpiryDate,
@@ -11,8 +11,8 @@ import {
   validateCardholderName,
   formatCardNumber,
   detectCardType,
-  cardBrands
-} from '@/lib/card-validation';
+  cardBrands,
+} from "@/lib/card-validation";
 
 interface CardData {
   cardNumber: string;
@@ -30,8 +30,10 @@ interface CardFormProps {
 }
 
 export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
-  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
-  const [cardType, setCardType] = useState<string>('unknown');
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string[]>
+  >({});
+  const [cardType, setCardType] = useState<string>("unknown");
   const [isValidating, setIsValidating] = useState<Record<string, boolean>>({});
 
   // Detectar tipo de tarjeta en tiempo real
@@ -42,64 +44,64 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
 
   const handleChange = (field: string, value: string | number) => {
     onChange({ ...data, [field]: value });
-    
+
     // Limpiar errores cuando el usuario empiece a escribir
     if (validationErrors[field]) {
-      setValidationErrors(prev => ({
+      setValidationErrors((prev) => ({
         ...prev,
-        [field]: []
+        [field]: [],
       }));
     }
   };
 
   const validateField = (field: string, value: string) => {
-    setIsValidating(prev => ({ ...prev, [field]: true }));
-    
+    setIsValidating((prev) => ({ ...prev, [field]: true }));
+
     setTimeout(() => {
       let validation;
-      
+
       switch (field) {
-        case 'cardNumber':
+        case "cardNumber":
           validation = validateCardNumber(value);
           break;
-        case 'expiryDate':
+        case "expiryDate":
           validation = validateExpiryDate(data.expiryMonth, data.expiryYear);
           break;
-        case 'securityCode':
+        case "securityCode":
           validation = validateSecurityCode(value, cardType);
           break;
-        case 'cardholderName':
+        case "cardholderName":
           validation = validateCardholderName(value);
           break;
         default:
-          validation = { isValid: true, cardType: '', errors: [] };
+          validation = { isValid: true, cardType: "", errors: [] };
       }
-      
-      setValidationErrors(prev => ({
+
+      setValidationErrors((prev) => ({
         ...prev,
-        [field]: validation.errors
+        [field]: validation.errors,
       }));
-      
-      setIsValidating(prev => ({ ...prev, [field]: false }));
+
+      setIsValidating((prev) => ({ ...prev, [field]: false }));
     }, 500); // Debounce de 500ms
   };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCardNumber(e.target.value, cardType);
-    handleChange('cardNumber', formatted);
-    validateField('cardNumber', formatted);
+    handleChange("cardNumber", formatted);
+    validateField("cardNumber", formatted);
   };
 
   const installmentOptions = [
-    { value: '1', label: '1 cuota sin interés' },
-    { value: '3', label: '3 cuotas sin interés' },
-    { value: '6', label: '6 cuotas sin interés' },
-    { value: '12', label: '12 cuotas con interés' },
+    { value: "1", label: "1 cuota sin interés" },
+    { value: "3", label: "3 cuotas sin interés" },
+    { value: "6", label: "6 cuotas sin interés" },
+    { value: "12", label: "12 cuotas con interés" },
   ];
 
   const monthOptions = Array.from({ length: 12 }, (_, i) => ({
-    value: String(i + 1).padStart(2, '0'),
-    label: String(i + 1).padStart(2, '0'),
+    value: String(i + 1).padStart(2, "0"),
+    label: String(i + 1).padStart(2, "0"),
   }));
 
   const currentYear = new Date().getFullYear();
@@ -109,22 +111,33 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
   }));
 
   const getFieldStatus = (field: string) => {
-    if (isValidating[field]) return 'validating';
-    if (validationErrors[field]?.length > 0) return 'error';
-    if (data[field as keyof CardData] && validationErrors[field]?.length === 0) return 'valid';
-    return 'default';
+    if (isValidating[field]) {
+      return "validating";
+    }
+    if (validationErrors[field]?.length > 0) {
+      return "error";
+    }
+    if (
+      data[field as keyof CardData] &&
+      validationErrors[field]?.length === 0
+    ) {
+      return "valid";
+    }
+    return "default";
   };
 
   const renderFieldIcon = (field: string) => {
     const status = getFieldStatus(field);
-    
-    if (status === 'validating') {
-      return <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />;
+
+    if (status === "validating") {
+      return (
+        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      );
     }
-    if (status === 'valid') {
+    if (status === "valid") {
       return <Check className="w-4 h-4 text-success" />;
     }
-    if (status === 'error') {
+    if (status === "error") {
       return <AlertCircle className="w-4 h-4 text-error" />;
     }
     return null;
@@ -138,7 +151,9 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
         </div>
         <div>
           <h4 className="font-semibold text-primary">
-            {paymentMethod === 'credit_card' ? 'Tarjeta de Crédito' : 'Tarjeta de Débito'}
+            {paymentMethod === "credit_card"
+              ? "Tarjeta de Crédito"
+              : "Tarjeta de Débito"}
           </h4>
           <p className="text-sm muted">Ingresa los datos de tu tarjeta</p>
         </div>
@@ -148,7 +163,7 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
       <div>
         <label className="block text-sm font-medium mb-2">
           Número de tarjeta
-          {cardType !== 'unknown' && cardBrands[cardType] && (
+          {cardType !== "unknown" && cardBrands[cardType] && (
             <span className="ml-2 text-xs text-primary">
               {cardBrands[cardType].name} detectada
             </span>
@@ -160,18 +175,23 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
             placeholder="1234 5678 9012 3456"
             value={data.cardNumber}
             onChange={handleCardNumberChange}
-            maxLength={cardType === 'amex' ? 17 : 19}
+            maxLength={cardType === "amex" ? 17 : 19}
             className={`font-mono pr-10 ${
-              getFieldStatus('cardNumber') === 'error' ? 'border-error' :
-              getFieldStatus('cardNumber') === 'valid' ? 'border-success' : ''
+              getFieldStatus("cardNumber") === "error"
+                ? "border-error"
+                : getFieldStatus("cardNumber") === "valid"
+                  ? "border-success"
+                  : ""
             }`}
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            {renderFieldIcon('cardNumber')}
+            {renderFieldIcon("cardNumber")}
           </div>
         </div>
         {validationErrors.cardNumber?.map((error) => (
-          <p key={`card-error-${error}`} className="text-xs text-error mt-1">{error}</p>
+          <p key={`card-error-${error}`} className="text-xs text-error mt-1">
+            {error}
+          </p>
         ))}
       </div>
 
@@ -185,15 +205,15 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
             options={monthOptions}
             value={data.expiryMonth}
             onChange={(value) => {
-              handleChange('expiryMonth', value);
+              handleChange("expiryMonth", value);
               if (data.expiryYear) {
-                validateField('expiryDate', `${value}/${data.expiryYear}`);
+                validateField("expiryDate", `${value}/${data.expiryYear}`);
               }
             }}
             placeholder="MM"
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium mb-2">
             Año de vencimiento
@@ -202,50 +222,65 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
             options={yearOptions}
             value={data.expiryYear}
             onChange={(value) => {
-              handleChange('expiryYear', value);
+              handleChange("expiryYear", value);
               if (data.expiryMonth) {
-                validateField('expiryDate', `${data.expiryMonth}/${value}`);
+                validateField("expiryDate", `${data.expiryMonth}/${value}`);
               }
             }}
             placeholder="AA"
           />
           {validationErrors.expiryDate?.map((error) => (
-            <p key={`expiry-error-${error}`} className="text-xs text-error mt-1">{error}</p>
+            <p
+              key={`expiry-error-${error}`}
+              className="text-xs text-error mt-1"
+            >
+              {error}
+            </p>
           ))}
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium mb-2">
-            {cardType === 'amex' ? 'CID' : 'CVV'}
+            {cardType === "amex" ? "CID" : "CVV"}
             <span className="ml-1 text-xs muted">
-              ({cardType === 'amex' ? '4 dígitos' : '3 dígitos'})
+              ({cardType === "amex" ? "4 dígitos" : "3 dígitos"})
             </span>
           </label>
           <div className="relative">
             <Input
               type="text"
-              placeholder={cardType === 'amex' ? '1234' : '123'}
+              placeholder={cardType === "amex" ? "1234" : "123"}
               value={data.securityCode}
               onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '').slice(0, cardType === 'amex' ? 4 : 3);
-                handleChange('securityCode', value);
-                validateField('securityCode', value);
+                const value = e.target.value
+                  .replace(/\D/g, "")
+                  .slice(0, cardType === "amex" ? 4 : 3);
+                handleChange("securityCode", value);
+                validateField("securityCode", value);
               }}
-              maxLength={cardType === 'amex' ? 4 : 3}
+              maxLength={cardType === "amex" ? 4 : 3}
               className={`font-mono pr-10 ${
-                getFieldStatus('securityCode') === 'error' ? 'border-error' :
-                getFieldStatus('securityCode') === 'valid' ? 'border-success' : ''
+                getFieldStatus("securityCode") === "error"
+                  ? "border-error"
+                  : getFieldStatus("securityCode") === "valid"
+                    ? "border-success"
+                    : ""
               }`}
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              {renderFieldIcon('securityCode')}
+              {renderFieldIcon("securityCode")}
             </div>
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
               <Lock className="w-3 h-3 muted" />
             </div>
           </div>
           {validationErrors.securityCode?.map((error) => (
-            <p key={`security-error-${error}`} className="text-xs text-error mt-1">{error}</p>
+            <p
+              key={`security-error-${error}`}
+              className="text-xs text-error mt-1"
+            >
+              {error}
+            </p>
           ))}
         </div>
       </div>
@@ -262,25 +297,33 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
             value={data.cardholderName}
             onChange={(e) => {
               const value = e.target.value.toUpperCase();
-              handleChange('cardholderName', value);
-              validateField('cardholderName', value);
+              handleChange("cardholderName", value);
+              validateField("cardholderName", value);
             }}
             className={`pr-10 ${
-              getFieldStatus('cardholderName') === 'error' ? 'border-error' :
-              getFieldStatus('cardholderName') === 'valid' ? 'border-success' : ''
+              getFieldStatus("cardholderName") === "error"
+                ? "border-error"
+                : getFieldStatus("cardholderName") === "valid"
+                  ? "border-success"
+                  : ""
             }`}
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            {renderFieldIcon('cardholderName')}
+            {renderFieldIcon("cardholderName")}
           </div>
         </div>
         {validationErrors.cardholderName?.map((error) => (
-          <p key={`cardholder-error-${error}`} className="text-xs text-error mt-1">{error}</p>
+          <p
+            key={`cardholder-error-${error}`}
+            className="text-xs text-error mt-1"
+          >
+            {error}
+          </p>
         ))}
       </div>
 
       {/* Cuotas (solo para tarjetas de crédito) */}
-      {paymentMethod === 'credit_card' && (
+      {paymentMethod === "credit_card" && (
         <div>
           <label className="block text-sm font-medium mb-2">
             Cuotas
@@ -289,7 +332,7 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
           <Select
             options={installmentOptions}
             value={String(data.installments)}
-            onChange={(value) => handleChange('installments', parseInt(value))}
+            onChange={(value) => handleChange("installments", parseInt(value))}
             placeholder="Seleccionar cuotas"
           />
         </div>
@@ -302,8 +345,8 @@ export function CardForm({ data, onChange, paymentMethod }: CardFormProps) {
           <div>
             <h5 className="font-medium text-primary mb-1">Pago 100% seguro</h5>
             <p className="text-xs muted leading-relaxed">
-              Tus datos están protegidos con encriptación SSL de 256 bits. 
-              No almacenamos información de tu tarjeta.
+              Tus datos están protegidos con encriptación SSL de 256 bits. No
+              almacenamos información de tu tarjeta.
             </p>
           </div>
         </div>

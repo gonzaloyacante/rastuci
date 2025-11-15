@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Tipo para el cache entry
 interface CacheEntry<T> {
@@ -14,7 +14,9 @@ class GlobalCache {
 
   get<T>(key: string): T | null {
     const entry = this.cache.get(key);
-    if (!entry) return null;
+    if (!entry) {
+      return null;
+    }
 
     // Verificar si el cache ha expirado
     if (Date.now() - entry.timestamp > entry.ttl) {
@@ -30,7 +32,7 @@ class GlobalCache {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
     this.notifyListeners(key);
   }
@@ -66,14 +68,16 @@ class GlobalCache {
   private notifyListeners(key: string): void {
     const listeners = this.listeners.get(key);
     if (listeners) {
-      listeners.forEach(callback => callback());
+      listeners.forEach((callback) => callback());
     }
   }
 
   // Método para verificar si hay datos frescos
   isStale(key: string): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return true;
+    if (!entry) {
+      return true;
+    }
     return Date.now() - entry.timestamp > entry.ttl;
   }
 
@@ -100,13 +104,16 @@ class GlobalCache {
     return {
       size: this.cache.size,
       keys,
-      totalSize
+      totalSize,
     };
   }
 }
 
 // Instancia singleton del cache
 const globalCache = new GlobalCache();
+
+// Map para rastrear fetches en progreso (prevenir duplicados)
+const pendingFetches = new Map<string, Promise<unknown>>();
 
 // Hook para usar el cache con reactividad
 export function useGlobalCache<T>(
@@ -121,7 +128,7 @@ export function useGlobalCache<T>(
   const {
     ttl = 5 * 60 * 1000, // 5 minutos por defecto
     revalidateOnMount = false,
-    revalidateOnFocus = false
+    revalidateOnFocus = false,
   } = options;
 
   const [data, setData] = useState<T | null>(() => globalCache.get<T>(key));
@@ -131,18 +138,39 @@ export function useGlobalCache<T>(
   fetcherRef.current = fetcher;
 
   const fetchData = useCallback(async () => {
+    // Si ya hay un fetch en progreso para esta key, reutilizarlo
+    if (pendingFetches.has(key)) {
+      try {
+        const result = (await pendingFetches.get(key)) as T;
+        setData(result);
+        setIsLoading(false);
+        return;
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error("Unknown error");
+        setError(error);
+        setIsLoading(false);
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError(null);
 
+    // Crear y guardar el promise del fetch
+    const fetchPromise = fetcherRef.current();
+    pendingFetches.set(key, fetchPromise);
+
     try {
-      const result = await fetcherRef.current();
+      const result = await fetchPromise;
       globalCache.set(key, result, ttl);
       setData(result);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown error');
+      const error = err instanceof Error ? err : new Error("Unknown error");
       setError(error);
     } finally {
       setIsLoading(false);
+      // Limpiar el fetch pendiente después de un pequeño delay
+      setTimeout(() => pendingFetches.delete(key), 100);
     }
   }, [key, ttl]);
 
@@ -164,7 +192,10 @@ export function useGlobalCache<T>(
   // Efecto para cargar datos iniciales
   useEffect(() => {
     const cachedData = globalCache.get<T>(key);
-    if (cachedData === null || (revalidateOnMount && globalCache.isStale(key))) {
+    if (
+      cachedData === null ||
+      (revalidateOnMount && globalCache.isStale(key))
+    ) {
       fetchData();
     } else {
       setData(cachedData);
@@ -174,7 +205,9 @@ export function useGlobalCache<T>(
 
   // Revalidación en focus
   useEffect(() => {
-    if (!revalidateOnFocus) return;
+    if (!revalidateOnFocus) {
+      return;
+    }
 
     const handleFocus = () => {
       if (globalCache.isStale(key)) {
@@ -182,18 +215,21 @@ export function useGlobalCache<T>(
       }
     };
 
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [key, revalidateOnFocus, fetchData]);
 
-  const mutate = useCallback(async (newData?: T) => {
-    if (newData !== undefined) {
-      globalCache.set(key, newData, ttl);
-      setData(newData);
-    } else {
-      await fetchData();
-    }
-  }, [key, ttl, fetchData]);
+  const mutate = useCallback(
+    async (newData?: T) => {
+      if (newData !== undefined) {
+        globalCache.set(key, newData, ttl);
+        setData(newData);
+      } else {
+        await fetchData();
+      }
+    },
+    [key, ttl, fetchData]
+  );
 
   const clearCache = useCallback(() => {
     globalCache.clear(key);
@@ -206,7 +242,7 @@ export function useGlobalCache<T>(
     error,
     mutate,
     clearCache,
-    isStale: globalCache.isStale(key)
+    isStale: globalCache.isStale(key),
   };
 }
 

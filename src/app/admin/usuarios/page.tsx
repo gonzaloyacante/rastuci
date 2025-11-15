@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import {
-  AdminPageHeader,
-  AdminLoading,
-  AdminError,
   AdminEmpty,
   AdminEmptyIcons,
+  AdminError,
+  AdminLoading,
+  AdminPageHeader,
 } from "@/components/admin";
-import { useUsers, User } from "@/hooks/useUsers";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { User, useUsers } from "@/hooks/useUsers";
+import { useState } from "react";
 
 export default function UsuariosPage() {
   const {
@@ -21,9 +22,19 @@ export default function UsuariosPage() {
     fetchUsers,
   } = useUsers({ limit: 20 });
   const [searchInput, setSearchInput] = useState("");
+  const { confirm: confirmDialog, ConfirmDialog } = useConfirmDialog();
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+    const confirmed = await confirmDialog({
+      title: "Eliminar usuario",
+      message:
+        "¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+      variant: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -37,7 +48,9 @@ export default function UsuariosPage() {
 
   // Paginación
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
+    if (page < 1 || page > totalPages) {
+      return;
+    }
     fetchUsers({ page, limit: 20, search: searchInput });
   };
 
@@ -55,8 +68,12 @@ export default function UsuariosPage() {
     });
   };
 
-  if (loading) return <AdminLoading />;
-  if (error) return <AdminError message={error} />;
+  if (loading) {
+    return <AdminLoading />;
+  }
+  if (error) {
+    return <AdminError message={error} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -81,14 +98,17 @@ export default function UsuariosPage() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSearch();
+            if (e.key === "Enter") {
+              handleSearch();
+            }
           }}
           placeholder="Buscar usuarios por nombre o email..."
           className="w-full sm:w-96 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
         <button
           onClick={handleSearch}
-          className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors">
+          className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors"
+        >
           Buscar
         </button>
       </div>
@@ -121,7 +141,8 @@ export default function UsuariosPage() {
             {users.map((user: User) => (
               <div
                 key={user.id}
-                className="border rounded-lg p-4 space-y-3 surface shadow-sm">
+                className="border rounded-lg p-4 space-y-3 surface shadow-sm"
+              >
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
@@ -141,7 +162,8 @@ export default function UsuariosPage() {
                       <span
                         className={`badge-${
                           getRoleBadge(user.role).variant
-                        } text-xs`}>
+                        } text-xs`}
+                      >
                         {getRoleBadge(user.role).label}
                       </span>
                       <span className="text-xs text-content-tertiary">
@@ -155,13 +177,15 @@ export default function UsuariosPage() {
                     onClick={() => {
                       window.location.href = `/admin/usuarios/${user.id}/editar`;
                     }}
-                    className="btn-secondary flex-1 text-sm cursor-pointer">
+                    className="btn-secondary flex-1 text-sm cursor-pointer"
+                  >
                     Editar
                   </button>
                   <button
                     onClick={() => handleDelete(user.id)}
                     disabled={user.role === "ADMIN"}
-                    className="btn-destructive flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                    className="btn-destructive flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
                     Eliminar
                   </button>
                 </div>
@@ -217,7 +241,8 @@ export default function UsuariosPage() {
                       <span
                         className={`badge-${
                           getRoleBadge(user.role).variant
-                        } text-xs`}>
+                        } text-xs`}
+                      >
                         {getRoleBadge(user.role).label}
                       </span>
                     </td>
@@ -231,13 +256,15 @@ export default function UsuariosPage() {
                         onClick={() => {
                           window.location.href = `/admin/usuarios/${user.id}/editar`;
                         }}
-                        className="text-primary hover:text-primary/80 mr-4 cursor-pointer">
+                        className="text-primary hover:text-primary/80 mr-4 cursor-pointer"
+                      >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(user.id)}
                         disabled={user.role === "ADMIN"}
-                        className="text-error hover:text-error/80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                        className="text-error hover:text-error/80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
                         Eliminar
                       </button>
                     </td>
@@ -251,7 +278,8 @@ export default function UsuariosPage() {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1 || loading}
-                  className="btn-secondary disabled:opacity-50">
+                  className="btn-secondary disabled:opacity-50"
+                >
                   Anterior
                 </button>
                 <span className="text-sm text-content-secondary">
@@ -260,7 +288,8 @@ export default function UsuariosPage() {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages || loading}
-                  className="btn-secondary disabled:opacity-50">
+                  className="btn-secondary disabled:opacity-50"
+                >
                   Siguiente
                 </button>
               </div>
@@ -268,6 +297,7 @@ export default function UsuariosPage() {
           </div>
         </div>
       )}
+      {ConfirmDialog}
     </div>
   );
 }

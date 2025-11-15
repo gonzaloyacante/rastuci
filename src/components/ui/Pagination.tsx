@@ -1,8 +1,7 @@
 "use client";
 
-import React from 'react';
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
-import { Button } from './Button';
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Button } from "./Button";
 
 interface PaginationProps {
   currentPage: number;
@@ -19,17 +18,19 @@ export function Pagination({
   onPageChange,
   showFirstLast = true,
   maxVisiblePages = 5,
-  className = '',
+  className = "",
 }: PaginationProps) {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) {
+    return null;
+  }
 
   const getVisiblePages = () => {
-    const pages: (number | 'ellipsis')[] = [];
+    const pages: (number | "ellipsis")[] = [];
     const half = Math.floor(maxVisiblePages / 2);
-    
+
     let start = Math.max(1, currentPage - half);
     let end = Math.min(totalPages, currentPage + half);
-    
+
     // Adjust if we're near the beginning or end
     if (currentPage <= half) {
       end = Math.min(totalPages, maxVisiblePages);
@@ -37,28 +38,28 @@ export function Pagination({
     if (currentPage > totalPages - half) {
       start = Math.max(1, totalPages - maxVisiblePages + 1);
     }
-    
+
     // Add first page and ellipsis if needed
     if (start > 1) {
       pages.push(1);
       if (start > 2) {
-        pages.push('ellipsis');
+        pages.push("ellipsis");
       }
     }
-    
+
     // Add visible pages
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
-    
+
     // Add ellipsis and last page if needed
     if (end < totalPages) {
       if (end < totalPages - 1) {
-        pages.push('ellipsis');
+        pages.push("ellipsis");
       }
       pages.push(totalPages);
     }
-    
+
     return pages;
   };
 
@@ -104,7 +105,7 @@ export function Pagination({
 
       {/* Visible page numbers */}
       {visiblePages.map((page, index) => {
-        if (page === 'ellipsis') {
+        if (page === "ellipsis") {
           return (
             <span key={`ellipsis-${index}`} className="px-2 py-1 text-sm muted">
               <MoreHorizontal className="w-4 h-4" />

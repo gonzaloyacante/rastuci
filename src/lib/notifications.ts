@@ -62,8 +62,8 @@ export const showInfo = (message: string, options?: ToastOptions) => {
 };
 
 export const showLoading = (
-  message: string = "Cargando...",
-  options?: ToastOptions,
+  message = "Cargando...",
+  options?: ToastOptions
 ) => {
   return toast.loading(message, {
     ...toastConfig.loading,
@@ -87,7 +87,7 @@ export const showPromise = async <T>(
     success: string;
     error: string;
   },
-  options?: ToastOptions,
+  options?: ToastOptions
 ) => {
   const toastId = showLoading(messages.loading, options);
   try {
@@ -192,7 +192,7 @@ export const notifications = {
 export const withAutoNotification = <T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   successMessage: string,
-  errorMessage: string = "Error al procesar la solicitud",
+  errorMessage = "Error al procesar la solicitud"
 ) => {
   return async (...args: T): Promise<R> => {
     const toastId = showLoading("Procesando...");

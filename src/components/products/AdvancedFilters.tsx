@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import useSWR from "swr";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Filter,
-  X,
   ChevronDown,
   ChevronUp,
-  Star,
-  Tag,
+  DollarSign,
+  Filter,
   Palette,
   Ruler,
-  DollarSign,
+  Star,
+  Tag,
+  X,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 
 // Tipos para filtros
 interface FilterOption {
@@ -71,27 +71,42 @@ export default function AdvancedFilters({
 }: AdvancedFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({});
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['category', 'price']));
-  const [sortBy, setSortBy] = useState('relevance');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(["category", "price"])
+  );
+  const [sortBy, setSortBy] = useState("relevance");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Obtener categorías reales de la API
-  const { data: categoriesData } = useSWR('/api/categories', async (url: string) => {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch categories');
-    return res.json();
-  });
+  const { data: categoriesData } = useSWR(
+    "/api/categories",
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+      return res.json();
+    }
+  );
 
   // Obtener estadísticas de productos para filtros dinámicos
-  const { data: statsData } = useSWR('/api/products/stats', async (url: string) => {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch product stats');
-    return res.json();
-  });
+  const { data: statsData } = useSWR(
+    "/api/products/stats",
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error("Failed to fetch product stats");
+      }
+      return res.json();
+    }
+  );
 
-  const categories = useMemo(() => categoriesData?.data?.data || [], [categoriesData]);
+  const categories = useMemo(
+    () => categoriesData?.data?.data || [],
+    [categoriesData]
+  );
   const stats = useMemo(() => statsData?.data || {}, [statsData]);
 
   // Construir filtros dinámicos basados en datos reales
@@ -105,7 +120,7 @@ export default function AdvancedFilters({
         min: stats.minPrice || 0,
         max: stats.maxPrice || 100000,
         step: 1000,
-      }
+      },
     ];
 
     // Categorías dinámicas
@@ -118,8 +133,8 @@ export default function AdvancedFilters({
         options: categories.map((cat: Category) => ({
           id: cat.id,
           label: cat.name,
-          count: cat.count || stats.categoryCounts?.[cat.id] || 0
-        }))
+          count: cat.count || stats.categoryCounts?.[cat.id] || 0,
+        })),
       });
     }
 
@@ -133,8 +148,8 @@ export default function AdvancedFilters({
         options: stats.availableSizes.map((size: string) => ({
           id: size,
           label: size,
-          count: stats.sizeCounts?.[size] || 0
-        }))
+          count: stats.sizeCounts?.[size] || 0,
+        })),
       });
     }
 
@@ -149,8 +164,8 @@ export default function AdvancedFilters({
           id: color.toLowerCase(),
           label: color,
           count: stats.colorCounts?.[color] || 0,
-          color: getColorHex(color)
-        }))
+          color: getColorHex(color),
+        })),
       });
     }
 
@@ -162,11 +177,27 @@ export default function AdvancedFilters({
         type: "radio",
         icon: <Star className="w-4 h-4" />,
         options: [
-          { id: "5", label: "5 estrellas", count: stats.ratingCounts?.['5'] || 0 },
-          { id: "4", label: "4+ estrellas", count: stats.ratingCounts?.['4+'] || 0 },
-          { id: "3", label: "3+ estrellas", count: stats.ratingCounts?.['3+'] || 0 },
-          { id: "2", label: "2+ estrellas", count: stats.ratingCounts?.['2+'] || 0 },
-        ]
+          {
+            id: "5",
+            label: "5 estrellas",
+            count: stats.ratingCounts?.["5"] || 0,
+          },
+          {
+            id: "4",
+            label: "4+ estrellas",
+            count: stats.ratingCounts?.["4+"] || 0,
+          },
+          {
+            id: "3",
+            label: "3+ estrellas",
+            count: stats.ratingCounts?.["3+"] || 0,
+          },
+          {
+            id: "2",
+            label: "2+ estrellas",
+            count: stats.ratingCounts?.["2+"] || 0,
+          },
+        ],
       });
     }
 
@@ -176,29 +207,29 @@ export default function AdvancedFilters({
   // Función para obtener color hex basado en nombre
   const getColorHex = (colorName: string): string => {
     const colorMap: Record<string, string> = {
-      'rosa': '#ec4899',
-      'pink': '#ec4899',
-      'azul': '#3b82f6',
-      'blue': '#3b82f6',
-      'blanco': '#ffffff',
-      'white': '#ffffff',
-      'negro': '#000000',
-      'black': '#000000',
-      'amarillo': '#eab308',
-      'yellow': '#eab308',
-      'verde': '#22c55e',
-      'green': '#22c55e',
-      'rojo': '#ef4444',
-      'red': '#ef4444',
-      'morado': '#a855f7',
-      'purple': '#a855f7',
-      'naranja': '#f97316',
-      'orange': '#f97316',
-      'gris': '#6b7280',
-      'gray': '#6b7280',
+      rosa: "#ec4899",
+      pink: "#ec4899",
+      azul: "#3b82f6",
+      blue: "#3b82f6",
+      blanco: "#ffffff",
+      white: "#ffffff",
+      negro: "#000000",
+      black: "#000000",
+      amarillo: "#eab308",
+      yellow: "#eab308",
+      verde: "#22c55e",
+      green: "#22c55e",
+      rojo: "#ef4444",
+      red: "#ef4444",
+      morado: "#a855f7",
+      purple: "#a855f7",
+      naranja: "#f97316",
+      orange: "#f97316",
+      gris: "#6b7280",
+      gray: "#6b7280",
     };
-    
-    return colorMap[colorName.toLowerCase()] || '#6b7280';
+
+    return colorMap[colorName.toLowerCase()] || "#6b7280";
   };
 
   const FILTER_GROUPS = buildFilterGroups();
@@ -206,83 +237,92 @@ export default function AdvancedFilters({
   // Inicializar filtros desde URL
   useEffect(() => {
     const filters: ActiveFilters = {};
-    
+
     // Extraer filtros de la URL
-    FILTER_GROUPS.forEach(group => {
+    FILTER_GROUPS.forEach((group) => {
       const param = searchParams.get(group.id);
       if (param) {
-        if (group.type === 'range') {
-          const [min, max] = param.split('-').map(Number);
+        if (group.type === "range") {
+          const [min, max] = param.split("-").map(Number);
           filters[group.id] = [min || group.min || 0, max || group.max || 100];
-        } else if (group.type === 'radio') {
+        } else if (group.type === "radio") {
           filters[group.id] = param;
         } else {
-          filters[group.id] = param.split(',');
+          filters[group.id] = param.split(",");
         }
       }
     });
 
-    const sort = searchParams.get('sort') || 'relevance';
+    const sort = searchParams.get("sort") || "relevance";
     setSortBy(sort);
     setActiveFilters(filters);
   }, [searchParams, FILTER_GROUPS]);
 
   // Actualizar URL cuando cambian los filtros
-  const updateURL = useCallback((newFilters: ActiveFilters, newSort: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    // Limpiar parámetros de filtros existentes
-    FILTER_GROUPS.forEach(group => {
-      params.delete(group.id);
-    });
-    params.delete('sort');
+  const updateURL = useCallback(
+    (newFilters: ActiveFilters, newSort: string) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    // Agregar nuevos filtros
-    Object.entries(newFilters).forEach(([key, value]) => {
-      if (Array.isArray(value) && value.length > 0) {
-        if (typeof value[0] === 'number') {
-          // Para rangos
-          params.set(key, value.join('-'));
-        } else {
-          // Para checkboxes
-          params.set(key, value.join(','));
+      // Limpiar parámetros de filtros existentes
+      FILTER_GROUPS.forEach((group) => {
+        params.delete(group.id);
+      });
+      params.delete("sort");
+
+      // Agregar nuevos filtros
+      Object.entries(newFilters).forEach(([key, value]) => {
+        if (Array.isArray(value) && value.length > 0) {
+          if (typeof value[0] === "number") {
+            // Para rangos
+            params.set(key, value.join("-"));
+          } else {
+            // Para checkboxes
+            params.set(key, value.join(","));
+          }
+        } else if (typeof value === "string" && value) {
+          // Para radio buttons
+          params.set(key, value);
         }
-      } else if (typeof value === 'string' && value) {
-        // Para radio buttons
-        params.set(key, value);
+      });
+
+      if (newSort !== "relevance") {
+        params.set("sort", newSort);
       }
-    });
 
-    if (newSort !== 'relevance') {
-      params.set('sort', newSort);
-    }
+      // Mantener búsqueda si existe
+      const query = searchParams.get("q");
+      if (query) {
+        params.set("q", query);
+      }
 
-    // Mantener búsqueda si existe
-    const query = searchParams.get('q');
-    if (query) {
-      params.set('q', query);
-    }
-
-    router.push(`/productos?${params.toString()}`);
-  }, [router, searchParams, FILTER_GROUPS]);
+      router.push(`/productos?${params.toString()}`);
+    },
+    [router, searchParams, FILTER_GROUPS]
+  );
 
   // Manejar cambio de filtros
-  const handleFilterChange = (groupId: string, value: string | number[], checked?: boolean) => {
+  const handleFilterChange = (
+    groupId: string,
+    value: string | number[],
+    checked?: boolean
+  ) => {
     const newFilters = { ...activeFilters };
-    const group = FILTER_GROUPS.find(g => g.id === groupId);
+    const group = FILTER_GROUPS.find((g) => g.id === groupId);
 
-    if (!group) return;
+    if (!group) {
+      return;
+    }
 
-    if (group.type === 'checkbox') {
+    if (group.type === "checkbox") {
       const currentValues = (newFilters[groupId] as string[]) || [];
       if (checked) {
         newFilters[groupId] = [...currentValues, value as string];
       } else {
-        newFilters[groupId] = currentValues.filter(v => v !== value);
+        newFilters[groupId] = currentValues.filter((v) => v !== value);
       }
-    } else if (group.type === 'radio') {
+    } else if (group.type === "radio") {
       newFilters[groupId] = value as string;
-    } else if (group.type === 'range') {
+    } else if (group.type === "range") {
       newFilters[groupId] = value as number[];
     }
 
@@ -326,20 +366,27 @@ export default function AdvancedFilters({
   };
 
   // Contar filtros activos
-  const activeFilterCount = Object.values(activeFilters).filter(value => 
+  const activeFilterCount = Object.values(activeFilters).filter((value) =>
     Array.isArray(value) ? value.length > 0 : Boolean(value)
   ).length;
 
   // Renderizar opción de checkbox
   const renderCheckboxOption = (groupId: string, option: FilterOption) => {
-    const isChecked = ((activeFilters[groupId] as string[]) || []).includes(option.id);
-    
+    const isChecked = ((activeFilters[groupId] as string[]) || []).includes(
+      option.id
+    );
+
     return (
-      <label key={option.id} className="flex items-center space-x-3 cursor-pointer group">
+      <label
+        key={option.id}
+        className="flex items-center space-x-3 cursor-pointer group"
+      >
         <input
           type="checkbox"
           checked={isChecked}
-          onChange={(e) => handleFilterChange(groupId, option.id, e.target.checked)}
+          onChange={(e) =>
+            handleFilterChange(groupId, option.id, e.target.checked)
+          }
           className="w-4 h-4 text-primary border-2 border-surface-secondary rounded focus:ring-2 focus:ring-pink-500"
         />
         <span className="flex-1 text-sm text-primary group-hover:text-pink-600 transition-colors">
@@ -354,19 +401,21 @@ export default function AdvancedFilters({
 
   // Renderizar opción de color
   const renderColorOption = (groupId: string, option: FilterOption) => {
-    const isChecked = ((activeFilters[groupId] as string[]) || []).includes(option.id);
-    
+    const isChecked = ((activeFilters[groupId] as string[]) || []).includes(
+      option.id
+    );
+
     return (
       <button
         key={option.id}
         onClick={() => handleFilterChange(groupId, option.id, !isChecked)}
         className={`group relative flex items-center space-x-2 p-2 rounded-lg border-2 transition-all ${
-          isChecked 
-            ? 'border-pink-500 bg-pink-50' 
-            : 'border-surface-secondary hover:border-surface'
+          isChecked
+            ? "border-pink-500 bg-pink-50"
+            : "border-surface-secondary hover:border-surface"
         }`}
       >
-        <div 
+        <div
           className="w-6 h-6 rounded-full border-2 border-surface-secondary"
           style={{ backgroundColor: option.color }}
         />
@@ -385,8 +434,11 @@ export default function AdvancedFilters({
 
   // Renderizar rango de precio
   const renderPriceRange = (group: FilterGroup) => {
-    const [min, max] = (activeFilters[group.id] as number[]) || [group.min || 0, group.max || 100];
-    
+    const [min, max] = (activeFilters[group.id] as number[]) || [
+      group.min || 0,
+      group.max || 100,
+    ];
+
     return (
       <div className="space-y-4">
         <div className="flex items-center space-x-4">
@@ -395,7 +447,9 @@ export default function AdvancedFilters({
             <input
               type="number"
               value={min}
-              onChange={(e) => handleFilterChange(group.id, [Number(e.target.value), max])}
+              onChange={(e) =>
+                handleFilterChange(group.id, [Number(e.target.value), max])
+              }
               className="w-full px-3 py-2 border border-surface-secondary rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
               min={group.min}
               max={group.max}
@@ -407,7 +461,9 @@ export default function AdvancedFilters({
             <input
               type="number"
               value={max}
-              onChange={(e) => handleFilterChange(group.id, [min, Number(e.target.value)])}
+              onChange={(e) =>
+                handleFilterChange(group.id, [min, Number(e.target.value)])
+              }
               className="w-full px-3 py-2 border border-surface-secondary rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
               min={group.min}
               max={group.max}
@@ -439,7 +495,7 @@ export default function AdvancedFilters({
               </span>
             )}
           </button>
-          
+
           <div className="text-sm muted">
             {isLoading ? (
               <span>Buscando...</span>
@@ -456,7 +512,7 @@ export default function AdvancedFilters({
             onChange={(e) => handleSortChange(e.target.value)}
             className="px-3 py-2 border border-surface-secondary rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
           >
-            {SORT_OPTIONS.map(option => (
+            {SORT_OPTIONS.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>
@@ -469,7 +525,9 @@ export default function AdvancedFilters({
       {activeFilterCount > 0 && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-primary">Filtros activos</h3>
+            <h3 className="text-sm font-medium text-primary">
+              Filtros activos
+            </h3>
             <button
               onClick={clearFilters}
               className="text-sm text-pink-600 hover:text-pink-700"
@@ -479,15 +537,21 @@ export default function AdvancedFilters({
           </div>
           <div className="flex flex-wrap gap-2">
             {Object.entries(activeFilters).map(([groupId, value]) => {
-              const group = FILTER_GROUPS.find(g => g.id === groupId);
-              if (!group || (Array.isArray(value) && value.length === 0) || !value) return null;
+              const group = FILTER_GROUPS.find((g) => g.id === groupId);
+              if (
+                !group ||
+                (Array.isArray(value) && value.length === 0) ||
+                !value
+              ) {
+                return null;
+              }
 
-              let displayValue = '';
+              let displayValue = "";
               if (Array.isArray(value)) {
-                if (typeof value[0] === 'number') {
+                if (typeof value[0] === "number") {
                   displayValue = `$${value[0].toLocaleString()} - $${value[1].toLocaleString()}`;
                 } else {
-                  displayValue = value.join(', ');
+                  displayValue = value.join(", ");
                 }
               } else {
                 displayValue = value.toString();
@@ -498,7 +562,9 @@ export default function AdvancedFilters({
                   key={groupId}
                   className="inline-flex items-center space-x-2 px-3 py-1 bg-pink-100 text-pink-800 text-sm rounded-full"
                 >
-                  <span>{group.label}: {displayValue}</span>
+                  <span>
+                    {group.label}: {displayValue}
+                  </span>
                   <button
                     onClick={() => clearFilter(groupId)}
                     className="text-pink-600 hover:text-pink-800"
@@ -515,15 +581,20 @@ export default function AdvancedFilters({
       {/* Sidebar de filtros desktop */}
       <div className="hidden lg:block">
         <div className="space-y-6">
-          {FILTER_GROUPS.map(group => (
-            <div key={group.id} className="border-b border-surface-secondary pb-6">
+          {FILTER_GROUPS.map((group) => (
+            <div
+              key={group.id}
+              className="border-b border-surface-secondary pb-6"
+            >
               <button
                 onClick={() => toggleGroup(group.id)}
                 className="flex items-center justify-between w-full text-left"
               >
                 <div className="flex items-center space-x-2">
                   {group.icon}
-                  <span className="font-medium text-primary">{group.label}</span>
+                  <span className="font-medium text-primary">
+                    {group.label}
+                  </span>
                 </div>
                 {expandedGroups.has(group.id) ? (
                   <ChevronUp className="w-4 h-4 muted" />
@@ -536,37 +607,48 @@ export default function AdvancedFilters({
                 {expandedGroups.has(group.id) && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
+                    animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-4 space-y-3"
                   >
-                    {group.type === 'range' && renderPriceRange(group)}
-                    {group.type === 'checkbox' && group.options?.map(option => 
-                      renderCheckboxOption(group.id, option)
-                    )}
-                    {group.type === 'color' && (
+                    {group.type === "range" && renderPriceRange(group)}
+                    {group.type === "checkbox" &&
+                      group.options?.map((option) =>
+                        renderCheckboxOption(group.id, option)
+                      )}
+                    {group.type === "color" && (
                       <div className="grid grid-cols-2 gap-2">
-                        {group.options?.map(option => 
+                        {group.options?.map((option) =>
                           renderColorOption(group.id, option)
                         )}
                       </div>
                     )}
-                    {group.type === 'radio' && group.options?.map(option => (
-                      <label key={option.id} className="flex items-center space-x-3 cursor-pointer">
-                        <input
-                          type="radio"
-                          name={group.id}
-                          value={option.id}
-                          checked={activeFilters[group.id] === option.id}
-                          onChange={() => handleFilterChange(group.id, option.id)}
-                          className="w-4 h-4 text-primary border-2 border-surface-secondary focus:ring-2 focus:ring-pink-500"
-                        />
-                        <span className="flex-1 text-sm text-primary">{option.label}</span>
-                        {option.count && option.count > 0 && (
-                          <span className="text-xs muted">({option.count})</span>
-                        )}
-                      </label>
-                    ))}
+                    {group.type === "radio" &&
+                      group.options?.map((option) => (
+                        <label
+                          key={option.id}
+                          className="flex items-center space-x-3 cursor-pointer"
+                        >
+                          <input
+                            type="radio"
+                            name={group.id}
+                            value={option.id}
+                            checked={activeFilters[group.id] === option.id}
+                            onChange={() =>
+                              handleFilterChange(group.id, option.id)
+                            }
+                            className="w-4 h-4 text-primary border-2 border-surface-secondary focus:ring-2 focus:ring-pink-500"
+                          />
+                          <span className="flex-1 text-sm text-primary">
+                            {option.label}
+                          </span>
+                          {option.count && option.count > 0 && (
+                            <span className="text-xs muted">
+                              ({option.count})
+                            </span>
+                          )}
+                        </label>
+                      ))}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -585,22 +667,24 @@ export default function AdvancedFilters({
             className="fixed inset-0 z-50 lg:hidden"
           >
             {/* Backdrop */}
-            <div 
+            <div
               className="absolute inset-0 bg-black bg-opacity-50"
               onClick={() => setShowMobileFilters(false)}
             />
-            
+
             {/* Panel */}
             <motion.div
-              initial={{ x: '-100%' }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'tween', duration: 0.3 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.3 }}
               className="absolute inset-y-0 left-0 w-80 bg-white shadow-xl overflow-y-auto"
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold text-primary">Filtros</h2>
+                  <h2 className="text-lg font-semibold text-primary">
+                    Filtros
+                  </h2>
                   <button
                     onClick={() => setShowMobileFilters(false)}
                     className="p-2 hover:bg-surface rounded-full"
@@ -610,15 +694,20 @@ export default function AdvancedFilters({
                 </div>
 
                 <div className="space-y-6">
-                  {FILTER_GROUPS.map(group => (
-                    <div key={group.id} className="border-b border-surface-secondary pb-6">
+                  {FILTER_GROUPS.map((group) => (
+                    <div
+                      key={group.id}
+                      className="border-b border-surface-secondary pb-6"
+                    >
                       <button
                         onClick={() => toggleGroup(group.id)}
                         className="flex items-center justify-between w-full text-left mb-4"
                       >
                         <div className="flex items-center space-x-2">
                           {group.icon}
-                          <span className="font-medium text-primary">{group.label}</span>
+                          <span className="font-medium text-primary">
+                            {group.label}
+                          </span>
                         </div>
                         {expandedGroups.has(group.id) ? (
                           <ChevronUp className="w-4 h-4 muted" />
@@ -631,37 +720,50 @@ export default function AdvancedFilters({
                         {expandedGroups.has(group.id) && (
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
+                            animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
                             className="space-y-3"
                           >
-                            {group.type === 'range' && renderPriceRange(group)}
-                            {group.type === 'checkbox' && group.options?.map(option => 
-                              renderCheckboxOption(group.id, option)
-                            )}
-                            {group.type === 'color' && (
+                            {group.type === "range" && renderPriceRange(group)}
+                            {group.type === "checkbox" &&
+                              group.options?.map((option) =>
+                                renderCheckboxOption(group.id, option)
+                              )}
+                            {group.type === "color" && (
                               <div className="grid grid-cols-2 gap-2">
-                                {group.options?.map(option => 
+                                {group.options?.map((option) =>
                                   renderColorOption(group.id, option)
                                 )}
                               </div>
                             )}
-                            {group.type === 'radio' && group.options?.map(option => (
-                              <label key={option.id} className="flex items-center space-x-3 cursor-pointer">
-                                <input
-                                  type="radio"
-                                  name={group.id}
-                                  value={option.id}
-                                  checked={activeFilters[group.id] === option.id}
-                                  onChange={() => handleFilterChange(group.id, option.id)}
-                                  className="w-4 h-4 text-primary border-2 border-surface-secondary focus:ring-2 focus:ring-pink-500"
-                                />
-                                <span className="flex-1 text-sm text-primary">{option.label}</span>
-                                {option.count && option.count > 0 && (
-                                  <span className="text-xs muted">({option.count})</span>
-                                )}
-                              </label>
-                            ))}
+                            {group.type === "radio" &&
+                              group.options?.map((option) => (
+                                <label
+                                  key={option.id}
+                                  className="flex items-center space-x-3 cursor-pointer"
+                                >
+                                  <input
+                                    type="radio"
+                                    name={group.id}
+                                    value={option.id}
+                                    checked={
+                                      activeFilters[group.id] === option.id
+                                    }
+                                    onChange={() =>
+                                      handleFilterChange(group.id, option.id)
+                                    }
+                                    className="w-4 h-4 text-primary border-2 border-surface-secondary focus:ring-2 focus:ring-pink-500"
+                                  />
+                                  <span className="flex-1 text-sm text-primary">
+                                    {option.label}
+                                  </span>
+                                  {option.count && option.count > 0 && (
+                                    <span className="text-xs muted">
+                                      ({option.count})
+                                    </span>
+                                  )}
+                                </label>
+                              ))}
                           </motion.div>
                         )}
                       </AnimatePresence>

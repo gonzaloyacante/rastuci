@@ -9,9 +9,9 @@ export type NormalizedError = {
 
 export function normalizeApiError(
   err: unknown,
-  fallbackCode: string = "INTERNAL_ERROR",
-  fallbackMessage: string = "Error interno del servidor",
-  fallbackStatus: number = 500
+  fallbackCode = "INTERNAL_ERROR",
+  fallbackMessage = "Error interno del servidor",
+  fallbackStatus = 500
 ): NormalizedError {
   // Zod validation errors
   if (err instanceof ZodError) {
@@ -61,7 +61,7 @@ export function normalizeApiError(
 
 function safePick(obj: unknown, keys: string[]) {
   const out: Record<string, unknown> = {};
-  if (obj && typeof obj === 'object') {
+  if (obj && typeof obj === "object") {
     const objRecord = obj as Record<string, unknown>;
     for (const k of keys) {
       if (Object.prototype.hasOwnProperty.call(objRecord, k)) {

@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft, CheckCircle, Printer, Truck, Package } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { ArrowLeft, CheckCircle, Package, Printer, Truck } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { logger } from "../../../../lib/logger";
 
 // Componente Badge interno para evitar problemas de importación
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -20,7 +21,8 @@ const Badge = ({ className, children, ...props }: BadgeProps) => {
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
         className || ""
       }`}
-      {...props}>
+      {...props}
+    >
       {children}
     </div>
   );
@@ -114,7 +116,7 @@ export default function OrderDetailPage() {
           setError(data.error || "No se pudo cargar el pedido");
         }
       } catch (err) {
-        console.error(err);
+        logger.error("Error fetching order:", { error: err });
         setError("Ocurrió un error al conectar con el servidor");
       } finally {
         setLoading(false);
@@ -155,7 +157,7 @@ export default function OrderDetailPage() {
         throw new Error(data.error || "Error al actualizar el pedido");
       }
     } catch (error) {
-      console.error("Error al actualizar pedido:", error);
+      logger.error("Error al actualizar pedido:", { error });
       toast.error("No se pudo actualizar el estado del pedido");
     } finally {
       setUpdating(false);
@@ -178,8 +180,9 @@ export default function OrderDetailPage() {
   };
 
   const getProductImage = (item: OrderItem) => {
-    if (!item.product.images)
+    if (!item.product.images) {
       return "/placeholder.jpg";
+    }
 
     if (Array.isArray(item.product.images) && item.product.images.length > 0) {
       return item.product.images[0];
@@ -205,7 +208,8 @@ export default function OrderDetailPage() {
             className="h-12 w-12 mx-auto mb-2"
             fill="none"
             viewBox="0 0 24 24"
-            stroke="currentColor">
+            stroke="currentColor"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -216,9 +220,7 @@ export default function OrderDetailPage() {
           {error}
         </div>
         <Link href="/admin/pedidos/pendientes">
-          <Button className="btn-hero">
-            Volver a Pedidos Pendientes
-          </Button>
+          <Button className="btn-hero">Volver a Pedidos Pendientes</Button>
         </Link>
       </div>
     );
@@ -229,9 +231,7 @@ export default function OrderDetailPage() {
       <div className="flex flex-col items-center justify-center py-12">
         <div className="muted text-2xl mb-4">Pedido no encontrado</div>
         <Link href="/admin/pedidos/pendientes">
-          <Button className="btn-hero">
-            Volver a Pedidos Pendientes
-          </Button>
+          <Button className="btn-hero">Volver a Pedidos Pendientes</Button>
         </Link>
       </div>
     );
@@ -243,7 +243,8 @@ export default function OrderDetailPage() {
         <div>
           <Link
             href="/admin/pedidos/pendientes"
-            className="inline-flex items-center muted hover:text-primary mb-2">
+            className="inline-flex items-center muted hover:text-primary mb-2"
+          >
             <ArrowLeft size={16} className="mr-2" />
             Volver a Pedidos Pendientes
           </Link>
@@ -254,7 +255,8 @@ export default function OrderDetailPage() {
         <Button
           variant="outline"
           onClick={() => window.print()}
-          className="hidden sm:flex items-center gap-2">
+          className="hidden sm:flex items-center gap-2"
+        >
           <Printer size={16} />
           Imprimir
         </Button>
@@ -276,9 +278,7 @@ export default function OrderDetailPage() {
             <CardContent className="pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium muted">
-                    ID del Pedido
-                  </h3>
+                  <h3 className="text-sm font-medium muted">ID del Pedido</h3>
                   <p className="text-sm font-mono">{order.id}</p>
                 </div>
                 <div>
@@ -288,9 +288,7 @@ export default function OrderDetailPage() {
                   <p className="text-sm">{formatDate(order.createdAt)}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium muted">
-                    Total
-                  </h3>
+                  <h3 className="text-sm font-medium muted">Total</h3>
                   <p className="text-lg font-bold text-primary">
                     {formatCurrency(order.total)}
                   </p>
@@ -327,7 +325,8 @@ export default function OrderDetailPage() {
                     <div className="flex-grow">
                       <Link
                         href={`/admin/productos/editar/${item.product.id}`}
-                        className="font-medium text-primary hover:underline">
+                        className="font-medium text-primary hover:underline"
+                      >
                         {item.product.name}
                       </Link>
                       <div className="text-sm muted">
@@ -367,16 +366,12 @@ export default function OrderDetailPage() {
                   <p className="text-sm">{order.customerName}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium muted">
-                    Teléfono
-                  </h3>
+                  <h3 className="text-sm font-medium muted">Teléfono</h3>
                   <p className="text-sm">{order.customerPhone}</p>
                 </div>
                 {order.customerAddress && (
                   <div>
-                    <h3 className="text-sm font-medium muted">
-                      Dirección
-                    </h3>
+                    <h3 className="text-sm font-medium muted">Dirección</h3>
                     <p className="text-sm">{order.customerAddress}</p>
                   </div>
                 )}
@@ -395,7 +390,8 @@ export default function OrderDetailPage() {
                   <Button
                     className="w-full btn-hero flex items-center justify-center gap-2"
                     onClick={() => updateOrderStatus("PROCESSED")}
-                    disabled={updating}>
+                    disabled={updating}
+                  >
                     {updating ? (
                       <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
                     ) : (
@@ -408,7 +404,8 @@ export default function OrderDetailPage() {
                   <Button
                     className="w-full btn-hero flex items-center justify-center gap-2"
                     onClick={() => updateOrderStatus("DELIVERED")}
-                    disabled={updating}>
+                    disabled={updating}
+                  >
                     {updating ? (
                       <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
                     ) : (
@@ -428,7 +425,8 @@ export default function OrderDetailPage() {
                     variant="outline"
                     className="w-full mt-3"
                     onClick={() => updateOrderStatus("PENDING")}
-                    disabled={updating}>
+                    disabled={updating}
+                  >
                     Volver a marcar como Pendiente
                   </Button>
                 )}

@@ -1,26 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
+import { sanitizers, validateAndSanitize } from "@/lib/input-sanitization";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
-import {
-  ApiResponse,
-  Product,
-  PaginatedResponse,
-} from "@/types";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import {
   ProductCreateSchema,
   ProductsQuerySchema,
 } from "@/lib/validation/product";
-import { normalizeApiError } from "@/lib/errors";
-import {
-  validateAndSanitize,
-  sanitizers,
-} from "@/lib/input-sanitization";
+import { ApiResponse, PaginatedResponse, Product } from "@/types";
+import { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 // GET /api/products - Obtener productos con filtros y paginación
 export async function GET(
-  request: NextRequest,
+  request: NextRequest
 ): Promise<NextResponse<ApiResponse<PaginatedResponse<Product>>>> {
   try {
     // Rate limiting
@@ -48,8 +42,8 @@ export async function GET(
     }
     const filters = parsedQuery.data;
 
-  // Construir filtros para Prisma
-  const where: Prisma.ProductWhereInput = {};
+    // Construir filtros para Prisma
+    const where: Prisma.ProductWhereInput = {};
 
     if (filters.categoryId) {
       where.categoryId = filters.categoryId;
@@ -64,10 +58,12 @@ export async function GET(
 
     if (filters.minPrice || filters.maxPrice) {
       where.price = {};
-      if (filters.minPrice)
+      if (filters.minPrice) {
         (where.price as Record<string, number>).gte = filters.minPrice;
-      if (filters.maxPrice)
+      }
+      if (filters.maxPrice) {
         (where.price as Record<string, number>).lte = filters.maxPrice;
+      }
     }
 
     if (filters.onSale) {
@@ -75,15 +71,21 @@ export async function GET(
     }
 
     // Paginación: asegurar valores por defecto
-    const page = typeof filters.page === "number" && filters.page > 0 ? filters.page : 1;
-    const limit = typeof filters.limit === "number" && filters.limit > 0 ? filters.limit : 20;
+    const page =
+      typeof filters.page === "number" && filters.page > 0 ? filters.page : 1;
+    const limit =
+      typeof filters.limit === "number" && filters.limit > 0
+        ? filters.limit
+        : 20;
     const offset = (page - 1) * limit;
 
     // Construir ordenamiento dinámico de forma segura
     let orderBy: Prisma.ProductOrderByWithRelationInput | undefined;
     if (filters.sortBy) {
       // los campos permitidos vienen del schema de validación
-      orderBy = { [filters.sortBy]: filters.sortOrder } as Prisma.ProductOrderByWithRelationInput;
+      orderBy = {
+        [filters.sortBy]: filters.sortOrder,
+      } as Prisma.ProductOrderByWithRelationInput;
     }
 
     // Preparar argumentos para Prisma
@@ -107,26 +109,40 @@ export async function GET(
       salePrice?: number | null;
       stock?: number | null;
       images?: string | string[] | null;
-      category?: { id: string; name: string; description?: string | null } | null;
+      category?: {
+        id: string;
+        name: string;
+        description?: string | null;
+      } | null;
       [k: string]: unknown;
     };
 
-    const prismaProducts = await prisma.product.findMany(prismaArgs as unknown as Parameters<typeof prisma.product.findMany>[0]);
+    const prismaProducts = await prisma.product.findMany(
+      prismaArgs as unknown as Parameters<typeof prisma.product.findMany>[0]
+    );
 
     // Mapear imágenes si vienen como JSON string
-    const products: Product[] = (prismaProducts as unknown as PartialProduct[]).map((p) => ({
-      ...(p as unknown as Product),
-      description: p.description ?? undefined,
-      salePrice: p.salePrice ?? undefined,
-      images: typeof p.images === "string" ? JSON.parse(p.images as string) : (p.images as string[] | undefined),
-      category: {
-        ...(p.category ?? {}),
-        description: p.category?.description ?? undefined,
-      },
-    } as Product));
+    const products: Product[] = (
+      prismaProducts as unknown as PartialProduct[]
+    ).map(
+      (p) =>
+        ({
+          ...(p as unknown as Product),
+          description: p.description ?? undefined,
+          salePrice: p.salePrice ?? undefined,
+          images:
+            typeof p.images === "string"
+              ? JSON.parse(p.images as string)
+              : (p.images as string[] | undefined),
+          category: {
+            ...(p.category ?? {}),
+            description: p.category?.description ?? undefined,
+          },
+        }) as Product
+    );
 
-  // Calcular total para paginación
-  const total = await prisma.product.count({ where });
+    // Calcular total para paginación
+    const total = await prisma.product.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
     const paginated: PaginatedResponse<Product> = {
@@ -138,23 +154,31 @@ export async function GET(
     };
 
     const apiResponse = ok(paginated);
-    apiResponse.headers.set("Cache-Control", "public, max-age=300, s-maxage=300");
+    apiResponse.headers.set(
+      "Cache-Control",
+      "public, max-age=300, s-maxage=300"
+    );
     return apiResponse;
   } catch (error) {
-    console.error("Error fetching products:", error);
+    logger.error("Error fetching products:", { error: error });
     const e = normalizeApiError(
       error,
       "INTERNAL_ERROR",
       "Error al obtener productos",
-      500,
+      500
     );
-    return fail(e.code as ApiErrorCode, e.message, e.status, e.details as Record<string, unknown>);
+    return fail(
+      e.code as ApiErrorCode,
+      e.message,
+      e.status,
+      e.details as Record<string, unknown>
+    );
   }
 }
 
 // POST /api/products - Crear nuevo producto
 export async function POST(
-  request: NextRequest,
+  request: NextRequest
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
     // Rate limiting para creación
@@ -169,13 +193,16 @@ export async function POST(
     const validation = validateAndSanitize(
       ProductCreateSchema,
       body,
-      sanitizers.product,
+      sanitizers.product
     );
 
     if (!validation.success) {
       // Devolver un mensaje que incluya la palabra 'validación' para los tests y
       // mantener el detalle original en English/technical para logging.
-      const msg = typeof validation.error === 'string' ? validation.error : JSON.stringify(validation.error);
+      const msg =
+        typeof validation.error === "string"
+          ? validation.error
+          : JSON.stringify(validation.error);
       return fail("BAD_REQUEST", `validación: ${msg}`, 400);
     }
 
@@ -220,10 +247,21 @@ export async function POST(
     // Devuelve 201 para creación
     return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
-    console.error("Error creating product:", error);
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear producto", 500);
+    logger.error("Error creating product:", { error: error });
+    const e = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al crear producto",
+      500
+    );
     // Algunos tests esperan 400 en casos de contrainte/validation, así que si el error parece de validación devolvemos 400
-    const status = (e.status && e.status >= 400 && e.status < 500) ? e.status : 500;
-    return fail(e.code as ApiErrorCode, e.message, status, e.details as Record<string, unknown>);
+    const status =
+      e.status && e.status >= 400 && e.status < 500 ? e.status : 500;
+    return fail(
+      e.code as ApiErrorCode,
+      e.message,
+      status,
+      e.details as Record<string, unknown>
+    );
   }
 }

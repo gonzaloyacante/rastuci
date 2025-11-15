@@ -13,7 +13,7 @@ interface UseIntersectionObserverOptions {
  * Combina funcionalidad de lazy loading y detección de viewport
  */
 export function useIntersectionObserver(
-  options: UseIntersectionObserverOptions = {},
+  options: UseIntersectionObserverOptions = {}
 ) {
   const {
     threshold = 0.1,
@@ -38,12 +38,14 @@ export function useIntersectionObserver(
         setHasIntersected(true);
       }
     },
-    [hasIntersected],
+    [hasIntersected]
   );
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element || !enabled || (triggerOnce && hasIntersected)) return;
+    if (!element || !enabled || (triggerOnce && hasIntersected)) {
+      return;
+    }
 
     const observer = new IntersectionObserver(callback, {
       threshold,
@@ -93,8 +95,8 @@ export function usePreload(options: UseIntersectionObserverOptions = {}) {
  * Útil para evitar cargas innecesarias en scroll rápido
  */
 export function useLazyLoadWithDelay(
-  delay: number = 150,
-  options: UseIntersectionObserverOptions = {},
+  delay = 150,
+  options: UseIntersectionObserverOptions = {}
 ) {
   const { elementRef, isVisible } = useIntersectionObserver(options);
   const [shouldLoad, setShouldLoad] = useState(false);

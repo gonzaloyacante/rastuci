@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
+import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 // Configurar Cloudinary
 cloudinary.config({
@@ -33,9 +34,13 @@ export async function POST(request: NextRequest) {
             folder: "Rastuci",
           },
           (error, result) => {
-            if (error) reject(error);
-            else if (result) resolve(result);
-            else reject(new Error("No result from Cloudinary"));
+            if (error) {
+              reject(error);
+            } else if (result) {
+              resolve(result);
+            } else {
+              reject(new Error("No result from Cloudinary"));
+            }
           }
         )
         .end(buffer);
@@ -47,7 +52,7 @@ export async function POST(request: NextRequest) {
       public_id: result.public_id,
     });
   } catch (error) {
-    console.error("Error uploading to Cloudinary:", error);
+    logger.error("Error uploading to Cloudinary:", { error: error });
     return NextResponse.json(
       { success: false, error: "Error al subir la imagen" },
       { status: 500 }
@@ -74,7 +79,7 @@ export async function DELETE(request: NextRequest) {
       message: "Imagen eliminada correctamente",
     });
   } catch (error) {
-    console.error("Error deleting from Cloudinary:", error);
+    logger.error("Error deleting from Cloudinary:", { error: error });
     return NextResponse.json(
       { success: false, error: "Error al eliminar la imagen" },
       { status: 500 }

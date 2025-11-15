@@ -34,7 +34,9 @@ export const AdminLoading: React.FC<AdminLoadingProps> = ({
   };
 
   const getMinHeight = () => {
-    if (fullPage) return "";
+    if (fullPage) {
+      return "";
+    }
     switch (size) {
       case "sm":
         return "h-32";
@@ -51,7 +53,8 @@ export const AdminLoading: React.FC<AdminLoadingProps> = ({
     <div className={`${getContainerClasses()} ${getMinHeight()} ${className}`}>
       <div className="text-center">
         <div
-          className={`animate-spin rounded-full border-b-2 border-primary ${getSizeClasses()} mx-auto`}></div>
+          className={`animate-spin rounded-full border-b-2 border-primary ${getSizeClasses()} mx-auto`}
+        ></div>
         {text && <p className="text-content-secondary mt-2 text-sm">{text}</p>}
       </div>
     </div>

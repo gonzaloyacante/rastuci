@@ -33,7 +33,8 @@ export const AdminError: React.FC<AdminErrorProps> = ({
               className="w-12 h-12 mx-auto"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24">
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -54,10 +55,11 @@ export const AdminError: React.FC<AdminErrorProps> = ({
           <div className="flex gap-2 justify-center flex-wrap">
             {actions.map((action, index) => (
               <Button
-                key={index}
+                key={`item-${index}`}
                 variant={action.variant || "outline"}
                 onClick={action.onClick}
-                className="min-w-24">
+                className="min-w-24"
+              >
                 {action.icon && <span className="mr-2">{action.icon}</span>}
                 {action.label}
               </Button>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
 import { Check } from "lucide-react";
+import { useMemo } from "react";
 
 interface CheckoutStepperProps {
   currentStep: number;
@@ -19,18 +19,18 @@ export default function CheckoutStepper({
       "Entrega / Retiro",
       "Revisar Pedido",
     ],
-    [],
+    []
   );
 
   return (
     <div className="mb-10">
       <div className="flex items-center justify-between relative">
         {/* Línea de progreso de fondo */}
-        <div className="absolute top-5 left-0 right-0 h-[2px] surface z-0" />
+        <div className="absolute top-5 left-0 right-0 h-0.5 surface z-0" />
 
         {/* Línea de progreso activa */}
         <div
-          className="absolute top-5 left-0 h-[2px] bg-primary z-0 transition-all duration-500 ease-in-out"
+          className="absolute top-5 left-0 h-0.5 bg-primary z-0 transition-all duration-500 ease-in-out"
           style={{
             width: `${(currentStep / (stepNames.length - 1)) * 100}%`,
           }}
@@ -43,7 +43,7 @@ export default function CheckoutStepper({
 
           return (
             <div
-              key={`step-${index}`}
+              key={step || `step-${index}`}
               className={`flex flex-col items-center z-10 ${
                 isClickable ? "cursor-pointer" : ""
               }`}
@@ -68,7 +68,7 @@ export default function CheckoutStepper({
 
               {/* Nombre del paso */}
               <span
-                className={`text-xs mt-3 text-center max-w-[80px] leading-tight transition-all duration-300 ${
+                className={`text-xs mt-3 text-center max-w-20 leading-tight transition-all duration-300 ${
                   isCompleted || isCurrent
                     ? "text-primary font-semibold"
                     : "muted"

@@ -1,32 +1,36 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
-import { useRouter } from "next/navigation";
-import useSWR from "swr";
 import { Button } from "@/components/ui/Button";
 import { ColorChip } from "@/components/ui/ColorChip";
-import { Product } from "@/types";
-import {
-  ShoppingCart,
-  Heart,
-  Star,
-  Truck,
-  ShieldCheck,
-  CreditCard,
-  Share2,
-  ArrowLeft,
-} from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { useToast } from "@/components/ui/Toast";
+import { Product } from "@/types";
 import { formatPriceARS } from "@/utils/formatters";
+import {
+  ArrowLeft,
+  CreditCard,
+  Heart,
+  Share2,
+  ShieldCheck,
+  ShoppingCart,
+  Star,
+  Truck,
+} from "lucide-react";
 import Link from "next/link";
-
+import { useRouter } from "next/navigation";
+import React, { Suspense, useState } from "react";
+import useSWR from "swr";
+import { logger } from "../../../lib/logger";
 
 // Dynamic imports para componentes no críticos
-const ProductImageGallery = React.lazy(() => import("@/components/ProductImageGallery"));
+const ProductImageGallery = React.lazy(
+  () => import("@/components/ProductImageGallery")
+);
 const ProductReviews = React.lazy(() => import("@/components/ProductReviews"));
-const RelatedProducts = React.lazy(() => import("@/components/RelatedProducts"));
+const RelatedProducts = React.lazy(
+  () => import("@/components/RelatedProducts")
+);
 
 interface ProductDetailClientProps {
   productId: string;
@@ -39,11 +43,15 @@ const ProductDetailSkeleton = () => (
       <nav className="mb-6" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-2 text-sm muted">
           <li>
-            <Link href="/" className="hover:text-primary">Inicio</Link>
+            <Link href="/" className="hover:text-primary">
+              Inicio
+            </Link>
           </li>
           <li>/</li>
           <li>
-            <Link href="/productos" className="hover:text-primary">Productos</Link>
+            <Link href="/productos" className="hover:text-primary">
+              Productos
+            </Link>
           </li>
           <li>/</li>
           <li className="text-primary font-medium">Cargando...</li>
@@ -56,7 +64,10 @@ const ProductDetailSkeleton = () => (
           <div className="aspect-square surface rounded-lg animate-pulse" />
           <div className="grid grid-cols-4 gap-2">
             {[...Array(4)].map((_, i) => (
-              <div key={`skeleton-thumbnail-${i}`} className="aspect-square surface rounded animate-pulse" />
+              <div
+                key={`skeleton-thumbnail-${i}`}
+                className="aspect-square surface rounded animate-pulse"
+              />
             ))}
           </div>
         </div>
@@ -105,13 +116,18 @@ const RelatedProductsSkeleton = () => (
     <div className="h-8 surface rounded animate-pulse w-1/3" />
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
       {[...Array(4)].map((_, i) => (
-        <div key={`skeleton-related-${i}`} className="h-48 surface border border-muted rounded-lg animate-pulse" />
+        <div
+          key={`skeleton-related-${i}`}
+          className="h-48 surface border border-muted rounded-lg animate-pulse"
+        />
       ))}
     </div>
   </div>
 );
 
-export default function ProductDetailClient({ productId }: ProductDetailClientProps) {
+export default function ProductDetailClient({
+  productId,
+}: ProductDetailClientProps) {
   const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
@@ -122,7 +138,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
   const { show } = useToast();
 
   // SWR para fetch del producto
-  const fetcher = (url: string) => fetch(url).then(res => res.json());
+  const fetcher = (url: string) => fetch(url).then((res) => res.json());
   const { data, isLoading, error } = useSWR(
     productId ? `/api/products/${productId}` : null,
     fetcher,
@@ -135,44 +151,69 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
   const product: Product | null = data?.success ? data.data : null;
 
   const handleAddToCart = () => {
-    if (!product) {return;}
+    if (!product) {
+      return;
+    }
 
     if (selectedSize === "") {
-      show({ type: "error", title: "Talle", message: "Por favor selecciona un talle" });
+      show({
+        type: "error",
+        title: "Talle",
+        message: "Por favor selecciona un talle",
+      });
       return;
     }
 
     // Validar color si hay colores disponibles
-    const availableColors = Array.isArray(product.colors) && product.colors.length > 0 
-      ? product.colors 
-      : [];
-    
+    const availableColors =
+      Array.isArray(product.colors) && product.colors.length > 0
+        ? product.colors
+        : [];
+
     if (availableColors.length > 0 && selectedColor === "") {
-      show({ type: "error", title: "Color", message: "Por favor selecciona un color" });
+      show({
+        type: "error",
+        title: "Color",
+        message: "Por favor selecciona un color",
+      });
       return;
     }
 
     // Usar el color seleccionado o "Sin color" si no hay colores disponibles
     const colorToUse = availableColors.length > 0 ? selectedColor : "Sin color";
-    
+
     addToCart(product, quantity, selectedSize, colorToUse);
-    show({ type: "success", title: "Carrito", message: "Producto agregado al carrito" });
+    show({
+      type: "success",
+      title: "Carrito",
+      message: "Producto agregado al carrito",
+    });
   };
 
   const handleToggleFavorite = () => {
-    if (!product) {return;}
+    if (!product) {
+      return;
+    }
 
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
-      show({ type: "success", title: "Favoritos", message: "Eliminado de favoritos" });
+      show({
+        type: "success",
+        title: "Favoritos",
+        message: "Eliminado de favoritos",
+      });
     } else {
       addToWishlist({
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0] || '/placeholder.jpg',
+        image: product.images[0] || "/placeholder.jpg",
       });
-      show({ type: "success", title: "Favoritos", message: "Agregado a favoritos" });
+      show({
+        type: "success",
+        title: "Favoritos",
+        message: "Agregado a favoritos",
+      });
     }
   };
 
@@ -185,12 +226,16 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
           url: window.location.href,
         });
       } catch (err) {
-        console.log("Error sharing:", err);
+        logger.error("Error sharing:", { error: err });
       }
     } else {
       // Fallback: copiar URL al clipboard
       navigator.clipboard.writeText(window.location.href);
-      show({ type: "success", title: "Compartir", message: "Enlace copiado al portapapeles" });
+      show({
+        type: "success",
+        title: "Compartir",
+        message: "Enlace copiado al portapapeles",
+      });
     }
   };
 
@@ -235,10 +280,11 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
       ? JSON.parse(product.images)
       : [];
 
-  const sizes = Array.isArray(product.sizes) && product.sizes.length > 0
-    ? product.sizes
-    : ["XS", "S", "M", "L", "XL"];
-  
+  const sizes =
+    Array.isArray(product.sizes) && product.sizes.length > 0
+      ? product.sizes
+      : ["XS", "S", "M", "L", "XL"];
+
   const isProductFavorite = isInWishlist(product.id);
 
   return (
@@ -248,11 +294,15 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
         <nav className="mb-6" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2 text-sm muted">
             <li>
-              <Link href="/" className="hover:text-primary">Inicio</Link>
+              <Link href="/" className="hover:text-primary">
+                Inicio
+              </Link>
             </li>
             <li>/</li>
             <li>
-              <Link href="/productos" className="hover:text-primary">Productos</Link>
+              <Link href="/productos" className="hover:text-primary">
+                Productos
+              </Link>
             </li>
             <li>/</li>
             <li className="text-primary font-medium">{product.name}</li>
@@ -314,10 +364,17 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
             {/* Características */}
             {Array.isArray(product.features) && product.features.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-primary mt-2 mb-2">Características</h2>
+                <h2 className="text-lg font-semibold text-primary mt-2 mb-2">
+                  Características
+                </h2>
                 <ul className="list-disc pl-5 space-y-1">
                   {product.features.map((f: string, idx: number) => (
-                    <li key={`feature-${idx}-${f.slice(0, 10)}`} className="text-primary/90">{f}</li>
+                    <li
+                      key={`feature-${idx}-${f.slice(0, 10)}`}
+                      className="text-primary/90"
+                    >
+                      {f}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -327,7 +384,12 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
             {Array.isArray(product.colors) && product.colors.length > 0 && (
               <div>
                 <h2 className="text-lg font-semibold text-primary mt-2 mb-2">
-                  Colores {selectedColor && <span className="text-sm font-normal muted">- {selectedColor}</span>}
+                  Colores{" "}
+                  {selectedColor && (
+                    <span className="text-sm font-normal muted">
+                      - {selectedColor}
+                    </span>
+                  )}
                 </h2>
                 <div className="flex items-center gap-2 flex-wrap">
                   {product.colors.map((color: string, idx: number) => (
@@ -335,9 +397,9 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
                       key={`color-${color}-${idx}`}
                       onClick={() => setSelectedColor(color)}
                       className={`relative transition-all ${
-                        selectedColor === color 
-                          ? 'ring-2 ring-primary ring-offset-2' 
-                          : 'hover:ring-1 hover:ring-primary/50'
+                        selectedColor === color
+                          ? "ring-2 ring-primary ring-offset-2"
+                          : "hover:ring-1 hover:ring-primary/50"
                       }`}
                       title={`Seleccionar color ${color}`}
                     >
@@ -369,7 +431,8 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
                       selectedSize === size
                         ? "border-primary text-primary surface"
                         : "border-muted hover:border-primary"
-                    }`}>
+                    }`}
+                  >
                     {size}
                   </button>
                 ))}
@@ -384,13 +447,15 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8 h-8 border border-muted rounded flex items-center justify-center hover:surface-secondary">
+                  className="w-8 h-8 border border-muted rounded flex items-center justify-center hover:surface-secondary"
+                >
                   -
                 </button>
                 <span className="w-12 text-center font-medium">{quantity}</span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-8 h-8 border border-muted rounded flex items-center justify-center hover:surface-secondary">
+                  className="w-8 h-8 border border-muted rounded flex items-center justify-center hover:surface-secondary"
+                >
                   +
                 </button>
               </div>
@@ -412,14 +477,16 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
               <Button
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
-                className="flex-1">
+                className="flex-1"
+              >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Agregar al carrito
               </Button>
               <Button
                 onClick={handleToggleFavorite}
                 variant="outline"
-                className="px-4">
+                className="px-4"
+              >
                 <Heart
                   className={`w-4 h-4 ${
                     isProductFavorite ? "fill-current text-primary" : ""

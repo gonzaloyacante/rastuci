@@ -1,41 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { logger } from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import * as z from "zod";
 
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { ColorChip } from "@/components/ui/ColorChip";
+import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Product } from "@/types";
-import { ColorChip } from "@/components/ui/ColorChip";
 import { formatCurrency } from "@/utils/formatters";
 import {
-  Package,
-  FileText,
-  DollarSign,
-  Hash,
-  Tag,
-  Upload,
-  Save,
-  ArrowLeft,
-  Palette,
-  Ruler,
-  List,
-  Info,
-  Trash2,
-  Eye,
-  ImageIcon,
   AlertCircle,
+  ArrowLeft,
   Check,
-  X,
+  DollarSign,
+  Eye,
+  FileText,
+  Hash,
+  ImageIcon,
+  Info,
+  List,
+  Package,
+  Palette,
   Percent,
+  Ruler,
+  Save,
+  Tag,
+  Trash2,
+  Upload,
+  X,
 } from "lucide-react";
 
 // Interfaces locales para tipado
@@ -46,11 +47,24 @@ interface Category {
 }
 
 const productSchema = z.object({
-  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres").max(100, "El nombre no puede exceder 100 caracteres"),
-  description: z.string().max(1000, "La descripción no puede exceder 1000 caracteres").optional(),
+  name: z
+    .string()
+    .min(3, "El nombre debe tener al menos 3 caracteres")
+    .max(100, "El nombre no puede exceder 100 caracteres"),
+  description: z
+    .string()
+    .max(1000, "La descripción no puede exceder 1000 caracteres")
+    .optional(),
   price: z.coerce.number().min(0.01, "El precio debe ser mayor a 0"),
-  salePrice: z.coerce.number().min(0, "El precio de oferta no puede ser negativo").optional().nullable(),
-  stock: z.coerce.number().int("El stock debe ser un número entero").min(0, "El stock no puede ser negativo"),
+  salePrice: z.coerce
+    .number()
+    .min(0, "El precio de oferta no puede ser negativo")
+    .optional()
+    .nullable(),
+  stock: z.coerce
+    .number()
+    .int("El stock debe ser un número entero")
+    .min(0, "El stock no puede ser negativo"),
   categoryId: z.string().nonempty("Debes seleccionar una categoría"),
   onSale: z.coerce.boolean().optional(),
   // Campos mejorados
@@ -67,7 +81,9 @@ interface ProductFormProps {
 }
 
 const PlaceholderImage = ({ className }: { className?: string }) => (
-  <div className={`bg-muted rounded-lg flex items-center justify-center ${className || 'w-full h-48'}`}>
+  <div
+    className={`bg-muted rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
+  >
     <div className="text-center">
       <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
       <p className="text-sm text-muted-foreground">Sin imagen</p>
@@ -75,9 +91,17 @@ const PlaceholderImage = ({ className }: { className?: string }) => (
   </div>
 );
 
-const ImagePreview = ({ src, alt, onRemove }: { src: string; alt: string; onRemove: () => void }) => {
+const ImagePreview = ({
+  src,
+  alt,
+  onRemove,
+}: {
+  src: string;
+  alt: string;
+  onRemove: () => void;
+}) => {
   const [imageError, setImageError] = useState(false);
-  
+
   return (
     <div className="relative group">
       {imageError ? (
@@ -103,7 +127,13 @@ const ImagePreview = ({ src, alt, onRemove }: { src: string; alt: string; onRemo
   );
 };
 
-const ColorPicker = ({ colors, onColorsChange }: { colors: string[]; onColorsChange: (colors: string[]) => void }) => {
+const ColorPicker = ({
+  colors,
+  onColorsChange,
+}: {
+  colors: string[];
+  onColorsChange: (colors: string[]) => void;
+}) => {
   const [newColor, setNewColor] = useState("");
 
   const addColor = () => {
@@ -114,7 +144,7 @@ const ColorPicker = ({ colors, onColorsChange }: { colors: string[]; onColorsCha
   };
 
   const removeColor = (colorToRemove: string) => {
-    onColorsChange(colors.filter(color => color !== colorToRemove));
+    onColorsChange(colors.filter((color) => color !== colorToRemove));
   };
 
   return (
@@ -125,15 +155,20 @@ const ColorPicker = ({ colors, onColorsChange }: { colors: string[]; onColorsCha
           onChange={(e) => setNewColor(e.target.value)}
           placeholder="Agregar color (ej: Rojo, #FF0000)"
           className="flex-1"
-          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addColor())}
+          onKeyPress={(e) =>
+            e.key === "Enter" && (e.preventDefault(), addColor())
+          }
         />
         <Button type="button" onClick={addColor} variant="outline" size="sm">
           <Check className="h-4 w-4" />
         </Button>
       </div>
       <div className="flex flex-wrap gap-2">
-        {colors.map((color, index) => (
-          <div key={index} className="flex items-center gap-1 bg-surface px-2 py-1 rounded-full text-sm">
+        {colors.map((color) => (
+          <div
+            key={color}
+            className="flex items-center gap-1 bg-surface px-2 py-1 rounded-full text-sm"
+          >
             <ColorChip color={color} size="sm" />
             <span>{color}</span>
             <button
@@ -150,7 +185,13 @@ const ColorPicker = ({ colors, onColorsChange }: { colors: string[]; onColorsCha
   );
 };
 
-const SizeManager = ({ sizes, onSizesChange }: { sizes: string[]; onSizesChange: (sizes: string[]) => void }) => {
+const SizeManager = ({
+  sizes,
+  onSizesChange,
+}: {
+  sizes: string[];
+  onSizesChange: (sizes: string[]) => void;
+}) => {
   const [newSize, setNewSize] = useState("");
 
   const addSize = () => {
@@ -161,10 +202,24 @@ const SizeManager = ({ sizes, onSizesChange }: { sizes: string[]; onSizesChange:
   };
 
   const removeSize = (sizeToRemove: string) => {
-    onSizesChange(sizes.filter(size => size !== sizeToRemove));
+    onSizesChange(sizes.filter((size) => size !== sizeToRemove));
   };
 
-  const commonSizes = ["XS", "S", "M", "L", "XL", "XXL", "0", "1", "2", "3", "4", "5", "6"];
+  const commonSizes = [
+    "XS",
+    "S",
+    "M",
+    "L",
+    "XL",
+    "XXL",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+  ];
 
   return (
     <div className="space-y-3">
@@ -174,13 +229,15 @@ const SizeManager = ({ sizes, onSizesChange }: { sizes: string[]; onSizesChange:
           onChange={(e) => setNewSize(e.target.value)}
           placeholder="Talle personalizado"
           className="flex-1"
-          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSize())}
+          onKeyPress={(e) =>
+            e.key === "Enter" && (e.preventDefault(), addSize())
+          }
         />
         <Button type="button" onClick={addSize} variant="outline" size="sm">
           <Check className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">Talles comunes:</p>
         <div className="flex flex-wrap gap-2">
@@ -188,11 +245,13 @@ const SizeManager = ({ sizes, onSizesChange }: { sizes: string[]; onSizesChange:
             <button
               key={size}
               type="button"
-              onClick={() => !sizes.includes(size) && onSizesChange([...sizes, size])}
+              onClick={() =>
+                !sizes.includes(size) && onSizesChange([...sizes, size])
+              }
               className={`px-3 py-1 text-sm rounded-md border transition-colors ${
-                sizes.includes(size) 
-                  ? 'bg-primary text-white border-primary' 
-                  : 'border-muted hover:border-primary hover:bg-primary/10'
+                sizes.includes(size)
+                  ? "bg-primary text-white border-primary"
+                  : "border-muted hover:border-primary hover:bg-primary/10"
               }`}
             >
               {size}
@@ -203,7 +262,10 @@ const SizeManager = ({ sizes, onSizesChange }: { sizes: string[]; onSizesChange:
 
       <div className="flex flex-wrap gap-2">
         {sizes.map((size, index) => (
-          <div key={index} className="flex items-center gap-1 bg-primary text-white px-2 py-1 rounded-full text-sm">
+          <div
+            key={`item-${index}`}
+            className="flex items-center gap-1 bg-primary text-white px-2 py-1 rounded-full text-sm"
+          >
             <span>{size}</span>
             <button
               type="button"
@@ -219,7 +281,13 @@ const SizeManager = ({ sizes, onSizesChange }: { sizes: string[]; onSizesChange:
   );
 };
 
-const FeatureManager = ({ features, onFeaturesChange }: { features: string[]; onFeaturesChange: (features: string[]) => void }) => {
+const FeatureManager = ({
+  features,
+  onFeaturesChange,
+}: {
+  features: string[];
+  onFeaturesChange: (features: string[]) => void;
+}) => {
   const [newFeature, setNewFeature] = useState("");
 
   const addFeature = () => {
@@ -230,7 +298,7 @@ const FeatureManager = ({ features, onFeaturesChange }: { features: string[]; on
   };
 
   const removeFeature = (featureToRemove: string) => {
-    onFeaturesChange(features.filter(feature => feature !== featureToRemove));
+    onFeaturesChange(features.filter((feature) => feature !== featureToRemove));
   };
 
   return (
@@ -241,16 +309,21 @@ const FeatureManager = ({ features, onFeaturesChange }: { features: string[]; on
           onChange={(e) => setNewFeature(e.target.value)}
           placeholder="Nueva característica"
           className="flex-1"
-          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
+          onKeyPress={(e) =>
+            e.key === "Enter" && (e.preventDefault(), addFeature())
+          }
         />
         <Button type="button" onClick={addFeature} variant="outline" size="sm">
           <Check className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="space-y-2">
         {features.map((feature, index) => (
-          <div key={index} className="flex items-center justify-between p-3 bg-surface rounded-lg border">
+          <div
+            key={`item-${index}`}
+            className="flex items-center justify-between p-3 bg-surface rounded-lg border"
+          >
             <span className="flex-1">{feature}</span>
             <button
               type="button"
@@ -305,17 +378,17 @@ export default function ProductForm({
 
   useEffect(() => {
     if (initialData) {
-      const parsedImages = Array.isArray(initialData.images) 
-        ? initialData.images 
-        : typeof initialData.images === "string" 
-          ? JSON.parse(initialData.images) 
+      const parsedImages = Array.isArray(initialData.images)
+        ? initialData.images
+        : typeof initialData.images === "string"
+          ? JSON.parse(initialData.images)
           : [];
-      
+
       setCurrentImages(parsedImages);
       setColors(initialData.colors || []);
       setSizes(initialData.sizes || []);
       setFeatures(initialData.features || []);
-      
+
       reset({
         name: initialData.name,
         description: initialData.description || "",
@@ -334,22 +407,22 @@ export default function ProductForm({
   };
 
   const removeCurrentImage = (index: number) => {
-    setCurrentImages(prev => prev.filter((_, i) => i !== index));
+    setCurrentImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setImageFiles(prev => [...prev, ...files]);
+    setImageFiles((prev) => [...prev, ...files]);
   };
 
   const removeNewImage = (index: number) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
     try {
       setLoading(true);
-      
+
       let imageUrls = [...currentImages];
 
       if (imageFiles.length > 0) {
@@ -387,16 +460,17 @@ export default function ProductForm({
       router.refresh();
       toast.success(toastMessage);
     } catch (error) {
-      console.error("Error al guardar el producto:", error);
+      logger.error("Error al guardar el producto:", { error: error });
       toast.error("Error al procesar la solicitud. Intenta nuevamente.");
     } finally {
       setLoading(false);
     }
   };
 
-  const discountPercentage = watchPrice && watchSalePrice 
-    ? Math.round(((watchPrice - watchSalePrice) / watchPrice) * 100)
-    : 0;
+  const discountPercentage =
+    watchPrice && watchSalePrice
+      ? Math.round(((watchPrice - watchSalePrice) / watchPrice) * 100)
+      : 0;
 
   return (
     <div className="min-h-screen surface py-8 px-4">
@@ -429,7 +503,10 @@ export default function ProductForm({
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Nombre */}
                 <div className="lg:col-span-1">
-                  <label htmlFor="name" className="block text-sm font-medium mb-2">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium mb-2"
+                  >
                     <Package className="h-4 w-4 inline mr-2" />
                     Nombre del Producto *
                   </label>
@@ -450,7 +527,10 @@ export default function ProductForm({
 
                 {/* Categoría */}
                 <div className="lg:col-span-1">
-                  <label htmlFor="categoryId" className="block text-sm font-medium mb-2">
+                  <label
+                    htmlFor="categoryId"
+                    className="block text-sm font-medium mb-2"
+                  >
                     <Tag className="h-4 w-4 inline mr-2" />
                     Categoría *
                   </label>
@@ -478,7 +558,10 @@ export default function ProductForm({
 
               {/* Descripción */}
               <div>
-                <label htmlFor="description" className="block text-sm font-medium mb-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium mb-2"
+                >
                   <FileText className="h-4 w-4 inline mr-2" />
                   Descripción Detallada
                 </label>
@@ -493,7 +576,8 @@ export default function ProductForm({
                   disabled={loading}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Máximo 1000 caracteres. Describe materiales, cuidados, características especiales.
+                  Máximo 1000 caracteres. Describe materiales, cuidados,
+                  características especiales.
                 </p>
                 {errors.description && (
                   <p className="mt-1 text-sm text-error flex items-center gap-1">
@@ -517,7 +601,10 @@ export default function ProductForm({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Precio Base */}
                 <div>
-                  <label htmlFor="price" className="block text-sm font-medium mb-2">
+                  <label
+                    htmlFor="price"
+                    className="block text-sm font-medium mb-2"
+                  >
                     <DollarSign className="h-4 w-4 inline mr-2" />
                     Precio Base *
                   </label>
@@ -545,7 +632,10 @@ export default function ProductForm({
 
                 {/* Precio de Oferta */}
                 <div>
-                  <label htmlFor="salePrice" className="block text-sm font-medium mb-2">
+                  <label
+                    htmlFor="salePrice"
+                    className="block text-sm font-medium mb-2"
+                  >
                     <Percent className="h-4 w-4 inline mr-2" />
                     Precio en Oferta
                   </label>
@@ -560,9 +650,11 @@ export default function ProductForm({
                   />
                   {watchSalePrice && watchSalePrice > 0 && (
                     <p className="text-xs text-orange-600 mt-1 font-medium">
-                      {formatCurrency(Number(watchSalePrice))} 
+                      {formatCurrency(Number(watchSalePrice))}
                       {discountPercentage > 0 && (
-                        <span className="ml-1 text-error">(-{discountPercentage}%)</span>
+                        <span className="ml-1 text-error">
+                          (-{discountPercentage}%)
+                        </span>
                       )}
                     </p>
                   )}
@@ -576,7 +668,10 @@ export default function ProductForm({
 
                 {/* Stock */}
                 <div>
-                  <label htmlFor="stock" className="block text-sm font-medium mb-2">
+                  <label
+                    htmlFor="stock"
+                    className="block text-sm font-medium mb-2"
+                  >
                     <Hash className="h-4 w-4 inline mr-2" />
                     Stock Disponible *
                   </label>
@@ -589,13 +684,22 @@ export default function ProductForm({
                     disabled={loading}
                   />
                   {watchStock !== undefined && (
-                    <p className={`text-xs mt-1 font-medium ${
-                      Number(watchStock) > 10 ? 'text-green-600' : 
-                      Number(watchStock) > 5 ? 'text-yellow-600' : 'text-red-600'
-                    }`}>
-                      {Number(watchStock) === 0 ? 'Sin stock' : 
-                       Number(watchStock) <= 5 ? 'Stock bajo' : 
-                       Number(watchStock) <= 10 ? 'Stock medio' : 'Stock bueno'}
+                    <p
+                      className={`text-xs mt-1 font-medium ${
+                        Number(watchStock) > 10
+                          ? "text-green-600"
+                          : Number(watchStock) > 5
+                            ? "text-yellow-600"
+                            : "text-red-600"
+                      }`}
+                    >
+                      {Number(watchStock) === 0
+                        ? "Sin stock"
+                        : Number(watchStock) <= 5
+                          ? "Stock bajo"
+                          : Number(watchStock) <= 10
+                            ? "Stock medio"
+                            : "Stock bueno"}
                     </p>
                   )}
                   {errors.stock && (
@@ -609,10 +713,16 @@ export default function ProductForm({
                 {/* Estado de Oferta */}
                 <div className="flex items-center space-x-2">
                   <div>
-                    <label htmlFor="onSale" className="block text-sm font-medium mb-2">
+                    <label
+                      htmlFor="onSale"
+                      className="block text-sm font-medium mb-2"
+                    >
                       Estado de Venta
                     </label>
-                    <label htmlFor="onSale" className="inline-flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-surface transition-colors">
+                    <label
+                      htmlFor="onSale"
+                      className="inline-flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-surface transition-colors"
+                    >
                       <input
                         id="onSale"
                         type="checkbox"
@@ -666,7 +776,10 @@ export default function ProductForm({
                   <List className="h-4 w-4 inline mr-2" />
                   Características Especiales
                 </label>
-                <FeatureManager features={features} onFeaturesChange={setFeatures} />
+                <FeatureManager
+                  features={features}
+                  onFeaturesChange={setFeatures}
+                />
               </div>
             </CardContent>
           </Card>
@@ -683,11 +796,13 @@ export default function ProductForm({
               {/* Imágenes Existentes */}
               {currentImages.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-medium mb-3">Imágenes Actuales</h3>
+                  <h3 className="text-lg font-medium mb-3">
+                    Imágenes Actuales
+                  </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {currentImages.map((image, index) => (
                       <ImagePreview
-                        key={index}
+                        key={`item-${index}`}
                         src={image}
                         alt={`Imagen ${index + 1}`}
                         onRemove={() => removeCurrentImage(index)}
@@ -700,14 +815,18 @@ export default function ProductForm({
               {/* Nuevas Imágenes */}
               {imageFiles.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-medium mb-3">Nuevas Imágenes (por subir)</h3>
+                  <h3 className="text-lg font-medium mb-3">
+                    Nuevas Imágenes (por subir)
+                  </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {imageFiles.map((file, index) => (
-                      <div key={index} className="relative group">
+                      <div key={`item-${index}`} className="relative group">
                         <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
                           <div className="text-center">
                             <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-1" />
-                            <p className="text-xs text-muted-foreground truncate px-2">{file.name}</p>
+                            <p className="text-xs text-muted-foreground truncate px-2">
+                              {file.name}
+                            </p>
                           </div>
                         </div>
                         <button
@@ -748,7 +867,8 @@ export default function ProductForm({
                   <p className="pl-2 self-center">o arrastra y suelta aquí</p>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  PNG, JPG, WEBP hasta 10MB cada una. Recomendado: 800x800px o superior
+                  PNG, JPG, WEBP hasta 10MB cada una. Recomendado: 800x800px o
+                  superior
                 </p>
               </div>
             </CardContent>
@@ -776,7 +896,7 @@ export default function ProductForm({
                             height={300}
                             className="w-full h-full object-cover rounded-lg"
                             onError={(e) => {
-                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.style.display = "none";
                             }}
                           />
                         ) : (
@@ -797,11 +917,12 @@ export default function ProductForm({
                           En Oferta
                         </span>
                       )}
-                      {watch("stock") !== undefined && Number(watch("stock")) <= 5 && (
-                        <span className="bg-warning/10 text-warning px-2 py-1 rounded-full text-sm font-medium">
-                          Pocas unidades
-                        </span>
-                      )}
+                      {watch("stock") !== undefined &&
+                        Number(watch("stock")) <= 5 && (
+                          <span className="bg-warning/10 text-warning px-2 py-1 rounded-full text-sm font-medium">
+                            Pocas unidades
+                          </span>
+                        )}
                     </div>
                     <div className="space-y-2">
                       {watch("salePrice") && Number(watch("salePrice")) > 0 ? (
@@ -827,14 +948,18 @@ export default function ProductForm({
                       )}
                     </div>
                     <p className="text-muted-foreground">
-                      {watch("description") || "Descripción del producto aparecerá aquí..."}
+                      {watch("description") ||
+                        "Descripción del producto aparecerá aquí..."}
                     </p>
                     {sizes.length > 0 && (
                       <div>
                         <p className="font-medium mb-2">Talles:</p>
                         <div className="flex flex-wrap gap-2">
                           {sizes.map((size, index) => (
-                            <span key={index} className="px-3 py-1 border rounded-md text-sm">
+                            <span
+                              key={`item-${index}`}
+                              className="px-3 py-1 border rounded-md text-sm"
+                            >
                               {size}
                             </span>
                           ))}
@@ -846,7 +971,10 @@ export default function ProductForm({
                         <p className="font-medium mb-2">Colores:</p>
                         <div className="flex flex-wrap gap-2">
                           {colors.map((color, index) => (
-                            <div key={index} className="flex items-center gap-1">
+                            <div
+                              key={`item-${index}`}
+                              className="flex items-center gap-1"
+                            >
                               <ColorChip color={color} />
                               <span className="text-sm">{color}</span>
                             </div>

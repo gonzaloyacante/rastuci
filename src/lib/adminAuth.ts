@@ -1,6 +1,7 @@
-import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
+import { getServerSession } from "next-auth/next";
+import { NextRequest } from "next/server";
 
 interface AdminAuthResult {
   success: boolean;
@@ -17,28 +18,30 @@ interface AdminAuthResult {
  * Verifica si el usuario actual es administrador
  * Para usar en API Routes de admin
  */
-export async function verifyAdminAuth(_request: NextRequest): Promise<AdminAuthResult> {
+export async function verifyAdminAuth(
+  _request: NextRequest
+): Promise<AdminAuthResult> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session) {
       return {
         success: false,
-        error: "No authenticated session found"
+        error: "No authenticated session found",
       };
     }
 
     if (!session.user) {
       return {
         success: false,
-        error: "Invalid session user"
+        error: "Invalid session user",
       };
     }
 
     if (!session.user.isAdmin) {
       return {
         success: false,
-        error: "User is not an administrator"
+        error: "User is not an administrator",
       };
     }
 
@@ -48,15 +51,14 @@ export async function verifyAdminAuth(_request: NextRequest): Promise<AdminAuthR
         id: session.user.id,
         email: session.user.email!,
         name: session.user.name || undefined,
-        isAdmin: session.user.isAdmin
-      }
+        isAdmin: session.user.isAdmin,
+      },
     };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Admin auth verification error:", error);
+    logger.error("Admin auth verification error", { error });
     return {
       success: false,
-      error: "Authentication verification failed"
+      error: "Authentication verification failed",
     };
   }
 }
@@ -72,17 +74,21 @@ export function withAdminAuth<T extends unknown[]>(
     const authResult = await verifyAdminAuth(request);
 
     if (!authResult.success) {
-      const status = authResult.error === "No authenticated session found" ? 401 : 403;
-      
+      const status =
+        authResult.error === "No authenticated session found" ? 401 : 403;
+
       return new Response(
         JSON.stringify({
           success: false,
           error: authResult.error,
-          message: status === 401 ? "Authentication required" : "Administrator privileges required"
+          message:
+            status === 401
+              ? "Authentication required"
+              : "Administrator privileges required",
         }),
         {
           status,
-          headers: { "Content-Type": "application/json" }
+          headers: { "Content-Type": "application/json" },
         }
       );
     }

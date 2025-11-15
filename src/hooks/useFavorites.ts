@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
+import { useEffect, useState } from "react";
 
 const FAVORITES_STORAGE_KEY = "rastuci_favorites";
 
@@ -19,7 +20,7 @@ export const useFavorites = () => {
           setFavorites([]);
         }
       } catch (error) {
-        console.error("Error loading favorites from localStorage:", error);
+        logger.error("Error loading favorites from localStorage", { error });
         setFavorites([]);
       }
     }

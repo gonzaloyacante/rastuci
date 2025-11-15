@@ -1,11 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm, FieldErrors, UseFormRegister, FieldValues, UseFormWatch, Path } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { useState, useEffect } from "react";
+import {
+  useForm,
+  FieldErrors,
+  UseFormRegister,
+  FieldValues,
+  UseFormWatch,
+  Path,
+} from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { logger } from "@/lib/logger";
 
 interface FormFieldProps<T extends FieldValues = FieldValues> {
   name: Path<T>;
@@ -22,7 +30,7 @@ interface FormFieldProps<T extends FieldValues = FieldValues> {
 export function FormField<T extends FieldValues = FieldValues>({
   name,
   label,
-  type = 'text',
+  type = "text",
   placeholder,
   required = false,
   errors,
@@ -32,7 +40,7 @@ export function FormField<T extends FieldValues = FieldValues>({
 }: FormFieldProps<T>) {
   const [touched, setTouched] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  
+
   const error = errors?.[name];
   const hasError = (touched && localError) || error;
 
@@ -54,7 +62,7 @@ export function FormField<T extends FieldValues = FieldValues>({
         {label}
         {required && <span className="text-error ml-1">*</span>}
       </label>
-      
+
       <Input
         id={name}
         type={type}
@@ -62,12 +70,12 @@ export function FormField<T extends FieldValues = FieldValues>({
         {...register(name)}
         onBlur={handleBlur}
         onChange={handleChange}
-        className={hasError ? 'border-error focus:border-error' : ''}
-        aria-invalid={hasError ? 'true' : 'false'}
+        className={hasError ? "border-error focus:border-error" : ""}
+        aria-invalid={hasError ? "true" : "false"}
         aria-describedby={hasError ? `${name}-error` : undefined}
         {...inputProps}
       />
-      
+
       {hasError && (
         <p id={`${name}-error`} className="text-sm text-error" role="alert">
           {(error as { message?: string })?.message || localError}
@@ -80,7 +88,13 @@ export function FormField<T extends FieldValues = FieldValues>({
 interface EnhancedFormProps<T extends FieldValues = FieldValues> {
   schema: z.ZodSchema<T>;
   onSubmit: (data: T) => Promise<void> | void;
-  children: React.ReactNode | ((props: { register: UseFormRegister<T>; errors: FieldErrors<T>; watch: UseFormWatch<T> }) => React.ReactNode);
+  children:
+    | React.ReactNode
+    | ((props: {
+        register: UseFormRegister<T>;
+        errors: FieldErrors<T>;
+        watch: UseFormWatch<T>;
+      }) => React.ReactNode);
   className?: string;
   submitText?: string;
   isLoading?: boolean;
@@ -91,8 +105,8 @@ export function EnhancedForm<T extends FieldValues = FieldValues>({
   schema,
   onSubmit,
   children,
-  className = '',
-  submitText = 'Submit',
+  className = "",
+  submitText = "Submit",
   isLoading = false,
   resetOnSuccess = false,
 }: EnhancedFormProps<T>) {
@@ -107,23 +121,24 @@ export function EnhancedForm<T extends FieldValues = FieldValues>({
     watch,
   } = useForm<T>({
     resolver: zodResolver(schema),
-    mode: 'onChange',
+    mode: "onChange",
   });
-
 
   const handleFormSubmit = async (data: T) => {
     try {
       setSubmitError(null);
       setSubmitSuccess(false);
-      
+
       await onSubmit(data);
-      
+
       setSubmitSuccess(true);
       if (resetOnSuccess) {
         reset();
       }
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'An error occurred');
+      setSubmitError(
+        error instanceof Error ? error.message : "An error occurred"
+      );
     }
   };
 
@@ -138,31 +153,40 @@ export function EnhancedForm<T extends FieldValues = FieldValues>({
   }, [submitSuccess]);
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className={className} noValidate>
+    <form
+      onSubmit={handleSubmit(handleFormSubmit)}
+      className={className}
+      noValidate
+    >
       <div className="space-y-4">
-        {typeof children === 'function' 
+        {typeof children === "function"
           ? children({ register, errors, watch })
-          : children
-        }
-        
+          : children}
+
         {submitError && (
-          <div className="p-3 rounded-md bg-error/10 border border-error/20" role="alert">
+          <div
+            className="p-3 rounded-md bg-error/10 border border-error/20"
+            role="alert"
+          >
             <p className="text-sm text-error">{submitError}</p>
           </div>
         )}
-        
+
         {submitSuccess && (
-          <div className="p-3 rounded-md bg-success/10 border border-success/20" role="alert">
+          <div
+            className="p-3 rounded-md bg-success/10 border border-success/20"
+            role="alert"
+          >
             <p className="text-sm text-success">Form submitted successfully!</p>
           </div>
         )}
-        
+
         <Button
           type="submit"
           disabled={isSubmitting || isLoading || !isValid}
           className="w-full"
         >
-          {isSubmitting || isLoading ? 'Submitting...' : submitText}
+          {isSubmitting || isLoading ? "Submitting..." : submitText}
         </Button>
       </div>
     </form>
@@ -171,26 +195,26 @@ export function EnhancedForm<T extends FieldValues = FieldValues>({
 
 // Pre-built form schemas
 export const contactFormSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  subject: z.string().min(5, 'Subject must be at least 5 characters'),
-  message: z.string().min(10, 'Message must be at least 10 characters'),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  subject: z.string().min(5, "Subject must be at least 5 characters"),
+  message: z.string().min(10, "Message must be at least 10 characters"),
 });
 
 export const productFormSchema = z.object({
-  name: z.string().min(2, 'Product name is required'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  price: z.number().min(0.01, 'Price must be greater than 0'),
-  category: z.string().min(1, 'Category is required'),
-  stock: z.number().int().min(0, 'Stock must be a non-negative integer'),
-  images: z.array(z.string()).min(1, 'At least one image is required'),
+  name: z.string().min(2, "Product name is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  price: z.number().min(0.01, "Price must be greater than 0"),
+  category: z.string().min(1, "Category is required"),
+  stock: z.number().int().min(0, "Stock must be a non-negative integer"),
+  images: z.array(z.string()).min(1, "At least one image is required"),
 });
 
 export const userFormSchema = z.object({
-  name: z.string().min(2, 'Name is required'),
-  email: z.string().email('Please enter a valid email address'),
-  role: z.enum(['USER', 'ADMIN'], {
-    errorMap: () => ({ message: 'Please select a valid role' }),
+  name: z.string().min(2, "Name is required"),
+  email: z.string().email("Please enter a valid email address"),
+  role: z.enum(["USER", "ADMIN"], {
+    errorMap: () => ({ message: "Please select a valid role" }),
   }),
 });
 
@@ -198,8 +222,8 @@ export const userFormSchema = z.object({
 export function ContactForm() {
   const handleSubmit = async (data: z.infer<typeof contactFormSchema>) => {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log('Contact form submitted:', data);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    logger.info("Contact form submitted:", { data: data });
   };
 
   return (
@@ -219,7 +243,7 @@ export function ContactForm() {
             register={register}
             errors={errors}
           />
-          
+
           <FormField
             name="email"
             label="Email Address"
@@ -229,7 +253,7 @@ export function ContactForm() {
             register={register}
             errors={errors}
           />
-          
+
           <FormField
             name="subject"
             label="Subject"
@@ -238,7 +262,7 @@ export function ContactForm() {
             register={register}
             errors={errors}
           />
-          
+
           <div className="space-y-2">
             <label htmlFor="message" className="block text-sm font-medium">
               Message <span className="text-error">*</span>
@@ -247,11 +271,11 @@ export function ContactForm() {
               id="message"
               rows={4}
               placeholder="Enter your message"
-              {...register('message')}
+              {...register("message")}
               className={`w-full px-3 py-2 border rounded-md surface focus:outline-none focus:ring-2 focus:ring-primary/20 ${
-                errors.message ? 'border-error' : 'border-muted'
+                errors.message ? "border-error" : "border-muted"
               }`}
-              aria-invalid={errors.message ? 'true' : 'false'}
+              aria-invalid={errors.message ? "true" : "false"}
             />
             {errors.message && (
               <p className="text-sm text-error" role="alert">

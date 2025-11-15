@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import { AlertCircle, CheckCircle, Info, X, XCircle } from "lucide-react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 import { toast, ToastOptions } from "react-hot-toast";
-import { CheckCircle, XCircle, AlertCircle, Info, X } from "lucide-react";
 
 export type NotificationType = "success" | "error" | "warning" | "info";
 
@@ -90,10 +90,26 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       };
 
       const byType: Record<NotificationType, ToastOptions> = {
-        success: { ...base, icon: "✅", className: `${base.className} border-success` },
-        error: { ...base, icon: "❌", className: `${base.className} border-error` },
-        warning: { ...base, icon: "⚠️", className: `${base.className} border-warning` },
-        info: { ...base, icon: "ℹ️", className: `${base.className} border-info` },
+        success: {
+          ...base,
+          icon: "✅",
+          className: `${base.className} border-success`,
+        },
+        error: {
+          ...base,
+          icon: "❌",
+          className: `${base.className} border-error`,
+        },
+        warning: {
+          ...base,
+          icon: "⚠️",
+          className: `${base.className} border-warning`,
+        },
+        info: {
+          ...base,
+          icon: "ℹ️",
+          className: `${base.className} border-info`,
+        },
       };
 
       toast(message, { ...byType[type], ...options });
@@ -121,7 +137,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 const NotificationContainer: React.FC = () => {
   const { notifications, removeNotification } = useNotifications();
 
-  if (notifications.length === 0) return null;
+  if (notifications.length === 0) {
+    return null;
+  }
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
@@ -175,7 +193,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     <div
       className={`p-4 rounded-lg border shadow-lg ${getBorderColor(
         notification.type
-      )} animate-in slide-in-from-right-2 duration-300`}>
+      )} animate-in slide-in-from-right-2 duration-300`}
+    >
       <div className="flex items-start space-x-3">
         {getIcon(notification.type)}
         <div className="flex-1 min-w-0">
@@ -188,17 +207,19 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           {notification.action && (
             <button
               onClick={notification.action.onClick}
-              className="mt-2 text-sm font-medium text-primary hover:opacity-90">
+              className="mt-2 text-sm font-medium text-primary hover:opacity-90"
+            >
               {notification.action.label}
             </button>
           )}
         </div>
         <button
           onClick={onRemove}
-          className="flex-shrink-0 muted hover:text-primary">
+          className="flex-shrink-0 muted hover:text-primary"
+        >
           <X className="w-4 h-4" />
         </button>
       </div>
     </div>
   );
-}
+};

@@ -1,7 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
@@ -23,7 +29,9 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within <ToastProvider>");
+  if (!ctx) {
+    throw new Error("useToast must be used within <ToastProvider>");
+  }
   return ctx;
 }
 
@@ -31,7 +39,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
 
-  const show: ToastContextValue["show"] = ({ type, title, message, duration = 3500 }) => {
+  const show: ToastContextValue["show"] = ({
+    type,
+    title,
+    message,
+    duration = 3500,
+  }) => {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, type, title, message, duration }]);
     if (duration > 0) {
@@ -47,9 +60,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  useEffect(() => () => {
-    Object.values(timers.current).forEach(clearTimeout);
-  }, []);
+  useEffect(
+    () => () => {
+      Object.values(timers.current).forEach(clearTimeout);
+    },
+    []
+  );
 
   return (
     <ToastContext.Provider value={{ toasts, show, dismiss }}>
@@ -63,16 +79,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
+function ToastItem({
+  toast,
+  onDismiss,
+}: {
+  toast: Toast;
+  onDismiss: () => void;
+}) {
   const { type, title, message } = toast;
   const color =
     type === "success"
       ? "bg-success"
       : type === "error"
-      ? "bg-error"
-      : type === "warning"
-      ? "bg-warning"
-      : "bg-info";
+        ? "bg-error"
+        : type === "warning"
+          ? "bg-warning"
+          : "bg-info";
 
   return (
     <div
@@ -85,7 +107,11 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
     >
       <div className={cn("h-2 w-2 rounded-full mt-2", color)} />
       <div className="flex-1">
-        {title && <div className="font-semibold text-sm text-primary mb-0.5">{title}</div>}
+        {title && (
+          <div className="font-semibold text-sm text-primary mb-0.5">
+            {title}
+          </div>
+        )}
         <div className="text-sm muted">{message}</div>
       </div>
       <button

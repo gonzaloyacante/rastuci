@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { fail, ok } from "@/lib/apiResponse";
 import prisma from "@/lib/prisma";
-import { ApiResponse, ProductReview } from "@/types";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { ok, fail } from "@/lib/apiResponse";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ProductReviewCreateSchema } from "@/lib/validation/product";
+import { ApiResponse, ProductReview } from "@/types";
+import { NextRequest, NextResponse } from "next/server";
+import { logger } from "../../../../../lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -34,7 +35,7 @@ export async function GET(
 
     return ok(reviews);
   } catch (error) {
-    console.error("Error fetching reviews:", error);
+    logger.error("Error fetching reviews:", { error });
     return fail("INTERNAL_ERROR", "Error al obtener las reseñas", 500);
   }
 }
@@ -56,7 +57,9 @@ export async function POST(
     const body = await request.json();
     const parsed = ProductReviewCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return fail("BAD_REQUEST", "Datos inválidos", 400, { issues: parsed.error.issues });
+      return fail("BAD_REQUEST", "Datos inválidos", 400, {
+        issues: parsed.error.issues,
+      });
     }
     const { rating, comment, customerName } = parsed.data;
 
@@ -97,7 +100,7 @@ export async function POST(
 
     return ok(review);
   } catch (error) {
-    console.error("Error creating review:", error);
+    logger.error("Error creating review:", { error });
     return fail("INTERNAL_ERROR", "Error al crear la reseña", 500);
   }
 }

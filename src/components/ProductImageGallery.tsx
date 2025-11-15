@@ -42,9 +42,13 @@ export default function ProductImageGallery({
     <div
       className="space-y-4"
       role="region"
-      aria-label={`Galería de imágenes de ${productName}`}>
+      aria-label={`Galería de imágenes de ${productName}`}
+    >
       {/* Imagen principal */}
-      <div className="relative w-full aspect-square md:h-96 surface border border-muted rounded-lg overflow-hidden group" style={{ position: 'relative' }}>
+      <div
+        className="relative w-full aspect-square md:h-96 surface border border-muted rounded-lg overflow-hidden group"
+        style={{ position: "relative" }}
+      >
         <Image
           src={images[selectedImage]}
           alt={`${productName} - Imagen ${selectedImage + 1} de ${
@@ -64,14 +68,16 @@ export default function ProductImageGallery({
               onClick={prevImage}
               onKeyDown={(e) => handleKeyDown(e, prevImage)}
               aria-label={`Imagen anterior de ${productName}`}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
               <ChevronLeft className="w-5 h-5" aria-hidden="true" />
             </button>
             <button
               onClick={nextImage}
               onKeyDown={(e) => handleKeyDown(e, nextImage)}
               aria-label={`Imagen siguiente de ${productName}`}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
               <ChevronRight className="w-5 h-5" aria-hidden="true" />
             </button>
           </>
@@ -81,7 +87,8 @@ export default function ProductImageGallery({
         {images.length > 1 && (
           <div
             className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm"
-            aria-live="polite">
+            aria-live="polite"
+          >
             {selectedImage + 1} / {images.length}
           </div>
         )}
@@ -91,19 +98,27 @@ export default function ProductImageGallery({
       {images.length > 1 && (
         <div>
           {/* Thumbnail list for accessibility: tests expect a list role with this label */}
-          <div className="flex gap-2 overflow-x-auto" role="list" aria-label="Miniaturas de imágenes">
+          <div
+            className="flex gap-2 overflow-x-auto"
+            role="list"
+            aria-label="Miniaturas de imágenes"
+          >
             {images.map((image, index) => (
               <button
-                key={index}
+                key={`item-${index}`}
                 onClick={() => setSelectedImage(index)}
-                onKeyDown={(e) => handleKeyDown(e, () => setSelectedImage(index))}
+                onKeyDown={(e) =>
+                  handleKeyDown(e, () => setSelectedImage(index))
+                }
                 aria-label={`Seleccionar imagen ${index + 1} de ${productName}`}
-                aria-current={index === selectedImage ? 'true' : 'false'}
+                aria-current={index === selectedImage ? "true" : "false"}
                 className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                   index === selectedImage
                     ? "border-primary ring-2"
                     : "border-muted hover:border-muted"
-                }`} style={{ position: 'relative' }}>
+                }`}
+                style={{ position: "relative" }}
+              >
                 <Image
                   src={image}
                   alt={`${productName} - Miniatura ${index + 1}`}

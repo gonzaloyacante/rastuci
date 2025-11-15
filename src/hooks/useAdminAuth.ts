@@ -9,7 +9,9 @@ export function useAdminAuth() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "loading") return; // Todavía cargando
+    if (status === "loading") {
+      return;
+    } // Todavía cargando
 
     setIsLoading(false);
 

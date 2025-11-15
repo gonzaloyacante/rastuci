@@ -1,8 +1,9 @@
+import { generateProductMetadata } from "@/lib/seo";
+import type { Product } from "@/types";
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { generateProductMetadata } from "@/lib/seo";
+import { logger } from "../../../lib/logger";
 import ProductDetailClient from "./client-page";
-import type { Product } from "@/types";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -13,7 +14,7 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
-  
+
   try {
     const response = await fetch(
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/products/${id}`,
@@ -28,7 +29,7 @@ export async function generateMetadata({
     }
 
     const data = await response.json();
-    
+
     if (!data.success || !data.data) {
       return {
         title: "Producto no encontrado - Rastuci",
@@ -55,7 +56,7 @@ export async function generateMetadata({
       },
     });
   } catch (error) {
-    console.error("Error generating product metadata:", error);
+    logger.error("Error generating product metadata:", { error });
     return {
       title: "Error al cargar producto - Rastuci",
       description: "Error al cargar la información del producto.",
@@ -81,7 +82,10 @@ const ProductDetailSkeleton = () => (
           <div className="aspect-square surface rounded-lg animate-pulse" />
           <div className="grid grid-cols-4 gap-2">
             {[...Array(4)].map(() => (
-              <div key={`thumbnail-${Math.random()}`} className="aspect-square surface rounded animate-pulse" />
+              <div
+                key={`thumbnail-${Math.random()}`}
+                className="aspect-square surface rounded animate-pulse"
+              />
             ))}
           </div>
         </div>
@@ -96,7 +100,10 @@ const ProductDetailSkeleton = () => (
           </div>
           <div className="space-y-4">
             {[...Array(3)].map(() => (
-              <div key={`action-button-${Math.random()}`} className="h-12 surface rounded animate-pulse" />
+              <div
+                key={`action-button-${Math.random()}`}
+                className="h-12 surface rounded animate-pulse"
+              />
             ))}
           </div>
         </div>
@@ -107,7 +114,7 @@ const ProductDetailSkeleton = () => (
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
-  
+
   return (
     <Suspense fallback={<ProductDetailSkeleton />}>
       <ProductDetailClient productId={id} />

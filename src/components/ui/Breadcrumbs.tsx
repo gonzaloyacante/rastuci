@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight, Home } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import React from "react";
 
 export interface BreadcrumbItem {
   label: string;
@@ -25,7 +25,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   items = [],
   showHome = true,
   separator = <ChevronRight className="w-4 h-4 muted" />,
-  className = '',
+  className = "",
   maxItems = 5,
   truncateMiddle = true,
 }) => {
@@ -37,30 +37,30 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
       return items;
     }
 
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = pathname.split("/").filter(Boolean);
     const breadcrumbItems: BreadcrumbItem[] = [];
 
     segments.forEach((segment, index) => {
-      const href = '/' + segments.slice(0, index + 1).join('/');
+      const href = "/" + segments.slice(0, index + 1).join("/");
       const isLast = index === segments.length - 1;
 
       // Convert segment to readable label
       let label = segment
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase());
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
 
       // Special cases for common segments
       const specialLabels: Record<string, string> = {
-        'admin': 'Administración',
-        'productos': 'Productos',
-        'categorias': 'Categorías',
-        'usuarios': 'Usuarios',
-        'pedidos': 'Pedidos',
-        'perfil': 'Perfil',
-        'configuracion': 'Configuración',
-        'nuevo': 'Nuevo',
-        'editar': 'Editar',
-        'ver': 'Ver',
+        admin: "Administración",
+        productos: "Productos",
+        categorias: "Categorías",
+        usuarios: "Usuarios",
+        pedidos: "Pedidos",
+        perfil: "Perfil",
+        configuracion: "Configuración",
+        nuevo: "Nuevo",
+        editar: "Editar",
+        ver: "Ver",
       };
 
       if (specialLabels[segment.toLowerCase()]) {
@@ -93,7 +93,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
 
     return [
       ...firstItems,
-      { label: '...', href: undefined, isActive: false },
+      { label: "...", href: undefined, isActive: false },
       ...lastItems,
     ];
   }, [generatedItems, maxItems, truncateMiddle]);
@@ -122,7 +122,10 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         )}
 
         {displayItems.map((item) => (
-          <li key={`breadcrumb-${item.href}-${item.label}`} className="flex items-center">
+          <li
+            key={`breadcrumb-${item.href}-${item.label}`}
+            className="flex items-center"
+          >
             <span className="mx-2" aria-hidden="true">
               {separator}
             </span>
@@ -138,11 +141,9 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
             ) : (
               <span
                 className={`text-sm font-medium ${
-                  item.isActive
-                    ? 'text-primary'
-                    : 'text-primary'
+                  item.isActive ? "text-primary" : "text-primary"
                 }`}
-                aria-current={item.isActive ? 'page' : undefined}
+                aria-current={item.isActive ? "page" : undefined}
               >
                 {item.icon && <span className="mr-1">{item.icon}</span>}
                 {item.label}
@@ -164,28 +165,28 @@ export const useBreadcrumbs = (customItems?: BreadcrumbItem[]) => {
       return customItems;
     }
 
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = pathname.split("/").filter(Boolean);
     const items: BreadcrumbItem[] = [];
 
     segments.forEach((segment, index) => {
-      const href = '/' + segments.slice(0, index + 1).join('/');
+      const href = "/" + segments.slice(0, index + 1).join("/");
       const isLast = index === segments.length - 1;
 
       let label = segment
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase());
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
 
       const specialLabels: Record<string, string> = {
-        'admin': 'Administración',
-        'productos': 'Productos',
-        'categorias': 'Categorías',
-        'usuarios': 'Usuarios',
-        'pedidos': 'Pedidos',
-        'perfil': 'Perfil',
-        'configuracion': 'Configuración',
-        'nuevo': 'Nuevo',
-        'editar': 'Editar',
-        'ver': 'Ver',
+        admin: "Administración",
+        productos: "Productos",
+        categorias: "Categorías",
+        usuarios: "Usuarios",
+        pedidos: "Pedidos",
+        perfil: "Perfil",
+        configuracion: "Configuración",
+        nuevo: "Nuevo",
+        editar: "Editar",
+        ver: "Ver",
       };
 
       if (specialLabels[segment.toLowerCase()]) {
@@ -217,39 +218,46 @@ export const createBreadcrumbItem = (
 // Common breadcrumb patterns
 export const breadcrumbPatterns = {
   productDetail: (productName: string, categoryName?: string) => [
-    createBreadcrumbItem('Inicio', '/'),
-    createBreadcrumbItem('Productos', '/productos'),
-    ...(categoryName ? [createBreadcrumbItem(categoryName, `/productos?categoria=${categoryName}`)] : []),
+    createBreadcrumbItem("Inicio", "/"),
+    createBreadcrumbItem("Productos", "/productos"),
+    ...(categoryName
+      ? [
+          createBreadcrumbItem(
+            categoryName,
+            `/productos?categoria=${categoryName}`
+          ),
+        ]
+      : []),
     createBreadcrumbItem(productName),
   ],
 
   adminProductList: () => [
-    createBreadcrumbItem('Administración', '/admin'),
-    createBreadcrumbItem('Productos', '/admin/productos'),
+    createBreadcrumbItem("Administración", "/admin"),
+    createBreadcrumbItem("Productos", "/admin/productos"),
   ],
 
   adminProductEdit: (productName: string) => [
-    createBreadcrumbItem('Administración', '/admin'),
-    createBreadcrumbItem('Productos', '/admin/productos'),
-    createBreadcrumbItem('Editar'),
+    createBreadcrumbItem("Administración", "/admin"),
+    createBreadcrumbItem("Productos", "/admin/productos"),
+    createBreadcrumbItem("Editar"),
     createBreadcrumbItem(productName),
   ],
 
   adminCategoryList: () => [
-    createBreadcrumbItem('Administración', '/admin'),
-    createBreadcrumbItem('Categorías', '/admin/categorias'),
+    createBreadcrumbItem("Administración", "/admin"),
+    createBreadcrumbItem("Categorías", "/admin/categorias"),
   ],
 
   userProfile: () => [
-    createBreadcrumbItem('Inicio', '/'),
-    createBreadcrumbItem('Perfil', '/perfil'),
+    createBreadcrumbItem("Inicio", "/"),
+    createBreadcrumbItem("Perfil", "/perfil"),
   ],
 
   checkout: () => [
-    createBreadcrumbItem('Inicio', '/'),
-    createBreadcrumbItem('Productos', '/productos'),
-    createBreadcrumbItem('Carrito', '/carrito'),
-    createBreadcrumbItem('Checkout'),
+    createBreadcrumbItem("Inicio", "/"),
+    createBreadcrumbItem("Productos", "/productos"),
+    createBreadcrumbItem("Carrito", "/carrito"),
+    createBreadcrumbItem("Checkout"),
   ],
 };
 
@@ -259,15 +267,15 @@ export const BreadcrumbsWithSchema: React.FC<BreadcrumbsProps> = (props) => {
 
   // Generate structured data for breadcrumbs
   const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement: items
-      .filter(item => item.href)
+      .filter((item) => item.href)
       .map((item, index) => ({
-        '@type': 'ListItem',
+        "@type": "ListItem",
         position: index + 1,
         name: item.label,
-        item: `${typeof window !== 'undefined' ? window.location.origin : ''}${item.href}`,
+        item: `${typeof window !== "undefined" ? window.location.origin : ""}${item.href}`,
       })),
   };
 
@@ -276,6 +284,7 @@ export const BreadcrumbsWithSchema: React.FC<BreadcrumbsProps> = (props) => {
       <Breadcrumbs {...props} />
       <script
         type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData),
         }}

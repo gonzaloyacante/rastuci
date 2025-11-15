@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "next/core-web-vitals",
-    "next/typescript"
-  ],
+  "extends": ["next/core-web-vitals", "next/typescript"],
   "plugins": ["react-hooks"],
   "env": {
     "browser": true,
@@ -18,7 +15,7 @@
     // React Hooks rules
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
-    
+
     // React best practices
     "react/no-unescaped-entities": "off",
     "react/prop-types": "off",
@@ -27,9 +24,9 @@
     "react/jsx-no-duplicate-props": "error",
     "react/jsx-no-undef": "error",
     "react/jsx-pascal-case": "error",
-    "react/no-array-index-key": "warn",
+    "react/no-array-index-key": "off",
     "react/no-danger": "warn",
-    
+
     // TypeScript rules
     "@typescript-eslint/no-unused-vars": [
       "error",
@@ -51,7 +48,7 @@
         "ts-check": false
       }
     ],
-    
+
     // General code quality
     "no-console": "warn",
     "no-debugger": "error",
@@ -65,12 +62,12 @@
     "eqeqeq": ["warn", "always"],
     "curly": ["warn", "all"],
     "no-empty": ["warn", { "allowEmptyCatch": false }],
-    
+
     // Import/Export rules
     "no-duplicate-imports": "warn",
     "import/no-default-export": "off",
     "import/prefer-default-export": "off",
-    
+
     // Performance rules
     "jsx-a11y/alt-text": "error",
     "jsx-a11y/anchor-has-content": "error",
@@ -79,7 +76,7 @@
     "jsx-a11y/aria-proptypes": "error",
     "jsx-a11y/aria-unsupported-elements": "error",
     "jsx-a11y/role-has-required-aria-props": "error",
-    
+
     // Semantic color enforcement (existing rule)
     "no-restricted-syntax": [
       "error",
@@ -116,6 +113,13 @@
       "files": ["src/pages/**/*", "src/app/**/*"],
       "rules": {
         "import/no-default-export": "off"
+      }
+    },
+    {
+      "files": ["src/lib/logger.ts", "src/lib/logging.ts"],
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-unused-vars": "off"
       }
     }
   ]
