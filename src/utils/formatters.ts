@@ -14,18 +14,13 @@ export const formatPrice = (price: number): string => {
  * Formatear precio en pesos argentinos
  */
 export function formatCurrency(amount: number) {
-  // Mostrar sin decimales cuando el monto es entero, y con 2 decimales cuando tiene fracción.
-  const hasDecimals = Math.abs(amount % 1) > 0;
   const formatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
-    minimumFractionDigits: hasDecimals ? 2 : 0,
-    maximumFractionDigits: hasDecimals ? 2 : 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 
-  // Algunos locales insertan un espacio NBSP entre el símbolo de moneda y el número.
-  // Los tests esperan el símbolo pegado al número (por ejemplo: "$1.234,56" o "$1.000").
-  // Reemplazar únicamente NBSP (u00A0) que algunos locales insertan entre símbolo y número
   return formatter.format(amount).replace(/\u00A0/g, "");
 }
 
@@ -73,7 +68,9 @@ export const capitalize = (str: string): string => {
  * Truncar texto
  */
 export const truncateText = (text: string, maxLength: number): string => {
-  if (text.length <= maxLength) {return text;}
+  if (text.length <= maxLength) {
+    return text;
+  }
   return text.substring(0, maxLength) + "...";
 };
 
@@ -89,6 +86,74 @@ export const generateSlug = (text: string): string => {
     .replace(/\s+/g, "-") // Reemplazar espacios con guiones
     .replace(/-+/g, "-") // Remover guiones duplicados
     .trim();
+};
+
+/**
+ * Formatear fecha relativa (hace X minutos/horas/días)
+ */
+export const formatDateRelative = (date: Date | string): string => {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - dateObj.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 1) {
+    return "justo ahora";
+  }
+  if (diffMinutes < 60) {
+    return `hace ${diffMinutes} minuto${diffMinutes > 1 ? "s" : ""}`;
+  }
+  if (diffHours < 24) {
+    return `hace ${diffHours} hora${diffHours > 1 ? "s" : ""}`;
+  }
+  return `hace ${diffDays} día${diffDays > 1 ? "s" : ""}`;
+};
+
+/**
+ * Formatear teléfono argentino
+ */
+export const formatPhoneNumber = (phone: string): string => {
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.length === 10) {
+    return `+54 ${cleaned.slice(0, 2)} ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+  }
+  return phone;
+};
+
+/**
+ * Convertir texto a slug
+ */
+export const slugify = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 -]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim()
+    .replace(/^-+|-+$/g, "");
+};
+
+/**
+ * Capitalizar primera letra
+ */
+export const capitalizeFirst = (str: string): string => {
+  if (!str || str.length === 0) {
+    return str;
+  }
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/**
+ * Generar número de orden único
+ */
+export const generateOrderNumber = (): string => {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `ORD-${timestamp}-${random}`;
 };
 
 /**
@@ -127,10 +192,7 @@ export const formatPhone = (phone: string): string => {
  * @param showDecimals - Si mostrar decimales (default: false)
  * @returns Precio formateado en pesos argentinos
  */
-export const formatPriceARS = (
-  price: number,
-  showDecimals = false
-): string => {
+export const formatPriceARS = (price: number, showDecimals = false): string => {
   const formatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",

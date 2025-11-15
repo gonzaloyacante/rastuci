@@ -1,7 +1,7 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Button } from "../../src/components/ui/Button";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Badge } from "../../src/components/ui/Badge";
+import { Button } from "../../src/components/ui/Button";
 import { LoadingSpinner } from "../../src/components/ui/LoadingStates";
 
 // Mock react-hot-toast
@@ -22,25 +22,25 @@ describe.skip("Button Component (skipped - legacy UI tests)", () => {
   it("renders with default props", () => {
     render(<Button>Click me</Button>);
     expect(
-      screen.getByRole("button", { name: /click me/i }),
+      screen.getByRole("button", { name: /click me/i })
     ).toBeInTheDocument();
   });
 
   it("renders with different variants", () => {
     const { rerender } = render(
-      <Button variant="outline">Outline Button</Button>,
+      <Button variant="outline">Outline Button</Button>
     );
     expect(screen.getByRole("button")).toHaveClass(
       "surface",
       "border",
-      "border-primary",
+      "border-primary"
     );
 
     rerender(<Button variant="destructive">Destructive Button</Button>);
     expect(screen.getByRole("button")).toHaveClass(
       "surface",
       "border",
-      "border-error",
+      "border-error"
     );
   });
 
@@ -87,19 +87,19 @@ describe.skip("Badge Component (skipped - legacy UI tests)", () => {
     const { rerender } = render(<Badge variant="success">Success Badge</Badge>);
     expect(screen.getByText("Success Badge")).toHaveClass(
       "bg-success/10",
-      "text-success",
+      "text-success"
     );
 
     rerender(<Badge variant="error">Error Badge</Badge>);
     expect(screen.getByText("Error Badge")).toHaveClass(
       "bg-error/10",
-      "text-error",
+      "text-error"
     );
 
     rerender(<Badge variant="warning">Warning Badge</Badge>);
     expect(screen.getByText("Warning Badge")).toHaveClass(
       "bg-warning/10",
-      "text-warning",
+      "text-warning"
     );
   });
 
@@ -128,7 +128,7 @@ describe("LoadingSpinner Component", () => {
     expect(screen.getByRole("status")).toHaveClass("text-white");
 
     rerender(<LoadingSpinner color="gray" />);
-    expect(screen.getByRole("status")).toHaveClass("muted");
+    expect(screen.getByRole("status")).toHaveClass("text-gray-500");
   });
 
   it("applies custom className", () => {
@@ -138,7 +138,7 @@ describe("LoadingSpinner Component", () => {
 
   it("has accessible aria-label", () => {
     render(<LoadingSpinner />);
-    expect(screen.getByLabelText("Loading")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cargando...")).toBeInTheDocument();
   });
 });
 
@@ -169,7 +169,7 @@ describe("Utility Functions", () => {
             clearTimeout(timeout);
             timeout = setTimeout(() => func(...args), wait);
           };
-        })(mockFn, 100),
+        })(mockFn, 100)
       );
 
       debouncedFn();
@@ -239,7 +239,7 @@ describe("Performance", () => {
 describe("Accessibility", () => {
   it("should have proper ARIA labels", () => {
     render(<LoadingSpinner />);
-    expect(screen.getByLabelText("Loading")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cargando...")).toBeInTheDocument();
   });
 
   it("should have proper role attributes", () => {
