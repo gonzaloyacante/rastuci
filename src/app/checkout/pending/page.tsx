@@ -180,7 +180,7 @@ function CheckoutPendingContent() {
               </h3>
               <div className="surface-secondary border muted rounded-lg p-4">
                 <div className="flex items-start">
-                  <AlertCircle className="w-5 h-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-primary mr-3 mt-0.5 shrink-0" />
                   <div className="text-sm">
                     <p className="font-medium text-primary mb-1">
                       Conserva tu comprobante de pago
