@@ -112,9 +112,14 @@ describe("CategoriesSection", () => {
   });
 
   it("no debe renderizar nada cuando no hay categorías", () => {
-    const { container } = render(<CategoriesSection categories={[]} />);
+    render(<CategoriesSection categories={[]} />);
 
-    expect(container.firstChild).toBeNull();
+    // El título debe estar presente (siempre visible)
+    expect(screen.getByText("Nuestras Categorías")).toBeInTheDocument();
+
+    // Pero no debe haber cards de categorías
+    const links = screen.queryByRole("link");
+    expect(links).toBeNull();
   });
 
   it("debe renderizar skeletons durante la carga", () => {
@@ -191,10 +196,10 @@ describe("CategoriesSection", () => {
 
     const grid = container.querySelector(".grid");
     expect(grid).toHaveClass(
-      "grid-cols-2",
-      "sm:grid-cols-3",
-      "lg:grid-cols-4",
-      "xl:grid-cols-5"
+      "grid-cols-1",
+      "sm:grid-cols-2",
+      "md:grid-cols-3",
+      "lg:grid-cols-6"
     );
   });
 });

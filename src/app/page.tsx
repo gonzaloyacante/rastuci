@@ -1,10 +1,10 @@
 "use client";
 
-import { HeroSection } from "@/components/home/HeroSection";
-import { CategoriesSection } from "@/components/home/CategoriesSection";
-import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
 import { BenefitsSection } from "@/components/home/BenefitsSection";
+import { CategoriesSection } from "@/components/home/CategoriesSection";
 import { EmptyStateSection } from "@/components/home/EmptyStateSection";
+import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
+import { HeroSection } from "@/components/home/HeroSection";
 import { useHomeData } from "@/hooks/useHomeData";
 
 export default function Home() {
@@ -20,23 +20,24 @@ export default function Home() {
         <HeroSection home={home} loading={loading} />
 
         {/* Categories Section */}
-        <CategoriesSection 
-          categories={categories} 
-          home={home} 
-          loading={loading} 
+        <CategoriesSection
+          categories={categories}
+          home={home}
+          display={home?.categoriesDisplay}
+          loading={loading}
         />
 
         {/* Featured Products */}
-        <FeaturedProductsSection 
-          products={products} 
-          home={home} 
-          loading={loading} 
+        <FeaturedProductsSection
+          products={products}
+          home={home}
+          loading={loading}
         />
 
         {/* Estado vacío cuando no hay productos ni categorías */}
-        <EmptyStateSection 
-          showProducts={hasProducts} 
-          showCategories={hasCategories} 
+        <EmptyStateSection
+          showProducts={hasProducts}
+          showCategories={hasCategories}
         />
 
         {/* Promotional Banner - Benefits from settings */}

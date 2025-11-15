@@ -1,13 +1,19 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Header from "@/components/Header";
+import { useHomeData } from "@/hooks/useHomeData";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default function SiteChrome({ children }: { children: React.ReactNode }) {
+export default function SiteChrome({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [isHydrated, setIsHydrated] = useState(false);
+  const { home } = useHomeData();
 
   useEffect(() => {
     setIsHydrated(true);
@@ -48,10 +54,8 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
   return (
     <>
       <Header currentPage={getCurrentPage()} />
-      <div className="flex-grow">
-        {children}
-      </div>
-      <Footer />
+      <div className="flex-grow">{children}</div>
+      <Footer home={home} />
     </>
   );
 }
