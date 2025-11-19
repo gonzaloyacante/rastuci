@@ -12,11 +12,11 @@
  * @version 1.0.0
  */
 
-import { correoArgentinoService } from "./correo-argentino-service";
-import { sendTrackingUpdateEmail } from "./email";
-import { logger } from "./logger";
-import { sendNotification } from "./onesignal";
-import { prisma } from "./prisma";
+import { correoArgentinoService } from "@/lib/correo-argentino-service";
+import { sendTrackingUpdateEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
+import { sendNotification } from "@/lib/onesignal";
+import { prisma } from "@/lib/prisma";
 
 // ============================================================================
 // TIPOS Y INTERFACES

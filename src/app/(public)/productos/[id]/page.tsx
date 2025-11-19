@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 import { generateProductMetadata } from "@/lib/seo";
-import type { Product } from "@/types";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import ProductDetailClient from "./client-page";
@@ -16,37 +16,20 @@ export async function generateMetadata({
   const { id } = await params;
 
   try {
-    // Usar NEXT_PUBLIC_APP_URL o construir URL basada en el entorno
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
-                    process.env.NEXTAUTH_URL ||
-                    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
-                    "http://localhost:3000";
+    // Consultar directamente a Prisma en lugar de fetch (mejor para build time)
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+      },
+    });
 
-    const response = await fetch(
-      `${baseUrl}/api/products/${id}`,
-      {
-        next: { revalidate: 3600 },
-        cache: 'force-cache'
-      }
-    );
-
-    if (!response.ok) {
+    if (!product) {
       return {
         title: "Producto no encontrado - Rastuci",
         description: "El producto que buscas no está disponible.",
       };
     }
-
-    const data = await response.json();
-
-    if (!data.success || !data.data) {
-      return {
-        title: "Producto no encontrado - Rastuci",
-        description: "El producto que buscas no está disponible.",
-      };
-    }
-
-    const product = data.data as Product;
     const images = Array.isArray(product.images)
       ? product.images
       : typeof product.images === "string"
