@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/Select";
 import { Calendar, Download, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useState } from 'react';
 
-interface ShippingPerformanceData {
+interface _ShippingPerformanceData {
   totalOrders: number;
   oca: {
     count: number;

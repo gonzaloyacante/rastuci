@@ -21,7 +21,7 @@ export const colorNameToHex: Record<string, string> = {
   turquesa: "#14B8A6",
   fucsia: "#D946EF",
   lila: "#C084FC",
-  
+
   // Tonalidades
   "rojo oscuro": "#991B1B",
   "azul oscuro": "#1E40AF",
@@ -33,7 +33,7 @@ export const colorNameToHex: Record<string, string> = {
   "gris claro": "#D1D5DB",
   "rosa claro": "#F9A8D4",
   "rosa fuerte": "#BE185D",
-  
+
   // Variantes específicas de ropa
   "blanco hueso": "#FAF5EF",
   crema: "#FEF3C7",
@@ -48,14 +48,14 @@ export const colorNameToHex: Record<string, string> = {
   durazno: "#FFDAB9",
   chocolate: "#7B3F00",
   camel: "#C19A6B",
-  
+
   // Colores neutros
   arena: "#C2B280",
   tierra: "#8B4513",
   caqui: "#C3B091",
   oliva: "#6B8E23",
   militar: "#4B5320",
-  
+
   // Tonos modernos
   "azul navy": "#001F3F",
   navy: "#001F3F",
@@ -65,7 +65,7 @@ export const colorNameToHex: Record<string, string> = {
   mostaza: "#E1AD01",
   terracota: "#E2725B",
   denim: "#1560BD",
-  
+
   // Metálicos
   dorado: "#FFD700",
   plateado: "#C0C0C0",
@@ -90,14 +90,14 @@ export function getColorHex(colorName: string): string {
 export function isLightColor(hex: string): boolean {
   // Remover # si existe
   const color = hex.replace("#", "");
-  
+
   // Convertir a RGB
   const r = parseInt(color.substr(0, 2), 16);
   const g = parseInt(color.substr(2, 2), 16);
   const b = parseInt(color.substr(4, 2), 16);
-  
+
   // Calcular luminosidad
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
+
   return luminance > 0.5;
 }

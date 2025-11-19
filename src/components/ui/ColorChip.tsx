@@ -1,6 +1,6 @@
-import React from "react";
 import { cn } from "@/lib/utils";
 import { getColorHex } from "@/utils/colors";
+import React from "react";
 
 interface ColorChipProps extends React.HTMLAttributes<HTMLSpanElement> {
   color: string;

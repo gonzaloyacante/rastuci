@@ -5,7 +5,11 @@ import CartWidget from "@/components/header/CartWidget.client";
 import MobileMenuClient from "@/components/header/MobileMenu.client";
 import WishlistWidget from "@/components/header/WishlistWidget.client";
 
-export default function HeaderShell({ children }: { children?: ReactNode }) {
+export default function HeaderShell({
+  children: _children,
+}: {
+  children?: React.ReactNode;
+}) {
   return (
     <header className="sticky top-0 z-50 surface">
       <div className="max-w-7xl mx-auto px-4">

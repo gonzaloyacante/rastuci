@@ -419,7 +419,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       // Usar directamente NextAuth signOut para terminar la sesión.
                       try {
                         await signOut({ callbackUrl: '/admin' });
-                      } catch (e) {
+                      } catch (_e) {
                         // Fallback simple: redirigir al login
                         // eslint-disable-next-line no-restricted-globals
                         window.location.href = '/admin';

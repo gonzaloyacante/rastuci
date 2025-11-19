@@ -153,7 +153,7 @@ export const authOptions: AuthOptions = {
               session.expires = new Date(expNum * 1000).toISOString();
             }
           }
-        } catch {
+        } catch (_e) {
           // Silenciar errores de parseo y dejar que NextAuth calcule `expires`
         }
       }

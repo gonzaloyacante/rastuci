@@ -15,8 +15,7 @@ import {
     Share2,
     ShieldCheck,
     ShoppingCart,
-    Star,
-    Truck,
+    Truck
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -318,7 +317,7 @@ export default function ProductDetailClient({
                 productName={product.name}
               />
             </Suspense>
-            
+
             {/* Descripción y Características debajo de imágenes (estilo Mercado Libre) */}
             <div className="mt-8 space-y-6">
               {/* Descripción */}

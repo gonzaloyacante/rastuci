@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
     });
-  } catch (error) {
+  } catch (_error) {
     // JWT decryption error - treat as no session (silent handling)
     session = null;
   }
