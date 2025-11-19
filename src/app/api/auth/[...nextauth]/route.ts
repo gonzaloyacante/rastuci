@@ -12,17 +12,23 @@ import { logger } from "../../../../lib/logger";
 // Para localhost / IPs devolvemos `undefined` para no forzar domain.
 const cookieDomain = (() => {
   const envOverride = process.env.COOKIE_DOMAIN;
-  if (envOverride && envOverride.trim().length > 0) {return envOverride.trim();}
+  if (envOverride && envOverride.trim().length > 0) {
+    return envOverride.trim();
+  }
   const nextAuthUrl = process.env.NEXTAUTH_URL || "";
-  if (!nextAuthUrl) {return undefined;}
+  if (!nextAuthUrl) {
+    return undefined;
+  }
   try {
     const parsed = new URL(nextAuthUrl);
     const host = parsed.hostname;
     const isLocalhost = host === "localhost" || host === "127.0.0.1";
     const isIp = /^\d+\.\d+\.\d+\.\d+$/.test(host);
-    if (isLocalhost || isIp) {return undefined;}
+    if (isLocalhost || isIp) {
+      return undefined;
+    }
     return host.startsWith(".") ? host : `.${host}`;
-  } catch (e) {
+  } catch {
     return undefined;
   }
 })();
@@ -47,11 +53,21 @@ export const authOptions: AuthOptions = {
     },
     callbackUrl: {
       name: "next-auth.callback-url",
-      options: { path: "/admin", sameSite: "lax", secure: process.env.NODE_ENV === "production", domain: cookieDomain || undefined },
+      options: {
+        path: "/admin",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        domain: cookieDomain || undefined,
+      },
     },
     csrfToken: {
       name: "next-auth.csrf-token",
-      options: { path: "/admin", sameSite: "lax", secure: process.env.NODE_ENV === "production", domain: cookieDomain || undefined },
+      options: {
+        path: "/admin",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        domain: cookieDomain || undefined,
+      },
     },
   },
   providers: [
@@ -102,8 +118,8 @@ export const authOptions: AuthOptions = {
             remember: rememberFlag,
           };
         } catch (error) {
-            // Retornar null para que NextAuth no rediriga
-            logger.error("Authentication error", { error });
+          // Retornar null para que NextAuth no rediriga
+          logger.error("Authentication error", { error });
           return null;
         }
       },
@@ -129,10 +145,10 @@ export const authOptions: AuthOptions = {
         // Configurar expiración basada en "recordarme"
         if (user.remember) {
           // Si "recordarme" está marcado, sesión de 30 días
-          token.exp = Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60);
+          token.exp = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
         } else {
           // Si no está marcado, sesión de 1 día
-          token.exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
+          token.exp = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
         }
       }
       return token;
@@ -148,12 +164,15 @@ export const authOptions: AuthOptions = {
         // la expiración del token que ajustamos en la callback `jwt`.
         try {
           if (token.exp) {
-            const expNum = typeof token.exp === 'number' ? token.exp : parseInt(String(token.exp), 10);
+            const expNum =
+              typeof token.exp === "number"
+                ? token.exp
+                : parseInt(String(token.exp), 10);
             if (!Number.isNaN(expNum) && expNum > 0) {
               session.expires = new Date(expNum * 1000).toISOString();
             }
           }
-        } catch (_e) {
+        } catch {
           // Silenciar errores de parseo y dejar que NextAuth calcule `expires`
         }
       }

@@ -87,8 +87,10 @@ export async function POST(
       where: { productId: id },
     });
 
+    type ReviewType = (typeof allReviews)[0];
     const averageRating =
-      allReviews.reduce((acc, rev) => acc + rev.rating, 0) / allReviews.length;
+      allReviews.reduce((acc: number, rev: ReviewType) => acc + rev.rating, 0) /
+      allReviews.length;
 
     await prisma.product.update({
       where: { id },

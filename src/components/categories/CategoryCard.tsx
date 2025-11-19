@@ -18,13 +18,20 @@ export const CategoryCard = memo(function CategoryCard({
   const showIcon = !(displayMode === "image" && img);
 
   const Wrapper: React.ElementType = href === null ? "div" : Link;
-  const wrapperProps: Record<string, any> = href === null ? {} : { href: href ?? `/productos?categoryId=${category.id}` };
+  const wrapperProps: Record<string, string> =
+    href === null
+      ? {}
+      : { href: href ?? `/productos?categoryId=${category.id}` };
 
   return (
     <Wrapper
       {...wrapperProps}
       className="group relative flex flex-col justify-end overflow-hidden rounded-xl aspect-3/4 text-white transition-transform duration-200 hover:scale-105 mx-auto text-center"
-      aria-label={href === null ? undefined : `Ver productos de la categoría ${category.name}`}
+      aria-label={
+        href === null
+          ? undefined
+          : `Ver productos de la categoría ${category.name}`
+      }
     >
       {/* Background image (only if available) */}
       {displayMode === "image" && img ? (

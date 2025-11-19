@@ -140,7 +140,8 @@ export async function GET(
       prisma.user.count({ where }),
     ]);
 
-    const safeUsers: SafeUser[] = users.map((user) => ({
+    type UserType = (typeof users)[0];
+    const safeUsers: SafeUser[] = users.map((user: UserType) => ({
       id: user.id,
       name: user.name || "",
       email: user.email || "",

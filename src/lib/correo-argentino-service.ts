@@ -221,12 +221,12 @@ export interface ImportShipmentParams {
 
 export interface ImportShipmentResponse {
   createdAt: string; // ISO 8601 timestamp
+  trackingNumber?: string; // Número de seguimiento
+  shipmentId?: string; // ID del envío
 }
 
 // Tracking (/shipping/tracking)
-export interface GetTrackingParams {
-  shippingId: string;
-}
+export type GetTrackingParams = string | { shippingId: string };
 
 export interface TrackingEvent {
   event: string;
@@ -268,10 +268,13 @@ export interface ApiResponse<T> {
 
 // URLs base según ambiente
 const API_URLS = {
-  development: "http://app-correoargintercotizador-dev.apps.ocpbarr.correo.local",
-  testing_local: "http://app-correoargintercotizador-test.apps.ocpbarr.correo.local",
+  development:
+    "http://app-correoargintercotizador-dev.apps.ocpbarr.correo.local",
+  testing_local:
+    "http://app-correoargintercotizador-test.apps.ocpbarr.correo.local",
   testing: "https://apitest.correoargentino.com.ar/micorreo/v1",
-  production_local: "http://app-correoargintercotizador.apps.ocpprod.correo.local",
+  production_local:
+    "http://app-correoargintercotizador.apps.ocpprod.correo.local",
   production: "https://api.correoargentino.com.ar/micorreo/v1",
 };
 
@@ -317,13 +320,14 @@ export class CorreoArgentinoService {
   private apiUrl: string;
   private authToken: string | null = null;
   private tokenExpiry: Date | null = null;
-  private ratesCache: Map<string, { rates: RateQuote[]; validTo: Date }> = new Map();
+  private ratesCache: Map<string, { rates: RateQuote[]; validTo: Date }> =
+    new Map();
 
   constructor(isProduction = false) {
     // Seleccionar URL según ambiente
     this.apiUrl = isProduction
       ? API_URLS.production
-      : (process.env.CORREO_ARGENTINO_API_URL || API_URLS.testing);
+      : process.env.CORREO_ARGENTINO_API_URL || API_URLS.testing;
 
     this.credentials = {
       username: process.env.CORREO_ARGENTINO_USERNAME || "",
@@ -371,11 +375,20 @@ export class CorreoArgentinoService {
    */
   private isRetryableError(status: number, error?: Error): boolean {
     // Reintentar en errores del servidor (5xx) o timeouts
-    if (status >= 500 && status < 600) {return true;}
+    if (status >= 500 && status < 600) {
+      return true;
+    }
     if (error instanceof Error) {
       const errorMessage = error.message.toLowerCase();
-      if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {return true;}
-      if (errorMessage.includes('network') || errorMessage.includes('fetch')) {return true;}
+      if (
+        errorMessage.includes("timeout") ||
+        errorMessage.includes("aborted")
+      ) {
+        return true;
+      }
+      if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+        return true;
+      }
     }
     return false;
   }
@@ -384,8 +397,13 @@ export class CorreoArgentinoService {
    * Genera clave de cache para cotizaciones
    */
   private generateRatesCacheKey(params: CalculateRatesParams): string {
-    const { postalCodeOrigin, postalCodeDestination, deliveredType, dimensions } = params;
-    return `${postalCodeOrigin}-${postalCodeDestination}-${deliveredType || 'D'}-${dimensions.weight}-${dimensions.height}x${dimensions.width}x${dimensions.length}`;
+    const {
+      postalCodeOrigin,
+      postalCodeDestination,
+      deliveredType,
+      dimensions,
+    } = params;
+    return `${postalCodeOrigin}-${postalCodeDestination}-${deliveredType || "D"}-${dimensions.weight}-${dimensions.height}x${dimensions.width}x${dimensions.length}`;
   }
 
   /**
@@ -393,7 +411,9 @@ export class CorreoArgentinoService {
    */
   private getCachedRates(cacheKey: string): RateQuote[] | null {
     const cached = this.ratesCache.get(cacheKey);
-    if (!cached) {return null;}
+    if (!cached) {
+      return null;
+    }
 
     // Verificar si el cache sigue válido
     if (new Date() > cached.validTo) {
@@ -408,9 +428,15 @@ export class CorreoArgentinoService {
   /**
    * Guarda cotizaciones en cache
    */
-  private setCachedRates(cacheKey: string, rates: RateQuote[], validTo: Date): void {
+  private setCachedRates(
+    cacheKey: string,
+    rates: RateQuote[],
+    validTo: Date
+  ): void {
     this.ratesCache.set(cacheKey, { rates, validTo });
-    logger.info(`[CorreoArgentino] Cached rates until ${validTo.toISOString()}`);
+    logger.info(
+      `[CorreoArgentino] Cached rates until ${validTo.toISOString()}`
+    );
   }
 
   private async makeRequest<T>(
@@ -441,17 +467,20 @@ export class CorreoArgentinoService {
           headers["Authorization"] = `Bearer ${this.authToken}`;
         }
 
-        logger.info(`[CorreoArgentino] ${method} ${endpoint} (attempt ${attempt + 1}/${MAX_RETRIES + 1})`, {
-          url,
-          hasAuth: !!this.authToken
-        });
+        logger.info(
+          `[CorreoArgentino] ${method} ${endpoint} (attempt ${attempt + 1}/${MAX_RETRIES + 1})`,
+          {
+            url,
+            hasAuth: !!this.authToken,
+          }
+        );
 
         const response = await fetch(url, {
           method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-      });
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+          signal: controller.signal,
+        });
 
         clearTimeout(timeoutId);
         lastStatus = response.status;
@@ -460,17 +489,21 @@ export class CorreoArgentinoService {
 
         // Manejar errores HTTP
         if (!response.ok) {
-          logger.error(`[CorreoArgentino] HTTP ${response.status} (attempt ${attempt + 1})`, {
-            status: response.status,
-            data: responseData,
-            willRetry: this.isRetryableError(response.status) && attempt < MAX_RETRIES
-          });
+          logger.error(
+            `[CorreoArgentino] HTTP ${response.status} (attempt ${attempt + 1})`,
+            {
+              status: response.status,
+              data: responseData,
+              willRetry:
+                this.isRetryableError(response.status) && attempt < MAX_RETRIES,
+            }
+          );
 
           // Si es error reintentar-able y quedan intentos, reintentar
           if (this.isRetryableError(response.status) && attempt < MAX_RETRIES) {
             const delay = this.calculateRetryDelay(attempt);
             logger.warn(`[CorreoArgentino] Retrying after ${delay}ms...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
+            await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }
 
@@ -483,7 +516,9 @@ export class CorreoArgentinoService {
           };
         }
 
-        logger.info(`[CorreoArgentino] ${method} ${endpoint} - Success (attempt ${attempt + 1})`);
+        logger.info(
+          `[CorreoArgentino] ${method} ${endpoint} - Success (attempt ${attempt + 1})`
+        );
 
         return {
           success: true,
@@ -491,16 +526,24 @@ export class CorreoArgentinoService {
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        logger.error(`[CorreoArgentino] Request failed: ${endpoint} (attempt ${attempt + 1})`, {
-          error: lastError.message,
-          willRetry: this.isRetryableError(lastStatus, lastError) && attempt < MAX_RETRIES
-        });
+        logger.error(
+          `[CorreoArgentino] Request failed: ${endpoint} (attempt ${attempt + 1})`,
+          {
+            error: lastError.message,
+            willRetry:
+              this.isRetryableError(lastStatus, lastError) &&
+              attempt < MAX_RETRIES,
+          }
+        );
 
         // Si es error reintentar-able y quedan intentos, reintentar
-        if (this.isRetryableError(lastStatus, lastError) && attempt < MAX_RETRIES) {
+        if (
+          this.isRetryableError(lastStatus, lastError) &&
+          attempt < MAX_RETRIES
+        ) {
           const delay = this.calculateRetryDelay(attempt);
           logger.warn(`[CorreoArgentino] Retrying after ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         }
 
@@ -533,13 +576,15 @@ export class CorreoArgentinoService {
     try {
       logger.info("[CorreoArgentino] Authenticating...");
 
-      const auth = btoa(`${this.credentials.username}:${this.credentials.password}`);
+      const auth = btoa(
+        `${this.credentials.username}:${this.credentials.password}`
+      );
       const url = `${this.apiUrl}/token`;
 
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          "Authorization": `Basic ${auth}`,
+          Authorization: `Basic ${auth}`,
           "Content-Type": "application/json",
         },
       });
@@ -575,7 +620,8 @@ export class CorreoArgentinoService {
         success: false,
         error: {
           code: "AUTH_ERROR",
-          message: error instanceof Error ? error.message : "Error de autenticación",
+          message:
+            error instanceof Error ? error.message : "Error de autenticación",
         },
       };
     }
@@ -585,7 +631,9 @@ export class CorreoArgentinoService {
    * POST /register
    * Registra un nuevo usuario en MiCorreo
    */
-  async registerUser(params: RegisterUserParams): Promise<ApiResponse<RegisterUserResponse>> {
+  async registerUser(
+    params: RegisterUserParams
+  ): Promise<ApiResponse<RegisterUserResponse>> {
     logger.info("[CorreoArgentino] Registering user", { email: params.email });
     return this.makeRequest<RegisterUserResponse>("/register", "POST", params);
   }
@@ -594,9 +642,15 @@ export class CorreoArgentinoService {
    * POST /users/validate
    * Valida credenciales y devuelve el customerId
    */
-  async validateUser(params: ValidateUserParams): Promise<ApiResponse<ValidateUserResponse>> {
+  async validateUser(
+    params: ValidateUserParams
+  ): Promise<ApiResponse<ValidateUserResponse>> {
     logger.info("[CorreoArgentino] Validating user", { email: params.email });
-    return this.makeRequest<ValidateUserResponse>("/users/validate", "POST", params);
+    return this.makeRequest<ValidateUserResponse>(
+      "/users/validate",
+      "POST",
+      params
+    );
   }
 
   /**
@@ -606,7 +660,7 @@ export class CorreoArgentinoService {
   async getAgencies(params: GetAgenciesParams): Promise<ApiResponse<Agency[]>> {
     logger.info("[CorreoArgentino] Getting agencies", {
       customerId: params.customerId,
-      provinceCode: params.provinceCode
+      provinceCode: params.provinceCode,
     });
 
     const queryParams = new URLSearchParams({
@@ -618,14 +672,19 @@ export class CorreoArgentinoService {
       queryParams.append("services", params.services);
     }
 
-    return this.makeRequest<Agency[]>(`/agencies?${queryParams.toString()}`, "GET");
+    return this.makeRequest<Agency[]>(
+      `/agencies?${queryParams.toString()}`,
+      "GET"
+    );
   }
 
   /**
    * POST /rates
    * Cotiza un envío según origen, destino y dimensiones
    */
-  async calculateRates(params: CalculateRatesParams): Promise<ApiResponse<CalculateRatesResponse>> {
+  async calculateRates(
+    params: CalculateRatesParams
+  ): Promise<ApiResponse<CalculateRatesResponse>> {
     logger.info("[CorreoArgentino] Calculating rates", {
       origin: params.postalCodeOrigin,
       destination: params.postalCodeDestination,
@@ -643,7 +702,11 @@ export class CorreoArgentinoService {
       };
     }
 
-    if (params.dimensions.height > 150 || params.dimensions.width > 150 || params.dimensions.length > 150) {
+    if (
+      params.dimensions.height > 150 ||
+      params.dimensions.width > 150 ||
+      params.dimensions.length > 150
+    ) {
       return {
         success: false,
         error: {
@@ -680,7 +743,11 @@ export class CorreoArgentinoService {
     }
 
     // Si no hay cache, hacer request a la API
-    const response = await this.makeRequest<CalculateRatesResponse>("/rates", "POST", requestBody);
+    const response = await this.makeRequest<CalculateRatesResponse>(
+      "/rates",
+      "POST",
+      requestBody
+    );
 
     // Si el request fue exitoso, cachear las cotizaciones
     if (response.success && response.data) {
@@ -695,7 +762,9 @@ export class CorreoArgentinoService {
    * POST /shipping/import
    * Importa un envío a MiCorreo
    */
-  async importShipment(params: ImportShipmentParams): Promise<ApiResponse<ImportShipmentResponse>> {
+  async importShipment(
+    params: ImportShipmentParams
+  ): Promise<ApiResponse<ImportShipmentResponse>> {
     logger.info("[CorreoArgentino] Importing shipment", {
       extOrderId: params.extOrderId,
       deliveryType: params.shipping.deliveryType,
@@ -704,11 +773,13 @@ export class CorreoArgentinoService {
     // Validar datos según tipo de envío
     if (params.shipping.deliveryType === "D") {
       // Envío a domicilio requiere dirección completa
-      if (!params.shipping.address?.streetName ||
-          !params.shipping.address?.streetNumber ||
-          !params.shipping.address?.city ||
-          !params.shipping.address?.provinceCode ||
-          !params.shipping.address?.postalCode) {
+      if (
+        !params.shipping.address?.streetName ||
+        !params.shipping.address?.streetNumber ||
+        !params.shipping.address?.city ||
+        !params.shipping.address?.provinceCode ||
+        !params.shipping.address?.postalCode
+      ) {
         return {
           success: false,
           error: {
@@ -733,10 +804,12 @@ export class CorreoArgentinoService {
     // Truncar floor y apartment a 3 caracteres (según documentación)
     const requestBody = { ...params };
     if (requestBody.shipping.address?.floor) {
-      requestBody.shipping.address.floor = requestBody.shipping.address.floor.substring(0, 3);
+      requestBody.shipping.address.floor =
+        requestBody.shipping.address.floor.substring(0, 3);
     }
     if (requestBody.shipping.address?.apartment) {
-      requestBody.shipping.address.apartment = requestBody.shipping.address.apartment.substring(0, 3);
+      requestBody.shipping.address.apartment =
+        requestBody.shipping.address.apartment.substring(0, 3);
     }
 
     // Asegurar que dimensiones y peso sean enteros
@@ -745,22 +818,33 @@ export class CorreoArgentinoService {
     requestBody.shipping.length = Math.round(requestBody.shipping.length);
     requestBody.shipping.width = Math.round(requestBody.shipping.width);
 
-    return this.makeRequest<ImportShipmentResponse>("/shipping/import", "POST", requestBody);
+    return this.makeRequest<ImportShipmentResponse>(
+      "/shipping/import",
+      "POST",
+      requestBody
+    );
   }
 
   /**
    * GET /shipping/tracking
    * Obtiene el seguimiento de un envío
    */
-  async getTracking(params: GetTrackingParams): Promise<ApiResponse<TrackingInfo | TrackingInfo[] | TrackingErrorResponse>> {
+  async getTracking(
+    params: GetTrackingParams
+  ): Promise<
+    ApiResponse<TrackingInfo | TrackingInfo[] | TrackingErrorResponse>
+  > {
+    const shippingId = typeof params === "string" ? params : params.shippingId;
     logger.info("[CorreoArgentino] Getting tracking", {
-      shippingId: params.shippingId
+      shippingId,
     });
 
-    return this.makeRequest<TrackingInfo | TrackingInfo[] | TrackingErrorResponse>(
+    return this.makeRequest<
+      TrackingInfo | TrackingInfo[] | TrackingErrorResponse
+    >(
       "/shipping/tracking",
       "GET",
-      params
+      typeof params === "string" ? { shippingId: params } : params
     );
   }
 

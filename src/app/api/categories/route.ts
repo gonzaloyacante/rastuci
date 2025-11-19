@@ -76,17 +76,20 @@ export async function GET(request: NextRequest): Promise<
 
     const total = await prisma.category.count({ where });
 
-    const transformedCategories = categoriesWithCount.map((category) => ({
-      ...category,
-      description: category.description ?? undefined,
-      ...(includeProductCount
-        ? {
-            productCount:
-              (category as unknown as { _count?: { products?: number } })._count
-                ?.products ?? 0,
-          }
-        : {}),
-    }));
+    type CategoryType = (typeof categoriesWithCount)[0];
+    const transformedCategories = categoriesWithCount.map(
+      (category: CategoryType) => ({
+        ...category,
+        description: category.description ?? undefined,
+        ...(includeProductCount
+          ? {
+              productCount:
+                (category as unknown as { _count?: { products?: number } })
+                  ._count?.products ?? 0,
+            }
+          : {}),
+      })
+    );
 
     const totalPages = Math.ceil(total / limit);
 

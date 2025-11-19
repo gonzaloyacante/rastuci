@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { ok, fail } from "@/lib/apiResponse";
-import { ApiResponse } from "@/types";
+import { fail, ok } from "@/lib/apiResponse";
 import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
+import { ApiResponse } from "@/types";
+import { NextResponse } from "next/server";
 
 // GET /api/search/trending - Devuelve búsquedas trending basadas en ventas
 export async function GET(): Promise<
@@ -17,7 +17,8 @@ export async function GET(): Promise<
       take: 10,
     });
 
-    const productIds = topProducts.map((t) => t.productId);
+    type TopProductType = (typeof topProducts)[0];
+    const productIds = topProducts.map((t: TopProductType) => t.productId);
     const products =
       productIds.length > 0
         ? await prisma.product.findMany({
@@ -26,7 +27,8 @@ export async function GET(): Promise<
           })
         : [];
 
-    const trending: string[] = products.map((p) => p.name);
+    type ProductNameType = (typeof products)[0];
+    const trending: string[] = products.map((p: ProductNameType) => p.name);
 
     // Completar con categorías top si hace falta
     if (trending.length < 8) {
@@ -36,7 +38,8 @@ export async function GET(): Promise<
         orderBy: { _count: { id: "desc" } },
         take: 8 - trending.length,
       });
-      const catIds = catCounts.map((c) => c.categoryId);
+      type CatCountType = (typeof catCounts)[0];
+      const catIds = catCounts.map((c: CatCountType) => c.categoryId);
       const cats =
         catIds.length > 0
           ? await prisma.category.findMany({
@@ -44,7 +47,8 @@ export async function GET(): Promise<
               select: { id: true, name: true },
             })
           : [];
-      cats.forEach((c) => trending.push(c.name));
+      type CatType = (typeof cats)[0];
+      cats.forEach((c: CatType) => trending.push(c.name));
     }
 
     return ok({ trending });

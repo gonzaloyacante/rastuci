@@ -277,9 +277,10 @@ export async function POST(req: NextRequest) {
       size?: string;
       color?: string;
     };
+    type ProductType = (typeof dbProducts)[0];
     const orderItems: WebhookItem[] = metaItems.map(
       (it: Record<string, unknown>) => {
-        const prod = dbProducts.find((p) => p.id === it.productId);
+        const prod = dbProducts.find((p: ProductType) => p.id === it.productId);
         if (!prod) {
           throw new Error(`Producto no encontrado: ${it.productId}`);
         }
@@ -332,56 +333,58 @@ export async function POST(req: NextRequest) {
       payment.payer?.email || metadata.customerEmail;
 
     // Idempotent upsert using mpPaymentId
-    await prisma.$transaction(async (tx) => {
-      // If order already exists, update status and return
-      const existing = await tx.order.findFirst({
-        where: { mpPaymentId: mpPaymentId },
-      });
-      if (existing) {
-        await tx.order.update({
-          where: { id: existing.id },
+    await prisma.$transaction(
+      async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
+        // If order already exists, update status and return
+        const existing = await tx.order.findFirst({
+          where: { mpPaymentId: mpPaymentId },
+        });
+        if (existing) {
+          await tx.order.update({
+            where: { id: existing.id },
+            data: {
+              mpStatus: mpStatus,
+              status: mapStatus(mpStatus),
+              updatedAt: new Date(),
+            },
+          });
+          return;
+        }
+
+        await tx.order.create({
           data: {
-            mpStatus: mpStatus,
+            customerName: customerName,
+            customerPhone: customerPhone,
+            customerAddress: customerAddress,
+            customerEmail: customerEmail,
+            total: total,
             status: mapStatus(mpStatus),
-            updatedAt: new Date(),
+            mpPaymentId: mpPaymentId,
+            mpPreferenceId: preferenceId,
+            mpStatus: mpStatus,
+            items: {
+              create: orderItems.map((it) => ({
+                productId: it.productId,
+                quantity: it.quantity,
+                price: it.unitPrice,
+                size: it.size,
+                color: it.color,
+              })),
+            },
           },
         });
-        return;
-      }
 
-      await tx.order.create({
-        data: {
-          customerName: customerName,
-          customerPhone: customerPhone,
-          customerAddress: customerAddress,
-          customerEmail: customerEmail,
-          total: total,
-          status: mapStatus(mpStatus),
-          mpPaymentId: mpPaymentId,
-          mpPreferenceId: preferenceId,
-          mpStatus: mpStatus,
-          items: {
-            create: orderItems.map((it) => ({
-              productId: it.productId,
-              quantity: it.quantity,
-              price: it.unitPrice,
-              size: it.size,
-              color: it.color,
-            })),
-          },
-        },
-      });
-
-      // Decrement stock for each product
-      for (const it of orderItems) {
-        await tx.product.update({
-          where: { id: it.productId },
-          data: {
-            stock: { decrement: it.quantity },
-          },
-        });
+        // Decrement stock for each product
+        for (const it of orderItems) {
+          await tx.product.update({
+            where: { id: it.productId },
+            data: {
+              stock: { decrement: it.quantity },
+            },
+          });
+        }
       }
-    });
+    );
 
     return ok({ ok: true });
   } catch (e: unknown) {

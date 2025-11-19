@@ -1,11 +1,11 @@
 "use client";
 
 import {
-    AdminEmpty,
-    AdminEmptyIcons,
-    AdminError,
-    AdminLoading,
-    AdminPageHeader,
+  AdminEmpty,
+  AdminEmptyIcons,
+  AdminError,
+  AdminLoading,
+  AdminPageHeader,
 } from "@/components/admin";
 import { FilterBar, SearchBar } from "@/components/search";
 import { useCorreoArgentino } from "@/hooks";
@@ -25,7 +25,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const { orders, loading, error, totalPages, fetchOrders } = useOrders();
-    const {
+  const {
     getTracking: _getTracking,
     importShipment: _importShipment,
     loading: _caLoading,
@@ -328,20 +328,34 @@ export default function OrdersPage() {
                           {formatCurrency(order.total)}
                         </span>
                       </div>
-                      {(order as any).caTrackingNumber && (
+                      {(order as { caTrackingNumber?: string })
+                        .caTrackingNumber && (
                         <div className="flex items-center gap-2 text-sm text-success">
                           <TruckIcon size={14} />
-                          <span>Tracking CA: {(order as any).caTrackingNumber}</span>
+                          <span>
+                            Tracking CA:{" "}
+                            {
+                              (order as { caTrackingNumber?: string })
+                                .caTrackingNumber
+                            }
+                          </span>
                         </div>
                       )}
-                      {(order as any).shippingMethod && (
+                      {(order as { shippingMethod?: string })
+                        .shippingMethod && (
                         <div className="flex items-center gap-2 text-sm text-content-secondary">
                           <PackageIcon size={14} />
                           <span>
-                            {(order as any).shippingMethod === 'pickup' ? 'Retiro en tienda' :
-                             (order as any).shippingMethod === 'standard' ? 'Envío estándar' :
-                             (order as any).shippingMethod === 'express' ? 'Envío express' :
-                             'Correo Argentino'}
+                            {(order as { shippingMethod?: string })
+                              .shippingMethod === "pickup"
+                              ? "Retiro en tienda"
+                              : (order as { shippingMethod?: string })
+                                    .shippingMethod === "standard"
+                                ? "Envío estándar"
+                                : (order as { shippingMethod?: string })
+                                      .shippingMethod === "express"
+                                  ? "Envío express"
+                                  : "Correo Argentino"}
                           </span>
                         </div>
                       )}

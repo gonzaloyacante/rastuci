@@ -5,12 +5,12 @@ import { ShippingOption, useCart } from "@/context/CartContext";
 import { logger } from "@/lib/logger";
 import { formatPriceARS } from "@/utils/formatters";
 import {
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    Loader2,
-    MapPin,
-    Truck,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  MapPin,
+  Truck,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -90,13 +90,21 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         estimatedDays: "Inmediato",
       };
 
-      const caOptions: ShippingOption[] = result.data.rates?.map((rate: any) => ({
-        id: `ca-${rate.serviceType}`,
-        name: rate.serviceName || "Correo Argentino",
-        description: rate.description || "Envío por Correo Argentino",
-        price: rate.price,
-        estimatedDays: rate.deliveryTime || "3-5 días hábiles",
-      })) || [];
+      type RateType = {
+        serviceType: string;
+        serviceName?: string;
+        description?: string;
+        price: number;
+        deliveryTime?: string;
+      };
+      const caOptions: ShippingOption[] =
+        result.data.rates?.map((rate: RateType) => ({
+          id: `ca-${rate.serviceType}`,
+          name: rate.serviceName || "Correo Argentino",
+          description: rate.description || "Envío por Correo Argentino",
+          price: rate.price,
+          estimatedDays: rate.deliveryTime || "3-5 días hábiles",
+        })) || [];
 
       const allOptions = [pickupOption, ...caOptions];
       setShippingOptions(allOptions);

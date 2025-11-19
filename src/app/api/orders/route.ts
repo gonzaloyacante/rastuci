@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
+import { getRequestId, logger } from "@/lib/logger";
 import { sendNotification } from "@/lib/onesignal";
+import { mapOrderToDTO } from "@/lib/orders";
+import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { OrderCreateSchema, OrdersQuerySchema } from "@/lib/validation/order";
 import { ApiResponse, Order, PaginatedResponse } from "@/types";
 import { Prisma } from "@prisma/client";
-import { checkRateLimit } from "@/lib/rateLimiter";
-import { mapOrderToDTO } from "@/lib/orders";
-import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
-import { OrdersQuerySchema, OrderCreateSchema } from "@/lib/validation/order";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
-import { normalizeApiError } from "@/lib/errors";
-import { logger, getRequestId } from "@/lib/logger";
+import { NextRequest, NextResponse } from "next/server";
 
 // GET /api/orders - Obtener todos los pedidos con paginación
 export async function GET(
@@ -33,7 +33,9 @@ export async function GET(
       search: searchParams.get("search") || undefined,
     });
     if (!parsedQuery.success) {
-      return fail("BAD_REQUEST", "Parámetros inválidos", 400, { issues: parsedQuery.error.issues });
+      return fail("BAD_REQUEST", "Parámetros inválidos", 400, {
+        issues: parsedQuery.error.issues,
+      });
     }
     const { page, limit, status, search } = parsedQuery.data;
 
@@ -76,7 +78,10 @@ export async function GET(
       prisma.order.count({ where }),
     ]);
 
-    const orders: Order[] = prismaOrders.map((order) => mapOrderToDTO(order));
+    type OrderType = (typeof prismaOrders)[0];
+    const orders: Order[] = prismaOrders.map((order: OrderType) =>
+      mapOrderToDTO(order)
+    );
 
     const totalPages = Math.ceil(total / limit);
 
@@ -91,9 +96,20 @@ export async function GET(
     return ok(response);
   } catch (error) {
     const _requestId = getRequestId(request.headers);
-    logger.error("Error fetching orders", { requestId: _requestId, error: String(error) });
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al obtener los pedidos", 500);
-    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId: _requestId, ...(e.details as Record<string, unknown>) });
+    logger.error("Error fetching orders", {
+      requestId: _requestId,
+      error: String(error),
+    });
+    const e = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al obtener los pedidos",
+      500
+    );
+    return fail(e.code as ApiErrorCode, e.message, e.status, {
+      requestId: _requestId,
+      ...(e.details as Record<string, unknown>),
+    });
   }
 }
 
@@ -114,7 +130,9 @@ export async function POST(
     const json = await request.json();
     const parsed = OrderCreateSchema.safeParse(json);
     if (!parsed.success) {
-      return fail("BAD_REQUEST", "Body inválido", 400, { issues: parsed.error.issues });
+      return fail("BAD_REQUEST", "Body inválido", 400, {
+        issues: parsed.error.issues,
+      });
     }
     const { customerName, customerPhone, customerAddress, items } = parsed.data;
 
@@ -132,7 +150,11 @@ export async function POST(
       });
 
       if (!product) {
-        return fail("BAD_REQUEST", `Producto con ID ${item.productId} no encontrado`, 400);
+        return fail(
+          "BAD_REQUEST",
+          `Producto con ID ${item.productId} no encontrado`,
+          400
+        );
       }
 
       if (product.stock < item.quantity) {
@@ -205,15 +227,29 @@ export async function POST(
         "Nuevo Pedido Recibido"
       );
     } catch (notificationError) {
-      logger.error("Error sending notification", { requestId: _requestId, error: String(notificationError) });
+      logger.error("Error sending notification", {
+        requestId: _requestId,
+        error: String(notificationError),
+      });
       // No fallar el pedido si la notificación falla
     }
 
     return ok(responseOrder, "Pedido creado exitosamente");
   } catch (error) {
     const _requestId = getRequestId(request.headers);
-    logger.error("Error creating order", { requestId: _requestId, error: String(error) });
-    const e = normalizeApiError(error, "INTERNAL_ERROR", "Error al crear el pedido", 500);
-    return fail(e.code as ApiErrorCode, e.message, e.status, { requestId: _requestId, ...(e.details as Record<string, unknown>) });
+    logger.error("Error creating order", {
+      requestId: _requestId,
+      error: String(error),
+    });
+    const e = normalizeApiError(
+      error,
+      "INTERNAL_ERROR",
+      "Error al crear el pedido",
+      500
+    );
+    return fail(e.code as ApiErrorCode, e.message, e.status, {
+      requestId: _requestId,
+      ...(e.details as Record<string, unknown>),
+    });
   }
 }

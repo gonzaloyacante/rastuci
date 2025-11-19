@@ -418,11 +418,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     onClick={async () => {
                       // Usar directamente NextAuth signOut para terminar la sesión.
                       try {
-                        await signOut({ callbackUrl: '/admin' });
-                      } catch (_e) {
+                        await signOut({ callbackUrl: "/admin" });
+                      } catch {
                         // Fallback simple: redirigir al login
                         // eslint-disable-next-line no-restricted-globals
-                        window.location.href = '/admin';
+                        window.location.href = "/admin";
                       }
                     }}
                     className={`flex items-center ${

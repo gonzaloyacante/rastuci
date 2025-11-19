@@ -4,15 +4,14 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { useCart } from "@/context/CartContext";
 import {
-    AlertCircle,
-    CheckCircle,
-    Copy,
-    ExternalLink,
-    Loader2,
-    MapPin,
-    Package,
-    Phone,
-    Truck,
+  CheckCircle,
+  Copy,
+  ExternalLink,
+  Loader2,
+  MapPin,
+  Package,
+  Phone,
+  Truck,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -188,28 +187,14 @@ function CheckoutSuccessContent() {
                 </div>
 
                 {/* Estado actual del envío */}
-                {(trackingStatus || ocaLoading) && (
+                {trackingStatus && (
                   <div className="surface-secondary rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-medium text-primary">
                         Estado Actual:
                       </span>
-                      {ocaLoading && (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      )}
                     </div>
-                    {trackingStatus ? (
-                      <p className="text-success font-medium">
-                        {trackingStatus}
-                      </p>
-                    ) : ocaError ? (
-                      <p className="text-error text-sm">
-                        <AlertCircle className="w-4 h-4 inline mr-1" />
-                        No disponible en este momento
-                      </p>
-                    ) : (
-                      <p className="muted">Obteniendo estado...</p>
-                    )}
+                    <p className="text-success font-medium">{trackingStatus}</p>
                   </div>
                 )}
 

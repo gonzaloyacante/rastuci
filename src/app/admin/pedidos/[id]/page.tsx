@@ -3,7 +3,21 @@
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useCorreoArgentino } from "@/hooks";
-import { ArrowLeft, CheckCircle, MapPin, Package, Printer, RefreshCw, Send, Truck } from "lucide-react";
+import type {
+  TrackingErrorResponse,
+  TrackingInfo,
+  ProvinceCode,
+} from "@/lib/correo-argentino-service";
+import {
+  ArrowLeft,
+  CheckCircle,
+  MapPin,
+  Package,
+  Printer,
+  RefreshCw,
+  Send,
+  Truck,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -91,10 +105,16 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
-  const [trackingInfo, setTrackingInfo] = useState<any>(null);
+  const [trackingInfo, setTrackingInfo] = useState<
+    TrackingInfo | TrackingInfo[] | TrackingErrorResponse | null
+  >(null);
   const [loadingTracking, setLoadingTracking] = useState(false);
   const orderId = params.id as string;
-  const { getTracking, importShipment, loading: caLoading } = useCorreoArgentino();
+  const {
+    getTracking,
+    importShipment,
+    loading: caLoading,
+  } = useCorreoArgentino();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -232,45 +252,62 @@ export default function OrderDetailPage() {
   };
 
   const handleImportShipment = async () => {
-    if (!order) {return;}
-
-    if (order.caShipmentId) {
-      toast.error("Este pedido ya tiene un envío importado en Correo Argentino");
+    if (!order) {
       return;
     }
 
-    if (!order.shippingStreet || !order.shippingCity || !order.shippingProvince || !order.shippingPostalCode) {
+    if (order.caShipmentId) {
+      toast.error(
+        "Este pedido ya tiene un envío importado en Correo Argentino"
+      );
+      return;
+    }
+
+    if (
+      !order.shippingStreet ||
+      !order.shippingCity ||
+      !order.shippingProvince ||
+      !order.shippingPostalCode
+    ) {
       toast.error("El pedido no tiene dirección completa de envío");
       return;
     }
 
     try {
       // Calcular peso total de productos (1kg por defecto por producto)
-      const totalWeight = order.items.reduce((sum, item) => sum + (item.quantity * 1000), 0);
+      const totalWeight = order.items.reduce(
+        (sum, item) => sum + item.quantity * 1000,
+        0
+      );
 
       const shipmentData = {
-        externalOrderId: order.id,
-        deliveryType: order.shippingMethod === 'S' ? 'S' as const : 'D' as const,
+        customerId: process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID || "",
+        extOrderId: order.id,
         recipient: {
           name: order.customerName,
           phone: order.customerPhone,
+          email: "noemail@example.com", // TODO: Agregar campo customerEmail a Order
+        },
+        shipping: {
+          deliveryType:
+            order.shippingMethod === "S" ? ("S" as const) : ("D" as const),
+          productType: "CP",
+          agency: order.shippingAgency,
           address: {
-            street: order.shippingStreet,
-            number: order.shippingNumber || "SN",
+            streetName: order.shippingStreet,
+            streetNumber: order.shippingNumber || "SN",
             floor: order.shippingFloor,
             apartment: order.shippingApartment,
             city: order.shippingCity,
-            province: order.shippingProvince,
-            postalCode: order.shippingPostalCode
-          }
-        },
-        packages: [{
+            provinceCode: order.shippingProvince as ProvinceCode,
+            postalCode: order.shippingPostalCode,
+          },
           weight: totalWeight,
           height: 10,
           width: 20,
-          length: 30
-        }],
-        agencyCode: order.shippingAgency
+          length: 30,
+          declaredValue: order.total,
+        },
       };
 
       const result = await importShipment(shipmentData);
@@ -283,15 +320,15 @@ export default function OrderDetailPage() {
           body: JSON.stringify({
             caTrackingNumber: result.trackingNumber,
             caShipmentId: result.shipmentId,
-            caExtOrderId: order.id
-          })
+            caExtOrderId: order.id,
+          }),
         });
 
         setOrder({
           ...order,
           caTrackingNumber: result.trackingNumber,
           caShipmentId: result.shipmentId,
-          caExtOrderId: order.id
+          caExtOrderId: order.id,
         });
 
         toast.success("Envío importado correctamente en Correo Argentino");
@@ -504,7 +541,9 @@ export default function OrderDetailPage() {
                   {order.caTrackingNumber && (
                     <div>
                       <h3 className="text-sm font-medium muted">Tracking</h3>
-                      <p className="text-sm font-mono">{order.caTrackingNumber}</p>
+                      <p className="text-sm font-mono">
+                        {order.caTrackingNumber}
+                      </p>
                       <Button
                         variant="outline"
                         className="w-full mt-2"
@@ -520,20 +559,45 @@ export default function OrderDetailPage() {
                       </Button>
                     </div>
                   )}
-                  {trackingInfo && (
-                    <div className="p-3 surface-secondary rounded text-sm">
-                      <p><strong>Estado:</strong> {trackingInfo.status}</p>
-                      <p><strong>Ubicación:</strong> {trackingInfo.location}</p>
-                      <p><strong>Fecha:</strong> {new Date(trackingInfo.date).toLocaleString('es-AR')}</p>
-                    </div>
-                  )}
+                  {trackingInfo &&
+                    !Array.isArray(trackingInfo) &&
+                    "events" in trackingInfo && (
+                      <div className="p-3 surface-secondary rounded text-sm">
+                        <p>
+                          <strong>Tracking:</strong>{" "}
+                          {trackingInfo.trackingNumber}
+                        </p>
+                        {trackingInfo.events &&
+                          trackingInfo.events.length > 0 && (
+                            <>
+                              <p>
+                                <strong>Estado:</strong>{" "}
+                                {trackingInfo.events[0].status}
+                              </p>
+                              <p>
+                                <strong>Ubicación:</strong>{" "}
+                                {trackingInfo.events[0].branch}
+                              </p>
+                              <p>
+                                <strong>Fecha:</strong>{" "}
+                                {new Date(
+                                  trackingInfo.events[0].date
+                                ).toLocaleString("es-AR")}
+                              </p>
+                            </>
+                          )}
+                      </div>
+                    )}
                   {!order.caShipmentId && order.shippingStreet && (
                     <div>
-                      <h3 className="text-sm font-medium muted mb-2">Dirección de Envío</h3>
+                      <h3 className="text-sm font-medium muted mb-2">
+                        Dirección de Envío
+                      </h3>
                       <p className="text-sm">
                         {order.shippingStreet} {order.shippingNumber}
                         {order.shippingFloor && `, Piso ${order.shippingFloor}`}
-                        {order.shippingApartment && `, Depto ${order.shippingApartment}`}
+                        {order.shippingApartment &&
+                          `, Depto ${order.shippingApartment}`}
                       </p>
                       <p className="text-sm">
                         {order.shippingCity}, {order.shippingProvince}
@@ -555,8 +619,12 @@ export default function OrderDetailPage() {
                   )}
                   {order.caShipmentId && (
                     <div className="p-3 surface text-success border border-success rounded-lg text-sm">
-                      <p><strong>ID Envío:</strong> {order.caShipmentId}</p>
-                      <p className="text-xs mt-1">Envío registrado en Correo Argentino</p>
+                      <p>
+                        <strong>ID Envío:</strong> {order.caShipmentId}
+                      </p>
+                      <p className="text-xs mt-1">
+                        Envío registrado en Correo Argentino
+                      </p>
                     </div>
                   )}
                 </div>

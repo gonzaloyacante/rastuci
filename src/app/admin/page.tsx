@@ -36,9 +36,13 @@ export default function AdminLoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
 
   // Comprobar sesión al montar: si ya hay sesión de next-auth, redirigir al dashboard
-  const { data: session, status } = useSession();
+  const sessionData = useSession();
+  const session = sessionData?.data;
+  const status = sessionData?.status || "loading";
   useEffect(() => {
-    if (status === "loading") {return;}
+    if (status === "loading") {
+      return;
+    }
     if (session?.user) {
       router.push("/admin/dashboard");
     }

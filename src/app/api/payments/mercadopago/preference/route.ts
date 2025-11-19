@@ -1,10 +1,10 @@
-import { NextRequest } from "next/server";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { normalizeApiError } from "@/lib/errors";
+import { getRequestId, logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
-import { logger, getRequestId } from "@/lib/logger";
-import { normalizeApiError } from "@/lib/errors";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
+import { NextRequest } from "next/server";
 
 interface MercadoPagoPreference {
   items: Array<{
@@ -32,30 +32,42 @@ export async function POST(req: NextRequest) {
     const requestId = getRequestId(req.headers);
     const accessToken = process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
-      return fail("INTERNAL_ERROR", "Missing MP_ACCESS_TOKEN env var", 500, { requestId });
+      return fail("INTERNAL_ERROR", "Missing MP_ACCESS_TOKEN env var", 500, {
+        requestId,
+      });
     }
 
     // Basic rate limiting per IP for preference creation
-    const rl = checkRateLimit(req, { key: makeKey("POST", "/api/payments/mercadopago/preference"), ...getPreset("mutatingLow") });
+    const rl = checkRateLimit(req, {
+      key: makeKey("POST", "/api/payments/mercadopago/preference"),
+      ...getPreset("mutatingLow"),
+    });
     if (!rl.ok) {
-      return fail("RATE_LIMITED", "Too many requests, please try again later.", 429, { requestId });
+      return fail(
+        "RATE_LIMITED",
+        "Too many requests, please try again later.",
+        429,
+        { requestId }
+      );
     }
 
     const body = await req.json();
     const { items = [], customer = null, metadata = {} } = body || {};
 
     // Log para debugging (solo en desarrollo)
-    if (process.env.NODE_ENV === 'development') {
-      logger.info("Creating MP preference", { 
-        requestId, 
+    if (process.env.NODE_ENV === "development") {
+      logger.info("Creating MP preference", {
+        requestId,
         itemsCount: items.length,
         hasCustomer: !!customer,
-        accessTokenPrefix: accessToken.substring(0, 10) + '...'
+        accessTokenPrefix: accessToken.substring(0, 10) + "...",
       });
     }
 
     if (!Array.isArray(items) || items.length === 0) {
-      return fail("BAD_REQUEST", "Items required to create preference", 400, { requestId });
+      return fail("BAD_REQUEST", "Items required to create preference", 400, {
+        requestId,
+      });
     }
 
     const origin =
@@ -66,27 +78,45 @@ export async function POST(req: NextRequest) {
     // Server-side validation: rebuild items from DB using metadata.items
     const metaItems = Array.isArray(metadata?.items) ? metadata.items : [];
     if (metaItems.length === 0) {
-      return fail("BAD_REQUEST", "metadata.items es requerido para validar en el servidor", 400, { requestId });
+      return fail(
+        "BAD_REQUEST",
+        "metadata.items es requerido para validar en el servidor",
+        400,
+        { requestId }
+      );
     }
 
-    const productIds: string[] = metaItems.map((i: Record<string, unknown>) => String(i.productId));
+    const productIds: string[] = metaItems.map((i: Record<string, unknown>) =>
+      String(i.productId)
+    );
     const dbProducts = await prisma.product.findMany({
       where: { id: { in: productIds } },
-      select: { id: true, name: true, price: true, description: true, images: true },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        description: true,
+        images: true,
+      },
     });
 
     // Verificar stock: como el schema no tiene stock por variante, validamos cantidad >= 1 (stock global se ajustará en webhook)
     // Calcular descuento proporcional enviado por el cliente como referencia pero aplicado en el server
     const discountPercent = Number(metadata?.discountPercent || 0);
-    const safeDiscount = isFinite(discountPercent) && discountPercent >= 0 && discountPercent <= 1 ? discountPercent : 0;
+    const safeDiscount =
+      isFinite(discountPercent) && discountPercent >= 0 && discountPercent <= 1
+        ? discountPercent
+        : 0;
 
+    type ProductType = (typeof dbProducts)[0];
     const validatedItems = metaItems.map((it: Record<string, unknown>) => {
-      const prod = dbProducts.find((p) => p.id === it.productId);
+      const prod = dbProducts.find((p: ProductType) => p.id === it.productId);
       if (!prod) {
         throw new Error(`Producto no encontrado: ${it.productId}`);
       }
       const unitPrice = Number((prod.price * (1 - safeDiscount)).toFixed(2));
-      const title = prod.name + (it.size && it.color ? ` (${it.size} - ${it.color})` : "");
+      const title =
+        prod.name + (it.size && it.color ? ` (${it.size} - ${it.color})` : "");
       const firstImage = (() => {
         try {
           const arr = JSON.parse(prod.images);
@@ -108,10 +138,21 @@ export async function POST(req: NextRequest) {
     // Agregar ítem de envío según metadata.shipping (fallback a 0)
     const shippingId = metadata?.shipping as string | undefined;
     if (shippingId) {
-      const shippingMap: Record<string, { name: string; price: number; description?: string }> = {
+      const shippingMap: Record<
+        string,
+        { name: string; price: number; description?: string }
+      > = {
         pickup: { name: "Retiro en tienda", price: 0 },
-        standard: { name: "Envío estándar", price: 1500, description: "3-5 días" },
-        express: { name: "Envío express", price: 2500, description: "24-48 horas" },
+        standard: {
+          name: "Envío estándar",
+          price: 1500,
+          description: "3-5 días",
+        },
+        express: {
+          name: "Envío express",
+          price: 2500,
+          description: "24-48 horas",
+        },
       };
       const ship = shippingMap[shippingId];
       if (ship) {
@@ -132,7 +173,10 @@ export async function POST(req: NextRequest) {
     if (process.env.MP_WEBHOOK_URL) {
       try {
         const parsed = new URL(process.env.MP_WEBHOOK_URL);
-        if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+        if (
+          parsed.hostname !== "localhost" &&
+          parsed.hostname !== "127.0.0.1"
+        ) {
           mpNotificationUrl = process.env.MP_WEBHOOK_URL;
         }
       } catch {
@@ -168,33 +212,58 @@ export async function POST(req: NextRequest) {
     } as MercadoPagoPreference;
 
     // Log payload in development to help debug MP errors
-    if (process.env.NODE_ENV === 'development') {
-      logger.info('MP preference payload', { requestId, payload: preferencePayload });
+    if (process.env.NODE_ENV === "development") {
+      logger.info("MP preference payload", {
+        requestId,
+        payload: preferencePayload,
+      });
     }
 
-    const resp = await fetch("https://api.mercadopago.com/checkout/preferences", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(preferencePayload),
-    });
+    const resp = await fetch(
+      "https://api.mercadopago.com/checkout/preferences",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(preferencePayload),
+      }
+    );
 
     if (!resp.ok) {
       const err = await resp.text();
-      logger.error("MP preference create failed", { requestId, details: err, payload: preferencePayload });
-      const details = process.env.NODE_ENV === 'development' ? { error: err, payload: preferencePayload } : { error: err };
-      return fail("INTERNAL_ERROR", "Failed to create preference", 500, { requestId, details });
+      logger.error("MP preference create failed", {
+        requestId,
+        details: err,
+        payload: preferencePayload,
+      });
+      const details =
+        process.env.NODE_ENV === "development"
+          ? { error: err, payload: preferencePayload }
+          : { error: err };
+      return fail("INTERNAL_ERROR", "Failed to create preference", 500, {
+        requestId,
+        details,
+      });
     }
 
     const data = await resp.json();
     // data.init_point (desktop) / data.sandbox_init_point; data.id preference id
-    return ok({ init_point: data.init_point || data.sandbox_init_point, preference_id: data.id });
+    return ok({
+      init_point: data.init_point || data.sandbox_init_point,
+      preference_id: data.id,
+    });
   } catch (e: unknown) {
     const requestId = getRequestId(req.headers);
-    logger.error("Unexpected error creating MP preference", { requestId, error: String(e) });
+    logger.error("Unexpected error creating MP preference", {
+      requestId,
+      error: String(e),
+    });
     const n = normalizeApiError(e, "INTERNAL_ERROR", "Unexpected error", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId, ...(n.details as Record<string, unknown>) });
+    return fail(n.code as ApiErrorCode, n.message, n.status, {
+      requestId,
+      ...(n.details as Record<string, unknown>),
+    });
   }
 }

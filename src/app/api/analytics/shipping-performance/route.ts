@@ -72,19 +72,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
     // Calcular métricas de Correo Argentino
+    type OrderType = (typeof orders)[0];
     const totalShipments = orders.length;
     const deliveredShipments = orders.filter(
-      (o) => o.status === "DELIVERED"
+      (o: OrderType) => o.status === "DELIVERED"
     ).length;
     const pendingShipments = orders.filter(
-      (o) => o.status === "PENDING" || o.status === "PROCESSED"
+      (o: OrderType) => o.status === "PENDING" || o.status === "PROCESSED"
     ).length;
 
     // Calcular tiempo promedio de entrega (solo para pedidos entregados)
-    const deliveredOrders = orders.filter((o) => o.status === "DELIVERED");
+    const deliveredOrders = orders.filter(
+      (o: OrderType) => o.status === "DELIVERED"
+    );
     const averageDeliveryTime =
       deliveredOrders.length > 0
-        ? deliveredOrders.reduce((sum, order) => {
+        ? deliveredOrders.reduce((sum: number, order: OrderType) => {
             const deliveryTime =
               (order.updatedAt.getTime() - order.createdAt.getTime()) /
               (1000 * 60 * 60 * 24);
@@ -92,24 +95,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           }, 0) / deliveredOrders.length
         : 0;
 
-    const successRate = totalShipments > 0
-      ? (deliveredShipments / totalShipments) * 100
-      : 0;
+    const successRate =
+      totalShipments > 0 ? (deliveredShipments / totalShipments) * 100 : 0;
 
     // Entregas a tiempo (estimado: < 5 días)
-    const onTimeDeliveries = deliveredOrders.filter((order) => {
+    const onTimeDeliveries = deliveredOrders.filter((order: OrderType) => {
       const deliveryTime =
         (order.updatedAt.getTime() - order.createdAt.getTime()) /
         (1000 * 60 * 60 * 24);
       return deliveryTime <= 5;
     }).length;
 
-    const timelyDelivery = deliveredOrders.length > 0
-      ? (onTimeDeliveries / deliveredOrders.length) * 100
-      : 0;
+    const timelyDelivery =
+      deliveredOrders.length > 0
+        ? (onTimeDeliveries / deliveredOrders.length) * 100
+        : 0;
 
     // Envíos retrasados
-    const delayedShipments = deliveredOrders.filter((order) => {
+    const delayedShipments = deliveredOrders.filter((order: OrderType) => {
       const deliveryTime =
         (order.updatedAt.getTime() - order.createdAt.getTime()) /
         (1000 * 60 * 60 * 24);
@@ -117,9 +120,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }).length;
 
     // Costos y revenue
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+    const totalRevenue = orders.reduce(
+      (sum: number, order: OrderType) => sum + order.total,
+      0
+    );
     const shippingRevenue = orders.reduce(
-      (sum, order) => sum + (order.shippingCost || 0),
+      (sum: number, order: OrderType) => sum + (order.shippingCost || 0),
       0
     );
     const averageShippingCost =
@@ -185,9 +191,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const response: ApiResponse<never> = {
       success: false,
       error:
-        error instanceof Error
-          ? error.message
-          : "Error interno del servidor",
+        error instanceof Error ? error.message : "Error interno del servidor",
     };
 
     return NextResponse.json(response, { status: 500 });

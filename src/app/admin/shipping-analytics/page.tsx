@@ -1,14 +1,20 @@
-'use client';
+"use client";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Calendar, Download, Minus, TrendingDown, TrendingUp } from "lucide-react";
-import { useCallback, useEffect, useState } from 'react';
+import {
+  Calendar,
+  Download,
+  Minus,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
-interface _ShippingPerformanceData {
+interface ShippingAnalyticsData {
   totalOrders: number;
   oca: {
     count: number;
@@ -24,15 +30,46 @@ interface _ShippingPerformanceData {
     totalOrders: number;
     averageDeliveryTime: number;
     onTimeRate: number;
+    onTimeDeliveryRate: number;
+    deliveredOrders: number;
+    averageShippingCost: number;
+    totalShippingRevenue: number;
+    deliveryTimeDistribution: Array<{ range: string; count: number }>;
+    performanceByRegion: Array<{
+      region: string;
+      avgTime: number;
+      count: number;
+      averageDeliveryTime?: number;
+      onTimeRate?: number;
+      averageCost?: number;
+      orderCount?: number;
+      avgCost?: number;
+    }>;
+  };
+  satisfaction: {
+    satisfactionByDeliveryTime: Array<{
+      timeRange: string;
+      rating: number;
+      avgRating?: number;
+      responseCount?: number;
+    }>;
+    overallSatisfactionRate: number;
+    npsScore: number;
+    recommendationRate: number;
+    totalResponses?: number;
+  };
+  summary: {
+    performanceScore: number;
+    trendsIndicator: "improving" | "declining" | "stable";
   };
 }
 
 export default function ShippingAnalytics() {
   const [data, setData] = useState<ShippingAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState('');
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState("");
   const [includeDetails, setIncludeDetails] = useState(true);
 
   // Establecer fechas por defecto (últimos 30 días)
@@ -41,8 +78,8 @@ export default function ShippingAnalytics() {
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(today.getDate() - 30);
 
-    setEndDate(today.toISOString().split('T')[0]);
-    setStartDate(thirtyDaysAgo.toISOString().split('T')[0]);
+    setEndDate(today.toISOString().split("T")[0]);
+    setStartDate(thirtyDaysAgo.toISOString().split("T")[0]);
   }, []);
 
   const fetchAnalytics = useCallback(async () => {
@@ -59,10 +96,12 @@ export default function ShippingAnalytics() {
       });
 
       if (selectedRegion) {
-        params.append('region', selectedRegion);
+        params.append("region", selectedRegion);
       }
 
-      const response = await fetch(`/api/analytics/shipping-performance?${params}`);
+      const response = await fetch(
+        `/api/analytics/shipping-performance?${params}`
+      );
       const result = await response.json();
 
       if (result.success) {
@@ -89,28 +128,40 @@ export default function ShippingAnalytics() {
 
     // Crear CSV con los datos
     const csvData = [
-      ['Métrica', 'Valor'],
-      ['Tiempo Promedio de Entrega (días)', data.delivery.averageDeliveryTime.toString()],
-      ['Tasa de Entrega a Tiempo (%)', data.delivery.onTimeDeliveryRate.toString()],
-      ['Total de Órdenes', data.delivery.totalOrders.toString()],
-      ['Órdenes Entregadas', data.delivery.deliveredOrders.toString()],
-      ['Costo Promedio de Envío', `$${data.delivery.averageShippingCost}`],
-      ['Ingresos Totales de Envío', `$${data.delivery.totalShippingRevenue}`],
-      ['Puntaje de Performance', data.summary.performanceScore.toString()],
+      ["Métrica", "Valor"],
+      [
+        "Tiempo Promedio de Entrega (días)",
+        data.delivery.averageDeliveryTime.toString(),
+      ],
+      [
+        "Tasa de Entrega a Tiempo (%)",
+        data.delivery.onTimeDeliveryRate.toString(),
+      ],
+      ["Total de Órdenes", data.delivery.totalOrders.toString()],
+      ["Órdenes Entregadas", data.delivery.deliveredOrders.toString()],
+      ["Costo Promedio de Envío", `$${data.delivery.averageShippingCost}`],
+      ["Ingresos Totales de Envío", `$${data.delivery.totalShippingRevenue}`],
+      ["Puntaje de Performance", data.summary.performanceScore.toString()],
     ];
 
     if (data.satisfaction) {
       csvData.push(
-        ['Satisfacción Promedio', data.satisfaction.overallSatisfactionRate.toString()],
-        ['NPS Score', data.satisfaction.npsScore.toString()],
-        ['Tasa de Recomendación (%)', data.satisfaction.recommendationRate.toString()]
+        [
+          "Satisfacción Promedio",
+          data.satisfaction.overallSatisfactionRate.toString(),
+        ],
+        ["NPS Score", data.satisfaction.npsScore.toString()],
+        [
+          "Tasa de Recomendación (%)",
+          data.satisfaction.recommendationRate.toString(),
+        ]
       );
     }
 
-    const csvContent = csvData.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csvContent = csvData.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `shipping-analytics-${startDate}-${endDate}.csv`;
     document.body.appendChild(a);
@@ -121,9 +172,9 @@ export default function ShippingAnalytics() {
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'improving':
+      case "improving":
         return <TrendingUp className="h-4 w-4 text-success" />;
-      case 'declining':
+      case "declining":
         return <TrendingDown className="h-4 w-4 text-error" />;
       default:
         return <Minus className="h-4 w-4 muted" />;
@@ -132,12 +183,12 @@ export default function ShippingAnalytics() {
 
   const getPerformanceColor = (score: number) => {
     if (score >= 80) {
-      return 'text-success';
+      return "text-success";
     }
     if (score >= 60) {
-      return 'text-warning';
+      return "text-warning";
     }
-    return 'text-error';
+    return "text-error";
   };
 
   if (loading) {
@@ -174,7 +225,9 @@ export default function ShippingAnalytics() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Fecha Inicio</label>
+              <label className="block text-sm font-medium mb-2">
+                Fecha Inicio
+              </label>
               <Input
                 type="date"
                 value={startDate}
@@ -182,7 +235,9 @@ export default function ShippingAnalytics() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Fecha Fin</label>
+              <label className="block text-sm font-medium mb-2">
+                Fecha Fin
+              </label>
               <Input
                 type="date"
                 value={endDate}
@@ -229,17 +284,27 @@ export default function ShippingAnalytics() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <span className={`text-2xl font-bold ${getPerformanceColor(data.summary.performanceScore)}`}>
+                  <span
+                    className={`text-2xl font-bold ${getPerformanceColor(data.summary.performanceScore)}`}
+                  >
                     {data.summary.performanceScore}%
                   </span>
                   <div className="flex items-center gap-1">
                     {getTrendIcon(data.summary.trendsIndicator)}
-                    <Badge variant={
-                      data.summary.trendsIndicator === 'improving' ? 'default' :
-                      data.summary.trendsIndicator === 'declining' ? 'destructive' : 'secondary'
-                    }>
-                      {data.summary.trendsIndicator === 'improving' ? 'Mejorando' :
-                       data.summary.trendsIndicator === 'declining' ? 'Declinando' : 'Estable'}
+                    <Badge
+                      variant={
+                        data.summary.trendsIndicator === "improving"
+                          ? "default"
+                          : data.summary.trendsIndicator === "declining"
+                            ? "destructive"
+                            : "secondary"
+                      }
+                    >
+                      {data.summary.trendsIndicator === "improving"
+                        ? "Mejorando"
+                        : data.summary.trendsIndicator === "declining"
+                          ? "Declinando"
+                          : "Estable"}
                     </Badge>
                   </div>
                 </div>
@@ -251,7 +316,9 @@ export default function ShippingAnalytics() {
                 <CardTitle className="text-lg">Tiempo Promedio</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{data.delivery.averageDeliveryTime} días</div>
+                <div className="text-2xl font-bold">
+                  {data.delivery.averageDeliveryTime} días
+                </div>
                 <p className="text-sm muted">Tiempo de entrega</p>
               </CardContent>
             </Card>
@@ -265,7 +332,8 @@ export default function ShippingAnalytics() {
                   {data.delivery.onTimeDeliveryRate}%
                 </div>
                 <p className="text-sm muted">
-                  {data.delivery.deliveredOrders} de {data.delivery.totalOrders} órdenes
+                  {data.delivery.deliveredOrders} de {data.delivery.totalOrders}{" "}
+                  órdenes
                 </p>
               </CardContent>
             </Card>
@@ -275,7 +343,9 @@ export default function ShippingAnalytics() {
                 <CardTitle className="text-lg">Ingresos de Envío</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${data.delivery.totalShippingRevenue}</div>
+                <div className="text-2xl font-bold">
+                  ${data.delivery.totalShippingRevenue}
+                </div>
                 <p className="text-sm muted">
                   Promedio: ${data.delivery.averageShippingCost}
                 </p>
@@ -290,22 +360,32 @@ export default function ShippingAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {data.delivery.deliveryTimeDistribution.map((item) => (
-                  <div key={item.timeRange} className="flex items-center justify-between">
-                    <span className="font-medium">{item.timeRange}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-32 bg-surface-secondary rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full"
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
+                {data.delivery.deliveryTimeDistribution.map(
+                  (item: {
+                    timeRange?: string;
+                    range: string;
+                    count: number;
+                    percentage?: number;
+                  }) => (
+                    <div
+                      key={item.timeRange || item.range}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="font-medium">{item.timeRange}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-32 bg-surface-secondary rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full"
+                            style={{ width: `${item.percentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm muted w-16 text-right">
+                          {item.count} ({item.percentage}%)
+                        </span>
                       </div>
-                      <span className="text-sm muted w-16 text-right">
-                        {item.count} ({item.percentage}%)
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             </CardContent>
           </Card>
@@ -328,22 +408,40 @@ export default function ShippingAnalytics() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.delivery.performanceByRegion.map((region) => (
-                      <tr key={region.region} className="border-b">
-                        <td className="py-2 font-medium">{region.region}</td>
-                        <td className="text-right py-2">{region.averageDeliveryTime} días</td>
-                        <td className="text-right py-2">
-                          <span className={
-                            region.onTimeRate >= 80 ? 'text-success' :
-                            region.onTimeRate >= 60 ? 'text-warning' : 'text-error'
-                          }>
-                            {region.onTimeRate}%
-                          </span>
-                        </td>
-                        <td className="text-right py-2">{region.orderCount}</td>
-                        <td className="text-right py-2">${region.avgCost}</td>
-                      </tr>
-                    ))}
+                    {data.delivery.performanceByRegion.map(
+                      (region: {
+                        region: string;
+                        averageDeliveryTime?: number;
+                        avgTime: number;
+                        count: number;
+                        onTimeRate?: number;
+                        averageCost?: number;
+                      }) => (
+                        <tr key={region.region} className="border-b">
+                          <td className="py-2 font-medium">{region.region}</td>
+                          <td className="text-right py-2">
+                            {region.averageDeliveryTime} días
+                          </td>
+                          <td className="text-right py-2">
+                            <span
+                              className={
+                                (region.onTimeRate ?? 0) >= 80
+                                  ? "text-success"
+                                  : (region.onTimeRate ?? 0) >= 60
+                                    ? "text-warning"
+                                    : "text-error"
+                              }
+                            >
+                              {region.onTimeRate}%
+                            </span>
+                          </td>
+                          <td className="text-right py-2">{region.count}</td>
+                          <td className="text-right py-2">
+                            ${region.averageCost ?? 0}
+                          </td>
+                        </tr>
+                      )
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -363,7 +461,9 @@ export default function ShippingAnalytics() {
                       {data.satisfaction.overallSatisfactionRate}/5
                     </div>
                     <p className="text-sm muted">Calificación Promedio</p>
-                    <p className="text-xs muted">{data.satisfaction.totalResponses} respuestas</p>
+                    <p className="text-xs muted">
+                      {data.satisfaction.totalResponses} respuestas
+                    </p>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-success">
@@ -380,14 +480,23 @@ export default function ShippingAnalytics() {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="font-medium">Satisfacción por Tiempo de Entrega</h4>
+                  <h4 className="font-medium">
+                    Satisfacción por Tiempo de Entrega
+                  </h4>
                   {data.satisfaction.satisfactionByDeliveryTime.map((item) => (
-                    <div key={item.timeRange} className="flex items-center justify-between p-3 surface rounded">
+                    <div
+                      key={item.timeRange}
+                      className="flex items-center justify-between p-3 surface rounded"
+                    >
                       <span className="font-medium">{item.timeRange}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-warning text-lg">
-                          {'★'.repeat(Math.round(item.avgRating))}
-                          {'☆'.repeat(5 - Math.round(item.avgRating))}
+                          {"★".repeat(
+                            Math.round(item.avgRating ?? item.rating)
+                          )}
+                          {"☆".repeat(
+                            5 - Math.round(item.avgRating ?? item.rating)
+                          )}
                         </span>
                         <span className="text-sm muted">
                           {item.avgRating}/5 ({item.responseCount} respuestas)
@@ -423,25 +532,32 @@ export default function ShippingAnalytics() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted">Tiempo Promedio</span>
+                      <span className="text-sm text-muted">
+                        Tiempo Promedio
+                      </span>
                       <span className="font-semibold">
                         {data.delivery.averageDeliveryTime > 0
                           ? (data.delivery.averageDeliveryTime + 0.5).toFixed(1)
-                          : 0} días
+                          : 0}{" "}
+                        días
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted">Entregas a Tiempo</span>
+                      <span className="text-sm text-muted">
+                        Entregas a Tiempo
+                      </span>
                       <span className="font-semibold text-success">
                         {data.delivery.onTimeDeliveryRate > 0
                           ? (data.delivery.onTimeDeliveryRate - 2).toFixed(1)
-                          : 0}%
+                          : 0}
+                        %
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted">Costo Promedio</span>
                       <span className="font-semibold">
-                        ${data.delivery.averageShippingCost > 0
+                        $
+                        {data.delivery.averageShippingCost > 0
                           ? (data.delivery.averageShippingCost * 1.1).toFixed(2)
                           : 0}
                       </span>
@@ -465,26 +581,35 @@ export default function ShippingAnalytics() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted">Tiempo Promedio</span>
+                      <span className="text-sm text-muted">
+                        Tiempo Promedio
+                      </span>
                       <span className="font-semibold">
                         {data.delivery.averageDeliveryTime > 0
                           ? (data.delivery.averageDeliveryTime - 0.3).toFixed(1)
-                          : 0} días
+                          : 0}{" "}
+                        días
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted">Entregas a Tiempo</span>
+                      <span className="text-sm text-muted">
+                        Entregas a Tiempo
+                      </span>
                       <span className="font-semibold text-success">
                         {data.delivery.onTimeDeliveryRate > 0
                           ? (data.delivery.onTimeDeliveryRate + 3).toFixed(1)
-                          : 0}%
+                          : 0}
+                        %
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted">Costo Promedio</span>
                       <span className="font-semibold">
-                        ${data.delivery.averageShippingCost > 0
-                          ? (data.delivery.averageShippingCost * 0.95).toFixed(2)
+                        $
+                        {data.delivery.averageShippingCost > 0
+                          ? (data.delivery.averageShippingCost * 0.95).toFixed(
+                              2
+                            )
                           : 0}
                       </span>
                     </div>
@@ -494,8 +619,9 @@ export default function ShippingAnalytics() {
 
               <div className="mt-6 p-4 bg-primary/10 rounded-lg">
                 <p className="text-sm text-primary">
-                  <strong>Nota:</strong> Correo Argentino muestra tiempos de entrega más rápidos y costos más competitivos.
-                  Los datos se actualizan en tiempo real desde ambos proveedores.
+                  <strong>Nota:</strong> Correo Argentino muestra tiempos de
+                  entrega más rápidos y costos más competitivos. Los datos se
+                  actualizan en tiempo real desde ambos proveedores.
                 </p>
               </div>
             </CardContent>

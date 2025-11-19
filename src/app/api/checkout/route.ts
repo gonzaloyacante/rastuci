@@ -1,4 +1,7 @@
-import { correoArgentinoService } from "@/lib/correo-argentino-service";
+import {
+  correoArgentinoService,
+  type ProvinceCode,
+} from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { createPreference } from "@/lib/mercadopago";
 import prisma from "@/lib/prisma";
@@ -107,39 +110,50 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
 
       // Si el método de envío es Correo Argentino, importar shipment
-      if (shippingMethod && shippingMethod.provider === 'correo-argentino' && customer.address && customer.postalCode) {
+      if (
+        shippingMethod &&
+        shippingMethod.provider === "correo-argentino" &&
+        customer.address &&
+        customer.postalCode
+      ) {
         try {
           await correoArgentinoService.authenticate();
 
           const shipmentResult = await correoArgentinoService.importShipment({
-            customerId: process.env.CORREO_ARGENTINO_CUSTOMER_ID || '',
+            customerId: process.env.CORREO_ARGENTINO_CUSTOMER_ID || "",
             extOrderId: order.id,
             sender: {
-              name: process.env.STORE_NAME || 'Rastuci',
-              street: process.env.STORE_ADDRESS || '',
-              city: process.env.STORE_CITY || 'CABA',
-              province: process.env.STORE_PROVINCE || 'C',
-              postalCode: process.env.STORE_POSTAL_CODE || '1425',
-              phone: process.env.STORE_PHONE || '',
-              email: process.env.STORE_EMAIL || '',
+              name: process.env.STORE_NAME || "Rastuci",
+              phone: process.env.STORE_PHONE || "",
+              email: process.env.STORE_EMAIL || "",
+              originAddress: {
+                streetName: process.env.STORE_ADDRESS || "",
+                city: process.env.STORE_CITY || "CABA",
+                provinceCode: (process.env.STORE_PROVINCE ||
+                  "C") as ProvinceCode,
+                postalCode: process.env.STORE_POSTAL_CODE || "1425",
+              },
             },
             recipient: {
               name: customer.name,
-              street: customer.address,
-              city: customer.city,
-              province: customer.province || 'B',
-              postalCode: customer.postalCode,
               phone: customer.phone,
               email: customer.email,
             },
-            deliveredType: shippingMethod.deliveryType || 'D',
-            packages: [{
+            shipping: {
+              deliveryType: (shippingMethod.deliveryType || "D") as "D" | "S",
+              productType: "CP",
+              address: {
+                streetName: customer.address,
+                city: customer.city,
+                provinceCode: (customer.province || "B") as ProvinceCode,
+                postalCode: customer.postalCode,
+              },
               weight: orderData.weight || 500,
               height: orderData.height || 10,
               width: orderData.width || 20,
               length: orderData.length || 30,
               declaredValue: orderData.total,
-            }],
+            },
           });
 
           if (shipmentResult.success && shipmentResult.data) {
@@ -151,13 +165,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               },
             });
 
-            logger.info('[checkout] CA shipment imported', {
+            logger.info("[checkout] CA shipment imported", {
               orderId: order.id,
               trackingNumber: shipmentResult.data.trackingNumber,
             });
           }
         } catch (caError) {
-          logger.error('[checkout] Failed to import CA shipment', {
+          logger.error("[checkout] Failed to import CA shipment", {
             orderId: order.id,
             error: caError,
           });

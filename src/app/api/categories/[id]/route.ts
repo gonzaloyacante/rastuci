@@ -44,10 +44,11 @@ export async function GET(
       return fail("NOT_FOUND", "Categoría no encontrada", 404, { requestId });
     }
 
+    type ProductType = (typeof category.products)[0];
     return ok({
       ...category,
       description: category.description ?? undefined,
-      products: category.products.map((product) => ({
+      products: category.products.map((product: ProductType) => ({
         ...product,
         description: product.description ?? undefined,
       })),

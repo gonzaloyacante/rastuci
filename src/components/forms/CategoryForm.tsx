@@ -48,10 +48,10 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       setFormData({
         name: category.name || "",
         description: category.description || "",
-        imageUrl: (category as any).imageUrl || (category.image ?? null),
-        icon: (category as any).icon || null,
-        showImage: !!((category as any).imageUrl || category.image),
-        showIcon: !!(category as any).icon,
+        imageUrl: category.image ?? null,
+        icon: null,
+        showImage: !!category.image,
+        showIcon: false,
       });
     }
   }, [category]);
@@ -97,7 +97,8 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-content-primary mb-2">
+            className="block text-sm font-medium text-content-primary mb-2"
+          >
             Nombre de la categoría *
           </label>
           <Input
@@ -113,7 +114,8 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         <div>
           <label
             htmlFor="description"
-            className="block text-sm font-medium text-content-primary mb-2">
+            className="block text-sm font-medium text-content-primary mb-2"
+          >
             Descripción *
           </label>
           <textarea
@@ -141,13 +143,13 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
               <label className="text-sm font-medium text-content-primary">
                 Mostrar imagen
               </label>
-              <p className="text-xs text-muted">
-                Mostrar imagen de fondo
-              </p>
+              <p className="text-xs text-muted">Mostrar imagen de fondo</p>
             </div>
             <button
               type="button"
-              onClick={() => setFormData((prev) => ({ ...prev, showImage: !prev.showImage }))}
+              onClick={() =>
+                setFormData((prev) => ({ ...prev, showImage: !prev.showImage }))
+              }
               disabled={loading}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 formData.showImage ? "bg-primary" : "bg-gray-300"
@@ -166,13 +168,13 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
               <label className="text-sm font-medium text-content-primary">
                 Mostrar ícono
               </label>
-              <p className="text-xs text-muted">
-                Mostrar ícono personalizado
-              </p>
+              <p className="text-xs text-muted">Mostrar ícono personalizado</p>
             </div>
             <button
               type="button"
-              onClick={() => setFormData((prev) => ({ ...prev, showIcon: !prev.showIcon }))}
+              onClick={() =>
+                setFormData((prev) => ({ ...prev, showIcon: !prev.showIcon }))
+              }
               disabled={loading}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 formData.showIcon ? "bg-primary" : "bg-gray-300"
@@ -191,7 +193,9 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         {formData.showImage && (
           <ImageUploader
             value={formData.imageUrl}
-            onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
+            onChange={(url) =>
+              setFormData((prev) => ({ ...prev, imageUrl: url }))
+            }
             label="Imagen de la categoría"
             helpText="Imagen de fondo que se mostrará en la tarjeta de categoría (recomendado: 800x600px)"
             disabled={loading}
@@ -215,7 +219,8 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
           type="button"
           variant="outline"
           onClick={onCancel}
-          disabled={loading}>
+          disabled={loading}
+        >
           Cancelar
         </Button>
         <Button type="submit" disabled={loading}>

@@ -1,8 +1,8 @@
 import { fail, ok } from "@/lib/apiResponse";
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { ApiResponse } from "@/types";
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
 
 // GET /api/products/stats - Estadísticas para filtros dinámicos
 export async function GET(): Promise<
@@ -26,13 +26,14 @@ export async function GET(): Promise<
     const categoryCounts: Record<string, number> = {};
     let hasRatings = false;
 
-    products.forEach((p) => {
+    type ProductType = (typeof products)[0];
+    products.forEach((p: ProductType) => {
       // sizes
-      (p.sizes || []).forEach((s) => {
+      (p.sizes || []).forEach((s: string) => {
         sizeCounts[s] = (sizeCounts[s] || 0) + 1;
       });
       // colors
-      (p.colors || []).forEach((c) => {
+      (p.colors || []).forEach((c: string) => {
         colorCounts[c] = (colorCounts[c] || 0) + 1;
       });
       // rating

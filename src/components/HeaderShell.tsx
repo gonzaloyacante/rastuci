@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { type ReactNode } from "react";
+import React from "react";
 
 import CartWidget from "@/components/header/CartWidget.client";
 import MobileMenuClient from "@/components/header/MobileMenu.client";
@@ -22,10 +22,29 @@ export default function HeaderShell({
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center space-x-8" role="navigation" aria-label="Navegación principal">
-            <Link href="/" className="text-sm font-medium muted hover:text-primary">Inicio</Link>
-            <Link href="/productos" className="text-sm font-medium muted hover:text-primary">Productos</Link>
-            <Link href="/contacto" className="text-sm font-medium muted hover:text-primary">Contacto</Link>
+          <nav
+            className="hidden md:flex items-center space-x-8"
+            role="navigation"
+            aria-label="Navegación principal"
+          >
+            <Link
+              href="/"
+              className="text-sm font-medium muted hover:text-primary"
+            >
+              Inicio
+            </Link>
+            <Link
+              href="/productos"
+              className="text-sm font-medium muted hover:text-primary"
+            >
+              Productos
+            </Link>
+            <Link
+              href="/contacto"
+              className="text-sm font-medium muted hover:text-primary"
+            >
+              Contacto
+            </Link>
           </nav>
 
           {/* Widgets: each widget is a client component and will hydrate individually */}

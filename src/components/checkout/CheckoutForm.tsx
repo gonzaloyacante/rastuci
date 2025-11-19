@@ -8,10 +8,17 @@ import { CreditCard, Loader2, Lock, Shield } from "lucide-react";
 import { useState } from "react";
 import { CustomerForm } from "./CustomerForm";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
-import {
-  ShippingCostCalculator,
-  type ShippingOption,
-} from "./ShippingCostCalculator";
+// import {
+//   ShippingCostCalculator,
+//   type ShippingOption,
+// } from "./ShippingCostCalculator";
+
+type ShippingOption = {
+  name: string;
+  cost: number;
+  provider?: string;
+  description?: string;
+};
 
 interface CheckoutFormProps {
   onPaymentSuccess?: (paymentId: string) => void;
@@ -28,7 +35,7 @@ export function CheckoutForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("");
-  const [shippingOption, setShippingOption] = useState<ShippingOption | null>(
+  const [shippingOption, _setShippingOption] = useState<ShippingOption | null>(
     null
   );
   const [customerData, setCustomerData] = useState({
@@ -173,10 +180,10 @@ export function CheckoutForm({
           <CustomerForm data={customerData} onChange={setCustomerData} />
 
           {/* Calculadora de envío */}
-          <ShippingCostCalculator
+          {/* <ShippingCostCalculator
             onShippingChange={setShippingOption}
             className="border border-muted rounded-lg p-4"
-          />
+          /> */}
 
           {/* Método de pago (solo MercadoPago y Efectivo) */}
           <PaymentMethodSelector

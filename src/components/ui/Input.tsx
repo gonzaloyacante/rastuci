@@ -25,13 +25,21 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ref
   ) => {
     const generatedId = useId();
-    const { id: restId, type: restType, onChange: restOnChange, ["aria-label"]: restAria, ...restProps } = (rest as any || {});
+    const {
+      id: restId,
+      type: restType,
+      onChange: restOnChange,
+      ["aria-label"]: restAria,
+      ...restProps
+    } = rest || {};
     const id = restId || `input-${generatedId}`;
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = restType === "password" || rest.type === "password";
     const showToggle = isPassword && allowPasswordToggle;
-    const effectiveType = showToggle && showPassword ? "text" : (restType || rest.type);
-    const ariaLabel = restAria || (!label && isPassword ? "password" : undefined);
+    const effectiveType =
+      showToggle && showPassword ? "text" : restType || rest.type;
+    const ariaLabel =
+      restAria || (!label && isPassword ? "password" : undefined);
 
     return (
       <div className="w-full">
@@ -54,12 +62,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               showToggle ? "pr-16" : ""
             } ${error ? "border-error" : ""} ${className}`}
             {...(() => {
-              const p: any = { ...restProps };
+              const p = { ...restProps };
               // Asegurar que no duplicamos atributos controlados
-              delete p.id;
-              delete p.type;
-              delete p["aria-label"];
-              return p;
+              const cleaned = p as Record<string, unknown>;
+              delete cleaned.id;
+              delete cleaned.type;
+              delete cleaned["aria-label"];
+              return cleaned;
             })()}
             id={id}
             type={effectiveType}
@@ -68,7 +77,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-describedby={helpText || error ? `${id}-help` : undefined}
             onChange={(e) => {
               if (typeof restOnChange === "function") {
-                (restOnChange as React.ChangeEventHandler<HTMLInputElement>)(e as any);
+                (restOnChange as React.ChangeEventHandler<HTMLInputElement>)(e);
               }
             }}
           />
@@ -80,17 +89,34 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {showToggle && (
             <button
               type="button"
-              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-label={
+                showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+              }
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-3 flex h-full items-center px-3 text-muted hover:text-foreground focus:outline-none z-10">
+              className="absolute inset-y-0 right-3 flex h-full items-center px-3 text-muted hover:text-foreground focus:outline-none z-10"
+            >
               {/* Simple eye icon using SVG to avoid external deps */}
               {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-5 w-5"
+                >
                   <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3.11-11-8 1.02-2.86 2.98-5.12 5.3-6.42M9.88 9.88a3 3 0 1 0 4.24 4.24" />
                   <path d="M1 1l22 22" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-5 w-5"
+                >
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                   <circle cx="12" cy="12" r="3" />
                 </svg>
@@ -99,10 +125,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p id={`${id}-help`} className="mt-1 text-xs text-error font-medium">{error}</p>
+          <p id={`${id}-help`} className="mt-1 text-xs text-error font-medium">
+            {error}
+          </p>
         )}
         {helpText && !error && (
-          <p id={`${id}-help`} className="mt-1 text-xs muted">{helpText}</p>
+          <p id={`${id}-help`} className="mt-1 text-xs muted">
+            {helpText}
+          </p>
         )}
       </div>
     );
