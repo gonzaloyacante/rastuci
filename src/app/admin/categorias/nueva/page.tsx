@@ -5,14 +5,26 @@ import { CategoryForm } from "@/components/forms";
 import { logger } from "@/lib/logger";
 
 export default function CreateCategoryPage() {
-  const handleSubmit = async (data: { name: string; description?: string }) => {
+  const handleSubmit = async (data: {
+    name: string;
+    description?: string;
+    imageUrl?: string | null;
+    icon?: string | null;
+    showImage?: boolean;
+    showIcon?: boolean;
+  }) => {
     try {
       const response = await fetch("/api/categories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name: data.name,
+          description: data.description,
+          imageUrl: data.showImage ? data.imageUrl : null,
+          icon: data.showIcon ? data.icon : null,
+        }),
       });
 
       if (!response.ok) {

@@ -1,12 +1,7 @@
+import AppProviders from "@/components/AppProviders";
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/context/CartContext";
-import { WishlistProvider } from "@/context/WishlistContext";
-import SiteChrome from "@/components/layout/SiteChrome";
-import { SkipLink } from "@/components/ui/SkipLink";
-import { ThemeProvider } from "@/components/ui/ThemeProvider";
-import { ToastProvider } from "@/components/ui/Toast";
 
 const inter = Inter({ subsets: ["latin"] });
 const poppins = Poppins({
@@ -95,7 +90,7 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="var(--color-primary)" />
         <meta
@@ -104,27 +99,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} ${poppins.variable}`}>
-        <ThemeProvider>
-          <WishlistProvider>
-            <CartProvider>
-              <ToastProvider>
-                <div className="min-h-screen flex flex-col">
-                  <SkipLink href="#main-content">
-                    Saltar al contenido principal
-                  </SkipLink>
-                  <SkipLink href="#navigation">
-                    Saltar a la navegación
-                  </SkipLink>
-                  <SiteChrome>
-                    <main id="main-content" role="main" tabIndex={-1}>
-                      {children}
-                    </main>
-                  </SiteChrome>
-                </div>
-              </ToastProvider>
-            </CartProvider>
-          </WishlistProvider>
-        </ThemeProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

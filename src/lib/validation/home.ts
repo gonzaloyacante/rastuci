@@ -67,7 +67,7 @@ export const defaultHomeSettings: HomeSettings = {
   footer: {
     brand: "Rastući",
     tagline: "Ropa con amor para los más peques.",
-    email: "contacto@rastući.com",
+    email: "contacto@rastuci.com",
     phone: "+54 9 11 1234-5678",
     socialLinks: {
       instagram: "#",

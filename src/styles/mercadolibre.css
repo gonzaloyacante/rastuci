@@ -1,0 +1,426 @@
+/*
+ * Estilos globales inspirados en MercadoLibre
+ * Aplicados a toda la aplicación pública
+ */
+
+/* Esquema de colores ML */
+:root {
+  --ml-yellow: #FFE600;
+  --ml-blue: #3483FA;
+  --ml-light-blue: #E6F4FF;
+  --ml-green: #00A650;
+  --ml-gray: #EDEDDE;
+  --ml-dark-gray: #333333;
+  --ml-border: #ECECEC;
+  --ml-shadow: rgba(0,0,0,0.1);
+}
+
+/* Cards estilo ML */
+.ml-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--ml-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 2px var(--ml-shadow);
+  transition: box-shadow 0.2s;
+}
+
+.ml-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Botones estilo ML */
+.ml-btn-primary {
+  background-color: var(--ml-blue);
+  color: white;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  transition: background-color 0.15s;
+}
+
+.ml-btn-primary:hover {
+  background-color: #2968c8;
+}
+
+.ml-btn-primary:active {
+  background-color: #1f5bb7;
+}
+
+.ml-btn-secondary {
+  background-color: var(--ml-light-blue);
+  color: var(--ml-blue);
+  font-weight: 500;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  transition: background-color 0.15s;
+}
+
+.ml-btn-secondary:hover {
+  background-color: #d4ebff;
+}
+
+.ml-btn-secondary:active {
+  background-color: #c2e1ff;
+}
+
+.ml-btn-success {
+  background-color: var(--ml-green);
+  color: white;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  transition: background-color 0.15s;
+}
+
+.ml-btn-success:hover {
+  background-color: #008f47;
+}
+
+.ml-btn-success:active {
+  background-color: #00783d;
+}
+
+/* Badges estilo ML */
+.ml-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.ml-badge-discount {
+  background-color: var(--ml-green);
+  color: white;
+}
+
+.ml-badge-new {
+  background-color: var(--ml-yellow);
+  color: var(--ml-dark-gray);
+}
+
+.ml-badge-shipping {
+  background-color: var(--ml-light-blue);
+  color: var(--ml-blue);
+}
+
+/* Input estilo ML */
+.ml-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--ml-border);
+  border-radius: 0.375rem;
+  transition: all 0.15s;
+}
+
+.ml-input:hover {
+  border-color: #9ca3af;
+}
+
+.ml-input:focus {
+  outline: none;
+  border-color: var(--ml-blue);
+  box-shadow: 0 0 0 2px var(--ml-light-blue);
+}
+
+/* Breadcrumbs estilo ML */
+.ml-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 1rem;
+}
+
+.ml-breadcrumb a {
+  transition: color 0.15s;
+}
+
+.ml-breadcrumb a:hover {
+  color: var(--ml-blue);
+  text-decoration: underline;
+}
+
+/* Product Grid estilo ML */
+.ml-product-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .ml-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .ml-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .ml-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .ml-product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* Price estilo ML */
+.ml-price {
+  font-size: 1.875rem;
+  font-weight: 400;
+}
+
+.ml-price-cents {
+  font-size: 1.25rem;
+  vertical-align: top;
+}
+
+.ml-price-currency {
+  font-size: 1.5rem;
+  font-weight: 300;
+  margin-right: 0.25rem;
+}
+
+.ml-old-price {
+  font-size: 1rem;
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
+/* Shipping badge ML */
+.ml-free-shipping {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ml-green);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Review stars ML */
+.ml-stars {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ml-star {
+  color: var(--ml-yellow);
+}
+
+.ml-star-empty {
+  color: #d1d5db;
+}
+
+/* Tabs estilo ML */
+.ml-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--ml-border);
+}
+
+.ml-tab {
+  padding: 0.75rem 1rem;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s;
+}
+
+.ml-tab:hover {
+  color: var(--ml-blue);
+}
+
+.ml-tab-active {
+  color: var(--ml-blue);
+  border-bottom-color: var(--ml-blue);
+}
+
+/* Skeleton loaders ML */
+.ml-skeleton {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+}
+
+.dark .ml-skeleton {
+  background-color: #374151;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Container ML */
+.ml-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .ml-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ml-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Responsive fixes */
+@media (max-width: 640px) {
+  .ml-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .ml-card {
+    font-size: 0.875rem;
+  }
+
+  .ml-price {
+    font-size: 1.5rem;
+  }
+
+  .ml-btn-primary,
+  .ml-btn-secondary,
+  .ml-btn-success {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Responsive typography */
+.ml-heading-1 {
+  font-size: 1.5rem;
+  font-weight: 300;
+}
+
+@media (min-width: 768px) {
+  .ml-heading-1 {
+    font-size: 1.875rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ml-heading-1 {
+    font-size: 2.25rem;
+  }
+}
+
+.ml-heading-2 {
+  font-size: 1.25rem;
+  font-weight: 300;
+}
+
+@media (min-width: 768px) {
+  .ml-heading-2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ml-heading-2 {
+    font-size: 1.875rem;
+  }
+}
+
+.ml-heading-3 {
+  font-size: 1.125rem;
+  font-weight: 400;
+}
+
+@media (min-width: 768px) {
+  .ml-heading-3 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ml-heading-3 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Mejoras de accesibilidad */
+.ml-btn-primary:focus,
+.ml-btn-secondary:focus,
+.ml-btn-success:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--ml-blue);
+}
+
+/* Animaciones suaves */
+.ml-fade-in {
+  animation: mlFadeIn 0.3s ease-in;
+}
+
+@keyframes mlFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Product card hover effect ML */
+.ml-product-card {
+  cursor: pointer;
+}
+
+.ml-product-card:hover .ml-product-image {
+  transform: scale(1.05);
+}
+
+.ml-product-image {
+  transition: transform 0.3s ease-out;
+}
+
+/* Category pills ML */
+.ml-category-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background-color: white;
+  border: 1px solid var(--ml-border);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ml-category-pill:hover {
+  border-color: var(--ml-blue);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.ml-category-pill-active {
+  border-color: var(--ml-blue);
+  background-color: var(--ml-light-blue);
+  color: var(--ml-blue);
+}

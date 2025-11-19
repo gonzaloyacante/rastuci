@@ -8,12 +8,16 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ============================================================================
+// MODELOS PRINCIPALES (E-COMMERCE)
+// ============================================================================
+
 model Category {
   id          String    @id @default(cuid())
   name        String    @unique
   description String?
   imageUrl    String?
-  icon        String?   // Nombre del icono (e.g., 'ShoppingBag', 'Laptop') - opcional
+  icon        String? // Nombre del icono (e.g., 'ShoppingBag', 'Laptop')
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
@@ -22,33 +26,42 @@ model Category {
 }
 
 model Product {
-  id          String      @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
   price       Float
   salePrice   Float?
-  stock       Int         @default(0)
+  stock       Int      @default(0)
   images      String
-  onSale      Boolean     @default(false)
-  sizes       String[]    @default([])
-  colors      String[]    @default([])
-  features    String[]    @default([])
-  rating      Float?      @default(0)
-  reviewCount Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  categoryId  String
-  orderItems  OrderItem[]
-  reviews     ProductReview[]
-  category    Category    @relation(fields: [categoryId], references: [id])
+  onSale      Boolean  @default(false)
+  sizes       String[] @default([])
+  colors      String[] @default([])
+  features    String[] @default([])
+  rating      Float?   @default(0)
+  reviewCount Int      @default(0)
 
-  @@map("products")
+  // Dimensiones y peso para envíos (min 1g, max 25000g | max 150cm)
+  weight    Int?  @default(1000) // Peso en gramos
+  height    Int?  @default(10) // Alto en cm
+  width     Int?  @default(20) // Ancho en cm
+  length    Int?  @default(30) // Largo en cm
+  sizeGuide Json? // Guía de talles JSON
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  categoryId String
+
+  orderItems OrderItem[]
+  reviews    ProductReview[]
+  category   Category        @relation(fields: [categoryId], references: [id])
+
   @@index([name])
   @@index([categoryId])
   @@index([onSale])
   @@index([price])
   @@index([createdAt])
   @@index([categoryId, onSale])
+  @@map("products")
 }
 
 model Order {
@@ -56,31 +69,93 @@ model Order {
   customerName    String
   customerPhone   String
   customerAddress String?
+  customerEmail   String?
   total           Float
   status          OrderStatus @default(PENDING)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
 
-  // Mercado Pago integration fields
-  mpPaymentId     String?
-  mpPreferenceId  String?
-  mpStatus        String?
-  customerEmail   String?
+  // ===== MERCADOPAGO =====
+  mpPaymentId    String?
+  mpPreferenceId String?
+  mpStatus       String?
 
-  // OCA Tracking fields
-  ocaTrackingNumber String?
-  ocaOrderId        String?
-  shippingMethod    String? // 'domicilio' | 'sucursal'
-  trackingNumber    String? // Generic tracking field
-  estimatedDelivery DateTime?
-  shippingCost      Float?
+  // ===== CORREO ARGENTINO (MiCorreo API) - ÚNICO PROVEEDOR =====
 
-  @@map("orders")
+  // IDs y tracking
+  caTrackingNumber String? @unique
+  caShipmentId     String?
+  caExtOrderId     String? @unique
+  caOrderNumber    String? // Visible en MiCorreo
+
+  // Remitente (sender)
+  senderName         String?
+  senderPhone        String?
+  senderCellPhone    String?
+  senderEmail        String?
+  senderStreetName   String?
+  senderStreetNumber String?
+  senderFloor        String? @db.VarChar(3)
+  senderApartment    String? @db.VarChar(3)
+  senderLocality     String?
+  senderCity         String?
+  senderProvinceCode String? @db.Char(1)
+  senderPostalCode   String?
+
+  // Destinatario (recipient) - REQUERIDO
+  recipientName      String?
+  recipientPhone     String?
+  recipientCellPhone String?
+  recipientEmail     String?
+
+  // Envío
+  shippingMethod      String? // 'D' = domicilio | 'S' = sucursal
+  shippingProductType String? @default("CP")
+  shippingAgency      String?
+  shippingCost        Float?
+
+  // Dirección de envío
+  shippingStreet       String?
+  shippingNumber       String?
+  shippingFloor        String? @db.VarChar(3)
+  shippingApartment    String? @db.VarChar(3)
+  shippingLocality     String?
+  shippingCity         String?
+  shippingProvince     String?
+  shippingProvinceCode String? @db.Char(1)
+  shippingPostalCode   String?
+
+  // Paquete
+  packageWeight Int?
+  packageHeight Int?
+  packageWidth  Int?
+  packageLength Int?
+
+  // Valor y cotización
+  declaredValue        Float?
+  rateValidTo          DateTime?
+  estimatedDeliveryMin String?
+  estimatedDeliveryMax String?
+  estimatedDelivery    DateTime?
+
+  // Tracking genérico (backward compat)
+  trackingNumber String?
+
+  // Relaciones CA
+  caCustomerId     String?
+  caCustomer       CACustomer? @relation(fields: [caCustomerId], references: [customerId])
+  caShipmentId_rel String?
+  caShipment       CAShipment? @relation(fields: [caShipmentId_rel], references: [id])
+
   @@index([status])
   @@index([createdAt])
-  @@index([ocaTrackingNumber])
+  @@index([caTrackingNumber])
   @@index([trackingNumber])
+  @@index([caExtOrderId])
+  @@index([caCustomerId])
+  @@index([shippingProvinceCode])
+  @@map("orders")
 }
 
 model OrderItem {
@@ -96,6 +171,22 @@ model OrderItem {
 
   @@map("order_items")
 }
+
+model ProductReview {
+  id           String   @id @default(cuid())
+  rating       Int      @db.SmallInt
+  comment      String?
+  customerName String
+  createdAt    DateTime @default(now())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_reviews")
+}
+
+// ============================================================================
+// AUTENTICACIÓN (NextAuth)
+// ============================================================================
 
 model User {
   id            String    @id @default(cuid())
@@ -143,25 +234,10 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model ProductReview {
-  id        String   @id @default(cuid())
-  rating    Int      @db.SmallInt
-  comment   String?
-  customerName String
-  createdAt DateTime @default(now())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+// ============================================================================
+// CMS
+// ============================================================================
 
-  @@map("product_reviews")
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSED
-  DELIVERED
-}
-
-/// Key-value JSON settings store for CMS-like editable content (e.g., homepage)
 model Setting {
   key       String   @id
   value     Json
@@ -169,4 +245,242 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum OrderStatus {
+  PENDING
+  PROCESSED
+  DELIVERED
+}
+
+enum CADeliveryType {
+  D // Domicilio
+  S // Sucursal
+}
+
+enum CADocumentType {
+  DNI // Consumidor final
+  CUIT // Monotributista o Responsable Inscripto
+}
+
+enum CAProvinceCode {
+  A // Salta
+  B // Provincia de Buenos Aires
+  C // Ciudad Autonoma Buenos Aires (Capital Federal)
+  D // San Luis
+  E // Entre Rios
+  F // La Rioja
+  G // Santiago del Estero
+  H // Chaco
+  J // San Juan
+  K // Catamarca
+  L // La Pampa
+  M // Mendoza
+  N // Misiones
+  P // Formosa
+  Q // Neuquen
+  R // Rio Negro
+  S // Santa Fe
+  T // Tucuman
+  U // Chubut
+  V // Tierra del Fuego
+  W // Corrientes
+  X // Cordoba
+  Y // Jujuy
+  Z // Santa Cruz
+}
+
+// ============================================================================
+// CORREO ARGENTINO (MiCorreo API)
+// ============================================================================
+
+/// Usuario registrado en MiCorreo (API /register y /users/validate)
+model CACustomer {
+  customerId   String         @id
+  firstName    String
+  lastName     String
+  email        String         @unique
+  documentType CADocumentType
+  documentId   String         @unique
+  phone        String?
+  cellPhone    String?
+
+  streetName   String?
+  streetNumber String?
+  floor        String?
+  apartment    String?
+  locality     String?
+  city         String?
+  provinceCode String? @db.Char(1)
+  postalCode   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    Order[]
+  shipments CAShipment[]
+  rates     CAShippingRate[]
+
+  @@index([email])
+  @@index([documentId])
+  @@map("ca_customers")
+}
+
+/// Cotización de envío (API /rates)
+model CAShippingRate {
+  id         String     @id @default(cuid())
+  customerId String
+  customer   CACustomer @relation(fields: [customerId], references: [customerId])
+
+  postalCodeOrigin      String
+  postalCodeDestination String
+  deliveryType          CADeliveryType
+  productType           String // "CP"
+  productName           String // "Correo Argentino Clasico"
+
+  weight Int // Gramos (1-25000)
+  height Int // cm (max 150)
+  width  Int // cm (max 150)
+  length Int // cm (max 150)
+
+  price           Float
+  deliveryTimeMin String // "2"
+  deliveryTimeMax String // "5"
+  validTo         DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([postalCodeOrigin])
+  @@index([postalCodeDestination])
+  @@index([validTo])
+  @@map("ca_shipping_rates")
+}
+
+/// Envío importado a MiCorreo (API /shipping/import)
+model CAShipment {
+  id         String     @id @default(cuid())
+  customerId String
+  customer   CACustomer @relation(fields: [customerId], references: [customerId])
+
+  extOrderId     String  @unique
+  orderNumber    String?
+  trackingNumber String? @unique
+  productId      String? // "HC"
+
+  // Sender
+  senderName         String?
+  senderPhone        String?
+  senderCellPhone    String?
+  senderEmail        String?
+  senderStreetName   String?
+  senderStreetNumber String?
+  senderFloor        String?
+  senderApartment    String?
+  senderLocality     String?
+  senderCity         String?
+  senderProvinceCode String? @db.Char(1)
+  senderPostalCode   String?
+
+  // Recipient
+  recipientName      String
+  recipientPhone     String?
+  recipientCellPhone String?
+  recipientEmail     String
+
+  // Shipping
+  deliveryType CADeliveryType
+  productType  String // "CP"
+  agencyCode   String?
+
+  // Destination address
+  destStreetName   String?
+  destStreetNumber String?
+  destFloor        String?
+  destApartment    String?
+  destLocality     String?
+  destCity         String?
+  destProvinceCode String? @db.Char(1)
+  destPostalCode   String?
+
+  // Package
+  weight        Int
+  height        Int
+  width         Int
+  length        Int
+  declaredValue Float
+
+  // Status
+  status     String?
+  importedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  orders         Order[]
+  trackingEvents CATrackingEvent[]
+
+  @@index([customerId])
+  @@index([trackingNumber])
+  @@index([extOrderId])
+  @@index([status])
+  @@map("ca_shipments")
+}
+
+/// Evento de tracking (API /shipping/tracking)
+model CATrackingEvent {
+  id         String     @id @default(cuid())
+  shipmentId String
+  shipment   CAShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  event     String // "PREIMPOSICION", "CADUCA", etc.
+  eventDate DateTime // "09-12-2024 05:00"
+  branch    String // "CORREO ARGENTINO"
+  status    String?
+  sign      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([shipmentId])
+  @@index([eventDate])
+  @@index([event])
+  @@map("ca_tracking_events")
+}
+
+/// Sucursal de Correo Argentino (API /agencies)
+model CAAgency {
+  code    String  @id // "B0107"
+  name    String // "Monte Grande"
+  manager String?
+  email   String?
+  phone   String?
+
+  packageReception   Boolean @default(false)
+  pickupAvailability Boolean @default(false)
+
+  streetName   String?
+  streetNumber String?
+  floor        String?
+  apartment    String?
+  locality     String?
+  city         String?
+  province     String? // "Buenos Aires"
+  provinceCode String  @db.Char(1) // "B"
+  postalCode   String?
+  latitude     Float?
+  longitude    Float?
+
+  hours  Json? // {monday: {start, end}, ...}
+  status String @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([provinceCode])
+  @@index([status])
+  @@index([city])
+  @@map("ca_agencies")
 }

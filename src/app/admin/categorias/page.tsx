@@ -8,89 +8,70 @@ import {
   AdminPageHeader,
 } from "@/components/admin";
 import { useCategories } from "@/hooks";
-// import { SearchBar, FilterBar, useSearchAndFilter } from "@/components/admin/SearchAndFilter"; // TODO: Implement when needed
+import { AdminTable } from "@/components/admin/AdminTable";
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
-import Image from "next/image";
+import { Edit3, Trash2 } from "lucide-react";
+import CategoryIcon from "@/components/ui/CategoryIcon";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// Extiendo el tipo Category para incluir imageUrl
-interface CategoryWithImage {
+type CategoryRow = {
   id: string;
   name: string;
   description?: string | null;
-  imageUrl?: string | null;
-}
+  image?: string | null;
+};
 
 export default function AdminCategoriasPage() {
-  const { categories, isLoading, error, mutate } = useCategories();
-  const categoriesWithImage = categories as CategoryWithImage[];
+  const { categories = [], isLoading, error, mutate } = useCategories();
   const [searchInput, setSearchInput] = useState("");
   const router = useRouter();
   const { show } = useToast();
   const { confirm: confirmDialog, ConfirmDialog } = useConfirmDialog();
 
-  // Búsqueda local
-  const filteredCategories = categoriesWithImage.filter(
-    (category) =>
-      category.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-      (category.description &&
-        category.description.toLowerCase().includes(searchInput.toLowerCase()))
+  const filteredCategories = (categories || []).filter((category) =>
+    category.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+    (category.description &&
+      category.description.toLowerCase().includes(searchInput.toLowerCase()))
   );
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDialog({
       title: "Eliminar categoría",
-      message:
-        "¿Estás seguro de que deseas eliminar esta categoría? Esta acción no se puede deshacer.",
+      message: "¿Estás seguro de que deseas eliminar esta categoría? Esta acción no se puede deshacer.",
       confirmText: "Eliminar",
       cancelText: "Cancelar",
       variant: "danger",
     });
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) {return;}
 
     try {
-      const response = await fetch(`/api/categories/${id}`, {
-        method: "DELETE",
-      });
-
+      const response = await fetch(`/api/categories/${id}`, { method: "DELETE" });
       if (response.ok) {
-        show({
-          type: "success",
-          title: "Categorías",
-          message: "Categoría eliminada",
-        });
-        mutate(); // Revalidar datos
+        show({ type: "success", title: "Categorías", message: "Categoría eliminada" });
+        mutate?.();
       } else {
-        // Extraer mensaje específico de error del API
-        const errorData = await response.json();
-        const errorMessage =
-          errorData.message || "Error al eliminar la categoría";
+        const errorData = await response.json().catch(() => ({} as unknown));
+        let errorMessage = "Error al eliminar la categoría";
+        if (typeof errorData === "object" && errorData !== null && "message" in errorData) {
+          const possible = (errorData as { message?: unknown }).message;
+          if (typeof possible === "string") {errorMessage = possible;}
+        }
         show({ type: "error", title: "Categorías", message: errorMessage });
       }
-    } catch (error) {
-      logger.error("Error deleting category", { error });
-      show({
-        type: "error",
-        title: "Categorías",
-        message: "Error al eliminar la categoría",
-      });
+    } catch (err) {
+      logger.error("Error deleting category", { error: err });
+      show({ type: "error", title: "Categorías", message: "Error al eliminar la categoría" });
     }
   };
 
-  if (isLoading) {
-    return <AdminLoading />;
-  }
-  if (error) {
-    return <AdminError message={error} />;
-  }
+  if (isLoading) {return <AdminLoading />;}
+  if (error) {return <AdminError message={error} />;}
 
   return (
     <div className="space-y-6">
@@ -100,15 +81,12 @@ export default function AdminCategoriasPage() {
         actions={[
           {
             label: "Crear Categoría",
-            onClick: () => {
-              window.location.href = "/admin/categorias/nueva";
-            },
+            onClick: () => (window.location.href = "/admin/categorias/nueva"),
             variant: "primary",
           },
         ]}
       />
 
-      {/* Barra de búsqueda */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
         <div className="w-full sm:w-96">
           <Input
@@ -119,14 +97,7 @@ export default function AdminCategoriasPage() {
             aria-label="Buscar categorías"
           />
         </div>
-        <Button
-          variant="primary"
-          onClick={() => {
-            /* no-op: búsqueda local */
-          }}
-        >
-          Buscar
-        </Button>
+        <Button variant="primary">Buscar</Button>
       </div>
 
       {filteredCategories.length === 0 ? (
@@ -136,140 +107,87 @@ export default function AdminCategoriasPage() {
           description="No hay categorías registradas. ¡Crea tu primera categoría!"
           action={{
             label: "Crear Primera Categoría",
-            onClick: () => {
-              window.location.href = "/admin/categorias/nueva";
-            },
+            onClick: () => (window.location.href = "/admin/categorias/nueva"),
             variant: "primary",
           }}
         />
       ) : (
         <div className="card">
-          {/* Vista de cards para mobile/tablet */}
-          <div className="block xl:hidden space-y-4">
-            {filteredCategories.map((category) => (
-              <div
-                key={category.id}
-                className="surface border rounded-lg p-4 space-y-3 shadow-sm"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 min-w-0 flex items-center gap-3">
-                    {category.imageUrl && (
-                      <div className="relative w-14 h-14">
-                        <Image
-                          src={category.imageUrl}
-                          alt={category.name}
-                          fill
-                          className="object-cover rounded-lg border border-muted shadow"
-                          sizes="56px"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-medium text-content-primary truncate">
-                        {category.name}
-                      </h3>
-                      <p className="text-sm text-content-secondary mt-1">
-                        {category.description || "Sin descripción"}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="badge-info text-xs">0 productos</span>
-                </div>
-                <div className="flex space-x-2 pt-2">
-                  <Button
-                    onClick={() =>
-                      router.push(`/admin/categorias/${category.id}/editar`)
-                    }
-                    variant="secondary"
-                    className="flex-1 text-sm"
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(category.id)}
-                    variant="destructive"
-                    className="flex-1 text-sm"
-                  >
-                    Eliminar
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Vista de tabla para desktop */}
-          <div className="hidden xl:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-border">
-              <thead className="bg-surface-secondary">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
-                    Imagen
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
-                    Nombre
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
-                    Descripción
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
-                    Productos
-                  </th>
-                  <th className="relative px-6 py-3">
-                    <span className="sr-only">Acciones</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="surface divide-y divide-border">
-                {filteredCategories.map((category) => (
-                  <tr key={category.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {category.imageUrl && (
-                        <div className="relative w-14 h-14">
-                          <Image
-                            src={category.imageUrl}
-                            alt={category.name}
-                            fill
-                            className="object-cover rounded-lg border border-muted shadow"
-                            sizes="56px"
-                          />
+          <div className="max-w-7xl mx-auto px-4">
+            <AdminTable
+              columns={[
+                {
+                  key: "image",
+                  label: "Imagen",
+                  width: "120px",
+                  align: "center",
+                  render: (_: unknown, row: CategoryRow) => (
+                    <div className="flex items-center justify-center">
+                      {row.image ? (
+                        <div className="w-12 h-12 rounded-md overflow-hidden bg-muted/5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={row.image} alt={row.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 flex items-center justify-center bg-surface/10 rounded-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <path d="M21 15l-5-5-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
                         </div>
                       )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-content-primary">
-                        {category.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-content-primary">
-                        {category.description || "Sin descripción"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="badge-info text-xs">0 productos</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button
-                        onClick={() =>
-                          router.push(`/admin/categorias/${category.id}/editar`)
-                        }
-                        variant="ghost"
-                        className="mr-4 px-2 py-1"
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        onClick={() => handleDelete(category.id)}
-                        variant="destructive"
-                        className="px-2 py-1"
-                      >
-                        Eliminar
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  ),
+                },
+                {
+                  key: "icon",
+                  label: "Icono",
+                  width: "96px",
+                  align: "center",
+                  render: (_: unknown, row: CategoryRow) => (
+                    <div className="flex items-center justify-center">
+                      <CategoryIcon categoryName={row.name} className="w-6 h-6 text-muted" />
+                    </div>
+                  ),
+                },
+                {
+                  key: "name",
+                  label: "Nombre / Descripción",
+                  render: (_: unknown, row: CategoryRow) => (
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{row.name}</div>
+                      <div className="text-xs muted line-clamp-2">{row.description || "Sin descripción"}</div>
+                    </div>
+                  ),
+                },
+                {
+                  key: "products",
+                  label: "Productos",
+                  align: "center",
+                  render: () => (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium bg-surface/60 border border-border">
+                      <strong className="mr-1">0</strong> productos
+                    </span>
+                  ),
+                },
+              ]}
+              data={filteredCategories}
+              actions={[
+                {
+                  label: "Editar",
+                  onClick: (row: CategoryRow) => router.push(`/admin/categorias/${row.id}/editar`),
+                  variant: "ghost",
+                  icon: <Edit3 className="w-4 h-4" />,
+                },
+                {
+                  label: "Eliminar",
+                  onClick: (row: CategoryRow) => handleDelete(row.id),
+                  variant: "destructive",
+                  icon: <Trash2 className="w-4 h-4" />,
+                },
+              ]}
+            />
           </div>
         </div>
       )}

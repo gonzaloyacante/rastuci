@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -141,7 +141,7 @@ function isVersionOutdated(currentVersion: string, requiredVersion: string): boo
       return false;
     }
   }
-  
+
   return false;
 }
 
@@ -173,7 +173,7 @@ async function getMobileAppStats() {
       }),
       prisma.order.count({
         where: {
-          ocaTrackingNumber: {
+          trackingNumber: {
             not: null
           },
           status: {

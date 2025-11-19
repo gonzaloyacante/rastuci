@@ -33,7 +33,7 @@ export function CategoriesSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 justify-items-center">
         {loading
-          ? Array.from({ length: 8 }, (_, i) => <CategorySkeleton key={i} />)
+          ? Array.from({ length: 12 }, (_, i) => <CategorySkeleton key={i} />)
           : hasCategories
             ? categories.map((category) => (
                 <CategoryCard

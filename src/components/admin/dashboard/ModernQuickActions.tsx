@@ -2,14 +2,14 @@
 
 import { motion } from "framer-motion";
 import {
-  Plus,
-  Package,
-  ShoppingCart,
-  Users,
-  BarChart3,
-  Settings,
-  Tag,
-  FileText,
+    BarChart3,
+    FileText,
+    Package,
+    Plus,
+    Settings,
+    ShoppingCart,
+    Tag,
+    Users,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -140,14 +140,14 @@ export default function ModernQuickActions() {
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
                 />
-                
+
                 {/* Shimmer Effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
 
                 <div className="relative flex items-start space-x-3">
                   {/* Icon */}
                   <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br ${action.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
+                    className={`shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br ${action.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
                   >
                     <action.icon className="h-5 w-5 text-white" />
                   </div>

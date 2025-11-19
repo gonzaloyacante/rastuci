@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { withAdminAuth } from '@/lib/adminAuth';
+import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -19,27 +19,22 @@ export const POST = withAdminAuth(async (_request: NextRequest): Promise<NextRes
 
     let updatedCount = 0;
     const errors: string[] = [];
-    
+
     for (const order of orders) {
-      // En una implementación real con tracking, verificarías si existe tracking number
-      // if (order.trackingNumber) {
+      if (order.trackingNumber) {
         try {
-          // Aquí podrías integrar con OCA API real
-          // const ocaData = await ocaService.obtenerTracking(order.trackingNumber);
-          
-          // Simulación de actualización de estado
-          // En producción esto se haría con la API real de OCA
-          const shouldUpdate = Math.random() > 0.7; // Simulación
-          
-          if (shouldUpdate) {
-            await prisma.order.update({
-              where: { id: order.id },
-              data: { 
-                updatedAt: new Date()
-              }
-            });
-            updatedCount++;
-          }
+          // TODO: Integrar con API de Correo Argentino para obtener estado actualizado
+          // const caService = new CorreoArgentinoService({...credentials});
+          // const trackingData = await caService.getTracking({trackingNumber: order.trackingNumber});
+
+          // Actualizar el pedido con nueva información
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              updatedAt: new Date()
+            }
+          });
+          updatedCount++;
         } catch (error) {
           errors.push(`Error actualizando orden ${order.id}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
           continue;
@@ -47,12 +42,12 @@ export const POST = withAdminAuth(async (_request: NextRequest): Promise<NextRes
 
         // Pequeña pausa para no sobrecargar APIs externas
         await new Promise(resolve => setTimeout(resolve, 100));
-      // }
+      }
     }
 
     const response: ApiResponse = {
       success: true,
-      data: { 
+      data: {
         updatedCount,
         totalProcessed: orders.length,
         errors: errors.length > 0 ? errors : undefined

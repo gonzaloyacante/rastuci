@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Check, X, AlertCircle, Info, Loader2 } from "lucide-react";
+import { AlertCircle, Check, Info, Loader2, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface CheckoutNotificationProps {
   type: "success" | "error" | "warning" | "info" | "loading";
@@ -105,7 +105,7 @@ export function CheckoutNotification({
       `}
       >
         <div className="flex items-start">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <Icon
               className={`w-5 h-5 ${config.iconColor} ${type === "loading" ? "animate-spin" : ""}`}
             />

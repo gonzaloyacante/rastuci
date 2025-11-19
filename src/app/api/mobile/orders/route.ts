@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
 // Tipos para OrderStatus (directos desde schema)
 type OrderStatus = 'PENDING' | 'PROCESSED' | 'DELIVERED';
@@ -11,7 +11,7 @@ type OrderWithItems = {
   total: number;
   createdAt: Date;
   updatedAt: Date;
-  ocaTrackingNumber: string | null;
+  trackingNumber: string | null;
   customerAddress: string | null;
   customerPhone: string | null;
   items: {
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const status = searchParams.get('status');
-    
+
     if (!customerEmail) {
       return NextResponse.json<ApiResponse<null>>({
         success: false,
@@ -59,11 +59,11 @@ export async function GET(request: NextRequest) {
     }
 
     const skip = (page - 1) * limit;
-    
+
     const whereClause: OrderWhereClause = {
         customerEmail,
     };
-    
+
     if (status) {
       whereClause.status = status as OrderStatus;
     }
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
           total: true,
           createdAt: true,
           updatedAt: true,
-          ocaTrackingNumber: true,
+          trackingNumber: true,
           customerAddress: true,
           customerPhone: true,
           items: {
@@ -116,8 +116,8 @@ export async function GET(request: NextRequest) {
       total: order.total,
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString(),
-      trackingCode: order.ocaTrackingNumber,
-      hasTracking: !!order.ocaTrackingNumber,
+      trackingCode: order.trackingNumber,
+      hasTracking: !!order.trackingNumber,
       shippingAddress: order.customerAddress,
       paymentMethod: order.customerPhone,
       itemsCount: order.items.length,
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
 function getStatusLabel(status: string): string {
   const statusLabels: Record<string, string> = {
     PENDING: "Pendiente",
-    PROCESSED: "Procesando", 
+    PROCESSED: "Procesando",
     SHIPPED: "Enviado",
     DELIVERED: "Entregado",
     CANCELLED: "Cancelado",

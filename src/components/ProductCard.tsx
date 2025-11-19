@@ -32,7 +32,7 @@ const ProductCard = React.memo(
 
     // Memoizar la imagen principal
     const mainImage = useMemo(
-      () => (productImages.length > 0 ? productImages[0] : "/placeholder.jpg"),
+      () => (productImages.length > 0 ? productImages[0] : "https://placehold.co/800x800.png"),
       [productImages]
     );
 
@@ -72,7 +72,7 @@ const ProductCard = React.memo(
               aria-label={`Ver detalles de ${product.name}`}
             >
               <Image
-                src={imageError ? "/placeholder.jpg" : mainImage}
+                src={imageError ? "https://placehold.co/800x800.png" : mainImage}
                 alt={`${product.name} - ${
                   product.category?.name || "Producto"
                 } - ${formattedPrice}`}
@@ -182,13 +182,13 @@ const ProductCard = React.memo(
       <article className="group relative surface rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-muted">
         <div className="flex">
           {/* Imagen */}
-          <div className="relative w-32 sm:w-40 md:w-48 h-32 sm:h-40 md:h-48 flex-shrink-0 overflow-hidden">
+          <div className="relative w-32 sm:w-40 md:w-48 h-32 sm:h-40 md:h-48 shrink-0 overflow-hidden">
             <Link
               href={`/productos/${product.id}`}
               aria-label={`Ver detalles de ${product.name}`}
             >
               <Image
-                src={imageError ? "/placeholder.jpg" : mainImage}
+                src={imageError ? "https://placehold.co/800x800.png" : mainImage}
                 alt={`${product.name} - ${product.category?.name || "Producto"} - ${formattedPrice}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-200"

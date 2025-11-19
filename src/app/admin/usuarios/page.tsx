@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  AdminEmpty,
-  AdminEmptyIcons,
-  AdminError,
-  AdminLoading,
-  AdminPageHeader,
+    AdminEmpty,
+    AdminEmptyIcons,
+    AdminError,
+    AdminLoading,
+    AdminPageHeader,
 } from "@/components/admin";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { User, useUsers } from "@/hooks/useUsers";
@@ -220,7 +220,7 @@ export default function UsuariosPage() {
                   <tr key={user.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-12">
+                        <div className="shrink-0 h-12 w-12">
                           <div className="h-12 w-12 bg-primary rounded-full flex items-center justify-center text-white font-medium text-lg">
                             {user.name.charAt(0).toUpperCase()}
                           </div>

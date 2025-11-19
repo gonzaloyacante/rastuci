@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast, Toaster } from "react-hot-toast";
 import * as z from "zod";
@@ -35,6 +35,15 @@ export default function AdminLoginPage() {
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
+  // Comprobar sesión al montar: si ya hay sesión de next-auth, redirigir al dashboard
+  const { data: session, status } = useSession();
+  useEffect(() => {
+    if (status === "loading") {return;}
+    if (session?.user) {
+      router.push("/admin/dashboard");
+    }
+  }, [session, status, router]);
+
   // Form para login
   const {
     register: registerLogin,
@@ -60,46 +69,21 @@ export default function AdminLoginPage() {
     setAuthError(null);
 
     try {
-      // Primero validar credenciales con nuestra API
-      const validationResponse = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
-      });
-
-      const validationResult = await validationResponse.json();
-
-      if (!validationResult.success) {
-        // Mostrar error específico según el campo
-        if (validationResult.error.field === "email") {
-          toast.error(validationResult.error.message);
-        } else if (validationResult.error.field === "password") {
-          toast.error(validationResult.error.message);
-        } else {
-          toast.error(validationResult.error.message);
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Si la validación es exitosa, proceder con NextAuth
-      const result = await signIn("credentials", {
-        redirect: false,
+      // Usar NextAuth para iniciar sesión (Credentials Provider).
+      // Pedimos a NextAuth que redirija (redirect: true) y especificamos
+      // `callbackUrl` para que la cookie de sesión se escriba correctamente
+      // por el servidor y evitemos condiciones de carrera cliente/servidor.
+      await signIn("credentials", {
+        redirect: true,
+        callbackUrl: "/admin/dashboard",
         email: data.email,
         password: data.password,
-        remember: rememberMe.toString(),
+        remember: rememberMe,
       });
 
-      if (result?.error) {
-        toast.error("Error de autenticación");
-        setLoading(false);
-      } else {
-        toast.success("¡Bienvenido al panel de administración!");
-        router.push("/admin/dashboard");
-      }
+      // Nota: al usar `redirect: true` NextAuth hace la navegación, así
+      // que no llegaremos aquí en el flujo normal. Dejamos el setLoading
+      // por si hay errores inesperados.
     } catch (error) {
       logger.error("Error de inicio de sesión", { error });
       toast.error("Ha ocurrido un error al iniciar sesión");
@@ -161,6 +145,7 @@ export default function AdminLoginPage() {
           >
             <Input
               label="Correo electrónico"
+              id="admin-email"
               type="email"
               placeholder="tu@email.com"
               {...registerLogin("email")}
@@ -173,6 +158,7 @@ export default function AdminLoginPage() {
             />
             <Input
               label="Contraseña"
+              id="admin-password"
               type="password"
               placeholder="••••••••"
               {...registerLogin("password")}
@@ -207,6 +193,8 @@ export default function AdminLoginPage() {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-primary focus:ring-primary border-muted rounded cursor-pointer"
+                  tabIndex={0}
+                  aria-checked={rememberMe}
                 />
                 <label
                   htmlFor="remember-me"

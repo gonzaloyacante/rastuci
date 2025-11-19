@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 // import { cn } from "@/lib/utils"; // Available when needed
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -24,15 +24,19 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
+    const generatedId = useId();
+    const { id: restId, type: restType, onChange: restOnChange, ["aria-label"]: restAria, ...restProps } = (rest as any || {});
+    const id = restId || `input-${generatedId}`;
     const [showPassword, setShowPassword] = useState(false);
-    const isPassword = rest.type === "password";
+    const isPassword = restType === "password" || rest.type === "password";
     const showToggle = isPassword && allowPasswordToggle;
-    const effectiveType = showToggle && showPassword ? "text" : rest.type;
+    const effectiveType = showToggle && showPassword ? "text" : (restType || rest.type);
+    const ariaLabel = restAria || (!label && isPassword ? "password" : undefined);
 
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor={id} className="block text-sm font-medium mb-2">
             {label}
           </label>
         )}
@@ -49,13 +53,22 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             } ${icon && iconPosition === "right" ? "pr-10" : ""} ${
               showToggle ? "pr-16" : ""
             } ${error ? "border-error" : ""} ${className}`}
-            // Si no hay label pero es password, añadimos aria-label para accesibilidad
-            {...{ ...rest, type: effectiveType, 'aria-label': rest['aria-label'] || (!label && isPassword ? 'password' : undefined) }}
+            {...(() => {
+              const p: any = { ...restProps };
+              // Asegurar que no duplicamos atributos controlados
+              delete p.id;
+              delete p.type;
+              delete p["aria-label"];
+              return p;
+            })()}
+            id={id}
+            type={effectiveType}
+            aria-label={ariaLabel}
+            aria-invalid={!!error}
+            aria-describedby={helpText || error ? `${id}-help` : undefined}
             onChange={(e) => {
-              // Normalize event for tests that expect an object with target.value
-              if (rest.onChange) {
-                const ev = { target: { value: (e.target as HTMLInputElement).value } } as unknown as React.ChangeEvent<HTMLInputElement>;
-                (rest.onChange as React.ChangeEventHandler<HTMLInputElement>)(ev);
+              if (typeof restOnChange === "function") {
+                (restOnChange as React.ChangeEventHandler<HTMLInputElement>)(e as any);
               }
             }}
           />
@@ -86,10 +99,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p className="mt-1 text-xs text-error font-medium">{error}</p>
+          <p id={`${id}-help`} className="mt-1 text-xs text-error font-medium">{error}</p>
         )}
         {helpText && !error && (
-          <p className="mt-1 text-xs muted">{helpText}</p>
+          <p id={`${id}-help`} className="mt-1 text-xs muted">{helpText}</p>
         )}
       </div>
     );

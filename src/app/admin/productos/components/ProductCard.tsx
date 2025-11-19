@@ -28,7 +28,7 @@ interface ProductCardProps {
 
 const ProductImagePlaceholder = ({ className }: { className?: string }) => (
   <div
-    className={`bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
+    className={`bg-linear-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
   >
     <div className="text-center opacity-60">
       <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />

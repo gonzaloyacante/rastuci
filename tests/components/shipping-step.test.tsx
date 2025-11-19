@@ -1,6 +1,5 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
-import ShippingStep from "../../src/app/checkout/components/ShippingStep";
+import ShippingStep from "../../src/app/(public)/checkout/components/ShippingStep";
 import { CartProvider } from "../../src/context/CartContext";
 
 describe("ShippingStep", () => {

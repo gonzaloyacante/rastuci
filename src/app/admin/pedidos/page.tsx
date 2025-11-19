@@ -1,16 +1,17 @@
 "use client";
 
 import {
-  AdminEmpty,
-  AdminEmptyIcons,
-  AdminError,
-  AdminLoading,
-  AdminPageHeader,
+    AdminEmpty,
+    AdminEmptyIcons,
+    AdminError,
+    AdminLoading,
+    AdminPageHeader,
 } from "@/components/admin";
 import { FilterBar, SearchBar } from "@/components/search";
+import { useCorreoArgentino } from "@/hooks";
 import { useOrders, type Order } from "@/hooks/useOrders";
 import { logger } from "@/lib/logger";
-import { DownloadIcon } from "lucide-react";
+import { DownloadIcon, PackageIcon, TruckIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -20,9 +21,11 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "PENDING" | "PROCESSED" | "DELIVERED"
   >("ALL");
+  const [shippingFilter, setShippingFilter] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
 
   const { orders, loading, error, totalPages, fetchOrders } = useOrders();
+  const { getTracking, importShipment, loading: caLoading } = useCorreoArgentino();
 
   useEffect(() => {
     fetchOrders({
@@ -44,6 +47,18 @@ export default function OrdersPage() {
         { value: "PENDING", label: "Pendientes" },
         { value: "PROCESSED", label: "Procesados" },
         { value: "DELIVERED", label: "Entregados" },
+      ],
+    },
+    {
+      key: "shipping",
+      label: "Método de Envío",
+      type: "select" as const,
+      options: [
+        { value: "ALL", label: "Todos los métodos" },
+        { value: "pickup", label: "Retiro en tienda" },
+        { value: "standard", label: "Envío estándar" },
+        { value: "express", label: "Envío express" },
+        { value: "ca", label: "Correo Argentino" },
       ],
     },
   ];
@@ -190,16 +205,20 @@ export default function OrdersPage() {
         />
         <FilterBar
           fields={filterFields}
-          values={{ status: statusFilter }}
+          values={{ status: statusFilter, shipping: shippingFilter }}
           onChange={(key: string, value: string | string[] | null) => {
             if (key === "status" && typeof value === "string") {
               handleStatusChange(
                 value as "ALL" | "PENDING" | "PROCESSED" | "DELIVERED"
               );
+            } else if (key === "shipping" && typeof value === "string") {
+              setShippingFilter(value);
+              setCurrentPage(1);
             }
           }}
           onReset={() => {
             setStatusFilter("ALL");
+            setShippingFilter("ALL");
             setSearchTerm("");
             setCurrentPage(1);
           }}
@@ -269,7 +288,7 @@ export default function OrdersPage() {
                         {formatDate(order.createdAt)}
                       </p>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       {getStatusBadge(order.status)}
                     </div>
                   </div>
@@ -296,13 +315,32 @@ export default function OrdersPage() {
                     <h4 className="text-sm font-medium text-content-secondary mb-2">
                       Resumen del pedido
                     </h4>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-content-primary">
-                        {order.items.length} producto(s)
-                      </span>
-                      <span className="font-bold text-primary text-lg">
-                        {formatCurrency(order.total)}
-                      </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-content-primary">
+                          {order.items.length} producto(s)
+                        </span>
+                        <span className="font-bold text-primary text-lg">
+                          {formatCurrency(order.total)}
+                        </span>
+                      </div>
+                      {(order as any).caTrackingNumber && (
+                        <div className="flex items-center gap-2 text-sm text-success">
+                          <TruckIcon size={14} />
+                          <span>Tracking CA: {(order as any).caTrackingNumber}</span>
+                        </div>
+                      )}
+                      {(order as any).shippingMethod && (
+                        <div className="flex items-center gap-2 text-sm text-content-secondary">
+                          <PackageIcon size={14} />
+                          <span>
+                            {(order as any).shippingMethod === 'pickup' ? 'Retiro en tienda' :
+                             (order as any).shippingMethod === 'standard' ? 'Envío estándar' :
+                             (order as any).shippingMethod === 'express' ? 'Envío express' :
+                             'Correo Argentino'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

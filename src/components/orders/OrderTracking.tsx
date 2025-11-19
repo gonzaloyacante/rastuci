@@ -3,28 +3,24 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
-import { useOCAService } from "@/hooks/useOCA";
 import { logger } from "@/lib/logger";
-import { useCallback, useEffect, useState } from "react";
-// import { useTrackingValidation } from '@/hooks/useTrackingValidation';
-import { type TrackingCompleto } from "@/lib/oca-service";
-// import { type EstadoEnvio } from '@/lib/oca-service';
 import {
-  AlertCircle,
-  Calendar,
-  CheckCircle,
-  Clock,
-  Download,
-  Info,
-  Loader2,
-  Mail,
-  MapPin,
-  Navigation,
-  Package,
-  Phone,
-  RefreshCw,
-  Truck,
+    AlertCircle,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Download,
+    Info,
+    Loader2,
+    Mail,
+    MapPin,
+    Navigation,
+    Package,
+    Phone,
+    RefreshCw,
+    Truck,
 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 interface OrderStatus {
   id: string;
@@ -70,18 +66,22 @@ interface Order {
   estimatedDelivery?: Date;
   statusHistory: OrderStatus[];
   createdAt: Date;
-  // Nuevos campos para OCA
-  ocaTrackingNumber?: string;
   mpPaymentId?: string;
   shippingMethod?: "domicilio" | "sucursal";
-  ocaOrderId?: string;
 }
 
-interface OCATrackingEvent {
+interface TrackingEvent {
   fecha: string;
   descripcion: string;
   ubicacion?: string;
   estado: string;
+}
+
+interface TrackingData {
+  trackingNumber: string;
+  events: TrackingEvent[];
+  estimatedDelivery?: string;
+  currentStatus: string;
 }
 
 interface OrderTrackingProps {
@@ -93,50 +93,37 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [ocaTracking, setOcaTracking] = useState<TrackingCompleto | null>(null);
-  const [ocaTrackingLoading, setOcaTrackingLoading] = useState(false);
+  const [tracking, setTracking] = useState<TrackingData | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
   const [lastTrackingUpdate, setLastTrackingUpdate] = useState<Date | null>(
     null
   );
 
-  const {
-    obtenerTracking,
-    obtenerEstadoEnvio,
-    isLoading: ocaServiceLoading,
-    error: ocaError,
-  } = useOCAService();
+  const loadTracking = useCallback(async (trackingNumber: string) => {
+    if (!trackingNumber) {
+      return;
+    }
 
-  const loadOCATracking = useCallback(
-    async (trackingNumber: string) => {
-      if (!trackingNumber) {
-        return;
+    try {
+      setTrackingLoading(true);
+
+      const res = await fetch(`/api/tracking/${trackingNumber}`);
+      if (!res.ok) {
+        throw new Error(`Error obteniendo tracking: ${res.status}`);
       }
 
-      try {
-        setOcaTrackingLoading(true);
-
-        // Intentar obtener tracking completo primero
-        try {
-          const trackingData = await obtenerTracking(trackingNumber);
-          setOcaTracking(trackingData);
-          setLastTrackingUpdate(new Date());
-        } catch {
-          // Si el tracking completo falla, intentar solo estado
-          try {
-            await obtenerEstadoEnvio(trackingNumber);
-            setLastTrackingUpdate(new Date());
-          } catch {
-            // Si ambos fallan, no es crítico
-          }
-        }
-      } catch {
-        // Error silencioso - el tracking de OCA es opcional
-      } finally {
-        setOcaTrackingLoading(false);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTracking(data.data);
+        setLastTrackingUpdate(new Date());
       }
-    },
-    [obtenerTracking, obtenerEstadoEnvio]
-  );
+    } catch (err) {
+      logger.error("Error loading tracking", { error: err });
+      // Error silencioso - el tracking es opcional
+    } finally {
+      setTrackingLoading(false);
+    }
+  }, []);
 
   const loadOrderData = useCallback(async () => {
     try {
@@ -170,11 +157,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       setOrder(apiOrder);
       onOrderUpdate?.(apiOrder);
 
-      // Si el pedido tiene tracking de OCA, cargar información adicional
-      if (apiOrder.ocaTrackingNumber || apiOrder.trackingNumber) {
-        await loadOCATracking(
-          apiOrder.ocaTrackingNumber || apiOrder.trackingNumber!
-        );
+      // Si el pedido tiene tracking, cargar información adicional
+      if (apiOrder.trackingNumber) {
+        await loadTracking(apiOrder.trackingNumber);
       }
     } catch (error) {
       logger.error("Error loading order", { error });
@@ -185,78 +170,76 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     } finally {
       setLoading(false);
     }
-  }, [orderId, onOrderUpdate, loadOCATracking]);
+  }, [orderId, onOrderUpdate, loadTracking]);
 
   const refreshTracking = useCallback(async () => {
-    if (!order?.trackingNumber && !order?.ocaTrackingNumber) {
+    if (!order?.trackingNumber) {
       return;
     }
-    const trackingNumber = order.ocaTrackingNumber || order.trackingNumber!;
-    await loadOCATracking(trackingNumber);
-  }, [order, loadOCATracking]);
+    await loadTracking(order.trackingNumber);
+  }, [order, loadTracking]);
 
   useEffect(() => {
     loadOrderData();
   }, [loadOrderData]);
 
-  // Auto-refresh tracking cada 5 minutos si el pedido está en estado shipped
+  // Auto-refresh tracking cada 5 minutos
   useEffect(() => {
-    if (
-      order?.status === "shipped" &&
-      (order.trackingNumber || order.ocaTrackingNumber)
-    ) {
-      const interval = setInterval(refreshTracking, 5 * 60 * 1000); // 5 minutos
-      return () => clearInterval(interval);
+    if (!order?.trackingNumber) {return;}
+
+    const interval = setInterval(() => {
+      refreshTracking();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [order?.trackingNumber, refreshTracking]);
+
+  const downloadInvoice = () => {
+    if (!order) {return;}
+    // TODO: Implementar descarga de factura
+    logger.info("Download invoice", { orderId: order.id });
+  };
+
+  const getStatusColor = (
+    status: OrderStatus["status"]
+  ): "default" | "success" | "warning" | "error" | "info" => {
+    switch (status) {
+      case "delivered":
+        return "success";
+      case "shipped":
+        return "info";
+      case "processing":
+        return "warning";
+      case "cancelled":
+        return "error";
+      default:
+        return "default";
     }
-    return undefined;
-  }, [order, refreshTracking]);
+  };
 
   const getStatusIcon = (status: OrderStatus["status"]) => {
     switch (status) {
-      case "pending":
-        return <Clock className="w-5 h-5 text-warning" />;
-      case "confirmed":
-        return <CheckCircle className="w-5 h-5 text-info" />;
-      case "processing":
-        return <Package className="w-5 h-5 text-primary" />;
-      case "shipped":
-        return <Truck className="w-5 h-5 text-primary" />;
       case "delivered":
-        return <CheckCircle className="w-5 h-5 text-success" />;
+        return <CheckCircle className="h-5 w-5" />;
+      case "shipped":
+        return <Truck className="h-5 w-5" />;
+      case "processing":
+        return <Package className="h-5 w-5" />;
       case "cancelled":
-        return <AlertCircle className="w-5 h-5 text-error" />;
+        return <AlertCircle className="h-5 w-5" />;
       default:
-        return <Clock className="w-5 h-5 muted" />;
+        return <Clock className="h-5 w-5" />;
     }
   };
 
-  const getStatusBadge = (status: OrderStatus["status"]) => {
+  const getStatusText = (status: OrderStatus["status"]): string => {
     switch (status) {
       case "pending":
-        return <Badge variant="warning">Pendiente</Badge>;
-      case "confirmed":
-        return <Badge variant="info">Confirmado</Badge>;
-      case "processing":
-        return <Badge variant="primary">Preparando</Badge>;
-      case "shipped":
-        return <Badge variant="primary">Enviado</Badge>;
-      case "delivered":
-        return <Badge variant="success">Entregado</Badge>;
-      case "cancelled":
-        return <Badge variant="error">Cancelado</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const getStatusLabel = (status: OrderStatus["status"]) => {
-    switch (status) {
-      case "pending":
-        return "Pedido Recibido";
+        return "Pendiente";
       case "confirmed":
         return "Confirmado";
       case "processing":
-        return "Preparando";
+        return "En preparación";
       case "shipped":
         return "Enviado";
       case "delivered":
@@ -268,397 +251,286 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     }
   };
 
-  const getOCAStatusLabel = (estado: string) => {
-    const estadosMap: Record<string, string> = {
-      EN_TRANSITO: "En tránsito",
-      ENTREGADO: "Entregado",
-      EN_DISTRIBUCION: "En distribución",
-      EN_SUCURSAL: "En sucursal",
-      RETENIDO: "Retenido",
-      DEVUELTO: "Devuelto",
-      PENDIENTE: "Pendiente",
-      PREPARACION: "En preparación",
-    };
-    return estadosMap[estado] || estado;
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 muted">Cargando información del pedido...</span>
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Cargando información del pedido...</p>
+        </div>
       </div>
     );
   }
 
-  if (!order) {
+  if (error || !order) {
     return (
-      <div className="text-center p-8">
-        {error ? (
-          <div className="space-y-4">
-            <AlertCircle className="w-16 h-16 text-error mx-auto" />
-            <h3 className="text-lg font-medium">Error al cargar el pedido</h3>
-            <p className="text-sm text-error">{error}</p>
-            <Button onClick={loadOrderData}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Reintentar
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <Package className="w-16 h-16 muted mx-auto mb-4" />
-            <h3 className="text-lg font-medium">Pedido no encontrado</h3>
-            <p className="muted mb-4">No se encontró información del pedido.</p>
-            <Button onClick={loadOrderData}>Reintentar</Button>
-          </div>
-        )}
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="text-center max-w-md">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Error al cargar el pedido</h2>
+          <p className="text-muted-foreground mb-4">
+            {error || "No se pudo encontrar el pedido"}
+          </p>
+          <Button onClick={loadOrderData}>Reintentar</Button>
+        </div>
       </div>
     );
   }
-
-  // Combinar historial del pedido con tracking de OCA
-  const combinedHistory = [...order.statusHistory];
-
-  if (ocaTracking?.historial) {
-    const ocaEvents: OrderStatus[] = ocaTracking.historial.map(
-      (event: OCATrackingEvent, index: number) => ({
-        id: `oca-${index}`,
-        status: "shipped" as const,
-        timestamp: new Date(event.fecha),
-        description: `OCA: ${event.descripcion}`,
-        location: event.ubicacion,
-      })
-    );
-    combinedHistory.push(...ocaEvents);
-  }
-
-  // Ordenar por fecha
-  combinedHistory.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
   return (
-    <div className="space-y-6">
-      {/* Order Header */}
-      <div className="surface border border-muted rounded-lg p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Pedido #{order.orderNumber}</h1>
-            <p className="muted">
-              Realizado el {order.createdAt.toLocaleDateString("es-ES")}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {getStatusBadge(order.status)}
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Descargar Factura
-            </Button>
-          </div>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold">
+            Pedido #{order.orderNumber}
+          </h1>
+          <Badge variant={getStatusColor(order.status)} className="text-sm">
+            {getStatusIcon(order.status)}
+            <span className="ml-2">{getStatusText(order.status)}</span>
+          </Badge>
         </div>
-
-        {/* Tracking Information */}
-        {(order.trackingNumber || order.ocaTrackingNumber) && (
-          <div className="mt-6 grid md:grid-cols-2 gap-4">
-            <div className="surface-secondary rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Truck className="w-5 h-5 text-primary" />
-                <span className="font-medium">Número de Seguimiento</span>
-              </div>
-              <p className="font-mono text-lg">
-                {order.ocaTrackingNumber || order.trackingNumber}
-              </p>
-              {order.estimatedDelivery && (
-                <p className="text-sm muted mt-1">
-                  Entrega estimada:{" "}
-                  {order.estimatedDelivery.toLocaleDateString("es-ES")}
-                </p>
-              )}
-            </div>
-
-            <div className="surface-secondary rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Info className="w-5 h-5 text-primary" />
-                  <span className="font-medium">Estado de Envío</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={refreshTracking}
-                  disabled={ocaTrackingLoading || ocaServiceLoading}
-                >
-                  {ocaTrackingLoading || ocaServiceLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-
-              {ocaTracking?.estadoActual ? (
-                <div>
-                  <p className="font-medium">
-                    {getOCAStatusLabel(ocaTracking.estadoActual.estado)}
-                  </p>
-                  <p className="text-sm muted">
-                    {ocaTracking.estadoActual.descripcionEstado}
-                  </p>
-                </div>
-              ) : (
-                <p className="muted">
-                  Información de seguimiento no disponible
-                </p>
-              )}
-
-              {lastTrackingUpdate && (
-                <p className="text-xs muted mt-2">
-                  Última actualización:{" "}
-                  {lastTrackingUpdate.toLocaleTimeString("es-ES")}
-                </p>
-              )}
-
-              {ocaError && (
-                <p className="text-xs text-error mt-2">Error: {ocaError}</p>
-              )}
-            </div>
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            <span>
+              {new Date(order.createdAt).toLocaleDateString("es-AR", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
           </div>
-        )}
-      </div>
-
-      {/* Order Progress */}
-      <div className="surface border border-muted rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-6">Historial del Pedido</h2>
-
-        <div className="relative">
-          {/* Progress Line */}
-          <div className="absolute left-6 top-8 bottom-8 w-0.5 surface-secondary"></div>
-
-          <div className="space-y-6">
-            {combinedHistory.map((event, index) => (
-              <div key={event.id} className="relative flex items-start gap-4">
-                {/* Status Icon */}
-                <div
-                  className={`
-                  relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2
-                  ${
-                    event.status === order.status &&
-                    index === combinedHistory.length - 1
-                      ? "bg-primary border-primary text-white"
-                      : "surface border-muted"
-                  }
-                `}
-                >
-                  {getStatusIcon(event.status)}
-                </div>
-
-                {/* Status Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-medium">
-                      {getStatusLabel(event.status)}
-                    </h3>
-                    {event.status === order.status &&
-                      index === combinedHistory.length - 1 && (
-                        <Badge variant="primary" className="text-xs">
-                          Actual
-                        </Badge>
-                      )}
-                  </div>
-                  <p className="text-sm muted mb-1">{event.description}</p>
-                  <div className="flex items-center gap-4 text-xs muted">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {event.timestamp.toLocaleString("es-ES")}
-                    </span>
-                    {event.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {event.location}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Order Items */}
-        <div className="surface border border-muted rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Productos</h2>
-          <div className="space-y-4">
-            {order.items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-4 p-3 surface border border-muted rounded"
-              >
-                <OptimizedImage
-                  src={item.image}
-                  alt={item.name}
-                  width={60}
-                  height={60}
-                  className="rounded"
-                />
-                <div className="flex-1">
-                  <h4 className="font-medium">{item.name}</h4>
-                  <div className="text-sm muted">
-                    {item.size && <span>Talla: {item.size}</span>}
-                    {item.color && (
-                      <span className="ml-2">Color: {item.color}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-sm">Cantidad: {item.quantity}</span>
-                    <span className="font-medium">${item.price}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <div className="border-t border-muted pt-4">
-              <div className="flex justify-between items-center font-bold text-lg">
-                <span>Total</span>
-                <span>${order.total}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Shipping Address */}
-        <div className="surface border border-muted rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Dirección de Envío</h2>
-          <div className="space-y-3">
-            <div>
-              <p className="font-medium">{order.shippingAddress.name}</p>
-              <p className="muted">{order.shippingAddress.street}</p>
-              <p className="muted">
-                {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
-                {order.shippingAddress.zipCode}
-              </p>
-              <p className="muted">{order.shippingAddress.country}</p>
-            </div>
-
-            <div className="pt-3 border-t border-muted">
-              <div className="flex items-center gap-2 text-sm muted">
-                <Phone className="w-4 h-4" />
-                <span>{order.shippingAddress.phone}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Support */}
-          <div className="mt-6 pt-4 border-t border-muted">
-            <h3 className="font-medium mb-2">¿Necesitas ayuda?</h3>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
-                <Mail className="w-4 h-4 mr-2" />
-                Contactar Soporte
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Phone className="w-4 h-4 mr-2" />
-                Llamar al +34 900 123 456
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Real-time tracking updates */}
-      {order.status === "shipped" &&
-        (order.trackingNumber || order.ocaTrackingNumber) && (
-          <div className="surface border border-muted rounded-lg p-4">
-            <div className="flex items-center gap-2 text-sm muted">
-              <Navigation className="w-4 h-4" />
+          {order.estimatedDelivery && (
+            <div className="flex items-center gap-2">
+              <Truck className="h-4 w-4" />
               <span>
-                Este pedido se actualiza automáticamente cada 5 minutos mientras
-                está en tránsito
+                Entrega estimada:{" "}
+                {new Date(order.estimatedDelivery).toLocaleDateString("es-AR")}
               </span>
             </div>
-          </div>
-        )}
-    </div>
-  );
-}
+          )}
+        </div>
+      </div>
 
-// Order tracking list component
-export function OrderTrackingList({ orders }: { orders: Order[] }) {
-  const getStatusBadge = (status: OrderStatus["status"]) => {
-    switch (status) {
-      case "pending":
-        return <Badge variant="warning">Pendiente</Badge>;
-      case "confirmed":
-        return <Badge variant="info">Confirmado</Badge>;
-      case "processing":
-        return <Badge variant="primary">Preparando</Badge>;
-      case "shipped":
-        return <Badge variant="primary">Enviado</Badge>;
-      case "delivered":
-        return <Badge variant="success">Entregado</Badge>;
-      case "cancelled":
-        return <Badge variant="error">Cancelado</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      {orders.map((order) => (
-        <div
-          key={order.id}
-          className="surface border border-muted rounded-lg p-4"
-        >
-          <div className="flex items-center justify-between mb-3">
+      {/* Tracking Number */}
+      {order.trackingNumber && (
+        <div className="bg-muted/50 rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium">Pedido #{order.orderNumber}</h3>
-              <p className="text-sm muted">
-                {order.createdAt.toLocaleDateString("es-ES")}
-              </p>
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Navigation className="h-5 w-5" />
+                Número de Seguimiento
+              </h3>
+              <div className="flex items-center gap-4">
+                <code className="text-lg font-mono bg-background px-3 py-1 rounded">
+                  {order.trackingNumber}
+                </code>
+                {lastTrackingUpdate && (
+                  <span className="text-xs text-muted-foreground">
+                    Actualizado hace{" "}
+                    {Math.floor(
+                      (Date.now() - lastTrackingUpdate.getTime()) / 60000
+                    )}{" "}
+                    min
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="text-right">
-              {getStatusBadge(order.status)}
-              <p className="text-sm font-medium mt-1">${order.total}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex -space-x-2">
-              {order.items.slice(0, 3).map((item) => (
-                <OptimizedImage
-                  key={item.id}
-                  src={item.image}
-                  alt={item.name}
-                  width={32}
-                  height={32}
-                  className="rounded border-2 border-white"
-                />
-              ))}
-              {order.items.length > 3 && (
-                <div className="w-8 h-8 rounded border-2 border-white surface flex items-center justify-center text-xs">
-                  +{order.items.length - 3}
-                </div>
+            <Button
+              onClick={refreshTracking}
+              disabled={trackingLoading}
+              variant="outline"
+              size="sm"
+            >
+              {trackingLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Actualizando...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Actualizar
+                </>
               )}
-            </div>
-
-            <div className="flex-1">
-              <p className="text-sm">
-                {order.items.length} producto
-                {order.items.length !== 1 ? "s" : ""}
-              </p>
-              {(order.trackingNumber || order.ocaTrackingNumber) && (
-                <p className="text-xs muted">
-                  Tracking: {order.ocaTrackingNumber || order.trackingNumber}
-                </p>
-              )}
-            </div>
-
-            <Button variant="outline" size="sm">
-              Ver Detalles
             </Button>
           </div>
         </div>
-      ))}
+      )}
+
+      {/* Tracking Events */}
+      {tracking && tracking.events && tracking.events.length > 0 && (
+        <div className="bg-card rounded-lg border p-6 mb-6">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Info className="h-5 w-5" />
+            Historial de Seguimiento
+          </h3>
+          <div className="space-y-4">
+            {tracking.events.map((event, index) => (
+              <div
+                key={index}
+                className="flex gap-4 pb-4 border-b last:border-b-0"
+              >
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Package className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">{event.descripcion}</p>
+                      {event.ubicacion && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                          <MapPin className="h-3 w-3" />
+                          {event.ubicacion}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(event.fecha).toLocaleDateString("es-AR", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Status History */}
+      <div className="bg-card rounded-lg border p-6 mb-6">
+        <h3 className="font-semibold mb-4">Estado del Pedido</h3>
+        <div className="space-y-4">
+          {order.statusHistory.map((status, index) => (
+            <div
+              key={status.id}
+              className="flex gap-4 pb-4 border-b last:border-b-0"
+            >
+              <div className="flex-shrink-0">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    index === 0
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {getStatusIcon(status.status)}
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium">{getStatusText(status.status)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {status.description}
+                    </p>
+                    {status.location && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                        <MapPin className="h-3 w-3" />
+                        {status.location}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(status.timestamp).toLocaleDateString("es-AR", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Shipping Address */}
+      <div className="bg-card rounded-lg border p-6 mb-6">
+        <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <MapPin className="h-5 w-5" />
+          Dirección de Envío
+        </h3>
+        <div className="space-y-2 text-sm">
+          <p className="font-medium">{order.shippingAddress.name}</p>
+          <p>{order.shippingAddress.street}</p>
+          <p>
+            {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+            {order.shippingAddress.zipCode}
+          </p>
+          <p>{order.shippingAddress.country}</p>
+          <div className="flex items-center gap-2 text-muted-foreground pt-2">
+            <Phone className="h-4 w-4" />
+            <span>{order.shippingAddress.phone}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Order Items */}
+      <div className="bg-card rounded-lg border p-6 mb-6">
+        <h3 className="font-semibold mb-4">Productos</h3>
+        <div className="space-y-4">
+          {order.items.map((item) => (
+            <div
+              key={item.id}
+              className="flex gap-4 pb-4 border-b last:border-b-0"
+            >
+              <OptimizedImage
+                src={item.image}
+                alt={item.name}
+                width={80}
+                height={80}
+                className="rounded-lg object-cover"
+              />
+              <div className="flex-1">
+                <h4 className="font-medium">{item.name}</h4>
+                {(item.size || item.color) && (
+                  <p className="text-sm text-muted-foreground">
+                    {item.size && `Talle: ${item.size}`}
+                    {item.size && item.color && " | "}
+                    {item.color && `Color: ${item.color}`}
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Cantidad: {item.quantity}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold">
+                  ${(item.price * item.quantity).toFixed(2)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  ${item.price.toFixed(2)} c/u
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between items-center pt-4 border-t">
+          <span className="font-semibold">Total</span>
+          <span className="text-2xl font-bold">${order.total.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-4">
+        <Button onClick={downloadInvoice} variant="outline" className="flex-1">
+          <Download className="h-4 w-4 mr-2" />
+          Descargar Factura
+        </Button>
+        <Button variant="outline" className="flex-1">
+          <Mail className="h-4 w-4 mr-2" />
+          Contactar Soporte
+        </Button>
+      </div>
     </div>
   );
 }

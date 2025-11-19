@@ -1,3 +1,4 @@
+import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { createPreference } from "@/lib/mercadopago";
 import prisma from "@/lib/prisma";
@@ -104,6 +105,64 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
         },
       });
+
+      // Si el método de envío es Correo Argentino, importar shipment
+      if (shippingMethod && shippingMethod.provider === 'correo-argentino' && customer.address && customer.postalCode) {
+        try {
+          await correoArgentinoService.authenticate();
+
+          const shipmentResult = await correoArgentinoService.importShipment({
+            customerId: process.env.CORREO_ARGENTINO_CUSTOMER_ID || '',
+            extOrderId: order.id,
+            sender: {
+              name: process.env.STORE_NAME || 'Rastuci',
+              street: process.env.STORE_ADDRESS || '',
+              city: process.env.STORE_CITY || 'CABA',
+              province: process.env.STORE_PROVINCE || 'C',
+              postalCode: process.env.STORE_POSTAL_CODE || '1425',
+              phone: process.env.STORE_PHONE || '',
+              email: process.env.STORE_EMAIL || '',
+            },
+            recipient: {
+              name: customer.name,
+              street: customer.address,
+              city: customer.city,
+              province: customer.province || 'B',
+              postalCode: customer.postalCode,
+              phone: customer.phone,
+              email: customer.email,
+            },
+            deliveredType: shippingMethod.deliveryType || 'D',
+            packages: [{
+              weight: orderData.weight || 500,
+              height: orderData.height || 10,
+              width: orderData.width || 20,
+              length: orderData.length || 30,
+              declaredValue: orderData.total,
+            }],
+          });
+
+          if (shipmentResult.success && shipmentResult.data) {
+            await prisma.order.update({
+              where: { id: order.id },
+              data: {
+                caTrackingNumber: shipmentResult.data.trackingNumber,
+                caShipmentId: shipmentResult.data.shipmentId,
+              },
+            });
+
+            logger.info('[checkout] CA shipment imported', {
+              orderId: order.id,
+              trackingNumber: shipmentResult.data.trackingNumber,
+            });
+          }
+        } catch (caError) {
+          logger.error('[checkout] Failed to import CA shipment', {
+            orderId: order.id,
+            error: caError,
+          });
+        }
+      }
 
       return NextResponse.json({
         success: true,

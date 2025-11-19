@@ -1,13 +1,13 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Heart, ShoppingCart, Star } from 'lucide-react';
-import { Product } from '@/types';
-import { Button } from '../ui/Button';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { Product } from '@/types';
+import { Heart, ShoppingCart, Star } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import React from 'react';
+import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
 
 interface ProductCardProps {
@@ -35,7 +35,7 @@ export function ProductCard({
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
     } else {
@@ -43,7 +43,7 @@ export function ProductCard({
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0] || '/placeholder.jpg',
+        image: product.images[0] || 'https://placehold.co/800x800.png',
       });
     }
   };
@@ -62,7 +62,7 @@ export function ProductCard({
           </div>
         ) : (
           <div className="flex space-x-4 p-4">
-            <Skeleton className="w-24 h-24 rounded-lg flex-shrink-0" />
+            <Skeleton className="w-24 h-24 rounded-lg shrink-0" />
             <div className="flex-1 space-y-2">
               <div className="space-y-2">
                 <Skeleton className="h-4 w-full" />
@@ -77,7 +77,7 @@ export function ProductCard({
     );
   }
 
-  const primaryImage = product.images[0] || '/placeholder.jpg';
+  const primaryImage = product.images[0] || 'https://placehold.co/800x800.png';
   const isOnSale = product.onSale;
   const isOutOfStock = product.stock === 0;
   const isInFavorites = isInWishlist(product.id);
@@ -88,7 +88,7 @@ export function ProductCard({
         <div className="surface rounded-lg border border-muted hover-surface transition-all duration-200 overflow-hidden group product-card">
           <div className="flex space-x-4 p-4">
             {/* Image */}
-            <div className="relative w-24 h-24 flex-shrink-0">
+            <div className="relative w-24 h-24 shrink-0">
               <Image
                 src={primaryImage}
                 alt={product.name}
@@ -110,7 +110,7 @@ export function ProductCard({
                   <h3 className="font-semibold text-sm mb-1 truncate group-hover:text-primary transition-colors">
                     {product.name}
                   </h3>
-                  
+
                   {product.description && (
                     <p className="text-sm muted line-clamp-2 mb-2">
                       {product.description}
@@ -140,7 +140,7 @@ export function ProductCard({
                       ))}
                       <span className="text-xs muted">(4.0)</span>
                     </div>
-                    
+
                     {isOutOfStock && (
                       <span className="text-xs text-error font-medium">
                         Sin stock
@@ -160,7 +160,7 @@ export function ProductCard({
                   >
                     <Heart className={`w-4 h-4 ${isInFavorites ? 'fill-current' : ''}`} />
                   </Button>
-                  
+
                   <Button
                     variant="primary"
                     size="sm"
@@ -192,7 +192,7 @@ export function ProductCard({
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
-          
+
           {/* Badges */}
           <div className="absolute top-2 left-2 space-y-1">
             {isOnSale && (
@@ -241,7 +241,7 @@ export function ProductCard({
           <h3 className="font-semibold mb-1 line-clamp-2 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
-          
+
           {product.category && (
             <p className="text-sm muted mb-2">{product.category.name}</p>
           )}
@@ -250,7 +250,7 @@ export function ProductCard({
             <span className="text-lg font-bold text-primary">
               ${product.price.toLocaleString()}
             </span>
-            
+
             <div className="flex items-center space-x-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star

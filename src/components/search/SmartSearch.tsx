@@ -5,14 +5,14 @@ import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ChevronRight,
-  Clock,
-  Loader2,
-  Search,
-  Star,
-  Tag,
-  TrendingUp,
-  X,
+    ChevronRight,
+    Clock,
+    Loader2,
+    Search,
+    Star,
+    Tag,
+    TrendingUp,
+    X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -359,7 +359,7 @@ export default function SmartSearch({
                       ${selectedIndex === index ? "bg-pink-50 text-pink-700" : "hover:bg-surface text-primary"}
                     `}
                   >
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       {suggestion.type === "product" ? (
                         <Tag className="w-4 h-4 muted" />
                       ) : (

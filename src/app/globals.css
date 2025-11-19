@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/mercadolibre.css";
 
 /* ==========================================================================
    RASTUCI - SISTEMA DE DISEÑO GLOBAL
@@ -29,7 +30,7 @@
   --color-text-muted: #6b7280;        /* gray-500/600 */
   --color-border: #e5e7eb;            /* gray-200 */
   --color-border-muted: #f3f4f6;      /* gray-100 */
-  
+
   /* Dark mode support */
   --color-surface-dark: #1e293b;
   --color-surface-secondary-dark: #334155;
@@ -435,6 +436,25 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Inter, system-ui, sans-serif;
+}
+
+/* Highlight temporal para secciones tras scroll desde CTA */
+.scroll-highlight {
+  animation: scroll-highlight 1.5s ease forwards;
+}
+
+@keyframes scroll-highlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba(233, 30, 99, 0.0);
+    background-color: transparent;
+  }
+  10% {
+    background-color: rgba(233, 30, 99, 0.06);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 10px 30px -12px rgba(0,0,0,0.2);
+  }
 }
 
 /* Typography defaults to reduce per-node classes */

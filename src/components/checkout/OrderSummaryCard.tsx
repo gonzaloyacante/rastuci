@@ -1,10 +1,9 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { Truck, CreditCard, FileText, MapPin, Phone, Mail, Edit2 } from 'lucide-react';
-import { formatPriceARS } from '@/utils/formatters';
 import { Button } from '@/components/ui/Button';
+import { formatPriceARS } from '@/utils/formatters';
+import { CreditCard, Edit2, FileText, Mail, MapPin, Phone, Truck } from 'lucide-react';
+import Image from 'next/image';
 
 interface OrderItem {
   id: string;
@@ -73,12 +72,12 @@ export function OrderSummaryCard({
           </div>
           Productos en tu pedido
         </h3>
-        
+
         <div className="space-y-4">
           {items.map((item) => (
             <div key={`${item.id}-${item.size}-${item.color}`} className="flex items-center gap-4 p-3 surface-secondary rounded-lg">
               {item.image && (
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
                   <Image
                     src={item.image}
                     alt={item.name}
@@ -124,7 +123,7 @@ export function OrderSummaryCard({
             Editar
           </Button>
         </div>
-        
+
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
@@ -144,7 +143,7 @@ export function OrderSummaryCard({
               </div>
             </div>
           </div>
-          
+
           <div className="pl-11">
             <p className="text-sm">{customerInfo.address}</p>
             <p className="text-sm muted">
@@ -171,7 +170,7 @@ export function OrderSummaryCard({
             Cambiar
           </Button>
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div>
             <p className="font-medium">{shippingOption.name}</p>
@@ -203,7 +202,7 @@ export function OrderSummaryCard({
             Cambiar
           </Button>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <CreditCard className="w-5 h-5 text-primary" />
@@ -221,27 +220,27 @@ export function OrderSummaryCard({
           <FileText className="w-5 h-5 text-primary mr-2" />
           Resumen del pedido
         </h3>
-        
+
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
             <span>Subtotal ({items.length} {items.length === 1 ? 'producto' : 'productos'})</span>
             <span>{formatPriceARS(subtotal)}</span>
           </div>
-          
+
           <div className="flex justify-between text-sm">
             <span>Envío</span>
             <span className={shippingCost === 0 ? 'text-success font-medium' : ''}>
               {shippingCost === 0 ? 'Gratis' : formatPriceARS(shippingCost)}
             </span>
           </div>
-          
+
           {discount > 0 && (
             <div className="flex justify-between text-sm text-success">
               <span>Descuento aplicado</span>
               <span>-{formatPriceARS(discount)}</span>
             </div>
           )}
-          
+
           <div className="border-t border-muted pt-3">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold">Total</span>

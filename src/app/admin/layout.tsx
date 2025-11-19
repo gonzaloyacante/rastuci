@@ -240,7 +240,7 @@ const SidebarLink = ({
       }`}
     >
       <span
-        className={`flex-shrink-0 flex items-center justify-center ${isActive ? "text-primary" : ""}`}
+        className={`shrink-0 flex items-center justify-center ${isActive ? "text-primary" : ""}`}
       >
         {iconMap[link.icon]}
       </span>
@@ -415,14 +415,23 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   }`}
                 >
                   <button
-                    onClick={() => signOut({ callbackUrl: "/admin" })}
+                    onClick={async () => {
+                      // Usar directamente NextAuth signOut para terminar la sesión.
+                      try {
+                        await signOut({ callbackUrl: '/admin' });
+                      } catch (e) {
+                        // Fallback simple: redirigir al login
+                        // eslint-disable-next-line no-restricted-globals
+                        window.location.href = '/admin';
+                      }
+                    }}
                     className={`flex items-center ${
                       isSidebarOpen ? "w-full px-4 py-3" : "justify-center p-3"
                     } rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 flex-shrink-0"
+                      className="h-5 w-5 shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

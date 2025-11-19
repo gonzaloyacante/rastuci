@@ -2,12 +2,12 @@
 
 import { motion } from "framer-motion";
 import {
-  AlertTriangle,
-  Archive,
-  ArrowRight,
-  ImageIcon,
-  Package,
-  TrendingDown,
+    AlertTriangle,
+    Archive,
+    ArrowRight,
+    ImageIcon,
+    Package,
+    TrendingDown,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -160,7 +160,7 @@ export default function ModernLowStockProducts({
 
                     <div className="relative flex items-start space-x-3">
                       {/* Product Image */}
-                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
+                      <div className="shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
                         {product.image ? (
                           <Image
                             src={product.image}
@@ -217,7 +217,7 @@ export default function ModernLowStockProducts({
                       </div>
 
                       {/* Hover Arrow */}
-                      <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="w-6 h-6 rounded-full surface-secondary flex items-center justify-center">
                           <ArrowRight className="w-3 h-3 text-primary" />
                         </div>

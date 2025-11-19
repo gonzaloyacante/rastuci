@@ -15,7 +15,7 @@ export async function handleOrderStatusChange(input: OrderStatusChangeInput): Pr
       select: {
         customerEmail: true,
         customerName: true,
-        ocaTrackingNumber: true,
+        trackingNumber: true,
       },
     });
 
@@ -30,7 +30,7 @@ export async function handleOrderStatusChange(input: OrderStatusChangeInput): Pr
         to: order.customerEmail,
         customerName: order.customerName || 'Cliente',
         orderId: input.orderId,
-        trackingCode: order.ocaTrackingNumber || undefined,
+        trackingCode: order.trackingNumber || undefined,
         status: input.newStatus,
       });
 
@@ -40,7 +40,7 @@ export async function handleOrderStatusChange(input: OrderStatusChangeInput): Pr
         orderId: input.orderId,
         status: getStatusLabel(input.newStatus),
         customerName: order.customerName,
-        trackingCode: order.ocaTrackingNumber || undefined,
+        trackingCode: order.trackingNumber || undefined,
       });
     }
   } catch {
@@ -51,7 +51,7 @@ export async function handleOrderStatusChange(input: OrderStatusChangeInput): Pr
 function getStatusLabel(status: string): string {
   const statusLabels: Record<string, string> = {
     PENDING: "Pendiente",
-    PROCESSED: "Procesado", 
+    PROCESSED: "Procesado",
     DELIVERED: "Entregado",
     pending: "Pendiente",
     'in-transit': "En tránsito",

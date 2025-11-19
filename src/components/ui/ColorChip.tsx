@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { getColorHex } from "@/utils/colors";
 
 interface ColorChipProps extends React.HTMLAttributes<HTMLSpanElement> {
   color: string;
@@ -16,8 +17,11 @@ export const ColorChip = React.forwardRef<HTMLSpanElement, ColorChipProps>(
       lg: "w-6 h-6",
     };
 
+    // Convertir nombre de color en español a hex
+    const colorHex = getColorHex(color);
+
     const combinedClassName = cn(
-      "inline-block rounded-full border border-muted",
+      "inline-block rounded-full border-2 border-gray-300 shadow-sm",
       sizes[size],
       className
     );
@@ -26,7 +30,7 @@ export const ColorChip = React.forwardRef<HTMLSpanElement, ColorChipProps>(
       <span
         ref={ref}
         className={combinedClassName}
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: colorHex }}
         title={showTooltip ? color : undefined}
         {...props}
       />

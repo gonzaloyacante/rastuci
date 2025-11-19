@@ -1,7 +1,9 @@
-import Image from "next/image";
-import Link from "next/link";
+"use client";
+
 import { Button } from "@/components/ui/Button";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
+import Image from "next/image";
+import Link from "next/link";
 
 interface HeroSectionProps {
   home?: HomeSettings;
@@ -9,6 +11,24 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ home, loading = false }: HeroSectionProps) {
+  const handleExploreCategories = (e?: React.MouseEvent) => {
+    if (e) {e.preventDefault();}
+    const el = document.getElementById("categorias");
+    if (el) {
+      const header = document.querySelector("header");
+      const headerHeight = header ? header.getBoundingClientRect().height : 0;
+      const rect = el.getBoundingClientRect();
+      const targetY = window.scrollY + rect.top - Math.max(8, headerHeight);
+      window.scrollTo({ top: targetY, behavior: "smooth" });
+
+      // Aplicar highlight temporal
+      el.classList.add("scroll-highlight");
+      window.setTimeout(() => el.classList.remove("scroll-highlight"), 1600);
+    } else {
+      // Fallback: smooth scroll to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
   return (
     <section className="w-full" aria-labelledby="hero-title">
       <div className="relative h-[calc(100svh-4rem)] overflow-hidden surface flex items-center justify-center">
@@ -16,11 +36,11 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full surface backdrop-blur border border-muted text-primary text-sm font-medium mb-6 shadow-sm">
             ✨ Nueva temporada
           </span>
-          
+
           {/* Logo SVG Principal - Carga independiente */}
           <div className="mb-8">
-            <Image 
-              src="/Rastući full logo.svg" 
+            <Image
+              src="/rastuci-full-logo.svg"
               alt="Rastući - Ropa Infantil de Calidad"
               width={160}
               height={96}
@@ -28,7 +48,7 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
               priority
             />
           </div>
-          
+
           <p className="text-base md:text-xl muted mb-8 max-w-2xl">
             {loading ? "Ropa infantil de calidad, comodidad y estilo para los más pequeños" : (home?.heroSubtitle || defaultHomeSettings.heroSubtitle)}
           </p>
@@ -38,11 +58,11 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
                 {loading ? "Ver Productos" : (home?.ctaPrimaryLabel || defaultHomeSettings.ctaPrimaryLabel)}
               </Button>
             </Link>
-            <Link href="#categorias" className="inline-flex">
+            <a href="#categorias" onClick={handleExploreCategories} className="inline-flex">
               <Button variant="product">
                 {loading ? "Explorar Categorías" : (home?.ctaSecondaryLabel || defaultHomeSettings.ctaSecondaryLabel)}
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
       </div>

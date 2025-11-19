@@ -17,10 +17,23 @@ export async function middleware(request: NextRequest) {
 
   // Ensure request-id exists and propagate to response
   const reqId = getRequestId(request.headers);
-  const session = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+
+  // Get session token with error handling to prevent JWT decryption errors
+  let session = null;
+  try {
+    session = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+  } catch (error) {
+    // JWT decryption error - treat as no session (silent handling)
+    session = null;
+  }
+
+  // Añadir cabeceras de diagnóstico para facilitar el debugging del bucle
+  // de redirecciones en entornos de desarrollo. Estas cabeceras no exponen
+  // datos sensibles, solo el estado de existencia/rol de la sesión.
+  const debugAuthHeader = session ? "present" : "missing";
 
   const pathname = request.nextUrl.pathname;
   // Rutas públicas que cualquiera puede acceder (página de login/admin landing)
@@ -34,6 +47,7 @@ export async function middleware(request: NextRequest) {
   if (!session && !isPublicRoute && isAdminPage) {
     const res = NextResponse.redirect(new URL("/admin", request.url));
     res.headers.set("x-request-id", reqId);
+    res.headers.set("x-auth-debug", debugAuthHeader);
     return res;
   }
 
@@ -41,6 +55,7 @@ export async function middleware(request: NextRequest) {
   if (session && !session.isAdmin && isAdminPage && !isPublicRoute) {
     const res = NextResponse.redirect(new URL("/", request.url));
     res.headers.set("x-request-id", reqId);
+    res.headers.set("x-auth-debug", "not-admin");
     return res;
   }
 
@@ -48,6 +63,7 @@ export async function middleware(request: NextRequest) {
   if (session && pathname === "/admin") {
     const res = NextResponse.redirect(new URL("/admin/dashboard", request.url));
     res.headers.set("x-request-id", reqId);
+    res.headers.set("x-auth-debug", debugAuthHeader);
     return res;
   }
 
@@ -75,5 +91,5 @@ export async function middleware(request: NextRequest) {
 
 // Configurar el middleware para que se ejecute solo en las rutas especificadas
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*", "/api/admin/:path*"],
 };

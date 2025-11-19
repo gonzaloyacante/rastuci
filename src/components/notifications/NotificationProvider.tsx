@@ -215,7 +215,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         </div>
         <button
           onClick={onRemove}
-          className="flex-shrink-0 muted hover:text-primary"
+          className="shrink-0 muted hover:text-primary"
         >
           <X className="w-4 h-4" />
         </button>

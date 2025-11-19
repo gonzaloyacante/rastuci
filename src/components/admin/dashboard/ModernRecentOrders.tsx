@@ -2,15 +2,15 @@
 
 import { motion } from "framer-motion";
 import {
-  ShoppingCart,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Package,
-  Truck,
-  ArrowRight,
-  Calendar,
-  DollarSign,
+    ArrowRight,
+    Calendar,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Package,
+    ShoppingCart,
+    Truck,
+    XCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -161,7 +161,7 @@ export default function ModernRecentOrders({
                     <div className="relative flex items-center justify-between">
                       <div className="flex items-center space-x-3 flex-1">
                         {/* Order Icon */}
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <div className="shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                           <ShoppingCart className="h-5 w-5 text-white" />
                         </div>
 
@@ -203,7 +203,7 @@ export default function ModernRecentOrders({
                       </div>
 
                       {/* Order Total */}
-                      <div className="flex-shrink-0 text-right">
+                      <div className="shrink-0 text-right">
                         <div className="flex items-center space-x-1">
                           <DollarSign className="h-4 w-4 text-success" />
                           <span className="text-sm font-bold text-success">

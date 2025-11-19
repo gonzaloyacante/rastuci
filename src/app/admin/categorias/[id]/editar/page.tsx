@@ -1,40 +1,67 @@
+"use client";
+
 import { AdminLoading, AdminPageHeader } from "@/components/admin";
 import { CategoryForm } from "@/components/forms";
 import { logger } from "@/lib/logger";
-import prisma from "@/lib/prisma";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { SerializedCategory } from "@/types";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-interface CategoryEditPageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
+export default function CategoryEditPage() {
+  const params = useParams();
+  const categoryId = params.id as string;
+  const [category, setCategory] = useState<SerializedCategory | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-async function EditCategoryContent({ categoryId }: { categoryId: string }) {
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
-  });
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const response = await fetch(`/api/categories/${categoryId}`);
+        if (!response.ok) {
+          throw new Error("Error al cargar la categoría");
+        }
+        const data = await response.json();
+        setCategory(data.data);
+      } catch (error) {
+        logger.error("Error:", { error });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!category) {
-    return notFound();
-  }
+    if (categoryId) {
+      fetchCategory();
+    }
+  }, [categoryId]);
 
-  const handleSubmit = async (data: { name: string; description?: string }) => {
+  const handleSubmit = async (data: {
+    name: string;
+    description?: string;
+    imageUrl?: string | null;
+    icon?: string | null;
+    showImage?: boolean;
+    showIcon?: boolean;
+  }) => {
     try {
       const response = await fetch(`/api/categories/${categoryId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name: data.name,
+          description: data.description,
+          imageUrl: data.showImage ? data.imageUrl : null,
+          icon: data.showIcon ? data.icon : null,
+        }),
       });
 
       if (!response.ok) {
         throw new Error("Error al actualizar la categoría");
       }
 
-      window.location.href = "/admin/categorias";
+      router.push("/admin/categorias");
     } catch (error) {
       logger.error("Error:", { error });
       throw error;
@@ -42,8 +69,16 @@ async function EditCategoryContent({ categoryId }: { categoryId: string }) {
   };
 
   const handleCancel = () => {
-    window.location.href = "/admin/categorias";
+    router.push("/admin/categorias");
   };
+
+  if (loading) {
+    return <AdminLoading />;
+  }
+
+  if (!category) {
+    return <div>Categoría no encontrada</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -61,27 +96,11 @@ async function EditCategoryContent({ categoryId }: { categoryId: string }) {
 
       <div className="card">
         <CategoryForm
-          category={{
-            ...category,
-            createdAt: category.createdAt.toISOString(),
-            updatedAt: category.updatedAt.toISOString(),
-          }}
+          category={category}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
         />
       </div>
     </div>
-  );
-}
-
-export default async function CategoryEditPage({
-  params,
-}: CategoryEditPageProps) {
-  const { id } = await params;
-
-  return (
-    <Suspense fallback={<AdminLoading />}>
-      <EditCategoryContent categoryId={id} />
-    </Suspense>
   );
 }

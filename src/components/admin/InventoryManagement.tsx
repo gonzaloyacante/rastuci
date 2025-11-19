@@ -7,15 +7,15 @@ import { Input } from "@/components/ui/Input";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import type { Product } from "@/types";
 import {
-  AlertTriangle,
-  Download,
-  Edit,
-  Eye,
-  Package,
-  Search,
-  TrendingDown,
-  TrendingUp,
-  Upload,
+    AlertTriangle,
+    Download,
+    Edit,
+    Eye,
+    Package,
+    Search,
+    TrendingDown,
+    TrendingUp,
+    Upload,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -107,7 +107,7 @@ export function InventoryManagement() {
           : typeof p.images === "string"
             ? JSON.parse(p.images || "[]")
             : [];
-        const img = images?.[0] ?? "/placeholder.jpg";
+        const img = images?.[0] ?? "https://placehold.co/800x800.png";
 
         const currentStock = typeof p.stock === "number" ? p.stock : 0;
 

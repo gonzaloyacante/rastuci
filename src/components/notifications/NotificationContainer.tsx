@@ -1,6 +1,6 @@
+import { Notification, useNotifications } from "@/context/NotificationContext";
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
 import React from "react";
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
-import { useNotifications, Notification } from "@/context/NotificationContext";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -45,7 +45,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     <div
       className={`surface border ${getBorderColor()} rounded-lg shadow-lg p-4 mb-3 max-w-sm`}>
       <div className="flex items-start">
-        <div className="flex-shrink-0">{getIcon()}</div>
+        <div className="shrink-0">{getIcon()}</div>
         <div className="ml-3 flex-1">
           {notification.title && (
             <h3 className="text-sm font-medium text-primary mb-1">
@@ -76,7 +76,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         </div>
         <button
           onClick={() => removeNotification(notification.id)}
-          className="flex-shrink-0 ml-3 muted hover:text-primary">
+          className="shrink-0 ml-3 muted hover:text-primary">
           <X className="w-4 h-4" />
         </button>
       </div>

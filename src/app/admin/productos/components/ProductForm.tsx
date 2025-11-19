@@ -16,7 +16,7 @@ import { ColorChip } from "@/components/ui/ColorChip";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Product } from "@/types";
-import { formatCurrency } from "@/utils/formatters";
+import { formatPriceARS } from "@/utils/formatters";
 import {
   AlertCircle,
   ArrowLeft,
@@ -25,6 +25,7 @@ import {
   Eye,
   FileText,
   Hash,
+  HelpCircle,
   ImageIcon,
   Info,
   List,
@@ -39,7 +40,31 @@ import {
   X,
 } from "lucide-react";
 
-// Interfaces locales para tipado
+// Componente de ayuda reutilizable con tooltip
+const HelpTooltip = ({ text }: { text: string }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        onClick={() => setShowTooltip(!showTooltip)}
+        className="text-muted hover:text-primary transition-colors"
+        aria-label="Ayuda"
+      >
+        <HelpCircle className="h-4 w-4" />
+      </button>
+      {showTooltip && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-primary text-white text-xs rounded-lg shadow-lg max-w-xs whitespace-normal">
+          {text}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-primary" />
+        </div>
+      )}
+    </div>
+  );
+};// Interfaces locales para tipado
 interface Category {
   id: string;
   name: string;
@@ -56,9 +81,10 @@ const productSchema = z.object({
     .max(1000, "La descripción no puede exceder 1000 caracteres")
     .optional(),
   price: z.coerce.number().min(0.01, "El precio debe ser mayor a 0"),
-  salePrice: z.coerce
+  discountPercentage: z.coerce
     .number()
-    .min(0, "El precio de oferta no puede ser negativo")
+    .min(0, "El descuento no puede ser negativo")
+    .max(100, "El descuento no puede ser mayor a 100%")
     .optional()
     .nullable(),
   stock: z.coerce
@@ -91,41 +117,9 @@ const PlaceholderImage = ({ className }: { className?: string }) => (
   </div>
 );
 
-const ImagePreview = ({
-  src,
-  alt,
-  onRemove,
-}: {
-  src: string;
-  alt: string;
-  onRemove: () => void;
-}) => {
-  const [imageError, setImageError] = useState(false);
-
-  return (
-    <div className="relative group">
-      {imageError ? (
-        <PlaceholderImage className="w-full h-32" />
-      ) : (
-        <Image
-          src={src}
-          alt={alt}
-          width={128}
-          height={128}
-          className="w-full h-32 object-cover rounded-lg"
-          onError={() => setImageError(true)}
-        />
-      )}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute top-2 right-2 bg-error text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <X className="h-3 w-3" />
-      </button>
-    </div>
-  );
-};
+/* ImagePreview was removed because preview and remove functionality
+   are handled by ImageUploadZone and the inline gallery below.
+   If later needed, restore a shared Preview component in a ui/ folder. */
 
 const ColorPicker = ({
   colors,
@@ -135,6 +129,23 @@ const ColorPicker = ({
   onColorsChange: (colors: string[]) => void;
 }) => {
   const [newColor, setNewColor] = useState("");
+  const [colorInput, setColorInput] = useState("#000000");
+
+  // Palette predefinida de colores comunes
+  const commonColors = [
+    { name: "Rojo", hex: "#FF0000" },
+    { name: "Azul", hex: "#0000FF" },
+    { name: "Verde", hex: "#00FF00" },
+    { name: "Amarillo", hex: "#FFFF00" },
+    { name: "Negro", hex: "#000000" },
+    { name: "Blanco", hex: "#FFFFFF" },
+    { name: "Rosa", hex: "#FFC0CB" },
+    { name: "Naranja", hex: "#FFA500" },
+    { name: "Morado", hex: "#800080" },
+    { name: "Gris", hex: "#808080" },
+    { name: "Celeste", hex: "#87CEEB" },
+    { name: "Beige", hex: "#F5F5DC" },
+  ];
 
   const addColor = () => {
     if (newColor.trim() && !colors.includes(newColor.trim())) {
@@ -143,44 +154,130 @@ const ColorPicker = ({
     }
   };
 
+  const addColorFromPicker = () => {
+    const colorName = `Color ${colorInput}`;
+    if (!colors.includes(colorName)) {
+      onColorsChange([...colors, colorName]);
+    }
+  };
+
+  const addPredefinedColor = (name: string) => {
+    if (!colors.includes(name)) {
+      onColorsChange([...colors, name]);
+    }
+  };
+
   const removeColor = (colorToRemove: string) => {
     onColorsChange(colors.filter((color) => color !== colorToRemove));
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        <Input
-          value={newColor}
-          onChange={(e) => setNewColor(e.target.value)}
-          placeholder="Agregar color (ej: Rojo, #FF0000)"
-          className="flex-1"
-          onKeyPress={(e) =>
-            e.key === "Enter" && (e.preventDefault(), addColor())
-          }
-        />
-        <Button type="button" onClick={addColor} variant="outline" size="sm">
-          <Check className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {colors.map((color) => (
-          <div
-            key={color}
-            className="flex items-center gap-1 bg-surface px-2 py-1 rounded-full text-sm"
-          >
-            <ColorChip color={color} size="sm" />
-            <span>{color}</span>
+    <div className="space-y-4">
+      {/* Palette de colores predefinidos */}
+      <div>
+        <p className="text-sm font-medium mb-2">Colores Predefinidos</p>
+        <div className="flex flex-wrap gap-2">
+          {commonColors.map((c) => (
             <button
+              key={c.name}
               type="button"
-              onClick={() => removeColor(color)}
-              className="text-error hover:bg-error hover:text-white rounded-full p-0.5 transition-colors"
+              onClick={() => addPredefinedColor(c.name)}
+              disabled={colors.includes(c.name)}
+              className="group relative"
+              title={`Agregar ${c.name}`}
             >
-              <X className="h-3 w-3" />
+              <div
+                className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                  colors.includes(c.name)
+                    ? "border-success opacity-50"
+                    : "border-muted hover:border-primary hover:scale-110"
+                }`}
+                style={{ backgroundColor: c.hex }}
+              >
+                {colors.includes(c.name) && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Check className="h-5 w-5 text-white drop-shadow" />
+                  </div>
+                )}
+              </div>
+              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                {c.name}
+              </span>
             </button>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+
+      {/* Color picker HTML5 */}
+      <div>
+        <p className="text-sm font-medium mb-2">Color Personalizado (Picker)</p>
+        <div className="flex gap-2 items-center">
+          <input
+            type="color"
+            value={colorInput}
+            onChange={(e) => setColorInput(e.target.value)}
+            className="w-16 h-10 rounded border-2 border-muted cursor-pointer"
+          />
+          <span className="text-sm muted font-mono">{colorInput}</span>
+          <Button
+            type="button"
+            onClick={addColorFromPicker}
+            variant="outline"
+            size="sm"
+          >
+            Agregar
+          </Button>
+        </div>
+      </div>
+
+      {/* Input manual para nombres o hex */}
+      <div>
+        <p className="text-sm font-medium mb-2">
+          Color Manual (nombre o código hex)
+        </p>
+        <div className="flex gap-2">
+          <Input
+            value={newColor}
+            onChange={(e) => setNewColor(e.target.value)}
+            placeholder="Ej: Rojo, #FF0000, rgba(255,0,0,1)"
+            className="flex-1"
+            onKeyPress={(e) =>
+              e.key === "Enter" && (e.preventDefault(), addColor())
+            }
+          />
+          <Button type="button" onClick={addColor} variant="outline" size="sm">
+            <Check className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Colores seleccionados */}
+      {colors.length > 0 && (
+        <div>
+          <p className="text-sm font-medium mb-2">
+            Colores Seleccionados ({colors.length})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {colors.map((color) => (
+              <div
+                key={color}
+                className="flex items-center gap-1 bg-surface px-3 py-1.5 rounded-full text-sm border border-muted"
+              >
+                <ColorChip color={color} size="sm" />
+                <span className="font-medium">{color}</span>
+                <button
+                  type="button"
+                  onClick={() => removeColor(color)}
+                  className="text-error hover:bg-error hover:text-white rounded-full p-1 transition-colors ml-1"
+                  title={`Eliminar ${color}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -289,6 +386,63 @@ const FeatureManager = ({
   onFeaturesChange: (features: string[]) => void;
 }) => {
   const [newFeature, setNewFeature] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("todos");
+
+  // Características predefinidas categorizadas
+  const featureCategories = {
+    material: {
+      label: "Material",
+      help: "Composición y tipo de tela del producto",
+      items: [
+        "100% Algodón",
+        "100% Algodón orgánico",
+        "Mezcla de algodón",
+        "Poliéster",
+        "Lana",
+        "Seda",
+        "Denim",
+        "Jersey",
+      ],
+    },
+    cuidado: {
+      label: "Cuidado",
+      help: "Instrucciones de lavado y mantenimiento",
+      items: [
+        "Lavable en máquina",
+        "Lavar a mano",
+        "No usar blanqueador",
+        "Secar al aire",
+        "Planchar a baja temperatura",
+        "Lavar con colores similares",
+      ],
+    },
+    diseño: {
+      label: "Diseño",
+      help: "Características del diseño y estilo",
+      items: [
+        "Diseño cómodo y fresco",
+        "Diseño moderno",
+        "Estampado de calidad",
+        "Estampado que no se destiñe",
+        "Botones de seguridad",
+        "Cierre invisible",
+        "Bolsillos funcionales",
+      ],
+    },
+    caracteristicas: {
+      label: "Características",
+      help: "Propiedades adicionales del producto",
+      items: [
+        "Transpirable",
+        "Resistente al agua",
+        "Protección UV",
+        "Antibacterial",
+        "Hipoalergénico",
+        "Elástico",
+        "Forrado",
+      ],
+    },
+  };
 
   const addFeature = () => {
     if (newFeature.trim() && !features.includes(newFeature.trim())) {
@@ -297,47 +451,149 @@ const FeatureManager = ({
     }
   };
 
+  const addPredefinedFeature = (feature: string) => {
+    if (!features.includes(feature)) {
+      onFeaturesChange([...features, feature]);
+    }
+  };
+
   const removeFeature = (featureToRemove: string) => {
     onFeaturesChange(features.filter((feature) => feature !== featureToRemove));
   };
 
+  const allFeatures = Object.values(featureCategories).flatMap((cat) => cat.items);
+  const displayFeatures =
+    selectedCategory === "todos"
+      ? allFeatures
+      : featureCategories[selectedCategory as keyof typeof featureCategories]?.items || [];
+
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        <Input
-          value={newFeature}
-          onChange={(e) => setNewFeature(e.target.value)}
-          placeholder="Nueva característica"
-          className="flex-1"
-          onKeyPress={(e) =>
-            e.key === "Enter" && (e.preventDefault(), addFeature())
-          }
-        />
-        <Button type="button" onClick={addFeature} variant="outline" size="sm">
-          <Check className="h-4 w-4" />
-        </Button>
+    <div className="space-y-4">
+      {/* Categorías de características */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-sm font-medium">Categorías de Características</p>
+          <HelpTooltip text="Selecciona una categoría para ver sugerencias predefinidas o agrega características personalizadas" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory("todos")}
+            className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+              selectedCategory === "todos"
+                ? "bg-primary text-white border-primary"
+                : "border-muted hover:border-primary"
+            }`}
+          >
+            Todos
+          </button>
+          {Object.entries(featureCategories).map(([key, cat]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSelectedCategory(key)}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                selectedCategory === key
+                  ? "bg-primary text-white border-primary"
+                  : "border-muted hover:border-primary"
+              }`}
+              title={cat.help}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="space-y-2">
-        {features.map((feature, index) => (
-          <div
-            key={`item-${index}`}
-            className="flex items-center justify-between p-3 bg-surface rounded-lg border"
-          >
-            <span className="flex-1">{feature}</span>
+      {/* Características sugeridas */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-sm font-medium">Características Sugeridas</p>
+          {selectedCategory !== "todos" && (
+            <HelpTooltip
+              text={
+                featureCategories[selectedCategory as keyof typeof featureCategories]?.help || ""
+              }
+            />
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-surface/50 rounded-lg">
+          {displayFeatures.map((feature) => (
             <button
+              key={feature}
               type="button"
-              onClick={() => removeFeature(feature)}
-              className="text-error hover:bg-error hover:text-white rounded-full p-1 transition-colors"
+              onClick={() => addPredefinedFeature(feature)}
+              disabled={features.includes(feature)}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
+                features.includes(feature)
+                  ? "bg-success/10 border-success text-success cursor-not-allowed"
+                  : "border-muted hover:border-primary hover:bg-primary/5"
+              }`}
+              title={features.includes(feature) ? "Ya agregada" : `Agregar ${feature}`}
             >
-              <Trash2 className="h-4 w-4" />
+              {feature}
+              {features.includes(feature) && (
+                <Check className="inline h-3 w-3 ml-1" />
+              )}
             </button>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+
+      {/* Input personalizado */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-sm font-medium">Característica Personalizada</p>
+          <HelpTooltip text="Agrega cualquier característica específica que no esté en las sugerencias" />
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={newFeature}
+            onChange={(e) => setNewFeature(e.target.value)}
+            placeholder="Ej: Resistente a manchas"
+            className="flex-1"
+            onKeyPress={(e) =>
+              e.key === "Enter" && (e.preventDefault(), addFeature())
+            }
+          />
+          <Button type="button" onClick={addFeature} variant="outline" size="sm">
+            <Check className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Características seleccionadas */}
+      {features.length > 0 && (
+        <div>
+          <p className="text-sm font-medium mb-2">
+            Características Agregadas ({features.length})
+          </p>
+          <div className="space-y-2">
+            {features.map((feature, index) => (
+              <div
+                key={`feature-${index}-${feature.slice(0, 10)}`}
+                className="flex items-center justify-between p-3 bg-surface rounded-lg border border-muted hover:border-primary transition-colors group"
+              >
+                <span className="flex-1 text-sm">{feature}</span>
+                <button
+                  type="button"
+                  onClick={() => removeFeature(feature)}
+                  className="text-error hover:bg-error hover:text-white rounded-full p-1.5 transition-colors opacity-70 group-hover:opacity-100"
+                  title={`Eliminar ${feature}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+// Import ImageUploadZone
+import ImageUploadZone from "./ImageUploadZone";
 
 export default function ProductForm({
   initialData,
@@ -345,11 +601,10 @@ export default function ProductForm({
 }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     initialData?.categoryId || ""
   );
-  const [currentImages, setCurrentImages] = useState<string[]>([]);
+  const [productImages, setProductImages] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
@@ -372,7 +627,6 @@ export default function ProductForm({
   });
 
   const watchPrice = watch("price");
-  const watchSalePrice = watch("salePrice");
   const watchStock = watch("stock");
   const watchOnSale = watch("onSale");
 
@@ -384,16 +638,25 @@ export default function ProductForm({
           ? JSON.parse(initialData.images)
           : [];
 
-      setCurrentImages(parsedImages);
+      setProductImages(parsedImages);
       setColors(initialData.colors || []);
       setSizes(initialData.sizes || []);
       setFeatures(initialData.features || []);
+
+      // Calcular discountPercentage desde salePrice
+      const discountPercentage =
+        initialData.salePrice && initialData.price
+          ? Math.round(
+              ((initialData.price - initialData.salePrice) / initialData.price) *
+                100
+            )
+          : null;
 
       reset({
         name: initialData.name,
         description: initialData.description || "",
         price: initialData.price,
-        salePrice: initialData.salePrice,
+        discountPercentage: discountPercentage,
         stock: initialData.stock,
         categoryId: initialData.categoryId,
         onSale: initialData.onSale || false,
@@ -401,49 +664,44 @@ export default function ProductForm({
     }
   }, [initialData, reset]);
 
+  // Local controlled input for price to allow free typing (thousands, decimals)
+  const [priceInput, setPriceInput] = useState<string>(
+    watchPrice !== undefined && watchPrice !== null ? formatPriceARS(Number(watchPrice)) : ""
+  );
+
+  // Sync local input when watchPrice changes externally (e.g., reset with initialData)
+  useEffect(() => {
+    if (watchPrice !== undefined && watchPrice !== null) {
+      setPriceInput(formatPriceARS(Number(watchPrice)));
+    }
+  }, [watchPrice]);
+
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
     setValue("categoryId", categoryId);
-  };
-
-  const removeCurrentImage = (index: number) => {
-    setCurrentImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setImageFiles((prev) => [...prev, ...files]);
-  };
-
-  const removeNewImage = (index: number) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
     try {
       setLoading(true);
 
-      let imageUrls = [...currentImages];
+      // Las imágenes ya están subidas en productImages (ImageUploadZone las sube automáticamente)
+      // No necesitamos re-subirlas aquí (PUNTO 12 completado)
 
-      if (imageFiles.length > 0) {
-        const uploadPromises = imageFiles.map(async (file) => {
-          const formData = new FormData();
-          formData.append("file", file);
-          const res = await axios.post("/api/upload", formData);
-          return res.data.url;
-        });
-        const uploadedUrls = await Promise.all(uploadPromises);
-        imageUrls = [...imageUrls, ...uploadedUrls];
-      }
+      // Calcular salePrice desde discountPercentage
+      const salePrice =
+        data.discountPercentage && data.discountPercentage > 0
+          ? data.price * (1 - data.discountPercentage / 100)
+          : null;
 
       const productData = {
         name: data.name,
         description: data.description || null,
         price: data.price,
-        salePrice: data.salePrice || null,
+        salePrice,
         stock: data.stock,
         categoryId: data.categoryId,
-        images: imageUrls,
+        images: productImages, // Usar imágenes ya subidas
         onSale: data.onSale || false,
         sizes,
         colors,
@@ -467,20 +725,22 @@ export default function ProductForm({
     }
   };
 
-  const discountPercentage =
-    watchPrice && watchSalePrice
-      ? Math.round(((watchPrice - watchSalePrice) / watchPrice) * 100)
-      : 0;
+  // Calcular precio de oferta desde porcentaje de descuento
+  const watchDiscountPercentage = watch("discountPercentage");
+  const calculatedSalePrice =
+    watchPrice && watchDiscountPercentage && watchDiscountPercentage > 0
+      ? watchPrice * (1 - watchDiscountPercentage / 100)
+      : null;
 
   return (
     <div className="min-h-screen surface py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header mejorado */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-full mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-primary to-primary/80 rounded-full mb-4 shadow-lg">
             <Package className="h-10 w-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent">
             {title}
           </h1>
           <p className="muted mt-2 text-lg">
@@ -493,7 +753,7 @@ export default function ProductForm({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* Información Básica */}
           <Card className="shadow-xl border-0 overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-primary to-primary/90 text-white">
+            <CardHeader className="bg-linear-to-r from-primary to-primary/90 text-white">
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <Info className="h-5 w-5" />
                 Información Básica
@@ -591,7 +851,7 @@ export default function ProductForm({
 
           {/* Precios y Stock */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white">
+            <CardHeader className="bg-linear-to-r from-green-600 to-green-700 text-white">
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
                 Precios y Stock
@@ -610,16 +870,73 @@ export default function ProductForm({
                   </label>
                   <Input
                     id="price"
-                    type="number"
-                    step="0.01"
-                    {...register("price")}
-                    placeholder="0.00"
+                    type="text"
+                    inputMode="decimal"
+                    value={priceInput}
+                    onFocus={() => {
+                      // Show plain numeric value for easier editing
+                      if (watchPrice !== undefined && watchPrice !== null) {
+                        setPriceInput(String(Number(watchPrice)));
+                      }
+                    }}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      // Allow only digits, dot and comma while typing
+                      const filtered = String(raw).replace(/[^0-9.,]/g, "");
+                      setPriceInput(filtered);
+
+                      // Parse localized number (es-AR): thousands '.' and decimal ','
+                      // Remove thousands separators (dots), replace comma with dot
+                      const noThousands = filtered.replace(/\./g, "");
+                      const normalized = noThousands.replace(/,/, ".");
+                      const parsed = parseFloat(normalized);
+
+                      if (!isNaN(parsed)) {
+                        setValue("price", parsed, { shouldValidate: true, shouldDirty: true });
+                      } else if (filtered.trim() === "") {
+                        // keep form value at 0 when empty
+                        setValue("price", 0, { shouldValidate: false });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      const allowed = [
+                        "Backspace",
+                        "Tab",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "Delete",
+                        "Home",
+                        "End",
+                      ];
+                      if (allowed.includes(e.key)) {
+                        return;
+                      }
+                      // Allow digits and comma/dot
+                      if (!/^[0-9.,]$/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const paste = e.clipboardData?.getData("text") || "";
+                      if (!/^[0-9.,\s]+$/.test(paste)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onBlur={() => {
+                      // Format displayed value on blur based on current form value
+                      if (watchPrice !== undefined && watchPrice !== null) {
+                        setPriceInput(formatPriceARS(Number(watchPrice)));
+                      } else {
+                        setPriceInput("");
+                      }
+                    }}
+                    placeholder={formatPriceARS(0)}
                     className={`transition-all duration-200 ${errors.price ? "border-error" : ""}`}
                     disabled={loading}
                   />
                   {watchPrice > 0 && (
                     <p className="text-xs text-success mt-1 font-medium">
-                      {formatCurrency(Number(watchPrice))}
+                      {formatPriceARS(Number(watchPrice))}
                     </p>
                   )}
                   {errors.price && (
@@ -630,38 +947,56 @@ export default function ProductForm({
                   )}
                 </div>
 
-                {/* Precio de Oferta */}
+                {/* Porcentaje de Descuento */}
                 <div>
                   <label
-                    htmlFor="salePrice"
+                    htmlFor="discountPercentage"
                     className="block text-sm font-medium mb-2"
                   >
                     <Percent className="h-4 w-4 inline mr-2" />
-                    Precio en Oferta
+                    Descuento (%)
                   </label>
                   <Input
-                    id="salePrice"
+                    id="discountPercentage"
                     type="number"
-                    step="0.01"
-                    {...register("salePrice")}
-                    placeholder="0.00"
-                    className={`transition-all duration-200 ${errors.salePrice ? "border-error" : ""}`}
+                    step="1"
+                    min="0"
+                    max="100"
+                    {...register("discountPercentage")}
+                    placeholder="0"
+                    onKeyDown={(e) => {
+                      const allowed = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
+                      if (allowed.includes(e.key)) {
+                        return;
+                      }
+                      if (!/^[0-9]$/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const paste = e.clipboardData?.getData("text") || "";
+                      if (!/^\d+$/.test(paste)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className={`transition-all duration-200 ${errors.discountPercentage ? "border-error" : ""}`}
                     disabled={loading}
                   />
-                  {watchSalePrice && watchSalePrice > 0 && (
-                    <p className="text-xs text-orange-600 mt-1 font-medium">
-                      {formatCurrency(Number(watchSalePrice))}
-                      {discountPercentage > 0 && (
-                        <span className="ml-1 text-error">
-                          (-{discountPercentage}%)
-                        </span>
-                      )}
-                    </p>
+                  {watchDiscountPercentage && watchDiscountPercentage > 0 && calculatedSalePrice && (
+                    <>
+                      <p className="text-xs text-orange-600 mt-1 font-medium">
+                        Precio en oferta: {formatPriceARS(Number(calculatedSalePrice))}
+                        <span className="ml-1 text-error">(-{watchDiscountPercentage}%)</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        El descuento será de {formatPriceARS(Number(watchPrice || 0) - Number(calculatedSalePrice))}
+                      </p>
+                    </>
                   )}
-                  {errors.salePrice && (
+                  {errors.discountPercentage && (
                     <p className="mt-1 text-sm text-error flex items-center gap-1">
                       <AlertCircle className="h-4 w-4" />
-                      {errors.salePrice.message}
+                      {errors.discountPercentage.message}
                     </p>
                   )}
                 </div>
@@ -680,6 +1015,21 @@ export default function ProductForm({
                     type="number"
                     {...register("stock")}
                     placeholder="0"
+                    onKeyDown={(e) => {
+                      const allowed = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
+                      if (allowed.includes(e.key)) {
+                        return;
+                      }
+                      if (!/^[0-9]$/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const paste = e.clipboardData?.getData("text") || "";
+                      if (!/^\d+$/.test(paste)) {
+                        e.preventDefault();
+                      }
+                    }}
                     className={`transition-all duration-200 ${errors.stock ? "border-error" : ""}`}
                     disabled={loading}
                   />
@@ -745,7 +1095,7 @@ export default function ProductForm({
 
           {/* Variantes del Producto */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+            <CardHeader className="bg-linear-to-r from-purple-600 to-purple-700 text-white">
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <Palette className="h-5 w-5" />
                 Variantes del Producto
@@ -786,97 +1136,25 @@ export default function ProductForm({
 
           {/* Imágenes del Producto */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+            <CardHeader className="bg-linear-to-r from-blue-600 to-blue-700 text-white">
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <Upload className="h-5 w-5" />
                 Galería de Imágenes
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8 space-y-6">
-              {/* Imágenes Existentes */}
-              {currentImages.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-medium mb-3">
-                    Imágenes Actuales
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {currentImages.map((image, index) => (
-                      <ImagePreview
-                        key={`item-${index}`}
-                        src={image}
-                        alt={`Imagen ${index + 1}`}
-                        onRemove={() => removeCurrentImage(index)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Nuevas Imágenes */}
-              {imageFiles.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-medium mb-3">
-                    Nuevas Imágenes (por subir)
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {imageFiles.map((file, index) => (
-                      <div key={`item-${index}`} className="relative group">
-                        <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
-                          <div className="text-center">
-                            <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-1" />
-                            <p className="text-xs text-muted-foreground truncate px-2">
-                              {file.name}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeNewImage(index)}
-                          className="absolute top-2 right-2 bg-error text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Área de Upload */}
-              <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center hover:border-primary transition-colors duration-200 bg-gradient-to-br from-surface to-muted/20">
-                <Upload className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-                <div className="text-lg font-medium mb-2">
-                  Subir Imágenes del Producto
-                </div>
-                <div className="flex text-sm text-muted-foreground justify-center">
-                  <label
-                    htmlFor="images"
-                    className="relative cursor-pointer bg-primary text-white rounded-md px-4 py-2 font-medium hover:bg-primary/90 transition-colors"
-                  >
-                    <span>Seleccionar archivos</span>
-                    <input
-                      id="images"
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={handleImageUpload}
-                      disabled={loading}
-                    />
-                  </label>
-                  <p className="pl-2 self-center">o arrastra y suelta aquí</p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  PNG, JPG, WEBP hasta 10MB cada una. Recomendado: 800x800px o
-                  superior
-                </p>
-              </div>
+            <CardContent className="p-8">
+              <ImageUploadZone
+                existingImages={productImages}
+                onImagesChange={setProductImages}
+                maxImages={10}
+                maxSizeMB={5}
+              />
             </CardContent>
           </Card>
 
           {/* Vista Previa */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white">
+            <CardHeader className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white">
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <Eye className="h-5 w-5" />
                 Vista Previa del Producto
@@ -884,81 +1162,148 @@ export default function ProductForm({
             </CardHeader>
             <CardContent className="p-8">
               <div className="bg-surface rounded-lg p-6 border">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    {currentImages.length > 0 || imageFiles.length > 0 ? (
-                      <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                        {currentImages.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Galería de Imágenes */}
+                  <div className="space-y-4">
+                    {productImages.length > 0 ? (
+                      <>
+                        {/* Imagen Principal */}
+                        <div className="aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden border-2 border-muted">
                           <Image
-                            src={currentImages[0]}
+                            src={productImages[0]}
                             alt="Vista previa"
-                            width={300}
-                            height={300}
+                            width={500}
+                            height={500}
                             className="w-full h-full object-cover rounded-lg"
                             onError={(e) => {
                               e.currentTarget.style.display = "none";
                             }}
                           />
-                        ) : (
-                          <PlaceholderImage className="w-full h-full" />
+                        </div>
+
+                        {/* Miniaturas */}
+                        {productImages.length > 1 && (
+                          <div className="grid grid-cols-4 gap-2">
+                            {productImages.slice(0, 4).map((img, idx) => (
+                              <div
+                                key={`thumb-${idx}`}
+                                className="aspect-square bg-muted rounded overflow-hidden border border-muted hover:border-primary transition-colors"
+                              >
+                                <Image
+                                  src={img}
+                                  alt={`Miniatura ${idx + 1}`}
+                                  width={100}
+                                  height={100}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         )}
-                      </div>
+                      </>
                     ) : (
                       <PlaceholderImage className="aspect-square" />
                     )}
                   </div>
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-bold">
-                      {watch("name") || "Nombre del producto"}
-                    </h3>
-                    <div className="flex items-center gap-2">
+
+                  {/* Información del Producto */}
+                  <div className="space-y-5">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                        Categoría: {categories.find((c) => c.id === watch("categoryId"))?.name || "No seleccionada"}
+                      </p>
+                      <h3 className="text-3xl font-bold text-primary">
+                        {watch("name") || "Nombre del producto"}
+                      </h3>
+                    </div>
+
+                    {/* Badges */}
+                    <div className="flex flex-wrap items-center gap-2">
                       {watch("onSale") && (
-                        <span className="bg-error/10 text-error px-2 py-1 rounded-full text-sm font-medium">
-                          En Oferta
+                        <span className="bg-error/10 text-error px-3 py-1 rounded-full text-sm font-medium">
+                          ⚡ En Oferta
                         </span>
                       )}
-                      {watch("stock") !== undefined &&
-                        Number(watch("stock")) <= 5 && (
-                          <span className="bg-warning/10 text-warning px-2 py-1 rounded-full text-sm font-medium">
-                            Pocas unidades
-                          </span>
-                        )}
+                      {watch("stock") !== undefined && Number(watch("stock")) > 0 && (
+                        <span className="bg-success/10 text-success px-3 py-1 rounded-full text-sm font-medium">
+                          ✓ {Number(watch("stock"))} en stock
+                        </span>
+                      )}
+                      {watch("stock") !== undefined && Number(watch("stock")) <= 5 && Number(watch("stock")) > 0 && (
+                        <span className="bg-warning/10 text-warning px-3 py-1 rounded-full text-sm font-medium">
+                          ⚠️ Stock limitado
+                        </span>
+                      )}
+                      {watch("stock") === 0 && (
+                        <span className="bg-error/10 text-error px-3 py-1 rounded-full text-sm font-medium">
+                          ✗ Sin stock
+                        </span>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      {watch("salePrice") && Number(watch("salePrice")) > 0 ? (
+
+                    {/* Precio */}
+                    <div className="space-y-2 py-4 border-y border-muted">
+                      {watchDiscountPercentage && watchDiscountPercentage > 0 && calculatedSalePrice ? (
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold text-success">
-                              {formatCurrency(Number(watch("salePrice")))}
+                          <div className="flex items-center gap-3">
+                            <span className="text-3xl font-bold text-success">
+                              {formatPriceARS(Number(calculatedSalePrice))}
                             </span>
-                            {discountPercentage > 0 && (
-                              <span className="bg-error text-white px-2 py-1 rounded text-sm font-bold">
-                                -{discountPercentage}%
-                              </span>
-                            )}
+                            <span className="bg-error text-white px-2.5 py-1 rounded-lg text-sm font-bold">
+                              -{watchDiscountPercentage}% OFF
+                            </span>
                           </div>
                           <span className="text-lg text-muted-foreground line-through">
-                            {formatCurrency(Number(watch("price") || 0))}
+                            {formatPriceARS(Number(watch("price") || 0))}
                           </span>
+                          <p className="text-sm text-success font-medium">
+                            ¡Ahorrás {formatPriceARS(Number(watch("price") || 0) - Number(calculatedSalePrice))}!
+                          </p>
                         </div>
                       ) : (
-                        <span className="text-2xl font-bold">
-                          {formatCurrency(Number(watch("price") || 0))}
+                        <span className="text-3xl font-bold text-primary">
+                          {formatPriceARS(Number(watch("price") || 0))}
                         </span>
                       )}
                     </div>
-                    <p className="text-muted-foreground">
-                      {watch("description") ||
-                        "Descripción del producto aparecerá aquí..."}
-                    </p>
+
+                    {/* Descripción */}
+                    <div>
+                      <p className="text-primary/90 leading-relaxed">
+                        {watch("description") || "Descripción del producto aparecerá aquí..."}
+                      </p>
+                    </div>
+
+                    {/* Características */}
+                    {features.length > 0 && (
+                      <div className="bg-surface-secondary p-4 rounded-lg">
+                        <p className="font-semibold mb-2 flex items-center gap-2">
+                          <List className="h-4 w-4" />
+                          Características
+                        </p>
+                        <ul className="space-y-1.5">
+                          {features.map((feature, index) => (
+                            <li key={`feat-${index}`} className="flex items-start gap-2 text-sm">
+                              <span className="text-success mt-1">✓</span>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Talles */}
                     {sizes.length > 0 && (
                       <div>
-                        <p className="font-medium mb-2">Talles:</p>
+                        <p className="font-semibold mb-2 flex items-center gap-2">
+                          <Ruler className="h-4 w-4" />
+                          Talles Disponibles
+                        </p>
                         <div className="flex flex-wrap gap-2">
                           {sizes.map((size, index) => (
                             <span
-                              key={`item-${index}`}
-                              className="px-3 py-1 border rounded-md text-sm"
+                              key={`size-${index}`}
+                              className="px-4 py-2 border-2 border-muted rounded-lg text-sm font-medium hover:border-primary transition-colors"
                             >
                               {size}
                             </span>
@@ -966,23 +1311,39 @@ export default function ProductForm({
                         </div>
                       </div>
                     )}
+
+                    {/* Colores */}
                     {colors.length > 0 && (
                       <div>
-                        <p className="font-medium mb-2">Colores:</p>
-                        <div className="flex flex-wrap gap-2">
+                        <p className="font-semibold mb-2 flex items-center gap-2">
+                          <Palette className="h-4 w-4" />
+                          Colores Disponibles
+                        </p>
+                        <div className="flex flex-wrap gap-3">
                           {colors.map((color, index) => (
                             <div
-                              key={`item-${index}`}
-                              className="flex items-center gap-1"
+                              key={`color-${index}`}
+                              className="flex items-center gap-2 px-3 py-1.5 bg-surface-secondary rounded-full border border-muted"
                             >
-                              <ColorChip color={color} />
-                              <span className="text-sm">{color}</span>
+                              <ColorChip color={color} size="sm" />
+                              <span className="text-sm font-medium">{color}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Nota Informativa */}
+                <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <p className="text-sm text-muted-foreground flex items-start gap-2">
+                    <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <span>
+                      Esta es una vista previa de cómo se verá el producto en la tienda.
+                      Verifica que toda la información sea correcta antes de guardar.
+                    </span>
+                  </p>
                 </div>
               </div>
             </CardContent>

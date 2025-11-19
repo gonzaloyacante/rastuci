@@ -8,5 +8,11 @@
   "installCommand": "yarn install",
   "github": {
     "autoAlias": false
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/tracking-notifications",
+      "schedule": "*/15 * * * *"
+    }
+  ]
 }

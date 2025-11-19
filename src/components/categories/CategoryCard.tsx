@@ -6,20 +6,25 @@ import { memo } from "react";
 interface CategoryCardProps {
   category: Category;
   displayMode?: "image" | "icon";
+  href?: string | null; // if null, render as non-clickable card (useful for admin)
 }
 
 export const CategoryCard = memo(function CategoryCard({
   category,
   displayMode = "image",
+  href,
 }: CategoryCardProps) {
   const img = category.image;
   const showIcon = !(displayMode === "image" && img);
 
+  const Wrapper: React.ElementType = href === null ? "div" : Link;
+  const wrapperProps: Record<string, any> = href === null ? {} : { href: href ?? `/productos?categoryId=${category.id}` };
+
   return (
-    <Link
-      href={`/productos?categoryId=${category.id}`}
+    <Wrapper
+      {...wrapperProps}
       className="group relative flex flex-col justify-end overflow-hidden rounded-xl aspect-3/4 text-white transition-transform duration-200 hover:scale-105 mx-auto text-center"
-      aria-label={`Ver productos de la categoría ${category.name}`}
+      aria-label={href === null ? undefined : `Ver productos de la categoría ${category.name}`}
     >
       {/* Background image (only if available) */}
       {displayMode === "image" && img ? (
@@ -68,6 +73,6 @@ export const CategoryCard = memo(function CategoryCard({
           </svg>
         </div>
       </div>
-    </Link>
+    </Wrapper>
   );
 });

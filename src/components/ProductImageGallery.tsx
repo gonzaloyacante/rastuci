@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -46,7 +46,7 @@ export default function ProductImageGallery({
     >
       {/* Imagen principal */}
       <div
-        className="relative w-full aspect-square md:h-96 surface border border-muted rounded-lg overflow-hidden group"
+        className="relative w-full aspect-square surface border border-muted rounded-lg overflow-hidden group"
         style={{ position: "relative" }}
       >
         <Image
@@ -112,7 +112,7 @@ export default function ProductImageGallery({
                 }
                 aria-label={`Seleccionar imagen ${index + 1} de ${productName}`}
                 aria-current={index === selectedImage ? "true" : "false"}
-                className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                className={`relative w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                   index === selectedImage
                     ? "border-primary ring-2"
                     : "border-muted hover:border-muted"

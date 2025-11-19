@@ -254,6 +254,182 @@ Titular: APRO (para aprobado)
 
 ---
 
+## 📦 **Integración con Correo Argentino (MiCorreo API)**
+
+Rastuci incluye integración completa con **Correo Argentino** a través de la API MiCorreo, permitiendo cotización de envíos, importación de pedidos y tracking en tiempo real.
+
+### **🔑 Configuración de Credenciales**
+
+1. **Obtener Credenciales**:
+   - Registrarse en el portal MiCorreo de Correo Argentino
+   - Solicitar credenciales de API (username + password)
+   - Obtener Customer ID desde el portal
+
+2. **Configurar Variables de Entorno**:
+```env
+# Correo Argentino (MiCorreo API)
+# Ambiente de Testing (desarrollo)
+CORREO_ARGENTINO_API_URL="https://apitest.correoargentino.com.ar/micorreo/v1"
+
+# Ambiente de Producción (comentar en desarrollo)
+# CORREO_ARGENTINO_API_URL="https://api.correoargentino.com.ar/micorreo/v1"
+
+# Credenciales (solicitar a Correo Argentino)
+CORREO_ARGENTINO_USERNAME="YOUR_USERNAME_HERE"
+CORREO_ARGENTINO_PASSWORD="YOUR_PASSWORD_HERE"
+CORREO_ARGENTINO_CUSTOMER_ID="YOUR_CUSTOMER_ID_HERE"
+
+# Datos de la tienda (remitente)
+STORE_NAME="Rastuci"
+STORE_ADDRESS="Calle Ejemplo 123"
+STORE_CITY="CABA"
+STORE_PROVINCE="C"
+STORE_POSTAL_CODE="1425"
+STORE_PHONE="1122334455"
+STORE_EMAIL="info@rastuci.com.ar"
+```
+
+### **🚀 Flujo Completo: Checkout → Import → Tracking**
+
+#### **1. Cotización de Envío** (`/api/shipping/calculate`)
+El sistema calcula automáticamente el costo de envío durante el checkout:
+```typescript
+// Cliente selecciona productos y dirección
+// → API calcula rates con Correo Argentino
+// → Muestra opciones de envío (domicilio/sucursal)
+// → Cliente elige opción
+```
+
+#### **2. Importación de Pedido** (`/api/checkout`)
+Cuando el cliente confirma el pedido:
+```typescript
+// 1. Se crea el Order en la DB
+// 2. Se llama a correoArgentinoService.importShipment()
+// 3. Se recibe tracking number y shipment ID
+// 4. Se actualiza Order con caTrackingNumber y caShipmentId
+```
+
+#### **3. Tracking en Tiempo Real** (`/api/admin/tracking`)
+Admin y cliente pueden seguir el envío:
+```typescript
+// Panel Admin: /admin/tracking
+// - GET /api/admin/tracking → obtiene tracking de ambos proveedores (OCA + CA)
+// - POST /api/admin/tracking?action=refresh → sincroniza estados
+// - Muestra historial de eventos de tracking
+
+// Cliente: /tracking
+// - Ingresa número de tracking
+// - Sistema detecta proveedor (OCA o CA)
+// - Muestra estado actual y eventos
+```
+
+### **📡 APIs Disponibles**
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/shipping/calculate` | POST | Calcula tarifas de envío con CA |
+| `/api/checkout` | POST | Crea order e importa envío a CA |
+| `/api/admin/tracking` | GET | Obtiene tracking de pedidos (dual-provider) |
+| `/api/admin/tracking` | POST | Sincroniza estados desde CA API |
+| `/api/admin/sucursales-ca/sync` | POST | Sincroniza sucursales a DB local |
+
+### **🏢 Gestión de Sucursales**
+
+El sistema permite gestionar sucursales de Correo Argentino:
+```typescript
+// Panel Admin: /admin/sucursales-ca
+// - Cargar sucursales por provincia desde API
+// - Buscar y filtrar sucursales
+// - Exportar a CSV
+// - Sincronizar a base de datos local
+```
+
+Componente para selección de sucursales en checkout:
+```tsx
+import { AgencySelector } from '@/components/checkout/AgencySelector';
+
+<AgencySelector
+  province="B"
+  onSelect={(agency) => handleAgencySelect(agency)}
+/>
+```
+
+### **🔧 Servicios y Hooks**
+
+**Servicio completo** (`src/lib/correo-argentino-service.ts`):
+```typescript
+import { correoArgentinoService } from '@/lib/correo-argentino-service';
+
+// Autenticación
+await correoArgentinoService.authenticate();
+
+// Calcular tarifas
+const rates = await correoArgentinoService.calculateRates({
+  customerId, postalCodeOrigin, postalCodeDestination,
+  deliveredType: 'D', dimensions: { weight, height, width, length }
+});
+
+// Importar envío
+const shipment = await correoArgentinoService.importShipment({
+  customerId, extOrderId, sender, recipient, deliveredType, packages
+});
+
+// Obtener tracking
+const tracking = await correoArgentinoService.getTracking({
+  shippingId: trackingNumber
+});
+
+// Obtener sucursales
+const agencies = await correoArgentinoService.getAgencies({
+  province: 'B'
+});
+```
+
+**Hook para React** (`src/hooks/useCorreoArgentino.ts`):
+```tsx
+import { useCorreoArgentino } from '@/hooks';
+
+function MyComponent() {
+  const {
+    authenticate, calculateRates, importShipment,
+    getTracking, getAgencies, loading, error
+  } = useCorreoArgentino();
+
+  // Usar métodos con manejo automático de estado
+}
+```
+
+### **📊 Modelos de Base de Datos**
+
+El sistema incluye 5 modelos para Correo Argentino:
+- **CACustomer**: Clientes registrados en MiCorreo
+- **CAShippingRate**: Cotizaciones de envío
+- **CAShipment**: Envíos importados
+- **CATrackingEvent**: Eventos de tracking
+- **CAAgency**: Sucursales de Correo Argentino
+
+Además, el modelo **Order** se extiende con 40+ campos para datos de CA (sender, recipient, shipping, package details).
+
+### **📈 Analytics**
+
+Panel de analytics con comparativa OCA vs Correo Argentino:
+```
+/admin/shipping-analytics
+- Tiempo promedio de entrega por proveedor
+- Tasa de entregas a tiempo
+- Costos promedio
+- Performance por región
+```
+
+### **🧪 Testing**
+
+Tests unitarios completos para el servicio:
+```bash
+yarn test tests/lib/correo-argentino-service.test.ts
+```
+
+---
+
 ## 🤝 **Contribuir**
 
 ¡Las contribuciones son bienvenidas! Este proyecto está diseñado para ser un ejemplo de calidad y una base sólida para proyectos reales.

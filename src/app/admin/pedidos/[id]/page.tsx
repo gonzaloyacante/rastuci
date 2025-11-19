@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { ArrowLeft, CheckCircle, Package, Printer, Truck } from "lucide-react";
+import { useCorreoArgentino } from "@/hooks";
+import { ArrowLeft, CheckCircle, MapPin, Package, Printer, RefreshCw, Send, Truck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -54,6 +55,19 @@ interface Order {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+  // Campos Correo Argentino
+  caTrackingNumber?: string;
+  caShipmentId?: string;
+  caExtOrderId?: string;
+  shippingMethod?: string;
+  shippingStreet?: string;
+  shippingNumber?: string;
+  shippingFloor?: string;
+  shippingApartment?: string;
+  shippingCity?: string;
+  shippingProvince?: string;
+  shippingPostalCode?: string;
+  shippingAgency?: string;
 }
 
 const statusInfo = {
@@ -77,7 +91,10 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [trackingInfo, setTrackingInfo] = useState<any>(null);
+  const [loadingTracking, setLoadingTracking] = useState(false);
   const orderId = params.id as string;
+  const { getTracking, importShipment, loading: caLoading } = useCorreoArgentino();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -181,14 +198,108 @@ export default function OrderDetailPage() {
 
   const getProductImage = (item: OrderItem) => {
     if (!item.product.images) {
-      return "/placeholder.jpg";
+      return "https://placehold.co/800x800.png";
     }
 
     if (Array.isArray(item.product.images) && item.product.images.length > 0) {
       return item.product.images[0];
     }
 
-    return "/placeholder.jpg";
+    return "https://placehold.co/800x800.png";
+  };
+
+  const handleGetTracking = async () => {
+    if (!order?.caTrackingNumber) {
+      toast.error("No hay número de tracking de Correo Argentino");
+      return;
+    }
+
+    setLoadingTracking(true);
+    try {
+      const result = await getTracking(order.caTrackingNumber);
+      if (result) {
+        setTrackingInfo(result);
+        toast.success("Información de tracking obtenida");
+      } else {
+        toast.error("No se pudo obtener información de tracking");
+      }
+    } catch (err) {
+      logger.error("Error al obtener tracking", { error: err });
+      toast.error("Error al obtener tracking");
+    } finally {
+      setLoadingTracking(false);
+    }
+  };
+
+  const handleImportShipment = async () => {
+    if (!order) {return;}
+
+    if (order.caShipmentId) {
+      toast.error("Este pedido ya tiene un envío importado en Correo Argentino");
+      return;
+    }
+
+    if (!order.shippingStreet || !order.shippingCity || !order.shippingProvince || !order.shippingPostalCode) {
+      toast.error("El pedido no tiene dirección completa de envío");
+      return;
+    }
+
+    try {
+      // Calcular peso total de productos (1kg por defecto por producto)
+      const totalWeight = order.items.reduce((sum, item) => sum + (item.quantity * 1000), 0);
+
+      const shipmentData = {
+        externalOrderId: order.id,
+        deliveryType: order.shippingMethod === 'S' ? 'S' as const : 'D' as const,
+        recipient: {
+          name: order.customerName,
+          phone: order.customerPhone,
+          address: {
+            street: order.shippingStreet,
+            number: order.shippingNumber || "SN",
+            floor: order.shippingFloor,
+            apartment: order.shippingApartment,
+            city: order.shippingCity,
+            province: order.shippingProvince,
+            postalCode: order.shippingPostalCode
+          }
+        },
+        packages: [{
+          weight: totalWeight,
+          height: 10,
+          width: 20,
+          length: 30
+        }],
+        agencyCode: order.shippingAgency
+      };
+
+      const result = await importShipment(shipmentData);
+
+      if (result) {
+        // Actualizar orden con información de CA
+        await fetch(`/api/orders/${orderId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            caTrackingNumber: result.trackingNumber,
+            caShipmentId: result.shipmentId,
+            caExtOrderId: order.id
+          })
+        });
+
+        setOrder({
+          ...order,
+          caTrackingNumber: result.trackingNumber,
+          caShipmentId: result.shipmentId,
+          caExtOrderId: order.id
+        });
+
+        toast.success("Envío importado correctamente en Correo Argentino");
+      }
+    } catch (err) {
+      logger.error("Error al importar envío", { error: err });
+      toast.error("Error al importar envío en Correo Argentino");
+    }
   };
 
   if (loading) {
@@ -378,6 +489,80 @@ export default function OrderDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Correo Argentino */}
+          {(order.caTrackingNumber || order.shippingStreet) && (
+            <Card>
+              <CardHeader className="surface border-b border-muted">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Truck size={18} />
+                  Correo Argentino
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3">
+                  {order.caTrackingNumber && (
+                    <div>
+                      <h3 className="text-sm font-medium muted">Tracking</h3>
+                      <p className="text-sm font-mono">{order.caTrackingNumber}</p>
+                      <Button
+                        variant="outline"
+                        className="w-full mt-2"
+                        onClick={handleGetTracking}
+                        disabled={loadingTracking}
+                      >
+                        {loadingTracking ? (
+                          <RefreshCw size={16} className="mr-2 animate-spin" />
+                        ) : (
+                          <MapPin size={16} className="mr-2" />
+                        )}
+                        Rastrear Envío
+                      </Button>
+                    </div>
+                  )}
+                  {trackingInfo && (
+                    <div className="p-3 surface-secondary rounded text-sm">
+                      <p><strong>Estado:</strong> {trackingInfo.status}</p>
+                      <p><strong>Ubicación:</strong> {trackingInfo.location}</p>
+                      <p><strong>Fecha:</strong> {new Date(trackingInfo.date).toLocaleString('es-AR')}</p>
+                    </div>
+                  )}
+                  {!order.caShipmentId && order.shippingStreet && (
+                    <div>
+                      <h3 className="text-sm font-medium muted mb-2">Dirección de Envío</h3>
+                      <p className="text-sm">
+                        {order.shippingStreet} {order.shippingNumber}
+                        {order.shippingFloor && `, Piso ${order.shippingFloor}`}
+                        {order.shippingApartment && `, Depto ${order.shippingApartment}`}
+                      </p>
+                      <p className="text-sm">
+                        {order.shippingCity}, {order.shippingProvince}
+                      </p>
+                      <p className="text-sm">CP: {order.shippingPostalCode}</p>
+                      <Button
+                        className="w-full mt-3 btn-hero"
+                        onClick={handleImportShipment}
+                        disabled={caLoading}
+                      >
+                        {caLoading ? (
+                          <RefreshCw size={16} className="mr-2 animate-spin" />
+                        ) : (
+                          <Send size={16} className="mr-2" />
+                        )}
+                        Importar a Correo Argentino
+                      </Button>
+                    </div>
+                  )}
+                  {order.caShipmentId && (
+                    <div className="p-3 surface text-success border border-success rounded-lg text-sm">
+                      <p><strong>ID Envío:</strong> {order.caShipmentId}</p>
+                      <p className="text-xs mt-1">Envío registrado en Correo Argentino</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Acciones */}
           <Card>

@@ -64,7 +64,7 @@ RESUMEN_*.md
 /docs/internal/
 
 # scripts privados y temporales
-/scripts/
+/scripts/*
 create-admin.ts
 reset-admin-password.ts
 /script/create-admin.ts

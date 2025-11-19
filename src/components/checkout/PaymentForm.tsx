@@ -1,18 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { EnhancedForm, FormField } from '@/components/forms/EnhancedForm';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/Badge';
+import { CardData, paymentManager, PaymentMethod } from '@/lib/payment';
 import {
-  CreditCard,
-  Lock,
-  AlertCircle,
+    AlertCircle,
+    CreditCard,
+    Lock,
 } from "lucide-react";
-import { paymentManager, PaymentMethod, CardData } from '@/lib/payment';
-import { EnhancedForm, FormField } from '@/components/forms/EnhancedForm';
-import { z } from 'zod';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { z } from 'zod';
 
 const cardSchema = z.object({
   holderName: z.string().min(2, 'Nombre del titular requerido'),
@@ -44,7 +44,7 @@ export function PaymentForm({
 
   const handleCardPayment = async (data: z.infer<typeof cardSchema>) => {
     setProcessing(true);
-    
+
     try {
       const cardInfo: CardData = {
         number: data.number.replace(/\s/g, ''),
@@ -79,7 +79,7 @@ export function PaymentForm({
 
   const handlePayPalPayment = async () => {
     setProcessing(true);
-    
+
     try {
       const result = await paymentManager.processPayment('paypal', {
         amount,
@@ -105,7 +105,7 @@ export function PaymentForm({
 
   const handleBankTransfer = async () => {
     setProcessing(true);
-    
+
     try {
       const result = await paymentManager.processPayment('bank_transfer', {
         amount,
@@ -153,8 +153,8 @@ export function PaymentForm({
               key={method.id}
               className={`
                 flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition-all
-                ${selectedMethod === method.id 
-                  ? 'border-primary bg-primary/5' 
+                ${selectedMethod === method.id
+                  ? 'border-primary bg-primary/5'
                   : 'border-muted hover:border-primary/50'
                 }
               `}
@@ -167,13 +167,13 @@ export function PaymentForm({
                 onChange={(e) => setSelectedMethod(e.target.value)}
                 className="sr-only"
               />
-              
+
               <div className="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center">
                 {selectedMethod === method.id && (
                   <div className="w-3 h-3 rounded-full bg-primary"></div>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-3 flex-1">
                 <div className="w-8 h-8 flex items-center justify-center">
                   {method.type === 'card' && <CreditCard className="w-5 h-5" />}
@@ -182,7 +182,7 @@ export function PaymentForm({
                 </div>
                 <span className="font-medium">{method.name}</span>
               </div>
-              
+
               {method.enabled && (
                 <Badge variant="success" className="text-xs">Disponible</Badge>
               )}
@@ -208,7 +208,7 @@ export function PaymentForm({
             {({ register, errors, watch }) => {
               const watchedNumber = watch('number') || '';
               const cardType = getCardType(watchedNumber);
-              
+
               return (
                 <>
                   <FormField
@@ -306,7 +306,7 @@ export function PaymentForm({
                   </div>
 
                   <div className="flex items-start gap-3 p-3 surface border border-info rounded">
-                    <AlertCircle className="w-5 h-5 text-info mt-0.5 flex-shrink-0" />
+                    <AlertCircle className="w-5 h-5 text-info mt-0.5 shrink-0" />
                     <div className="text-sm text-info">
                       <p className="font-medium">Información Segura</p>
                       <p>Tus datos de pago están protegidos con encriptación de nivel bancario.</p>
@@ -330,7 +330,7 @@ export function PaymentForm({
               Serás redirigido a PayPal para completar tu pago de forma segura.
             </p>
           </div>
-          
+
           <Button
             onClick={handlePayPalPayment}
             disabled={processing}
@@ -377,7 +377,7 @@ export function PaymentForm({
 
           <div className="mt-4 p-3 surface border border-warning rounded">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-warning mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-warning mt-0.5 shrink-0" />
               <div className="text-sm text-warning">
                 <p className="font-medium">Importante:</p>
                 <p>Incluye el número de pedido en el concepto de la transferencia para identificar tu pago.</p>
