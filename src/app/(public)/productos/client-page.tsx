@@ -1,6 +1,6 @@
 "use client";
 
-import ProductCard from "@/components/ProductCard";
+import ProductCard from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -23,26 +23,34 @@ interface ProductsPageClientProps {
 }
 
 const ProductGridSkeleton = () => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
     {[...Array(12)].map(() => (
       <ProductCardSkeleton key={`product-card-skeleton-${Math.random()}`} />
     ))}
   </div>
 );
 
-export default function ProductsPageClient({ searchParams }: ProductsPageClientProps) {
+export default function ProductsPageClient({
+  searchParams,
+}: ProductsPageClientProps) {
   const router = useRouter();
   const { categories, isLoading: categoriesLoading } = useCategories();
 
   // Estados locales
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Estados sincronizados con URL
   const [searchInput, setSearchInput] = useState(searchParams.buscar || "");
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.categoria || "");
+  const [selectedCategory, setSelectedCategory] = useState(
+    searchParams.categoria || ""
+  );
   const [sortBy, setSortBy] = useState(searchParams.sortBy || "createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(searchParams.sortOrder || "desc");
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.pagina) || 1);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(
+    searchParams.sortOrder || "desc"
+  );
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.pagina) || 1
+  );
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
@@ -60,26 +68,49 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
     params.set("limit", "12");
     params.set("sortBy", sortBy);
     params.set("sortOrder", sortOrder);
-    if (debouncedSearch) {params.set("search", debouncedSearch);}
-    if (selectedCategory) {params.set("categoryId", selectedCategory);}
+    if (debouncedSearch) {
+      params.set("search", debouncedSearch);
+    }
+    if (selectedCategory) {
+      params.set("categoryId", selectedCategory);
+    }
     return `/api/products?${params.toString()}`;
   }, [currentPage, sortBy, sortOrder, debouncedSearch, selectedCategory]);
 
   // Actualizar URL cuando cambien los filtros
   useEffect(() => {
     const params = new URLSearchParams();
-    if (debouncedSearch) {params.set("buscar", debouncedSearch);}
-    if (selectedCategory) {params.set("categoria", selectedCategory);}
-    if (sortBy !== "createdAt") {params.set("sortBy", sortBy);}
-    if (sortOrder !== "desc") {params.set("sortOrder", sortOrder);}
-    if (currentPage > 1) {params.set("pagina", currentPage.toString());}
+    if (debouncedSearch) {
+      params.set("buscar", debouncedSearch);
+    }
+    if (selectedCategory) {
+      params.set("categoria", selectedCategory);
+    }
+    if (sortBy !== "createdAt") {
+      params.set("sortBy", sortBy);
+    }
+    if (sortOrder !== "desc") {
+      params.set("sortOrder", sortOrder);
+    }
+    if (currentPage > 1) {
+      params.set("pagina", currentPage.toString());
+    }
 
-    const newUrl = params.toString() ? `/productos?${params.toString()}` : "/productos";
+    const newUrl = params.toString()
+      ? `/productos?${params.toString()}`
+      : "/productos";
     router.replace(newUrl, { scroll: false });
-  }, [debouncedSearch, selectedCategory, sortBy, sortOrder, currentPage, router]);
+  }, [
+    debouncedSearch,
+    selectedCategory,
+    sortBy,
+    sortOrder,
+    currentPage,
+    router,
+  ]);
 
   // Fetch de productos con SWR
-  const fetcher = (url: string) => fetch(url).then(res => res.json());
+  const fetcher = (url: string) => fetch(url).then((res) => res.json());
   const { data, isLoading, error } = useSWR(apiUrl, fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 30000, // 30 segundos
@@ -157,11 +188,13 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
       <div className="min-h-screen surface">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-error mb-4">Error al cargar productos</h1>
-            <p className="muted mb-4">Ocurrió un problema al cargar los productos. Inténtalo nuevamente.</p>
-            <Button onClick={() => window.location.reload()}>
-              Reintentar
-            </Button>
+            <h1 className="text-2xl font-bold text-error mb-4">
+              Error al cargar productos
+            </h1>
+            <p className="muted mb-4">
+              Ocurrió un problema al cargar los productos. Inténtalo nuevamente.
+            </p>
+            <Button onClick={() => window.location.reload()}>Reintentar</Button>
           </div>
         </div>
       </div>
@@ -181,7 +214,7 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Buscar productos..."
                 className="text-sm"
               />
@@ -213,15 +246,15 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
           <div className="flex justify-between items-center">
             <div className="flex gap-1">
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-primary text-white' : 'surface muted hover:bg-surface-secondary'}`}
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-primary text-white" : "surface muted hover:bg-surface-secondary"}`}
                 title="Vista de cuadrícula"
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-primary text-white' : 'surface muted hover:bg-surface-secondary'}`}
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded-lg transition-colors ${viewMode === "list" ? "bg-primary text-white" : "surface muted hover:bg-surface-secondary"}`}
                 title="Vista de lista"
               >
                 <List className="w-4 h-4" />
@@ -242,7 +275,9 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
             {/* Sidebar de filtros - siempre visible en desktop */}
             <aside className="w-80 shrink-0">
               <div className="sticky top-24 surface border border-muted rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-primary mb-6">Filtros</h2>
+                <h2 className="text-lg font-semibold text-primary mb-6">
+                  Filtros
+                </h2>
 
                 {/* Búsqueda */}
                 <div className="mb-6">
@@ -254,7 +289,7 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                       type="text"
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                       placeholder="Nombre, descripción..."
                       className="text-sm"
                     />
@@ -276,8 +311,8 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                         onClick={() => handleCategoryChange(category.value)}
                         className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
                           selectedCategory === category.value
-                            ? 'bg-primary text-white'
-                            : 'surface hover:bg-surface-secondary'
+                            ? "bg-primary text-white"
+                            : "surface hover:bg-surface-secondary"
                         }`}
                       >
                         {category.label}
@@ -320,13 +355,16 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                 <div className="flex items-center gap-4">
                   <span className="text-sm muted">
                     {isLoading ? (
-                      <span className="animate-pulse">Cargando productos...</span>
+                      <span className="animate-pulse">
+                        Cargando productos...
+                      </span>
                     ) : (
                       <>
-                        {totalProducts === 0 ? 'No se encontraron productos' :
-                         totalProducts === 1 ? '1 producto encontrado' :
-                         `${totalProducts} productos encontrados`
-                        }
+                        {totalProducts === 0
+                          ? "No se encontraron productos"
+                          : totalProducts === 1
+                            ? "1 producto encontrado"
+                            : `${totalProducts} productos encontrados`}
                       </>
                     )}
                   </span>
@@ -335,15 +373,15 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                 <div className="flex items-center gap-2">
                   <span className="text-sm muted mr-2">Vista:</span>
                   <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-primary text-white' : 'surface muted hover:bg-surface-secondary'}`}
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-primary text-white" : "surface muted hover:bg-surface-secondary"}`}
                     title="Vista de cuadrícula"
                   >
                     <Grid className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-primary text-white' : 'surface muted hover:bg-surface-secondary'}`}
+                    onClick={() => setViewMode("list")}
+                    className={`p-2 rounded-lg transition-colors ${viewMode === "list" ? "bg-primary text-white" : "surface muted hover:bg-surface-secondary"}`}
                     title="Vista de lista"
                   >
                     <List className="w-4 h-4" />
@@ -364,9 +402,8 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                   </h3>
                   <p className="muted mb-6 max-w-md mx-auto">
                     {hasActiveFilters
-                      ? 'Intenta ajustar los filtros de búsqueda o explorar otras categorías'
-                      : 'No hay productos disponibles en este momento'
-                    }
+                      ? "Intenta ajustar los filtros de búsqueda o explorar otras categorías"
+                      : "No hay productos disponibles en este momento"}
                   </p>
                   {hasActiveFilters && (
                     <Button onClick={clearFilters} variant="hero">
@@ -376,11 +413,13 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                 </div>
               ) : (
                 <>
-                  <div className={`grid gap-6 mb-8 ${
-                    viewMode === 'grid'
-                      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
-                      : 'grid-cols-1 max-w-4xl'
-                  }`}>
+                  <div
+                    className={`grid gap-6 mb-8 ${
+                      viewMode === "grid"
+                        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                        : "grid-cols-1 max-w-4xl"
+                    }`}
+                  >
                     {products.map((product) => (
                       <ProductCard
                         key={product.id}
@@ -402,27 +441,34 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                       </Button>
 
                       <div className="flex gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                          const page = currentPage <= 3 ? i + 1 :
-                                       currentPage >= totalPages - 2 ? totalPages - 4 + i :
-                                       currentPage - 2 + i;
+                        {Array.from({ length: Math.min(5, totalPages) }).map(
+                          (_, i) => {
+                            const page =
+                              currentPage <= 3
+                                ? i + 1
+                                : currentPage >= totalPages - 2
+                                  ? totalPages - 4 + i
+                                  : currentPage - 2 + i;
 
-                          if (page < 1 || page > totalPages) {return null;}
+                            if (page < 1 || page > totalPages) {
+                              return null;
+                            }
 
-                          return (
-                            <button
-                              key={page}
-                              onClick={() => handlePageChange(page)}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                page === currentPage
-                                  ? 'bg-primary text-white'
-                                  : 'surface muted hover:text-primary'
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          );
-                        })}
+                            return (
+                              <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  page === currentPage
+                                    ? "bg-primary text-white"
+                                    : "surface muted hover:text-primary"
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            );
+                          }
+                        )}
                       </div>
 
                       <Button
@@ -437,7 +483,8 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
 
                   {/* Info de paginación */}
                   <div className="text-center mt-4 text-sm muted">
-                    Página {currentPage} de {totalPages} - {totalProducts} productos en total
+                    Página {currentPage} de {totalPages} - {totalProducts}{" "}
+                    productos en total
                   </div>
                 </>
               )}
@@ -463,7 +510,10 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                   onClick={() => setSelectedCategory("")}
                   className="inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full surface text-primary border border-primary hover:bg-primary hover:text-white transition-colors"
                 >
-                  <span>{categories.find(c => c.id === selectedCategory)?.name || ''}</span>
+                  <span>
+                    {categories.find((c) => c.id === selectedCategory)?.name ||
+                      ""}
+                  </span>
                   <span>×</span>
                 </button>
               )}
@@ -485,9 +535,8 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
               </h3>
               <p className="muted mb-6 max-w-md mx-auto">
                 {hasActiveFilters
-                  ? 'Intenta ajustar los filtros de búsqueda o explorar otras categorías'
-                  : 'No hay productos disponibles en este momento'
-                }
+                  ? "Intenta ajustar los filtros de búsqueda o explorar otras categorías"
+                  : "No hay productos disponibles en este momento"}
               </p>
               {hasActiveFilters && (
                 <Button onClick={clearFilters} variant="hero">
@@ -497,11 +546,13 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
             </div>
           ) : (
             <>
-              <div className={`grid gap-6 mb-8 ${
-                viewMode === 'grid'
-                  ? 'grid-cols-1 sm:grid-cols-2'
-                  : 'grid-cols-1 max-w-2xl mx-auto'
-              }`}>
+              <div
+                className={`grid gap-6 mb-8 ${
+                  viewMode === "grid"
+                    ? "grid-cols-1 sm:grid-cols-2"
+                    : "grid-cols-1 max-w-2xl mx-auto"
+                }`}
+              >
                 {products.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -524,27 +575,34 @@ export default function ProductsPageClient({ searchParams }: ProductsPageClientP
                   </Button>
 
                   <div className="flex gap-1">
-                    {Array.from({ length: Math.min(3, totalPages) }).map((_, i) => {
-                      const page = currentPage <= 2 ? i + 1 :
-                                   currentPage >= totalPages - 1 ? totalPages - 2 + i :
-                                   currentPage - 1 + i;
+                    {Array.from({ length: Math.min(3, totalPages) }).map(
+                      (_, i) => {
+                        const page =
+                          currentPage <= 2
+                            ? i + 1
+                            : currentPage >= totalPages - 1
+                              ? totalPages - 2 + i
+                              : currentPage - 1 + i;
 
-                      if (page < 1 || page > totalPages) {return null;}
+                        if (page < 1 || page > totalPages) {
+                          return null;
+                        }
 
-                      return (
-                        <button
-                          key={page}
-                          onClick={() => handlePageChange(page)}
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            page === currentPage
-                              ? 'bg-primary text-white'
-                              : 'surface muted hover:text-primary'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    })}
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              page === currentPage
+                                ? "bg-primary text-white"
+                                : "surface muted hover:text-primary"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      }
+                    )}
                   </div>
 
                   <Button

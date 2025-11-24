@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
+    qualities: [80],
     remotePatterns: [
       {
         protocol: "https",
@@ -102,7 +103,8 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))",
+        source:
+          "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))",
         headers: [
           {
             key: "Cache-Control",

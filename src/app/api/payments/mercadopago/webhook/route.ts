@@ -322,6 +322,105 @@ export async function POST(req: NextRequest) {
       return "PENDING" as const; // rejected/cancelled -> keep pending for manual review
     };
 
+    // 1. Try to find order by external_reference (our order.id)
+    if (payment.external_reference) {
+      const orderId = payment.external_reference;
+      const existingOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { items: true },
+      });
+
+      if (existingOrder) {
+        // Update existing order
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            mpPaymentId: mpPaymentId,
+            mpStatus: mpStatus,
+            status: mapStatus(mpStatus),
+            updatedAt: new Date(),
+          },
+        });
+
+        // If approved, decrement stock (if not already done)
+        // Note: We should ideally check if stock was already decremented to avoid double counting
+        // For now, we assume stock is decremented only when status changes to PROCESSED
+        if (
+          mapStatus(mpStatus) === "PROCESSED" &&
+          existingOrder.status !== "PROCESSED"
+        ) {
+          for (const item of existingOrder.items) {
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: { decrement: item.quantity },
+              },
+            });
+          }
+        }
+
+        logger.info("[MP webhook] Order updated via external_reference", {
+          orderId,
+          status: mpStatus,
+        });
+        return ok({ ok: true });
+      } else {
+        logger.warn(
+          "[MP webhook] external_reference provided but order not found",
+          {
+            orderId,
+          }
+        );
+      }
+    }
+
+    // 2. Fallback: Try to find by preference_id
+    if (preferenceId) {
+      const existingOrder = await prisma.order.findFirst({
+        where: { mpPreferenceId: preferenceId },
+        include: { items: true },
+      });
+
+      if (existingOrder) {
+        await prisma.order.update({
+          where: { id: existingOrder.id },
+          data: {
+            mpPaymentId: mpPaymentId,
+            mpStatus: mpStatus,
+            status: mapStatus(mpStatus),
+            updatedAt: new Date(),
+          },
+        });
+
+        if (
+          mapStatus(mpStatus) === "PROCESSED" &&
+          existingOrder.status !== "PROCESSED"
+        ) {
+          for (const item of existingOrder.items) {
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: { decrement: item.quantity },
+              },
+            });
+          }
+        }
+
+        logger.info("[MP webhook] Order updated via preference_id", {
+          orderId: existingOrder.id,
+          status: mpStatus,
+        });
+        return ok({ ok: true });
+      }
+    }
+
+    // 3. Legacy Fallback: Create order from metadata (retained for backward compatibility or edge cases)
+    // Only if we couldn't find it by ID
+    logger.info(
+      "[MP webhook] Order not found by ID, attempting creation from metadata",
+      { mpPaymentId }
+    );
+
     const customerName: string =
       payment.payer?.first_name && payment.payer?.last_name
         ? `${payment.payer.first_name} ${payment.payer.last_name}`
@@ -335,7 +434,7 @@ export async function POST(req: NextRequest) {
     // Idempotent upsert using mpPaymentId
     await prisma.$transaction(
       async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
-        // If order already exists, update status and return
+        // If order already exists (by payment ID), update status and return
         const existing = await tx.order.findFirst({
           where: { mpPaymentId: mpPaymentId },
         });

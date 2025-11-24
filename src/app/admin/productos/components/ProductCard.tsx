@@ -28,7 +28,7 @@ interface ProductCardProps {
 
 const ProductImagePlaceholder = ({ className }: { className?: string }) => (
   <div
-    className={`bg-linear-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
+    className={`bg-gradient-to-br from-muted/50 to-muted rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
   >
     <div className="text-center opacity-60">
       <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
@@ -66,7 +66,10 @@ const StockBadge = ({ stock }: { stock: number }) => {
   }
 
   return (
-    <Badge variant="success" className="flex items-center gap-1">
+    <Badge
+      variant="outline"
+      className="flex items-center gap-1 border-success text-success"
+    >
       <CheckCircle className="h-3 w-3" />
       Stock bueno ({stock})
     </Badge>
@@ -88,7 +91,7 @@ const PriceBadge = ({
     : 0;
 
   return (
-    <div className="space-y-1">
+    <div className="min-h-[48px] flex flex-col justify-center">
       {hasDiscount ? (
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -168,10 +171,10 @@ export default function ProductCard({
         {/* Badges Overlay */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {product.onSale && (
-            <Badge variant="error" className="shadow-lg">
-              <TrendingUp className="h-3 w-3 mr-1" />
+            <div className="bg-black/90 text-white px-2.5 py-1 rounded-md shadow-lg backdrop-blur-sm border border-white/10 flex items-center gap-1 text-xs font-semibold">
+              <TrendingUp className="h-3 w-3" />
               OFERTA
-            </Badge>
+            </div>
           )}
           {productImages.length > 1 && (
             <Badge variant="info" className="shadow-lg">
@@ -197,12 +200,25 @@ export default function ProductCard({
 
       {/* Content Section */}
       <div className="p-4 space-y-3">
-        {/* Header */}
+        {/* Header with Rating */}
         <div className="space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className="font-semibold text-base leading-tight line-clamp-2 flex-1 group-hover:text-primary transition-colors">
               {product.name}
             </h3>
+            {product.rating &&
+              product.reviewCount &&
+              product.reviewCount > 0 && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+                  <span className="text-sm font-medium">
+                    {product.rating.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({product.reviewCount})
+                  </span>
+                </div>
+              )}
           </div>
 
           {product.category && (
@@ -212,66 +228,47 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* Description */}
-        {product.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {product.description}
-          </p>
-        )}
-
         {/* Product Details */}
         <div className="space-y-2">
-          {/* Variants */}
-          <div className="flex flex-wrap gap-2 text-xs">
-            {product.sizes && product.sizes.length > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="text-muted-foreground">Talles:</span>
-                <span className="font-medium">
-                  {product.sizes.slice(0, 3).join(", ")}
-                  {product.sizes.length > 3 &&
-                    `... +${product.sizes.length - 3}`}
-                </span>
+          {/* Sizes - Show all */}
+          {product.sizes && product.sizes.length > 0 && (
+            <div>
+              <span className="text-xs text-muted-foreground mb-1 block">
+                Talles:
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {product.sizes.map((size, index) => (
+                  <Badge
+                    key={`size-${index}`}
+                    variant="outline"
+                    className="text-xs px-2 py-0.5"
+                  >
+                    {size}
+                  </Badge>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
+          {/* Colors */}
           {product.colors && product.colors.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Colores:</span>
               <div className="flex gap-1">
-                {product.colors.slice(0, 4).map((color, index) => (
+                {product.colors.map((color, index) => (
                   <div
-                    key={`item-${index}`}
+                    key={`color-${index}`}
                     className="w-4 h-4 rounded-full border border-muted"
                     style={{ backgroundColor: color.toLowerCase() }}
                     title={color}
                   />
                 ))}
-                {product.colors.length > 4 && (
-                  <div className="w-4 h-4 rounded-full border border-muted bg-muted flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground">+</span>
-                  </div>
-                )}
               </div>
             </div>
           )}
-        </div>
 
-        {/* Stock and Rating */}
-        <div className="flex items-center justify-between">
+          {/* Stock */}
           <StockBadge stock={product.stock} />
-
-          {product.rating && product.reviewCount && product.reviewCount > 0 && (
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-warning text-warning" />
-              <span className="text-sm font-medium">
-                {product.rating.toFixed(1)}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                ({product.reviewCount})
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Price */}

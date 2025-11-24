@@ -1,4 +1,4 @@
-import AppProviders from "@/components/AppProviders";
+import AppProviders from "@/components/providers/AppProviders";
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
@@ -76,11 +76,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from "next-auth";
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="es">
       <head>
@@ -99,7 +104,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} ${poppins.variable}`}>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders session={session}>{children}</AppProviders>
       </body>
     </html>
   );

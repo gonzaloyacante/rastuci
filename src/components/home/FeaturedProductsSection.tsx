@@ -1,7 +1,7 @@
-import { Product } from "@/types";
+import ProductCard from "@/components/products/ProductCard";
 import { ProductCardSkeleton as UISkeletonProductCard } from "@/components/ui/Skeleton";
-import ProductCard from "@/components/ProductCard";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
+import { Product } from "@/types";
 
 interface FeaturedProductsSectionProps {
   products: Product[];
@@ -21,7 +21,7 @@ export function FeaturedProductsSection({
           <h2 className="text-3xl font-bold text-center mb-10 font-montserrat">
             Productos en Oferta
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 w-fit mx-auto">
             {[...Array(4)].map((_, index) => (
               <UISkeletonProductCard key={`item-${index}`} />
             ))}
@@ -51,7 +51,7 @@ export function FeaturedProductsSection({
         <p className="text-center text-sm muted mb-10">
           {home?.featuredSubtitle || defaultHomeSettings.featuredSubtitle}
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 justify-center w-fit mx-auto">
           {products.map((product, index) => (
             <ProductCard
               key={product.id}

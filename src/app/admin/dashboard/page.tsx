@@ -3,6 +3,7 @@
 import { AdminError, AdminLoading } from "@/components/admin";
 import ModernDashboardCharts from "@/components/admin/dashboard/ModernDashboardCharts";
 import { useDashboard } from "@/hooks";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { motion } from "framer-motion";
 import {
   DollarSign,
@@ -16,6 +17,7 @@ import {
 import Link from "next/link";
 
 export default function AdminDashboard() {
+  useDocumentTitle({ title: "Dashboard" });
   const { stats, categoryData, monthlySales, loading, error } = useDashboard();
 
   if (loading) {

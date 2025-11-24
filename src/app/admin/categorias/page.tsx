@@ -7,15 +7,15 @@ import {
   AdminLoading,
   AdminPageHeader,
 } from "@/components/admin";
-import { useCategories } from "@/hooks";
 import { AdminTable } from "@/components/admin/AdminTable";
 import { Button } from "@/components/ui/Button";
+import CategoryIcon from "@/components/ui/CategoryIcon";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { useCategories, useDocumentTitle } from "@/hooks";
 import { logger } from "@/lib/logger";
 import { Edit3, Trash2 } from "lucide-react";
-import CategoryIcon from "@/components/ui/CategoryIcon";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -27,51 +27,76 @@ type CategoryRow = {
 };
 
 export default function AdminCategoriasPage() {
+  useDocumentTitle({ title: "Categorías" });
   const { categories = [], isLoading, error, mutate } = useCategories();
   const [searchInput, setSearchInput] = useState("");
   const router = useRouter();
   const { show } = useToast();
   const { confirm: confirmDialog, ConfirmDialog } = useConfirmDialog();
 
-  const filteredCategories = (categories || []).filter((category) =>
-    category.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-    (category.description &&
-      category.description.toLowerCase().includes(searchInput.toLowerCase()))
+  const filteredCategories = (categories || []).filter(
+    (category) =>
+      category.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+      (category.description &&
+        category.description.toLowerCase().includes(searchInput.toLowerCase()))
   );
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDialog({
       title: "Eliminar categoría",
-      message: "¿Estás seguro de que deseas eliminar esta categoría? Esta acción no se puede deshacer.",
+      message:
+        "¿Estás seguro de que deseas eliminar esta categoría? Esta acción no se puede deshacer.",
       confirmText: "Eliminar",
       cancelText: "Cancelar",
       variant: "danger",
     });
 
-    if (!confirmed) {return;}
+    if (!confirmed) {
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/categories/${id}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
-        show({ type: "success", title: "Categorías", message: "Categoría eliminada" });
+        show({
+          type: "success",
+          title: "Categorías",
+          message: "Categoría eliminada",
+        });
         mutate?.();
       } else {
-        const errorData = await response.json().catch(() => ({} as unknown));
+        const errorData = await response.json().catch(() => ({}) as unknown);
         let errorMessage = "Error al eliminar la categoría";
-        if (typeof errorData === "object" && errorData !== null && "message" in errorData) {
+        if (
+          typeof errorData === "object" &&
+          errorData !== null &&
+          "message" in errorData
+        ) {
           const possible = (errorData as { message?: unknown }).message;
-          if (typeof possible === "string") {errorMessage = possible;}
+          if (typeof possible === "string") {
+            errorMessage = possible;
+          }
         }
         show({ type: "error", title: "Categorías", message: errorMessage });
       }
     } catch (err) {
       logger.error("Error deleting category", { error: err });
-      show({ type: "error", title: "Categorías", message: "Error al eliminar la categoría" });
+      show({
+        type: "error",
+        title: "Categorías",
+        message: "Error al eliminar la categoría",
+      });
     }
   };
 
-  if (isLoading) {return <AdminLoading />;}
-  if (error) {return <AdminError message={error} />;}
+  if (isLoading) {
+    return <AdminLoading />;
+  }
+  if (error) {
+    return <AdminError message={error} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -126,14 +151,37 @@ export default function AdminCategoriasPage() {
                       {row.image ? (
                         <div className="w-12 h-12 rounded-md overflow-hidden bg-muted/5">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={row.image} alt={row.name} className="w-full h-full object-cover" />
+                          <img
+                            src={row.image}
+                            alt={row.name}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                       ) : (
                         <div className="w-12 h-12 flex items-center justify-center bg-surface/10 rounded-md">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                            <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-5 h-5 text-muted"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            aria-hidden="true"
+                          >
+                            <rect
+                              x="3"
+                              y="5"
+                              width="18"
+                              height="14"
+                              rx="2"
+                              ry="2"
+                            />
                             <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="M21 15l-5-5-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                            <path
+                              d="M21 15l-5-5-7 7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                         </div>
                       )}
@@ -147,7 +195,10 @@ export default function AdminCategoriasPage() {
                   align: "center",
                   render: (_: unknown, row: CategoryRow) => (
                     <div className="flex items-center justify-center">
-                      <CategoryIcon categoryName={row.name} className="w-6 h-6 text-muted" />
+                      <CategoryIcon
+                        categoryName={row.name}
+                        className="w-6 h-6 text-muted"
+                      />
                     </div>
                   ),
                 },
@@ -157,7 +208,9 @@ export default function AdminCategoriasPage() {
                   render: (_: unknown, row: CategoryRow) => (
                     <div className="min-w-0">
                       <div className="font-semibold truncate">{row.name}</div>
-                      <div className="text-xs muted line-clamp-2">{row.description || "Sin descripción"}</div>
+                      <div className="text-xs muted line-clamp-2">
+                        {row.description || "Sin descripción"}
+                      </div>
                     </div>
                   ),
                 },
@@ -176,7 +229,8 @@ export default function AdminCategoriasPage() {
               actions={[
                 {
                   label: "Editar",
-                  onClick: (row: CategoryRow) => router.push(`/admin/categorias/${row.id}/editar`),
+                  onClick: (row: CategoryRow) =>
+                    router.push(`/admin/categorias/${row.id}/editar`),
                   variant: "ghost",
                   icon: <Edit3 className="w-4 h-4" />,
                 },

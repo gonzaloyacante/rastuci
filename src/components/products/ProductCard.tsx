@@ -1,272 +1,281 @@
 "use client";
 
-import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
-import { Product } from '@/types';
-import { Heart, ShoppingCart, Star } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import React from 'react';
-import { Button } from '../ui/Button';
-import { Skeleton } from '../ui/Skeleton';
+import { useFavorites } from "@/hooks/useFavorites";
+import { Product } from "@/types";
+import { formatPriceARS } from "@/utils/formatters";
+import { Heart, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useCallback, useMemo, useState } from "react";
 
 interface ProductCardProps {
   product: Product;
-  viewMode?: 'grid' | 'list';
-  loading?: boolean;
-  className?: string;
+  priority?: boolean; // Para marcar imágenes prioritarias (LCP)
+  variant?: "grid" | "list"; // Diseño de tarjeta
 }
 
-export function ProductCard({
-  product,
-  viewMode = 'grid',
-  loading = false,
-  className = '',
-}: ProductCardProps) {
-  const { addToCart } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+const ProductCard = React.memo(
+  ({ product, priority = false, variant = "grid" }: ProductCardProps) => {
+    const [imageError, setImageError] = useState(false);
+    const { isFavorite, toggleFavorite } = useFavorites();
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(product, 1, 'M', 'Sin color');
-  };
+    // Memoizar el parsing de imágenes
+    const productImages = useMemo(() => {
+      try {
+        return typeof product.images === "string"
+          ? JSON.parse(product.images)
+          : product.images || [];
+      } catch {
+        return [];
+      }
+    }, [product.images]);
 
-  const handleToggleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
-    } else {
-      addToWishlist({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[0] || 'https://placehold.co/800x800.png',
-      });
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className={`surface rounded-lg border border-muted overflow-hidden ${className}`}>
-        {viewMode === 'grid' ? (
-          <div className="space-y-3 p-4">
-            <Skeleton className="aspect-square rounded-lg" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-            <Skeleton className="h-8 w-20" />
-          </div>
-        ) : (
-          <div className="flex space-x-4 p-4">
-            <Skeleton className="w-24 h-24 rounded-lg shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-              <Skeleton className="h-8 w-20" />
-            </div>
-          </div>
-        )}
-      </div>
+    // Memoizar la imagen principal
+    const mainImage = useMemo(
+      () =>
+        productImages.length > 0
+          ? productImages[0]
+          : "https://placehold.co/800x800.png",
+      [productImages]
     );
-  }
 
-  const primaryImage = product.images[0] || 'https://placehold.co/800x800.png';
-  const isOnSale = product.onSale;
-  const isOutOfStock = product.stock === 0;
-  const isInFavorites = isInWishlist(product.id);
+    // Memoizar el precio formateado
+    const formattedPrice = useMemo(
+      () => formatPriceARS(product.price),
+      [product.price]
+    );
 
-  if (viewMode === 'list') {
-    return (
-      <Link href={`/productos/${product.id}`} className={`block ${className}`}>
-        <div className="surface rounded-lg border border-muted hover-surface transition-all duration-200 overflow-hidden group product-card">
-          <div className="flex space-x-4 p-4">
-            {/* Image */}
-            <div className="relative w-24 h-24 shrink-0">
+    // Memoizar el estado de favorito
+    const isProductFavorite = useMemo(
+      () => isFavorite(product.id),
+      [isFavorite, product.id]
+    );
+
+    // Memoizar el handler de favorito
+    const handleToggleFavorite = useCallback(() => {
+      toggleFavorite(product.id);
+    }, [toggleFavorite, product.id]);
+
+    // Memoizar el handler de error de imagen
+    const handleImageError = useCallback(() => {
+      setImageError(true);
+    }, []);
+
+    // GRID VARIANT (default)
+    if (variant === "grid") {
+      return (
+        <article className="group relative surface rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-muted">
+          {/* Imagen del producto */}
+          <div
+            className="relative aspect-square overflow-hidden surface"
+            style={{ position: "relative" }}
+          >
+            <Link
+              href={`/productos/${product.id}`}
+              aria-label={`Ver detalles de ${product.name}`}
+            >
               <Image
-                src={primaryImage}
-                alt={product.name}
+                src={
+                  imageError ? "https://placehold.co/800x800.png" : mainImage
+                }
+                alt={`${product.name} - ${
+                  product.category?.name || "Producto"
+                } - ${formattedPrice}`}
                 fill
-                className="object-cover rounded-lg"
-                sizes="96px"
+                className="object-cover group-hover:scale-102 transition-transform duration-200"
+                onError={handleImageError}
+                priority={priority}
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                quality={80}
               />
-              {isOnSale && (
-                <span className="absolute top-1 left-1 badge-error text-xs px-2 py-1 rounded">
-                  Oferta
+            </Link>
+
+            {/* Badge de oferta */}
+            {product.onSale && (
+              <div className="absolute top-2 left-2 bg-error text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+                OFERTA
+              </div>
+            )}
+
+            {/* Botón de favorito - Mobile optimized */}
+            <button
+              onClick={handleToggleFavorite}
+              aria-label={
+                isProductFavorite
+                  ? `Quitar ${product.name} de favoritos`
+                  : `Agregar ${product.name} a favoritos`
+              }
+              className={`absolute top-2 right-2 p-1.5 surface backdrop-blur-sm rounded-full hover:shadow transition-colors focus:outline-none ${
+                isProductFavorite
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100"
+              }`}
+            >
+              <Heart
+                className={`w-3.5 h-3.5 ${
+                  isProductFavorite ? "text-warning fill-current" : "muted"
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+
+            {/* Badge de stock bajo - Mobile optimized */}
+            {product.stock <= 30 && product.stock > 0 && (
+              <div className="absolute bottom-2 left-2 surface text-warning text-[10px] px-1.5 py-0.5 rounded-full">
+                ¡Solo {product.stock}!
+              </div>
+            )}
+
+            {/* Badge de sin stock */}
+            {product.stock === 0 && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="surface text-error border border-error px-2 py-0.5 rounded-full text-xs font-medium">
+                  Agotado
                 </span>
+              </div>
+            )}
+
+            {/* Indicador de múltiples imágenes - Mobile optimized */}
+            {productImages.length > 1 && (
+              <div className="absolute bottom-2 right-2 surface text-primary border border-primary text-[10px] px-1.5 py-0.5 rounded-full">
+                +{productImages.length - 1}
+              </div>
+            )}
+          </div>
+
+          {/* Información del producto - Mobile optimized */}
+          <div className="p-3">
+            {/* Categoría */}
+            <p className="text-[10px] muted uppercase tracking-wide mb-1 line-clamp-1">
+              {product.category?.name}
+            </p>
+
+            {/* Nombre del producto */}
+            <Link
+              href={`/productos/${product.id}`}
+              aria-label={`Ver detalles de ${product.name}`}
+            >
+              <h3 className="font-medium text-primary transition-colors line-clamp-2 mb-2 text-sm leading-tight">
+                {product.name}
+              </h3>
+            </Link>
+
+            {/* Rating */}
+            {product.rating && product.rating > 0 && (
+              <div className="flex items-center gap-1 mb-2">
+                <Star className="w-3 h-3 fill-warning text-warning" />
+                <span className="text-xs muted">{product.rating}</span>
+                {product.reviewCount && (
+                  <span className="text-xs muted">({product.reviewCount})</span>
+                )}
+              </div>
+            )}
+
+            {/* Precio */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-primary">
+                {formattedPrice}
+              </span>
+            </div>
+          </div>
+        </article>
+      );
+    }
+
+    // LIST VARIANT (horizontal)
+    return (
+      <article className="group relative surface rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-muted">
+        <div className="flex">
+          {/* Imagen */}
+          <div className="relative w-32 sm:w-40 md:w-48 h-32 sm:h-40 md:h-48 shrink-0 overflow-hidden">
+            <Link
+              href={`/productos/${product.id}`}
+              aria-label={`Ver detalles de ${product.name}`}
+            >
+              <Image
+                src={
+                  imageError ? "https://placehold.co/800x800.png" : mainImage
+                }
+                alt={`${product.name} - ${product.category?.name || "Producto"} - ${formattedPrice}`}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-200"
+                onError={handleImageError}
+                priority={priority}
+                sizes="(max-width: 640px) 128px, (max-width: 768px) 160px, 192px"
+                quality={80}
+              />
+            </Link>
+
+            {/* Badge de oferta */}
+            {product.onSale && (
+              <div className="absolute top-2 left-2 bg-error text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+                OFERTA
+              </div>
+            )}
+            {product.stock === 0 && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="surface text-error border border-error px-2 py-0.5 rounded-full text-[10px]">
+                  Agotado
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Contenido */}
+          <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide muted mb-1">
+                {product.category?.name}
+              </p>
+              <Link
+                href={`/productos/${product.id}`}
+                aria-label={`Ver detalles de ${product.name}`}
+              >
+                <h3 className="text-sm sm:text-base font-semibold text-primary line-clamp-2 mb-2">
+                  {product.name}
+                </h3>
+              </Link>
+
+              {product.rating && product.rating > 0 && (
+                <div className="flex items-center gap-1 mb-2">
+                  <Star className="w-3 h-3 fill-warning text-warning" />
+                  <span className="text-xs muted">{product.rating}</span>
+                  {product.reviewCount && (
+                    <span className="text-xs muted">
+                      ({product.reviewCount})
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm mb-1 truncate group-hover:text-primary transition-colors">
-                    {product.name}
-                  </h3>
-
-                  {product.description && (
-                    <p className="text-sm muted line-clamp-2 mb-2">
-                      {product.description}
-                    </p>
-                  )}
-
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-lg font-bold text-primary">
-                      ${product.price.toLocaleString()}
-                    </span>
-                    {product.category && (
-                      <span className="text-xs muted">
-                        {product.category.name}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={`star-${product.id}-${i}`}
-                          className={`w-3 h-3 ${
-                            i < 4 ? 'text-yellow-400 fill-current' : 'muted'
-                          }`}
-                        />
-                      ))}
-                      <span className="text-xs muted">(4.0)</span>
-                    </div>
-
-                    {isOutOfStock && (
-                      <span className="text-xs text-error font-medium">
-                        Sin stock
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center space-x-2 ml-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleToggleFavorite}
-                    className={`p-2 ${isInFavorites ? 'text-primary' : ''}`}
-                    aria-label={isInFavorites ? "Quitar de favoritos" : "Agregar a favoritos"}
-                  >
-                    <Heart className={`w-4 h-4 ${isInFavorites ? 'fill-current' : ''}`} />
-                  </Button>
-
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleAddToCart}
-                    disabled={isOutOfStock}
-                    className="px-3"
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-1" />
-                    Agregar
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  }
-
-  // Grid view
-  return (
-    <Link href={`/productos/${product.id}`} className={`block ${className}`}>
-      <div className="surface rounded-lg border border-muted hover-surface transition-all duration-200 overflow-hidden group product-card">
-        <div className="relative aspect-square">
-          <Image
-            src={primaryImage}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-
-          {/* Badges */}
-          <div className="absolute top-2 left-2 space-y-1">
-            {isOnSale && (
-              <span className="badge-error text-xs px-2 py-1 rounded">
-                Oferta
+            <div className="flex items-center justify-between">
+              <span className="text-base sm:text-lg font-bold text-primary">
+                {formattedPrice}
               </span>
-            )}
-            {isOutOfStock && (
-              <span className="badge-error text-xs px-2 py-1 rounded">
-                Sin stock
-              </span>
-            )}
-          </div>
-
-          {/* Actions overlay */}
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleToggleFavorite}
-              className={`p-2 surface rounded-full shadow-sm ${isInFavorites ? 'text-primary' : ''}`}
-              aria-label={isInFavorites ? "Quitar de favoritos" : "Agregar a favoritos"}
-            >
-              <Heart className={`w-4 h-4 ${isInFavorites ? 'fill-current' : ''}`} />
-            </Button>
-          </div>
-
-          {/* Quick add button */}
-          <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              fullWidth
-              className="shadow-sm"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              {isOutOfStock ? 'Sin stock' : 'Agregar al carrito'}
-            </Button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-4">
-          <h3 className="font-semibold mb-1 line-clamp-2 group-hover:text-primary transition-colors">
-            {product.name}
-          </h3>
-
-          {product.category && (
-            <p className="text-sm muted mb-2">{product.category.name}</p>
-          )}
-
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-primary">
-              ${product.price.toLocaleString()}
-            </span>
-
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={`star-grid-${product.id}-${i}`}
-                  className={`w-3 h-3 ${
-                    i < 4 ? 'text-yellow-400 fill-current' : 'muted'
+              <button
+                onClick={handleToggleFavorite}
+                aria-label={
+                  isProductFavorite
+                    ? `Quitar ${product.name} de favoritos`
+                    : `Agregar ${product.name} a favoritos`
+                }
+                className="p-2 rounded-full hover:bg-pink-50 transition-colors"
+              >
+                <Heart
+                  className={`w-4 h-4 ${
+                    isProductFavorite ? "text-warning fill-current" : "muted"
                   }`}
                 />
-              ))}
-              <span className="text-xs muted ml-1">(4.0)</span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </Link>
-  );
-}
+      </article>
+    );
+  }
+);
+
+ProductCard.displayName = "ProductCard";
 
 export default ProductCard;

@@ -9,13 +9,13 @@ import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 import { formatPriceARS } from "@/utils/formatters";
 import {
-    ArrowLeft,
-    CreditCard,
-    Heart,
-    Share2,
-    ShieldCheck,
-    ShoppingCart,
-    Truck
+  ArrowLeft,
+  CreditCard,
+  Heart,
+  Share2,
+  ShieldCheck,
+  ShoppingCart,
+  Truck,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,15 +24,19 @@ import useSWR from "swr";
 
 // Dynamic imports para componentes no críticos
 const ProductImageGallery = React.lazy(
-  () => import("@/components/ProductImageGallery")
+  () => import("@/components/products/ProductImageGallery")
 );
-const ProductReviews = React.lazy(() => import("@/components/ProductReviews"));
+const ProductReviews = React.lazy(
+  () => import("@/components/products/ProductReviews")
+);
 const RelatedProducts = React.lazy(
-  () => import("@/components/RelatedProducts")
+  () => import("@/components/products/RelatedProducts")
 );
 
 interface ProductDetailClientProps {
   productId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialProduct?: any; // Using any to avoid complex type matching with serialized dates
 }
 
 // Loading components
@@ -126,6 +130,7 @@ const RelatedProductsSkeleton = () => (
 
 export default function ProductDetailClient({
   productId,
+  initialProduct,
 }: ProductDetailClientProps) {
   const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -144,6 +149,9 @@ export default function ProductDetailClient({
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000, // 1 minuto
+      fallbackData: initialProduct
+        ? { success: true, data: initialProduct }
+        : undefined,
     }
   );
 
@@ -331,23 +339,24 @@ export default function ProductDetailClient({
               </div>
 
               {/* Características */}
-              {Array.isArray(product.features) && product.features.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-semibold text-primary mb-3">
-                    Características
-                  </h2>
-                  <ul className="list-disc pl-5 space-y-2">
-                    {product.features.map((f: string, idx: number) => (
-                      <li
-                        key={`feature-${idx}-${f.slice(0, 10)}`}
-                        className="text-primary/90"
-                      >
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {Array.isArray(product.features) &&
+                product.features.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold text-primary mb-3">
+                      Características
+                    </h2>
+                    <ul className="list-disc pl-5 space-y-2">
+                      {product.features.map((f: string, idx: number) => (
+                        <li
+                          key={`feature-${idx}-${f.slice(0, 10)}`}
+                          className="text-primary/90"
+                        >
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </div>
           </div>
 

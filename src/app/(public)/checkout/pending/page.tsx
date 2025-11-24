@@ -1,7 +1,7 @@
 "use client";
 
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
+import Header from "@/components/header/Header";
+import Footer from "@/components/layout/Footer";
 import {
   AlertCircle,
   Clock,

@@ -1,4 +1,4 @@
-import ProductCard from "@/components/ProductCard";
+import ProductCard from "@/components/products/ProductCard";
 import { CartProvider } from "@/context/CartContext";
 import type { Product } from "@/types";
 import { render, screen } from "@testing-library/react";

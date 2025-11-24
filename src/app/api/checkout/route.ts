@@ -1,5 +1,6 @@
 import {
   correoArgentinoService,
+  PROVINCE_NAMES,
   type ProvinceCode,
 } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
@@ -76,48 +77,72 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Si es pago en efectivo, crear pedido directamente
-    if (paymentMethod === "cash") {
-      // Crear el pedido sin MercadoPago
-      const order = await prisma.order.create({
-        data: {
-          customerName: customer.name,
-          customerPhone: customer.phone,
-          customerEmail: customer.email,
-          customerAddress: `${customer.address}, ${customer.city}, ${customer.province}`,
-          total: orderData.total,
-          status: "PENDING",
-          mpPaymentId: null,
-          mpPreferenceId: null,
-          mpStatus: "cash_payment",
-          items: {
-            create: items.map((item: OrderItem) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price,
-              size: item.size || null,
-              color: item.color || null,
-            })),
+    // Crear el pedido en base de datos (estado inicial PENDING)
+    // Para MercadoPago, esto nos da un ID para usar como external_reference
+    const order = await prisma.order.create({
+      data: {
+        customerName: customer.name,
+        customerPhone: customer.phone,
+        customerEmail: customer.email,
+        customerAddress: `${customer.address}, ${customer.city}, ${customer.province}`,
+        total: orderData.total,
+        status: "PENDING",
+        mpPaymentId: null,
+        mpPreferenceId: null,
+        mpStatus: paymentMethod === "cash" ? "cash_payment" : "pending_payment",
+        items: {
+          create: items.map((item: OrderItem) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            size: item.size || null,
+            color: item.color || null,
+          })),
+        },
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
           },
         },
-        include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
-      });
+      },
+    });
 
-      // Si el método de envío es Correo Argentino, importar shipment
+    // Si es pago en efectivo
+    if (paymentMethod === "cash") {
+      // Si el método de envío es Correo Argentino (id empieza con 'ca-')
       if (
         shippingMethod &&
-        shippingMethod.provider === "correo-argentino" &&
+        shippingMethod.id.startsWith("ca-") &&
         customer.address &&
         customer.postalCode
       ) {
         try {
           await correoArgentinoService.authenticate();
+
+          // Determinar tipo de entrega y sucursal
+          const deliveryType =
+            shippingMethod.id.includes("paq-suc") || body.shippingAgency
+              ? "S"
+              : "D";
+          const agencyCode = body.shippingAgency?.code;
+
+          // Mapear código de provincia
+          let provinceCode: ProvinceCode = "B"; // Default Buenos Aires
+          if (customer.province) {
+            // Import PROVINCE_NAMES to find key by value
+            const entry = Object.entries(PROVINCE_NAMES).find(
+              ([_, name]) =>
+                name.toLowerCase() === customer.province?.toLowerCase() ||
+                name
+                  .toLowerCase()
+                  .includes(customer.province?.toLowerCase() || "")
+            );
+            if (entry) {
+              provinceCode = entry[0] as ProvinceCode;
+            }
+          }
 
           const shipmentResult = await correoArgentinoService.importShipment({
             customerId: process.env.CORREO_ARGENTINO_CUSTOMER_ID || "",
@@ -127,11 +152,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               phone: process.env.STORE_PHONE || "",
               email: process.env.STORE_EMAIL || "",
               originAddress: {
-                streetName: process.env.STORE_ADDRESS || "",
-                city: process.env.STORE_CITY || "CABA",
-                provinceCode: (process.env.STORE_PROVINCE ||
-                  "C") as ProvinceCode,
-                postalCode: process.env.STORE_POSTAL_CODE || "1425",
+                streetName: process.env.STORE_ADDRESS || "Dirección Local",
+                city: "Don Torcuato",
+                provinceCode: "B",
+                postalCode: "1611",
               },
             },
             recipient: {
@@ -140,15 +164,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               email: customer.email,
             },
             shipping: {
-              deliveryType: (shippingMethod.deliveryType || "D") as "D" | "S",
-              productType: "CP",
-              address: {
-                streetName: customer.address,
-                city: customer.city,
-                provinceCode: (customer.province || "B") as ProvinceCode,
-                postalCode: customer.postalCode,
-              },
-              weight: orderData.weight || 500,
+              deliveryType: deliveryType,
+              productType: "CP", // Clásico Pack
+              agency: deliveryType === "S" ? agencyCode : undefined,
+              address:
+                deliveryType === "D"
+                  ? {
+                      streetName: customer.address,
+                      streetNumber: customer.address.match(/\d+/)?.[0] || "0", // Extract number or default
+                      city: customer.city,
+                      provinceCode: provinceCode,
+                      postalCode: customer.postalCode,
+                    }
+                  : undefined,
+              weight: orderData.weight || 1000,
               height: orderData.height || 10,
               width: orderData.width || 20,
               length: orderData.length || 30,
@@ -162,6 +191,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               data: {
                 caTrackingNumber: shipmentResult.data.trackingNumber,
                 caShipmentId: shipmentResult.data.shipmentId,
+                shippingMethod: "Correo Argentino",
+                shippingAgency: agencyCode,
               },
             });
 
@@ -169,6 +200,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               orderId: order.id,
               trackingNumber: shipmentResult.data.trackingNumber,
             });
+          } else {
+            logger.error(
+              "[checkout] Failed to import CA shipment (API error)",
+              {
+                orderId: order.id,
+                error: shipmentResult.error,
+              }
+            );
           }
         } catch (caError) {
           logger.error("[checkout] Failed to import CA shipment", {
@@ -229,7 +268,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
         };
 
-        preference = await createPreference(mpItems, payer);
+        // Pasar external_reference (order.id) y metadata
+        preference = await createPreference(mpItems, payer, {
+          external_reference: order.id,
+          metadata: {
+            orderId: order.id,
+            customerEmail: customer.email,
+          },
+        });
+
+        // Actualizar orden con ID de preferencia
+        await prisma.order.update({
+          where: { id: order.id },
+          data: {
+            mpPreferenceId: preference.id,
+          },
+        });
       } catch (mpError) {
         logger.error("[checkout] MercadoPago preference creation error:", {
           error: mpError,

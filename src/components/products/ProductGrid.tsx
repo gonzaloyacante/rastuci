@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import { Product } from '@/types';
-import { ProductCard } from './ProductCard';
-import { LoadingSkeleton, LoadingSpinner } from '../ui/LoadingStates';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { Pagination, PaginationInfo } from '../ui/Pagination';
-import { Button } from '../ui/Button';
-import { Grid, List } from 'lucide-react';
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { Product } from "@/types";
+import { Grid, List } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Button } from "../ui/Button";
+import { LoadingSkeleton, LoadingSpinner } from "../ui/LoadingStates";
+import { Pagination, PaginationInfo } from "../ui/Pagination";
+import ProductCard from "./ProductCard";
 
 interface ProductGridProps {
   products: Product[];
@@ -23,8 +23,8 @@ interface ProductGridProps {
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
   // Display options
-  viewMode?: 'grid' | 'list';
-  onViewModeChange?: (mode: 'grid' | 'list') => void;
+  viewMode?: "grid" | "list";
+  onViewModeChange?: (mode: "grid" | "list") => void;
   showViewToggle?: boolean;
   className?: string;
 }
@@ -43,13 +43,13 @@ export function ProductGrid({
   hasMore = false,
   onLoadMore,
   // Display props
-  viewMode = 'grid',
+  viewMode = "grid",
   onViewModeChange,
   showViewToggle = true,
-  className = '',
+  className = "",
 }: ProductGridProps) {
-  const [localViewMode, setLocalViewMode] = useState<'grid' | 'list'>(viewMode);
-  
+  const [localViewMode, setLocalViewMode] = useState<"grid" | "list">(viewMode);
+
   // Determine if we're using pagination or infinite scroll
   const isPaginationMode = Boolean(totalPages && currentPage && onPageChange);
   const isInfiniteScrollMode = Boolean(hasMore && onLoadMore);
@@ -63,7 +63,7 @@ export function ProductGrid({
 
   const currentViewMode = onViewModeChange ? viewMode : localViewMode;
 
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
+  const handleViewModeChange = (mode: "grid" | "list") => {
     if (onViewModeChange) {
       onViewModeChange(mode);
     } else {
@@ -72,10 +72,10 @@ export function ProductGrid({
   };
 
   const gridClasses = useMemo(() => {
-    if (currentViewMode === 'list') {
-      return 'flex flex-col space-y-4';
+    if (currentViewMode === "list") {
+      return "flex flex-col space-y-4";
     }
-    return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6';
+    return "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6";
   }, [currentViewMode]);
 
   // Error state
@@ -97,7 +97,9 @@ export function ProductGrid({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold mb-2">Error al cargar productos</h3>
+        <h3 className="text-lg font-semibold mb-2">
+          Error al cargar productos
+        </h3>
         <p className="muted mb-4">{error}</p>
         <Button onClick={() => window.location.reload()} variant="outline">
           Reintentar
@@ -111,7 +113,10 @@ export function ProductGrid({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={`loading-skeleton-${index}`} className="surface rounded-lg border border-muted overflow-hidden animate-pulse product-card">
+          <div
+            key={`loading-skeleton-${index}`}
+            className="surface rounded-lg border border-muted overflow-hidden animate-pulse product-card"
+          >
             <div className="aspect-square bg-muted"></div>
             <div className="p-4 space-y-3">
               <div className="h-4 bg-muted rounded w-3/4"></div>
@@ -143,7 +148,9 @@ export function ProductGrid({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold mb-2">No se encontraron productos</h3>
+        <h3 className="text-lg font-semibold mb-2">
+          No se encontraron productos
+        </h3>
         <p className="muted">Intenta ajustar los filtros de búsqueda.</p>
       </div>
     );
@@ -159,7 +166,10 @@ export function ProductGrid({
             currentPage={currentPage}
             totalPages={totalPages!}
             totalItems={totalItems}
-            startItem={Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}
+            startItem={Math.min(
+              (currentPage - 1) * itemsPerPage + 1,
+              totalItems
+            )}
             endItem={Math.min(currentPage * itemsPerPage, totalItems)}
           />
         )}
@@ -170,18 +180,18 @@ export function ProductGrid({
             <span className="text-sm muted">Vista:</span>
             <div className="flex rounded-lg border border-muted overflow-hidden">
               <Button
-                variant={currentViewMode === 'grid' ? 'primary' : 'ghost'}
+                variant={currentViewMode === "grid" ? "primary" : "ghost"}
                 size="sm"
-                onClick={() => handleViewModeChange('grid')}
+                onClick={() => handleViewModeChange("grid")}
                 className="rounded-none border-0"
                 aria-label="Vista en cuadrícula"
               >
                 <Grid className="w-4 h-4" />
               </Button>
               <Button
-                variant={currentViewMode === 'list' ? 'primary' : 'ghost'}
+                variant={currentViewMode === "list" ? "primary" : "ghost"}
                 size="sm"
-                onClick={() => handleViewModeChange('list')}
+                onClick={() => handleViewModeChange("list")}
                 className="rounded-none border-0"
                 aria-label="Vista en lista"
               >
@@ -210,17 +220,13 @@ export function ProductGrid({
         {/* Product cards */}
         {products.map((product, index) => {
           const isLast = index === products.length - 1;
-          
+
           return (
             <div
               key={product.id}
               ref={isInfiniteScrollMode && isLast ? lastElementRef : undefined}
             >
-              <ProductCard
-                product={product}
-                viewMode={currentViewMode}
-                loading={loading && index >= products.length - 4} // Show loading on last 4 items
-              />
+              <ProductCard product={product} />
             </div>
           );
         })}

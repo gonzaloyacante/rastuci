@@ -98,8 +98,8 @@ export default function ProductList() {
     const csvContent = [
       ["Nombre", "Categoría", "Precio", "Stock", "En Oferta"],
       ...filteredProducts.map((product: Product) => [
-        product.name,
-        product.category?.name || "Sin categoría",
+        `"${product.name.replace(/"/g, '""')}"`,
+        `"${product.category?.name || "Sin categoría"}"`,
         product.price.toString(),
         product.stock.toString(),
         product.onSale ? "Sí" : "No",
@@ -108,11 +108,15 @@ export default function ProductList() {
       .map((row) => row.join(","))
       .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    // UTF-8 BOM para compatibilidad con Excel
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "productos.csv";
+    a.download = `productos_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -233,7 +237,7 @@ export default function ProductList() {
 
       {/* Controles de filtros y vista */}
       <div className="bg-surface p-4 rounded-lg border space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-wrap gap-3 items-center justify-between">
           <div className="flex gap-2">
             <Button
               onClick={() => setViewMode("grid")}
@@ -263,59 +267,84 @@ export default function ProductList() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-content-tertiary w-4 h-4" />
-            <Input
-              placeholder="Buscar productos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        {/* Filtros */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-xs font-semibold text-content-secondary uppercase tracking-wider mb-2">
+              Filtrar
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="relative sm:col-span-2 lg:col-span-1">
+                <Input
+                  placeholder="Buscar productos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pr-10"
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-content-tertiary w-4 h-4 pointer-events-none" />
+              </div>
+
+              <Select
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                options={[
+                  { value: "all", label: "Todas las categorías" },
+                  ...categories.map((cat) => ({
+                    value: cat.id,
+                    label: cat.name,
+                  })),
+                ]}
+              />
+
+              <Select
+                value={stockFilter}
+                onChange={setStockFilter}
+                options={[
+                  { value: "all", label: "Todo el stock" },
+                  { value: "high", label: "Stock alto (>20)" },
+                  { value: "medium", label: "Stock medio (5-20)" },
+                  { value: "low", label: "Stock bajo (1-5)" },
+                  { value: "out", label: "Sin stock" },
+                ]}
+              />
+            </div>
           </div>
 
-          <Select
-            value={selectedCategory}
-            onChange={setSelectedCategory}
-            options={[
-              { value: "all", label: "Todas las categorías" },
-              ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
-            ]}
-          />
-
-          <Select
-            value={stockFilter}
-            onChange={setStockFilter}
-            options={[
-              { value: "all", label: "Todo el stock" },
-              { value: "high", label: "Stock alto (>20)" },
-              { value: "medium", label: "Stock medio (5-20)" },
-              { value: "low", label: "Stock bajo (1-5)" },
-              { value: "out", label: "Sin stock" },
-            ]}
-          />
-
-          <div className="flex gap-2">
-            <Select
-              value={sortField}
-              onChange={(value) => setSortField(value as SortField)}
-              options={[
-                { value: "name", label: "Nombre" },
-                { value: "price", label: "Precio" },
-                { value: "stock", label: "Stock" },
-              ]}
-            />
-            <Button
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              variant="outline"
-              size="sm"
-            >
-              {sortOrder === "asc" ? (
-                <SortAsc className="w-4 h-4" />
-              ) : (
-                <SortDesc className="w-4 h-4" />
-              )}
-            </Button>
+          {/* Ordenamiento */}
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-xs font-semibold text-content-secondary uppercase tracking-wider mb-2">
+              Ordenar
+            </h3>
+            <div className="flex gap-2 max-w-xs">
+              <Select
+                value={sortField}
+                onChange={(value) => setSortField(value as SortField)}
+                options={[
+                  { value: "name", label: "Nombre" },
+                  { value: "price", label: "Precio" },
+                  { value: "stock", label: "Stock" },
+                ]}
+              />
+              <Button
+                onClick={() =>
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                title={
+                  sortOrder === "asc"
+                    ? "Ordenar descendente (mayor a menor)"
+                    : "Ordenar ascendente (menor a mayor)"
+                }
+              >
+                {sortOrder === "asc" ? (
+                  <SortAsc className="w-4 h-4" />
+                ) : (
+                  <SortDesc className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -340,7 +369,7 @@ export default function ProductList() {
         <div
           className={
             viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
               : "space-y-4"
           }
         >

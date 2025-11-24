@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useCart, CustomerInfo } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
+import { CustomerInfo, useCart } from "@/context/CartContext";
+import { ARGENTINA_PROVINCES } from "@/lib/constants";
 import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface CustomerInfoStepProps {
   onNext: () => void;
@@ -103,7 +104,6 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Manejar envío del formulario
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -120,38 +120,12 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
     }
   };
 
-  // Lista de provincias argentinas
-  const provincias = [
-    "Buenos Aires",
-    "Ciudad Autónoma de Buenos Aires",
-    "Catamarca",
-    "Chaco",
-    "Chubut",
-    "Córdoba",
-    "Corrientes",
-    "Entre Ríos",
-    "Formosa",
-    "Jujuy",
-    "La Pampa",
-    "La Rioja",
-    "Mendoza",
-    "Misiones",
-    "Neuquén",
-    "Río Negro",
-    "Salta",
-    "San Juan",
-    "San Luis",
-    "Santa Cruz",
-    "Santa Fe",
-    "Santiago del Estero",
-    "Tierra del Fuego",
-    "Tucumán",
-  ];
-
   return (
     <div className="max-w-3xl mx-auto">
       <div className="surface p-6 rounded-lg shadow-sm border border-muted">
-        <h2 className="text-2xl font-bold mb-6 text-primary">Información de Contacto</h2>
+        <h2 className="text-2xl font-bold mb-6 text-primary">
+          Información de Contacto
+        </h2>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -159,7 +133,8 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="name"
-                className="block text-sm font-medium muted mb-1">
+                className="block text-sm font-medium muted mb-1"
+              >
                 Nombre completo *
               </label>
               <input
@@ -182,7 +157,8 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium muted mb-1">
+                className="block text-sm font-medium muted mb-1"
+              >
                 Email *
               </label>
               <input
@@ -200,39 +176,14 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 <p className="text-error text-xs mt-1">{errors.email}</p>
               )}
             </div>
-
-            {/* Teléfono */}
-            <div className="col-span-2 md:col-span-1">
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium muted mb-1">
-                Teléfono *
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={`w-full p-3 border rounded-md ${
-                  errors.phone ? "border-error" : "border-muted"
-                }`}
-                placeholder="Ej: 1155667788"
-              />
-              {errors.phone && (
-                <p className="text-error text-xs mt-1">{errors.phone}</p>
-              )}
-            </div>
           </div>
-
-          <h2 className="text-2xl font-bold mb-4 mt-8 text-primary">Dirección de Envío</h2>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Dirección */}
             <div className="col-span-2">
               <label
                 htmlFor="address"
-                className="block text-sm font-medium muted mb-1">
+                className="block text-sm font-medium muted mb-1"
+              >
                 Dirección *
               </label>
               <input
@@ -255,7 +206,8 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="city"
-                className="block text-sm font-medium muted mb-1">
+                className="block text-sm font-medium muted mb-1"
+              >
                 Ciudad *
               </label>
               <input
@@ -278,7 +230,8 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="province"
-                className="block text-sm font-medium muted mb-1">
+                className="block text-sm font-medium muted mb-1"
+              >
                 Provincia *
               </label>
               <select
@@ -288,9 +241,10 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 onChange={handleChange}
                 className={`w-full p-3 border rounded-md ${
                   errors.province ? "border-error" : "border-muted"
-                }`}>
+                }`}
+              >
                 <option value="">Seleccionar provincia</option>
-                {provincias.map((provincia) => (
+                {ARGENTINA_PROVINCES.map((provincia) => (
                   <option key={provincia} value={provincia}>
                     {provincia}
                   </option>
@@ -305,7 +259,8 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2 md:col-span-1">
               <label
                 htmlFor="postalCode"
-                className="block text-sm font-medium muted mb-1">
+                className="block text-sm font-medium muted mb-1"
+              >
                 Código Postal *
               </label>
               <input
@@ -328,7 +283,8 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
             <div className="col-span-2">
               <label
                 htmlFor="notes"
-                className="block text-sm font-medium muted mb-1">
+                className="block text-sm font-medium muted mb-1"
+              >
                 Notas para la entrega (opcional)
               </label>
               <textarea
@@ -338,14 +294,13 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 onChange={handleChange}
                 className="w-full p-3 border border-muted rounded-md"
                 rows={3}
-                placeholder="Instrucciones especiales para la entrega, referencias, etc."></textarea>
+                placeholder="Instrucciones especiales para la entrega, referencias, etc."
+              ></textarea>
             </div>
           </div>
 
           <div className="flex justify-end mt-8">
-            <Button
-              type="submit"
-              className="btn-hero">
+            <Button type="submit" className="btn-hero">
               Continuar
               <ChevronRight className="ml-2" size={16} />
             </Button>

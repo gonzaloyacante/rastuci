@@ -10,6 +10,7 @@ import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { logger } from "@/lib/logger";
 
 // Esquema para validación del formulario de login
@@ -27,6 +28,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function AdminLoginPage() {
+  useDocumentTitle({ title: "Iniciar Sesión" });
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);

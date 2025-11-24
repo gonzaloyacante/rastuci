@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { useDocumentTitle } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertTriangle,
@@ -60,6 +61,7 @@ const statusIcons = {
 };
 
 export default function AdminTrackingDashboard() {
+  useDocumentTitle({ title: "Seguimiento de Envíos" });
   const [trackingData, setTrackingData] = useState<TrackingData[]>([]);
   const [stats, setStats] = useState<TrackingStats | null>(null);
   const [loading, setLoading] = useState(true);

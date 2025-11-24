@@ -1,5 +1,6 @@
 "use client";
 
+import { Agency } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 import {
@@ -19,6 +20,7 @@ export interface ShippingOption {
   description: string;
   price: number;
   estimatedDays: string;
+  originalRate?: Record<string, unknown>; // Para guardar datos crudos de la API
 }
 
 export interface PaymentMethod {
@@ -83,7 +85,14 @@ interface CartContextType {
   availableShippingOptions: ShippingOption[];
   selectedShippingOption: ShippingOption | null;
   setSelectedShippingOption: (option: ShippingOption) => void;
-  calculateShippingCost: (postalCode: string) => Promise<ShippingOption[]>;
+  calculateShippingCost: (
+    postalCode: string,
+    deliveredType?: "D" | "S"
+  ) => Promise<ShippingOption[]>;
+
+  // Checkout - Sucursal
+  selectedAgency: Agency | null;
+  setSelectedAgency: (agency: Agency | null) => void;
 
   // Checkout - Pago
   availablePaymentMethods: PaymentMethod[];
@@ -142,6 +151,9 @@ const _defaultCart: CartContextType = {
   setSelectedShippingOption: () => {},
   calculateShippingCost: async () => [],
 
+  selectedAgency: null,
+  setSelectedAgency: () => {},
+
   availablePaymentMethods: [],
   selectedPaymentMethod: null,
   setSelectedPaymentMethod: () => {},
@@ -189,6 +201,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   // Estados del checkout - Envío
   const [selectedShippingOption, setSelectedShippingOption] =
     useState<ShippingOption | null>(null);
+  const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null);
 
   // Estados del checkout - Pago (Mercado Pago por defecto)
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
@@ -392,101 +405,56 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   // Envío - Implementación del cálculo por código postal
   const calculateShippingCost = useCallback(
-    async (postalCode: string): Promise<ShippingOption[]> => {
-      // Validar el código postal de Argentina (formato general 4 dígitos o 1 letra + 4 dígitos)
-      const postalCodeRegex = /^[A-Z]?\d{4}$/i;
-      if (!postalCodeRegex.test(postalCode)) {
-        throw new Error(
-          "Código postal inválido. Debe tener 4 dígitos, o una letra seguida de 4 dígitos."
-        );
-      }
-
-      // Lógica de cálculo de costo de envío según código postal
-      // Simplificado: Códigos postales de CABA (1000-1499) tienen precio especial
-      // Códigos del GBA (1500-1999) tienen otro precio
-      // Resto del país tiene precio estándar pero varía por región
-
-      const numericCode = parseInt(postalCode.replace(/[A-Z]/i, ""));
-      let options = [...availableShippingOptions];
-
-      // CABA
-      if (numericCode >= 1000 && numericCode <= 1499) {
-        options = options.map((option) => {
-          if (option.id === "standard") {
-            return { ...option, price: 800, estimatedDays: "2-3 días" };
-          }
-          if (option.id === "express") {
-            return { ...option, price: 1500, estimatedDays: "24 horas" };
-          }
-          return option;
+    async (
+      postalCode: string,
+      deliveredType?: "D" | "S"
+    ): Promise<ShippingOption[]> => {
+      try {
+        const response = await fetch("/api/shipping/calculate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ postalCode, deliveredType }),
         });
-      }
-      // GBA
-      else if (numericCode >= 1500 && numericCode <= 1999) {
-        options = options.map((option) => {
-          if (option.id === "standard") {
-            return { ...option, price: 1200, estimatedDays: "2-4 días" };
-          }
-          if (option.id === "express") {
-            return { ...option, price: 2000, estimatedDays: "24-48 horas" };
-          }
-          return option;
-        });
-      }
-      // Provincias cercanas (Santa Fe, Córdoba, Entre Ríos)
-      else if (
-        (numericCode >= 2000 && numericCode <= 2999) ||
-        (numericCode >= 3000 && numericCode <= 3599) ||
-        (numericCode >= 5000 && numericCode <= 5999)
-      ) {
-        options = options.map((option) => {
-          if (option.id === "standard") {
-            return { ...option, price: 1800, estimatedDays: "3-5 días" };
-          }
-          if (option.id === "express") {
-            return { ...option, price: 3000, estimatedDays: "48-72 horas" };
-          }
-          return option;
-        });
-      }
-      // Resto del país
-      else {
-        options = options.map((option) => {
-          if (option.id === "standard") {
-            return { ...option, price: 2500, estimatedDays: "5-7 días" };
-          }
-          if (option.id === "express") {
-            return { ...option, price: 4000, estimatedDays: "72-96 horas" };
-          }
-          return option;
-        });
-      }
 
-      return options;
+        const result = await response.json();
+
+        if (result.success && result.options) {
+          return result.options;
+        }
+        throw new Error(result.error || "Error calculando envío");
+      } catch (error) {
+        logger.error("Error loading customer info:", { error });
+        // Fallback to empty or throw? Throwing allows UI to show error.
+        throw error;
+      }
     },
-    [availableShippingOptions]
+    []
   );
 
   // Checkout - Cupones
   const applyCoupon = useCallback(async (code: string): Promise<boolean> => {
-    // Simular validación de cupón
-    // En producción, esto se haría contra una API
-    const validCoupons = [
-      { code: "WELCOME10", discount: 10 },
-      { code: "SUMMER20", discount: 20 },
-      { code: "FREESHIP", discount: 0 }, // Descuento especial para envío
-    ];
-
-    const coupon = validCoupons.find((c) => c.code === code.toUpperCase());
-    if (coupon) {
-      setAppliedCoupon({
-        code: coupon.code,
-        discount: coupon.discount,
-        isValid: true,
+    try {
+      const response = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code }),
       });
-      return true;
+
+      const result = await response.json();
+
+      if (result.success && result.coupon) {
+        setAppliedCoupon(result.coupon);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error("Error saving customer info:", { error });
+      return false;
     }
-    return false;
   }, []);
 
   const removeCoupon = useCallback(() => {
@@ -581,6 +549,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         })),
         customer: customerInfo,
         shippingMethod: selectedShippingOption,
+        shippingAgency: selectedAgency, // Add selected agency to order data
         paymentMethod: selectedPaymentMethod.id,
         orderData: {
           subtotal: orderSummary.subtotal,
@@ -646,6 +615,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     cartItems,
     getOrderSummary,
     clearCart,
+    selectedAgency,
   ]);
 
   const value: CartContextType = {
@@ -663,6 +633,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     selectedShippingOption,
     setSelectedShippingOption,
     calculateShippingCost,
+
+    // Checkout - Sucursal
+    selectedAgency,
+    setSelectedAgency,
 
     // Checkout - Pago
     availablePaymentMethods,

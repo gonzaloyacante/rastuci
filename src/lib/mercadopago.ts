@@ -96,7 +96,11 @@ async function safeCreate<T>(fn: () => Promise<T>): Promise<T> {
 export async function createPreference(
   items: MPItem[],
   payer?: Record<string, unknown>,
-  idempotencyKey?: string
+  options?: {
+    external_reference?: string;
+    metadata?: Record<string, unknown>;
+    idempotencyKey?: string;
+  }
 ) {
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) {
@@ -107,7 +111,7 @@ export async function createPreference(
     accessToken: token,
     options: {
       timeout: 10000,
-      idempotencyKey: idempotencyKey || genIdempotency(),
+      idempotencyKey: options?.idempotencyKey || genIdempotency(),
     },
   });
   const pref = new Preference(client);
@@ -130,6 +134,8 @@ export async function createPreference(
     notification_url: getNotificationUrl(),
     auto_return: "approved",
     binary_mode: false,
+    external_reference: options?.external_reference,
+    metadata: options?.metadata,
   } as Record<string, unknown>;
 
   return await safeCreate(

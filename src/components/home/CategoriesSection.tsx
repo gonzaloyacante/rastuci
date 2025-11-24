@@ -31,7 +31,7 @@ export function CategoriesSection({
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 justify-items-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 justify-items-center justify-center w-fit mx-auto">
         {loading
           ? Array.from({ length: 12 }, (_, i) => <CategorySkeleton key={i} />)
           : hasCategories

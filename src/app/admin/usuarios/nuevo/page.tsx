@@ -1,10 +1,12 @@
 "use client";
 
-import { UserForm } from "@/components/forms";
 import { AdminPageHeader } from "@/components/admin";
+import { UserForm } from "@/components/forms";
+import { useDocumentTitle } from "@/hooks";
 import { logger } from "@/lib/logger";
 
 export default function CreateUserPage() {
+  useDocumentTitle({ title: "Nuevo Usuario" });
   const handleSubmit = async (data: {
     name: string;
     email: string;

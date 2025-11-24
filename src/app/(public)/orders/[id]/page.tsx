@@ -1,7 +1,7 @@
-import { OrderTracking } from '@/components/orders/OrderTracking';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { notFound } from 'next/navigation';
+import Header from "@/components/header/Header";
+import Footer from "@/components/layout/Footer";
+import { OrderTracking } from "@/components/orders/OrderTracking";
+import { notFound } from "next/navigation";
 
 interface OrderPageProps {
   params: Promise<{
@@ -20,7 +20,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
   return (
     <div className="min-h-screen surface">
       <Header />
-      
+
       <div className="py-8 px-6">
         <div className="max-w-4xl mx-auto">
           <OrderTracking orderId={id} />

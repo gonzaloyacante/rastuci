@@ -1,8 +1,8 @@
-import Footer from '@/components/Footer';
-import Header from '@/components/Header';
-import { TrackingValidator } from '@/components/tracking/TrackingValidator';
-import { Info, Search } from 'lucide-react';
-import Link from 'next/link';
+import Header from "@/components/header/Header";
+import Footer from "@/components/layout/Footer";
+import { TrackingValidator } from "@/components/tracking/TrackingValidator";
+import { Info, Search } from "lucide-react";
+import Link from "next/link";
 
 export default function TrackingPage() {
   return (
@@ -20,9 +20,9 @@ export default function TrackingPage() {
               </h1>
             </div>
             <p className="muted max-w-2xl mx-auto">
-              Ingresa tu número de tracking para verificar el estado actual de tu envío.
-              Nuestro sistema valida la información directamente con OCA para brindarte
-              datos precisos y actualizados.
+              Ingresa tu número de tracking para verificar el estado actual de
+              tu envío. Nuestro sistema valida la información directamente con
+              OCA para brindarte datos precisos y actualizados.
             </p>
           </div>
 
@@ -40,7 +40,9 @@ export default function TrackingPage() {
               <div className="flex items-start gap-3 mb-4">
                 <Info className="w-6 h-6 text-primary mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-primary">¿Dónde encontrar tu tracking?</h3>
+                  <h3 className="font-semibold text-primary">
+                    ¿Dónde encontrar tu tracking?
+                  </h3>
                 </div>
               </div>
               <ul className="space-y-2 text-sm muted">
@@ -55,14 +57,28 @@ export default function TrackingPage() {
               <div className="flex items-start gap-3 mb-4">
                 <Search className="w-6 h-6 text-primary mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-primary">Estados de envío</h3>
+                  <h3 className="font-semibold text-primary">
+                    Estados de envío
+                  </h3>
                 </div>
               </div>
               <ul className="space-y-2 text-sm muted">
-                <li><span className="text-warning">• Preparación:</span> Tu pedido está siendo empaquetado</li>
-                <li><span className="text-primary">• En tránsito:</span> Tu pedido está camino a destino</li>
-                <li><span className="text-primary">• En distribución:</span> Será entregado pronto</li>
-                <li><span className="text-success">• Entregado:</span> Tu pedido llegó a destino</li>
+                <li>
+                  <span className="text-warning">• Preparación:</span> Tu pedido
+                  está siendo empaquetado
+                </li>
+                <li>
+                  <span className="text-primary">• En tránsito:</span> Tu pedido
+                  está camino a destino
+                </li>
+                <li>
+                  <span className="text-primary">• En distribución:</span> Será
+                  entregado pronto
+                </li>
+                <li>
+                  <span className="text-success">• Entregado:</span> Tu pedido
+                  llegó a destino
+                </li>
               </ul>
             </div>
           </div>
@@ -72,23 +88,30 @@ export default function TrackingPage() {
             <div className="flex items-start gap-3 mb-4">
               <Info className="w-6 h-6 text-primary mt-0.5" />
               <div>
-                <h3 className="font-semibold text-primary">Proveedores de envío</h3>
+                <h3 className="font-semibold text-primary">
+                  Proveedores de envío
+                </h3>
               </div>
             </div>
             <p className="text-sm muted mb-3">
-              Trabajamos con los mejores proveedores de logística para garantizar que tu pedido llegue en tiempo y forma:
+              Trabajamos con los mejores proveedores de logística para
+              garantizar que tu pedido llegue en tiempo y forma:
             </p>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="p-4 bg-primary/5 rounded-lg">
                 <h4 className="font-semibold text-primary mb-2">OCA</h4>
                 <p className="text-sm muted">
-                  Proveedor principal con cobertura nacional. Seguimiento en tiempo real y entrega puerta a puerta.
+                  Proveedor principal con cobertura nacional. Seguimiento en
+                  tiempo real y entrega puerta a puerta.
                 </p>
               </div>
               <div className="p-4 bg-primary/5 rounded-lg">
-                <h4 className="font-semibold text-primary mb-2">Correo Argentino</h4>
+                <h4 className="font-semibold text-primary mb-2">
+                  Correo Argentino
+                </h4>
                 <p className="text-sm muted">
-                  Red nacional con más de 1000 sucursales. Retiro en sucursal disponible para mayor flexibilidad.
+                  Red nacional con más de 1000 sucursales. Retiro en sucursal
+                  disponible para mayor flexibilidad.
                 </p>
               </div>
             </div>
@@ -96,20 +119,30 @@ export default function TrackingPage() {
 
           {/* FAQs */}
           <div className="surface border border-muted rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-primary mb-4">Preguntas Frecuentes</h2>
+            <h2 className="text-xl font-semibold text-primary mb-4">
+              Preguntas Frecuentes
+            </h2>
             <div className="space-y-4">
               <details className="group">
                 <summary className="font-medium text-primary cursor-pointer list-none flex items-center justify-between">
                   ¿Mi tracking no aparece, qué hago?
-                  <span className="transition-transform group-open:rotate-180">▼</span>
+                  <span className="transition-transform group-open:rotate-180">
+                    ▼
+                  </span>
                 </summary>
                 <div className="mt-2 text-sm muted pl-4">
                   <p>Si tu tracking no aparece, puede ser por estas razones:</p>
                   <ul className="mt-2 space-y-1">
-                    <li>• El envío aún no fue procesado por el proveedor (espera 24-48hs)</li>
+                    <li>
+                      • El envío aún no fue procesado por el proveedor (espera
+                      24-48hs)
+                    </li>
                     <li>• Verifica que el número esté escrito correctamente</li>
                     <li>• Tu pedido puede estar siendo preparado aún</li>
-                    <li>• Dependiendo del proveedor (OCA o Correo Argentino), los tiempos pueden variar</li>
+                    <li>
+                      • Dependiendo del proveedor (OCA o Correo Argentino), los
+                      tiempos pueden variar
+                    </li>
                   </ul>
                 </div>
               </details>
@@ -117,15 +150,22 @@ export default function TrackingPage() {
               <details className="group">
                 <summary className="font-medium text-primary cursor-pointer list-none flex items-center justify-between">
                   ¿Cuánto tiempo tarda en actualizarse?
-                  <span className="transition-transform group-open:rotate-180">▼</span>
+                  <span className="transition-transform group-open:rotate-180">
+                    ▼
+                  </span>
                 </summary>
                 <div className="mt-2 text-sm muted pl-4">
                   <p>El tracking se actualiza automáticamente:</p>
                   <ul className="mt-2 space-y-1">
-                    <li>• Cada vez que el paquete pasa por un centro de distribución</li>
+                    <li>
+                      • Cada vez que el paquete pasa por un centro de
+                      distribución
+                    </li>
                     <li>• Cuando sale para entrega</li>
                     <li>• Cuando es entregado exitosamente</li>
-                    <li>• Puede haber demoras de 2-4 horas en las actualizaciones</li>
+                    <li>
+                      • Puede haber demoras de 2-4 horas en las actualizaciones
+                    </li>
                   </ul>
                 </div>
               </details>
@@ -133,12 +173,17 @@ export default function TrackingPage() {
               <details className="group">
                 <summary className="font-medium text-primary cursor-pointer list-none flex items-center justify-between">
                   ¿Puedo cambiar la dirección de entrega?
-                  <span className="transition-transform group-open:rotate-180">▼</span>
+                  <span className="transition-transform group-open:rotate-180">
+                    ▼
+                  </span>
                 </summary>
                 <div className="mt-2 text-sm muted pl-4">
-                  <p>Una vez que el envío está en tránsito, no es posible cambiar la dirección.
-                  Si necesitas modificarla, contáctanos inmediatamente para ver si podemos
-                  interceptar el paquete antes del despacho.</p>
+                  <p>
+                    Una vez que el envío está en tránsito, no es posible cambiar
+                    la dirección. Si necesitas modificarla, contáctanos
+                    inmediatamente para ver si podemos interceptar el paquete
+                    antes del despacho.
+                  </p>
                 </div>
               </details>
             </div>
@@ -146,17 +191,25 @@ export default function TrackingPage() {
 
           {/* Enlaces útiles */}
           <div className="text-center mt-8 space-y-2">
-            <p className="text-sm muted">
-              ¿No encuentras lo que buscas?
-            </p>
+            <p className="text-sm muted">¿No encuentras lo que buscas?</p>
             <div className="flex flex-wrap justify-center gap-4 text-sm">
               <a href="/contacto" className="text-primary hover:underline">
                 Contactar Soporte
               </a>
-              <a href="https://www.oca.com.ar" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              <a
+                href="https://www.oca.com.ar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
                 Sitio de OCA
               </a>
-              <a href="https://www.correoargentino.com.ar" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              <a
+                href="https://www.correoargentino.com.ar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
                 Correo Argentino
               </a>
               <Link href="/orders" className="text-primary hover:underline">

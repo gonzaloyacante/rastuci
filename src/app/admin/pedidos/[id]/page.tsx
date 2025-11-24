@@ -2,11 +2,11 @@
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { useCorreoArgentino } from "@/hooks";
+import { useCorreoArgentino } from "@/hooks/useCorreoArgentino";
 import type {
+  ProvinceCode,
   TrackingErrorResponse,
   TrackingInfo,
-  ProvinceCode,
 } from "@/lib/correo-argentino-service";
 import {
   ArrowLeft,

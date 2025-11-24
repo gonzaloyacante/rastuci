@@ -1,15 +1,15 @@
 "use client";
 
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
+import Header from "@/components/header/Header";
+import Footer from "@/components/layout/Footer";
 import {
-    AlertTriangle,
-    CreditCard,
-    Loader2,
-    MapPin,
-    Phone,
-    RefreshCw,
-    XCircle,
+  AlertTriangle,
+  CreditCard,
+  Loader2,
+  MapPin,
+  Phone,
+  RefreshCw,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

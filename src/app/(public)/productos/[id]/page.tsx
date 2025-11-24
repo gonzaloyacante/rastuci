@@ -104,12 +104,56 @@ const ProductDetailSkeleton = () => (
   </div>
 );
 
+// Generar params estáticos para los productos más recientes/populares (SSG)
+export async function generateStaticParams() {
+  try {
+    const products = await prisma.product.findMany({
+      take: 20, // Pre-renderizar los 20 primeros productos
+      select: { id: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return products.map((product) => ({
+      id: product.id,
+    }));
+  } catch (error) {
+    logger.error("Error generating static params:", { error });
+    return [];
+  }
+}
+
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
+  // Fetch product data on server to pass to client (avoid double fetch)
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      category: true,
+    },
+  });
+
+  // Transform to match the Product interface expected by client
+  // Serializing dates to strings because Client Components cannot receive Date objects
+  const serializedProduct = product
+    ? {
+        ...product,
+        price: Number(product.price),
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+        category: product.category
+          ? {
+              ...product.category,
+              createdAt: product.category.createdAt.toISOString(),
+              updatedAt: product.category.updatedAt.toISOString(),
+            }
+          : undefined,
+      }
+    : null;
+
   return (
     <Suspense fallback={<ProductDetailSkeleton />}>
-      <ProductDetailClient productId={id} />
+      <ProductDetailClient productId={id} initialProduct={serializedProduct} />
     </Suspense>
   );
 }

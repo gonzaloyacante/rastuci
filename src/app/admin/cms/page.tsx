@@ -3,7 +3,7 @@
 import { AdminError, AdminLoading, AdminPageHeader } from "@/components/admin";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { useCMS } from "@/hooks";
+import { useCMS } from "@/hooks/useCMS";
 import { Edit2, Save, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -20,7 +20,9 @@ export default function CMSPage() {
   };
 
   const handleSave = async () => {
-    if (!editing) {return;}
+    if (!editing) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -55,14 +57,18 @@ export default function CMSPage() {
   }
 
   const commonSettings = [
-    { key: 'home.hero.title', label: 'Home - Título Hero', type: 'text' },
-    { key: 'home.hero.subtitle', label: 'Home - Subtítulo Hero', type: 'text' },
-    { key: 'home.hero.image', label: 'Home - Imagen Hero', type: 'text' },
-    { key: 'home.featured', label: 'Home - Productos Destacados', type: 'json' },
-    { key: 'home.banners', label: 'Home - Banners', type: 'json' },
-    { key: 'footer.about', label: 'Footer - Acerca de', type: 'text' },
-    { key: 'footer.contact', label: 'Footer - Contacto', type: 'json' },
-    { key: 'footer.social', label: 'Footer - Redes Sociales', type: 'json' },
+    { key: "home.hero.title", label: "Home - Título Hero", type: "text" },
+    { key: "home.hero.subtitle", label: "Home - Subtítulo Hero", type: "text" },
+    { key: "home.hero.image", label: "Home - Imagen Hero", type: "text" },
+    {
+      key: "home.featured",
+      label: "Home - Productos Destacados",
+      type: "json",
+    },
+    { key: "home.banners", label: "Home - Banners", type: "json" },
+    { key: "footer.about", label: "Footer - Acerca de", type: "text" },
+    { key: "footer.contact", label: "Footer - Contacto", type: "json" },
+    { key: "footer.social", label: "Footer - Redes Sociales", type: "json" },
   ];
 
   return (
@@ -140,7 +146,8 @@ export default function CMSPage() {
       <Card className="p-6">
         <h2 className="text-xl font-bold mb-4">Configuraciones Sugeridas</h2>
         <p className="text-sm text-content-secondary mb-4">
-          Estas son configuraciones comunes que puedes crear para personalizar tu sitio:
+          Estas son configuraciones comunes que puedes crear para personalizar
+          tu sitio:
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {commonSettings.map((setting) => {
@@ -150,8 +157,8 @@ export default function CMSPage() {
                 key={setting.key}
                 className={`p-3 rounded-lg border ${
                   exists
-                    ? 'border-success bg-success/5'
-                    : 'border-muted surface-secondary'
+                    ? "border-success bg-success/5"
+                    : "border-muted surface-secondary"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -182,7 +189,7 @@ export default function CMSPage() {
           <div>
             <h3 className="font-semibold mb-2">Home - Productos Destacados</h3>
             <pre className="text-xs p-3 bg-black/5 dark:bg-white/5 rounded overflow-x-auto">
-{`{
+              {`{
   "productIds": ["prod1", "prod2", "prod3"],
   "title": "Productos Destacados",
   "subtitle": "Los más vendidos de la semana"
@@ -193,7 +200,7 @@ export default function CMSPage() {
           <div>
             <h3 className="font-semibold mb-2">Home - Banners</h3>
             <pre className="text-xs p-3 bg-black/5 dark:bg-white/5 rounded overflow-x-auto">
-{`{
+              {`{
   "banners": [
     {
       "image": "/banners/promo1.jpg",
@@ -210,7 +217,7 @@ export default function CMSPage() {
           <div>
             <h3 className="font-semibold mb-2">Footer - Contacto</h3>
             <pre className="text-xs p-3 bg-black/5 dark:bg-white/5 rounded overflow-x-auto">
-{`{
+              {`{
   "email": "contacto@rastuci.com",
   "phone": "+54 11 1234-5678",
   "whatsapp": "+54 9 11 1234-5678",

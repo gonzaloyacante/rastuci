@@ -67,14 +67,11 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
-  // Protección de API admin: permitir si hay sesión admin o token válido
+  // Protección de API admin: requerir sesión de admin
   if (isAdminApi) {
     const isAdmin = Boolean(session?.isAdmin);
-    const headerToken = request.headers.get("x-admin-token");
-    const envToken = process.env.ADMIN_API_TOKEN;
-    const tokenOk = envToken && headerToken && headerToken === envToken;
 
-    if (!isAdmin && !tokenOk) {
+    if (!isAdmin) {
       const res = NextResponse.json(
         { success: false, code: "UNAUTHORIZED", error: "Unauthorized" },
         { status: 401 }

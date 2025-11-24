@@ -1,17 +1,19 @@
 "use client";
 
 import {
-    AdminEmpty,
-    AdminEmptyIcons,
-    AdminError,
-    AdminLoading,
-    AdminPageHeader,
+  AdminEmpty,
+  AdminEmptyIcons,
+  AdminError,
+  AdminLoading,
+  AdminPageHeader,
 } from "@/components/admin";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useDocumentTitle } from "@/hooks";
 import { User, useUsers } from "@/hooks/useUsers";
 import { useState } from "react";
 
 export default function UsuariosPage() {
+  useDocumentTitle({ title: "Usuarios" });
   const {
     users,
     loading,

@@ -8,7 +8,7 @@ import {
   AdminPageHeader,
 } from "@/components/admin";
 import { FilterBar, SearchBar } from "@/components/search";
-import { useCorreoArgentino } from "@/hooks";
+import { useDocumentTitle } from "@/hooks";
 import { useOrders, type Order } from "@/hooks/useOrders";
 import { logger } from "@/lib/logger";
 import { DownloadIcon, PackageIcon, TruckIcon } from "lucide-react";
@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 export default function OrdersPage() {
+  useDocumentTitle({ title: "Pedidos" });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "PENDING" | "PROCESSED" | "DELIVERED"
@@ -25,11 +26,6 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const { orders, loading, error, totalPages, fetchOrders } = useOrders();
-  const {
-    getTracking: _getTracking,
-    importShipment: _importShipment,
-    loading: _caLoading,
-  } = useCorreoArgentino();
 
   useEffect(() => {
     fetchOrders({

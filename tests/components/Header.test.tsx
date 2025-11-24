@@ -1,6 +1,6 @@
 /// <reference types="jest" />
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import Header from "@/components/Header";
+import Header from "@/components/header/Header";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 // Mock Next.js router
 const mockPush = jest.fn();
@@ -50,11 +50,11 @@ describe.skip("Header Component (skipped - legacy)", () => {
 
     expect(screen.getByText("Rastuci")).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: /navegación principal/i }),
+      screen.getByRole("navigation", { name: /navegación principal/i })
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /inicio/i })).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /productos/i }),
+      screen.getByRole("link", { name: /productos/i })
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /contacto/i })).toBeInTheDocument();
   });
@@ -74,7 +74,7 @@ describe.skip("Header Component (skipped - legacy)", () => {
     fireEvent.click(mobileMenuButton);
 
     expect(
-      screen.getByRole("dialog", { name: /menú de navegación móvil/i }),
+      screen.getByRole("dialog", { name: /menú de navegación móvil/i })
     ).toBeInTheDocument();
   });
 
@@ -88,7 +88,7 @@ describe.skip("Header Component (skipped - legacy)", () => {
     fireEvent.click(closeButton);
 
     expect(
-      screen.queryByRole("dialog", { name: /menú de navegación móvil/i }),
+      screen.queryByRole("dialog", { name: /menú de navegación móvil/i })
     ).not.toBeInTheDocument();
   });
 
@@ -102,7 +102,7 @@ describe.skip("Header Component (skipped - legacy)", () => {
     fireEvent.click(overlay);
 
     expect(
-      screen.queryByRole("dialog", { name: /menú de navegación móvil/i }),
+      screen.queryByRole("dialog", { name: /menú de navegación móvil/i })
     ).not.toBeInTheDocument();
   });
 
@@ -113,7 +113,7 @@ describe.skip("Header Component (skipped - legacy)", () => {
     fireEvent.click(searchButton);
 
     expect(
-      screen.getByRole("dialog", { name: /buscar productos/i }),
+      screen.getByRole("dialog", { name: /buscar productos/i })
     ).toBeInTheDocument();
   });
 
@@ -167,7 +167,7 @@ describe.skip("Header Component (skipped - legacy)", () => {
     fireEvent.keyDown(document, { key: "Escape" });
 
     expect(
-      screen.queryByRole("dialog", { name: /buscar productos/i }),
+      screen.queryByRole("dialog", { name: /buscar productos/i })
     ).not.toBeInTheDocument();
   });
 

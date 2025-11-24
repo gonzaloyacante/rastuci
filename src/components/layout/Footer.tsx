@@ -1,7 +1,7 @@
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
 import { Facebook, Instagram, Twitter } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "./ui/ThemeToggle";
 
 interface FooterProps {
   home?: HomeSettings;
