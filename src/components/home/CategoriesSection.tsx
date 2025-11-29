@@ -19,30 +19,40 @@ export function CategoriesSection({
 }: CategoriesSectionProps) {
   const hasCategories = categories.length > 0;
 
+  if (!loading && !hasCategories) {
+    return null;
+  }
+
   return (
     <section
       id="categorias"
-      className="py-12 px-4 max-w-7xl mx-auto"
+      className="surface py-16 px-6"
       aria-labelledby="categories-title"
     >
-      <div className="mb-8 text-center">
-        <h2 id="categories-title" className="text-2xl md:text-3xl font-bold">
+      <div className="max-w-[1400px] mx-auto">
+        <h2
+          id="categories-title"
+          className="text-3xl font-bold text-center mb-3"
+          style={{ fontFamily: "'Montserrat', sans-serif" }}
+        >
           {home?.categoriesTitle ?? "Nuestras Categorías"}
         </h2>
-      </div>
+        <p className="text-center text-sm muted mb-10">
+          {home?.categoriesSubtitle ??
+            "Explorá nuestras categorías de productos"}
+        </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 max-w-6xl mx-auto">
-        {loading
-          ? Array.from({ length: 12 }, (_, i) => <CategorySkeleton key={i} />)
-          : hasCategories
-            ? categories.map((category) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {loading
+            ? Array.from({ length: 8 }, (_, i) => <CategorySkeleton key={i} />)
+            : categories.map((category) => (
                 <CategoryCard
                   key={category.id}
                   category={category}
                   displayMode={display}
                 />
-              ))
-            : null}
+              ))}
+        </div>
       </div>
     </section>
   );

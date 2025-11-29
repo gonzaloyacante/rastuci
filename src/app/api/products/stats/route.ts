@@ -4,16 +4,24 @@ import prisma from "@/lib/prisma";
 import { ApiResponse } from "@/types";
 import { NextResponse } from "next/server";
 
-// GET /api/products/stats - Estadísticas para filtros dinámicos
+// GET /api/products/stats - Estadísticas para filtros dinámicos e inventario
 export async function GET(): Promise<
   NextResponse<ApiResponse<Record<string, unknown>>>
 > {
   try {
-    // Min/Max price
-    const priceAgg = await prisma.product.aggregate({
-      _min: { price: true },
-      _max: { price: true },
-    });
+    // Estadísticas de inventario (ejecutar en paralelo)
+    const [totalProducts, inStock, lowStock, outOfStock, priceAgg] =
+      await Promise.all([
+        prisma.product.count(),
+        prisma.product.count({ where: { stock: { gt: 0 } } }),
+        prisma.product.count({ where: { stock: { gt: 0, lte: 5 } } }),
+        prisma.product.count({ where: { stock: 0 } }),
+        // Min/Max price
+        prisma.product.aggregate({
+          _min: { price: true },
+          _max: { price: true },
+        }),
+      ]);
 
     // Sizes and colors aggregation (scan products)
     const products = await prisma.product.findMany({
@@ -53,6 +61,14 @@ export async function GET(): Promise<
     const availableColors = Object.keys(colorCounts);
 
     const response = ok({
+      // Estadísticas de inventario
+      inventory: {
+        total: totalProducts,
+        inStock,
+        lowStock,
+        outOfStock,
+      },
+      // Estadísticas de filtros
       minPrice: priceAgg._min.price ?? 0,
       maxPrice: priceAgg._max.price ?? 0,
       availableSizes,

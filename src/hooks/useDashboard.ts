@@ -1,6 +1,13 @@
 import { logger } from "@/lib/logger";
 import { useCallback, useEffect, useState } from "react";
 
+export interface StatsChanges {
+  products: string;
+  orders: string;
+  revenue: string;
+  categories: string;
+}
+
 export interface DashboardStats {
   totalProducts: number;
   totalCategories: number;
@@ -9,6 +16,7 @@ export interface DashboardStats {
   totalRevenue: number;
   pendingOrders: number;
   lowStockProducts: number;
+  changes: StatsChanges;
 }
 
 export interface RecentOrder {
@@ -86,10 +94,16 @@ export const useDashboard = (): UseDashboardReturn => {
         totalProducts: data.stats?.totalProducts || 0,
         totalCategories: data.stats?.totalCategories || 0,
         totalOrders: data.stats?.totalOrders || 0,
-        totalUsers: 0, // Este campo no existe en el API
+        totalUsers: 0,
         totalRevenue: data.stats?.totalRevenue || 0,
         pendingOrders: data.stats?.pendingOrders || 0,
         lowStockProducts: data.lowStockProducts?.length || 0,
+        changes: data.stats?.changes || {
+          products: "+0%",
+          orders: "+0%",
+          revenue: "+0%",
+          categories: "+0%",
+        },
       });
       setRecentOrders(data.recentOrders || []);
       setLowStockProducts(data.lowStockProducts || []);

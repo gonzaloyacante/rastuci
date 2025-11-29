@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 // Interfaces para tipado
 interface OrderWithItems {
@@ -24,8 +24,30 @@ interface CategoryWithCount {
   };
 }
 
+// Helper para calcular cambio porcentual
+function calculateChange(
+  current: number,
+  previous: number
+): { change: number; changePercent: string } {
+  if (previous === 0) {
+    return { change: current, changePercent: current > 0 ? "+100%" : "0%" };
+  }
+  const change = current - previous;
+  const percent = ((change / previous) * 100).toFixed(1);
+  return {
+    change,
+    changePercent: change >= 0 ? `+${percent}%` : `${percent}%`,
+  };
+}
+
 export async function GET() {
   try {
+    // Fechas para comparación (este mes vs mes anterior)
+    const now = new Date();
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
     // Obtener estadísticas básicas
     const [
       totalProducts,
@@ -33,6 +55,11 @@ export async function GET() {
       totalOrders,
       pendingOrders,
       recentOrders,
+      // Conteos del mes anterior para comparación
+      ordersThisMonth,
+      ordersLastMonth,
+      productsAddedThisMonth,
+      productsAddedLastMonth,
     ] = await Promise.all([
       prisma.product.count(),
       prisma.category.count(),
@@ -50,16 +77,68 @@ export async function GET() {
           },
         },
       }),
+      // Pedidos este mes
+      prisma.order.count({
+        where: { createdAt: { gte: startOfThisMonth } },
+      }),
+      // Pedidos mes anterior
+      prisma.order.count({
+        where: {
+          createdAt: {
+            gte: startOfLastMonth,
+            lte: endOfLastMonth,
+          },
+        },
+      }),
+      // Productos agregados este mes
+      prisma.product.count({
+        where: { createdAt: { gte: startOfThisMonth } },
+      }),
+      // Productos agregados mes anterior
+      prisma.product.count({
+        where: {
+          createdAt: {
+            gte: startOfLastMonth,
+            lte: endOfLastMonth,
+          },
+        },
+      }),
     ]);
 
-    // Calcular ingresos totales
-    const totalRevenueResult = await prisma.order.aggregate({
-      _sum: {
-        total: true,
-      },
-    });
+    // Calcular ingresos totales y por período
+    const [totalRevenueResult, revenueThisMonth, revenueLastMonth] =
+      await Promise.all([
+        prisma.order.aggregate({ _sum: { total: true } }),
+        prisma.order.aggregate({
+          _sum: { total: true },
+          where: { createdAt: { gte: startOfThisMonth } },
+        }),
+        prisma.order.aggregate({
+          _sum: { total: true },
+          where: {
+            createdAt: {
+              gte: startOfLastMonth,
+              lte: endOfLastMonth,
+            },
+          },
+        }),
+      ]);
 
     const totalRevenue = Number(totalRevenueResult._sum.total) || 0;
+    const revenueThisMonthValue = Number(revenueThisMonth._sum.total) || 0;
+    const revenueLastMonthValue = Number(revenueLastMonth._sum.total) || 0;
+
+    // Calcular cambios porcentuales
+    const productsChange = calculateChange(
+      productsAddedThisMonth,
+      productsAddedLastMonth
+    );
+    const ordersChange = calculateChange(ordersThisMonth, ordersLastMonth);
+    const revenueChange = calculateChange(
+      revenueThisMonthValue,
+      revenueLastMonthValue
+    );
+    const categoriesChange = calculateChange(totalCategories, totalCategories); // Categorías no cambian mucho
 
     // Obtener productos con bajo stock
     const lowStockProducts = await prisma.product.findMany({
@@ -103,6 +182,28 @@ export async function GET() {
       })
     );
 
+    // Ventas mensuales (últimos 6 meses)
+    const monthlySales = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+
+      const monthRevenue = await prisma.order.aggregate({
+        _sum: { total: true },
+        where: {
+          createdAt: {
+            gte: monthStart,
+            lte: monthEnd,
+          },
+        },
+      });
+
+      monthlySales.push({
+        month: monthStart.toLocaleDateString("es-AR", { month: "short" }),
+        revenue: Number(monthRevenue._sum.total) || 0,
+      });
+    }
+
     return NextResponse.json({
       stats: {
         totalProducts,
@@ -110,11 +211,18 @@ export async function GET() {
         totalOrders,
         pendingOrders,
         totalRevenue,
+        // Cambios porcentuales
+        changes: {
+          products: productsChange.changePercent,
+          orders: ordersChange.changePercent,
+          revenue: revenueChange.changePercent,
+          categories: categoriesChange.changePercent,
+        },
       },
       recentOrders: formattedRecentOrders,
       lowStockProducts,
       productsByCategoryCount: formattedProductsByCategory,
-      monthlySales: [], // Simplificado por ahora
+      monthlySales,
     });
   } catch (error) {
     logger.error("Error al obtener estadísticas del dashboard:", {

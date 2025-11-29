@@ -142,6 +142,7 @@ describe("CategoriesSection", () => {
       ctaPrimaryLabel: "Test",
       ctaSecondaryLabel: "Test",
       categoriesTitle: "Categorías Personalizadas",
+      categoriesSubtitle: "Subtítulo de prueba",
       featuredTitle: "Test",
       featuredSubtitle: "Test",
       benefits: [],

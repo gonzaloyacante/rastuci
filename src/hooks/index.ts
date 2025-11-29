@@ -9,8 +9,11 @@ export {
 
 // Hooks principales - exports nombrados para mejor tree shaking
 export { useCategories, useCategory } from "./useCategories";
+export { useInfiniteProducts } from "./useInfiniteProducts";
+export { useInfiniteScroll } from "./useInfiniteScroll";
 export { useOrders } from "./useOrders";
 export { useProduct, useProducts, useRelatedProducts } from "./useProducts";
+export { useProductStats } from "./useProductStats";
 export { useUsers } from "./useUsers";
 
 // Hooks específicos de dominio

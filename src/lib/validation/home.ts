@@ -6,6 +6,7 @@ export const HomeSettingsSchema = z.object({
   ctaPrimaryLabel: z.string().min(1).max(40),
   ctaSecondaryLabel: z.string().min(1).max(40),
   categoriesTitle: z.string().min(1).max(80),
+  categoriesSubtitle: z.string().min(1).max(200),
   categoriesDisplay: z.enum(["image", "icon"]).default("image").optional(),
   featuredTitle: z.string().min(1).max(80),
   featuredSubtitle: z.string().min(1).max(200),
@@ -43,6 +44,7 @@ export const defaultHomeSettings: HomeSettings = {
   ctaPrimaryLabel: "Ver Productos",
   ctaSecondaryLabel: "Explorar categorías",
   categoriesTitle: "Nuestras Categorías",
+  categoriesSubtitle: "Explorá nuestras categorías de productos",
   categoriesDisplay: "image",
   featuredTitle: "Productos en Oferta",
   featuredSubtitle:

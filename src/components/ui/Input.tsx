@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useId, useState } from "react";
 // import { cn } from "@/lib/utils"; // Available when needed
 

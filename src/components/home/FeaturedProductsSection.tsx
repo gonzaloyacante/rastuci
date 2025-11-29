@@ -2,6 +2,8 @@ import ProductCard from "@/components/products/ProductCard";
 import { ProductCardSkeleton as UISkeletonProductCard } from "@/components/ui/Skeleton";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
 import { Product } from "@/types";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 interface FeaturedProductsSectionProps {
   products: Product[];
@@ -60,6 +62,16 @@ export function FeaturedProductsSection({
               priority={index < 2} // Prioridad para las primeras 2 imágenes
             />
           ))}
+        </div>
+
+        <div className="flex justify-center mt-10">
+          <Link
+            href="/productos?onSale=true"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-3 rounded-lg transition-colors"
+          >
+            Ver todas las ofertas
+            <ChevronRight className="w-5 h-5" />
+          </Link>
         </div>
       </div>
     </section>

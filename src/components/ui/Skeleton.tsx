@@ -1,5 +1,5 @@
-import React from "react";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 interface SkeletonProps {
   className?: string;
@@ -65,7 +65,11 @@ export const ProductDetailSkeleton = () => (
         <Skeleton className="aspect-square w-full" rounded="lg" />
         <div className="grid grid-cols-4 gap-2">
           {[...Array(4)].map(() => (
-            <Skeleton key={`image-thumb-${Math.random()}`} className="aspect-square" rounded="md" />
+            <Skeleton
+              key={`image-thumb-${Math.random()}`}
+              className="aspect-square"
+              rounded="md"
+            />
           ))}
         </div>
       </div>
@@ -87,7 +91,11 @@ export const ProductDetailSkeleton = () => (
           <Skeleton className="h-5 w-20" />
           <div className="flex space-x-2">
             {[...Array(4)].map(() => (
-              <Skeleton key={`size-option-${Math.random()}`} className="h-10 w-16" rounded="md" />
+              <Skeleton
+                key={`size-option-${Math.random()}`}
+                className="h-10 w-16"
+                rounded="md"
+              />
             ))}
           </div>
         </div>
@@ -97,7 +105,11 @@ export const ProductDetailSkeleton = () => (
           <Skeleton className="h-5 w-20" />
           <div className="flex space-x-2">
             {[...Array(4)].map(() => (
-              <Skeleton key={`color-option-${Math.random()}`} className="h-10 w-10" rounded="full" />
+              <Skeleton
+                key={`color-option-${Math.random()}`}
+                className="h-10 w-10"
+                rounded="full"
+              />
             ))}
           </div>
         </div>
@@ -130,7 +142,10 @@ export const ProductDetailSkeleton = () => (
         <Skeleton className="h-6 w-48" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(6)].map(() => (
-            <div key={`feature-${Math.random()}`} className="flex items-center space-x-2">
+            <div
+              key={`feature-${Math.random()}`}
+              className="flex items-center space-x-2"
+            >
               <Skeleton className="h-4 w-4" rounded="full" />
               <Skeleton className="h-4 w-32" />
             </div>
@@ -143,12 +158,19 @@ export const ProductDetailSkeleton = () => (
         <Skeleton className="h-6 w-48" />
         <div className="space-y-4">
           {[...Array(3)].map(() => (
-            <div key={`review-${Math.random()}`} className="border-b border-muted pb-4">
+            <div
+              key={`review-${Math.random()}`}
+              className="border-b border-muted pb-4"
+            >
               <div className="flex items-center justify-between mb-2">
                 <Skeleton className="h-4 w-24" />
                 <div className="flex space-x-1">
                   {[...Array(5)].map(() => (
-                    <Skeleton key={`star-${Math.random()}`} className="h-3 w-3" rounded="full" />
+                    <Skeleton
+                      key={`star-${Math.random()}`}
+                      className="h-3 w-3"
+                      rounded="full"
+                    />
                   ))}
                 </div>
               </div>
@@ -184,13 +206,13 @@ export const ProductListSkeleton = () => (
 );
 
 export const CategorySkeleton = () => (
-  <div className="surface rounded-lg shadow-sm border border-muted p-4">
-    <div className="flex items-center space-x-3">
-      <Skeleton className="h-12 w-12" rounded="lg" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-3 w-16" />
-      </div>
+  <div className="surface rounded-xl shadow-sm border border-muted overflow-hidden">
+    <div className="relative aspect-[3/4] surface-secondary">
+      <Skeleton className="w-full h-full" rounded="none" />
+    </div>
+    <div className="p-4 space-y-2">
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-3 w-1/2 mx-auto" />
     </div>
   </div>
 );

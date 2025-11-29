@@ -1,9 +1,21 @@
 export { AdminCard } from "./AdminCard";
-export { AdminPageHeader } from "./AdminPageHeader";
 export { AdminEmpty, AdminEmptyIcons } from "./AdminEmpty";
-export { AdminLoading } from "./AdminLoading";
 export { AdminError } from "./AdminError";
+export { AdminLoading } from "./AdminLoading";
+export { AdminPageHeader } from "./AdminPageHeader";
 export { AdminTable } from "./AdminTable";
+
+// AdminCards - Componentes reutilizables para stats y secciones
+export * from "./AdminCards";
+
+// Analytics Components - Componentes para métricas y análisis
+export * from "./AnalyticsComponents";
+
+// Layout Components - Tabs, búsqueda, estados vacíos
+export * from "./LayoutComponents";
+
+// Order Components - Componentes para pedidos
+export * from "./OrderComponents";
 
 // Dashboard components
 export * from "./dashboard";

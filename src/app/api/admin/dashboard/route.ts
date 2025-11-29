@@ -325,7 +325,7 @@ export const GET = withAdminAuth(
         where: {
           stock: {
             gt: 0,
-            lte: 10,
+            lte: 5, // Umbral estándar de bajo stock = 5 unidades
           },
         },
       });

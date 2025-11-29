@@ -403,7 +403,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
           {/* Badge de oferta */}
           {product.onSale && (
-            <div className="absolute top-2 left-2 bg-error text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+            <div className="absolute top-2 left-2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded-full font-semibold shadow-md border border-white/20">
               OFERTA
             </div>
           )}
