@@ -67,7 +67,7 @@ export default function AdminDashboard() {
                 <span className="badge-success text-xs sm:text-sm">+12.5%</span>
               </div>
               <h3 className="text-xs sm:text-sm font-medium muted mb-1">
-                Total Productos
+                Productos
               </h3>
               <p className="text-xl sm:text-2xl font-bold text-primary">
                 {totalProducts}
@@ -159,15 +159,13 @@ export default function AdminDashboard() {
                   <div className="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Plus className="h-5 w-5 text-white" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xs sm:text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
-                      Nuevo Producto
-                    </h3>
-                    <p className="text-[10px] sm:text-xs muted mt-0.5 sm:mt-1">
-                      Agregar producto al catálogo
-                    </p>
-                  </div>
+                  <h3 className="text-xs sm:text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
+                    Nuevo Producto
+                  </h3>
                 </div>
+                <p className="text-[10px] sm:text-xs muted mt-0.5 sm:mt-1">
+                  Agregar producto al catálogo
+                </p>
               </div>
             </Link>
 
