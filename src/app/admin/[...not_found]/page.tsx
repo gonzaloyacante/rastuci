@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { logger } from "@/lib/logger";
 import Link from "next/link";
 import { useEffect } from "react";
-import { logger } from "../../../lib/logger";
 
 export default function CatchAllNotFound() {
   useEffect(() => {

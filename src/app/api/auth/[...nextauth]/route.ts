@@ -1,9 +1,9 @@
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { logger } from "../../../../lib/logger";
 // import { JWT } from "next-auth/jwt";
 // import { Session } from "next-auth";
 // import { User } from "@prisma/client";

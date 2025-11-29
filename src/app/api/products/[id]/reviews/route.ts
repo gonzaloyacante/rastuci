@@ -1,11 +1,11 @@
 import { fail, ok } from "@/lib/apiResponse";
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ProductReviewCreateSchema } from "@/lib/validation/product";
 import { ApiResponse, ProductReview } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
-import { logger } from "../../../../../lib/logger";
 
 interface RouteParams {
   params: Promise<{

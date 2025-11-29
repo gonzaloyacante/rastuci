@@ -1,10 +1,10 @@
 import { AdminPageHeader } from "@/components/admin";
 import { FormSkeleton } from "@/components/admin/skeletons";
 import { UserForm } from "@/components/forms";
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { logger } from "../../../../../lib/logger";
 
 interface UserEditPageProps {
   params: Promise<{

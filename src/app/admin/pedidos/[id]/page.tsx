@@ -9,6 +9,7 @@ import type {
   TrackingErrorResponse,
   TrackingInfo,
 } from "@/lib/correo-argentino-service";
+import { logger } from "@/lib/logger";
 import {
   ArrowLeft,
   CheckCircle,
@@ -24,7 +25,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { logger } from "../../../../lib/logger";
 
 // Componente Badge interno para evitar problemas de importación
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {

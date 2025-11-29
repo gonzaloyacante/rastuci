@@ -1,12 +1,12 @@
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ProductCreateSchema } from "@/lib/validation/product";
 import { ApiResponse, Product } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
-import { logger } from "../../../../lib/logger";
 
 interface RouteParams {
   params: Promise<{

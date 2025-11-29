@@ -2,9 +2,9 @@
 
 import { AdminError } from "@/components/admin";
 import { FormSkeleton } from "@/components/admin/skeletons";
+import ProductForm from "@/components/products/ProductForm";
 import { useCategories, useProduct } from "@/hooks";
 import { useParams } from "next/navigation";
-import ProductForm from "../../../../../components/products/ProductForm";
 
 export default function EditProductPage() {
   const params = useParams();
