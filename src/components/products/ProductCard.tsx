@@ -477,11 +477,23 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
+          {/* Precio con oferta */}
+          {product.onSale &&
+          product.salePrice &&
+          product.salePrice < product.price ? (
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-success">
+                {formatPriceARS(product.salePrice)}
+              </span>
+              <span className="text-xs text-muted-foreground line-through">
+                {formattedPrice}
+              </span>
+            </div>
+          ) : (
             <span className="text-sm font-bold text-primary">
               {formattedPrice}
             </span>
-          </div>
+          )}
         </div>
       </article>
     );

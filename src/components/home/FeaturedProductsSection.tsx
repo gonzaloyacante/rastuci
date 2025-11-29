@@ -21,7 +21,7 @@ export function FeaturedProductsSection({
           <h2 className="text-3xl font-bold text-center mb-10 font-montserrat">
             Productos en Oferta
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 justify-items-center justify-center w-fit mx-auto">
             {[...Array(4)].map((_, index) => (
               <UISkeletonProductCard key={`item-${index}`} />
             ))}
@@ -51,7 +51,7 @@ export function FeaturedProductsSection({
         <p className="text-center text-sm muted mb-10">
           {home?.featuredSubtitle || defaultHomeSettings.featuredSubtitle}
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 justify-items-center justify-center w-fit mx-auto">
           {products.map((product, index) => (
             <ProductCard
               key={product.id}
