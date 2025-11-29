@@ -2,6 +2,11 @@
 
 import { Button } from "@/components/ui/Button";
 import { ColorChip } from "@/components/ui/ColorChip";
+import {
+  ProductCardSkeleton,
+  ProductDetailSkeleton,
+  Skeleton,
+} from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -39,75 +44,20 @@ interface ProductDetailClientProps {
   initialProduct?: any; // Using any to avoid complex type matching with serialized dates
 }
 
-// Loading components
-const ProductDetailSkeleton = () => (
-  <div className="min-h-screen surface">
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm muted">
-          <li>
-            <Link href="/" className="hover:text-primary">
-              Inicio
-            </Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link href="/productos" className="hover:text-primary">
-              Productos
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-primary font-medium">Cargando...</li>
-        </ol>
-      </nav>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Image Gallery Skeleton */}
-        <div className="space-y-4">
-          <div className="aspect-square surface rounded-lg animate-pulse" />
-          <div className="grid grid-cols-4 gap-2">
-            {[...Array(4)].map((_, i) => (
-              <div
-                key={`skeleton-thumbnail-${i}`}
-                className="aspect-square surface rounded animate-pulse"
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Product Info Skeleton */}
-        <div className="space-y-6">
-          <div className="h-8 surface rounded animate-pulse w-3/4" />
-          <div className="h-6 surface rounded animate-pulse w-1/4" />
-          <div className="space-y-2">
-            <div className="h-4 surface rounded animate-pulse w-full" />
-            <div className="h-4 surface rounded animate-pulse w-5/6" />
-            <div className="h-4 surface rounded animate-pulse w-4/6" />
-          </div>
-          <div className="space-y-4">
-            <div className="h-12 surface rounded animate-pulse" />
-            <div className="h-12 surface rounded animate-pulse" />
-            <div className="h-12 surface rounded animate-pulse" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
+// Loading components usando componentes reutilizables
 const ImageGallerySkeleton = () => (
-  <div className="w-full h-96 surface rounded-lg animate-pulse" />
+  <Skeleton className="w-full h-96" rounded="lg" />
 );
 
 const ReviewsSkeleton = () => (
   <div className="space-y-4">
-    <div className="h-8 surface rounded animate-pulse w-1/3" />
+    <Skeleton className="h-8 w-1/3" />
     <div className="space-y-3">
       {[...Array(3)].map((_, i) => (
         <div key={`skeleton-review-${i}`} className="p-4 surface rounded-lg">
-          <div className="h-4 surface rounded animate-pulse w-1/4 mb-2" />
-          <div className="h-3 surface rounded animate-pulse w-full mb-1" />
-          <div className="h-3 surface rounded animate-pulse w-3/4" />
+          <Skeleton className="h-4 w-1/4 mb-2" />
+          <Skeleton className="h-3 w-full mb-1" />
+          <Skeleton className="h-3 w-3/4" />
         </div>
       ))}
     </div>
@@ -116,13 +66,10 @@ const ReviewsSkeleton = () => (
 
 const RelatedProductsSkeleton = () => (
   <div className="space-y-4">
-    <div className="h-8 surface rounded animate-pulse w-1/3" />
+    <Skeleton className="h-8 w-1/3" />
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
       {[...Array(4)].map((_, i) => (
-        <div
-          key={`skeleton-related-${i}`}
-          className="h-48 surface border border-muted rounded-lg animate-pulse"
-        />
+        <ProductCardSkeleton key={`skeleton-related-${i}`} />
       ))}
     </div>
   </div>
@@ -162,7 +109,9 @@ export default function ProductDetailClient({
       return;
     }
 
-    if (selectedSize === "") {
+    // Validar talle solo si el producto tiene talles disponibles
+    const availableSizes = Array.isArray(product.sizes) ? product.sizes : [];
+    if (availableSizes.length > 0 && selectedSize === "") {
       show({
         type: "error",
         title: "Talle",
@@ -188,8 +137,10 @@ export default function ProductDetailClient({
 
     // Usar el color seleccionado o "Sin color" si no hay colores disponibles
     const colorToUse = availableColors.length > 0 ? selectedColor : "Sin color";
+    // Usar el talle seleccionado o "Único" si no hay talles disponibles
+    const sizeToUse = availableSizes.length > 0 ? selectedSize : "Único";
 
-    addToCart(product, quantity, selectedSize, colorToUse);
+    addToCart(product, quantity, sizeToUse, colorToUse);
     show({
       type: "success",
       title: "Carrito",
@@ -287,10 +238,8 @@ export default function ProductDetailClient({
       ? JSON.parse(product.images)
       : [];
 
-  const sizes =
-    Array.isArray(product.sizes) && product.sizes.length > 0
-      ? product.sizes
-      : ["XS", "S", "M", "L", "XL"];
+  // No mostrar selector de talles si el producto no tiene talles definidos
+  const sizes = Array.isArray(product.sizes) ? product.sizes : [];
 
   const isProductFavorite = isInWishlist(product.id);
 
@@ -372,12 +321,26 @@ export default function ProductDetailClient({
 
             {/* Precio */}
             <div className="flex items-center space-x-4">
-              <span className="text-3xl font-bold text-primary">
-                {formatPriceARS(product.price)}
-              </span>
-              {product.onSale && (
-                <span className="text-lg muted line-through">
-                  {formatPriceARS(product.price * 1.2)}
+              {product.onSale && product.salePrice ? (
+                <>
+                  <span className="text-3xl font-bold text-success">
+                    {formatPriceARS(product.salePrice)}
+                  </span>
+                  <span className="text-lg muted line-through">
+                    {formatPriceARS(product.price)}
+                  </span>
+                  <span className="text-sm bg-error text-white px-2 py-1 rounded">
+                    -
+                    {Math.round(
+                      ((product.price - product.salePrice) / product.price) *
+                        100
+                    )}
+                    %
+                  </span>
+                </>
+              ) : (
+                <span className="text-3xl font-bold text-primary">
+                  {formatPriceARS(product.price)}
                 </span>
               )}
             </div>
@@ -419,27 +382,29 @@ export default function ProductDetailClient({
               </div>
             )}
 
-            {/* Talle */}
-            <div>
-              <label className="block text-sm font-medium text-primary mb-2">
-                Talle
-              </label>
-              <div className="flex space-x-2 flex-wrap">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-2 border rounded-lg transition-colors ${
-                      selectedSize === size
-                        ? "border-primary text-primary surface"
-                        : "border-muted hover:border-primary"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {/* Talle - Solo mostrar si hay talles definidos */}
+            {sizes.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-primary mb-2">
+                  Talle
+                </label>
+                <div className="flex space-x-2 flex-wrap">
+                  {sizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-4 py-2 border rounded-lg transition-colors ${
+                        selectedSize === size
+                          ? "border-primary text-primary surface"
+                          : "border-muted hover:border-primary"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Cantidad */}
             <div>

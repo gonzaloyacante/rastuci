@@ -11,7 +11,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -31,7 +31,6 @@
       "@/context/*": ["./src/context/*"]
     },
     "types": ["node", "jest", "@testing-library/jest-dom"],
-    
     // Enhanced strict mode settings
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
@@ -40,11 +39,9 @@
     "noImplicitOverride": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
-    
     // Import optimization
     "importsNotUsedAsValues": "remove",
     "verbatimModuleSyntax": false,
-    
     // Performance settings
     "forceConsistentCasingInFileNames": true,
     "declaration": false,
@@ -61,17 +58,10 @@
     "tests/**/*.tsx",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "prisma/seed.ts"
+    "prisma/seed.ts",
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "dist",
-    "build",
-    "coverage",
-    "**/*.config.js",
-    "**/*.config.ts"
-  ],
+  "exclude": ["node_modules", ".next", "dist", "build", "coverage", "**/*.config.js", "**/*.config.ts"],
   "ts-node": {
     "esm": true,
     "compilerOptions": {

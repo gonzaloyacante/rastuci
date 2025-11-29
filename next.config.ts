@@ -6,6 +6,8 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  // Configuración de Turbopack (silencia advertencia de compatibilidad webpack en Next.js 16)
+  turbopack: {},
   experimental: {
     optimizePackageImports: [
       "lucide-react",

@@ -1,13 +1,13 @@
-export { ProductForm } from "./ProductForm";
+// Forms reutilizables
 export { CategoryForm } from "./CategoryForm";
-export { UserForm } from "./UserForm";
 export { default as ContactForm } from "./ContactForm";
-export { default as HomeForm } from "./HomeForm";
-export { 
-  EnhancedForm, 
-  FormField, 
+export {
   ContactForm as EnhancedContactForm,
+  EnhancedForm,
+  FormField,
   contactFormSchema,
   productFormSchema,
-  userFormSchema
+  userFormSchema,
 } from "./EnhancedForm";
+export { default as HomeForm } from "./HomeForm";
+export { UserForm } from "./UserForm";

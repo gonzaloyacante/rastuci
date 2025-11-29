@@ -7,6 +7,7 @@ import {
   AdminLoading,
   AdminPageHeader,
 } from "@/components/admin";
+import ProductCard from "@/components/products/ProductCard";
 import { useAlert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -28,7 +29,6 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import ProductCard from "./ProductCard";
 
 type ViewMode = "grid" | "list";
 type SortField = "name" | "price" | "stock";
@@ -377,7 +377,7 @@ export default function ProductList() {
             <ProductCard
               key={product.id}
               product={product}
-              viewMode={viewMode}
+              variant="admin"
               onEdit={() =>
                 router.push(`/admin/productos/edit?id=${product.id}`)
               }

@@ -5,7 +5,13 @@ import { Heart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-export default function WishlistWidget() {
+interface WishlistWidgetProps {
+  mobile?: boolean;
+}
+
+export default function WishlistWidget({
+  mobile = false,
+}: WishlistWidgetProps) {
   const { getWishlistCount } = useWishlist();
   const [count, setCount] = useState<number | null>(null);
 
@@ -16,14 +22,30 @@ export default function WishlistWidget() {
   }, [getWishlistCount]);
 
   if (count === null) {
-    return <div className="w-9 h-9 rounded-full bg-muted animate-pulse" aria-hidden="true" />;
+    const skeletonSize = mobile ? "w-8 h-8" : "w-9 h-9";
+    return (
+      <div
+        className={`${skeletonSize} rounded-full bg-muted animate-pulse`}
+        aria-hidden="true"
+      />
+    );
   }
 
+  const badgeSize = mobile ? "w-4 h-4 text-[10px]" : "w-5 h-5";
+
   return (
-    <Link href="/favoritos" className="relative p-2 muted hover:text-primary transition-colors" aria-label={`Ver favoritos (${count} productos)`}>
+    <Link
+      href="/favoritos"
+      className="relative p-2 muted hover:text-primary transition-colors"
+      aria-label={`Ver favoritos (${count} productos)`}
+    >
       <Heart className="w-5 h-5" />
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 surface text-primary border border-primary text-xs rounded-full w-5 h-5 flex items-center justify-center">{count}</span>
+        <span
+          className={`absolute -top-1 -right-1 surface text-primary border border-primary text-xs rounded-full flex items-center justify-center ${badgeSize}`}
+        >
+          {count}
+        </span>
       )}
     </Link>
   );

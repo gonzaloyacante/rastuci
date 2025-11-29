@@ -1,3 +1,4 @@
+import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { generateProductMetadata } from "@/lib/seo";
@@ -55,54 +56,6 @@ export async function generateMetadata({
     };
   }
 }
-
-const ProductDetailSkeleton = () => (
-  <div className="min-h-screen surface">
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm muted">
-          <li>Inicio</li>
-          <li>/</li>
-          <li>Productos</li>
-          <li>/</li>
-          <li className="h-4 surface rounded animate-pulse w-32" />
-        </ol>
-      </nav>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-4">
-          <div className="aspect-square surface rounded-lg animate-pulse" />
-          <div className="grid grid-cols-4 gap-2">
-            {[...Array(4)].map(() => (
-              <div
-                key={`thumbnail-${Math.random()}`}
-                className="aspect-square surface rounded animate-pulse"
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="h-8 surface rounded animate-pulse w-3/4" />
-          <div className="h-6 surface rounded animate-pulse w-1/4" />
-          <div className="space-y-2">
-            <div className="h-4 surface rounded animate-pulse w-full" />
-            <div className="h-4 surface rounded animate-pulse w-5/6" />
-            <div className="h-4 surface rounded animate-pulse w-4/6" />
-          </div>
-          <div className="space-y-4">
-            {[...Array(3)].map(() => (
-              <div
-                key={`action-button-${Math.random()}`}
-                className="h-12 surface rounded animate-pulse"
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 // Generar params estáticos para los productos más recientes/populares (SSG)
 export async function generateStaticParams() {

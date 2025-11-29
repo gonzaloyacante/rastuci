@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/ui/Spinner";
 import React from "react";
 
 interface AdminLoadingProps {
@@ -13,19 +14,6 @@ export const AdminLoading: React.FC<AdminLoadingProps> = ({
   className = "",
   fullPage = false,
 }) => {
-  const getSizeClasses = () => {
-    switch (size) {
-      case "sm":
-        return "h-4 w-4";
-      case "md":
-        return "h-8 w-8";
-      case "lg":
-        return "h-12 w-12";
-      default:
-        return "h-8 w-8";
-    }
-  };
-
   const getContainerClasses = () => {
     if (fullPage) {
       return "fixed inset-0 surface bg-opacity-75 flex justify-center items-center z-50";
@@ -52,9 +40,7 @@ export const AdminLoading: React.FC<AdminLoadingProps> = ({
   return (
     <div className={`${getContainerClasses()} ${getMinHeight()} ${className}`}>
       <div className="text-center">
-        <div
-          className={`animate-spin rounded-full border-b-2 border-primary ${getSizeClasses()} mx-auto`}
-        ></div>
+        <Spinner size={size} className="mx-auto" />
         {text && <p className="text-content-secondary mt-2 text-sm">{text}</p>}
       </div>
     </div>

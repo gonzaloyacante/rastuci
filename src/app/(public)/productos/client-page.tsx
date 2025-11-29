@@ -416,7 +416,7 @@ export default function ProductsPageClient({
                   <div
                     className={`grid gap-6 mb-8 ${
                       viewMode === "grid"
-                        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
                         : "grid-cols-1 max-w-4xl"
                     }`}
                   >
@@ -549,7 +549,7 @@ export default function ProductsPageClient({
               <div
                 className={`grid gap-6 mb-8 ${
                   viewMode === "grid"
-                    ? "grid-cols-1 sm:grid-cols-2"
+                    ? "grid-cols-2"
                     : "grid-cols-1 max-w-2xl mx-auto"
                 }`}
               >

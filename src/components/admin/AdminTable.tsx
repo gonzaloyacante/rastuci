@@ -1,6 +1,7 @@
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
+import React from "react";
 
 interface AdminTableColumn<T = Record<string, unknown>> {
   key: string;
@@ -62,7 +63,7 @@ export const AdminTable = <T extends Record<string, unknown>>({
         )}
         <CardContent>
           <div className="flex justify-center items-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <Spinner size="lg" />
           </div>
         </CardContent>
       </Card>

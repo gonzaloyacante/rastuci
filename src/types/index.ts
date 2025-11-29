@@ -32,6 +32,11 @@ export interface Product {
   features?: string[];
   rating?: number | null;
   reviewCount?: number;
+  // Dimensiones para envío
+  weight?: number | null; // Peso en gramos
+  height?: number | null; // Alto en cm
+  width?: number | null; // Ancho en cm
+  length?: number | null; // Largo en cm
   categoryId: string;
   category?: Category;
   createdAt: Date;

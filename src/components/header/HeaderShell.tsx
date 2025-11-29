@@ -53,8 +53,10 @@ export default function HeaderShell({
             <CartWidget />
           </div>
 
-          {/* Mobile menu button (client) */}
-          <div className="md:hidden">
+          {/* Mobile quick actions + menu button (client) */}
+          <div className="md:hidden flex items-center space-x-1">
+            <WishlistWidget mobile />
+            <CartWidget mobile />
             <MobileMenuClient />
           </div>
         </div>

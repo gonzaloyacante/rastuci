@@ -75,7 +75,7 @@ export function ProductGrid({
     if (currentViewMode === "list") {
       return "flex flex-col space-y-4";
     }
-    return "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6";
+    return "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6";
   }, [currentViewMode]);
 
   // Error state
@@ -111,7 +111,7 @@ export function ProductGrid({
   // Empty state
   if (loading && products.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
           <div
             key={`loading-skeleton-${index}`}
@@ -226,7 +226,7 @@ export function ProductGrid({
               key={product.id}
               ref={isInfiniteScrollMode && isLast ? lastElementRef : undefined}
             >
-              <ProductCard product={product} />
+              <ProductCard product={product} variant={currentViewMode} />
             </div>
           );
         })}

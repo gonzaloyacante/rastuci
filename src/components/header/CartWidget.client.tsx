@@ -5,7 +5,11 @@ import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-export default function CartWidget() {
+interface CartWidgetProps {
+  mobile?: boolean;
+}
+
+export default function CartWidget({ mobile = false }: CartWidgetProps) {
   const { getItemCount } = useCart();
   const [count, setCount] = useState<number | null>(null);
 
@@ -18,16 +22,30 @@ export default function CartWidget() {
 
   if (count === null) {
     // skeleton for cart button
+    const skeletonSize = mobile ? "w-8 h-8" : "w-9 h-9";
     return (
-      <div className="w-9 h-9 rounded-full bg-muted animate-pulse" aria-hidden="true" />
+      <div
+        className={`${skeletonSize} rounded-full bg-muted animate-pulse`}
+        aria-hidden="true"
+      />
     );
   }
 
+  const badgeSize = mobile ? "w-4 h-4 text-[10px]" : "w-5 h-5";
+
   return (
-    <Link href="/carrito" className="relative p-2 muted hover:text-primary transition-colors" aria-label={`Ver carrito (${count} productos)`}>
+    <Link
+      href="/carrito"
+      className="relative p-2 muted hover:text-primary transition-colors"
+      aria-label={`Ver carrito (${count} productos)`}
+    >
       <ShoppingCart className="w-5 h-5" />
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 surface text-primary border border-primary text-xs rounded-full w-5 h-5 flex items-center justify-center">{count}</span>
+        <span
+          className={`absolute -top-1 -right-1 surface text-primary border border-primary text-xs rounded-full flex items-center justify-center ${badgeSize}`}
+        >
+          {count}
+        </span>
       )}
     </Link>
   );

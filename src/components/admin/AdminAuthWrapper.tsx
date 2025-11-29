@@ -1,8 +1,9 @@
 "use client";
 
+import { Spinner } from "@/components/ui/Spinner";
 import { useAdminSession } from "@/hooks/useAdminAuth";
-import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface AdminAuthWrapperProps {
   children: React.ReactNode;
@@ -27,7 +28,7 @@ export default function AdminAuthWrapper({ children }: AdminAuthWrapperProps) {
     return (
       <div className="min-h-screen surface flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <Spinner size="lg" />
           <p className="text-sm muted">Verificando sesión...</p>
         </div>
       </div>
@@ -45,7 +46,9 @@ export default function AdminAuthWrapper({ children }: AdminAuthWrapperProps) {
       <div className="min-h-screen surface flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Sesión requerida</h1>
-          <p className="text-muted mb-6">Debes iniciar sesión para acceder al panel de administración.</p>
+          <p className="text-muted mb-6">
+            Debes iniciar sesión para acceder al panel de administración.
+          </p>
           <Link href="/admin" className="btn-primary">
             Ir al login
           </Link>

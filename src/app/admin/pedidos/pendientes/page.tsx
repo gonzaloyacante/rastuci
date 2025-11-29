@@ -2,9 +2,10 @@
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
+import { logger } from "@/lib/logger";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { logger } from "@/lib/logger";
 
 interface OrderItem {
   id: string;
@@ -101,7 +102,7 @@ export default function PendingOrdersPage() {
 
       {loading ? (
         <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <Spinner size="lg" />
         </div>
       ) : orders.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

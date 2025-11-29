@@ -1,6 +1,7 @@
 "use client";
 
 import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
+import SessionProvider from "@/components/providers/SessionProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -232,7 +233,7 @@ const SidebarLink = ({
       onClick={onClick}
       className={`flex items-center ${
         isSidebarOpen ? "gap-3 px-4 py-3" : "justify-center p-3"
-      } rounded-lg transition-colors text-base font-medium font-bold cursor-pointer ${
+      } rounded-lg transition-colors text-base font-medium cursor-pointer ${
         isActive
           ? "surface-secondary text-primary"
           : "hover:surface-secondary hover:text-primary"
@@ -289,147 +290,178 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <AdminAuthWrapper>
-      <div className="flex h-screen surface relative overflow-x-hidden">
-        {/* Mobile Overlay */}
-        <AnimatePresence>
-          {isMobile && isSidebarOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-              onClick={closeSidebar}
-            />
-          )}
-        </AnimatePresence>
+    <SessionProvider>
+      <AdminAuthWrapper>
+        <div className="flex h-screen surface relative overflow-x-hidden">
+          {/* Mobile Overlay */}
+          <AnimatePresence>
+            {isMobile && isSidebarOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                onClick={closeSidebar}
+              />
+            )}
+          </AnimatePresence>
 
-        {/* Sidebar */}
-        <AnimatePresence mode="wait">
-          {(!isMobile || isSidebarOpen) && (
-            <motion.div
-              initial={isMobile ? { x: "100%" } : false}
-              animate={{ x: 0 }}
-              exit={isMobile ? { x: "100%" } : { x: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-                mass: 0.8,
-              }}
-              className={`
+          {/* Sidebar */}
+          <AnimatePresence mode="wait">
+            {(!isMobile || isSidebarOpen) && (
+              <motion.div
+                initial={isMobile ? { x: "100%" } : false}
+                animate={{ x: 0 }}
+                exit={isMobile ? { x: "100%" } : { x: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  mass: 0.8,
+                }}
+                className={`
               ${isSidebarOpen ? "w-64" : "w-18"}
               ${isMobile ? "fixed right-0" : "relative"}
               surface border-r border-muted flex flex-col z-50 h-full shadow-lg
               ${isSidebarOpen ? "items-stretch" : "items-center"}
             `}
-            >
-              {/* Header */}
-              <div
-                className={`p-4 border-b border-muted flex ${
-                  isSidebarOpen
-                    ? "items-center justify-between"
-                    : "flex-col items-center justify-center gap-4"
-                }`}
               >
+                {/* Header */}
                 <div
-                  className={
+                  className={`p-4 border-b border-muted flex ${
                     isSidebarOpen
-                      ? "flex items-center gap-2"
-                      : "flex flex-col items-center"
-                  }
+                      ? "items-center justify-between"
+                      : "flex-col items-center justify-center gap-4"
+                  }`}
                 >
-                  <div className="h-10 w-10 surface rounded-full flex items-center justify-center text-primary text-xl font-bold">
-                    R
-                  </div>
-                  {isSidebarOpen && (
-                    <span className="font-bold text-xl ml-2">Rastuci</span>
-                  )}
-                </div>
-                <button
-                  onClick={toggleSidebar}
-                  className={`p-2 rounded-full hover-surface focus:outline-none transition-colors ${
-                    isSidebarOpen ? "" : "mt-2"
-                  } cursor-pointer`}
-                >
-                  {isSidebarOpen ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 6h16M4 12h16M4 18h16"
-                      />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {/* Navigation */}
-              <nav
-                className={`flex-1 overflow-y-auto mt-4 ${
-                  isSidebarOpen ? "" : "flex flex-col items-center"
-                }`}
-              >
-                <ul
-                  className={`${isSidebarOpen ? "px-2" : "px-0"} space-y-1 w-full`}
-                >
-                  {navLinks.map((link) => (
-                    <SidebarLink
-                      key={link.href}
-                      link={link}
-                      isSidebarOpen={isSidebarOpen}
-                      isActive={isNavActive(pathname, link.href)}
-                      onClick={closeSidebar}
-                    />
-                  ))}
-                </ul>
-              </nav>
-              {/* Logout */}
-              <div
-                className={`p-4 border-t border-muted mt-2 ${
-                  isSidebarOpen ? "" : "flex flex-col items-center"
-                }`}
-              >
-                <button
-                  onClick={async () => {
-                    // Usar directamente NextAuth signOut para terminar la sesión.
-                    try {
-                      await signOut({ callbackUrl: "/admin" });
-                    } catch {
-                      // Fallback simple: redirigir al login
-                      // eslint-disable-next-line no-restricted-globals
-                      window.location.href = "/admin";
+                  <div
+                    className={
+                      isSidebarOpen
+                        ? "flex items-center gap-2"
+                        : "flex flex-col items-center"
                     }
-                  }}
-                  className={`flex items-center ${
-                    isSidebarOpen ? "w-full px-4 py-3" : "justify-center p-3"
-                  } rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary`}
+                  >
+                    <div className="h-10 w-10 surface rounded-full flex items-center justify-center text-primary text-xl font-bold">
+                      R
+                    </div>
+                    {isSidebarOpen && (
+                      <span className="font-bold text-xl ml-2">Rastuci</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={toggleSidebar}
+                    className={`p-2 rounded-full hover-surface focus:outline-none transition-colors ${
+                      isSidebarOpen ? "" : "mt-2"
+                    } cursor-pointer`}
+                  >
+                    {isSidebarOpen ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 6h16M4 12h16M4 18h16"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {/* Navigation */}
+                <nav
+                  className={`flex-1 overflow-y-auto mt-4 ${
+                    isSidebarOpen ? "" : "flex flex-col items-center"
+                  }`}
                 >
+                  <ul
+                    className={`${isSidebarOpen ? "px-2" : "px-0"} space-y-1 w-full`}
+                  >
+                    {navLinks.map((link) => (
+                      <SidebarLink
+                        key={link.href}
+                        link={link}
+                        isSidebarOpen={isSidebarOpen}
+                        isActive={isNavActive(pathname, link.href)}
+                        onClick={closeSidebar}
+                      />
+                    ))}
+                  </ul>
+                </nav>
+                {/* Logout */}
+                <div
+                  className={`p-4 border-t border-muted mt-2 ${
+                    isSidebarOpen ? "" : "flex flex-col items-center"
+                  }`}
+                >
+                  <button
+                    onClick={async () => {
+                      // Usar directamente NextAuth signOut para terminar la sesión.
+                      try {
+                        await signOut({ callbackUrl: "/admin" });
+                      } catch {
+                        // Fallback simple: redirigir al login
+
+                        window.location.href = "/admin";
+                      }
+                    }}
+                    className={`flex items-center ${
+                      isSidebarOpen ? "w-full px-4 py-3" : "justify-center p-3"
+                    } rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    {isSidebarOpen && <span>Cerrar sesión</span>}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
+            {/* Mobile Header */}
+            {isMobile && (
+              <div className="surface shadow-sm border-b border-muted p-3 flex items-center justify-between lg:hidden">
+                <h1 className="text-lg font-semibold text-content-primary">
+                  Panel de Administración
+                </h1>
+                <button onClick={toggleSidebar} className="btn-ghost">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 shrink-0"
+                    className="h-6 w-6"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -438,45 +470,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      d="M4 6h16M4 12h16M4 18h16"
                     />
                   </svg>
-                  {isSidebarOpen && <span>Cerrar sesión</span>}
                 </button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Main content */}
-        <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
-          {/* Mobile Header */}
-          {isMobile && (
-            <div className="surface shadow-sm border-b border-muted p-3 flex items-center justify-between lg:hidden">
-              <h1 className="text-lg font-semibold text-content-primary">
-                Panel de Administración
-              </h1>
-              <button onClick={toggleSidebar} className="btn-ghost">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              </button>
-            </div>
-          )}
-          <main className="p-2 sm:p-3 lg:p-4">{children}</main>
+            )}
+            <main className="p-2 sm:p-3 lg:p-4">{children}</main>
+          </div>
         </div>
-      </div>
-    </AdminAuthWrapper>
+      </AdminAuthWrapper>
+    </SessionProvider>
   );
 }

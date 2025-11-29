@@ -1,7 +1,5 @@
 "use client";
 
-import Header from "@/components/header/Header";
-import Footer from "@/components/layout/Footer";
 import { useCart } from "@/context/CartContext";
 import {
   CheckCircle,
@@ -104,325 +102,318 @@ function CheckoutSuccessContent() {
   const hasTracking = orderInfo?.trackingNumber;
 
   return (
-    <div className="min-h-screen surface">
-      <Header />
-
-      <div className="py-12 px-6">
-        <div className="max-w-2xl mx-auto">
-          {/* Ícono de éxito */}
-          <div className="text-center mb-8">
-            <CheckCircle className="w-20 h-20 text-success mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-primary mb-2">
-              ¡Pedido Confirmado!
-            </h1>
-            <p className="muted">
-              {orderInfo ? (
-                <>
-                  Número de pedido:{" "}
-                  <span className="font-semibold">
-                    #{orderInfo.orderNumber || orderId}
-                  </span>
-                  {orderInfo.total && (
-                    <span className="block mt-1">
-                      Total:{" "}
-                      <span className="font-semibold">
-                        ${orderInfo.total.toFixed(2)}
-                      </span>
+    <div className="py-12 px-6">
+      <div className="max-w-2xl mx-auto">
+        {/* Ícono de éxito */}
+        <div className="text-center mb-8">
+          <CheckCircle className="w-20 h-20 text-success mx-auto mb-4" />
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            ¡Pedido Confirmado!
+          </h1>
+          <p className="muted">
+            {orderInfo ? (
+              <>
+                Número de pedido:{" "}
+                <span className="font-semibold">
+                  #{orderInfo.orderNumber || orderId}
+                </span>
+                {orderInfo.total && (
+                  <span className="block mt-1">
+                    Total:{" "}
+                    <span className="font-semibold">
+                      ${orderInfo.total.toFixed(2)}
                     </span>
-                  )}
-                </>
-              ) : orderId ? (
-                `Número de pedido: #${orderId}`
-              ) : (
-                "Tu pedido ha sido procesado exitosamente"
-              )}
-            </p>
-          </div>
+                  </span>
+                )}
+              </>
+            ) : orderId ? (
+              `Número de pedido: #${orderId}`
+            ) : (
+              "Tu pedido ha sido procesado exitosamente"
+            )}
+          </p>
+        </div>
 
-          {/* Información de tracking OCA */}
-          {hasTracking && (
-            <div className="surface border border-muted rounded-lg p-6 mb-6">
-              <div className="flex items-start space-x-3 mb-4">
-                <Truck className="w-6 h-6 text-primary mt-0.5" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-primary">
-                    Información de Seguimiento
-                  </h3>
-                  <p className="muted mt-1">
-                    Tu pedido será enviado por OCA. Podrás hacer seguimiento del
-                    envío con el número de tracking.
-                  </p>
+        {/* Información de tracking OCA */}
+        {hasTracking && (
+          <div className="surface border border-muted rounded-lg p-6 mb-6">
+            <div className="flex items-start space-x-3 mb-4">
+              <Truck className="w-6 h-6 text-primary mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg text-primary">
+                  Información de Seguimiento
+                </h3>
+                <p className="muted mt-1">
+                  Tu pedido será enviado por OCA. Podrás hacer seguimiento del
+                  envío con el número de tracking.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Número de tracking */}
+              <div className="surface-secondary rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-primary">
+                    Número de Seguimiento:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => copyTrackingNumber(hasTracking)}
+                      className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      {copySuccess ? "Copiado!" : "Copiar"}
+                    </button>
+                    <a
+                      href={`https://www.oca.com.ar/seguimiento?numero=${hasTracking}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Ver en OCA
+                    </a>
+                  </div>
                 </div>
+                <p className="font-mono text-lg font-bold text-primary">
+                  {hasTracking}
+                </p>
               </div>
 
-              <div className="space-y-4">
-                {/* Número de tracking */}
+              {/* Estado actual del envío */}
+              {trackingStatus && (
                 <div className="surface-secondary rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-medium text-primary">
-                      Número de Seguimiento:
+                      Estado Actual:
                     </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => copyTrackingNumber(hasTracking)}
-                        className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
-                      >
-                        <Copy className="w-3 h-3" />
-                        {copySuccess ? "Copiado!" : "Copiar"}
-                      </button>
-                      <a
-                        href={`https://www.oca.com.ar/seguimiento?numero=${hasTracking}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Ver en OCA
-                      </a>
-                    </div>
                   </div>
-                  <p className="font-mono text-lg font-bold text-primary">
-                    {hasTracking}
-                  </p>
+                  <p className="text-success font-medium">{trackingStatus}</p>
                 </div>
+              )}
 
-                {/* Estado actual del envío */}
-                {trackingStatus && (
-                  <div className="surface-secondary rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-medium text-primary">
-                        Estado Actual:
-                      </span>
-                    </div>
-                    <p className="text-success font-medium">{trackingStatus}</p>
+              {/* Información adicional de envío */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {orderInfo?.shippingMethod && (
+                  <div>
+                    <span className="font-medium text-primary block">
+                      Método de envío:
+                    </span>
+                    <span className="muted capitalize">
+                      {orderInfo.shippingMethod}
+                    </span>
                   </div>
                 )}
-
-                {/* Información adicional de envío */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  {orderInfo?.shippingMethod && (
-                    <div>
-                      <span className="font-medium text-primary block">
-                        Método de envío:
-                      </span>
-                      <span className="muted capitalize">
-                        {orderInfo.shippingMethod}
-                      </span>
-                    </div>
-                  )}
-                  {orderInfo?.shippingCost && (
-                    <div>
-                      <span className="font-medium text-primary block">
-                        Costo de envío:
-                      </span>
-                      <span className="muted">
-                        ${orderInfo.shippingCost.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                  {orderInfo?.estimatedDelivery && (
-                    <div className="md:col-span-2">
-                      <span className="font-medium text-primary block">
-                        Entrega estimada:
-                      </span>
-                      <span className="muted">
-                        {new Date(
-                          orderInfo.estimatedDelivery
-                        ).toLocaleDateString("es-ES", {
+                {orderInfo?.shippingCost && (
+                  <div>
+                    <span className="font-medium text-primary block">
+                      Costo de envío:
+                    </span>
+                    <span className="muted">
+                      ${orderInfo.shippingCost.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {orderInfo?.estimatedDelivery && (
+                  <div className="md:col-span-2">
+                    <span className="font-medium text-primary block">
+                      Entrega estimada:
+                    </span>
+                    <span className="muted">
+                      {new Date(orderInfo.estimatedDelivery).toLocaleDateString(
+                        "es-ES",
+                        {
                           weekday: "long",
                           year: "numeric",
                           month: "long",
                           day: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                        }
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
 
-                {/* Enlace a seguimiento completo */}
-                <div className="pt-4 border-t border-muted">
-                  <Link
-                    href={`/orders/${orderId}`}
-                    className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1"
-                  >
-                    <Package className="w-4 h-4" />
-                    Ver seguimiento completo del pedido
-                  </Link>
-                </div>
+              {/* Enlace a seguimiento completo */}
+              <div className="pt-4 border-t border-muted">
+                <Link
+                  href={`/orders/${orderId}`}
+                  className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1"
+                >
+                  <Package className="w-4 h-4" />
+                  Ver seguimiento completo del pedido
+                </Link>
               </div>
             </div>
-          )}
-
-          {/* Información específica según método de pago */}
-          <div className="surface border border-muted rounded-lg p-6 mb-6">
-            {isCashPayment ? (
-              // Información para pago en efectivo
-              <div className="space-y-6">
-                <div className="flex items-start space-x-3">
-                  <Package className="w-6 h-6 text-primary mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-lg text-primary">
-                      Retiro en Local - Pago en Efectivo
-                    </h3>
-                    <p className="muted mt-1">
-                      Tu pedido está siendo preparado. Te contactaremos por
-                      WhatsApp cuando esté listo para retirar.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t border-muted pt-4">
-                  <h4 className="font-medium text-primary mb-3">
-                    Información del Local:
-                  </h4>
-                  <div className="space-y-2 text-sm muted">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>Contactanos para coordinar el retiro</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4" />
-                      <span>Nos comunicaremos contigo pronto</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 p-3 surface-secondary rounded-md">
-                    <p className="text-sm text-primary">
-                      <strong>Proceso de retiro:</strong>
-                      <br />
-                      Te contactaremos por WhatsApp una vez que tu pedido esté
-                      listo para coordinar la entrega.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t border-muted pt-4">
-                  <h4 className="font-medium text-primary mb-2">
-                    Próximos pasos:
-                  </h4>
-                  <ol className="list-decimal list-inside space-y-1 text-sm muted">
-                    <li>Prepararemos tu pedido (1-2 días hábiles)</li>
-                    <li>Te enviaremos un WhatsApp cuando esté listo</li>
-                    <li>Coordinamos la entrega</li>
-                    <li>¡Recibes tu pedido!</li>
-                  </ol>
-                </div>
-              </div>
-            ) : (
-              // Información para MercadoPago
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <CheckCircle className="w-6 h-6 text-success mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-lg text-primary">
-                      Pago Procesado con MercadoPago
-                    </h3>
-                    <p className="muted mt-1">
-                      Tu pago ha sido procesado exitosamente. Te enviaremos
-                      actualizaciones sobre el estado de tu pedido por email.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t border-muted pt-4">
-                  <h4 className="font-medium text-primary mb-2">¿Qué sigue?</h4>
-                  <ol className="list-decimal list-inside space-y-1 text-sm muted">
-                    <li>Recibirás un email de confirmación</li>
-                    <li>Prepararemos tu pedido (1-2 días hábiles)</li>
-                    <li>Enviaremos tu pedido según el método seleccionado</li>
-                    <li>Te notificaremos cuando esté en camino</li>
-                  </ol>
-                </div>
-              </div>
-            )}
           </div>
+        )}
 
-          {/* Información adicional del pedido */}
-          {loadingOrder ? (
-            <div className="surface border border-muted rounded-lg p-6 mb-6">
-              <div className="flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-primary mr-3" />
-                <span className="muted">
-                  Cargando información del pedido...
-                </span>
+        {/* Información específica según método de pago */}
+        <div className="surface border border-muted rounded-lg p-6 mb-6">
+          {isCashPayment ? (
+            // Información para pago en efectivo
+            <div className="space-y-6">
+              <div className="flex items-start space-x-3">
+                <Package className="w-6 h-6 text-primary mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-lg text-primary">
+                    Retiro en Local - Pago en Efectivo
+                  </h3>
+                  <p className="muted mt-1">
+                    Tu pedido está siendo preparado. Te contactaremos por
+                    WhatsApp cuando esté listo para retirar.
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t border-muted pt-4">
+                <h4 className="font-medium text-primary mb-3">
+                  Información del Local:
+                </h4>
+                <div className="space-y-2 text-sm muted">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>Contactanos para coordinar el retiro</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4" />
+                    <span>Nos comunicaremos contigo pronto</span>
+                  </div>
+                </div>
+
+                <div className="mt-3 p-3 surface-secondary rounded-md">
+                  <p className="text-sm text-primary">
+                    <strong>Proceso de retiro:</strong>
+                    <br />
+                    Te contactaremos por WhatsApp una vez que tu pedido esté
+                    listo para coordinar la entrega.
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t border-muted pt-4">
+                <h4 className="font-medium text-primary mb-2">
+                  Próximos pasos:
+                </h4>
+                <ol className="list-decimal list-inside space-y-1 text-sm muted">
+                  <li>Prepararemos tu pedido (1-2 días hábiles)</li>
+                  <li>Te enviaremos un WhatsApp cuando esté listo</li>
+                  <li>Coordinamos la entrega</li>
+                  <li>¡Recibes tu pedido!</li>
+                </ol>
               </div>
             </div>
           ) : (
-            orderInfo && (
-              <div className="surface border border-muted rounded-lg p-4 mb-6">
-                <h4 className="font-medium text-primary mb-3">
-                  Resumen del Pedido
-                </h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="muted">Cliente:</span>
-                    <p className="font-medium">{orderInfo.customerName}</p>
-                  </div>
-                  <div>
-                    <span className="muted">Teléfono:</span>
-                    <p className="font-medium">{orderInfo.customerPhone}</p>
-                  </div>
-                  {orderInfo.customerEmail && (
-                    <div className="col-span-2">
-                      <span className="muted">Email:</span>
-                      <p className="font-medium">{orderInfo.customerEmail}</p>
-                    </div>
-                  )}
+            // Información para MercadoPago
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="w-6 h-6 text-success mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-lg text-primary">
+                    Pago Procesado con MercadoPago
+                  </h3>
+                  <p className="muted mt-1">
+                    Tu pago ha sido procesado exitosamente. Te enviaremos
+                    actualizaciones sobre el estado de tu pedido por email.
+                  </p>
                 </div>
               </div>
-            )
+
+              <div className="border-t border-muted pt-4">
+                <h4 className="font-medium text-primary mb-2">¿Qué sigue?</h4>
+                <ol className="list-decimal list-inside space-y-1 text-sm muted">
+                  <li>Recibirás un email de confirmación</li>
+                  <li>Prepararemos tu pedido (1-2 días hábiles)</li>
+                  <li>Enviaremos tu pedido según el método seleccionado</li>
+                  <li>Te notificaremos cuando esté en camino</li>
+                </ol>
+              </div>
+            </div>
           )}
+        </div>
 
-          {/* Botones de acción */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {/* Información adicional del pedido */}
+        {loadingOrder ? (
+          <div className="surface border border-muted rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-primary mr-3" />
+              <span className="muted">Cargando información del pedido...</span>
+            </div>
+          </div>
+        ) : (
+          orderInfo && (
+            <div className="surface border border-muted rounded-lg p-4 mb-6">
+              <h4 className="font-medium text-primary mb-3">
+                Resumen del Pedido
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="muted">Cliente:</span>
+                  <p className="font-medium">{orderInfo.customerName}</p>
+                </div>
+                <div>
+                  <span className="muted">Teléfono:</span>
+                  <p className="font-medium">{orderInfo.customerPhone}</p>
+                </div>
+                {orderInfo.customerEmail && (
+                  <div className="col-span-2">
+                    <span className="muted">Email:</span>
+                    <p className="font-medium">{orderInfo.customerEmail}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        )}
+
+        {/* Botones de acción */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/productos"
+            className="bg-primary text-white px-6 py-3 rounded-md font-medium hover:bg-primary/80 transition-colors text-center"
+          >
+            Seguir Comprando
+          </Link>
+          <Link
+            href="/contacto"
+            className="border surface muted px-6 py-3 rounded-md font-medium hover:surface-secondary transition-colors text-center"
+          >
+            Contactar Soporte
+          </Link>
+          {hasTracking && (
             <Link
-              href="/productos"
-              className="bg-primary text-white px-6 py-3 rounded-md font-medium hover:bg-primary/80 transition-colors text-center"
+              href={`/orders/${orderId}`}
+              className="border border-primary text-primary px-6 py-3 rounded-md font-medium hover:bg-primary hover:text-white transition-colors text-center"
             >
-              Seguir Comprando
+              Ver Seguimiento
             </Link>
-            <Link
-              href="/contacto"
-              className="border surface muted px-6 py-3 rounded-md font-medium hover:surface-secondary transition-colors text-center"
-            >
-              Contactar Soporte
+          )}
+        </div>
+
+        {/* Información adicional */}
+        <div className="mt-8 text-center text-sm muted">
+          <p>
+            ¿Problemas con tu pedido?{" "}
+            <Link href="/contacto" className="text-primary hover:underline">
+              Contáctanos aquí
             </Link>
-            {hasTracking && (
-              <Link
-                href={`/orders/${orderId}`}
-                className="border border-primary text-primary px-6 py-3 rounded-md font-medium hover:bg-primary hover:text-white transition-colors text-center"
+          </p>
+          {hasTracking && (
+            <p className="mt-2">
+              También puedes hacer seguimiento en{" "}
+              <a
+                href={`https://www.oca.com.ar/seguimiento?numero=${hasTracking}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
               >
-                Ver Seguimiento
-              </Link>
-            )}
-          </div>
-
-          {/* Información adicional */}
-          <div className="mt-8 text-center text-sm muted">
-            <p>
-              ¿Problemas con tu pedido?{" "}
-              <Link href="/contacto" className="text-primary hover:underline">
-                Contáctanos aquí
-              </Link>
+                el sitio oficial de OCA
+              </a>
             </p>
-            {hasTracking && (
-              <p className="mt-2">
-                También puedes hacer seguimiento en{" "}
-                <a
-                  href={`https://www.oca.com.ar/seguimiento?numero=${hasTracking}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  el sitio oficial de OCA
-                </a>
-              </p>
-            )}
-          </div>
+          )}
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }
@@ -430,15 +421,11 @@ function CheckoutSuccessContent() {
 // Loading component para Suspense
 function CheckoutSuccessLoading() {
   return (
-    <div className="min-h-screen surface">
-      <Header />
-      <div className="py-12 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="muted">Procesando información del pedido...</p>
-        </div>
+    <div className="py-12 px-6">
+      <div className="max-w-2xl mx-auto text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+        <p className="muted">Procesando información del pedido...</p>
       </div>
-      <Footer />
     </div>
   );
 }

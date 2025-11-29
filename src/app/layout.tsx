@@ -76,16 +76,11 @@ export const metadata: Metadata = {
   },
 };
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getServerSession } from "next-auth";
-
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
-
   return (
     <html lang="es">
       <head>
@@ -104,7 +99,7 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${inter.className} ${poppins.variable}`}>
-        <AppProviders session={session}>{children}</AppProviders>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

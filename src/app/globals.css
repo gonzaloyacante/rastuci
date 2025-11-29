@@ -15,21 +15,21 @@
 
   --border-radius-card: 12px;
   --border-radius-button: 8px;
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-card:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-primary: 0 4px 14px 0 rgba(233, 30, 99, 0.39);
 
   --background: #ffffff;
   --foreground: #171717;
   /* Light mode surface/text/border (used by .surface, .surface-secondary, etc.) */
-  --color-background: #ffffff;        /* general app background */
-  --color-surface: #ffffff;           /* cards/sections base */
+  --color-background: #ffffff; /* general app background */
+  --color-surface: #ffffff; /* cards/sections base */
   --color-surface-secondary: #f3f4f6; /* gray-100-ish for skeletons */
-  --color-surface-hover: #f5f5f5;     /* hover state */
-  --color-text: #111827;              /* gray-900 */
-  --color-text-muted: #6b7280;        /* gray-500/600 */
-  --color-border: #e5e7eb;            /* gray-200 */
-  --color-border-muted: #f3f4f6;      /* gray-100 */
+  --color-surface-hover: #f5f5f5; /* hover state */
+  --color-text: #111827; /* gray-900 */
+  --color-text-muted: #6b7280; /* gray-500/600 */
+  --color-border: #e5e7eb; /* gray-200 */
+  --color-border-muted: #f3f4f6; /* gray-100 */
 
   /* Dark mode support */
   --color-surface-dark: #1e293b;
@@ -44,22 +44,22 @@
 
 .dark {
   /* Neutral gray dark theme (no azul) */
-  --background: #0b0b0e;              /* page bg */
-  --foreground: #e5e7eb;              /* base text */
+  --background: #0b0b0e; /* page bg */
+  --foreground: #e5e7eb; /* base text */
 
   /* Surfaces */
   --color-background: #0b0b0e;
-  --color-surface: #121212;           /* cards/sections */
-  --color-surface-hover: #1a1a1a;     /* hover */
+  --color-surface: #121212; /* cards/sections */
+  --color-surface-hover: #1a1a1a; /* hover */
   --color-surface-secondary: #1f1f1f; /* skeletons/secondary */
 
   /* Text */
-  --color-text: #e5e7eb;              /* gray-200 */
-  --color-text-muted: #9ca3af;        /* gray-400 */
+  --color-text: #e5e7eb; /* gray-200 */
+  --color-text-muted: #9ca3af; /* gray-400 */
 
   /* Borders */
-  --color-border: #2e2e2e;            /* gray-800 */
-  --color-border-muted: #222222;      /* darker */
+  --color-border: #2e2e2e; /* gray-800 */
+  --color-border-muted: #222222; /* darker */
 }
 
 /* Enhanced form styling for dark mode */
@@ -246,7 +246,8 @@
 }
 
 .card-hover:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
   transition: all 0.2s;
 }
@@ -287,6 +288,44 @@
   50% {
     opacity: 0.5;
   }
+}
+
+/* ==========================================================================
+   ANIMACIONES DE SIDEBAR MÓVIL
+   ========================================================================== */
+
+/* Slide in desde la derecha */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+/* Fade in para overlay */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+.animate-overlay-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
 }
 
 /* Badges */
@@ -445,7 +484,7 @@ body {
 
 @keyframes scroll-highlight {
   0% {
-    box-shadow: 0 0 0 0 rgba(233, 30, 99, 0.0);
+    box-shadow: 0 0 0 0 rgba(233, 30, 99, 0);
     background-color: transparent;
   }
   10% {
@@ -453,12 +492,17 @@ body {
   }
   100% {
     background-color: transparent;
-    box-shadow: 0 10px 30px -12px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.2);
   }
 }
 
 /* Typography defaults to reduce per-node classes */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--color-text);
   font-weight: 700;
 }
@@ -529,7 +573,9 @@ h1, h2, h3, h4, h5, h6 {
   color: #fff;
   border-radius: 0.5rem;
   font-weight: 600;
-  box-shadow: 0 10px 15px -3px rgba(233, 30, 99, 0.25), 0 4px 6px -4px rgba(233, 30, 99, 0.2);
+  box-shadow:
+    0 10px 15px -3px rgba(233, 30, 99, 0.25),
+    0 4px 6px -4px rgba(233, 30, 99, 0.2);
   transition: all 300ms ease;
   cursor: pointer;
 }
@@ -537,7 +583,9 @@ h1, h2, h3, h4, h5, h6 {
 .btn-product:hover {
   filter: brightness(0.92);
   transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 12px 20px -3px rgba(233, 30, 99, 0.35), 0 6px 8px -4px rgba(233, 30, 99, 0.25);
+  box-shadow:
+    0 12px 20px -3px rgba(233, 30, 99, 0.35),
+    0 6px 8px -4px rgba(233, 30, 99, 0.25);
 }
 .btn-hero:focus,
 .btn-product:focus {

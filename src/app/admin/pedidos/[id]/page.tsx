@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCorreoArgentino } from "@/hooks/useCorreoArgentino";
 import type {
   ProvinceCode,
@@ -342,7 +343,7 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <Spinner size="lg" />
       </div>
     );
   }

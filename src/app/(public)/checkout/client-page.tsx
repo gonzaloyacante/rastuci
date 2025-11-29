@@ -1,13 +1,14 @@
 "use client";
 
 import {
-    CheckoutStepper,
-    CustomerInfoStep,
-    OrderConfirmation,
-    PaymentStep,
-    ReviewStep,
-    ShippingStep,
+  CheckoutStepper,
+  CustomerInfoStep,
+  OrderConfirmation,
+  PaymentStep,
+  ReviewStep,
+  ShippingStep,
 } from "@/app/(public)/checkout/components";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCart } from "@/context/CartContext";
 import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
@@ -152,7 +153,7 @@ export default function CheckoutPageClient() {
         <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <Spinner size="lg" className="mx-auto mb-4" />
               <p className="muted">Verificando carrito...</p>
             </div>
           </div>

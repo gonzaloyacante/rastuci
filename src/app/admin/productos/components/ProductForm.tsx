@@ -64,7 +64,7 @@ const HelpTooltip = ({ text }: { text: string }) => {
       )}
     </div>
   );
-};// Interfaces locales para tipado
+}; // Interfaces locales para tipado
 interface Category {
   id: string;
   name: string;
@@ -93,6 +93,35 @@ const productSchema = z.object({
     .min(0, "El stock no puede ser negativo"),
   categoryId: z.string().nonempty("Debes seleccionar una categoría"),
   onSale: z.coerce.boolean().optional(),
+  // Dimensiones para envío (Correo Argentino)
+  weight: z.coerce
+    .number()
+    .int("El peso debe ser un número entero")
+    .min(1, "El peso debe ser al menos 1 gramo")
+    .max(30000, "El peso máximo es 30kg (30000 gramos)")
+    .optional()
+    .nullable(),
+  height: z.coerce
+    .number()
+    .int("El alto debe ser un número entero")
+    .min(1, "El alto debe ser al menos 1 cm")
+    .max(150, "El alto máximo es 150 cm")
+    .optional()
+    .nullable(),
+  width: z.coerce
+    .number()
+    .int("El ancho debe ser un número entero")
+    .min(1, "El ancho debe ser al menos 1 cm")
+    .max(150, "El ancho máximo es 150 cm")
+    .optional()
+    .nullable(),
+  length: z.coerce
+    .number()
+    .int("El largo debe ser un número entero")
+    .min(1, "El largo debe ser al menos 1 cm")
+    .max(150, "El largo máximo es 150 cm")
+    .optional()
+    .nullable(),
   // Campos mejorados
   sizesInput: z.string().optional(),
   colorsInput: z.string().optional(),
@@ -461,11 +490,14 @@ const FeatureManager = ({
     onFeaturesChange(features.filter((feature) => feature !== featureToRemove));
   };
 
-  const allFeatures = Object.values(featureCategories).flatMap((cat) => cat.items);
+  const allFeatures = Object.values(featureCategories).flatMap(
+    (cat) => cat.items
+  );
   const displayFeatures =
     selectedCategory === "todos"
       ? allFeatures
-      : featureCategories[selectedCategory as keyof typeof featureCategories]?.items || [];
+      : featureCategories[selectedCategory as keyof typeof featureCategories]
+          ?.items || [];
 
   return (
     <div className="space-y-4">
@@ -512,7 +544,9 @@ const FeatureManager = ({
           {selectedCategory !== "todos" && (
             <HelpTooltip
               text={
-                featureCategories[selectedCategory as keyof typeof featureCategories]?.help || ""
+                featureCategories[
+                  selectedCategory as keyof typeof featureCategories
+                ]?.help || ""
               }
             />
           )}
@@ -529,7 +563,11 @@ const FeatureManager = ({
                   ? "bg-success/10 border-success text-success cursor-not-allowed"
                   : "border-muted hover:border-primary hover:bg-primary/5"
               }`}
-              title={features.includes(feature) ? "Ya agregada" : `Agregar ${feature}`}
+              title={
+                features.includes(feature)
+                  ? "Ya agregada"
+                  : `Agregar ${feature}`
+              }
             >
               {feature}
               {features.includes(feature) && (
@@ -556,7 +594,12 @@ const FeatureManager = ({
               e.key === "Enter" && (e.preventDefault(), addFeature())
             }
           />
-          <Button type="button" onClick={addFeature} variant="outline" size="sm">
+          <Button
+            type="button"
+            onClick={addFeature}
+            variant="outline"
+            size="sm"
+          >
             <Check className="h-4 w-4" />
           </Button>
         </div>
@@ -647,7 +690,8 @@ export default function ProductForm({
       const discountPercentage =
         initialData.salePrice && initialData.price
           ? Math.round(
-              ((initialData.price - initialData.salePrice) / initialData.price) *
+              ((initialData.price - initialData.salePrice) /
+                initialData.price) *
                 100
             )
           : null;
@@ -660,13 +704,20 @@ export default function ProductForm({
         stock: initialData.stock,
         categoryId: initialData.categoryId,
         onSale: initialData.onSale || false,
+        // Dimensiones para envío
+        weight: initialData.weight || null,
+        height: initialData.height || null,
+        width: initialData.width || null,
+        length: initialData.length || null,
       });
     }
   }, [initialData, reset]);
 
   // Local controlled input for price to allow free typing (thousands, decimals)
   const [priceInput, setPriceInput] = useState<string>(
-    watchPrice !== undefined && watchPrice !== null ? formatPriceARS(Number(watchPrice)) : ""
+    watchPrice !== undefined && watchPrice !== null
+      ? formatPriceARS(Number(watchPrice))
+      : ""
   );
 
   // Sync local input when watchPrice changes externally (e.g., reset with initialData)
@@ -706,6 +757,11 @@ export default function ProductForm({
         sizes,
         colors,
         features,
+        // Dimensiones para envío (Correo Argentino)
+        weight: data.weight || null,
+        height: data.height || null,
+        width: data.width || null,
+        length: data.length || null,
       };
 
       if (initialData) {
@@ -892,7 +948,10 @@ export default function ProductForm({
                       const parsed = parseFloat(normalized);
 
                       if (!isNaN(parsed)) {
-                        setValue("price", parsed, { shouldValidate: true, shouldDirty: true });
+                        setValue("price", parsed, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
                       } else if (filtered.trim() === "") {
                         // keep form value at 0 when empty
                         setValue("price", 0, { shouldValidate: false });
@@ -965,7 +1024,15 @@ export default function ProductForm({
                     {...register("discountPercentage")}
                     placeholder="0"
                     onKeyDown={(e) => {
-                      const allowed = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
+                      const allowed = [
+                        "Backspace",
+                        "Tab",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "Delete",
+                        "Home",
+                        "End",
+                      ];
                       if (allowed.includes(e.key)) {
                         return;
                       }
@@ -982,17 +1049,26 @@ export default function ProductForm({
                     className={`transition-all duration-200 ${errors.discountPercentage ? "border-error" : ""}`}
                     disabled={loading}
                   />
-                  {watchDiscountPercentage && watchDiscountPercentage > 0 && calculatedSalePrice && (
-                    <>
-                      <p className="text-xs text-orange-600 mt-1 font-medium">
-                        Precio en oferta: {formatPriceARS(Number(calculatedSalePrice))}
-                        <span className="ml-1 text-error">(-{watchDiscountPercentage}%)</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        El descuento será de {formatPriceARS(Number(watchPrice || 0) - Number(calculatedSalePrice))}
-                      </p>
-                    </>
-                  )}
+                  {watchDiscountPercentage &&
+                    watchDiscountPercentage > 0 &&
+                    calculatedSalePrice && (
+                      <>
+                        <p className="text-xs text-orange-600 mt-1 font-medium">
+                          Precio en oferta:{" "}
+                          {formatPriceARS(Number(calculatedSalePrice))}
+                          <span className="ml-1 text-error">
+                            (-{watchDiscountPercentage}%)
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          El descuento será de{" "}
+                          {formatPriceARS(
+                            Number(watchPrice || 0) -
+                              Number(calculatedSalePrice)
+                          )}
+                        </p>
+                      </>
+                    )}
                   {errors.discountPercentage && (
                     <p className="mt-1 text-sm text-error flex items-center gap-1">
                       <AlertCircle className="h-4 w-4" />
@@ -1016,7 +1092,15 @@ export default function ProductForm({
                     {...register("stock")}
                     placeholder="0"
                     onKeyDown={(e) => {
-                      const allowed = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
+                      const allowed = [
+                        "Backspace",
+                        "Tab",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "Delete",
+                        "Home",
+                        "End",
+                      ];
                       if (allowed.includes(e.key)) {
                         return;
                       }
@@ -1089,6 +1173,153 @@ export default function ProductForm({
                     )}
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dimensiones para Envío */}
+          <Card className="shadow-xl border-0">
+            <CardHeader className="bg-linear-to-r from-orange-600 to-orange-700 text-white">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Dimensiones para Envío
+                <HelpTooltip text="Estas medidas son requeridas para calcular el costo de envío con Correo Argentino/OCA. Si no se especifican, se usarán valores por defecto." />
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Peso */}
+                <div>
+                  <label
+                    htmlFor="weight"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    <Package className="h-4 w-4 inline mr-2" />
+                    Peso (gramos)
+                  </label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    {...register("weight")}
+                    placeholder="1000"
+                    min="1"
+                    max="30000"
+                    className={`transition-all duration-200 ${errors.weight ? "border-error" : ""}`}
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Mín: 1g • Máx: 30kg
+                  </p>
+                  {errors.weight && (
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.weight.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Alto */}
+                <div>
+                  <label
+                    htmlFor="height"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    <Ruler className="h-4 w-4 inline mr-2" />
+                    Alto (cm)
+                  </label>
+                  <Input
+                    id="height"
+                    type="number"
+                    {...register("height")}
+                    placeholder="10"
+                    min="1"
+                    max="150"
+                    className={`transition-all duration-200 ${errors.height ? "border-error" : ""}`}
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Mín: 1cm • Máx: 150cm
+                  </p>
+                  {errors.height && (
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.height.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Ancho */}
+                <div>
+                  <label
+                    htmlFor="width"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    <Ruler className="h-4 w-4 inline mr-2" />
+                    Ancho (cm)
+                  </label>
+                  <Input
+                    id="width"
+                    type="number"
+                    {...register("width")}
+                    placeholder="20"
+                    min="1"
+                    max="150"
+                    className={`transition-all duration-200 ${errors.width ? "border-error" : ""}`}
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Mín: 1cm • Máx: 150cm
+                  </p>
+                  {errors.width && (
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.width.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Largo */}
+                <div>
+                  <label
+                    htmlFor="length"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    <Ruler className="h-4 w-4 inline mr-2" />
+                    Largo (cm)
+                  </label>
+                  <Input
+                    id="length"
+                    type="number"
+                    {...register("length")}
+                    placeholder="30"
+                    min="1"
+                    max="150"
+                    className={`transition-all duration-200 ${errors.length ? "border-error" : ""}`}
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Mín: 1cm • Máx: 150cm
+                  </p>
+                  {errors.length && (
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.length.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Nota informativa sobre envío */}
+              <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm text-orange-800 flex items-start gap-2">
+                  <Info className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
+                  <span>
+                    <strong>Importante:</strong> Las dimensiones correctas son
+                    esenciales para calcular el costo de envío. Si no se
+                    especifican, se usarán valores por defecto (1000g,
+                    10x20x30cm). Asegúrate de medir el producto empacado.
+                  </span>
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -1210,7 +1441,9 @@ export default function ProductForm({
                   <div className="space-y-5">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                        Categoría: {categories.find((c) => c.id === watch("categoryId"))?.name || "No seleccionada"}
+                        Categoría:{" "}
+                        {categories.find((c) => c.id === watch("categoryId"))
+                          ?.name || "No seleccionada"}
                       </p>
                       <h3 className="text-3xl font-bold text-primary">
                         {watch("name") || "Nombre del producto"}
@@ -1224,16 +1457,19 @@ export default function ProductForm({
                           ⚡ En Oferta
                         </span>
                       )}
-                      {watch("stock") !== undefined && Number(watch("stock")) > 0 && (
-                        <span className="bg-success/10 text-success px-3 py-1 rounded-full text-sm font-medium">
-                          ✓ {Number(watch("stock"))} en stock
-                        </span>
-                      )}
-                      {watch("stock") !== undefined && Number(watch("stock")) <= 5 && Number(watch("stock")) > 0 && (
-                        <span className="bg-warning/10 text-warning px-3 py-1 rounded-full text-sm font-medium">
-                          ⚠️ Stock limitado
-                        </span>
-                      )}
+                      {watch("stock") !== undefined &&
+                        Number(watch("stock")) > 0 && (
+                          <span className="bg-success/10 text-success px-3 py-1 rounded-full text-sm font-medium">
+                            ✓ {Number(watch("stock"))} en stock
+                          </span>
+                        )}
+                      {watch("stock") !== undefined &&
+                        Number(watch("stock")) <= 5 &&
+                        Number(watch("stock")) > 0 && (
+                          <span className="bg-warning/10 text-warning px-3 py-1 rounded-full text-sm font-medium">
+                            ⚠️ Stock limitado
+                          </span>
+                        )}
                       {watch("stock") === 0 && (
                         <span className="bg-error/10 text-error px-3 py-1 rounded-full text-sm font-medium">
                           ✗ Sin stock
@@ -1243,7 +1479,9 @@ export default function ProductForm({
 
                     {/* Precio */}
                     <div className="space-y-2 py-4 border-y border-muted">
-                      {watchDiscountPercentage && watchDiscountPercentage > 0 && calculatedSalePrice ? (
+                      {watchDiscountPercentage &&
+                      watchDiscountPercentage > 0 &&
+                      calculatedSalePrice ? (
                         <div className="space-y-1">
                           <div className="flex items-center gap-3">
                             <span className="text-3xl font-bold text-success">
@@ -1257,7 +1495,12 @@ export default function ProductForm({
                             {formatPriceARS(Number(watch("price") || 0))}
                           </span>
                           <p className="text-sm text-success font-medium">
-                            ¡Ahorrás {formatPriceARS(Number(watch("price") || 0) - Number(calculatedSalePrice))}!
+                            ¡Ahorrás{" "}
+                            {formatPriceARS(
+                              Number(watch("price") || 0) -
+                                Number(calculatedSalePrice)
+                            )}
+                            !
                           </p>
                         </div>
                       ) : (
@@ -1270,7 +1513,8 @@ export default function ProductForm({
                     {/* Descripción */}
                     <div>
                       <p className="text-primary/90 leading-relaxed">
-                        {watch("description") || "Descripción del producto aparecerá aquí..."}
+                        {watch("description") ||
+                          "Descripción del producto aparecerá aquí..."}
                       </p>
                     </div>
 
@@ -1283,7 +1527,10 @@ export default function ProductForm({
                         </p>
                         <ul className="space-y-1.5">
                           {features.map((feature, index) => (
-                            <li key={`feat-${index}`} className="flex items-start gap-2 text-sm">
+                            <li
+                              key={`feat-${index}`}
+                              className="flex items-start gap-2 text-sm"
+                            >
                               <span className="text-success mt-1">✓</span>
                               <span>{feature}</span>
                             </li>
@@ -1326,7 +1573,9 @@ export default function ProductForm({
                               className="flex items-center gap-2 px-3 py-1.5 bg-surface-secondary rounded-full border border-muted"
                             >
                               <ColorChip color={color} size="sm" />
-                              <span className="text-sm font-medium">{color}</span>
+                              <span className="text-sm font-medium">
+                                {color}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -1340,8 +1589,9 @@ export default function ProductForm({
                   <p className="text-sm text-muted-foreground flex items-start gap-2">
                     <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                     <span>
-                      Esta es una vista previa de cómo se verá el producto en la tienda.
-                      Verifica que toda la información sea correcta antes de guardar.
+                      Esta es una vista previa de cómo se verá el producto en la
+                      tienda. Verifica que toda la información sea correcta
+                      antes de guardar.
                     </span>
                   </p>
                 </div>

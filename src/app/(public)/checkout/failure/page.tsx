@@ -1,7 +1,5 @@
 "use client";
 
-import Header from "@/components/header/Header";
-import Footer from "@/components/layout/Footer";
 import {
   AlertTriangle,
   CreditCard,
@@ -102,139 +100,133 @@ function CheckoutFailureContent() {
   };
 
   return (
-    <div className="min-h-screen surface">
-      <Header />
+    <div className="py-12 px-6">
+      <div className="max-w-2xl mx-auto">
+        {/* Ícono de error */}
+        <div className="text-center mb-8">
+          <XCircle className="w-20 h-20 text-error mx-auto mb-4" />
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            Pago Rechazado
+          </h1>
+          <p className="muted">{orderId && `Referencia: #${orderId}`}</p>
+        </div>
 
-      <div className="py-12 px-6">
-        <div className="max-w-2xl mx-auto">
-          {/* Ícono de error */}
-          <div className="text-center mb-8">
-            <XCircle className="w-20 h-20 text-error mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-primary mb-2">
-              Pago Rechazado
-            </h1>
-            <p className="muted">{orderId && `Referencia: #${orderId}`}</p>
-          </div>
-
-          {/* Mensaje de error específico */}
-          <div className="surface-secondary rounded-lg border muted p-6 mb-6">
-            <div className="flex items-start">
-              <AlertTriangle className="w-6 h-6 text-error mr-3 mt-0.5 shrink-0" />
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-2">
-                  {getErrorMessage(errorReason)}
-                </h3>
-                <div className="muted">
-                  <p className="mb-3">¿Qué puedes hacer?</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    {getRecommendations(errorReason).map((rec, index) => (
-                      <li key={`rec-${index}`} className="text-sm">
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+        {/* Mensaje de error específico */}
+        <div className="surface-secondary rounded-lg border muted p-6 mb-6">
+          <div className="flex items-start">
+            <AlertTriangle className="w-6 h-6 text-error mr-3 mt-0.5 shrink-0" />
+            <div>
+              <h3 className="text-lg font-semibold text-primary mb-2">
+                {getErrorMessage(errorReason)}
+              </h3>
+              <div className="muted">
+                <p className="mb-3">¿Qué puedes hacer?</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {getRecommendations(errorReason).map((rec, index) => (
+                    <li key={`rec-${index}`} className="text-sm">
+                      {rec}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
-          </div>
-
-          {/* Métodos de pago alternativos */}
-          <div className="surface rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-semibold text-primary mb-4">
-              Métodos de Pago Disponibles
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center p-3 border muted rounded-lg">
-                <CreditCard className="w-6 h-6 text-primary mr-3" />
-                <div>
-                  <p className="font-medium">Tarjetas de Crédito/Débito</p>
-                  <p className="text-sm muted">
-                    Visa, Mastercard, American Express
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center p-3 border muted rounded-lg">
-                <div className="w-6 h-6 bg-primary rounded mr-3 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">MP</span>
-                </div>
-                <div>
-                  <p className="font-medium">MercadoPago</p>
-                  <p className="text-sm muted">Wallet, transferencias</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Acciones */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <Link
-              href="/carrito"
-              className="flex-1 bg-pink-600 text-white px-6 py-3 rounded-md font-medium hover:bg-pink-700 transition-colors text-center flex items-center justify-center"
-            >
-              <RefreshCw className="w-5 h-5 mr-2" />
-              Intentar Nuevamente
-            </Link>
-
-            <Link
-              href="/productos"
-              className="flex-1 border surface muted px-6 py-3 rounded-md font-medium hover:surface-secondary transition-colors text-center"
-            >
-              Seguir Comprando
-            </Link>
-          </div>
-
-          {/* Información de contacto */}
-          <div className="surface rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-semibold text-primary mb-4">
-              ¿Necesitas Ayuda?
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm">
-                <Phone className="w-4 h-4 muted mr-3" />
-                <span className="muted">WhatsApp:</span>
-                <a
-                  href="https://wa.me/5491234567890"
-                  className="text-pink-600 hover:underline ml-2"
-                >
-                  +54 9 123 456-7890
-                </a>
-              </div>
-              <div className="flex items-center text-sm">
-                <MapPin className="w-4 h-4 muted mr-3" />
-                <span className="muted">Email:</span>
-                <a
-                  href="mailto:soporte@rastuci.com"
-                  className="text-pink-600 hover:underline ml-2"
-                >
-                  soporte@rastuci.com
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Botón de soporte */}
-          <div className="flex justify-center">
-            <Link
-              href="/contacto"
-              className="border surface muted px-6 py-3 rounded-md font-medium hover:surface-secondary transition-colors text-center"
-            >
-              Contactar Soporte
-            </Link>
-          </div>
-
-          {/* Información adicional */}
-          <div className="mt-8 text-center text-sm muted">
-            <p>
-              Los pagos son procesados de forma segura por MercadoPago.{" "}
-              <Link href="/contacto" className="text-pink-600 hover:underline">
-                Política de privacidad
-              </Link>
-            </p>
           </div>
         </div>
-      </div>
 
-      <Footer />
+        {/* Métodos de pago alternativos */}
+        <div className="surface rounded-lg shadow-sm p-6 mb-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">
+            Métodos de Pago Disponibles
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center p-3 border muted rounded-lg">
+              <CreditCard className="w-6 h-6 text-primary mr-3" />
+              <div>
+                <p className="font-medium">Tarjetas de Crédito/Débito</p>
+                <p className="text-sm muted">
+                  Visa, Mastercard, American Express
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center p-3 border muted rounded-lg">
+              <div className="w-6 h-6 bg-primary rounded mr-3 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">MP</span>
+              </div>
+              <div>
+                <p className="font-medium">MercadoPago</p>
+                <p className="text-sm muted">Wallet, transferencias</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <Link
+            href="/carrito"
+            className="flex-1 bg-pink-600 text-white px-6 py-3 rounded-md font-medium hover:bg-pink-700 transition-colors text-center flex items-center justify-center"
+          >
+            <RefreshCw className="w-5 h-5 mr-2" />
+            Intentar Nuevamente
+          </Link>
+
+          <Link
+            href="/productos"
+            className="flex-1 border surface muted px-6 py-3 rounded-md font-medium hover:surface-secondary transition-colors text-center"
+          >
+            Seguir Comprando
+          </Link>
+        </div>
+
+        {/* Información de contacto */}
+        <div className="surface rounded-lg shadow-sm p-6 mb-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">
+            ¿Necesitas Ayuda?
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center text-sm">
+              <Phone className="w-4 h-4 muted mr-3" />
+              <span className="muted">WhatsApp:</span>
+              <a
+                href="https://wa.me/5491234567890"
+                className="text-pink-600 hover:underline ml-2"
+              >
+                +54 9 123 456-7890
+              </a>
+            </div>
+            <div className="flex items-center text-sm">
+              <MapPin className="w-4 h-4 muted mr-3" />
+              <span className="muted">Email:</span>
+              <a
+                href="mailto:soporte@rastuci.com"
+                className="text-pink-600 hover:underline ml-2"
+              >
+                soporte@rastuci.com
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Botón de soporte */}
+        <div className="flex justify-center">
+          <Link
+            href="/contacto"
+            className="border surface muted px-6 py-3 rounded-md font-medium hover:surface-secondary transition-colors text-center"
+          >
+            Contactar Soporte
+          </Link>
+        </div>
+
+        {/* Información adicional */}
+        <div className="mt-8 text-center text-sm muted">
+          <p>
+            Los pagos son procesados de forma segura por MercadoPago.{" "}
+            <Link href="/contacto" className="text-pink-600 hover:underline">
+              Política de privacidad
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -242,15 +234,11 @@ function CheckoutFailureContent() {
 // Loading component para Suspense
 function CheckoutFailureLoading() {
   return (
-    <div className="min-h-screen surface">
-      <Header />
-      <div className="py-12 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="muted">Cargando información del pago...</p>
-        </div>
+    <div className="py-12 px-6">
+      <div className="max-w-2xl mx-auto text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+        <p className="muted">Cargando información del pago...</p>
       </div>
-      <Footer />
     </div>
   );
 }

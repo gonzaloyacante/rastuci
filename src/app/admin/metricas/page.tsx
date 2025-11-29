@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface MetricData {
   label: string;
@@ -11,7 +12,7 @@ interface MetricData {
   previousValue: number;
   change: number;
   changePercent: number;
-  trend: 'up' | 'down' | 'stable';
+  trend: "up" | "down" | "stable";
 }
 
 interface MetricsDashboard {
@@ -48,241 +49,109 @@ interface MetricsDashboard {
   };
   recentActivity: Array<{
     id: string;
-    type: 'order' | 'customer' | 'product' | 'review';
+    type: "order" | "customer" | "product" | "review";
     description: string;
     timestamp: string;
     value?: number;
   }>;
 }
 
+type Period = "week" | "month" | "quarter" | "year";
+
 const MetricasPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<MetricsDashboard | null>(null);
-  const [period, setPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
+  const [period, setPeriod] = useState<Period>("month");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async (): Promise<void> => {
-      try {
-        setLoading(true);
-        
-        // Mock data simplificado
-        const mockDashboard: MetricsDashboard = {
-          overview: {
-            totalSales: {
-              label: 'Ventas Totales',
-              value: 485000,
-              previousValue: 432000,
-              change: 53000,
-              changePercent: 12.3,
-              trend: 'up'
-            },
-            totalOrders: {
-              label: 'Órdenes Totales',
-              value: 342,
-              previousValue: 298,
-              change: 44,
-              changePercent: 14.8,
-              trend: 'up'
-            },
-            averageOrderValue: {
-              label: 'Valor Promedio de Orden',
-              value: 1418,
-              previousValue: 1402,
-              change: 16,
-              changePercent: 1.1,
-              trend: 'up'
-            },
-            customerCount: {
-              label: 'Clientes',
-              value: 278,
-              previousValue: 245,
-              change: 33,
-              changePercent: 13.5,
-              trend: 'up'
-            },
-            conversionRate: {
-              label: 'Tasa de Conversión',
-              value: 3.8,
-              previousValue: 3.4,
-              change: 0.4,
-              changePercent: 11.8,
-              trend: 'up'
-            },
-            returnRate: {
-              label: 'Tasa de Devolución',
-              value: 1.8,
-              previousValue: 2.3,
-              change: -0.5,
-              changePercent: -21.7,
-              trend: 'down'
-            }
-          },
-          topProducts: [
-            {
-              id: 'PROD-001',
-              name: 'Smartphone Premium XZ',
-              sales: 89,
-              orders: 89,
-              revenue: 178000
-            },
-            {
-              id: 'PROD-002',
-              name: 'Auriculares Inalámbricos Pro',
-              sales: 156,
-              orders: 142,
-              revenue: 124800
-            },
-            {
-              id: 'PROD-003',
-              name: 'Tablet Ultra 10"',
-              sales: 67,
-              orders: 67,
-              revenue: 100500
-            }
-          ],
-          shippingMetrics: {
-            averageDeliveryTime: {
-              label: 'Tiempo Promedio de Entrega',
-              value: 3.2,
-              previousValue: 3.8,
-              change: -0.6,
-              changePercent: -15.8,
-              trend: 'down'
-            },
-            onTimeDeliveryRate: {
-              label: 'Entregas a Tiempo',
-              value: 94.5,
-              previousValue: 89.2,
-              change: 5.3,
-              changePercent: 5.9,
-              trend: 'up'
-            },
-            shippingCost: {
-              label: 'Costo de Envío Promedio',
-              value: 1250,
-              previousValue: 1420,
-              change: -170,
-              changePercent: -12.0,
-              trend: 'down'
-            }
-          },
-          customerMetrics: {
-            newCustomers: {
-              label: 'Nuevos Clientes',
-              value: 83,
-              previousValue: 73,
-              change: 10,
-              changePercent: 13.7,
-              trend: 'up'
-            },
-            returningCustomers: {
-              label: 'Clientes Recurrentes',
-              value: 195,
-              previousValue: 172,
-              change: 23,
-              changePercent: 13.4,
-              trend: 'up'
-            },
-            customerLifetimeValue: {
-              label: 'Valor de Vida del Cliente',
-              value: 4250,
-              previousValue: 3890,
-              change: 360,
-              changePercent: 9.3,
-              trend: 'up'
-            }
-          },
-          productMetrics: {
-            totalProducts: {
-              label: 'Productos Totales',
-              value: 1256,
-              previousValue: 1198,
-              change: 58,
-              changePercent: 4.8,
-              trend: 'up'
-            },
-            lowStockProducts: 23,
-            outOfStockProducts: 7,
-            averageRating: {
-              label: 'Calificación Promedio',
-              value: 4.6,
-              previousValue: 4.4,
-              change: 0.2,
-              changePercent: 4.5,
-              trend: 'up'
-            }
-          },
-          recentActivity: [
-            {
-              id: 'ACT-001',
-              type: 'order',
-              description: 'Nueva orden #ORD-2024-001 por $2,500',
-              timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-              value: 2500
-            },
-            {
-              id: 'ACT-002',
-              type: 'customer',
-              description: 'Nuevo cliente registrado: maria.garcia@email.com',
-              timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString()
-            },
-            {
-              id: 'ACT-003',
-              type: 'review',
-              description: 'Nueva reseña de 5 estrellas para Smartphone Premium XZ',
-              timestamp: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
-              value: 5
-            }
-          ]
-        };
+  const fetchData = useCallback(async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        setDashboard(mockDashboard);
-      } catch {
-        // Error handling removed for production
-      } finally {
-        setLoading(false);
+      const response = await fetch(`/api/admin/dashboard?period=${period}`);
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-    };
 
-    fetchData();
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Error al cargar métricas");
+      }
+
+      setDashboard(data.data);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error desconocido";
+      setError(errorMessage);
+      console.error("Error fetching metrics:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [period]);
 
-  const MetricCard: React.FC<{ metric: MetricData; format?: 'currency' | 'number' | 'percentage' | 'days' }> = ({ 
-    metric, 
-    format = 'number' 
-  }) => {
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const MetricCard: React.FC<{
+    metric: MetricData;
+    format?: "currency" | "number" | "percentage" | "days";
+  }> = ({ metric, format = "number" }) => {
     const formatValue = (value: number): string => {
       switch (format) {
-        case 'currency':
-          return `$${value.toLocaleString('es-AR')}`;
-        case 'percentage':
+        case "currency":
+          return `$${value.toLocaleString("es-AR")}`;
+        case "percentage":
           return `${value}%`;
-        case 'days':
+        case "days":
           return `${value} días`;
         default:
-          return value.toLocaleString('es-AR');
+          return value.toLocaleString("es-AR");
       }
     };
 
-    const trendIcon = metric.trend === 'up' ? '↑' : metric.trend === 'down' ? '↓' : '→';
-    const trendColor = metric.trend === 'up' ? 'text-success' : metric.trend === 'down' ? 'text-error' : 'text-content-secondary';
-    const bgColor = metric.trend === 'up' ? 'badge-success' : metric.trend === 'down' ? 'badge-error' : 'badge-default';
+    const trendIcon =
+      metric.trend === "up" ? "↑" : metric.trend === "down" ? "↓" : "→";
+    // Para returnRate, "down" es positivo (menos devoluciones)
+    const isPositiveTrend =
+      metric.label === "Tasa de Devolución"
+        ? metric.trend === "down"
+        : metric.trend === "up";
+    const trendColor = isPositiveTrend
+      ? "text-success"
+      : metric.trend === "stable"
+        ? "text-content-secondary"
+        : "text-error";
+    const bgColor = isPositiveTrend
+      ? "badge-success"
+      : metric.trend === "stable"
+        ? "badge-default"
+        : "badge-error";
 
     return (
       <Card className="p-4">
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-content-secondary">{metric.label}</h3>
+          <h3 className="text-sm font-medium text-content-secondary">
+            {metric.label}
+          </h3>
           <div className="flex items-end justify-between">
-            <span className="text-2xl font-bold">{formatValue(metric.value)}</span>
+            <span className="text-2xl font-bold">
+              {formatValue(metric.value)}
+            </span>
             <div className="flex items-center gap-1">
               <Badge className={bgColor}>
                 <span className={trendColor}>{trendIcon}</span>
-                <span className="ml-1">{Math.abs(metric.changePercent)}%</span>
+                <span className="ml-1">
+                  {Math.abs(metric.changePercent).toFixed(1)}%
+                </span>
               </Badge>
             </div>
           </div>
           <p className="text-xs text-content-tertiary">
-            {metric.trend === 'up' ? '+' : metric.trend === 'down' ? '-' : ''}
+            {metric.change >= 0 ? "+" : "-"}
             {formatValue(Math.abs(metric.change))} vs período anterior
           </p>
         </div>
@@ -290,10 +159,36 @@ const MetricasPage: React.FC = () => {
     );
   };
 
+  const periodLabels: Record<Period, string> = {
+    week: "Semana",
+    month: "Mes",
+    quarter: "Trimestre",
+    year: "Año",
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <Spinner size="lg" />
+        <p className="text-content-secondary">
+          Cargando métricas desde base de datos...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <div className="bg-error/10 border border-error/20 rounded-lg p-6 max-w-md mx-auto">
+          <p className="text-error font-medium mb-2">
+            Error al cargar métricas
+          </p>
+          <p className="text-content-secondary text-sm mb-4">{error}</p>
+          <Button onClick={fetchData} variant="outline" size="sm">
+            Reintentar
+          </Button>
+        </div>
       </div>
     );
   }
@@ -301,7 +196,15 @@ const MetricasPage: React.FC = () => {
   if (!dashboard) {
     return (
       <div className="text-center py-8">
-        <p className="text-content-secondary">Error al cargar el dashboard</p>
+        <p className="text-content-secondary">No hay datos disponibles</p>
+        <Button
+          onClick={fetchData}
+          variant="outline"
+          size="sm"
+          className="mt-4"
+        >
+          Reintentar
+        </Button>
       </div>
     );
   }
@@ -309,16 +212,22 @@ const MetricasPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Métricas Avanzadas</h1>
-        <div className="flex gap-2">
-          {(['week', 'month', 'quarter', 'year'] as const).map((p) => (
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Métricas del Negocio</h1>
+          <p className="text-content-secondary text-sm mt-1">
+            Datos en tiempo real desde la base de datos
+          </p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {(["week", "month", "quarter", "year"] as const).map((p) => (
             <Button
               key={p}
-              variant={period === p ? 'primary' : 'outline'}
+              variant={period === p ? "primary" : "outline"}
               onClick={() => setPeriod(p)}
+              size="sm"
             >
-              {p === 'week' ? 'Semana' : p === 'month' ? 'Mes' : p === 'quarter' ? 'Trimestre' : 'Año'}
+              {periodLabels[p]}
             </Button>
           ))}
         </div>
@@ -328,57 +237,170 @@ const MetricasPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <MetricCard metric={dashboard.overview.totalSales} format="currency" />
         <MetricCard metric={dashboard.overview.totalOrders} format="number" />
-        <MetricCard metric={dashboard.overview.averageOrderValue} format="currency" />
+        <MetricCard
+          metric={dashboard.overview.averageOrderValue}
+          format="currency"
+        />
         <MetricCard metric={dashboard.overview.customerCount} format="number" />
-        <MetricCard metric={dashboard.overview.conversionRate} format="percentage" />
-        <MetricCard metric={dashboard.overview.returnRate} format="percentage" />
+        <MetricCard
+          metric={dashboard.overview.conversionRate}
+          format="percentage"
+        />
+        <MetricCard
+          metric={dashboard.overview.returnRate}
+          format="percentage"
+        />
       </div>
 
       {/* Productos Top */}
       <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-4">Top Productos</h3>
-        <div className="space-y-3">
-          {dashboard.topProducts.map((product) => (
-            <div key={product.id} className="flex items-center justify-between p-3 surface-secondary rounded">
-              <div>
-                <h4 className="font-medium">{product.name}</h4>
-                <p className="text-sm text-content-secondary">{product.sales} ventas • {product.orders} órdenes</p>
+        <h3 className="text-lg font-semibold mb-4">Top Productos Vendidos</h3>
+        {dashboard.topProducts.length === 0 ? (
+          <div className="text-center py-8 text-content-secondary">
+            <p>No hay ventas en este período</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {dashboard.topProducts.map((product, index) => (
+              <div
+                key={product.id}
+                className="flex items-center justify-between p-3 surface-secondary rounded"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 flex items-center justify-center bg-primary/10 text-primary rounded-full text-sm font-bold">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <h4 className="font-medium">{product.name}</h4>
+                    <p className="text-sm text-content-secondary">
+                      {product.sales} unidades • {product.orders} órdenes
+                    </p>
+                  </div>
+                </div>
+                <span className="font-semibold text-success">
+                  ${product.revenue.toLocaleString("es-AR")}
+                </span>
               </div>
-              <span className="font-semibold">${product.revenue.toLocaleString()}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Métricas adicionales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Logística */}
         <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-4">Logística</h3>
-          <div className="space-y-3">
-            <MetricCard metric={dashboard.shippingMetrics.averageDeliveryTime} format="days" />
-            <MetricCard metric={dashboard.shippingMetrics.onTimeDeliveryRate} format="percentage" />
-            <MetricCard metric={dashboard.shippingMetrics.shippingCost} format="currency" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-4">Clientes</h3>
-          <div className="space-y-3">
-            <MetricCard metric={dashboard.customerMetrics.newCustomers} format="number" />
-            <MetricCard metric={dashboard.customerMetrics.returningCustomers} format="number" />
-            <MetricCard metric={dashboard.customerMetrics.customerLifetimeValue} format="currency" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-4">Inventario</h3>
-          <div className="space-y-3">
-            <MetricCard metric={dashboard.productMetrics.totalProducts} format="number" />
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>📦</span> Logística
+          </h3>
+          <div className="space-y-4">
             <div className="p-3 surface-secondary rounded">
-              <p className="text-sm">Stock bajo: <span className="font-semibold text-warning">{dashboard.productMetrics.lowStockProducts}</span></p>
-              <p className="text-sm">Sin stock: <span className="font-semibold text-error">{dashboard.productMetrics.outOfStockProducts}</span></p>
+              <p className="text-sm text-content-secondary">
+                {dashboard.shippingMetrics.averageDeliveryTime.label}
+              </p>
+              <p className="text-xl font-bold">
+                {dashboard.shippingMetrics.averageDeliveryTime.value} días
+              </p>
             </div>
-            <MetricCard metric={dashboard.productMetrics.averageRating} format="number" />
+            <div className="p-3 surface-secondary rounded">
+              <p className="text-sm text-content-secondary">
+                {dashboard.shippingMetrics.onTimeDeliveryRate.label}
+              </p>
+              <p className="text-xl font-bold">
+                {dashboard.shippingMetrics.onTimeDeliveryRate.value}%
+              </p>
+            </div>
+            <div className="p-3 surface-secondary rounded">
+              <p className="text-sm text-content-secondary">
+                {dashboard.shippingMetrics.shippingCost.label}
+              </p>
+              <p className="text-xl font-bold">
+                $
+                {dashboard.shippingMetrics.shippingCost.value.toLocaleString(
+                  "es-AR"
+                )}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Clientes */}
+        <Card className="p-4">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>👥</span> Clientes
+          </h3>
+          <div className="space-y-4">
+            <div className="p-3 surface-secondary rounded">
+              <p className="text-sm text-content-secondary">
+                {dashboard.customerMetrics.newCustomers.label}
+              </p>
+              <p className="text-xl font-bold text-success">
+                {dashboard.customerMetrics.newCustomers.value}
+              </p>
+            </div>
+            <div className="p-3 surface-secondary rounded">
+              <p className="text-sm text-content-secondary">
+                {dashboard.customerMetrics.returningCustomers.label}
+              </p>
+              <p className="text-xl font-bold">
+                {dashboard.customerMetrics.returningCustomers.value}
+              </p>
+            </div>
+            <div className="p-3 surface-secondary rounded">
+              <p className="text-sm text-content-secondary">
+                {dashboard.customerMetrics.customerLifetimeValue.label}
+              </p>
+              <p className="text-xl font-bold">
+                $
+                {dashboard.customerMetrics.customerLifetimeValue.value.toLocaleString(
+                  "es-AR"
+                )}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Inventario */}
+        <Card className="p-4">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>📊</span> Inventario
+          </h3>
+          <div className="space-y-4">
+            <div className="p-3 surface-secondary rounded">
+              <p className="text-sm text-content-secondary">
+                {dashboard.productMetrics.totalProducts.label}
+              </p>
+              <p className="text-xl font-bold">
+                {dashboard.productMetrics.totalProducts.value}
+              </p>
+            </div>
+            <div className="p-3 surface-secondary rounded">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-content-secondary">Stock Bajo</p>
+                  <p className="text-xl font-bold text-warning">
+                    {dashboard.productMetrics.lowStockProducts}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-content-secondary">Sin Stock</p>
+                  <p className="text-xl font-bold text-error">
+                    {dashboard.productMetrics.outOfStockProducts}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 surface-secondary rounded">
+              <p className="text-sm text-content-secondary">
+                {dashboard.productMetrics.averageRating.label}
+              </p>
+              <p className="text-xl font-bold">
+                ⭐{" "}
+                {dashboard.productMetrics.averageRating.value > 0
+                  ? dashboard.productMetrics.averageRating.value.toFixed(1)
+                  : "N/A"}
+              </p>
+            </div>
           </div>
         </Card>
       </div>
@@ -386,31 +408,61 @@ const MetricasPage: React.FC = () => {
       {/* Actividad reciente */}
       <Card className="p-4">
         <h3 className="text-lg font-semibold mb-4">Actividad Reciente</h3>
-        <div className="space-y-3">
-          {dashboard.recentActivity.map((activity) => (
-            <div key={activity.id} className="flex items-center gap-3 p-3 surface-secondary rounded">
-              <span className="text-primary">
-                {activity.type === 'order' ? '🛍️' : 
-                 activity.type === 'customer' ? '👤' : 
-                 activity.type === 'review' ? '⭐' : '📦'}
-              </span>
-              <div className="flex-1">
-                <p className="text-sm">{activity.description}</p>
-                <p className="text-xs text-content-tertiary">
-                  {new Date(activity.timestamp).toLocaleString('es-AR')}
-                </p>
+        {dashboard.recentActivity.length === 0 ? (
+          <div className="text-center py-8 text-content-secondary">
+            <p>No hay actividad reciente</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {dashboard.recentActivity.map((activity) => (
+              <div
+                key={activity.id}
+                className="flex items-center gap-3 p-3 surface-secondary rounded"
+              >
+                <span className="text-primary text-xl">
+                  {activity.type === "order"
+                    ? "🛍️"
+                    : activity.type === "customer"
+                      ? "👤"
+                      : activity.type === "review"
+                        ? "⭐"
+                        : "📦"}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{activity.description}</p>
+                  <p className="text-xs text-content-tertiary">
+                    {new Date(activity.timestamp).toLocaleString("es-AR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+                {activity.value !== undefined && (
+                  <Badge className="badge-default shrink-0">
+                    {activity.type === "review"
+                      ? `${activity.value}★`
+                      : activity.type === "order"
+                        ? `$${activity.value.toLocaleString("es-AR")}`
+                        : activity.value}
+                  </Badge>
+                )}
               </div>
-              {activity.value && (
-                <Badge className="badge-default">
-                  {activity.type === 'review' ? `${activity.value}★` : 
-                   activity.type === 'order' ? `$${activity.value.toLocaleString()}` :
-                   activity.value}
-                </Badge>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
+
+      {/* Footer informativo */}
+      <div className="text-center text-xs text-content-tertiary py-4">
+        <p>📊 Datos en tiempo real desde la base de datos</p>
+        <p className="mt-1">
+          Período: {periodLabels[period]} • Actualizado:{" "}
+          {new Date().toLocaleString("es-AR")}
+        </p>
+      </div>
     </div>
   );
 };
