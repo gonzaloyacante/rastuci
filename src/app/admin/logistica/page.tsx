@@ -1,10 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/Badge';
+import { LogisticsSkeleton } from "@/components/admin/skeletons";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { useDocumentTitle } from "@/hooks";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Mail,
+  MapPin,
+  Package,
+  Phone,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Search,
+  Star,
+  Truck,
+} from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface Supplier {
   id: string;
@@ -40,7 +57,7 @@ interface OptimizedRoute {
   totalDistance: number;
   estimatedDuration: string;
   fuelCost: number;
-  status: 'planned' | 'in_progress' | 'completed';
+  status: "planned" | "in_progress" | "completed";
   createdAt: string;
 }
 
@@ -48,7 +65,7 @@ interface ReturnRequest {
   id: string;
   orderId: string;
   customerEmail: string;
-  status: 'pending' | 'approved' | 'rejected' | 'processing' | 'completed';
+  status: "pending" | "approved" | "rejected" | "processing" | "completed";
   returnType: string;
   items: Array<{
     productId: string;
@@ -66,850 +83,444 @@ interface ReturnRequest {
   completedAt?: string;
 }
 
+type TabType = "suppliers" | "routes" | "returns";
+
 const LogisticsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'suppliers' | 'routes' | 'returns'>('suppliers');
+  useDocumentTitle({ title: "Logística" });
+  const [activeTab, setActiveTab] = useState<TabType>("suppliers");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [routes, setRoutes] = useState<OptimizedRoute[]>([]);
   const [returns, setReturns] = useState<ReturnRequest[]>([]);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
-  const [selectedRoute, setSelectedRoute] = useState<OptimizedRoute | null>(null);
-  const [selectedReturn, setSelectedReturn] = useState<ReturnRequest | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Nuevos formularios
-  const [newSupplier, setNewSupplier] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    category: '',
-    rating: 5,
-    paymentTerms: '',
-    leadTime: 7
-  });
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/logistics?type=${activeTab}&status=${statusFilter}&search=${searchTerm}`
+      );
 
-  const [newRouteOptimization, setNewRouteOptimization] = useState({
-    deliveryDate: '',
-    region: '',
-    vehicleType: 'auto' as 'moto' | 'auto' | 'camion',
-    priority: 'standard' as 'standard' | 'express' | 'urgent'
-  });
+      if (!response.ok) {
+        throw new Error("Error al cargar datos");
+      }
 
-  const supplierStatusColors = {
-    active: 'badge-success',
-    inactive: 'badge-error'
-  };
+      const result = await response.json();
 
-  const routeStatusColors = {
-    planned: 'bg-blue-100 text-blue-800',
-    in_progress: 'bg-yellow-100 text-yellow-800',
-    completed: 'badge-success'
-  };
-
-  const returnStatusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    processing: 'bg-blue-100 text-blue-800',
-    completed: 'badge-success'
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
+      if (result.success) {
         switch (activeTab) {
-          case 'suppliers':
-            await fetchSuppliers();
+          case "suppliers":
+            setSuppliers(result.data.suppliers || []);
             break;
-          case 'routes':
-            await fetchRoutes();
+          case "routes":
+            setRoutes(result.data.routes || []);
             break;
-          case 'returns':
-            await fetchReturns();
+          case "returns":
+            setReturns(result.data.returns || []);
             break;
         }
-      } catch {
-        // Error logging removed for production
       }
-    };
-    
-    fetchData();
-  }, [activeTab]);
-
-  const _fetchLogisticsData = async (): Promise<void> => {
-    try {
+    } catch {
+      // Set empty arrays on error
       switch (activeTab) {
-        case 'suppliers':
-          await fetchSuppliers();
+        case "suppliers":
+          setSuppliers([]);
           break;
-        case 'routes':
-          await fetchRoutes();
+        case "routes":
+          setRoutes([]);
           break;
-        case 'returns':
-          await fetchReturns();
+        case "returns":
+          setReturns([]);
           break;
       }
-    } catch {
-      // Error logging removed for production
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [activeTab, statusFilter, searchTerm]);
 
-  const fetchSuppliers = async (): Promise<void> => {
-    // Simular llamada API
-    const mockSuppliers: Supplier[] = [
-      {
-        id: 'SUPP-001',
-        name: 'Distribuidora Central',
-        email: 'ventas@distribuidoracentral.com',
-        phone: '+54 11 4567-8900',
-        address: 'Av. Rivadavia 5000, CABA',
-        category: 'Electrónicos',
-        rating: 4.8,
-        isActive: true,
-        paymentTerms: '30 días',
-        leadTime: 7,
-        totalOrders: 156,
-        onTimeDelivery: 94,
-        createdAt: '2024-01-01T10:00:00Z',
-        updatedAt: '2024-01-15T10:00:00Z'
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
+    { id: "suppliers", label: "Proveedores", icon: <Package size={16} /> },
+    { id: "routes", label: "Rutas", icon: <Truck size={16} /> },
+    { id: "returns", label: "Devoluciones", icon: <RotateCcw size={16} /> },
+  ];
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<
+      string,
+      { className: string; label: string; icon: React.ReactNode }
+    > = {
+      active: {
+        className: "badge-success",
+        label: "Activo",
+        icon: <CheckCircle size={12} />,
       },
-      {
-        id: 'SUPP-002',
-        name: 'Textiles Premium SA',
-        email: 'contacto@textilespremium.com',
-        phone: '+54 11 4567-8901',
-        address: 'Av. Warnes 1500, CABA',
-        category: 'Indumentaria',
-        rating: 4.6,
-        isActive: true,
-        paymentTerms: '15 días',
-        leadTime: 5,
-        totalOrders: 89,
-        onTimeDelivery: 96,
-        createdAt: '2024-01-05T10:00:00Z',
-        updatedAt: '2024-01-15T10:00:00Z'
-      }
-    ];
-    setSuppliers(mockSuppliers);
-  };
-
-  const fetchRoutes = async (): Promise<void> => {
-    // Simular llamada API
-    const mockRoutes: OptimizedRoute[] = [
-      {
-        id: 'ROUTE-001',
-        date: '2024-01-16',
-        region: 'CABA Norte',
-        vehicleType: 'auto',
-        driver: 'Juan Carlos Ruta',
-        orders: [
-          {
-            orderId: 'ORD-001',
-            customerName: 'Juan Pérez',
-            address: 'Av. Corrientes 1000, CABA',
-            priority: 'express',
-            estimatedTime: '10:00 AM',
-            status: 'pending'
-          },
-          {
-            orderId: 'ORD-002',
-            customerName: 'María García',
-            address: 'Av. Santa Fe 2500, CABA',
-            priority: 'standard',
-            estimatedTime: '11:30 AM',
-            status: 'pending'
-          }
-        ],
-        totalDistance: 35,
-        estimatedDuration: '3h 15m',
-        fuelCost: 1800,
-        status: 'planned',
-        createdAt: '2024-01-15T16:30:00Z'
-      }
-    ];
-    setRoutes(mockRoutes);
-  };
-
-  const fetchReturns = async (): Promise<void> => {
-    // Simular llamada API
-    const mockReturns: ReturnRequest[] = [
-      {
-        id: 'RET-001',
-        orderId: 'ORD-123',
-        customerEmail: 'cliente@example.com',
-        status: 'pending',
-        returnType: 'refund',
-        items: [
-          {
-            productId: 'PROD-001',
-            productName: 'Smartphone XZ',
-            quantity: 1,
-            reason: 'defective'
-          }
-        ],
-        customerReason: 'El producto llegó con la pantalla rota',
-        createdAt: '2024-01-15T14:30:00Z',
-        updatedAt: '2024-01-15T14:30:00Z'
+      inactive: {
+        className: "badge-error",
+        label: "Inactivo",
+        icon: <AlertTriangle size={12} />,
       },
-      {
-        id: 'RET-002',
-        orderId: 'ORD-124',
-        customerEmail: 'maria@example.com',
-        status: 'approved',
-        returnType: 'exchange',
-        items: [
-          {
-            productId: 'PROD-002',
-            productName: 'Remera Classic',
-            quantity: 1,
-            reason: 'wrong_item'
-          }
-        ],
-        customerReason: 'Pedí talle M pero llegó talle S',
-        adminNotes: 'Cambio aprobado, enviar talle correcto',
-        refundAmount: 0,
-        createdAt: '2024-01-14T16:20:00Z',
-        updatedAt: '2024-01-15T09:15:00Z',
-        approvedAt: '2024-01-15T09:15:00Z'
-      }
-    ];
-    setReturns(mockReturns);
+      planned: {
+        className: "badge-info",
+        label: "Planificada",
+        icon: <Clock size={12} />,
+      },
+      in_progress: {
+        className: "badge-warning",
+        label: "En Progreso",
+        icon: <Truck size={12} />,
+      },
+      completed: {
+        className: "badge-success",
+        label: "Completada",
+        icon: <CheckCircle size={12} />,
+      },
+      pending: {
+        className: "badge-warning",
+        label: "Pendiente",
+        icon: <Clock size={12} />,
+      },
+      approved: {
+        className: "badge-success",
+        label: "Aprobada",
+        icon: <CheckCircle size={12} />,
+      },
+      rejected: {
+        className: "badge-error",
+        label: "Rechazada",
+        icon: <AlertTriangle size={12} />,
+      },
+      processing: {
+        className: "badge-info",
+        label: "Procesando",
+        icon: <RefreshCw size={12} />,
+      },
+    };
+
+    const config = statusConfig[status] || {
+      className: "badge-default",
+      label: status,
+      icon: null,
+    };
+
+    return (
+      <Badge className={config.className}>
+        <span className="flex items-center gap-1">
+          {config.icon}
+          {config.label}
+        </span>
+      </Badge>
+    );
   };
 
-  const createSupplier = async (): Promise<void> => {
-    try {
-      // Simular creación
-      const createdSupplier: Supplier = {
-        id: `SUPP-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-        ...newSupplier,
-        isActive: true,
-        totalOrders: 0,
-        onTimeDelivery: 100,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      setSuppliers(prev => [createdSupplier, ...prev]);
-      
-      // Resetear formulario
-      setNewSupplier({
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        category: '',
-        rating: 5,
-        paymentTerms: '',
-        leadTime: 7
-      });
-    } catch {
-      // Error logging removed for production
-    }
-  };
-
-  const optimizeRoute = async (): Promise<void> => {
-    try {
-      // Simular optimización
-      const optimizedRoute: OptimizedRoute = {
-        id: `ROUTE-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-        date: newRouteOptimization.deliveryDate,
-        region: newRouteOptimization.region,
-        vehicleType: newRouteOptimization.vehicleType,
-        driver: 'Sistema Asignado',
-        orders: [
-          {
-            orderId: `ORD-${Math.floor(Math.random() * 1000)}`,
-            customerName: 'Cliente Ejemplo',
-            address: 'Dirección de ejemplo',
-            priority: newRouteOptimization.priority,
-            estimatedTime: '10:00 AM',
-            status: 'pending'
-          }
-        ],
-        totalDistance: Math.floor(Math.random() * 50 + 20),
-        estimatedDuration: '3h 45m',
-        fuelCost: Math.floor(Math.random() * 2000 + 1000),
-        status: 'planned',
-        createdAt: new Date().toISOString()
-      };
-
-      setRoutes(prev => [optimizedRoute, ...prev]);
-      
-      // Resetear formulario
-      setNewRouteOptimization({
-        deliveryDate: '',
-        region: '',
-        vehicleType: 'auto',
-        priority: 'standard'
-      });
-    } catch {
-      // Error logging removed for production
-    }
-  };
-
-  const updateReturnStatus = async (returnId: string, newStatus: ReturnRequest['status'], adminNotes?: string): Promise<void> => {
-    try {
-      setReturns(prev =>
-        prev.map(ret =>
-          ret.id === returnId
-            ? {
-                ...ret,
-                status: newStatus,
-                adminNotes: adminNotes || ret.adminNotes,
-                updatedAt: new Date().toISOString(),
-                approvedAt: newStatus === 'approved' ? new Date().toISOString() : ret.approvedAt,
-                completedAt: newStatus === 'completed' ? new Date().toISOString() : ret.completedAt
-              }
-            : ret
-        )
-      );
-      
-      if (selectedReturn?.id === returnId) {
-        setSelectedReturn(prev => prev ? { ...prev, status: newStatus } : null);
-      }
-    } catch {
-      // Error logging removed for production
-    }
-  };
-
-  const filteredSuppliers = suppliers.filter(supplier => {
-    const matchesSearch = !searchTerm || 
-      supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supplier.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && supplier.isActive) ||
-      (statusFilter === 'inactive' && !supplier.isActive);
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const filteredRoutes = routes.filter(route => {
-    const matchesSearch = !searchTerm || 
-      route.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      route.driver.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || route.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const filteredReturns = returns.filter(returnReq => {
-    const matchesSearch = !searchTerm || 
-      returnReq.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      returnReq.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || returnReq.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  if (loading) {
+    return <LogisticsSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Logística Avanzada</h1>
-        <div className="flex gap-2">
-          <Button
-            variant={activeTab === 'suppliers' ? 'primary' : 'outline'}
-            onClick={() => setActiveTab('suppliers')}
-          >
-            Proveedores ({suppliers.filter(s => s.isActive).length})
-          </Button>
-          <Button
-            variant={activeTab === 'routes' ? 'primary' : 'outline'}
-            onClick={() => setActiveTab('routes')}
-          >
-            Rutas ({routes.filter(r => r.status !== 'completed').length})
-          </Button>
-          <Button
-            variant={activeTab === 'returns' ? 'primary' : 'outline'}
-            onClick={() => setActiveTab('returns')}
-          >
-            Devoluciones ({returns.filter(r => r.status === 'pending').length})
-          </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-primary">Logística</h1>
+          <p className="text-muted">
+            Gestiona proveedores, rutas de entrega y devoluciones
+          </p>
         </div>
+        <Button variant="primary" className="gap-2">
+          <Plus size={16} />
+          {activeTab === "suppliers" && "Nuevo Proveedor"}
+          {activeTab === "routes" && "Nueva Ruta"}
+          {activeTab === "returns" && "Nueva Solicitud"}
+        </Button>
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border rounded-lg bg-white"
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-muted pb-2">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 rounded-t-lg flex items-center gap-2 transition-colors ${
+              activeTab === tab.id
+                ? "surface-secondary text-primary font-medium"
+                : "text-muted hover:text-primary"
+            }`}
           >
-            <option value="all">Todos los estados</option>
-            {activeTab === 'suppliers' && (
-              <>
-                <option value="active">Activos</option>
-                <option value="inactive">Inactivos</option>
-              </>
-            )}
-            {activeTab === 'routes' && (
-              <>
-                <option value="planned">Planificadas</option>
-                <option value="in_progress">En Progreso</option>
-                <option value="completed">Completadas</option>
-              </>
-            )}
-            {activeTab === 'returns' && (
-              <>
-                <option value="pending">Pendientes</option>
-                <option value="approved">Aprobadas</option>
-                <option value="processing">En Proceso</option>
-                <option value="completed">Completadas</option>
-                <option value="rejected">Rechazadas</option>
-              </>
-            )}
-          </select>
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+          />
+          <Input
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
-      </Card>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="input"
+        >
+          <option value="all">Todos los estados</option>
+          {activeTab === "suppliers" && (
+            <>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </>
+          )}
+          {activeTab === "routes" && (
+            <>
+              <option value="planned">Planificadas</option>
+              <option value="in_progress">En Progreso</option>
+              <option value="completed">Completadas</option>
+            </>
+          )}
+          {activeTab === "returns" && (
+            <>
+              <option value="pending">Pendientes</option>
+              <option value="approved">Aprobadas</option>
+              <option value="processing">En Proceso</option>
+              <option value="completed">Completadas</option>
+              <option value="rejected">Rechazadas</option>
+            </>
+          )}
+        </select>
+        <Button variant="outline" onClick={fetchData} className="gap-2">
+          <RefreshCw size={16} />
+          Actualizar
+        </Button>
+      </div>
 
-      {/* Contenido según pestaña activa */}
-      {activeTab === 'suppliers' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Lista de Proveedores */}
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Proveedores</h2>
-              <Button onClick={() => setSelectedSupplier({} as Supplier)}>
-                Nuevo Proveedor
+      {/* Content */}
+      {activeTab === "suppliers" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {suppliers.length === 0 ? (
+            <Card className="col-span-full p-8 text-center">
+              <Package size={48} className="mx-auto mb-4 text-muted" />
+              <h3 className="text-lg font-medium text-primary mb-2">
+                No hay proveedores
+              </h3>
+              <p className="text-muted mb-4">
+                Agrega proveedores para gestionar la cadena de suministro
+              </p>
+              <Button variant="primary" className="gap-2">
+                <Plus size={16} />
+                Agregar Proveedor
               </Button>
-            </div>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredSuppliers.map((supplier) => (
-                <div
-                  key={supplier.id}
-                  className={`p-3 border rounded-lg cursor-pointer surface-hover ${
-                    selectedSupplier?.id === supplier.id ? 'border-primary bg-blue-50' : ''
-                  }`}
-                  onClick={() => setSelectedSupplier(supplier)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{supplier.name}</h3>
-                      <p className="text-sm text-content-secondary">{supplier.category}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge className={supplierStatusColors[supplier.isActive ? 'active' : 'inactive']}>
-                          {supplier.isActive ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                        <span className="text-sm">★ {supplier.rating}</span>
-                        <span className="text-sm">{supplier.onTimeDelivery}% puntual</span>
-                      </div>
-                    </div>
+            </Card>
+          ) : (
+            suppliers.map((supplier) => (
+              <Card
+                key={supplier.id}
+                className="p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-primary">
+                      {supplier.name}
+                    </h3>
+                    <p className="text-sm text-muted">{supplier.category}</p>
                   </div>
+                  {getStatusBadge(supplier.isActive ? "active" : "inactive")}
                 </div>
-              ))}
-            </div>
-          </Card>
 
-          {/* Detalle/Formulario del Proveedor */}
-          <Card className="p-4">
-            {selectedSupplier ? (
-              selectedSupplier.id ? (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">{selectedSupplier.name}</h2>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Email</label>
-                      <p className="text-content-secondary">{selectedSupplier.email}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Teléfono</label>
-                      <p className="text-content-secondary">{selectedSupplier.phone}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Dirección</label>
-                      <p className="text-content-secondary">{selectedSupplier.address}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Términos de Pago</label>
-                        <p className="text-content-secondary">{selectedSupplier.paymentTerms}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Tiempo de Entrega</label>
-                        <p className="text-content-secondary">{selectedSupplier.leadTime} días</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Total Órdenes</label>
-                        <p className="text-content-secondary">{selectedSupplier.totalOrders}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Puntualidad</label>
-                        <p className="text-content-secondary">{selectedSupplier.onTimeDelivery}%</p>
-                      </div>
-                    </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-muted">
+                    <Mail size={14} />
+                    {supplier.email}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted">
+                    <Phone size={14} />
+                    {supplier.phone}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted">
+                    <MapPin size={14} />
+                    {supplier.address}
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">Nuevo Proveedor</h2>
-                  <div className="space-y-4">
-                    <Input
-                      placeholder="Nombre del proveedor"
-                      value={newSupplier.name}
-                      onChange={(e) => setNewSupplier({...newSupplier, name: e.target.value})}
-                    />
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={newSupplier.email}
-                      onChange={(e) => setNewSupplier({...newSupplier, email: e.target.value})}
-                    />
-                    <Input
-                      placeholder="Teléfono"
-                      value={newSupplier.phone}
-                      onChange={(e) => setNewSupplier({...newSupplier, phone: e.target.value})}
-                    />
-                    <Input
-                      placeholder="Dirección"
-                      value={newSupplier.address}
-                      onChange={(e) => setNewSupplier({...newSupplier, address: e.target.value})}
-                    />
-                    <Input
-                      placeholder="Categoría"
-                      value={newSupplier.category}
-                      onChange={(e) => setNewSupplier({...newSupplier, category: e.target.value})}
-                    />
-                    <Input
-                      placeholder="Términos de pago"
-                      value={newSupplier.paymentTerms}
-                      onChange={(e) => setNewSupplier({...newSupplier, paymentTerms: e.target.value})}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Tiempo de entrega (días)"
-                      value={newSupplier.leadTime}
-                      onChange={(e) => setNewSupplier({...newSupplier, leadTime: parseInt(e.target.value) || 7})}
-                    />
-                    <div className="flex gap-2">
-                      <Button onClick={createSupplier}>Crear Proveedor</Button>
-                      <Button variant="outline" onClick={() => setSelectedSupplier(null)}>
-                        Cancelar
-                      </Button>
-                    </div>
+
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-muted">
+                  <div className="flex items-center gap-1">
+                    <Star size={14} className="text-yellow-500 fill-current" />
+                    <span className="font-medium">{supplier.rating}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-muted">
+                    <Clock size={14} />
+                    {supplier.leadTime} días
                   </div>
                 </div>
-              )
-            ) : (
-              <div className="text-center py-8 text-content-tertiary">
-                Selecciona un proveedor o crea uno nuevo
-              </div>
-            )}
-          </Card>
+              </Card>
+            ))
+          )}
         </div>
       )}
 
-      {activeTab === 'routes' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Lista de Rutas */}
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Rutas Optimizadas</h2>
-              <Button onClick={() => setSelectedRoute({} as OptimizedRoute)}>
-                Optimizar Ruta
+      {activeTab === "routes" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {routes.length === 0 ? (
+            <Card className="col-span-full p-8 text-center">
+              <Truck size={48} className="mx-auto mb-4 text-muted" />
+              <h3 className="text-lg font-medium text-primary mb-2">
+                No hay rutas optimizadas
+              </h3>
+              <p className="text-muted mb-4">
+                Crea rutas optimizadas para las entregas
+              </p>
+              <Button variant="primary" className="gap-2">
+                <Plus size={16} />
+                Optimizar Rutas
               </Button>
-            </div>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredRoutes.map((route) => (
-                <div
-                  key={route.id}
-                  className={`p-3 border rounded-lg cursor-pointer surface-hover ${
-                    selectedRoute?.id === route.id ? 'border-primary bg-blue-50' : ''
-                  }`}
-                  onClick={() => setSelectedRoute(route)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{route.id} - {route.region}</h3>
-                      <p className="text-sm text-content-secondary">
-                        {route.driver} • {route.vehicleType}
-                      </p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <Badge className={routeStatusColors[route.status]}>
-                          {route.status}
-                        </Badge>
-                        <span className="text-sm">{route.orders.length} entregas</span>
-                        <span className="text-sm">{route.totalDistance} km</span>
-                      </div>
-                    </div>
-                    <span className="text-xs text-content-tertiary">
-                      {new Date(route.date).toLocaleDateString()}
-                    </span>
+            </Card>
+          ) : (
+            routes.map((route) => (
+              <Card
+                key={route.id}
+                className="p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-primary">
+                      Ruta {route.id}
+                    </h3>
+                    <p className="text-sm text-muted">{route.region}</p>
                   </div>
+                  {getStatusBadge(route.status)}
                 </div>
-              ))}
-            </div>
-          </Card>
 
-          {/* Detalle/Formulario de Ruta */}
-          <Card className="p-4">
-            {selectedRoute ? (
-              selectedRoute.id ? (
-                <div className="space-y-4">
+                <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">{selectedRoute.id}</h2>
-                    <Badge className={routeStatusColors[selectedRoute.status]}>
-                      {selectedRoute.status}
-                    </Badge>
+                    <span className="text-muted">Conductor:</span>
+                    <span className="font-medium">{route.driver}</span>
                   </div>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Región</label>
-                        <p className="text-content-secondary">{selectedRoute.region}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Fecha</label>
-                        <p className="text-content-secondary">{selectedRoute.date}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Conductor</label>
-                        <p className="text-content-secondary">{selectedRoute.driver}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Vehículo</label>
-                        <p className="text-content-secondary">{selectedRoute.vehicleType}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Distancia</label>
-                        <p className="text-content-secondary">{selectedRoute.totalDistance} km</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Duración</label>
-                        <p className="text-content-secondary">{selectedRoute.estimatedDuration}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Combustible</label>
-                        <p className="text-content-secondary">${selectedRoute.fuelCost}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Entregas Programadas</label>
-                      <div className="space-y-2">
-                        {selectedRoute.orders.map((order) => (
-                          <div key={order.orderId} className="p-2 surface-secondary rounded">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium text-sm">{order.customerName}</p>
-                                <p className="text-xs text-content-secondary">{order.address}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm">{order.estimatedTime}</p>
-                                <Badge className={order.priority === 'express' ? 'badge-warning' : 'badge-default'}>
-                                  {order.priority}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted">Pedidos:</span>
+                    <span className="font-medium">{route.orders.length}</span>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">Optimizar Nueva Ruta</h2>
-                  <div className="space-y-4">
-                    <Input
-                      type="date"
-                      placeholder="Fecha de entrega"
-                      value={newRouteOptimization.deliveryDate}
-                      onChange={(e) => setNewRouteOptimization({...newRouteOptimization, deliveryDate: e.target.value})}
-                    />
-                    <Input
-                      placeholder="Región"
-                      value={newRouteOptimization.region}
-                      onChange={(e) => setNewRouteOptimization({...newRouteOptimization, region: e.target.value})}
-                    />
-                    <select
-                      value={newRouteOptimization.vehicleType}
-                      onChange={(e) => setNewRouteOptimization({...newRouteOptimization, vehicleType: e.target.value as 'moto' | 'auto' | 'camion'})}
-                      className="w-full px-3 py-2 border rounded-lg bg-white"
-                    >
-                      <option value="moto">Motocicleta</option>
-                      <option value="auto">Automóvil</option>
-                      <option value="camion">Camión</option>
-                    </select>
-                    <select
-                      value={newRouteOptimization.priority}
-                      onChange={(e) => setNewRouteOptimization({...newRouteOptimization, priority: e.target.value as 'standard' | 'express' | 'urgent'})}
-                      className="w-full px-3 py-2 border rounded-lg bg-white"
-                    >
-                      <option value="standard">Estándar</option>
-                      <option value="express">Express</option>
-                      <option value="urgent">Urgente</option>
-                    </select>
-                    <div className="flex gap-2">
-                      <Button onClick={optimizeRoute}>Optimizar Ruta</Button>
-                      <Button variant="outline" onClick={() => setSelectedRoute(null)}>
-                        Cancelar
-                      </Button>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted">Distancia:</span>
+                    <span className="font-medium">
+                      {route.totalDistance} km
+                    </span>
                   </div>
-                </div>
-              )
-            ) : (
-              <div className="text-center py-8 text-content-tertiary">
-                Selecciona una ruta o crea una nueva optimización
-              </div>
-            )}
-          </Card>
-        </div>
-      )}
-
-      {activeTab === 'returns' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Lista de Devoluciones */}
-          <Card className="p-4">
-            <h2 className="text-lg font-semibold mb-4">Solicitudes de Devolución</h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredReturns.map((returnReq) => (
-                <div
-                  key={returnReq.id}
-                  className={`p-3 border rounded-lg cursor-pointer surface-hover ${
-                    selectedReturn?.id === returnReq.id ? 'border-primary bg-blue-50' : ''
-                  }`}
-                  onClick={() => setSelectedReturn(returnReq)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{returnReq.id} - {returnReq.orderId}</h3>
-                      <p className="text-sm text-content-secondary">{returnReq.customerEmail}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge className={returnStatusColors[returnReq.status]}>
-                          {returnReq.status}
-                        </Badge>
-                        <span className="text-sm">{returnReq.returnType}</span>
-                        <span className="text-sm">{returnReq.items.length} items</span>
-                      </div>
-                    </div>
-                    <span className="text-xs text-content-tertiary">
-                      {new Date(returnReq.createdAt).toLocaleDateString()}
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted">Duración est.:</span>
+                    <span className="font-medium">
+                      {route.estimatedDuration}
                     </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </Card>
 
-          {/* Detalle de Devolución */}
-          <Card className="p-4">
-            {selectedReturn ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">{selectedReturn.id}</h2>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-muted">
+                  <span className="text-sm text-muted">
+                    {new Date(route.date).toLocaleDateString("es-AR")}
+                  </span>
+                  <Button variant="outline" size="sm">
+                    Ver Detalles
+                  </Button>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === "returns" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {returns.length === 0 ? (
+            <Card className="col-span-full p-8 text-center">
+              <RotateCcw size={48} className="mx-auto mb-4 text-muted" />
+              <h3 className="text-lg font-medium text-primary mb-2">
+                No hay solicitudes de devolución
+              </h3>
+              <p className="text-muted">
+                Las solicitudes de devolución aparecerán aquí
+              </p>
+            </Card>
+          ) : (
+            returns.map((returnReq) => (
+              <Card
+                key={returnReq.id}
+                className="p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-primary">
+                      Devolución #{returnReq.id}
+                    </h3>
+                    <p className="text-sm text-muted">
+                      Pedido: {returnReq.orderId}
+                    </p>
+                  </div>
                   <div className="flex gap-2">
-                    <Badge className={returnStatusColors[selectedReturn.status]}>
-                      {selectedReturn.status}
+                    {getStatusBadge(returnReq.status)}
+                    <Badge className="badge-default">
+                      {returnReq.returnType}
                     </Badge>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Orden Original</label>
-                      <p className="text-content-secondary">{selectedReturn.orderId}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Cliente</label>
-                      <p className="text-content-secondary">{selectedReturn.customerEmail}</p>
-                    </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-muted">
+                    <Mail size={14} />
+                    {returnReq.customerEmail}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Tipo de Devolución</label>
-                    <p className="text-content-secondary">{selectedReturn.returnType}</p>
+                  <p className="text-muted line-clamp-2">
+                    {returnReq.customerReason}
+                  </p>
+                </div>
+
+                <div className="mt-3">
+                  <p className="text-sm font-medium mb-2">
+                    Productos ({returnReq.items.length}):
+                  </p>
+                  <div className="space-y-1">
+                    {returnReq.items.slice(0, 2).map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="text-sm flex items-center justify-between"
+                      >
+                        <span className="text-muted truncate">
+                          {item.productName}
+                        </span>
+                        <span>x{item.quantity}</span>
+                      </div>
+                    ))}
+                    {returnReq.items.length > 2 && (
+                      <p className="text-xs text-muted">
+                        +{returnReq.items.length - 2} más
+                      </p>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Items a Devolver</label>
-                    <div className="space-y-2">
-                      {selectedReturn.items.map((item) => (
-                        <div key={item.productId} className="p-2 surface-secondary rounded">
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-medium text-sm">{item.productName}</p>
-                              <p className="text-xs text-content-secondary">ID: {item.productId}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm">Cantidad: {item.quantity}</p>
-                              <p className="text-xs text-content-secondary">Razón: {item.reason}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Razón del Cliente</label>
-                    <p className="text-content-secondary text-sm">{selectedReturn.customerReason}</p>
-                  </div>
-                  {selectedReturn.adminNotes && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Notas del Administrador</label>
-                      <p className="text-content-secondary text-sm">{selectedReturn.adminNotes}</p>
-                    </div>
-                  )}
-                  {selectedReturn.refundAmount !== undefined && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Monto de Reembolso</label>
-                      <p className="text-content-secondary">${selectedReturn.refundAmount}</p>
-                    </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-muted">
+                  <span className="text-sm text-muted">
+                    {new Date(returnReq.createdAt).toLocaleDateString("es-AR")}
+                  </span>
+                  {returnReq.refundAmount && (
+                    <span className="font-medium">
+                      ${returnReq.refundAmount.toLocaleString("es-AR")}
+                    </span>
                   )}
                 </div>
-                {selectedReturn.status === 'pending' && (
-                  <div className="flex gap-2 pt-4 border-t">
-                    <Button 
-                      onClick={() => updateReturnStatus(selectedReturn.id, 'approved', 'Aprobada por administrador')}
-                      className="badge-success"
-                    >
-                      Aprobar
-                    </Button>
-                    <Button 
-                      onClick={() => updateReturnStatus(selectedReturn.id, 'rejected', 'Rechazada - no cumple criterios')}
-                      variant="destructive"
-                    >
-                      Rechazar
-                    </Button>
-                  </div>
-                )}
-                {selectedReturn.status === 'approved' && (
-                  <div className="flex gap-2 pt-4 border-t">
-                    <Button 
-                      onClick={() => updateReturnStatus(selectedReturn.id, 'processing', 'En proceso de devolución')}
-                    >
-                      Procesar
-                    </Button>
-                  </div>
-                )}
-                {selectedReturn.status === 'processing' && (
-                  <div className="flex gap-2 pt-4 border-t">
-                    <Button 
-                      onClick={() => updateReturnStatus(selectedReturn.id, 'completed', 'Devolución completada')}
-                      className="badge-success"
-                    >
-                      Completar
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-content-tertiary">
-                Selecciona una solicitud de devolución para ver los detalles
-              </div>
-            )}
-          </Card>
+              </Card>
+            ))
+          )}
         </div>
       )}
     </div>

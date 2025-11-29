@@ -1,8 +1,8 @@
 "use client";
 
+import { OrdersSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Spinner } from "@/components/ui/Spinner";
 import { logger } from "@/lib/logger";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -101,9 +101,7 @@ export default function PendingOrdersPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <Spinner size="lg" />
-        </div>
+        <OrdersSkeleton />
       ) : orders.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {orders.map((order) => (

@@ -1,11 +1,11 @@
 "use client";
 
+import { MetricsSkeleton } from "@/components/admin/skeletons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Spinner } from "@/components/ui/Spinner";
 import {
   Calendar,
   Download,
@@ -195,12 +195,7 @@ export default function ShippingAnalytics() {
   if (loading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <Spinner size="lg" className="mx-auto" />
-            <p className="mt-2 muted">Cargando analytics...</p>
-          </div>
-        </div>
+        <MetricsSkeleton />
       </div>
     );
   }

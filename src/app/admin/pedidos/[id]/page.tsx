@@ -1,8 +1,8 @@
 "use client";
 
+import { DetailViewSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Spinner } from "@/components/ui/Spinner";
 import { useCorreoArgentino } from "@/hooks/useCorreoArgentino";
 import type {
   ProvinceCode,
@@ -341,11 +341,7 @@ export default function OrderDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <DetailViewSkeleton />;
   }
 
   if (error) {
@@ -471,7 +467,7 @@ export default function OrderDetailPage() {
                         className="object-cover"
                       />
                     </div>
-                    <div className="flex-grow">
+                    <div className="grow">
                       <Link
                         href={`/admin/productos/editar/${item.product.id}`}
                         className="font-medium text-primary hover:underline"

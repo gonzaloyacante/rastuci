@@ -1,5 +1,6 @@
 "use client";
 
+import { FormSkeleton } from "@/components/admin/skeletons";
 import ContactForm from "@/components/forms/ContactForm";
 import { ContactSettings } from "@/lib/validation/contact";
 import { useEffect, useState } from "react";
@@ -29,7 +30,12 @@ export default function AdminContactPage() {
   }, []);
 
   if (loading) {
-    return <div className="p-6">Cargando…</div>;
+    return (
+      <div className="max-w-5xl mx-auto p-6">
+        <div className="h-8 w-32 rounded surface-secondary animate-pulse mb-6" />
+        <FormSkeleton fields={6} />
+      </div>
+    );
   }
   if (error) {
     return <div className="p-6 text-error">{error}</div>;

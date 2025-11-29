@@ -150,7 +150,7 @@ export default function CheckoutPageClient() {
   if (cartItems.length === 0 && currentStep !== CheckoutStep.CONFIRMATION) {
     return (
       <div className="surface text-primary min-h-screen flex flex-col">
-        <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
+        <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <Spinner size="lg" className="mx-auto mb-4" />
@@ -164,7 +164,7 @@ export default function CheckoutPageClient() {
 
   return (
     <div className="surface text-primary min-h-screen flex flex-col">
-      <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
+      <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-primary font-montserrat">
             Finalizar Compra

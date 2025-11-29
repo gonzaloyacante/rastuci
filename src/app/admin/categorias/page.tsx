@@ -4,10 +4,10 @@ import {
   AdminEmpty,
   AdminEmptyIcons,
   AdminError,
-  AdminLoading,
   AdminPageHeader,
 } from "@/components/admin";
 import { AdminTable } from "@/components/admin/AdminTable";
+import { CategoriesSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -92,7 +92,7 @@ export default function AdminCategoriasPage() {
   };
 
   if (isLoading) {
-    return <AdminLoading />;
+    return <CategoriesSkeleton />;
   }
   if (error) {
     return <AdminError message={error} />;

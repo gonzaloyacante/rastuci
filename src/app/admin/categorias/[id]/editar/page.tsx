@@ -1,6 +1,7 @@
 "use client";
 
-import { AdminLoading, AdminPageHeader } from "@/components/admin";
+import { AdminPageHeader } from "@/components/admin";
+import { FormSkeleton } from "@/components/admin/skeletons";
 import { CategoryForm } from "@/components/forms";
 import { logger } from "@/lib/logger";
 import { SerializedCategory } from "@/types";
@@ -73,7 +74,7 @@ export default function CategoryEditPage() {
   };
 
   if (loading) {
-    return <AdminLoading />;
+    return <FormSkeleton fields={6} />;
   }
 
   if (!category) {

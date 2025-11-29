@@ -1,9 +1,10 @@
 "use client";
 
-import { AdminError, AdminLoading } from "@/components/admin";
+import { AdminError } from "@/components/admin";
+import { FormSkeleton } from "@/components/admin/skeletons";
 import { useCategories, useProduct } from "@/hooks";
 import { useParams } from "next/navigation";
-import ProductForm from "../../components/ProductForm";
+import ProductForm from "../../../../../components/products/ProductForm";
 
 export default function EditProductPage() {
   const params = useParams();
@@ -12,7 +13,7 @@ export default function EditProductPage() {
   const { categories } = useCategories();
 
   if (isLoading) {
-    return <AdminLoading />;
+    return <FormSkeleton fields={10} />;
   }
   if (error) {
     return <AdminError message={error || "Error desconocido"} />;

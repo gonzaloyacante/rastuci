@@ -113,7 +113,7 @@ const CartItemComponent = ({
         )}
       </div>
 
-      <div className="flex-grow min-w-0">
+      <div className="grow min-w-0">
         <h3
           className="font-semibold text-lg truncate"
           title={item.product.name}
@@ -296,7 +296,7 @@ export default function CartPageClient() {
   if (cartItems.length === 0) {
     return (
       <div className="surface text-primary min-h-screen flex flex-col">
-        <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
+        <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
           <h1 className="text-3xl font-bold text-primary mb-8 font-montserrat">
             Mi Carrito (0 items)
           </h1>
@@ -315,7 +315,7 @@ export default function CartPageClient() {
 
   return (
     <div className="surface text-primary min-h-screen flex flex-col">
-      <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
+      <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-primary font-montserrat">
             Mi Carrito ({itemCount} {itemCount === 1 ? "item" : "items"})

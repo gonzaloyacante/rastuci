@@ -4,9 +4,9 @@ import {
   AdminEmpty,
   AdminEmptyIcons,
   AdminError,
-  AdminLoading,
   AdminPageHeader,
 } from "@/components/admin";
+import { OrdersSkeleton } from "@/components/admin/skeletons";
 import { FilterBar, SearchBar } from "@/components/search";
 import { useDocumentTitle } from "@/hooks";
 import { useOrders, type Order } from "@/hooks/useOrders";
@@ -227,7 +227,7 @@ export default function OrdersPage() {
 
       {/* Contenido principal */}
       {loading ? (
-        <AdminLoading />
+        <OrdersSkeleton />
       ) : error ? (
         <AdminError
           message={error}

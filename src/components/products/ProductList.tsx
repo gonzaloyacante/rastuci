@@ -4,9 +4,9 @@ import {
   AdminEmpty,
   AdminEmptyIcons,
   AdminError,
-  AdminLoading,
   AdminPageHeader,
 } from "@/components/admin";
+import { ProductsAdminSkeleton } from "@/components/admin/skeletons";
 import ProductCard from "@/components/products/ProductCard";
 import { useAlert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -122,7 +122,7 @@ export default function ProductList() {
   };
 
   if (isLoading) {
-    return <AdminLoading />;
+    return <ProductsAdminSkeleton />;
   }
   if (error) {
     return <AdminError message={error} />;

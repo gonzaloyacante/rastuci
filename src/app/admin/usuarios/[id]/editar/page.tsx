@@ -1,4 +1,5 @@
-import { AdminLoading, AdminPageHeader } from "@/components/admin";
+import { AdminPageHeader } from "@/components/admin";
+import { FormSkeleton } from "@/components/admin/skeletons";
 import { UserForm } from "@/components/forms";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -75,7 +76,7 @@ export default async function UserEditPage({ params }: UserEditPageProps) {
   const { id } = await params;
 
   return (
-    <Suspense fallback={<AdminLoading />}>
+    <Suspense fallback={<FormSkeleton fields={5} />}>
       <EditUserContent userId={id} />
     </Suspense>
   );

@@ -1,9 +1,9 @@
 "use client";
 
+import { MetricsSkeleton } from "@/components/admin/skeletons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Spinner } from "@/components/ui/Spinner";
 import React, { useCallback, useEffect, useState } from "react";
 
 interface MetricData {
@@ -167,14 +167,7 @@ const MetricasPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <Spinner size="lg" />
-        <p className="text-content-secondary">
-          Cargando métricas desde base de datos...
-        </p>
-      </div>
-    );
+    return <MetricsSkeleton />;
   }
 
   if (error) {

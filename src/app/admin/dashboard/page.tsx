@@ -1,7 +1,8 @@
 "use client";
 
-import { AdminError, AdminLoading } from "@/components/admin";
+import { AdminError } from "@/components/admin";
 import ModernDashboardCharts from "@/components/admin/dashboard/ModernDashboardCharts";
+import { DashboardSkeleton } from "@/components/admin/skeletons";
 import { useDashboard } from "@/hooks";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { motion } from "framer-motion";
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   const { stats, categoryData, monthlySales, loading, error } = useDashboard();
 
   if (loading) {
-    return <AdminLoading />;
+    return <DashboardSkeleton />;
   }
 
   if (error) {
@@ -57,10 +58,10 @@ export default function AdminDashboard() {
           className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6"
         >
           <div className="relative overflow-hidden rounded-xl sm:rounded-2xl surface shadow-sm border muted hover:shadow-lg transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative p-3 sm:p-4 lg:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-4 gap-2">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
                   <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <span className="badge-success text-xs sm:text-sm">+12.5%</span>
@@ -75,10 +76,10 @@ export default function AdminDashboard() {
           </div>
 
           <div className="relative overflow-hidden rounded-xl sm:rounded-2xl surface shadow-sm border muted hover:shadow-lg transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-emerald-500/10 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative p-3 sm:p-4 lg:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-4 gap-2">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shrink-0">
                   <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <span className="badge-success text-xs sm:text-sm">+8.2%</span>
@@ -93,10 +94,10 @@ export default function AdminDashboard() {
           </div>
 
           <div className="relative overflow-hidden rounded-xl sm:rounded-2xl surface shadow-sm border muted hover:shadow-lg transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative p-3 sm:p-4 lg:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-4 gap-2">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-linear-to-br from-amber-500 to-amber-600 flex items-center justify-center shrink-0">
                   <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <span className="badge-success text-xs sm:text-sm">+15.3%</span>
@@ -111,10 +112,10 @@ export default function AdminDashboard() {
           </div>
 
           <div className="relative overflow-hidden rounded-xl sm:rounded-2xl surface shadow-sm border muted hover:shadow-lg transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-cyan-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative p-3 sm:p-4 lg:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-4 gap-2">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-linear-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shrink-0">
                   <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <span className="badge-success text-xs sm:text-sm">+5.1%</span>
@@ -145,7 +146,7 @@ export default function AdminDashboard() {
                 Accesos directos a las funciones principales
               </p>
             </div>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
               <Settings className="h-5 w-5 text-white" />
             </div>
           </div>
@@ -153,9 +154,9 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Link href="/admin/productos/nuevo">
               <div className="group relative overflow-hidden rounded-lg sm:rounded-xl surface border muted p-3 sm:p-4 hover:shadow-lg transition-all duration-300 cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="relative flex items-start space-x-3">
-                  <div className="shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Plus className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -172,9 +173,9 @@ export default function AdminDashboard() {
 
             <Link href="/admin/productos">
               <div className="group relative overflow-hidden rounded-lg sm:rounded-xl surface border muted p-3 sm:p-4 hover:shadow-lg transition-all duration-300 cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="relative flex items-start space-x-3">
-                  <div className="shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Package className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -191,9 +192,9 @@ export default function AdminDashboard() {
 
             <Link href="/admin/pedidos">
               <div className="group relative overflow-hidden rounded-lg sm:rounded-xl surface border muted p-3 sm:p-4 hover:shadow-lg transition-all duration-300 cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-amber-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-linear-to-br from-amber-500/5 to-amber-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="relative flex items-start space-x-3">
-                  <div className="shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-amber-500 to-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <ShoppingCart className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -210,9 +211,9 @@ export default function AdminDashboard() {
 
             <Link href="/admin/categorias">
               <div className="group relative overflow-hidden rounded-lg sm:rounded-xl surface border muted p-3 sm:p-4 hover:shadow-lg transition-all duration-300 cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="relative flex items-start space-x-3">
-                  <div className="shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Tag className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">

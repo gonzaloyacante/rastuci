@@ -209,7 +209,7 @@ export default function ModernDashboardCharts({
     >
       {/* Ventas Mensuales */}
       <div className="relative overflow-hidden surface rounded-lg sm:rounded-2xl shadow-sm border muted p-3 sm:p-4 lg:p-6 group">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative">
           <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
             <div>
@@ -220,7 +220,7 @@ export default function ModernDashboardCharts({
                 Evolución de ingresos por mes
               </p>
             </div>
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
               <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
           </div>
@@ -241,7 +241,7 @@ export default function ModernDashboardCharts({
 
       {/* Productos por Categoría */}
       <div className="relative overflow-hidden surface rounded-lg sm:rounded-2xl shadow-sm border muted p-3 sm:p-4 lg:p-6 group">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative">
           <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
             <div>
@@ -252,7 +252,7 @@ export default function ModernDashboardCharts({
                 Distribución del catálogo
               </p>
             </div>
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shrink-0">
               <PieChart className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
           </div>

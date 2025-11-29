@@ -4,9 +4,9 @@ import {
   AdminEmpty,
   AdminEmptyIcons,
   AdminError,
-  AdminLoading,
   AdminPageHeader,
 } from "@/components/admin";
+import { UsersSkeleton } from "@/components/admin/skeletons";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDocumentTitle } from "@/hooks";
 import { User, useUsers } from "@/hooks/useUsers";
@@ -71,7 +71,7 @@ export default function UsuariosPage() {
   };
 
   if (loading) {
-    return <AdminLoading />;
+    return <UsersSkeleton />;
   }
   if (error) {
     return <AdminError message={error} />;

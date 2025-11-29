@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense } from "react";
-import ProductForm from "../components/ProductForm";
-import { AdminLoading } from "@/components/admin";
+import { FormSkeleton } from "@/components/admin/skeletons";
 import { useCategories } from "@/hooks";
+import { Suspense } from "react";
+import ProductForm from "../../../../components/products/ProductForm";
 
 function CreateProductContent() {
   const { categories } = useCategories();
@@ -17,7 +17,7 @@ function CreateProductContent() {
 
 export default function CreateProductPage() {
   return (
-    <Suspense fallback={<AdminLoading />}>
+    <Suspense fallback={<FormSkeleton fields={10} />}>
       <CreateProductContent />
     </Suspense>
   );

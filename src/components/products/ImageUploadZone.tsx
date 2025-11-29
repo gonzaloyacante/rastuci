@@ -214,14 +214,17 @@ export default function ImageUploadZone({
         )
       );
 
-      const updatedUrls = images.map((img) => img.url).filter(Boolean) as string[];
+      const updatedUrls = images
+        .map((img) => img.url)
+        .filter(Boolean) as string[];
       updatedUrls[index] = url;
       onImagesChange(updatedUrls);
 
       toast.success("Imagen subida correctamente");
     } catch (error) {
       logger.error("Error retrying upload:", { error });
-      const errorMsg = error instanceof Error ? error.message : "Error al subir";
+      const errorMsg =
+        error instanceof Error ? error.message : "Error al subir";
 
       setImages((prev) =>
         prev.map((img, i) =>
@@ -351,8 +354,8 @@ export default function ImageUploadZone({
             PNG, JPG, WEBP hasta {maxSizeMB}MB cada una
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {images.length}/{maxImages} imágenes •{" "}
-            {maxImages - images.length} restantes
+            {images.length}/{maxImages} imágenes • {maxImages - images.length}{" "}
+            restantes
           </p>
         </div>
       )}

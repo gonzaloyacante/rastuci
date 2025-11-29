@@ -1,6 +1,7 @@
 "use client";
 
-import { AdminError, AdminLoading, AdminPageHeader } from "@/components/admin";
+import { AdminError, AdminPageHeader } from "@/components/admin";
+import { FormSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useCMS } from "@/hooks/useCMS";
@@ -49,7 +50,7 @@ export default function CMSPage() {
   };
 
   if (loading) {
-    return <AdminLoading />;
+    return <FormSkeleton fields={8} />;
   }
 
   if (error) {
