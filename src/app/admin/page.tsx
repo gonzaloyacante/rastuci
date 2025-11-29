@@ -37,18 +37,31 @@ export default function AdminLoginPage() {
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Verificar si hay sesión activa al montar (sin usar useSession para evitar dependencia del provider)
+  // Verificar si hay sesión activa al montar y limpiar cookies corruptas si es necesario
   useEffect(() => {
-    // Verificar sesión mediante API call
     const checkSession = async () => {
       try {
         const res = await fetch("/api/auth/session");
         const data = await res.json();
+
+        // Si hay usuario válido, redirigir al dashboard
         if (data?.user) {
           router.push("/admin/dashboard");
+          return;
+        }
+
+        // Si la respuesta indica error o no hay sesión, limpiar cookies por si hay tokens corruptos
+        // Esto resuelve el error JWT_SESSION_ERROR: decryption operation failed
+        if (!data?.user) {
+          await fetch("/api/auth/clear-session", { method: "POST" });
         }
       } catch {
-        // Si hay error, simplemente no redirigir
+        // Si hay error en la verificación, limpiar cookies corruptas
+        try {
+          await fetch("/api/auth/clear-session", { method: "POST" });
+        } catch {
+          // Ignorar errores de limpieza
+        }
       }
     };
     checkSession();

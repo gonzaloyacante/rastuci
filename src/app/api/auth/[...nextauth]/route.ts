@@ -36,7 +36,7 @@ const cookieDomain = (() => {
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
-  // Cookies optimizadas solo para rutas admin
+  // Cookies configuradas para toda la aplicación (necesario para /api/auth/*)
   cookies: {
     sessionToken: {
       name:
@@ -46,7 +46,7 @@ export const authOptions: AuthOptions = {
       options: {
         httpOnly: true,
         sameSite: "lax",
-        path: "/admin", // CRÍTICO: Solo aplicar en rutas admin
+        path: "/", // Path raíz para que funcione en /api/auth/* y /admin/*
         secure: process.env.NODE_ENV === "production",
         domain: cookieDomain || undefined,
       },
@@ -54,7 +54,7 @@ export const authOptions: AuthOptions = {
     callbackUrl: {
       name: "next-auth.callback-url",
       options: {
-        path: "/admin",
+        path: "/",
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         domain: cookieDomain || undefined,
@@ -63,7 +63,7 @@ export const authOptions: AuthOptions = {
     csrfToken: {
       name: "next-auth.csrf-token",
       options: {
-        path: "/admin",
+        path: "/",
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         domain: cookieDomain || undefined,
@@ -133,6 +133,20 @@ export const authOptions: AuthOptions = {
   jwt: {
     // Token durará según la opción "recordarme"
     maxAge: 30 * 24 * 60 * 60, // 30 días máximo
+    // Manejar errores de descifrado JWT (tokens corruptos o encriptados con secret diferente)
+    async decode({ token, secret }) {
+      if (!token) return null;
+      try {
+        // Importar decode de next-auth/jwt dinámicamente para evitar dependencia circular
+        const { decode: defaultDecode } = await import("next-auth/jwt");
+        return await defaultDecode({ token, secret });
+      } catch (error) {
+        // Si hay error de descifrado, retornar null en lugar de lanzar excepción
+        // Esto permite que NextAuth limpie el token corrupto automáticamente
+        logger.warn("JWT decode failed, clearing corrupted token", { error });
+        return null;
+      }
+    },
   },
   callbacks: {
     async jwt({ token, user }) {
