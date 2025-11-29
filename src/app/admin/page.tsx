@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -37,18 +37,22 @@ export default function AdminLoginPage() {
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Comprobar sesión al montar: si ya hay sesión de next-auth, redirigir al dashboard
-  const sessionData = useSession();
-  const session = sessionData?.data;
-  const status = sessionData?.status || "loading";
+  // Verificar si hay sesión activa al montar (sin usar useSession para evitar dependencia del provider)
   useEffect(() => {
-    if (status === "loading") {
-      return;
-    }
-    if (session?.user) {
-      router.push("/admin/dashboard");
-    }
-  }, [session, status, router]);
+    // Verificar sesión mediante API call
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json();
+        if (data?.user) {
+          router.push("/admin/dashboard");
+        }
+      } catch {
+        // Si hay error, simplemente no redirigir
+      }
+    };
+    checkSession();
+  }, [router]);
 
   // Form para login
   const {

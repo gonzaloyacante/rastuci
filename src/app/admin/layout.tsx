@@ -289,6 +289,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: "Soporte", href: "/admin/soporte", icon: "support" },
   ];
 
+  // Si estamos en la página de login (/admin), renderizar solo el contenido sin sidebar
+  const isLoginPage = pathname === "/admin";
+
+  if (isLoginPage) {
+    return <SessionProvider>{children}</SessionProvider>;
+  }
+
   return (
     <SessionProvider>
       <AdminAuthWrapper>
