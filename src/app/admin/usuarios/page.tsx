@@ -8,6 +8,7 @@ import {
 } from "@/components/admin";
 import { UsersSkeleton } from "@/components/admin/skeletons";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Pagination } from "@/components/ui/Pagination";
 import { useDocumentTitle } from "@/hooks";
 import { User, useUsers } from "@/hooks/useUsers";
 import { useState } from "react";
@@ -276,24 +277,15 @@ export default function UsuariosPage() {
             </table>
             {/* Controles de paginación */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-6">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1 || loading}
-                  className="btn-secondary disabled:opacity-50"
-                >
-                  Anterior
-                </button>
-                <span className="text-sm text-content-secondary">
-                  Página {currentPage} de {totalPages}
-                </span>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages || loading}
-                  className="btn-secondary disabled:opacity-50"
-                >
-                  Siguiente
-                </button>
+              <div
+                className={`mt-6 ${loading ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  showFirstLast={totalPages > 5}
+                />
               </div>
             )}
           </div>

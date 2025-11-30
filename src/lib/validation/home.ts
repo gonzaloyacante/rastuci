@@ -3,6 +3,7 @@ import { z } from "zod";
 export const HomeSettingsSchema = z.object({
   heroTitle: z.string().min(1).max(120),
   heroSubtitle: z.string().min(1).max(220),
+  heroLogoUrl: z.string().url().optional(),
   ctaPrimaryLabel: z.string().min(1).max(40),
   ctaSecondaryLabel: z.string().min(1).max(40),
   categoriesTitle: z.string().min(1).max(80),
@@ -24,6 +25,7 @@ export const HomeSettingsSchema = z.object({
     .object({
       brand: z.string().min(1).max(80),
       tagline: z.string().min(1).max(120),
+      logoUrl: z.string().url().optional(),
       email: z.string().email().max(100),
       phone: z.string().min(1).max(30),
       socialLinks: z.object({
@@ -41,6 +43,7 @@ export const defaultHomeSettings: HomeSettings = {
   heroTitle: "Bienvenido a Rastuci",
   heroSubtitle:
     "Ropa infantil de calidad, comodidad y estilo para los más pequeños",
+  heroLogoUrl: "/rastuci-full-logo.svg",
   ctaPrimaryLabel: "Ver Productos",
   ctaSecondaryLabel: "Explorar categorías",
   categoriesTitle: "Nuestras Categorías",

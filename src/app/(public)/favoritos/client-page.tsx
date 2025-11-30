@@ -1,45 +1,60 @@
 "use client";
 
-import { Button } from '@/components/ui/Button';
-import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
-import { Product } from '@/types';
-import { formatPriceARS } from '@/utils/formatters';
-import { Filter, Grid3X3, Heart, List, ShoppingCart, Trash2 } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
-import toast from 'react-hot-toast';
+import { Button } from "@/components/ui/Button";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { Product } from "@/types";
+import { formatPriceARS } from "@/utils/formatters";
+import {
+  Filter,
+  Grid3X3,
+  Heart,
+  List,
+  Loader2,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
-type SortOption = 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc' | 'date-asc' | 'date-desc';
-type ViewMode = 'grid' | 'list';
+type SortOption =
+  | "name-asc"
+  | "name-desc"
+  | "price-asc"
+  | "price-desc"
+  | "date-asc"
+  | "date-desc";
+type ViewMode = "grid" | "list";
 
 export default function FavoritosPageClient() {
-  const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
+  const { wishlistItems, removeFromWishlist, clearWishlist, isLoaded } =
+    useWishlist();
   const { addToCart } = useCart();
 
-  const [sortBy, setSortBy] = useState<SortOption>('date-desc');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortBy, setSortBy] = useState<SortOption>("date-desc");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showFilters, setShowFilters] = useState(false);
   const { confirm, ConfirmDialog } = useConfirmDialog();
 
-  const handleAddToCart = (item: typeof wishlistItems[0]) => {
+  const handleAddToCart = (item: (typeof wishlistItems)[0]) => {
     // Convert wishlist item to product format for addToCart
     const product: Product = {
       id: item.id,
       name: item.name,
       price: item.price,
       images: [item.image],
-      description: '',
-      categoryId: 'default',
+      description: "",
+      categoryId: "default",
       stock: 1,
       onSale: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    addToCart(product, 1, 'M', 'Sin color');
-    toast.success('Producto agregado al carrito');
+    addToCart(product, 1, "M", "Sin color");
+    toast.success("Producto agregado al carrito");
   };
 
   const handleRemoveFromWishlist = (id: string, name: string) => {
@@ -49,32 +64,33 @@ export default function FavoritosPageClient() {
 
   const handleClearWishlist = async () => {
     const confirmed = await confirm({
-      title: 'Limpiar favoritos',
-      message: '¿Estás seguro de que quieres eliminar todos los favoritos? Esta acción no se puede deshacer.',
-      confirmText: 'Sí, limpiar',
-      cancelText: 'Cancelar',
-      variant: 'danger',
+      title: "Limpiar favoritos",
+      message:
+        "¿Estás seguro de que quieres eliminar todos los favoritos? Esta acción no se puede deshacer.",
+      confirmText: "Sí, limpiar",
+      cancelText: "Cancelar",
+      variant: "danger",
     });
 
     if (confirmed) {
       clearWishlist();
-      toast.success('Lista de favoritos limpiada');
+      toast.success("Lista de favoritos limpiada");
     }
   };
 
   const sortedItems = [...wishlistItems].sort((a, b) => {
     switch (sortBy) {
-      case 'name-asc':
+      case "name-asc":
         return a.name.localeCompare(b.name);
-      case 'name-desc':
+      case "name-desc":
         return b.name.localeCompare(a.name);
-      case 'price-asc':
+      case "price-asc":
         return a.price - b.price;
-      case 'price-desc':
+      case "price-desc":
         return b.price - a.price;
-      case 'date-asc':
+      case "date-asc":
         return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
-      case 'date-desc':
+      case "date-desc":
         return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
       default:
         return 0;
@@ -82,13 +98,27 @@ export default function FavoritosPageClient() {
   });
 
   const sortOptions = [
-    { value: 'date-desc', label: '📅 Agregados recientemente' },
-    { value: 'date-asc', label: '📅 Más antiguos' },
-    { value: 'name-asc', label: '🔤 Nombre: A-Z' },
-    { value: 'name-desc', label: '🔤 Nombre: Z-A' },
-    { value: 'price-asc', label: '💰 Precio: menor a mayor' },
-    { value: 'price-desc', label: '💎 Precio: mayor a menor' },
+    { value: "date-desc", label: "📅 Agregados recientemente" },
+    { value: "date-asc", label: "📅 Más antiguos" },
+    { value: "name-asc", label: "🔤 Nombre: A-Z" },
+    { value: "name-desc", label: "🔤 Nombre: Z-A" },
+    { value: "price-asc", label: "💰 Precio: menor a mayor" },
+    { value: "price-desc", label: "💎 Precio: mayor a menor" },
   ];
+
+  // Show loading state while wishlist is being loaded from localStorage
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen surface">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
+            <p className="muted">Cargando favoritos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (wishlistItems.length === 0) {
     return (
@@ -98,9 +128,12 @@ export default function FavoritosPageClient() {
             <div className="w-24 h-24 mx-auto mb-6 surface rounded-full flex items-center justify-center">
               <Heart className="w-12 h-12 muted" />
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-4">Tu lista de favoritos está vacía</h1>
+            <h1 className="text-3xl font-bold text-primary mb-4">
+              Tu lista de favoritos está vacía
+            </h1>
             <p className="muted mb-8 max-w-md mx-auto leading-relaxed">
-              Agrega productos a tu lista de favoritos haciendo clic en el ícono ❤️ para verlos aquí más tarde.
+              Agrega productos a tu lista de favoritos haciendo clic en el ícono
+              ❤️ para verlos aquí más tarde.
             </p>
             <Link href="/productos">
               <Button variant="hero" size="lg">
@@ -119,9 +152,14 @@ export default function FavoritosPageClient() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">Mis Favoritos</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            Mis Favoritos
+          </h1>
           <p className="muted">
-            {wishlistItems.length} {wishlistItems.length === 1 ? 'producto favorito' : 'productos favoritos'}
+            {wishlistItems.length}{" "}
+            {wishlistItems.length === 1
+              ? "producto favorito"
+              : "productos favoritos"}
           </p>
         </div>
 
@@ -157,15 +195,15 @@ export default function FavoritosPageClient() {
           <div className="flex items-center gap-2">
             <div className="flex gap-1 mr-4">
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-primary text-white' : 'surface muted hover:text-primary'}`}
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-primary text-white" : "surface muted hover:text-primary"}`}
                 title="Vista en cuadrícula"
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-primary text-white' : 'surface muted hover:text-primary'}`}
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded-lg ${viewMode === "list" ? "bg-primary text-white" : "surface muted hover:text-primary"}`}
                 title="Vista en lista"
               >
                 <List className="w-4 h-4" />
@@ -184,13 +222,15 @@ export default function FavoritosPageClient() {
         </div>
 
         {/* Products Grid/List */}
-        <div className={`${
-          viewMode === 'grid'
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-            : 'space-y-6'
-        }`}>
-          {sortedItems.map((item) => (
-            viewMode === 'grid' ? (
+        <div
+          className={`${
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              : "space-y-6"
+          }`}
+        >
+          {sortedItems.map((item) =>
+            viewMode === "grid" ? (
               // Grid View
               <div
                 key={item.id}
@@ -209,7 +249,9 @@ export default function FavoritosPageClient() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleRemoveFromWishlist(item.id, item.name)}
+                      onClick={() =>
+                        handleRemoveFromWishlist(item.id, item.name)
+                      }
                       className="p-2 surface rounded-full shadow-sm text-error hover:bg-error hover:text-white"
                       title="Quitar de favoritos"
                     >
@@ -219,9 +261,9 @@ export default function FavoritosPageClient() {
 
                   <div className="absolute bottom-2 left-2">
                     <span className="text-xs surface px-2 py-1 rounded text-primary shadow-sm">
-                      {new Date(item.addedAt).toLocaleDateString('es-ES', {
-                        day: 'numeric',
-                        month: 'short'
+                      {new Date(item.addedAt).toLocaleDateString("es-ES", {
+                        day: "numeric",
+                        month: "short",
                       })}
                     </span>
                   </div>
@@ -254,7 +296,9 @@ export default function FavoritosPageClient() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRemoveFromWishlist(item.id, item.name)}
+                      onClick={() =>
+                        handleRemoveFromWishlist(item.id, item.name)
+                      }
                       className="px-3 text-error border-error hover:bg-error hover:text-white"
                       title="Quitar de favoritos"
                     >
@@ -289,10 +333,11 @@ export default function FavoritosPageClient() {
                       </Link>
 
                       <p className="text-sm muted">
-                        Agregado el {new Date(item.addedAt).toLocaleDateString('es-ES', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
+                        Agregado el{" "}
+                        {new Date(item.addedAt).toLocaleDateString("es-ES", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
                         })}
                       </p>
                     </div>
@@ -314,7 +359,9 @@ export default function FavoritosPageClient() {
 
                         <Button
                           variant="outline"
-                          onClick={() => handleRemoveFromWishlist(item.id, item.name)}
+                          onClick={() =>
+                            handleRemoveFromWishlist(item.id, item.name)
+                          }
                           className="text-error border-error hover:bg-error hover:text-white"
                           title="Quitar de favoritos"
                         >
@@ -327,7 +374,7 @@ export default function FavoritosPageClient() {
                 </div>
               </div>
             )
-          ))}
+          )}
         </div>
 
         {/* Continue shopping */}

@@ -1,7 +1,13 @@
 "use client";
 
 import { logger } from "@/lib/logger";
-import React, { createContext, useContext, useEffect, useReducer } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  useState,
+} from "react";
 
 interface WishlistItem {
   id: string;
@@ -28,6 +34,7 @@ interface WishlistContextType {
   clearWishlist: () => void;
   isInWishlist: (id: string) => boolean;
   getWishlistCount: () => number;
+  isLoaded: boolean;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(
@@ -87,6 +94,7 @@ const initialState: WishlistState = {
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(wishlistReducer, initialState);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load wishlist from localStorage on mount
   useEffect(() => {
@@ -94,21 +102,26 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       const savedWishlist = localStorage.getItem("rastuci-wishlist");
       if (savedWishlist) {
         const items = JSON.parse(savedWishlist);
-        dispatch({ type: "LOAD_WISHLIST", payload: items });
+        if (Array.isArray(items) && items.length > 0) {
+          dispatch({ type: "LOAD_WISHLIST", payload: items });
+        }
       }
     } catch (error) {
       logger.error("Error loading wishlist from localStorage", { error });
+    } finally {
+      setIsLoaded(true);
     }
   }, []);
 
-  // Save wishlist to localStorage whenever it changes
+  // Save wishlist to localStorage whenever it changes (only after initial load)
   useEffect(() => {
+    if (!isLoaded) return; // Don't save during initial load
     try {
       localStorage.setItem("rastuci-wishlist", JSON.stringify(state.items));
     } catch (error) {
       logger.error("Error saving wishlist to localStorage", { error });
     }
-  }, [state.items]);
+  }, [state.items, isLoaded]);
 
   const addToWishlist = (item: Omit<WishlistItem, "addedAt">) => {
     dispatch({ type: "ADD_TO_WISHLIST", payload: item });
@@ -137,6 +150,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     clearWishlist,
     isInWishlist,
     getWishlistCount,
+    isLoaded,
   };
 
   return (
@@ -153,6 +167,7 @@ const _defaultWishlist: WishlistContextType = {
   clearWishlist: () => {},
   isInWishlist: () => false,
   getWishlistCount: () => 0,
+  isLoaded: false,
 };
 
 export function useWishlist() {

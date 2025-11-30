@@ -67,6 +67,7 @@ export default function CMSPage() {
       type: "json",
     },
     { key: "home.banners", label: "Home - Banners", type: "json" },
+    { key: "shipping", label: "Configuración de Envío", type: "json" },
     { key: "footer.about", label: "Footer - Acerca de", type: "text" },
     { key: "footer.contact", label: "Footer - Contacto", type: "json" },
     { key: "footer.social", label: "Footer - Redes Sociales", type: "json" },
@@ -205,12 +206,24 @@ export default function CMSPage() {
   "banners": [
     {
       "image": "/banners/promo1.jpg",
-      "title": "Envío Gratis",
-      "subtitle": "En compras mayores a $15,000",
+      "title": "Promoción Especial",
+      "subtitle": "Descuentos de temporada",
       "link": "/productos",
       "ctaText": "Ver Productos"
     }
   ]
+}`}
+            </pre>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Configuración de Envío</h3>
+            <pre className="text-xs p-3 bg-black/5 dark:bg-white/5 rounded overflow-x-auto">
+              {`{
+  "freeShipping": true,
+  "freeShippingMinAmount": 0,
+  "freeShippingLabel": "Envío gratis",
+  "freeShippingDescription": "Envío gratis a todo el país"
 }`}
             </pre>
           </div>

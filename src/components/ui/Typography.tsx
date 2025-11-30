@@ -19,18 +19,12 @@ export default function Typography({
     caption: "text-sm muted",
   };
 
-  const fontFamily = variant.startsWith("h")
-    ? "font-montserrat"
-    : "font-poppins";
+  const fontClass = variant.startsWith("h") ? "font-heading" : "";
 
   return (
     <div
-      className={`${baseClasses} ${variantClasses[variant]} ${fontFamily} ${className}`}
-      style={{
-        fontFamily: variant.startsWith("h")
-          ? "'Montserrat', sans-serif"
-          : "'Poppins', sans-serif",
-      }}>
+      className={`${baseClasses} ${variantClasses[variant]} ${fontClass} ${className}`}
+    >
       {children}
     </div>
   );

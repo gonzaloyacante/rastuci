@@ -149,19 +149,32 @@ export default function AdminCategoriasPage() {
                   render: (_: unknown, row: CategoryRow) => (
                     <div className="flex items-center justify-center">
                       {row.image ? (
-                        <div className="w-12 h-12 rounded-md overflow-hidden bg-muted/5">
+                        <div className="relative w-12 h-12 rounded-md overflow-hidden bg-muted/5 ring-2 ring-emerald-500/30">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={row.image}
                             alt={row.name}
                             className="w-full h-full object-cover"
                           />
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-2.5 h-2.5 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
                         </div>
                       ) : (
-                        <div className="w-12 h-12 flex items-center justify-center bg-surface/10 rounded-md">
+                        <div className="relative w-12 h-12 flex items-center justify-center surface-secondary rounded-md ring-2 ring-amber-500/30">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            className="w-5 h-5 text-muted"
+                            className="w-5 h-5 muted"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -183,6 +196,11 @@ export default function AdminCategoriasPage() {
                               strokeLinejoin="round"
                             />
                           </svg>
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                            <span className="text-[8px] font-bold text-white">
+                              !
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>

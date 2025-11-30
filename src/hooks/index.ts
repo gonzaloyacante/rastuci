@@ -21,6 +21,7 @@ export { useCart } from "./useCart";
 export { useDashboard } from "./useDashboard";
 export { useDocumentTitle } from "./useDocumentTitle";
 export { useHomeData } from "./useHomeData";
+export { useShippingSettings } from "./useShippingSettings";
 
 export { useSession } from "next-auth/react";
 export { useRouter } from "next/navigation";

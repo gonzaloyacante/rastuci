@@ -45,8 +45,7 @@ export function FeaturedProductsSection({
       <div className="max-w-[1400px] mx-auto">
         <h2
           id="featured-products-title"
-          className="text-3xl font-bold text-center mb-3"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
+          className="text-3xl font-bold text-center mb-3 font-heading"
         >
           {home?.featuredTitle || defaultHomeSettings.featuredTitle}
         </h2>
@@ -67,7 +66,7 @@ export function FeaturedProductsSection({
         <div className="flex justify-center mt-10">
           <Link
             href="/productos?onSale=true"
-            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-3 rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg"
           >
             Ver todas las ofertas
             <ChevronRight className="w-5 h-5" />

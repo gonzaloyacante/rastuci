@@ -484,3 +484,30 @@ model CAAgency {
   @@index([city])
   @@map("ca_agencies")
 }
+
+// ============================================================================
+// MENSAJES DE CONTACTO
+// ============================================================================
+
+enum ResponsePreference {
+  EMAIL
+  PHONE
+  WHATSAPP
+}
+
+model ContactMessage {
+  id                 String             @id @default(cuid())
+  name               String
+  email              String
+  phone              String?
+  message            String             @db.Text
+  responsePreference ResponsePreference @default(EMAIL)
+  isRead             Boolean            @default(false)
+  isArchived         Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("contact_messages")
+}

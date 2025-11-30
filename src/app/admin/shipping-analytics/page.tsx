@@ -278,46 +278,31 @@ function SatisfactionCard({
 // ============================================================================
 
 function ProviderComparisonCard({ data }: { data: ShippingAnalyticsData }) {
-  const ocaOrders = Math.round(data.delivery.totalOrders * 0.7);
-  const caOrders = Math.round(data.delivery.totalOrders * 0.3);
-  const ocaTime = (data.delivery.averageDeliveryTime + 0.5).toFixed(1);
-  const caTime = (data.delivery.averageDeliveryTime - 0.3).toFixed(1);
-  const ocaRate = (data.delivery.onTimeDeliveryRate - 2).toFixed(1);
-  const caRate = (data.delivery.onTimeDeliveryRate + 3).toFixed(1);
-  const ocaCost = (data.delivery.averageShippingCost * 1.1).toFixed(2);
-  const caCost = (data.delivery.averageShippingCost * 0.95).toFixed(2);
+  const caOrders = data.delivery.totalOrders;
+  const caTime = data.delivery.averageDeliveryTime.toFixed(1);
+  const caRate = data.delivery.onTimeDeliveryRate.toFixed(1);
+  const caCost = data.delivery.averageShippingCost.toFixed(2);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Comparativa de Proveedores</CardTitle>
+        <CardTitle>Proveedor de Envío</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ProviderStats
-            name="OCA"
-            badge="Proveedor Principal"
-            badgeVariant="default"
-            orders={ocaOrders}
-            avgTime={`${ocaTime} días`}
-            onTimeRate={`${ocaRate}%`}
-            avgCost={`$${ocaCost}`}
-          />
-          <ProviderStats
-            name="Correo Argentino"
-            badge="Nuevo Proveedor"
-            badgeVariant="secondary"
-            orders={caOrders}
-            avgTime={`${caTime} días`}
-            onTimeRate={`${caRate}%`}
-            avgCost={`$${caCost}`}
-          />
-        </div>
+        <ProviderStats
+          name="Correo Argentino"
+          badge="Proveedor Actual"
+          badgeVariant="default"
+          orders={caOrders}
+          avgTime={`${caTime} días`}
+          onTimeRate={`${caRate}%`}
+          avgCost={`$${caCost}`}
+        />
 
         <div className="mt-6 p-4 bg-primary/10 rounded-lg">
           <p className="text-sm text-primary">
-            <strong>Nota:</strong> Correo Argentino muestra tiempos de entrega
-            más rápidos y costos más competitivos.
+            <strong>Nota:</strong> Correo Argentino es nuestro proveedor de
+            envíos con cobertura nacional y más de 1000 sucursales.
           </p>
         </div>
       </CardContent>

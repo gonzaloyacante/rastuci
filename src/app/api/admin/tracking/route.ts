@@ -17,7 +17,7 @@ interface TrackingData {
   orderId: string;
   trackingCode: string;
   status: string;
-  ocaStatus?: string;
+  caStatus?: string;
   lastUpdated: string;
   customerEmail: string;
   customerName: string;
@@ -27,7 +27,7 @@ interface TrackingData {
   alertMessage?: string;
 }
 
-// Mapeo de estados de OCA/CA a estados internos
+// Mapeo de estados de Correo Argentino a estados internos
 function mapShippingStatus(
   externalStatus: string
 ): "pending" | "in-transit" | "delivered" | "delayed" | "error" {

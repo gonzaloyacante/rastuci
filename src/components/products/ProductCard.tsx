@@ -2,9 +2,10 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Product } from "@/types";
-import { formatCurrency, formatPriceARS } from "@/utils/formatters";
+import { formatPriceARS } from "@/utils/formatters";
 import {
   AlertTriangle,
   CheckCircle,
@@ -13,6 +14,7 @@ import {
   Heart,
   ImageIcon,
   Package,
+  ShoppingCart,
   Star,
   Trash2,
   TrendingUp,
@@ -32,11 +34,11 @@ export const ProductImagePlaceholder = ({
   className?: string;
 }) => (
   <div
-    className={`bg-linear-to-br from-muted/50 to-muted rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
+    className={`surface-secondary rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
   >
     <div className="text-center opacity-60">
-      <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-      <p className="text-sm text-muted-foreground font-medium">Sin imagen</p>
+      <ImageIcon className="h-12 w-12 muted mx-auto mb-2" />
+      <p className="text-sm muted font-medium">Sin imagen</p>
     </div>
   </div>
 );
@@ -70,7 +72,7 @@ export const StockBadge = ({ stock }: { stock: number }) => {
   return (
     <Badge
       variant="outline"
-      className="flex items-center gap-1 border-success text-success"
+      className="flex items-center gap-1 border-emerald-500 text-emerald-600 dark:text-emerald-400"
     >
       <CheckCircle className="h-3 w-3" />
       Stock bueno ({stock})
@@ -98,8 +100,8 @@ export const PriceBadge = ({
       {hasDiscount ? (
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-success">
-              {formatCurrency(salePrice!)}
+            <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+              {formatPriceARS(salePrice!)}
             </span>
             {discountPercentage > 0 && (
               <Badge variant="error" className="text-xs">
@@ -107,12 +109,48 @@ export const PriceBadge = ({
               </Badge>
             )}
           </div>
-          <span className="text-sm text-muted-foreground line-through">
-            {formatCurrency(price)}
+          <span className="text-sm muted line-through">
+            {formatPriceARS(price)}
           </span>
         </div>
       ) : (
-        <span className="text-lg font-bold">{formatCurrency(price)}</span>
+        <span className="text-lg font-bold text-base-primary">
+          {formatPriceARS(price)}
+        </span>
+      )}
+    </div>
+  );
+};
+
+/** Componente de estrellas de rating */
+const StarRating = ({
+  rating,
+  reviewCount,
+}: {
+  rating: number;
+  reviewCount?: number;
+}) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex gap-0.5">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`w-3.5 h-3.5 ${
+              i < fullStars
+                ? "fill-amber-400 text-amber-400"
+                : i === fullStars && hasHalfStar
+                  ? "fill-amber-400/50 text-amber-400"
+                  : "fill-zinc-200 text-zinc-200"
+            }`}
+          />
+        ))}
+      </div>
+      {reviewCount !== undefined && reviewCount > 0 && (
+        <span className="text-xs muted ml-1">({reviewCount})</span>
       )}
     </div>
   );
@@ -128,7 +166,7 @@ interface ProductCardBaseProps {
 }
 
 interface PublicProductCardProps extends ProductCardBaseProps {
-  variant?: "public" | "grid" | "list"; // "grid" y "list" son alias para retrocompatibilidad
+  variant?: "public" | "grid" | "list";
   layout?: "grid" | "list";
 }
 
@@ -148,13 +186,8 @@ export type ProductCardProps = PublicProductCardProps | AdminProductCardProps;
 const ProductCard = React.memo((props: ProductCardProps) => {
   const { product, priority = false } = props;
 
-  // Determinar variante: "admin" es explícito, cualquier otro es "public"
   const isAdmin = props.variant === "admin";
 
-  // Para variante pública, determinar el layout:
-  // - Si se pasa layout explícito, usarlo
-  // - Si variant es "grid" o "list", usarlo como layout (retrocompatibilidad)
-  // - Por defecto: "grid"
   const layout: "grid" | "list" = !isAdmin
     ? (props as PublicProductCardProps).layout ||
       (props.variant === "list" ? "list" : "grid")
@@ -163,10 +196,9 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
-  // Solo para variante pública
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { addItem } = useCart();
 
-  // Memoizar el parsing de imágenes
   const productImages = useMemo(() => {
     try {
       return typeof product.images === "string"
@@ -187,16 +219,39 @@ const ProductCard = React.memo((props: ProductCardProps) => {
     [product.price]
   );
 
+  const formattedSalePrice = useMemo(
+    () => (product.salePrice ? formatPriceARS(product.salePrice) : null),
+    [product.salePrice]
+  );
+
+  const discountPercentage = useMemo(() => {
+    if (
+      product.onSale &&
+      product.salePrice &&
+      product.salePrice < product.price
+    ) {
+      return Math.round(
+        ((product.price - product.salePrice) / product.price) * 100
+      );
+    }
+    return 0;
+  }, [product.onSale, product.price, product.salePrice]);
+
   const isProductFavorite = useMemo(
     () => (!isAdmin ? isFavorite(product.id) : false),
     [isFavorite, product.id, isAdmin]
   );
 
-  const handleToggleFavorite = useCallback(() => {
-    if (!isAdmin) {
-      toggleFavorite(product.id);
-    }
-  }, [toggleFavorite, product.id, isAdmin]);
+  const handleToggleFavorite = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isAdmin) {
+        toggleFavorite(product.id);
+      }
+    },
+    [toggleFavorite, product.id, isAdmin]
+  );
 
   const handleImageError = useCallback(() => {
     setImageError(true);
@@ -214,16 +269,16 @@ const ProductCard = React.memo((props: ProductCardProps) => {
     const { onEdit, onDelete, onView } = props as AdminProductCardProps;
 
     return (
-      <div className="group bg-surface border border-muted rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden">
+      <div className="group surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden">
         {/* Image Section */}
         <div className="relative">
-          <div className="aspect-square bg-muted rounded-t-xl overflow-hidden">
+          <div className="aspect-square surface-secondary rounded-t-xl overflow-hidden">
             {imageError || !mainImage ? (
               <ProductImagePlaceholder className="w-full h-full" />
             ) : (
               <div className="relative w-full h-full">
                 {imageLoading && (
-                  <div className="absolute inset-0 bg-muted animate-pulse" />
+                  <div className="absolute inset-0 surface-secondary animate-pulse" />
                 )}
                 <Image
                   src={mainImage}
@@ -243,7 +298,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           {/* Badges Overlay */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
             {product.onSale && (
-              <div className="bg-black/90 text-white px-2.5 py-1 rounded-md shadow-lg backdrop-blur-sm border border-white/10 flex items-center gap-1 text-xs font-semibold">
+              <div className="badge-discount px-2.5 py-1 rounded-lg shadow-lg flex items-center gap-1 text-xs font-semibold">
                 <TrendingUp className="h-3 w-3" />
                 OFERTA
               </div>
@@ -261,7 +316,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               <Button
                 size="sm"
                 variant="outline"
-                className="bg-surface/90 backdrop-blur-sm border-muted shadow-lg"
+                className="surface backdrop-blur-sm shadow-lg border-theme"
                 onClick={() => onView(product.id)}
               >
                 <Eye className="h-4 w-4" />
@@ -272,24 +327,18 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
         {/* Content Section */}
         <div className="p-4 space-y-3">
-          {/* Header with Rating */}
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-base leading-tight line-clamp-2 flex-1 group-hover:text-primary transition-colors">
+              <h3 className="font-semibold text-base leading-tight line-clamp-2 flex-1 text-base-primary group-hover:text-pink-600 transition-colors">
                 {product.name}
               </h3>
               {product.rating &&
                 product.reviewCount &&
                 product.reviewCount > 0 && (
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-                    <span className="text-sm font-medium">
-                      {product.rating.toFixed(1)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({product.reviewCount})
-                    </span>
-                  </div>
+                  <StarRating
+                    rating={product.rating}
+                    reviewCount={product.reviewCount}
+                  />
                 )}
             </div>
 
@@ -300,13 +349,10 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             )}
           </div>
 
-          {/* Product Details */}
           <div className="space-y-2">
             {product.sizes && product.sizes.length > 0 && (
               <div>
-                <span className="text-xs text-muted-foreground mb-1 block">
-                  Talles:
-                </span>
+                <span className="text-xs muted mb-1 block">Talles:</span>
                 <div className="flex flex-wrap gap-1">
                   {product.sizes.map((size, index) => (
                     <Badge
@@ -323,12 +369,12 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
             {product.colors && product.colors.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Colores:</span>
+                <span className="text-xs muted">Colores:</span>
                 <div className="flex gap-1">
                   {product.colors.map((color, index) => (
                     <div
                       key={`color-${index}`}
-                      className="w-4 h-4 rounded-full border border-muted"
+                      className="w-4 h-4 rounded-full border border-theme"
                       style={{ backgroundColor: color.toLowerCase() }}
                       title={color}
                     />
@@ -340,8 +386,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             <StockBadge stock={product.stock} />
           </div>
 
-          {/* Price */}
-          <div className="pt-2 border-t border-muted">
+          <div className="pt-2 border-t border-theme">
             <PriceBadge
               price={product.price}
               salePrice={product.salePrice}
@@ -349,7 +394,6 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             />
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2 pt-3">
             <Button
               size="sm"
@@ -378,123 +422,184 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   // =========================================================================
   if (layout === "grid") {
     return (
-      <article className="group relative surface rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-muted">
-        {/* Imagen del producto */}
-        <div className="relative aspect-square overflow-hidden surface">
-          <Link
-            href={`/productos/${product.id}`}
-            aria-label={`Ver detalles de ${product.name}`}
-          >
-            <Image
-              src={
-                imageError || !mainImage
-                  ? "https://placehold.co/800x800.png"
-                  : mainImage
-              }
-              alt={`${product.name} - ${product.category?.name || "Producto"} - ${formattedPrice}`}
-              fill
-              className="object-cover group-hover:scale-102 transition-transform duration-200"
-              onError={handleImageError}
-              priority={priority}
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-              quality={80}
-            />
-          </Link>
+      <article className="group h-full flex flex-col product-card relative cursor-pointer">
+        {/* Badge de oferta - esquina superior derecha */}
+        {product.onSale && discountPercentage > 0 && (
+          <div className="absolute top-2.5 right-2.5 z-10 badge-discount">
+            -{discountPercentage}% OFF
+          </div>
+        )}
 
-          {/* Badge de oferta */}
-          {product.onSale && (
-            <div className="absolute top-2 left-2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded-full font-semibold shadow-md border border-white/20">
-              OFERTA
+        <Link
+          href={`/productos/${product.id}`}
+          aria-label={`Ver detalles de ${product.name}`}
+          className="flex flex-col h-full"
+        >
+          {/* Imagen */}
+          <div className="overflow-hidden shrink-0">
+            <div className="h-[200px] overflow-hidden">
+              <Image
+                src={
+                  imageError || !mainImage
+                    ? "https://placehold.co/400x500.png"
+                    : mainImage
+                }
+                alt={`${product.name} - ${product.category?.name || "Producto"}`}
+                width={400}
+                height={200}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                onError={handleImageError}
+                onLoad={handleImageLoad}
+                priority={priority}
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                quality={85}
+              />
             </div>
-          )}
+          </div>
 
-          {/* Botón de favorito */}
-          <button
-            onClick={handleToggleFavorite}
-            aria-label={
-              isProductFavorite
-                ? `Quitar ${product.name} de favoritos`
-                : `Agregar ${product.name} a favoritos`
-            }
-            className={`absolute top-2 right-2 p-1.5 surface backdrop-blur-sm rounded-full hover:shadow transition-colors focus:outline-none ${
-              isProductFavorite
-                ? "opacity-100"
-                : "opacity-0 group-hover:opacity-100"
-            }`}
-          >
-            <Heart
-              className={`w-3.5 h-3.5 ${isProductFavorite ? "text-warning fill-current" : "muted"}`}
-              aria-hidden="true"
-            />
-          </button>
-
-          {/* Badge de stock bajo */}
-          {product.stock <= 30 && product.stock > 0 && (
-            <div className="absolute bottom-2 left-2 surface text-warning text-[10px] px-1.5 py-0.5 rounded-full">
-              ¡Solo {product.stock}!
-            </div>
-          )}
-
-          {/* Badge de sin stock */}
+          {/* Overlay de sin stock */}
           {product.stock === 0 && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <span className="surface text-error border border-error px-2 py-0.5 rounded-full text-xs font-medium">
+            <div className="absolute inset-0 z-10 bg-black/60 flex items-center justify-center">
+              <span className="surface text-base-primary px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
                 Agotado
               </span>
             </div>
           )}
 
-          {/* Indicador de múltiples imágenes */}
-          {productImages.length > 1 && (
-            <div className="absolute bottom-2 right-2 surface text-primary border border-primary text-[10px] px-1.5 py-0.5 rounded-full">
-              +{productImages.length - 1}
-            </div>
-          )}
-        </div>
+          {/* Info - flex-1 para ocupar todo el espacio disponible */}
+          <div className="p-5 flex flex-col flex-1 surface">
+            {/* Categoría */}
+            <p className="text-[11px] font-semibold tracking-[1px] uppercase muted mb-[5px]">
+              {product.category?.name || "Sin categoría"}
+            </p>
 
-        {/* Información del producto */}
-        <div className="p-3">
-          <p className="text-[10px] muted uppercase tracking-wide mb-1 line-clamp-1">
-            {product.category?.name}
-          </p>
-
-          <Link
-            href={`/productos/${product.id}`}
-            aria-label={`Ver detalles de ${product.name}`}
-          >
-            <h3 className="font-medium text-primary transition-colors line-clamp-2 mb-2 text-sm leading-tight">
+            {/* Título - altura fija para alineación */}
+            <h3 className="text-[18px] font-bold text-base-primary tracking-[-0.5px] m-0 mb-2.5 line-clamp-2 min-h-[2.7em]">
               {product.name}
             </h3>
-          </Link>
 
-          {product.rating && product.rating > 0 && (
-            <div className="flex items-center gap-1 mb-2">
-              <Star className="w-3 h-3 fill-warning text-warning" />
-              <span className="text-xs muted">{product.rating}</span>
-              {product.reviewCount && (
-                <span className="text-xs muted">({product.reviewCount})</span>
-              )}
-            </div>
-          )}
+            {/* Descripción corta - altura fija */}
+            <p className="text-[13px] text-base-secondary leading-[1.4] mb-3 line-clamp-2 min-h-[2.8em]">
+              {product.description || "\u00A0"}
+            </p>
 
-          {/* Precio con oferta */}
-          {product.onSale &&
-          product.salePrice &&
-          product.salePrice < product.price ? (
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-success">
-                {formatPriceARS(product.salePrice)}
-              </span>
-              <span className="text-xs text-muted-foreground line-through">
-                {formattedPrice}
-              </span>
+            {/* Features/Talles - altura fija */}
+            <div className="flex gap-1.5 mb-[15px] flex-wrap min-h-6">
+              {product.sizes && product.sizes.length > 0 ? (
+                <>
+                  {product.sizes.slice(0, 4).map((size, idx) => (
+                    <span key={idx} className="chip">
+                      {size}
+                    </span>
+                  ))}
+                  {product.sizes.length > 4 && (
+                    <span className="chip">+{product.sizes.length - 4}</span>
+                  )}
+                </>
+              ) : null}
             </div>
-          ) : (
-            <span className="text-sm font-bold text-primary">
-              {formattedPrice}
-            </span>
-          )}
-        </div>
+
+            {/* Spacer - empuja todo lo de abajo al fondo */}
+            <div className="flex-1" />
+
+            {/* Contenido inferior - siempre al fondo */}
+            <div className="shrink-0 mt-auto">
+              {/* Bottom: Precio y Botón */}
+              <div className="flex justify-between items-center mb-3">
+                {/* Precio */}
+                <div className="flex flex-col">
+                  {product.onSale &&
+                  formattedSalePrice &&
+                  product.salePrice! < product.price ? (
+                    <>
+                      <span className="text-[13px] line-through muted mb-0.5">
+                        {formattedPrice}
+                      </span>
+                      <span className="text-[20px] font-bold text-base-primary">
+                        {formattedSalePrice}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-[20px] font-bold text-base-primary">
+                      {formattedPrice}
+                    </span>
+                  )}
+                </div>
+
+                {/* Botón agregar al carrito */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (product.stock > 0) {
+                      addItem(product, 1);
+                    }
+                  }}
+                  aria-label="Agregar al carrito"
+                  className={`btn-cart ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  disabled={product.stock === 0}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Meta: Rating y Stock */}
+              <div className="flex justify-between items-center border-t border-theme pt-3">
+                {/* Rating: 1 estrella + número */}
+                {product.rating && product.rating > 0 ? (
+                  <div className="flex items-center gap-1">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="text-[12px] font-medium text-base-primary">
+                      {product.rating.toFixed(1)}
+                    </span>
+                    {product.reviewCount && product.reviewCount > 0 && (
+                      <span className="text-[11px] muted">
+                        ({product.reviewCount})
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-[11px] muted">Sin reseñas</span>
+                )}
+
+                {/* Stock */}
+                {product.stock > 0 && product.stock <= 10 ? (
+                  <span className="text-[11px] font-semibold text-amber-500">
+                    ¡Últimas {product.stock}!
+                  </span>
+                ) : product.stock > 0 ? (
+                  <span className="text-[11px] font-semibold text-green-500">
+                    En stock
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        {/* Botón favorito flotante */}
+        <button
+          onClick={handleToggleFavorite}
+          aria-label={
+            isProductFavorite
+              ? `Quitar ${product.name} de favoritos`
+              : `Agregar ${product.name} a favoritos`
+          }
+          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${
+            isProductFavorite
+              ? "opacity-100"
+              : "opacity-0 group-hover:opacity-100"
+          }`}
+        >
+          <Heart
+            className={`w-4 h-4 transition-colors ${
+              isProductFavorite
+                ? "text-rose-500 fill-rose-500"
+                : "text-zinc-400 hover:text-rose-500"
+            }`}
+            aria-hidden="true"
+          />
+        </button>
       </article>
     );
   }
@@ -503,87 +608,160 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   // VARIANTE PÚBLICA - LIST
   // =========================================================================
   return (
-    <article className="group relative surface rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-muted">
+    <article className="group relative surface rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-theme">
       <div className="flex">
-        {/* Imagen */}
-        <div className="relative w-32 sm:w-40 md:w-48 h-32 sm:h-40 md:h-48 shrink-0 overflow-hidden">
+        {/* Imagen - más compacta */}
+        <div className="relative w-28 sm:w-36 md:w-40 shrink-0 overflow-hidden">
           <Link
             href={`/productos/${product.id}`}
             aria-label={`Ver detalles de ${product.name}`}
           >
-            <Image
-              src={
-                imageError || !mainImage
-                  ? "https://placehold.co/800x800.png"
-                  : mainImage
-              }
-              alt={`${product.name} - ${product.category?.name || "Producto"} - ${formattedPrice}`}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-200"
-              onError={handleImageError}
-              priority={priority}
-              sizes="(max-width: 640px) 128px, (max-width: 768px) 160px, 192px"
-              quality={80}
-            />
+            <div className="relative h-full min-h-28 sm:min-h-32">
+              <Image
+                src={
+                  imageError || !mainImage
+                    ? "https://placehold.co/400x400.png"
+                    : mainImage
+                }
+                alt={`${product.name} - ${product.category?.name || "Producto"}`}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                onError={handleImageError}
+                priority={priority}
+                sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 160px"
+                quality={80}
+              />
+            </div>
           </Link>
 
-          {product.onSale && (
-            <div className="absolute top-2 left-2 bg-error text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
-              OFERTA
+          {product.onSale && discountPercentage > 0 && (
+            <div className="absolute top-1.5 left-1.5 badge-discount text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full">
+              -{discountPercentage}%
             </div>
           )}
+
           {product.stock === 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <span className="surface text-error border border-error px-2 py-0.5 rounded-full text-[10px]">
+              <span className="surface text-base-primary px-2 py-0.5 rounded-full text-[10px] font-semibold">
                 Agotado
               </span>
             </div>
           )}
         </div>
 
-        {/* Contenido */}
-        <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-wide muted mb-1">
+        {/* Contenido - layout mejorado */}
+        <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
+          {/* Header: Categoría + Rating */}
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <p className="text-[9px] sm:text-[10px] uppercase tracking-wide muted font-semibold truncate">
               {product.category?.name}
             </p>
-            <Link
-              href={`/productos/${product.id}`}
-              aria-label={`Ver detalles de ${product.name}`}
-            >
-              <h3 className="text-sm sm:text-base font-semibold text-primary line-clamp-2 mb-2">
-                {product.name}
-              </h3>
-            </Link>
-
             {product.rating && product.rating > 0 && (
-              <div className="flex items-center gap-1 mb-2">
-                <Star className="w-3 h-3 fill-warning text-warning" />
-                <span className="text-xs muted">{product.rating}</span>
-                {product.reviewCount && (
-                  <span className="text-xs muted">({product.reviewCount})</span>
-                )}
+              <div className="shrink-0">
+                <StarRating
+                  rating={product.rating}
+                  reviewCount={product.reviewCount}
+                />
               </div>
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-base sm:text-lg font-bold text-primary">
-              {formattedPrice}
-            </span>
-            <button
-              onClick={handleToggleFavorite}
-              aria-label={
-                isProductFavorite
-                  ? `Quitar ${product.name} de favoritos`
-                  : `Agregar ${product.name} a favoritos`
-              }
-              className="p-2 rounded-full hover:bg-pink-50 transition-colors"
-            >
-              <Heart
-                className={`w-4 h-4 ${isProductFavorite ? "text-warning fill-current" : "muted"}`}
-              />
-            </button>
+          {/* Título */}
+          <Link href={`/productos/${product.id}`} className="mb-1.5">
+            <h3 className="text-sm sm:text-base font-bold text-base-primary line-clamp-1 sm:line-clamp-2 hover:text-pink-600 transition-colors">
+              {product.name}
+            </h3>
+          </Link>
+
+          {/* Talles (si existen) */}
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="flex gap-1 flex-wrap mb-2">
+              {product.sizes.slice(0, 5).map((size, idx) => (
+                <span
+                  key={idx}
+                  className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded surface-secondary muted font-medium"
+                >
+                  {size}
+                </span>
+              ))}
+              {product.sizes.length > 5 && (
+                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded surface-secondary muted font-medium">
+                  +{product.sizes.length - 5}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Footer: Precio + Stock + Acciones */}
+          <div className="flex items-end justify-between gap-2">
+            {/* Precio y Stock */}
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-baseline gap-2">
+                {product.onSale &&
+                formattedSalePrice &&
+                product.salePrice! < product.price ? (
+                  <>
+                    <span className="text-base sm:text-lg font-bold text-base-primary">
+                      {formattedSalePrice}
+                    </span>
+                    <span className="text-[10px] sm:text-xs muted line-through">
+                      {formattedPrice}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-base sm:text-lg font-bold text-base-primary">
+                    {formattedPrice}
+                  </span>
+                )}
+              </div>
+              {/* Indicador de stock */}
+              {product.stock > 0 && product.stock <= 10 ? (
+                <span className="text-[9px] sm:text-[10px] font-semibold text-amber-500">
+                  ¡Últimas {product.stock} unidades!
+                </span>
+              ) : product.stock > 0 ? (
+                <span className="text-[9px] sm:text-[10px] font-medium text-green-600">
+                  En stock
+                </span>
+              ) : null}
+            </div>
+
+            {/* Acciones */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <button
+                onClick={handleToggleFavorite}
+                aria-label={
+                  isProductFavorite
+                    ? `Quitar de favoritos`
+                    : `Agregar a favoritos`
+                }
+                className="p-1.5 sm:p-2 rounded-full border border-transparent hover:border-primary hover:bg-primary/10 transition-all duration-200"
+              >
+                <Heart
+                  className={`w-4 h-4 ${isProductFavorite ? "text-rose-500 fill-rose-500" : "muted hover:text-rose-500"}`}
+                />
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (product.stock > 0) {
+                    addItem(product, 1);
+                  }
+                }}
+                aria-label="Agregar al carrito"
+                disabled={product.stock === 0}
+                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${
+                  product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -595,5 +773,4 @@ ProductCard.displayName = "ProductCard";
 
 export default ProductCard;
 
-// Re-export para backwards compatibility
 export { ProductCard };

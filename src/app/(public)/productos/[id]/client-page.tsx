@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { ColorChip } from "@/components/ui/ColorChip";
 import {
   ProductCardSkeleton,
   ProductDetailSkeleton,
@@ -10,8 +9,10 @@ import {
 import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useShippingSettings } from "@/hooks/useShippingSettings";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
+import { getColorHex } from "@/utils/colors";
 import { formatPriceARS } from "@/utils/formatters";
 import {
   ArrowLeft,
@@ -87,6 +88,7 @@ export default function ProductDetailClient({
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { show } = useToast();
+  const { shipping } = useShippingSettings();
 
   // SWR para fetch del producto
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -357,27 +359,24 @@ export default function ProductDetailClient({
                   )}
                 </h2>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {product.colors.map((color: string, idx: number) => (
-                    <button
-                      key={`color-${color}-${idx}`}
-                      onClick={() => setSelectedColor(color)}
-                      className={`relative transition-all ${
-                        selectedColor === color
-                          ? "ring-2 ring-primary ring-offset-2"
-                          : "hover:ring-1 hover:ring-primary/50"
-                      }`}
-                      title={`Seleccionar color ${color}`}
-                    >
-                      <ColorChip color={color} size="md" />
-                      {selectedColor === color && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-3 h-3 bg-white rounded-full flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                          </div>
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                  {product.colors.map((color: string, idx: number) => {
+                    const colorHex = getColorHex(color);
+                    const isSelected = selectedColor === color;
+                    return (
+                      <button
+                        key={`color-${color}-${idx}`}
+                        onClick={() => setSelectedColor(color)}
+                        className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                          isSelected
+                            ? "border-base-primary ring-2 ring-offset-2 ring-offset-surface ring-primary"
+                            : "border-theme hover:border-primary"
+                        }`}
+                        style={{ backgroundColor: colorHex }}
+                        title={`Seleccionar color ${color}`}
+                        aria-label={`Color ${color}${isSelected ? " (seleccionado)" : ""}`}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -467,10 +466,12 @@ export default function ProductDetailClient({
 
             {/* Beneficios */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-muted">
-              <div className="flex items-center space-x-2">
-                <Truck className="w-5 h-5 text-primary" />
-                <span className="text-sm">Envío gratis</span>
-              </div>
+              {shipping.freeShipping && (
+                <div className="flex items-center space-x-2">
+                  <Truck className="w-5 h-5 text-primary" />
+                  <span className="text-sm">{shipping.freeShippingLabel}</span>
+                </div>
+              )}
               <div className="flex items-center space-x-2">
                 <ShieldCheck className="w-5 h-5 text-primary" />
                 <span className="text-sm">Garantía</span>

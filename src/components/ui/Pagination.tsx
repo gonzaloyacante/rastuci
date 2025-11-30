@@ -78,7 +78,7 @@ export function Pagination({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
         aria-label="Página anterior"
-        className="px-3"
+        className="px-3 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200 disabled:hover:bg-transparent disabled:hover:border-border"
       >
         <ChevronLeft className="w-4 h-4" />
       </Button>
@@ -92,6 +92,11 @@ export function Pagination({
             onClick={() => onPageChange(1)}
             aria-label="Ir a la primera página"
             aria-current={1 === currentPage ? "page" : undefined}
+            className={
+              1 !== currentPage
+                ? "hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                : ""
+            }
           >
             1
           </Button>
@@ -121,7 +126,7 @@ export function Pagination({
             onClick={() => onPageChange(page)}
             aria-label={`Ir a la página ${page}`}
             aria-current={page === currentPage ? "page" : undefined}
-            className="min-w-[2.5rem]"
+            className={`min-w-10 ${page !== currentPage ? "hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200" : ""}`}
           >
             {page}
           </Button>
@@ -142,6 +147,11 @@ export function Pagination({
             onClick={() => onPageChange(totalPages)}
             aria-label="Ir a la última página"
             aria-current={totalPages === currentPage ? "page" : undefined}
+            className={
+              totalPages !== currentPage
+                ? "hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                : ""
+            }
           >
             {totalPages}
           </Button>
@@ -155,7 +165,7 @@ export function Pagination({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
         aria-label="Página siguiente"
-        className="px-3"
+        className="px-3 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200 disabled:hover:bg-transparent disabled:hover:border-border"
       >
         <ChevronRight className="w-4 h-4" />
       </Button>

@@ -134,7 +134,7 @@ function CheckoutSuccessContent() {
           </p>
         </div>
 
-        {/* Información de tracking OCA */}
+        {/* Información de tracking Correo Argentino */}
         {hasTracking && (
           <div className="surface border border-muted rounded-lg p-6 mb-6">
             <div className="flex items-start space-x-3 mb-4">
@@ -144,8 +144,8 @@ function CheckoutSuccessContent() {
                   Información de Seguimiento
                 </h3>
                 <p className="muted mt-1">
-                  Tu pedido será enviado por OCA. Podrás hacer seguimiento del
-                  envío con el número de tracking.
+                  Tu pedido será enviado por Correo Argentino. Podrás hacer
+                  seguimiento del envío con el número de tracking.
                 </p>
               </div>
             </div>
@@ -166,13 +166,13 @@ function CheckoutSuccessContent() {
                       {copySuccess ? "Copiado!" : "Copiar"}
                     </button>
                     <a
-                      href={`https://www.oca.com.ar/seguimiento?numero=${hasTracking}`}
+                      href={`https://www.correoargentino.com.ar/seguimiento?codigo=${hasTracking}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
                     >
                       <ExternalLink className="w-3 h-3" />
-                      Ver en OCA
+                      Ver en Correo Argentino
                     </a>
                   </div>
                 </div>
@@ -403,12 +403,12 @@ function CheckoutSuccessContent() {
             <p className="mt-2">
               También puedes hacer seguimiento en{" "}
               <a
-                href={`https://www.oca.com.ar/seguimiento?numero=${hasTracking}`}
+                href={`https://www.correoargentino.com.ar/seguimiento?codigo=${hasTracking}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                el sitio oficial de OCA
+                el sitio oficial de Correo Argentino
               </a>
             </p>
           )}

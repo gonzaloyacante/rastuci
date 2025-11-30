@@ -32,8 +32,7 @@ export function CategoriesSection({
       <div className="max-w-[1400px] mx-auto">
         <h2
           id="categories-title"
-          className="text-3xl font-bold text-center mb-3"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
+          className="text-3xl font-bold text-center mb-3 font-heading"
         >
           {home?.categoriesTitle ?? "Nuestras Categorías"}
         </h2>

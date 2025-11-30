@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Pagination as UIPagination } from "@/components/ui/Pagination";
 import Select from "@/components/ui/Select";
 import { ProductCardSkeleton } from "@/components/ui/Skeleton";
 import { Grid, List, ShoppingCart } from "lucide-react";
@@ -73,10 +74,10 @@ export function ViewModeToggle({
       {showLabel && <span className="text-sm muted mr-2">Vista:</span>}
       <button
         onClick={() => onChange("grid")}
-        className={`p-2 rounded-lg transition-colors ${
+        className={`p-2 rounded-lg transition-all duration-200 border ${
           viewMode === "grid"
-            ? "bg-primary text-white"
-            : "surface muted hover:bg-surface-secondary"
+            ? "bg-primary text-white border-primary"
+            : "surface muted border-transparent hover:border-primary hover:text-primary hover:bg-primary/10"
         }`}
         title="Vista de cuadrícula"
       >
@@ -84,10 +85,10 @@ export function ViewModeToggle({
       </button>
       <button
         onClick={() => onChange("list")}
-        className={`p-2 rounded-lg transition-colors ${
+        className={`p-2 rounded-lg transition-all duration-200 border ${
           viewMode === "list"
-            ? "bg-primary text-white"
-            : "surface muted hover:bg-surface-secondary"
+            ? "bg-primary text-white border-primary"
+            : "surface muted border-transparent hover:border-primary hover:text-primary hover:bg-primary/10"
         }`}
         title="Vista de lista"
       >
@@ -98,7 +99,7 @@ export function ViewModeToggle({
 }
 
 // ==============================================================================
-// Pagination
+// Pagination - Wrapper del componente UI reutilizable
 // ==============================================================================
 interface PaginationProps {
   currentPage: number;
@@ -119,69 +120,15 @@ export function Pagination({
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  const visiblePages = Math.min(maxVisiblePages, totalPages);
-
-  const getPageNumbers = () => {
-    const pages: number[] = [];
-    let start =
-      currentPage <= Math.floor(visiblePages / 2) + 1
-        ? 1
-        : currentPage >= totalPages - Math.floor(visiblePages / 2)
-          ? totalPages - visiblePages + 1
-          : currentPage - Math.floor(visiblePages / 2);
-
-    start = Math.max(1, start);
-    const end = Math.min(totalPages, start + visiblePages - 1);
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-    return pages;
-  };
-
-  const buttonSize = size === "sm" ? "sm" : undefined;
-  const pageButtonClass =
-    size === "sm"
-      ? "px-2 py-1 rounded text-xs font-medium"
-      : "px-3 py-2 rounded-lg text-sm font-medium";
-
   return (
     <div className="space-y-4">
-      <div className="flex justify-center items-center gap-2">
-        <Button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          variant="outline"
-          size={buttonSize}
-        >
-          Anterior
-        </Button>
-
-        <div className="flex gap-1">
-          {getPageNumbers().map((page) => (
-            <button
-              key={page}
-              onClick={() => onPageChange(page)}
-              className={`${pageButtonClass} transition-colors ${
-                page === currentPage
-                  ? "bg-primary text-white"
-                  : "surface muted hover:text-primary"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
-
-        <Button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          variant="outline"
-          size={buttonSize}
-        >
-          Siguiente
-        </Button>
-      </div>
+      <UIPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        showFirstLast={totalPages > 5}
+        maxVisiblePages={maxVisiblePages}
+      />
 
       <div
         className={`text-center ${size === "sm" ? "text-xs" : "text-sm"} muted`}
@@ -251,10 +198,10 @@ export function CategoryButtons({
         <button
           key={category.value}
           onClick={() => onSelect(category.value)}
-          className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+          className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 text-sm border ${
             selected === category.value
-              ? "bg-primary text-white"
-              : "surface hover:bg-surface-secondary"
+              ? "bg-primary text-white border-primary"
+              : "surface border-transparent hover:border-primary hover:text-primary hover:bg-primary/10"
           }`}
         >
           {category.label}
@@ -400,8 +347,8 @@ export function ProductGrid({
   const gridClasses =
     viewMode === "grid"
       ? isMobile
-        ? "grid-cols-2"
-        : "grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+        ? "grid-cols-2 md:grid-cols-3"
+        : "grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
       : isMobile
         ? "grid-cols-1 max-w-2xl mx-auto"
         : "grid-cols-1 max-w-4xl";

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export interface Order {
   id: string;
@@ -25,16 +25,17 @@ export const useOrders = (initialParams?: UseOrdersParams) => {
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(initialParams?.page || 1);
-  const [lastParams, setLastParams] = useState<UseOrdersParams>(
-    initialParams || {}
-  );
+  // useRef en lugar de useState para evitar re-renders innecesarios
+  const lastParamsRef = useRef<UseOrdersParams>(initialParams || {});
 
-  const fetchOrders = async (params?: UseOrdersParams) => {
+  const fetchOrders = useCallback(async (params?: UseOrdersParams) => {
     try {
       setLoading(true);
       setError(null);
-      const finalParams = { ...lastParams, ...params };
-      setLastParams(finalParams);
+      // Combinar con los últimos parámetros sin disparar re-render
+      const finalParams = { ...lastParamsRef.current, ...params };
+      lastParamsRef.current = finalParams;
+
       const urlParams = new URLSearchParams();
       if (finalParams.page) {
         urlParams.append("page", finalParams.page.toString());
@@ -48,10 +49,12 @@ export const useOrders = (initialParams?: UseOrdersParams) => {
       if (finalParams.search) {
         urlParams.append("search", finalParams.search);
       }
+
       const response = await fetch(`/api/orders?${urlParams}`);
       if (!response.ok) {
         throw new Error("Error al cargar los pedidos");
       }
+
       const data = await response.json();
       if (data.success) {
         setOrders(data.data.data);
@@ -65,7 +68,7 @@ export const useOrders = (initialParams?: UseOrdersParams) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Sin dependencias - fetchOrders es estable
 
   return {
     orders,

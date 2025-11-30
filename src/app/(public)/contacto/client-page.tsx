@@ -8,16 +8,27 @@ import {
   type ContactSettings,
   defaultContactSettings,
 } from "@/lib/validation/contact";
-import { Clock, Loader2, Mail, MapPin, Phone, Send } from "lucide-react";
+import {
+  Clock,
+  Loader2,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Send,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import useSWR from "swr";
+
+type ResponsePreference = "EMAIL" | "PHONE" | "WHATSAPP";
 
 interface ContactFormData {
   name: string;
   email: string;
   phone: string;
   message: string;
+  responsePreference: ResponsePreference;
 }
 
 const initialFormData: ContactFormData = {
@@ -25,6 +36,7 @@ const initialFormData: ContactFormData = {
   email: "",
   phone: "",
   message: "",
+  responsePreference: "EMAIL",
 };
 
 // Fetcher para SWR
@@ -42,7 +54,7 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
     <h2 className="text-2xl mb-6 font-montserrat">Información de Contacto</h2>
 
     <div className="space-y-6">
-      <Card className="surface border-0 shadow-md">
+      <Card className="surface border border-theme rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200">
         <CardContent className="p-6">
           <div className="flex items-start space-x-4">
             <div className="pill-icon">
@@ -60,7 +72,7 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
         </CardContent>
       </Card>
 
-      <Card className="surface border-0 shadow-md">
+      <Card className="surface border border-theme rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200">
         <CardContent className="p-6">
           <div className="flex items-start space-x-4">
             <div className="pill-icon">
@@ -78,7 +90,7 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
         </CardContent>
       </Card>
 
-      <Card className="surface border-0 shadow-md">
+      <Card className="surface border border-theme rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200">
         <CardContent className="p-6">
           <div className="flex items-start space-x-4">
             <div className="pill-icon">
@@ -97,7 +109,7 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
         </CardContent>
       </Card>
 
-      <Card className="surface border-0 shadow-md">
+      <Card className="surface border border-theme rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200">
         <CardContent className="p-6">
           <div className="flex items-start space-x-4">
             <div className="pill-icon">
@@ -141,23 +153,48 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
         toast.error("Por favor, escribe un mensaje");
         return;
       }
+      // Validar teléfono si la preferencia es PHONE o WHATSAPP
+      if (
+        (formData.responsePreference === "PHONE" ||
+          formData.responsePreference === "WHATSAPP") &&
+        !formData.phone.trim()
+      ) {
+        toast.error("Por favor, ingresa tu teléfono para poder contactarte");
+        return;
+      }
 
-      // Simular envío del formulario
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Enviar al endpoint
+      const response = await fetch("/api/contact/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error?.message || "Error al enviar el mensaje");
+      }
 
       setSubmitted(true);
       setFormData(initialFormData);
       toast.success("¡Mensaje enviado exitosamente!");
     } catch (error) {
       logger.error("Error al enviar formulario:", { error: error });
-      toast.error("Error al enviar el mensaje. Por favor, inténtalo de nuevo.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Error al enviar el mensaje. Por favor, inténtalo de nuevo."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     setFormData({
       ...formData,
@@ -175,7 +212,7 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
       <h2 className="text-2xl mb-6 font-montserrat">{contact.form.title}</h2>
 
       {submitted ? (
-        <Card className="surface border-0 shadow-md">
+        <Card className="surface border border-theme rounded-xl shadow-sm">
           <CardContent className="p-8 text-center">
             <div className="muted mb-4">
               <Send size={48} className="mx-auto" />
@@ -190,7 +227,7 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
           </CardContent>
         </Card>
       ) : (
-        <Card className="surface border-0 shadow-md">
+        <Card className="surface border border-theme rounded-xl shadow-sm">
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -253,6 +290,71 @@ const ContactForm = ({ contact }: { contact: ContactSettings }) => {
                 />
               </div>
 
+              {/* Selector de preferencia de respuesta */}
+              <div>
+                <label className="block text-sm font-semibold mb-2 font-montserrat">
+                  ¿Cómo preferís que te contactemos? *
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, responsePreference: "EMAIL" })
+                    }
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                      formData.responsePreference === "EMAIL"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-theme surface hover:border-primary/50"
+                    }`}
+                  >
+                    <Mail className="w-5 h-5" />
+                    <span className="text-sm font-medium">Email</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, responsePreference: "PHONE" })
+                    }
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                      formData.responsePreference === "PHONE"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-theme surface hover:border-primary/50"
+                    }`}
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span className="text-sm font-medium">Teléfono</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        responsePreference: "WHATSAPP",
+                      })
+                    }
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                      formData.responsePreference === "WHATSAPP"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-theme surface hover:border-primary/50"
+                    }`}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium">WhatsApp</span>
+                  </button>
+                </div>
+                {(formData.responsePreference === "PHONE" ||
+                  formData.responsePreference === "WHATSAPP") &&
+                  !formData.phone && (
+                    <p className="text-xs text-amber-600 mt-2">
+                      * Para contactarte por{" "}
+                      {formData.responsePreference === "PHONE"
+                        ? "teléfono"
+                        : "WhatsApp"}
+                      , necesitamos tu número
+                    </p>
+                  )}
+              </div>
+
               <div>
                 <label
                   htmlFor="message"
@@ -312,7 +414,7 @@ const FaqSection = ({ contact }: { contact: ContactSettings }) => (
       {contact.faqs.map((faq) => (
         <Card
           key={`faq-${faq.question.slice(0, 20)}`}
-          className="surface border-0 shadow-md hover:shadow-lg transition-shadow duration-300"
+          className="surface border border-theme rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200"
         >
           <CardContent className="p-6">
             <h3 className="text-lg mb-3 font-montserrat">{faq.question}</h3>

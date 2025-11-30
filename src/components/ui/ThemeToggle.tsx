@@ -1,23 +1,64 @@
 "use client";
 
-import React from 'react';
-import { Moon, Sun } from 'lucide-react';
-import { useTheme } from './ThemeProvider';
-import { Button } from './Button';
+import { Monitor, Moon, Sun } from "lucide-react";
+import { Button } from "./Button";
+import { useTheme } from "./ThemeProvider";
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  /** Variante del componente: 'toggle' = botón simple, 'full' = 3 botones */
+  variant?: "toggle" | "full";
+}
+
+export function ThemeToggle({ variant = "toggle" }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
 
+  // Versión completa con 3 botones verticales y texto
+  if (variant === "full") {
+    return (
+      <div className="theme-toggle-group">
+        <button
+          onClick={() => setTheme("light")}
+          aria-label="Modo claro"
+          className={`theme-toggle-btn ${theme === "light" ? "active active-light" : ""}`}
+        >
+          <Sun className="w-4 h-4" />
+          <span>Claro</span>
+        </button>
+        <button
+          onClick={() => setTheme("system")}
+          aria-label="Tema del sistema"
+          className={`theme-toggle-btn ${theme === "system" ? "active active-system" : ""}`}
+        >
+          <Monitor className="w-4 h-4" />
+          <span>Sistema</span>
+        </button>
+        <button
+          onClick={() => setTheme("dark")}
+          aria-label="Modo oscuro"
+          className={`theme-toggle-btn ${theme === "dark" ? "active active-dark" : ""}`}
+        >
+          <Moon className="w-4 h-4" />
+          <span>Oscuro</span>
+        </button>
+      </div>
+    );
+  }
+
+  // Versión toggle simple (original)
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    setTheme(theme === "light" ? "dark" : "light");
   };
 
   const getIcon = () => {
-    return theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />;
+    return theme === "light" ? (
+      <Moon className="w-4 h-4" />
+    ) : (
+      <Sun className="w-4 h-4" />
+    );
   };
 
   const getLabel = () => {
-    return theme === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro';
+    return theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro";
   };
 
   return (

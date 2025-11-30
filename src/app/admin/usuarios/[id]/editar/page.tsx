@@ -1,10 +1,8 @@
-import { AdminPageHeader } from "@/components/admin";
 import { FormSkeleton } from "@/components/admin/skeletons";
-import { UserForm } from "@/components/forms";
-import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { EditUserClient } from "./client-page";
 
 interface UserEditPageProps {
   params: Promise<{
@@ -15,61 +13,27 @@ interface UserEditPageProps {
 async function EditUserContent({ userId }: { userId: string }) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isAdmin: true,
+    },
   });
 
   if (!user) {
     return notFound();
   }
 
-  const handleSubmit = async (data: {
-    name: string;
-    email: string;
-    isAdmin: boolean;
-    password?: string;
-  }) => {
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al actualizar el usuario");
-      }
-
-      window.location.href = "/admin/usuarios";
-    } catch (error) {
-      logger.error("Error updating user:", { error });
-      throw error;
-    }
+  // Serializar datos para el Client Component
+  const serializedUser = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    isAdmin: user.isAdmin,
   };
 
-  const handleCancel = () => {
-    window.location.href = "/admin/usuarios";
-  };
-
-  return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="Editar Usuario"
-        subtitle={`Modificar ${user.name}`}
-        actions={[
-          {
-            label: "Volver",
-            onClick: handleCancel,
-            variant: "outline",
-          },
-        ]}
-      />
-
-      <div className="card">
-        <UserForm user={user} onSubmit={handleSubmit} onCancel={handleCancel} />
-      </div>
-    </div>
-  );
+  return <EditUserClient user={serializedUser} />;
 }
 
 export default async function UserEditPage({ params }: UserEditPageProps) {

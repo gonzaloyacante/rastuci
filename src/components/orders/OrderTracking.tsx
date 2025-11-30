@@ -424,8 +424,8 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     index === 0
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-primary text-white"
+                      : "surface-secondary muted"
                   }`}
                 >
                   {getStatusIcon(status.status)}

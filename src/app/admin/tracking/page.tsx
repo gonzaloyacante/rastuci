@@ -160,7 +160,7 @@ function TrackingTable({
                 <th className="text-left p-2">Pedido</th>
                 <th className="text-left p-2">Cliente</th>
                 <th className="text-left p-2">Estado</th>
-                <th className="text-left p-2">Estado OCA</th>
+                <th className="text-left p-2">Estado Correo Arg.</th>
                 <th className="text-left p-2">Última Act.</th>
                 <th className="text-left p-2">Alertas</th>
                 <th className="text-left p-2">Acciones</th>

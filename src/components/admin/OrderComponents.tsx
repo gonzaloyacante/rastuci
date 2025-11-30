@@ -1,5 +1,6 @@
 "use client";
 
+import { Pagination as UIPagination } from "@/components/ui/Pagination";
 import { LucideIcon, Package, TruckIcon } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -182,7 +183,7 @@ export function OrderCard({
 }
 
 // ============================================================================
-// Pagination Component
+// Pagination Component - Wrapper del componente UI reutilizable
 // ============================================================================
 
 interface PaginationProps {
@@ -201,24 +202,14 @@ export function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex justify-center items-center gap-4">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1 || disabled}
-        className="btn-secondary disabled:opacity-50"
-      >
-        Anterior
-      </button>
-      <span className="text-sm text-content-secondary">
-        Página {currentPage} de {totalPages}
-      </span>
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages || disabled}
-        className="btn-secondary disabled:opacity-50"
-      >
-        Siguiente
-      </button>
+    <div className={disabled ? "opacity-50 pointer-events-none" : ""}>
+      <UIPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        showFirstLast={totalPages > 5}
+        maxVisiblePages={5}
+      />
     </div>
   );
 }

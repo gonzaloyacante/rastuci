@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -14,6 +14,23 @@ export default function ProductImageGallery({
   productName,
 }: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right">(
+    "right"
+  );
+
+  const changeImage = useCallback(
+    (newIndex: number, direction: "left" | "right") => {
+      if (isTransitioning) return;
+      setSlideDirection(direction);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setSelectedImage(newIndex);
+        setTimeout(() => setIsTransitioning(false), 50);
+      }, 150);
+    },
+    [isTransitioning]
+  );
 
   if (!images || images.length === 0) {
     return (
@@ -24,11 +41,19 @@ export default function ProductImageGallery({
   }
 
   const nextImage = () => {
-    setSelectedImage((prev) => (prev + 1) % images.length);
+    const newIndex = (selectedImage + 1) % images.length;
+    changeImage(newIndex, "right");
   };
 
   const prevImage = () => {
-    setSelectedImage((prev) => (prev - 1 + images.length) % images.length);
+    const newIndex = (selectedImage - 1 + images.length) % images.length;
+    changeImage(newIndex, "left");
+  };
+
+  const selectImage = (index: number) => {
+    if (index === selectedImage) return;
+    const direction = index > selectedImage ? "right" : "left";
+    changeImage(index, direction);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent, action: () => void) => {
@@ -49,17 +74,27 @@ export default function ProductImageGallery({
         className="relative w-full aspect-square surface border border-muted rounded-lg overflow-hidden group"
         style={{ position: "relative" }}
       >
-        <Image
-          src={images[selectedImage]}
-          alt={`${productName} - Imagen ${selectedImage + 1} de ${
-            images.length
+        <div
+          className={`absolute inset-0 transition-all duration-300 ease-out ${
+            isTransitioning
+              ? slideDirection === "right"
+                ? "opacity-0 translate-x-4"
+                : "opacity-0 -translate-x-4"
+              : "opacity-100 translate-x-0"
           }`}
-          fill
-          className="object-cover"
-          priority={selectedImage === 0} // Prioridad para la primera imagen
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          quality={90}
-        />
+        >
+          <Image
+            src={images[selectedImage]}
+            alt={`${productName} - Imagen ${selectedImage + 1} de ${
+              images.length
+            }`}
+            fill
+            className="object-cover"
+            priority={selectedImage === 0}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            quality={90}
+          />
+        </div>
 
         {/* Controles de navegación */}
         {images.length > 1 && (
@@ -96,37 +131,36 @@ export default function ProductImageGallery({
 
       {/* Miniaturas */}
       {images.length > 1 && (
-        <div>
+        <div className="pt-2">
           {/* Thumbnail list for accessibility: tests expect a list role with this label */}
           <div
-            className="flex gap-2 overflow-x-auto"
+            className="flex gap-3 overflow-x-auto pb-2"
             role="list"
             aria-label="Miniaturas de imágenes"
           >
             {images.map((image, index) => (
               <button
                 key={`item-${index}`}
-                onClick={() => setSelectedImage(index)}
-                onKeyDown={(e) =>
-                  handleKeyDown(e, () => setSelectedImage(index))
-                }
+                onClick={() => selectImage(index)}
+                onKeyDown={(e) => handleKeyDown(e, () => selectImage(index))}
                 aria-label={`Seleccionar imagen ${index + 1} de ${productName}`}
                 aria-current={index === selectedImage ? "true" : "false"}
-                className={`relative w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                className={`relative w-20 h-20 rounded-lg shrink-0 transition-all duration-200 focus:outline-none ${
                   index === selectedImage
-                    ? "border-primary ring-2"
-                    : "border-muted hover:border-muted"
+                    ? "ring-2 ring-primary ring-offset-2 ring-offset-surface"
+                    : "opacity-70 hover:opacity-100 hover:ring-1 hover:ring-theme"
                 }`}
-                style={{ position: "relative" }}
               >
-                <Image
-                  src={image}
-                  alt={`${productName} - Miniatura ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="80px"
-                  quality={75}
-                />
+                <div className="w-full h-full rounded-lg overflow-hidden">
+                  <Image
+                    src={image}
+                    alt={`${productName} - Miniatura ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                    quality={75}
+                  />
+                </div>
               </button>
             ))}
           </div>

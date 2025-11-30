@@ -16,8 +16,8 @@ export default function TrackingPage() {
           </div>
           <p className="muted max-w-2xl mx-auto">
             Ingresa tu número de tracking para verificar el estado actual de tu
-            envío. Nuestro sistema valida la información directamente con OCA
-            para brindarte datos precisos y actualizados.
+            envío. Nuestro sistema valida la información directamente con Correo
+            Argentino para brindarte datos precisos y actualizados.
           </p>
         </div>
 
@@ -87,26 +87,18 @@ export default function TrackingPage() {
             </div>
           </div>
           <p className="text-sm muted mb-3">
-            Trabajamos con los mejores proveedores de logística para garantizar
-            que tu pedido llegue en tiempo y forma:
+            Trabajamos con Correo Argentino para garantizar que tu pedido llegue
+            en tiempo y forma:
           </p>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="p-4 bg-primary/5 rounded-lg">
-              <h4 className="font-semibold text-primary mb-2">OCA</h4>
-              <p className="text-sm muted">
-                Proveedor principal con cobertura nacional. Seguimiento en
-                tiempo real y entrega puerta a puerta.
-              </p>
-            </div>
-            <div className="p-4 bg-primary/5 rounded-lg">
-              <h4 className="font-semibold text-primary mb-2">
-                Correo Argentino
-              </h4>
-              <p className="text-sm muted">
-                Red nacional con más de 1000 sucursales. Retiro en sucursal
-                disponible para mayor flexibilidad.
-              </p>
-            </div>
+          <div className="p-4 bg-primary/5 rounded-lg">
+            <h4 className="font-semibold text-primary mb-2">
+              Correo Argentino
+            </h4>
+            <p className="text-sm muted">
+              Red nacional con más de 1000 sucursales. Seguimiento en tiempo
+              real, entrega puerta a puerta y retiro en sucursal disponible para
+              mayor flexibilidad.
+            </p>
           </div>
         </div>
 
@@ -132,10 +124,7 @@ export default function TrackingPage() {
                   </li>
                   <li>• Verifica que el número esté escrito correctamente</li>
                   <li>• Tu pedido puede estar siendo preparado aún</li>
-                  <li>
-                    • Dependiendo del proveedor (OCA o Correo Argentino), los
-                    tiempos pueden variar
-                  </li>
+                  <li>• Los tiempos de actualización pueden variar</li>
                 </ul>
               </div>
             </details>
@@ -187,14 +176,6 @@ export default function TrackingPage() {
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <a href="/contacto" className="text-primary hover:underline">
               Contactar Soporte
-            </a>
-            <a
-              href="https://www.oca.com.ar"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              Sitio de OCA
             </a>
             <a
               href="https://www.correoargentino.com.ar"

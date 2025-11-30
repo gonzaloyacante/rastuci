@@ -58,24 +58,176 @@ interface ColorPickerProps {
   onColorsChange: (colors: string[]) => void;
 }
 
-const COMMON_COLORS = [
-  { name: "Rojo", hex: "#FF0000" },
-  { name: "Azul", hex: "#0000FF" },
-  { name: "Verde", hex: "#00FF00" },
-  { name: "Amarillo", hex: "#FFFF00" },
-  { name: "Negro", hex: "#000000" },
-  { name: "Blanco", hex: "#FFFFFF" },
-  { name: "Rosa", hex: "#FFC0CB" },
-  { name: "Naranja", hex: "#FFA500" },
-  { name: "Morado", hex: "#800080" },
-  { name: "Gris", hex: "#808080" },
-  { name: "Celeste", hex: "#87CEEB" },
-  { name: "Beige", hex: "#F5F5DC" },
-] as const;
+// Tipo para cada color
+interface ColorOption {
+  name: string;
+  hex: string;
+}
+
+// Tipo para categoría de colores
+interface ColorCategory {
+  label: string;
+  colors: ColorOption[];
+}
+
+// Paleta de colores expandida y organizada por categorías
+const COLOR_CATEGORIES: Record<string, ColorCategory> = {
+  basicos: {
+    label: "Básicos",
+    colors: [
+      { name: "Negro", hex: "#000000" },
+      { name: "Blanco", hex: "#FFFFFF" },
+      { name: "Gris Oscuro", hex: "#333333" },
+      { name: "Gris", hex: "#808080" },
+      { name: "Gris Claro", hex: "#D3D3D3" },
+      { name: "Plata", hex: "#C0C0C0" },
+    ],
+  },
+  rojos: {
+    label: "Rojos y Rosas",
+    colors: [
+      { name: "Rojo", hex: "#FF0000" },
+      { name: "Rojo Oscuro", hex: "#8B0000" },
+      { name: "Carmesí", hex: "#DC143C" },
+      { name: "Coral", hex: "#FF7F50" },
+      { name: "Salmón", hex: "#FA8072" },
+      { name: "Rosa", hex: "#FFC0CB" },
+      { name: "Rosa Fuerte", hex: "#FF69B4" },
+      { name: "Magenta", hex: "#FF00FF" },
+      { name: "Fucsia", hex: "#FF1493" },
+      { name: "Borgoña", hex: "#800020" },
+    ],
+  },
+  naranjas: {
+    label: "Naranjas y Marrones",
+    colors: [
+      { name: "Naranja", hex: "#FFA500" },
+      { name: "Naranja Oscuro", hex: "#FF8C00" },
+      { name: "Durazno", hex: "#FFCBA4" },
+      { name: "Terracota", hex: "#E2725B" },
+      { name: "Marrón", hex: "#8B4513" },
+      { name: "Chocolate", hex: "#D2691E" },
+      { name: "Camel", hex: "#C19A6B" },
+      { name: "Beige", hex: "#F5F5DC" },
+      { name: "Crema", hex: "#FFFDD0" },
+      { name: "Canela", hex: "#D2691E" },
+    ],
+  },
+  amarillos: {
+    label: "Amarillos y Dorados",
+    colors: [
+      { name: "Amarillo", hex: "#FFFF00" },
+      { name: "Amarillo Claro", hex: "#FFFFE0" },
+      { name: "Limón", hex: "#FFF44F" },
+      { name: "Dorado", hex: "#FFD700" },
+      { name: "Mostaza", hex: "#FFDB58" },
+      { name: "Ámbar", hex: "#FFBF00" },
+      { name: "Oro Viejo", hex: "#CFB53B" },
+    ],
+  },
+  verdes: {
+    label: "Verdes",
+    colors: [
+      { name: "Verde", hex: "#008000" },
+      { name: "Verde Lima", hex: "#32CD32" },
+      { name: "Verde Menta", hex: "#98FF98" },
+      { name: "Verde Oliva", hex: "#808000" },
+      { name: "Verde Militar", hex: "#4B5320" },
+      { name: "Verde Esmeralda", hex: "#50C878" },
+      { name: "Verde Bosque", hex: "#228B22" },
+      { name: "Turquesa", hex: "#40E0D0" },
+      { name: "Aqua", hex: "#00FFFF" },
+      { name: "Verde Agua", hex: "#7FFFD4" },
+    ],
+  },
+  azules: {
+    label: "Azules",
+    colors: [
+      { name: "Azul", hex: "#0000FF" },
+      { name: "Azul Marino", hex: "#000080" },
+      { name: "Azul Rey", hex: "#4169E1" },
+      { name: "Celeste", hex: "#87CEEB" },
+      { name: "Azul Cielo", hex: "#87CEEB" },
+      { name: "Azul Bebé", hex: "#89CFF0" },
+      { name: "Azul Petróleo", hex: "#006064" },
+      { name: "Índigo", hex: "#4B0082" },
+      { name: "Cian", hex: "#00FFFF" },
+      { name: "Azul Acero", hex: "#4682B4" },
+    ],
+  },
+  violetas: {
+    label: "Violetas y Púrpuras",
+    colors: [
+      { name: "Morado", hex: "#800080" },
+      { name: "Púrpura", hex: "#9B30FF" },
+      { name: "Violeta", hex: "#EE82EE" },
+      { name: "Lavanda", hex: "#E6E6FA" },
+      { name: "Lila", hex: "#C8A2C8" },
+      { name: "Ciruela", hex: "#8E4585" },
+      { name: "Uva", hex: "#6F2DA8" },
+      { name: "Malva", hex: "#E0B0FF" },
+    ],
+  },
+  pasteles: {
+    label: "🎨 Pasteles",
+    colors: [
+      { name: "Rosa Pastel", hex: "#FFD1DC" },
+      { name: "Melocotón Pastel", hex: "#FFDAB9" },
+      { name: "Amarillo Pastel", hex: "#FDFD96" },
+      { name: "Verde Pastel", hex: "#77DD77" },
+      { name: "Menta Pastel", hex: "#B4F0C2" },
+      { name: "Celeste Pastel", hex: "#AEC6CF" },
+      { name: "Azul Pastel", hex: "#A2D2FF" },
+      { name: "Lavanda Pastel", hex: "#E6E6FA" },
+      { name: "Lila Pastel", hex: "#DDA0DD" },
+      { name: "Coral Pastel", hex: "#FFB7B2" },
+      { name: "Durazno Pastel", hex: "#FFE5B4" },
+      { name: "Crema Pastel", hex: "#FFFDD0" },
+      { name: "Gris Perla", hex: "#E5E4E2" },
+      { name: "Turquesa Pastel", hex: "#AFEEEE" },
+      { name: "Salmón Pastel", hex: "#FFA07A" },
+    ],
+  },
+  tierra: {
+    label: "Tonos Tierra",
+    colors: [
+      { name: "Café", hex: "#6F4E37" },
+      { name: "Tostado", hex: "#B87333" },
+      { name: "Arena", hex: "#C2B280" },
+      { name: "Ocre", hex: "#CC7722" },
+      { name: "Siena", hex: "#A0522D" },
+      { name: "Terracota", hex: "#E2725B" },
+      { name: "Arcilla", hex: "#B66A50" },
+      { name: "Óxido", hex: "#B7410E" },
+    ],
+  },
+  metalicos: {
+    label: "✨ Metálicos",
+    colors: [
+      { name: "Oro", hex: "#FFD700" },
+      { name: "Plata", hex: "#C0C0C0" },
+      { name: "Bronce", hex: "#CD7F32" },
+      { name: "Cobre", hex: "#B87333" },
+      { name: "Platino", hex: "#E5E4E2" },
+      { name: "Oro Rosa", hex: "#E0BFB8" },
+      { name: "Champagne", hex: "#F7E7CE" },
+    ],
+  },
+};
+
+// Lista plana para compatibilidad con código existente
+const COMMON_COLORS = Object.values(COLOR_CATEGORIES).flatMap(
+  (cat) => cat.colors
+);
 
 export function ColorPicker({ colors, onColorsChange }: ColorPickerProps) {
   const [newColor, setNewColor] = useState("");
   const [colorInput, setColorInput] = useState("#000000");
+  const [colorName, setColorName] = useState("");
+  const [activeCategory, setActiveCategory] = useState("basicos");
+
+  // Colores de la categoría activa
+  const activeCategoryColors = COLOR_CATEGORIES[activeCategory]?.colors || [];
 
   const addColor = () => {
     if (newColor.trim() && !colors.includes(newColor.trim())) {
@@ -85,15 +237,22 @@ export function ColorPicker({ colors, onColorsChange }: ColorPickerProps) {
   };
 
   const addColorFromPicker = () => {
-    const colorName = `Color ${colorInput}`;
-    if (!colors.includes(colorName)) {
-      onColorsChange([...colors, colorName]);
+    if (!colorName.trim()) {
+      return; // Nombre obligatorio
+    }
+    const fullColor = `${colorName.trim()} (${colorInput})`;
+    if (
+      !colors.some((c) => c.toLowerCase().includes(colorName.toLowerCase()))
+    ) {
+      onColorsChange([...colors, fullColor]);
+      setColorName("");
     }
   };
 
-  const addPredefinedColor = (name: string) => {
-    if (!colors.includes(name)) {
-      onColorsChange([...colors, name]);
+  const addPredefinedColor = (name: string, hex: string) => {
+    const fullColor = `${name} (${hex})`;
+    if (!colors.some((c) => c.toLowerCase().includes(name.toLowerCase()))) {
+      onColorsChange([...colors, fullColor]);
     }
   };
 
@@ -103,61 +262,114 @@ export function ColorPicker({ colors, onColorsChange }: ColorPickerProps) {
 
   return (
     <div className="space-y-4">
-      {/* Palette de colores predefinidos */}
+      {/* Categorías de colores */}
       <div>
-        <p className="text-sm font-medium mb-2">Colores Predefinidos</p>
-        <div className="flex flex-wrap gap-2">
-          {COMMON_COLORS.map((c) => (
+        <p className="text-sm font-medium mb-2">Paleta de Colores</p>
+
+        {/* Tabs de categorías */}
+        <div className="flex flex-wrap gap-1 mb-3 pb-2 border-b border-muted">
+          {Object.entries(COLOR_CATEGORIES).map(([key, category]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveCategory(key)}
+              className={`px-3 py-1 text-xs rounded-full transition-all ${
+                activeCategory === key
+                  ? "bg-primary text-white"
+                  : "bg-surface-secondary hover:bg-surface-tertiary text-muted"
+              }`}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Colores de la categoría activa */}
+        <div className="flex flex-wrap gap-2 min-h-[60px]">
+          {activeCategoryColors.map((c) => (
             <button
               key={c.name}
               type="button"
-              onClick={() => addPredefinedColor(c.name)}
-              disabled={colors.includes(c.name)}
+              onClick={() => addPredefinedColor(c.name, c.hex)}
+              disabled={colors.some((col) =>
+                col.toLowerCase().includes(c.name.toLowerCase())
+              )}
               className="group relative"
-              title={`Agregar ${c.name}`}
+              title={`Agregar ${c.name} (${c.hex})`}
             >
               <div
-                className={`w-10 h-10 rounded-lg border-2 transition-all ${
-                  colors.includes(c.name)
-                    ? "border-success opacity-50"
+                className={`w-9 h-9 rounded-lg border-2 transition-all ${
+                  colors.some((col) =>
+                    col.toLowerCase().includes(c.name.toLowerCase())
+                  )
+                    ? "border-success opacity-50 scale-90"
                     : "border-muted hover:border-primary hover:scale-110"
                 }`}
-                style={{ backgroundColor: c.hex }}
+                style={{
+                  backgroundColor: c.hex,
+                  boxShadow:
+                    c.hex === "#FFFFFF"
+                      ? "inset 0 0 0 1px rgba(0,0,0,0.1)"
+                      : undefined,
+                }}
               >
-                {colors.includes(c.name) && (
+                {colors.some((col) =>
+                  col.toLowerCase().includes(c.name.toLowerCase())
+                ) && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Check className="h-5 w-5 text-white drop-shadow" />
+                    <Check className="h-4 w-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
                   </div>
                 )}
               </div>
-              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs opacity-0 group-hover:opacity-100 whitespace-nowrap">
+              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 bg-surface px-1 rounded shadow">
                 {c.name}
               </span>
             </button>
           ))}
         </div>
+
+        {/* Contador de colores disponibles */}
+        <p className="text-xs muted mt-2">
+          {activeCategoryColors.length} colores en esta categoría •
+          {COMMON_COLORS.length} colores totales disponibles
+        </p>
       </div>
 
       {/* Color picker HTML5 */}
       <div>
-        <p className="text-sm font-medium mb-2">Color Personalizado (Picker)</p>
-        <div className="flex gap-2 items-center">
+        <p className="text-sm font-medium mb-2">Color Personalizado</p>
+        <div className="flex gap-2 items-center flex-wrap">
           <input
             type="color"
             value={colorInput}
             onChange={(e) => setColorInput(e.target.value)}
-            className="w-16 h-10 rounded border-2 border-muted cursor-pointer"
+            className="w-12 h-10 rounded border-2 border-muted cursor-pointer"
           />
-          <span className="text-sm muted font-mono">{colorInput}</span>
+          <Input
+            value={colorName}
+            onChange={(e) => setColorName(e.target.value)}
+            placeholder="Nombre del color (obligatorio)"
+            className="w-40"
+            onKeyPress={(e) =>
+              e.key === "Enter" && (e.preventDefault(), addColorFromPicker())
+            }
+          />
+          <span className="text-xs muted font-mono">{colorInput}</span>
           <Button
             type="button"
             onClick={addColorFromPicker}
             variant="outline"
             size="sm"
+            disabled={!colorName.trim()}
           >
             Agregar
           </Button>
         </div>
+        {!colorName.trim() && (
+          <p className="text-xs text-muted mt-1">
+            * El nombre del color es obligatorio
+          </p>
+        )}
       </div>
 
       {/* Input manual para nombres o hex */}

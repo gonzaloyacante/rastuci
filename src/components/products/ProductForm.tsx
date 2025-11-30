@@ -575,7 +575,7 @@ export default function ProductForm({
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <Package className="h-5 w-5" />
                 Dimensiones para Envío
-                <HelpTooltip text="Estas medidas son requeridas para calcular el costo de envío con Correo Argentino/OCA." />
+                <HelpTooltip text="Estas medidas son requeridas para calcular el costo de envío con Correo Argentino." />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">

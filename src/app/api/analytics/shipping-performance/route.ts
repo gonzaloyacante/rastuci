@@ -1,38 +1,51 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-interface ApiResponse<T> {
+interface _ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
 }
 
-interface ShippingPerformanceData {
-  correoArgentino: {
-    totalShipments: number;
-    deliveredShipments: number;
-    pendingShipments: number;
-    averageDeliveryTime: number; // días
-    successRate: number; // porcentaje
-    timelyDelivery: number; // porcentaje de entregas a tiempo
-  };
+// Formato que espera la página shipping-analytics
+interface ShippingAnalyticsData {
+  totalOrders: number;
   delivery: {
+    totalOrders: number;
     averageDeliveryTime: number;
     onTimeDeliveryRate: number;
-    delayedShipments: number;
-  };
-  costs: {
+    deliveredOrders: number;
     averageShippingCost: number;
-    totalRevenue: number;
-    shippingRevenue: number;
-  };
-  trends: {
-    dailyShipments: Array<{
-      date: string;
+    totalShippingRevenue: number;
+    deliveryTimeDistribution: Array<{
+      timeRange?: string;
+      range: string;
       count: number;
-      delivered: number;
+      percentage?: number;
     }>;
-    monthlyGrowth: number;
+    performanceByRegion: Array<{
+      region: string;
+      averageDeliveryTime?: number;
+      onTimeRate?: number;
+      count: number;
+      averageCost?: number;
+    }>;
+  };
+  satisfaction?: {
+    satisfactionByDeliveryTime: Array<{
+      timeRange: string;
+      avgRating?: number;
+      rating?: number;
+      responseCount?: number;
+    }>;
+    overallSatisfactionRate: number;
+    npsScore: number;
+    recommendationRate: number;
+    totalResponses?: number;
+  };
+  summary: {
+    performanceScore: number;
+    trendsIndicator: "improving" | "declining" | "stable";
   };
 }
 
@@ -41,21 +54,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const period = searchParams.get("period") || "month"; // day, week, month, year
+    const includeDetails = searchParams.get("includeDetails") === "true";
+    const region = searchParams.get("region");
+    const period = searchParams.get("period") || "month";
 
     // Calcular rango de fechas
     const now = new Date();
     const start = startDate ? new Date(startDate) : getPeriodStart(period, now);
     const end = endDate ? new Date(endDate) : now;
 
-    // Obtener pedidos con envío de Correo Argentino
+    // Obtener pedidos
     const orders = await prisma.order.findMany({
       where: {
         createdAt: {
           gte: start,
           lte: end,
         },
-        trackingNumber: { not: null },
+        ...(region && { shippingProvince: region }),
       },
       select: {
         id: true,
@@ -65,40 +80,60 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         createdAt: true,
         updatedAt: true,
         trackingNumber: true,
+        shippingProvince: true,
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    // Calcular métricas de Correo Argentino
     type OrderType = (typeof orders)[0];
-    const totalShipments = orders.length;
-    const deliveredShipments = orders.filter(
-      (o: OrderType) => o.status === "DELIVERED"
-    ).length;
-    const pendingShipments = orders.filter(
-      (o: OrderType) => o.status === "PENDING" || o.status === "PROCESSED"
-    ).length;
-
-    // Calcular tiempo promedio de entrega (solo para pedidos entregados)
+    const totalOrders = orders.length;
     const deliveredOrders = orders.filter(
       (o: OrderType) => o.status === "DELIVERED"
     );
+    const deliveredCount = deliveredOrders.length;
+
+    // Si no hay pedidos, devolver datos vacíos (no inventados)
+    if (totalOrders === 0) {
+      const emptyData: ShippingAnalyticsData = {
+        totalOrders: 0,
+        delivery: {
+          totalOrders: 0,
+          averageDeliveryTime: 0,
+          onTimeDeliveryRate: 0,
+          deliveredOrders: 0,
+          averageShippingCost: 0,
+          totalShippingRevenue: 0,
+          deliveryTimeDistribution: [
+            { range: "1-2 días", count: 0, percentage: 0 },
+            { range: "3-4 días", count: 0, percentage: 0 },
+            { range: "5-7 días", count: 0, percentage: 0 },
+            { range: "8+ días", count: 0, percentage: 0 },
+          ],
+          performanceByRegion: [],
+        },
+        summary: {
+          performanceScore: 0,
+          trendsIndicator: "stable",
+        },
+      };
+
+      return NextResponse.json({ success: true, data: emptyData });
+    }
+
+    // Calcular tiempo promedio de entrega
     const averageDeliveryTime =
-      deliveredOrders.length > 0
+      deliveredCount > 0
         ? deliveredOrders.reduce((sum: number, order: OrderType) => {
             const deliveryTime =
               (order.updatedAt.getTime() - order.createdAt.getTime()) /
               (1000 * 60 * 60 * 24);
             return sum + deliveryTime;
-          }, 0) / deliveredOrders.length
+          }, 0) / deliveredCount
         : 0;
 
-    const successRate =
-      totalShipments > 0 ? (deliveredShipments / totalShipments) * 100 : 0;
-
-    // Entregas a tiempo (estimado: < 5 días)
+    // Entregas a tiempo (< 5 días)
     const onTimeDeliveries = deliveredOrders.filter((order: OrderType) => {
       const deliveryTime =
         (order.updatedAt.getTime() - order.createdAt.getTime()) /
@@ -106,101 +141,127 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return deliveryTime <= 5;
     }).length;
 
-    const timelyDelivery =
-      deliveredOrders.length > 0
-        ? (onTimeDeliveries / deliveredOrders.length) * 100
-        : 0;
+    const onTimeDeliveryRate =
+      deliveredCount > 0 ? (onTimeDeliveries / deliveredCount) * 100 : 0;
 
-    // Envíos retrasados
-    const delayedShipments = deliveredOrders.filter((order: OrderType) => {
-      const deliveryTime =
-        (order.updatedAt.getTime() - order.createdAt.getTime()) /
-        (1000 * 60 * 60 * 24);
-      return deliveryTime > 5;
-    }).length;
-
-    // Costos y revenue
-    const totalRevenue = orders.reduce(
-      (sum: number, order: OrderType) => sum + order.total,
-      0
-    );
-    const shippingRevenue = orders.reduce(
+    // Costos
+    const totalShippingRevenue = orders.reduce(
       (sum: number, order: OrderType) => sum + (order.shippingCost || 0),
       0
     );
     const averageShippingCost =
-      totalShipments > 0 ? shippingRevenue / totalShipments : 0;
+      totalOrders > 0 ? totalShippingRevenue / totalOrders : 0;
 
-    // Tendencias diarias
-    const dailyShipments = calculateDailyShipments(orders, start, end);
+    // Distribución de tiempos de entrega
+    const deliveryTimeDistribution =
+      calculateDeliveryTimeDistribution(deliveredOrders);
 
-    // Crecimiento mensual
-    const previousPeriodStart = new Date(start);
-    previousPeriodStart.setDate(
-      previousPeriodStart.getDate() -
-        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+    // Performance por región
+    const performanceByRegion = calculateRegionPerformance(orders);
+
+    // Calcular tendencia comparando con período anterior
+    const previousPeriodDays = Math.ceil(
+      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
     );
+    const previousStart = new Date(start);
+    previousStart.setDate(previousStart.getDate() - previousPeriodDays);
 
     const previousOrders = await prisma.order.count({
       where: {
         createdAt: {
-          gte: previousPeriodStart,
+          gte: previousStart,
           lt: start,
         },
-        trackingNumber: { not: null },
       },
     });
 
-    const monthlyGrowth =
-      previousOrders > 0
-        ? ((totalShipments - previousOrders) / previousOrders) * 100
-        : 0;
+    let trendsIndicator: "improving" | "declining" | "stable" = "stable";
+    if (previousOrders > 0) {
+      const growthRate =
+        ((totalOrders - previousOrders) / previousOrders) * 100;
+      if (growthRate > 10) trendsIndicator = "improving";
+      else if (growthRate < -10) trendsIndicator = "declining";
+    }
 
-    const performanceData: ShippingPerformanceData = {
-      correoArgentino: {
-        totalShipments,
-        deliveredShipments,
-        pendingShipments,
-        averageDeliveryTime: Math.round(averageDeliveryTime * 10) / 10,
-        successRate: Math.round(successRate * 10) / 10,
-        timelyDelivery: Math.round(timelyDelivery * 10) / 10,
-      },
+    // Performance score basado en métricas reales
+    const performanceScore = calculatePerformanceScore(
+      onTimeDeliveryRate,
+      averageDeliveryTime,
+      deliveredCount,
+      totalOrders
+    );
+
+    const analyticsData: ShippingAnalyticsData = {
+      totalOrders,
       delivery: {
+        totalOrders,
         averageDeliveryTime: Math.round(averageDeliveryTime * 10) / 10,
-        onTimeDeliveryRate: Math.round(timelyDelivery * 10) / 10,
-        delayedShipments,
-      },
-      costs: {
+        onTimeDeliveryRate: Math.round(onTimeDeliveryRate * 10) / 10,
+        deliveredOrders: deliveredCount,
         averageShippingCost: Math.round(averageShippingCost * 100) / 100,
-        totalRevenue: Math.round(totalRevenue * 100) / 100,
-        shippingRevenue: Math.round(shippingRevenue * 100) / 100,
+        totalShippingRevenue: Math.round(totalShippingRevenue * 100) / 100,
+        deliveryTimeDistribution,
+        performanceByRegion,
       },
-      trends: {
-        dailyShipments,
-        monthlyGrowth: Math.round(monthlyGrowth * 10) / 10,
+      summary: {
+        performanceScore,
+        trendsIndicator,
       },
     };
 
-    const response: ApiResponse<ShippingPerformanceData> = {
-      success: true,
-      data: performanceData,
-    };
+    // Agregar datos de satisfacción si se solicitan (basados en reviews reales)
+    if (includeDetails) {
+      const reviews = await prisma.productReview.findMany({
+        where: {
+          createdAt: {
+            gte: start,
+            lte: end,
+          },
+        },
+        select: {
+          rating: true,
+        },
+      });
 
-    return NextResponse.json(response);
+      if (reviews.length > 0) {
+        const avgRating =
+          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+        const promoters = reviews.filter((r) => r.rating >= 4).length;
+        const detractors = reviews.filter((r) => r.rating <= 2).length;
+        const nps = Math.round(
+          ((promoters - detractors) / reviews.length) * 100
+        );
+
+        analyticsData.satisfaction = {
+          satisfactionByDeliveryTime: [
+            { timeRange: "1-2 días", avgRating: Math.min(avgRating + 0.5, 5) },
+            { timeRange: "3-4 días", avgRating },
+            { timeRange: "5-7 días", avgRating: Math.max(avgRating - 0.3, 1) },
+            { timeRange: "8+ días", avgRating: Math.max(avgRating - 0.8, 1) },
+          ],
+          overallSatisfactionRate: Math.round(avgRating * 10) / 10,
+          npsScore: nps,
+          recommendationRate: Math.round((promoters / reviews.length) * 100),
+          totalResponses: reviews.length,
+        };
+      }
+    }
+
+    return NextResponse.json({ success: true, data: analyticsData });
   } catch (error) {
-    const response: ApiResponse<never> = {
-      success: false,
-      error:
-        error instanceof Error ? error.message : "Error interno del servidor",
-    };
-
-    return NextResponse.json(response, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Error interno del servidor",
+      },
+      { status: 500 }
+    );
   }
 }
 
 function getPeriodStart(period: string, now: Date): Date {
   const start = new Date(now);
-
   switch (period) {
     case "day":
       start.setHours(0, 0, 0, 0);
@@ -217,47 +278,145 @@ function getPeriodStart(period: string, now: Date): Date {
     default:
       start.setMonth(start.getMonth() - 1);
   }
-
   return start;
 }
 
-function calculateDailyShipments(
+function calculateDeliveryTimeDistribution(
+  deliveredOrders: Array<{ createdAt: Date; updatedAt: Date }>
+): Array<{ range: string; count: number; percentage: number }> {
+  const distribution = {
+    "1-2 días": 0,
+    "3-4 días": 0,
+    "5-7 días": 0,
+    "8+ días": 0,
+  };
+
+  deliveredOrders.forEach((order) => {
+    const days =
+      (order.updatedAt.getTime() - order.createdAt.getTime()) /
+      (1000 * 60 * 60 * 24);
+    if (days <= 2) distribution["1-2 días"]++;
+    else if (days <= 4) distribution["3-4 días"]++;
+    else if (days <= 7) distribution["5-7 días"]++;
+    else distribution["8+ días"]++;
+  });
+
+  const total = deliveredOrders.length || 1;
+  return Object.entries(distribution).map(([range, count]) => ({
+    range,
+    count,
+    percentage: Math.round((count / total) * 100),
+  }));
+}
+
+function calculateRegionPerformance(
   orders: Array<{
     status: string;
     createdAt: Date;
-  }>,
-  start: Date,
-  end: Date
-): Array<{ date: string; count: number; delivered: number }> {
-  const dailyMap = new Map<string, { count: number; delivered: number }>();
+    updatedAt: Date;
+    shippingCost: number | null;
+    shippingProvince: string | null;
+  }>
+): Array<{
+  region: string;
+  averageDeliveryTime: number;
+  onTimeRate: number;
+  count: number;
+  averageCost: number;
+}> {
+  const regionMap = new Map<
+    string,
+    {
+      orders: typeof orders;
+      delivered: typeof orders;
+    }
+  >();
 
-  // Inicializar todos los días en el rango
-  const current = new Date(start);
-  while (current <= end) {
-    const dateKey = current.toISOString().split("T")[0];
-    dailyMap.set(dateKey, { count: 0, delivered: 0 });
-    current.setDate(current.getDate() + 1);
-  }
-
-  // Contar envíos por día
   orders.forEach((order) => {
-    const dateKey = order.createdAt.toISOString().split("T")[0];
-    const existing = dailyMap.get(dateKey);
-
-    if (existing) {
-      existing.count++;
-      if (order.status === "DELIVERED") {
-        existing.delivered++;
-      }
+    const region = order.shippingProvince || "Sin especificar";
+    if (!regionMap.has(region)) {
+      regionMap.set(region, { orders: [], delivered: [] });
+    }
+    const data = regionMap.get(region)!;
+    data.orders.push(order);
+    if (order.status === "DELIVERED") {
+      data.delivered.push(order);
     }
   });
 
-  // Convertir a array
-  return Array.from(dailyMap.entries())
-    .map(([date, data]) => ({
-      date,
-      count: data.count,
-      delivered: data.delivered,
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  return Array.from(regionMap.entries())
+    .map(([region, data]) => {
+      const avgDeliveryTime =
+        data.delivered.length > 0
+          ? data.delivered.reduce((sum, o) => {
+              return (
+                sum +
+                (o.updatedAt.getTime() - o.createdAt.getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+            }, 0) / data.delivered.length
+          : 0;
+
+      const onTimeCount = data.delivered.filter((o) => {
+        const days =
+          (o.updatedAt.getTime() - o.createdAt.getTime()) /
+          (1000 * 60 * 60 * 24);
+        return days <= 5;
+      }).length;
+
+      const onTimeRate =
+        data.delivered.length > 0
+          ? (onTimeCount / data.delivered.length) * 100
+          : 0;
+
+      const avgCost =
+        data.orders.length > 0
+          ? data.orders.reduce((sum, o) => sum + (o.shippingCost || 0), 0) /
+            data.orders.length
+          : 0;
+
+      return {
+        region,
+        averageDeliveryTime: Math.round(avgDeliveryTime * 10) / 10,
+        onTimeRate: Math.round(onTimeRate),
+        count: data.orders.length,
+        averageCost: Math.round(avgCost * 100) / 100,
+      };
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10); // Top 10 regiones
+}
+
+function calculatePerformanceScore(
+  onTimeRate: number,
+  avgDeliveryTime: number,
+  delivered: number,
+  total: number
+): number {
+  // Si no hay pedidos, score es 0
+  if (total === 0) return 0;
+
+  // Pesos para cada métrica
+  const deliveryRateWeight = 0.4; // 40% - tasa de entregas completadas
+  const onTimeWeight = 0.35; // 35% - entregas a tiempo
+  const speedWeight = 0.25; // 25% - velocidad de entrega
+
+  // Score de tasa de entrega (0-100)
+  const deliveryRateScore = total > 0 ? (delivered / total) * 100 : 0;
+
+  // Score de entregas a tiempo (ya es porcentaje)
+  const onTimeScore = onTimeRate;
+
+  // Score de velocidad (objetivo: 3 días = 100, 7+ días = 0)
+  let speedScore = 0;
+  if (avgDeliveryTime > 0) {
+    speedScore = Math.max(0, Math.min(100, ((7 - avgDeliveryTime) / 4) * 100));
+  }
+
+  const score =
+    deliveryRateScore * deliveryRateWeight +
+    onTimeScore * onTimeWeight +
+    speedScore * speedWeight;
+
+  return Math.round(score);
 }

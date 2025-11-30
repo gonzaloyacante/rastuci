@@ -5,6 +5,7 @@ import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import EmptyState from "@/components/ui/EmptyState";
 import QuantityButton from "@/components/ui/QuantityButton";
 import { useCart } from "@/context/CartContext";
+import { useShippingSettings } from "@/hooks/useShippingSettings";
 import { logger } from "@/lib/logger";
 import { formatPriceARS } from "@/utils/formatters";
 import { AlertCircle, Check, ShoppingCart, Trash2, X } from "lucide-react";
@@ -169,13 +170,19 @@ const OrderSummary = ({
   itemCount,
   onCheckout,
   isLoading,
+  shippingSettings,
 }: {
   total: number;
   itemCount: number;
   onCheckout: () => void;
   isLoading: boolean;
+  shippingSettings: {
+    freeShipping: boolean;
+    freeShippingLabel: string;
+    freeShippingDescription: string;
+  };
 }) => {
-  const shipping = 0; // Envío gratis
+  const shipping = shippingSettings.freeShipping ? 0 : 0; // Si no es gratis, calcular costo
   const finalTotal = total + shipping;
 
   return (
@@ -191,10 +198,14 @@ const OrderSummary = ({
         </div>
         <div className="flex justify-between text-sm">
           <span>Envío</span>
-          <span className="text-success flex items-center gap-1">
-            <Check size={14} />
-            Gratis
-          </span>
+          {shippingSettings.freeShipping ? (
+            <span className="text-success flex items-center gap-1">
+              <Check size={14} />
+              Gratis
+            </span>
+          ) : (
+            <span>{formatPriceARS(shipping)}</span>
+          )}
         </div>
         <div className="border-t border-muted my-4"></div>
         <div className="flex justify-between font-bold text-xl">
@@ -216,7 +227,9 @@ const OrderSummary = ({
       </Button>
 
       <div className="text-xs muted text-center space-y-1">
-        <p>Envío gratis a todo el país</p>
+        {shippingSettings.freeShipping && (
+          <p>{shippingSettings.freeShippingDescription}</p>
+        )}
         <p>Pago seguro con MercadoPago</p>
       </div>
     </div>
@@ -233,6 +246,7 @@ export default function CartPageClient() {
     getItemCount,
     clearCart,
   } = useCart();
+  const { shipping } = useShippingSettings();
 
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const { confirm, ConfirmDialog } = useConfirmDialog();
@@ -352,6 +366,7 @@ export default function CartPageClient() {
               itemCount={itemCount}
               onCheckout={handleCheckout}
               isLoading={isCheckingOut}
+              shippingSettings={shipping}
             />
           </div>
         </div>
