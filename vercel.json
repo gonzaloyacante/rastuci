@@ -1,7 +1,7 @@
 {
   "functions": {
     "app/api/**/*.js": {
-      "maxDuration": 30
+      "maxDuration": 10
     }
   },
   "buildCommand": "prisma generate && next build",
@@ -12,7 +12,7 @@
   "crons": [
     {
       "path": "/api/cron/tracking-notifications",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 9 * * *"
     }
   ]
 }
