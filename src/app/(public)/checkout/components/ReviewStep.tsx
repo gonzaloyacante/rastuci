@@ -257,49 +257,44 @@ export default function ReviewStep({
 
         {/* Botones */}
         <div className="flex justify-between mt-6 md:mt-8">
-          <Button onClick={onBack} variant="outline">
-            <ChevronLeft className="mr-2" size={16} />
+          <Button
+            onClick={onBack}
+            variant="outline"
+            leftIcon={<ChevronLeft size={16} />}
+          >
             Volver
           </Button>
           <Button
             onClick={onPlaceOrder}
             disabled={isSubmitting}
             className="btn-hero relative overflow-hidden"
+            leftIcon={
+              !isSubmitting ? (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                  />
+                </svg>
+              ) : undefined
+            }
+            rightIcon={!isSubmitting ? <ChevronRight size={16} /> : undefined}
+            loading={isSubmitting}
           >
-            {isSubmitting ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>
-                  {selectedPaymentMethod?.id === "mercadopago"
-                    ? "Procesando con MercadoPago..."
-                    : "Procesando pedido..."}
-                </span>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center">
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                    />
-                  </svg>
-                  <span>
-                    {selectedPaymentMethod?.id === "mercadopago"
-                      ? "Pagar con MercadoPago"
-                      : "Finalizar compra (Pago en efectivo y retiro)"}
-                  </span>
-                  <ChevronRight className="ml-2" size={16} />
-                </div>
-              </>
-            )}
+            {isSubmitting
+              ? selectedPaymentMethod?.id === "mercadopago"
+                ? "Procesando con MercadoPago..."
+                : "Procesando pedido..."
+              : selectedPaymentMethod?.id === "mercadopago"
+                ? "Pagar con MercadoPago"
+                : "Finalizar compra (Pago en efectivo y retiro)"}
           </Button>
         </div>
       </div>

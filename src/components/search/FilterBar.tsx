@@ -1,7 +1,7 @@
-import React from "react";
-import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { Filter, RotateCcw } from "lucide-react";
+import React from "react";
 
 export interface FilterOption {
   value: string;
@@ -112,7 +112,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 bg-surface-secondary rounded-lg ${className}`}>
+      className={`flex items-center gap-4 p-4 bg-surface-secondary rounded-lg ${className}`}
+    >
       <div className="flex items-center gap-2 text-content-secondary">
         <Filter className="h-4 w-4" />
         <span className="text-sm font-medium">Filtros:</span>
@@ -134,8 +135,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           variant="outline"
           size="sm"
           onClick={onReset}
-          className="ml-auto">
-          <RotateCcw className="h-4 w-4 mr-2" />
+          className="ml-auto"
+          leftIcon={<RotateCcw className="h-4 w-4" />}
+        >
           Limpiar
         </Button>
       )}

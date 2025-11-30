@@ -8,17 +8,27 @@ import {
 import useSWR from "swr";
 
 const fetcher = async (url: string): Promise<ShippingSettings> => {
-  const res = await fetch(url);
-  const json = await res.json();
+  try {
+    const res = await fetch(url);
 
-  if (json?.success && json.data) {
-    const parsed = ShippingSettingsSchema.safeParse(json.data);
-    if (parsed.success) {
-      return parsed.data;
+    // Si es 404 u otro error, usar defaults
+    if (!res.ok) {
+      return defaultShippingSettings;
     }
-  }
 
-  return defaultShippingSettings;
+    const json = await res.json();
+
+    if (json?.success && json.data) {
+      const parsed = ShippingSettingsSchema.safeParse(json.data);
+      if (parsed.success) {
+        return parsed.data;
+      }
+    }
+
+    return defaultShippingSettings;
+  } catch {
+    return defaultShippingSettings;
+  }
 };
 
 export function useShippingSettings() {

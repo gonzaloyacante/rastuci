@@ -176,6 +176,30 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
                 <p className="text-error text-xs mt-1">{errors.email}</p>
               )}
             </div>
+
+            {/* Teléfono */}
+            <div className="col-span-2 md:col-span-1">
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium muted mb-1"
+              >
+                Teléfono *
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className={`w-full p-3 border rounded-md ${
+                  errors.phone ? "border-error" : "border-muted"
+                }`}
+                placeholder="Ej: 11 1234-5678"
+              />
+              {errors.phone && (
+                <p className="text-error text-xs mt-1">{errors.phone}</p>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Dirección */}
@@ -300,9 +324,12 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
           </div>
 
           <div className="flex justify-end mt-8">
-            <Button type="submit" className="btn-hero">
+            <Button
+              type="submit"
+              className="btn-hero"
+              rightIcon={<ChevronRight size={16} />}
+            >
               Continuar
-              <ChevronRight className="ml-2" size={16} />
             </Button>
           </div>
         </form>

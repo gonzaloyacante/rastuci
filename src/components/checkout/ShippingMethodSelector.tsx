@@ -1,5 +1,3 @@
-import { Label } from "@/components/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Building2, Home, Store } from "lucide-react";
 
 export type DeliveryMode = "home" | "agency" | "pickup";
@@ -9,81 +7,74 @@ interface ShippingMethodSelectorProps {
   onChange: (value: DeliveryMode) => void;
 }
 
+const deliveryOptions: {
+  id: DeliveryMode;
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}[] = [
+  {
+    id: "home",
+    icon: Home,
+    title: "Envío a Domicilio",
+    description: "Recibí tu pedido en tu casa",
+  },
+  {
+    id: "agency",
+    icon: Building2,
+    title: "Retiro en Correo",
+    description: "Sucursal Correo Argentino",
+  },
+  {
+    id: "pickup",
+    icon: Store,
+    title: "Retiro en Local",
+    description: "Gratis en nuestro local",
+  },
+];
+
 export function ShippingMethodSelector({
   value,
   onChange,
 }: ShippingMethodSelectorProps) {
   return (
     <div className="space-y-4">
-      <Label className="text-base font-semibold">Método de entrega</Label>
-      <RadioGroup
-        value={value}
-        onValueChange={(v) => onChange(v as DeliveryMode)}
-        className="grid grid-cols-1 md:grid-cols-3 gap-4"
-      >
-        {/* Envío a Domicilio */}
-        <div>
-          <RadioGroupItem
-            value="home"
-            id="delivery-home"
-            className="peer sr-only"
-          />
-          <Label
-            htmlFor="delivery-home"
-            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
-          >
-            <Home className="mb-3 h-6 w-6" />
-            <div className="text-center">
-              <span className="block font-semibold">Envío a Domicilio</span>
-              <span className="text-sm text-muted-foreground">
-                Recibí tu pedido en tu casa
-              </span>
-            </div>
-          </Label>
-        </div>
+      <label className="text-base font-semibold text-primary">
+        Método de entrega
+      </label>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {deliveryOptions.map((option) => {
+          const Icon = option.icon;
+          const isSelected = value === option.id;
 
-        {/* Retiro en Sucursal CA */}
-        <div>
-          <RadioGroupItem
-            value="agency"
-            id="delivery-agency"
-            className="peer sr-only"
-          />
-          <Label
-            htmlFor="delivery-agency"
-            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
-          >
-            <Building2 className="mb-3 h-6 w-6" />
-            <div className="text-center">
-              <span className="block font-semibold">Retiro en Correo</span>
-              <span className="text-sm text-muted-foreground">
-                Sucursal Correo Argentino
-              </span>
-            </div>
-          </Label>
-        </div>
-
-        {/* Retiro en Tienda */}
-        <div>
-          <RadioGroupItem
-            value="pickup"
-            id="delivery-pickup"
-            className="peer sr-only"
-          />
-          <Label
-            htmlFor="delivery-pickup"
-            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
-          >
-            <Store className="mb-3 h-6 w-6" />
-            <div className="text-center">
-              <span className="block font-semibold">Retiro en Local</span>
-              <span className="text-sm text-muted-foreground">
-                Gratis en nuestro local
-              </span>
-            </div>
-          </Label>
-        </div>
-      </RadioGroup>
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => onChange(option.id)}
+              className={`flex flex-col items-center justify-center rounded-md border-2 p-4 transition-all cursor-pointer h-full ${
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-muted bg-popover hover:bg-accent hover:border-primary/50"
+              }`}
+            >
+              <Icon
+                className={`mb-3 h-6 w-6 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+              />
+              <div className="text-center">
+                <span
+                  className={`block font-semibold ${isSelected ? "text-primary" : ""}`}
+                >
+                  {option.title}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {option.description}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

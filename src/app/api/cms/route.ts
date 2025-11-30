@@ -1,8 +1,14 @@
 import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { defaultShippingSettings } from "@/lib/validation/shipping";
 import type { ApiResponse } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
+
+// Valores por defecto para keys específicas
+const DEFAULT_VALUES: Record<string, unknown> = {
+  shipping: defaultShippingSettings,
+};
 
 // GET /api/cms - Obtener configuración CMS
 export async function GET(request: NextRequest) {
@@ -16,7 +22,15 @@ export async function GET(request: NextRequest) {
         where: { key },
       });
 
+      // Si no existe, devolver valores por defecto si los hay
       if (!setting) {
+        if (DEFAULT_VALUES[key]) {
+          return NextResponse.json<ApiResponse<unknown>>({
+            success: true,
+            message: "Configuración por defecto",
+            data: DEFAULT_VALUES[key],
+          });
+        }
         return NextResponse.json<ApiResponse<null>>(
           {
             success: false,

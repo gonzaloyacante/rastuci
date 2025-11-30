@@ -1,5 +1,5 @@
-import React from "react";
 import { cn } from "@/lib/utils";
+import React from "react";
 import { Spinner } from "./Spinner";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -38,18 +38,23 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const base =
-      "inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transform hover:scale-105 hover:shadow-lg";
+      "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transform hover:scale-105 hover:shadow-lg";
 
     const variants = {
       primary: "btn-primary hover:bg-primary/90 hover:shadow-primary/30", // uses var(--color-primary)
-      secondary: "surface text-primary hover-surface hover:shadow-md hover:border-primary/50",
+      secondary:
+        "surface text-primary hover-surface hover:shadow-md hover:border-primary/50",
       // Include btn-* aliases to satisfy tests expecting utility classes
-      outline: "surface border border-primary text-primary hover-surface btn-outline hover:bg-primary/5 hover:shadow-md",
-      ghost: "bg-transparent text-primary hover-surface btn-ghost hover:bg-primary/10",
-      destructive: "surface border border-error text-error hover-surface btn-destructive hover:bg-error/5 hover:shadow-error/30",
+      outline:
+        "surface border border-primary text-primary hover-surface btn-outline hover:bg-primary/5 hover:shadow-md",
+      ghost:
+        "bg-transparent text-primary hover-surface btn-ghost hover:bg-primary/10",
+      destructive:
+        "surface border border-error text-error hover-surface btn-destructive hover:bg-error/5 hover:shadow-error/30",
       hero: "btn-hero uppercase hover:shadow-primary/40",
       product: "btn-product uppercase hover:shadow-primary/30",
-      category: "surface text-primary border border-muted hover-surface hover:border-primary/50 hover:shadow-md",
+      category:
+        "surface text-primary border border-muted hover-surface hover:border-primary/50 hover:shadow-md",
     } as const;
 
     const sizes = {
@@ -83,13 +88,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-disabled={props.disabled ? "true" : undefined}
         aria-busy={loading ? "true" : undefined}
         disabled={props.disabled || loading}
-        {...props}>
-        <span className="flex items-center gap-2">
-          {loading && <Spinner size="sm" ariaLabel="Cargando" />}
-          {!loading && leftIcon}
-          <span>{loading ? "Cargando..." : children}</span>
-          {!loading && rightIcon}
-        </span>
+        {...props}
+      >
+        {loading && <Spinner size="sm" ariaLabel="Cargando" />}
+        {!loading && leftIcon}
+        {loading ? "Cargando..." : children}
+        {!loading && rightIcon}
       </button>
     );
   }

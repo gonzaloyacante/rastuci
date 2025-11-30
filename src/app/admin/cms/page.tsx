@@ -220,10 +220,9 @@ export default function CMSPage() {
             <h3 className="font-semibold mb-2">Configuración de Envío</h3>
             <pre className="text-xs p-3 bg-black/5 dark:bg-white/5 rounded overflow-x-auto">
               {`{
-  "freeShipping": true,
-  "freeShippingMinAmount": 0,
-  "freeShippingLabel": "Envío gratis",
-  "freeShippingDescription": "Envío gratis a todo el país"
+  "shippingLabel": "Envío",
+  "shippingDescription": "Envío a todo el país",
+  "estimatedDelivery": "3-5 días hábiles"
 }`}
             </pre>
           </div>

@@ -2,11 +2,17 @@ import { cn } from "@/lib/utils";
 import { Circle } from "lucide-react";
 import * as React from "react";
 
+// Context para pasar valor y handler a los items
+interface RadioGroupContextValue {
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+const RadioGroupContext = React.createContext<RadioGroupContextValue>({});
+
 interface RadioGroupItemProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
-  checked?: boolean;
-  onCheckedChange?: () => void;
 }
 
 const RadioGroup = React.forwardRef<
@@ -16,25 +22,21 @@ const RadioGroup = React.forwardRef<
     onValueChange?: (value: string) => void;
   }
 >(({ className, value, onValueChange, children, ...props }, ref) => {
-  // Context to pass value and change handler to items
   return (
-    <div className={cn("grid gap-2", className)} {...props} ref={ref}>
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement<RadioGroupItemProps>(child)) {
-          return React.cloneElement(child, {
-            checked: child.props.value === value,
-            onCheckedChange: () => onValueChange?.(child.props.value),
-          });
-        }
-        return child;
-      })}
-    </div>
+    <RadioGroupContext.Provider value={{ value, onValueChange }}>
+      <div className={cn("grid gap-2", className)} {...props} ref={ref}>
+        {children}
+      </div>
+    </RadioGroupContext.Provider>
   );
 });
 RadioGroup.displayName = "RadioGroup";
 
 const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
-  ({ className, value, checked, onCheckedChange, ...props }, ref) => {
+  ({ className, value, ...props }, ref) => {
+    const context = React.useContext(RadioGroupContext);
+    const checked = context.value === value;
+
     return (
       <button
         type="button"
@@ -46,7 +48,7 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
           "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
-        onClick={onCheckedChange}
+        onClick={() => context.onValueChange?.(value)}
         ref={ref}
         {...props}
       >

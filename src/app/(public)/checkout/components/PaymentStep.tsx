@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { ChevronRight, ChevronLeft } from "lucide-react";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
+import { Button } from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 interface PaymentStepProps {
   onNext: () => void;
@@ -54,7 +54,7 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
             name: "Efectivo - Retiro en Local",
             icon: "dollar-sign",
             description: "Retiro y pago en efectivo",
-          },
+          }
     );
 
     onNext();
@@ -99,17 +99,17 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
             onClick={onBack}
             variant="outline"
             className="surface text-primary hover:brightness-95"
+            leftIcon={<ChevronLeft size={16} />}
           >
-            <ChevronLeft className="mr-2" size={16} />
             Volver
           </Button>
           <Button
             onClick={handleContinue}
             disabled={!selectedPaymentMethodLocal}
             className="btn-hero"
+            rightIcon={<ChevronRight size={16} />}
           >
             Continuar
-            <ChevronRight className="ml-2" size={16} />
           </Button>
         </div>
       </div>

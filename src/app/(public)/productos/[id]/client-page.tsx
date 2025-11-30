@@ -466,12 +466,12 @@ export default function ProductDetailClient({
 
             {/* Beneficios */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-muted">
-              {shipping.freeShipping && (
-                <div className="flex items-center space-x-2">
-                  <Truck className="w-5 h-5 text-primary" />
-                  <span className="text-sm">{shipping.freeShippingLabel}</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-2">
+                <Truck className="w-5 h-5 text-primary" />
+                <span className="text-sm">
+                  {shipping.estimatedDelivery || "Envío a todo el país"}
+                </span>
+              </div>
               <div className="flex items-center space-x-2">
                 <ShieldCheck className="w-5 h-5 text-primary" />
                 <span className="text-sm">Garantía</span>

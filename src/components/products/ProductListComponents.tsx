@@ -193,15 +193,15 @@ export function CategoryButtons({
   onSelect,
 }: CategoryButtonsProps) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {options.map((category) => (
         <button
           key={category.value}
           onClick={() => onSelect(category.value)}
-          className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 text-sm border ${
+          className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
             selected === category.value
-              ? "bg-primary text-white border-primary"
-              : "surface border-transparent hover:border-primary hover:text-primary hover:bg-primary/10"
+              ? "bg-primary text-white shadow-sm"
+              : "text-gray-900 dark:text-gray-300 hover:bg-pink-50 dark:hover:bg-pink-900/20 hover:text-primary"
           }`}
         >
           {category.label}
@@ -245,7 +245,7 @@ export function FilterSidebar({
   onClearFilters,
 }: FilterSidebarProps) {
   return (
-    <div className="sticky top-24 surface border border-muted rounded-lg p-6">
+    <div className="surface border border-muted rounded-lg p-6">
       <h2 className="text-lg font-semibold text-primary mb-6">Filtros</h2>
 
       {/* Búsqueda */}

@@ -400,16 +400,17 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               variant="outline"
               className="flex-1"
               onClick={() => onEdit(product.id)}
+              leftIcon={<Edit className="h-4 w-4" />}
             >
-              <Edit className="h-4 w-4 mr-2" />
               Editar
             </Button>
             <Button
               size="sm"
               variant="destructive"
               onClick={() => onDelete(product.id)}
+              leftIcon={<Trash2 className="h-4 w-4" />}
             >
-              <Trash2 className="h-4 w-4" />
+              Eliminar
             </Button>
           </div>
         </div>

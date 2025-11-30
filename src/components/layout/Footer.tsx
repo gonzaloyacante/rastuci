@@ -13,28 +13,33 @@ export default function Footer({ home }: FooterProps) {
   const logoUrl = footer.logoUrl;
 
   return (
-    <footer className="surface pt-12 pb-8 px-6 border-t border-muted">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-5 gap-6">
-        <div>
+    <footer className="surface pt-10 pb-6 px-4 border-t border-muted overflow-hidden">
+      <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+        {/* Marca */}
+        <div className="col-span-2 md:col-span-1">
           {logoUrl ? (
-            <Link href="/" className="block mb-4">
+            <Link href="/" className="block mb-3">
               <Image
                 src={logoUrl}
                 alt={footer.brand}
-                width={150}
-                height={40}
-                className="h-10 w-auto dark:invert"
+                width={120}
+                height={32}
+                className="h-8 w-auto dark:invert"
               />
             </Link>
           ) : (
-            <h3 className="text-2xl font-bold text-primary mb-4 font-heading">
+            <h3 className="text-xl font-bold text-primary mb-3 font-heading">
               {footer.brand}
             </h3>
           )}
-          <p className="text-sm muted">{footer.tagline}</p>
+          <p className="text-sm muted leading-relaxed">{footer.tagline}</p>
         </div>
+
+        {/* Navegación */}
         <div>
-          <h4 className="font-bold text-lg mb-4 font-heading">Navegación</h4>
+          <h4 className="font-semibold text-sm mb-3 font-heading">
+            Navegación
+          </h4>
           <ul className="space-y-2 text-sm">
             <li>
               <Link
@@ -62,14 +67,13 @@ export default function Footer({ home }: FooterProps) {
             </li>
           </ul>
         </div>
+
+        {/* Contacto + Redes */}
         <div>
-          <h4 className="font-bold text-lg mb-4 font-heading">Contacto</h4>
-          <p className="text-sm muted">{footer.email}</p>
-          <p className="text-sm muted">{footer.phone}</p>
-        </div>
-        <div>
-          <h4 className="font-bold text-lg mb-4 font-heading">Seguinos</h4>
-          <div className="flex space-x-4">
+          <h4 className="font-semibold text-sm mb-3 font-heading">Contacto</h4>
+          <p className="text-sm muted mb-1">{footer.email}</p>
+          <p className="text-sm muted mb-4">{footer.phone}</p>
+          <div className="flex space-x-3">
             {footer.socialLinks.instagram && (
               <Link
                 href={footer.socialLinks.instagram}
@@ -78,7 +82,7 @@ export default function Footer({ home }: FooterProps) {
                 rel="noopener noreferrer"
                 aria-label="Síguenos en Instagram"
               >
-                <Instagram size={20} aria-hidden="true" />
+                <Instagram size={18} aria-hidden="true" />
               </Link>
             )}
             {footer.socialLinks.facebook && (
@@ -89,7 +93,7 @@ export default function Footer({ home }: FooterProps) {
                 rel="noopener noreferrer"
                 aria-label="Síguenos en Facebook"
               >
-                <Facebook size={20} aria-hidden="true" />
+                <Facebook size={18} aria-hidden="true" />
               </Link>
             )}
             {footer.socialLinks.twitter && (
@@ -100,17 +104,19 @@ export default function Footer({ home }: FooterProps) {
                 rel="noopener noreferrer"
                 aria-label="Síguenos en Twitter"
               >
-                <Twitter size={20} aria-hidden="true" />
+                <Twitter size={18} aria-hidden="true" />
               </Link>
             )}
           </div>
         </div>
+
+        {/* Tema */}
         <div>
-          <h4 className="font-bold text-lg mb-4 font-heading">Tema</h4>
+          <h4 className="font-semibold text-sm mb-3 font-heading">Tema</h4>
           <ThemeToggle variant="full" />
         </div>
       </div>
-      <div className="border-t border-muted mt-8 pt-6 text-center text-sm muted">
+      <div className="border-t border-muted mt-6 pt-4 text-center text-xs muted">
         <p>
           &copy; {new Date().getFullYear()} Rastući. Todos los derechos
           reservados.

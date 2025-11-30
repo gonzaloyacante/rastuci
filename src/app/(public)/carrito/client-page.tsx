@@ -104,8 +104,8 @@ const CartItemComponent = ({
           src={imageUrl}
           alt={item.product.name}
           fill
+          sizes="96px"
           className="object-cover rounded-md"
-          priority
         />
         {isLowStock && (
           <div className="absolute -top-2 -right-2 bg-warning text-warning-foreground rounded-full p-1">

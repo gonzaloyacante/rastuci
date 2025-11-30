@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useCart, BillingOption, CustomerInfo } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
-import { Check, FileText, ChevronRight } from "lucide-react";
+import { BillingOption, CustomerInfo, useCart } from "@/context/CartContext";
+import { Check, ChevronRight, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface BillingStepProps {
   onNext: () => void;
@@ -105,7 +105,8 @@ export default function BillingStep({ onNext }: BillingStepProps) {
                   ? "border-primary surface"
                   : "border-muted surface hover:border-primary"
               }`}
-              onClick={() => handleSelectBilling(option)}>
+              onClick={() => handleSelectBilling(option)}
+            >
               <div className="flex justify-between items-center">
                 <div className="flex items-start gap-3">
                   <FileText
@@ -119,9 +120,7 @@ export default function BillingStep({ onNext }: BillingStepProps) {
                   <div>
                     <h3 className="font-semibold text-lg">{option.name}</h3>
                     {option.requiresDocument && (
-                      <p className="muted text-sm">
-                        Requiere documento fiscal
-                      </p>
+                      <p className="muted text-sm">Requiere documento fiscal</p>
                     )}
                   </div>
                 </div>
@@ -145,7 +144,8 @@ export default function BillingStep({ onNext }: BillingStepProps) {
               <div>
                 <label
                   htmlFor="documentType"
-                  className="block text-sm font-medium muted mb-1">
+                  className="block text-sm font-medium muted mb-1"
+                >
                   Tipo de Documento *
                 </label>
                 <select
@@ -153,7 +153,8 @@ export default function BillingStep({ onNext }: BillingStepProps) {
                   name="documentType"
                   value={documentInfo.documentType}
                   onChange={handleDocumentChange}
-                  className="w-full p-3 border border-muted rounded-md">
+                  className="w-full p-3 border border-muted rounded-md"
+                >
                   <option value="">Seleccionar tipo</option>
                   <option value="DNI">DNI</option>
                   <option value="CUIT">CUIT</option>
@@ -165,7 +166,8 @@ export default function BillingStep({ onNext }: BillingStepProps) {
               <div>
                 <label
                   htmlFor="documentNumber"
-                  className="block text-sm font-medium muted mb-1">
+                  className="block text-sm font-medium muted mb-1"
+                >
                   Número de Documento *
                 </label>
                 <input
@@ -194,9 +196,10 @@ export default function BillingStep({ onNext }: BillingStepProps) {
           <Button
             onClick={handleContinue}
             disabled={!selectedBillingOption}
-            className="btn-hero">
+            className="btn-hero"
+            rightIcon={<ChevronRight size={16} />}
+          >
             Continuar
-            <ChevronRight className="ml-2" size={16} />
           </Button>
         </div>
       </div>

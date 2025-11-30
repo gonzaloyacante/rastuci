@@ -45,7 +45,7 @@ export default function CheckoutPageClient() {
 
   // Calculate totals
   const subtotal = useMemo(() => getCartTotal(), [getCartTotal]);
-  const shippingCost = shippingSettings.freeShipping ? 0 : 0; // Si no es gratis, calcular costo
+  const shippingCost = 0; // El costo de envío se calcula en el paso de envío
   const total = useMemo(
     () => subtotal + shippingCost,
     [subtotal, shippingCost]
@@ -230,7 +230,7 @@ export default function CheckoutPageClient() {
               <span>
                 {shippingSettings.freeShipping
                   ? shippingSettings.freeShippingLabel
-                  : "Envío calculado"}
+                  : shippingSettings.estimatedDelivery}
               </span>
             </div>
             <div className="flex items-center gap-2">

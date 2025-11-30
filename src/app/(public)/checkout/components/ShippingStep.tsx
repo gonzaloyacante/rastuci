@@ -18,7 +18,57 @@ import {
   Store,
   Truck,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+
+// ============================================================================
+// HELPER FUNCTIONS (fuera del componente)
+// ============================================================================
+
+/** Crear opciones de envío de fallback */
+function createFallbackShippingOptions(type: "D" | "S"): ShippingOption[] {
+  if (type === "D") {
+    return [
+      {
+        id: "standard-home",
+        name: "Envío Estándar a Domicilio",
+        description: "Correo Argentino - Entrega en tu domicilio",
+        price: 4500,
+        estimatedDays: "5-7 días hábiles",
+      },
+      {
+        id: "express-home",
+        name: "Envío Express a Domicilio",
+        description: "Correo Argentino - Entrega rápida",
+        price: 7000,
+        estimatedDays: "2-3 días hábiles",
+      },
+    ];
+  }
+  return [
+    {
+      id: "standard-agency",
+      name: "Envío a Sucursal",
+      description: "Retirá en la sucursal de Correo Argentino",
+      price: 3500,
+      estimatedDays: "5-7 días hábiles",
+    },
+  ];
+}
+
+/** Crear opción de retiro en local */
+function createPickupOption(): ShippingOption {
+  return {
+    id: "pickup",
+    name: "Retiro en Local",
+    description: "Gratis en nuestro local",
+    price: 0,
+    estimatedDays: "Inmediato",
+  };
+}
+
+// ============================================================================
+// COMPONENTE PRINCIPAL
+// ============================================================================
 
 interface ShippingStepProps {
   onNext: () => void;
@@ -31,10 +81,6 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     selectedShippingOption,
     setSelectedShippingOption,
     calculateShippingCost,
-    // availableShippingOptions is from CartContext but not used directly here
-    // It's kept in destructuring for potential future use
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    availableShippingOptions,
     selectedPaymentMethod,
     selectedAgency,
     setSelectedAgency,
@@ -46,89 +92,92 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("home");
 
-  // Efecto para limpiar agencia seleccionada si cambia el modo
+  // ============================================================================
+  // EFECTOS
+  // ============================================================================
+
+  // Limpiar agencia seleccionada si cambia el modo
   useEffect(() => {
     if (deliveryMode !== "agency") {
       setSelectedAgency(null);
     }
   }, [deliveryMode, setSelectedAgency]);
 
-  // Calcular costos de envío
-  const calculateShipping = useCallback(async () => {
-    if (!customerInfo?.postalCode) {
+  // Autoseleccionar opción de pickup cuando se selecciona ese modo
+  useEffect(() => {
+    if (deliveryMode === "pickup") {
+      const pickupOption = createPickupOption();
+      setShippingOptions([pickupOption]);
+      setSelectedShippingOption(pickupOption);
+      setError(null);
+    }
+  }, [deliveryMode, setSelectedShippingOption]);
+
+  // Calcular costos de envío - solo cuando cambia el modo, CP o agencia seleccionada
+  useEffect(() => {
+    // Si es retiro en tienda (local), ya se maneja en otro useEffect
+    if (deliveryMode === "pickup") {
       return;
     }
 
-    // Si es retiro en tienda (local), mostrar opción estática
-    if (deliveryMode === "pickup") {
-      const pickupOption: ShippingOption = {
-        id: "pickup",
-        name: "Retiro en Local",
-        description: "Gratis en nuestro local",
-        price: 0,
-        estimatedDays: "Inmediato",
-      };
-      setShippingOptions([pickupOption]);
+    // Si no hay código postal, no calcular
+    if (!customerInfo?.postalCode) {
+      setError("Se requiere código postal para calcular el envío");
       return;
     }
 
     // Si es agencia pero no hay agencia seleccionada, no calcular aún
     if (deliveryMode === "agency" && !selectedAgency) {
       setShippingOptions([]);
+      setError(null);
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    const fetchShippingOptions = async () => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const type = deliveryMode === "agency" ? "S" : "D";
-      // Usar la función del contexto que ya maneja la API
-      const options = await calculateShippingCost(
-        customerInfo.postalCode,
-        type
-      );
+      try {
+        const type = deliveryMode === "agency" ? "S" : "D";
+        const options = await calculateShippingCost(
+          customerInfo.postalCode,
+          type
+        );
 
-      if (options.length > 0) {
-        setShippingOptions(options);
-        // Seleccionar la primera opción por defecto si no hay una seleccionada o si la seleccionada no está en las nuevas opciones
-        if (
-          !selectedShippingOption ||
-          !options.find((o) => o.id === selectedShippingOption.id)
-        ) {
+        if (options && options.length > 0) {
+          setShippingOptions(options);
+          // Seleccionar la primera opción automáticamente
           setSelectedShippingOption(options[0]);
+        } else {
+          // Usar fallback si no hay opciones
+          const fallbackOptions = createFallbackShippingOptions(type);
+          setShippingOptions(fallbackOptions);
+          setSelectedShippingOption(fallbackOptions[0]);
         }
-      } else {
-        setError("No se encontraron opciones de envío para esta ubicación.");
-        setShippingOptions([]);
+      } catch (err) {
+        logger.error("Error al calcular envío:", { err });
+        // En caso de error, usar opciones de fallback
+        const type = deliveryMode === "agency" ? "S" : "D";
+        const fallbackOptions = createFallbackShippingOptions(type);
+        setShippingOptions(fallbackOptions);
+        setSelectedShippingOption(fallbackOptions[0]);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      logger.error("Error al calcular envío:", { error });
-      setError("Error al calcular el costo de envío. Intenta nuevamente.");
-      setShippingOptions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    customerInfo?.postalCode,
-    deliveryMode,
-    selectedAgency,
-    calculateShippingCost,
-    setSelectedShippingOption,
-    selectedShippingOption,
-  ]);
+    };
 
-  // Recalcular cuando cambian las dependencias relevantes
-  useEffect(() => {
-    calculateShipping();
-  }, [calculateShipping]);
+    fetchShippingOptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerInfo?.postalCode, deliveryMode, selectedAgency]);
 
-  // Manejar selección de opción de envío
+  // ============================================================================
+  // HANDLERS
+  // ============================================================================
+
   const handleSelectOption = (option: ShippingOption) => {
     setSelectedShippingOption(option);
   };
 
-  // Manejar continuar al siguiente paso
   const handleContinue = () => {
     if (selectedShippingOption) {
       onNext();
@@ -137,50 +186,58 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     }
   };
 
-  // Renderizar las opciones de envío
+  // ============================================================================
+  // RENDER HELPERS
+  // ============================================================================
+
   const renderShippingOptions = () => {
     if (loading) {
       return (
         <div className="flex flex-col items-center justify-center py-10">
           <Loader2 size={40} className="animate-spin text-primary mb-4" />
-          <p>Calculando opciones de envío...</p>
+          <p className="text-muted-foreground">
+            Calculando opciones de envío...
+          </p>
         </div>
       );
     }
 
+    // Si es modo agencia y no hay agencia seleccionada
     if (deliveryMode === "agency" && !selectedAgency) {
       return (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-8 text-muted-foreground border border-dashed border-muted rounded-lg">
+          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
           Selecciona una sucursal para ver los costos de envío.
         </div>
       );
     }
 
-    if (shippingOptions.length === 0 && !loading && !error) {
-      if (deliveryMode === "home") {
-        return (
-          <div className="text-center py-8 text-muted-foreground">
-            No hay opciones de envío a domicilio disponibles para este código
-            postal.
-          </div>
-        );
-      }
-      return null;
+    // Si no hay opciones (solo para home/agency, pickup siempre tiene)
+    if (shippingOptions.length === 0 && deliveryMode !== "pickup") {
+      return (
+        <div className="text-center py-8 text-muted-foreground border border-dashed border-muted rounded-lg">
+          <Truck className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          {deliveryMode === "home"
+            ? "No hay opciones de envío a domicilio disponibles."
+            : "No hay opciones de envío a sucursal disponibles."}
+        </div>
+      );
     }
 
     return (
-      <div className="space-y-4 mt-6">
+      <div className="space-y-3 mt-6">
         {shippingOptions.map((option) => {
           const disabled =
             String(selectedPaymentMethod) === "cash" && option.id !== "pickup";
+          const isSelected = selectedShippingOption?.id === option.id;
 
           return (
             <div
               key={option.id}
               className={`border rounded-lg p-4 transition-all cursor-pointer ${
-                selectedShippingOption?.id === option.id
-                  ? "border-primary surface ring-1 ring-primary"
-                  : "border-muted surface hover:border-primary/50"
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-muted surface hover:border-primary/50 hover:bg-muted/30"
               } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               onClick={() => !disabled && handleSelectOption(option)}
             >
@@ -189,33 +246,21 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
                   {option.id === "pickup" ? (
                     <Store
                       size={24}
-                      className={`mt-1 ${
-                        selectedShippingOption?.id === option.id
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                      }`}
+                      className={`mt-0.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
                     />
                   ) : deliveryMode === "agency" ? (
                     <MapPin
                       size={24}
-                      className={`mt-1 ${
-                        selectedShippingOption?.id === option.id
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                      }`}
+                      className={`mt-0.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
                     />
                   ) : (
                     <Truck
                       size={24}
-                      className={`mt-1 ${
-                        selectedShippingOption?.id === option.id
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                      }`}
+                      className={`mt-0.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
                     />
                   )}
                   <div>
-                    <h3 className="font-semibold text-lg">{option.name}</h3>
+                    <h3 className="font-semibold">{option.name}</h3>
                     <p className="text-muted-foreground text-sm">
                       {option.description}
                     </p>
@@ -226,11 +271,13 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-bold text-lg">
-                    {option.price === 0
-                      ? "Gratis"
-                      : formatPriceARS(option.price)}
+                    {option.price === 0 ? (
+                      <span className="text-green-600">Gratis</span>
+                    ) : (
+                      formatPriceARS(option.price)
+                    )}
                   </span>
-                  {selectedShippingOption?.id === option.id && (
+                  {isSelected && (
                     <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                       <Check size={16} className="text-white" />
                     </div>
@@ -243,6 +290,10 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
       </div>
     );
   };
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -291,6 +342,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
               selectedAgency={selectedAgency}
               onSelectAgency={setSelectedAgency}
               initialProvince={customerInfo?.province}
+              initialPostalCode={customerInfo?.postalCode}
             />
           </div>
         )}
@@ -321,8 +373,8 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
             onClick={onBack}
             variant="outline"
             className="surface text-primary hover:brightness-95"
+            leftIcon={<ChevronLeft size={16} />}
           >
-            <ChevronLeft className="mr-2" size={16} />
             Volver
           </Button>
           <Button
@@ -333,9 +385,9 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
               (deliveryMode === "agency" && !selectedAgency)
             }
             className="btn-hero"
+            rightIcon={<ChevronRight size={16} />}
           >
             Continuar
-            <ChevronRight className="ml-2" size={16} />
           </Button>
         </div>
       </div>
