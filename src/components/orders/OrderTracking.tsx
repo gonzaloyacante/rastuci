@@ -5,20 +5,20 @@ import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { logger } from "@/lib/logger";
 import {
-    AlertCircle,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Download,
-    Info,
-    Loader2,
-    Mail,
-    MapPin,
-    Navigation,
-    Package,
-    Phone,
-    RefreshCw,
-    Truck,
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Download,
+  Info,
+  Loader2,
+  Mail,
+  MapPin,
+  Navigation,
+  Package,
+  Phone,
+  RefreshCw,
+  Truck,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -185,17 +185,24 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
 
   // Auto-refresh tracking cada 5 minutos
   useEffect(() => {
-    if (!order?.trackingNumber) {return;}
+    if (!order?.trackingNumber) {
+      return;
+    }
 
-    const interval = setInterval(() => {
-      refreshTracking();
-    }, 5 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        refreshTracking();
+      },
+      5 * 60 * 1000
+    );
 
     return () => clearInterval(interval);
   }, [order?.trackingNumber, refreshTracking]);
 
   const downloadInvoice = () => {
-    if (!order) {return;}
+    if (!order) {
+      return;
+    }
     // TODO: Implementar descarga de factura
     logger.info("Download invoice", { orderId: order.id });
   };
@@ -256,7 +263,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Cargando información del pedido...</p>
+          <p className="text-muted-foreground">
+            Cargando información del pedido...
+          </p>
         </div>
       </div>
     );
@@ -282,9 +291,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold">
-            Pedido #{order.orderNumber}
-          </h1>
+          <h1 className="text-3xl font-bold">Pedido #{order.orderNumber}</h1>
           <Badge variant={getStatusColor(order.status)} className="text-sm">
             {getStatusIcon(order.status)}
             <span className="ml-2">{getStatusText(order.status)}</span>
@@ -372,7 +379,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
                 key={index}
                 className="flex gap-4 pb-4 border-b last:border-b-0"
               >
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <Package className="h-5 w-5 text-primary" />
                   </div>
@@ -413,7 +420,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
               key={status.id}
               className="flex gap-4 pb-4 border-b last:border-b-0"
             >
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     index === 0
@@ -427,7 +434,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium">{getStatusText(status.status)}</p>
+                    <p className="font-medium">
+                      {getStatusText(status.status)}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {status.description}
                     </p>

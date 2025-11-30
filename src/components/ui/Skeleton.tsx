@@ -207,7 +207,7 @@ export const ProductListSkeleton = () => (
 
 export const CategorySkeleton = () => (
   <div className="surface rounded-xl shadow-sm border border-muted overflow-hidden">
-    <div className="relative aspect-[3/4] surface-secondary">
+    <div className="relative aspect-3/4 surface-secondary">
       <Skeleton className="w-full h-full" rounded="none" />
     </div>
     <div className="p-4 space-y-2">
