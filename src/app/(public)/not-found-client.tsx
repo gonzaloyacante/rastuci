@@ -24,18 +24,19 @@ export default function NotFoundClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
 
-  // Fetch featured/popular products for recommendations
-  const { data: productsData, isLoading } = useSWR<{
-    success: boolean;
-    data: Product[];
-  }>("/api/products?limit=8&featured=true", fetcher, {
-    fallbackData: { success: false, data: [] },
-    revalidateOnFocus: false,
-  });
-
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fetch featured/popular products ONLY after mount (lazy loading)
+  // Using null key prevents SWR from fetching until mounted
+  const { data: productsData, isLoading } = useSWR<{
+    success: boolean;
+    data: Product[];
+  }>(mounted ? "/api/products?limit=8&featured=true" : null, fetcher, {
+    fallbackData: { success: false, data: [] },
+    revalidateOnFocus: false,
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

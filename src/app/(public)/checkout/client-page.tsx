@@ -10,7 +10,6 @@ import {
 } from "@/app/(public)/checkout/components";
 import { Spinner } from "@/components/ui/Spinner";
 import { useCart } from "@/context/CartContext";
-import { useShippingSettings } from "@/hooks/useShippingSettings";
 import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -35,7 +34,6 @@ const stepLabels = [
 export default function CheckoutPageClient() {
   const router = useRouter();
   const { cartItems, placeOrder, getCartTotal } = useCart();
-  const { shipping: shippingSettings } = useShippingSettings();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(
     CheckoutStep.CUSTOMER_INFO
   );
@@ -227,11 +225,7 @@ export default function CheckoutPageClient() {
                   clipRule="evenodd"
                 />
               </svg>
-              <span>
-                {shippingSettings.freeShipping
-                  ? shippingSettings.freeShippingLabel
-                  : shippingSettings.estimatedDelivery}
-              </span>
+              <span>Envíos a todo el país</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
