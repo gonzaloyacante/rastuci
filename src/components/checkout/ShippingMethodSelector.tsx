@@ -38,7 +38,7 @@ export function ShippingMethodSelector({
   onChange,
 }: ShippingMethodSelectorProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <label className="text-base font-semibold text-primary">
         Método de entrega
       </label>

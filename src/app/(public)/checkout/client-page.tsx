@@ -153,11 +153,13 @@ export default function CheckoutPageClient() {
   if (cartItems.length === 0 && currentStep !== CheckoutStep.CONFIRMATION) {
     return (
       <div className="surface text-primary min-h-screen flex flex-col">
-        <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
-          <div className="flex items-center justify-center min-h-[400px]">
+        <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
+          <div className="flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
             <div className="text-center">
               <Spinner size="lg" className="mx-auto mb-4" />
-              <p className="muted">Verificando carrito...</p>
+              <p className="muted text-sm sm:text-base">
+                Verificando carrito...
+              </p>
             </div>
           </div>
         </main>
@@ -167,14 +169,15 @@ export default function CheckoutPageClient() {
 
   return (
     <div className="surface text-primary min-h-screen flex flex-col">
-      <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-primary font-montserrat">
+      <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
+        {/* Header - responsive con total abajo en mobile */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary font-montserrat">
             Finalizar Compra
           </h1>
-          <div className="text-right">
-            <p className="text-sm muted">Total a pagar</p>
-            <p className="text-2xl font-bold text-primary">
+          <div className="flex items-center justify-between sm:justify-end sm:text-right gap-2">
+            <p className="text-xs sm:text-sm muted">Total a pagar</p>
+            <p className="text-xl sm:text-2xl font-bold text-primary">
               {total.toLocaleString("es-AR", {
                 style: "currency",
                 currency: "ARS",
@@ -185,11 +188,11 @@ export default function CheckoutPageClient() {
 
         <CheckoutStepper currentStep={currentStep} onStepClick={goToStep} />
 
-        <div className="my-8">{renderCurrentStep()}</div>
+        <div className="my-6 sm:my-8">{renderCurrentStep()}</div>
 
-        {/* Progress indicator */}
+        {/* Progress indicator - oculto en mobile porque ya está en el stepper */}
         {currentStep !== CheckoutStep.CONFIRMATION && (
-          <div className="mt-8 text-center">
+          <div className="hidden sm:block mt-8 text-center">
             <p className="text-sm muted">
               Paso {currentStep + 1} de {stepLabels.length}
             </p>
@@ -204,21 +207,29 @@ export default function CheckoutPageClient() {
           </div>
         )}
 
-        {/* Security badges */}
-        <div className="mt-8 text-center border-t border-muted pt-6">
-          <div className="flex justify-center items-center gap-6 text-sm muted">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        {/* Security badges - responsive */}
+        <div className="mt-6 sm:mt-8 text-center border-t border-muted pt-4 sm:pt-6">
+          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-xs sm:text-sm muted">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <svg
+                className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path
                   fillRule="evenodd"
                   d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
                   clipRule="evenodd"
                 />
               </svg>
-              <span>Pago 100% seguro</span>
+              <span>Pago seguro</span>
             </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <svg
+                className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -227,8 +238,12 @@ export default function CheckoutPageClient() {
               </svg>
               <span>Envíos a todo el país</span>
             </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <svg
+                className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
               </svg>
               <span>MercadoPago</span>

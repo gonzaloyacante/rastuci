@@ -12,6 +12,7 @@ import {
   Truck,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 // import { OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
 // import { PaymentProcessor } from "@/components/checkout/PaymentProcessor";
@@ -104,20 +105,56 @@ export default function ReviewStep({
               {cartItems.map((item) => (
                 <div
                   key={`${item.product.id}-${item.size}-${item.color}`}
-                  className="flex items-center justify-between p-2.5 md:p-3 surface border border-muted rounded-lg"
+                  className="flex items-center p-2.5 md:p-3 surface border border-muted rounded-lg"
                 >
-                  <div className="flex items-center space-x-2.5 md:space-x-3">
-                    <div className="w-10 h-10 md:w-12 md:h-12 surface border border-muted rounded" />
-                    <div>
-                      <p className="font-medium">{item.product.name}</p>
-                      <p className="text-sm muted">
-                        {item.size} - {item.color} x {item.quantity}
+                  <div className="flex items-center space-x-2.5 md:space-x-3 min-w-0 w-full">
+                    {/* Imagen del producto (primera disponible) */}
+                    {(() => {
+                      try {
+                        const imgs =
+                          typeof item.product.images === "string"
+                            ? JSON.parse(String(item.product.images))
+                            : item.product.images || [];
+                        const first =
+                          Array.isArray(imgs) && imgs.length > 0
+                            ? imgs[0]
+                            : null;
+                        if (first) {
+                          return (
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded overflow-hidden bg-muted shrink-0">
+                              <Image
+                                src={String(first)}
+                                alt={item.product.name}
+                                width={48}
+                                height={48}
+                                className="object-cover w-full h-full"
+                              />
+                            </div>
+                          );
+                        }
+                      } catch (e) {
+                        // fallthrough to placeholder
+                      }
+
+                      return (
+                        <div className="w-10 h-10 md:w-12 md:h-12 surface border border-muted rounded shrink-0" />
+                      );
+                    })()}
+
+                    <div className="min-w-0 w-full">
+                      <p className="font-medium truncate">
+                        {item.product.name}
                       </p>
+                      <div className="flex items-center justify-between mt-0.5">
+                        <p className="text-sm muted truncate">
+                          {item.size} - {item.color} x {item.quantity}
+                        </p>
+                        <span className="font-semibold ml-3 whitespace-nowrap">
+                          {formatPriceARS(item.product.price * item.quantity)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <span className="font-semibold">
-                    {formatPriceARS(item.product.price * item.quantity)}
-                  </span>
                 </div>
               ))}
             </div>
@@ -142,18 +179,19 @@ export default function ReviewStep({
                   </button>
                 </div>
               ) : (
-                <div className="flex space-x-2">
+                <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="Código de cupón"
-                    className="flex-1 px-3 py-2 surface text-primary placeholder:muted border border-muted rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="flex-1 min-w-0 px-3 py-2 surface text-primary placeholder:muted border border-muted rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <Button
                     onClick={handleApplyCoupon}
                     disabled={couponLoading || !couponCode.trim()}
                     size="sm"
+                    className="px-3 py-1.5"
                   >
                     {couponLoading ? "Aplicando..." : "Aplicar"}
                   </Button>
@@ -255,36 +293,21 @@ export default function ReviewStep({
           </div>
         </div>
 
-        {/* Botones */}
-        <div className="flex justify-between mt-6 md:mt-8">
+        {/* Botones - imitar diseño de pasos anteriores (full width en mobile, lado a lado en desktop) */}
+        <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
           <Button
             onClick={onBack}
-            variant="outline"
+            className="surface text-primary hover:brightness-95 w-full sm:w-auto"
             leftIcon={<ChevronLeft size={16} />}
           >
             Volver
           </Button>
+
           <Button
             onClick={onPlaceOrder}
             disabled={isSubmitting}
-            className="btn-hero relative overflow-hidden"
-            leftIcon={
-              !isSubmitting ? (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  />
-                </svg>
-              ) : undefined
-            }
+            className={`btn-hero w-full sm:w-auto ${isSubmitting ? "opacity-80" : ""}`}
+            leftIcon={!isSubmitting ? <CreditCard size={16} /> : undefined}
             rightIcon={!isSubmitting ? <ChevronRight size={16} /> : undefined}
             loading={isSubmitting}
           >

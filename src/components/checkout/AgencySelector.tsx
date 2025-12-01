@@ -223,32 +223,32 @@ export function AgencySelector({
 
       {/* Detalle de Sucursal Seleccionada */}
       {selectedAgency && (
-        <div className="rounded-lg border p-4 bg-muted/30 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Store className="h-5 w-5 text-primary" />
+        <div className="rounded-lg border p-3 sm:p-4 bg-muted/30 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-start gap-2.5 sm:gap-3">
+            <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
+              <Store className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-primary">
+              <p className="font-semibold text-primary text-sm sm:text-base leading-tight">
                 {selectedAgency.name}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 {selectedAgency.location.address.streetName}{" "}
                 {selectedAgency.location.address.streetNumber}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {selectedAgency.location.address.city ||
                   selectedAgency.location.address.locality}
                 , CP {selectedAgency.location.address.postalCode}
               </p>
 
-              {/* Horarios */}
+              {/* Horarios - responsive grid */}
               {selectedAgency.hours && (
-                <div className="mt-3 pt-3 border-t border-border">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-border">
+                  <p className="text-[11px] sm:text-xs font-medium text-muted-foreground mb-1.5 sm:mb-2">
                     Horarios de atención:
                   </p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-0.5 sm:gap-y-1 text-[11px] sm:text-xs">
                     {Object.entries(selectedAgency.hours).map(
                       ([day, hours]) => {
                         if (!hours || day === "holidays") return null;
@@ -277,8 +277,8 @@ export function AgencySelector({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="w-full mt-3"
-                leftIcon={<MapPin className="h-4 w-4" />}
+                className="w-full mt-2.5 sm:mt-3 text-xs sm:text-sm"
+                leftIcon={<MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                 onClick={(e) => {
                   e.stopPropagation();
                   window.open(

@@ -201,9 +201,12 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
   const renderShippingOptions = () => {
     if (loading) {
       return (
-        <div className="flex flex-col items-center justify-center py-10">
-          <Loader2 size={40} className="animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">
+        <div className="flex flex-col items-center justify-center py-8 sm:py-10">
+          <Loader2
+            size={32}
+            className="animate-spin text-primary mb-3 sm:mb-4 sm:w-10 sm:h-10"
+          />
+          <p className="text-muted-foreground text-sm sm:text-base">
             Calculando opciones de envío...
           </p>
         </div>
@@ -213,8 +216,8 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     // Si es modo agencia y no hay agencia seleccionada
     if (deliveryMode === "agency" && !selectedAgency) {
       return (
-        <div className="text-center py-8 text-muted-foreground border border-dashed border-muted rounded-lg">
-          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <div className="text-center py-6 sm:py-8 text-muted-foreground border border-dashed border-muted rounded-lg text-sm sm:text-base">
+          <MapPin className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 opacity-50" />
           Selecciona una sucursal para ver los costos de envío.
         </div>
       );
@@ -223,8 +226,8 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     // Si no hay opciones (solo para home/agency, pickup siempre tiene)
     if (shippingOptions.length === 0 && deliveryMode !== "pickup") {
       return (
-        <div className="text-center py-8 text-muted-foreground border border-dashed border-muted rounded-lg">
-          <Truck className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <div className="text-center py-6 sm:py-8 text-muted-foreground border border-dashed border-muted rounded-lg text-sm sm:text-base">
+          <Truck className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 opacity-50" />
           {deliveryMode === "home"
             ? "No hay opciones de envío a domicilio disponibles."
             : "No hay opciones de envío a sucursal disponibles."}
@@ -233,25 +236,28 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     }
 
     return (
-      <div className="space-y-3 mt-6">
+      <div className="space-y-3 mt-4 sm:mt-6">
         {/* Indicador de origen de datos */}
         {shippingOptions.length > 0 && (
           <div
-            className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full w-fit ${
+            className={`inline-flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full ${
               shippingOptions[0]?.isFallback
-                ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                ? "bg-amber-100 text-amber-700"
+                : "bg-green-100 text-green-700"
             }`}
           >
             {shippingOptions[0]?.isFallback ? (
               <>
-                <AlertCircle size={14} />
-                <span>Precios estimados (API no disponible)</span>
+                <AlertCircle size={12} className="sm:w-3.5 sm:h-3.5" />
+                <span>Precios estimados</span>
               </>
             ) : (
               <>
-                <CheckCircle2 size={14} />
-                <span>Precios actualizados de Correo Argentino</span>
+                <CheckCircle2 size={12} className="sm:w-3.5 sm:h-3.5" />
+                <span className="hidden xs:inline">
+                  Precios actualizados de Correo Argentino
+                </span>
+                <span className="xs:hidden">Precios actualizados</span>
               </>
             )}
           </div>
@@ -265,43 +271,45 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
           return (
             <div
               key={option.id}
-              className={`border rounded-lg p-4 transition-all cursor-pointer ${
+              className={`border rounded-lg p-3 sm:p-4 transition-all cursor-pointer ${
                 isSelected
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
                   : "border-muted surface hover:border-primary/50 hover:bg-muted/30"
               } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               onClick={() => !disabled && handleSelectOption(option)}
             >
-              <div className="flex justify-between items-center">
-                <div className="flex items-start gap-3">
+              {/* Layout mobile: stack vertical */}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div className="flex items-start gap-2.5 sm:gap-3">
                   {option.id === "pickup" ? (
                     <Store
-                      size={24}
-                      className={`mt-0.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                      size={20}
+                      className={`mt-2.5 shrink-0 sm:w-10 sm:h-10 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
                     />
                   ) : deliveryMode === "agency" ? (
                     <MapPin
-                      size={24}
-                      className={`mt-0.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                      size={20}
+                      className={`mt-2.5 shrink-0 sm:w-10 sm:h-10 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
                     />
                   ) : (
                     <Truck
-                      size={24}
-                      className={`mt-0.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                      size={20}
+                      className={`mt-2.5 shrink-0 sm:w-10 sm:h-10 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
                     />
                   )}
-                  <div>
-                    <h3 className="font-semibold">{option.name}</h3>
-                    <p className="text-muted-foreground text-sm">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-md sm:text-base leading-tight">
+                      {option.name}
+                    </h3>
+                    <p className="text-muted-foreground text-sm sm:text-sm line-clamp-2 sm:line-clamp-none">
                       {option.description}
-                    </p>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      Tiempo estimado: {option.estimatedDays}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-lg">
+
+                {/* Precio y check - en mobile va abajo a la derecha */}
+                <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pl-7 sm:pl-0">
+                  <span className="font-bold text-base sm:text-lg">
                     {option.price === 0 ? (
                       <span className="text-green-600">Gratis</span>
                     ) : (
@@ -309,8 +317,8 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
                     )}
                   </span>
                   {isSelected && (
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                      <Check size={16} className="text-white" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <Check size={14} className="text-white sm:w-4 sm:h-4" />
                     </div>
                   )}
                 </div>
@@ -327,27 +335,32 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
   // ============================================================================
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="surface p-6 rounded-lg shadow-sm border border-muted">
-        <h2 className="text-2xl font-bold mb-6 text-primary">
+    <div className="max-w-3xl mx-auto px-0 sm:px-4">
+      <div className="surface p-4 sm:p-6 rounded-lg shadow-sm border border-muted">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary">
           Entrega / Retiro
         </h2>
 
-        {/* Resumen de dirección */}
+        {/* Resumen de dirección - más compacto en mobile */}
         {customerInfo && (
-          <div className="surface p-4 rounded-lg mb-6 border border-muted">
-            <div className="flex items-start gap-3">
-              <MapPin size={20} className="text-muted-foreground mt-1" />
-              <div>
-                <p className="font-medium">{customerInfo.name}</p>
-                <p className="text-muted-foreground text-sm">
+          <div className="surface p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 border border-muted">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <MapPin
+                size={18}
+                className="text-muted-foreground mt-0.5 shrink-0 hidden sm:block"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm sm:text-base truncate">
+                  {customerInfo.name}
+                </p>
+                <p className="text-muted-foreground text-xs sm:text-sm truncate">
                   {customerInfo.address}
                 </p>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   {customerInfo.city}, {customerInfo.province}, CP:{" "}
                   {customerInfo.postalCode}
                 </p>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   {customerInfo.phone}
                 </p>
               </div>
@@ -356,7 +369,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         )}
 
         {/* Selector de Método de Entrega */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <ShippingMethodSelector
             value={deliveryMode}
             onChange={setDeliveryMode}
@@ -365,8 +378,8 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
         {/* Selector de Agencia (solo si es retiro en sucursal) */}
         {deliveryMode === "agency" && (
-          <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-300">
-            <h3 className="text-lg font-semibold mb-4">
+          <div className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-top-4 duration-300">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
               Selecciona una sucursal
             </h3>
             <AgencySelector
@@ -381,7 +394,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         {/* Aviso: si el pago es en efectivo, solo retiro está disponible */}
         {String(selectedPaymentMethod) === "cash" &&
           deliveryMode !== "pickup" && (
-            <div className="mb-4 p-3 rounded-md surface-secondary border border-muted text-primary">
+            <div className="mb-4 p-3 rounded-md surface-secondary border border-muted text-primary text-sm">
               Has seleccionado <strong>Pago en efectivo</strong>. El envío a
               domicilio no está disponible para este método de pago. Solo está
               disponible la opción de <strong>Retiro en local</strong>.
@@ -390,7 +403,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
         {/* Mensaje de error */}
         {error && (
-          <div className="surface border border-error text-error p-3 rounded-md mb-4">
+          <div className="surface border border-error text-error p-3 rounded-md mb-4 text-sm">
             {error}
           </div>
         )}
@@ -398,12 +411,12 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         {/* Opciones de envío calculadas */}
         {renderShippingOptions()}
 
-        {/* Botones de navegación */}
-        <div className="flex justify-between mt-8">
+        {/* Botones de navegación - full width en mobile */}
+        <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
           <Button
             onClick={onBack}
             variant="outline"
-            className="surface text-primary hover:brightness-95"
+            className="surface text-primary hover:brightness-95 w-full sm:w-auto"
             leftIcon={<ChevronLeft size={16} />}
           >
             Volver
@@ -415,7 +428,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
               loading ||
               (deliveryMode === "agency" && !selectedAgency)
             }
-            className="btn-hero"
+            className="btn-hero w-full sm:w-auto"
             rightIcon={<ChevronRight size={16} />}
           >
             Continuar

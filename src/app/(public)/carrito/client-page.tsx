@@ -94,73 +94,111 @@ const CartItemComponent = ({
   return (
     <div
       className={`
-        flex items-center surface p-4 rounded-lg shadow-sm border border-muted
+        surface p-3 sm:p-4 rounded-lg shadow-sm border border-muted
         transition-all duration-300 hover:shadow-md
         ${isRemoving ? "opacity-50 scale-95" : ""}
       `}
     >
-      <div className="relative w-24 h-24 mr-4 shrink-0">
-        <Image
-          src={imageUrl}
-          alt={item.product.name}
-          fill
-          sizes="96px"
-          className="object-cover rounded-md"
-        />
-        {isLowStock && (
-          <div className="absolute -top-2 -right-2 bg-warning text-warning-foreground rounded-full p-1">
-            <AlertCircle size={12} />
+      {/* Layout mobile: más compacto */}
+      <div className="flex gap-3 sm:gap-4">
+        {/* Imagen */}
+        <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
+          <Image
+            src={imageUrl}
+            alt={item.product.name}
+            fill
+            sizes="(max-width: 640px) 80px, 96px"
+            className="object-cover rounded-md"
+          />
+          {isLowStock && (
+            <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-warning text-warning-foreground rounded-full p-0.5 sm:p-1">
+              <AlertCircle size={10} className="sm:w-3 sm:h-3" />
+            </div>
+          )}
+        </div>
+
+        {/* Info del producto */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          <div>
+            <h3
+              className="font-semibold text-sm sm:text-lg line-clamp-2 sm:truncate leading-tight"
+              title={item.product.name}
+            >
+              {item.product.name}
+            </h3>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs sm:text-sm muted mt-1">
+              <span className="px-1.5 py-0.5 surface rounded text-[11px] sm:text-xs">
+                {item.color}
+              </span>
+              <span className="px-1.5 py-0.5 surface rounded text-[11px] sm:text-xs">
+                Talle {item.size}
+              </span>
+            </div>
           </div>
-        )}
+
+          {/* Precio - visible en mobile debajo del nombre */}
+          <div className="mt-2 sm:hidden">
+            <p className="text-base font-bold text-primary">
+              {formatPriceARS(item.product.price)}
+            </p>
+            {pendingQuantity > 1 && (
+              <p className="text-xs muted">
+                Total: {formatPriceARS(itemTotal)}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Precio desktop */}
+        <div className="hidden sm:block text-right shrink-0">
+          <p className="text-lg font-bold text-primary">
+            {formatPriceARS(item.product.price)}
+          </p>
+          {pendingQuantity > 1 && (
+            <p className="text-sm muted">Total: {formatPriceARS(itemTotal)}</p>
+          )}
+        </div>
       </div>
 
-      <div className="grow min-w-0">
-        <h3
-          className="font-semibold text-lg truncate"
-          title={item.product.name}
-        >
-          {item.product.name}
-        </h3>
-        <div className="flex flex-wrap gap-2 text-sm muted mb-2">
-          <span>Color: {item.color}</span>
-          <span>•</span>
-          <span>Talla: {item.size}</span>
-        </div>
-        <p className="text-lg font-bold text-primary">
-          {formatPriceARS(item.product.price)}
-        </p>
-        {pendingQuantity > 1 && (
-          <p className="text-sm muted">Total: {formatPriceARS(itemTotal)}</p>
-        )}
+      {/* Controles: cantidad y eliminar - en fila separada en mobile */}
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-muted sm:border-0 sm:pt-0 sm:mt-0 sm:absolute sm:right-4 sm:bottom-4">
         {isLowStock && (
-          <p className="text-xs text-warning flex items-center gap-1 mt-1">
-            <AlertCircle size={12} />
-            Stock limitado: {item.product.stock} disponibles
+          <p className="text-[10px] sm:text-xs text-warning flex items-center gap-1 sm:hidden">
+            <AlertCircle size={10} />
+            Stock: {item.product.stock}
           </p>
         )}
+
+        <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+          <QuantityButton
+            quantity={pendingQuantity}
+            onIncrement={() => handleQuantityChange(pendingQuantity + 1)}
+            onDecrement={() => handleQuantityChange(pendingQuantity - 1)}
+            disabled={isRemoving}
+          />
+
+          <button
+            onClick={handleRemove}
+            disabled={isRemoving}
+            className="text-error hover:text-error transition-colors p-1.5 sm:p-2 rounded-full hover:bg-error/10 disabled:opacity-50"
+            title="Eliminar producto"
+          >
+            {isRemoving ? (
+              <X size={18} className="animate-spin sm:w-5 sm:h-5" />
+            ) : (
+              <Trash2 size={18} className="sm:w-5 sm:h-5" />
+            )}
+          </button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-4 shrink-0">
-        <QuantityButton
-          quantity={pendingQuantity}
-          onIncrement={() => handleQuantityChange(pendingQuantity + 1)}
-          onDecrement={() => handleQuantityChange(pendingQuantity - 1)}
-          disabled={isRemoving}
-        />
-
-        <button
-          onClick={handleRemove}
-          disabled={isRemoving}
-          className="text-error hover:text-error transition-colors p-2 rounded-full hover:bg-error/10 disabled:opacity-50"
-          title="Eliminar producto"
-        >
-          {isRemoving ? (
-            <X size={20} className="animate-spin" />
-          ) : (
-            <Trash2 size={20} />
-          )}
-        </button>
-      </div>
+      {/* Stock warning - solo desktop */}
+      {isLowStock && (
+        <p className="hidden sm:flex text-xs text-warning items-center gap-1 mt-2">
+          <AlertCircle size={12} />
+          Stock limitado: {item.product.stock} disponibles
+        </p>
+      )}
     </div>
   );
 };
@@ -186,12 +224,12 @@ const OrderSummary = ({
   const finalTotal = total + shipping;
 
   return (
-    <div className="surface p-6 rounded-lg shadow-sm sticky top-24 border border-muted">
-      <h2 className="text-2xl font-bold mb-6 font-montserrat">
+    <div className="surface p-4 sm:p-6 rounded-lg shadow-sm sticky top-20 sm:top-24 border border-muted">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 font-montserrat">
         Resumen del Pedido
       </h2>
 
-      <div className="space-y-3 mb-6">
+      <div className="space-y-2.5 sm:space-y-3 mb-4 sm:mb-6">
         <div className="flex justify-between text-sm">
           <span>Productos ({itemCount})</span>
           <span>{formatPriceARS(total)}</span>
@@ -207,8 +245,8 @@ const OrderSummary = ({
             <span>{formatPriceARS(shipping)}</span>
           )}
         </div>
-        <div className="border-t border-muted my-4"></div>
-        <div className="flex justify-between font-bold text-xl">
+        <div className="border-t border-muted my-3 sm:my-4"></div>
+        <div className="flex justify-between font-bold text-lg sm:text-xl">
           <span>Total</span>
           <span className="text-primary">{formatPriceARS(finalTotal)}</span>
         </div>
@@ -221,12 +259,12 @@ const OrderSummary = ({
         onClick={onCheckout}
         disabled={isLoading || itemCount === 0}
         loading={isLoading}
-        className="mb-4"
+        className="mb-3 sm:mb-4"
       >
         Proceder al Pago
       </Button>
 
-      <div className="text-xs muted text-center space-y-1">
+      <div className="text-[11px] sm:text-xs muted text-center space-y-0.5 sm:space-y-1">
         {shippingSettings.freeShipping && (
           <p>{shippingSettings.freeShippingDescription}</p>
         )}
@@ -310,8 +348,8 @@ export default function CartPageClient() {
   if (cartItems.length === 0) {
     return (
       <div className="surface text-primary min-h-screen flex flex-col">
-        <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
-          <h1 className="text-3xl font-bold text-primary mb-8 font-montserrat">
+        <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-6 sm:mb-8 font-montserrat">
             Mi Carrito (0 items)
           </h1>
 
@@ -329,26 +367,30 @@ export default function CartPageClient() {
 
   return (
     <div className="surface text-primary min-h-screen flex flex-col">
-      <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-primary font-montserrat">
+      <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
+        {/* Header - responsive */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary font-montserrat">
             Mi Carrito ({itemCount} {itemCount === 1 ? "item" : "items"})
           </h1>
 
           {cartItems.length > 0 && (
             <Button
               variant="ghost"
+              size="sm"
               onClick={handleClearCart}
-              className="text-muted hover:text-error"
+              className="text-muted hover:text-error self-start sm:self-auto"
             >
+              <Trash2 size={16} className="mr-1.5" />
               Vaciar Carrito
             </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Grid responsive: en mobile el resumen va arriba como sticky */}
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             {cartItems.map((item) => (
               <CartItemComponent
                 key={`${item.product.id}-${item.size}-${item.color}`}
@@ -359,7 +401,7 @@ export default function CartPageClient() {
             ))}
           </div>
 
-          {/* Order Summary */}
+          {/* Order Summary - en mobile aparece primero (sticky) */}
           <div className="lg:col-span-1">
             <OrderSummary
               total={total}
