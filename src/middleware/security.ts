@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 export function securityHeaders(_request: NextRequest) {
   const response = NextResponse.next();
@@ -16,20 +16,26 @@ export function securityHeaders(_request: NextRequest) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests"
-  ].join('; ');
+    "upgrade-insecure-requests",
+  ].join("; ");
 
   // Security headers
-  response.headers.set('Content-Security-Policy', csp);
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  
+  response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()"
+  );
+
   // HSTS (only in production)
-  if (process.env.NODE_ENV === 'production') {
-    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  if (process.env.NODE_ENV === "production") {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload"
+    );
   }
 
   return response;
@@ -37,18 +43,52 @@ export function securityHeaders(_request: NextRequest) {
 
 export function csrfProtection(request: NextRequest) {
   // Skip CSRF for GET, HEAD, OPTIONS
-  if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+  if (["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     return null;
   }
 
-  const token = request.headers.get('x-csrf-token') || 
-                request.cookies.get('csrf-token')?.value;
-  
-  const sessionToken = request.cookies.get('session-csrf')?.value;
+  const pathname = request.nextUrl.pathname;
+
+  // Rutas públicas que NO necesitan protección CSRF
+  // Estas son APIs del e-commerce que se llaman desde el frontend sin autenticación
+  const publicApiRoutes = [
+    "/api/shipping", // Cálculo de envío
+    "/api/checkout", // Proceso de checkout
+    "/api/contact", // Formulario de contacto
+    "/api/payments", // Webhooks de MercadoPago
+    "/api/webhooks", // Webhooks externos
+    "/api/products", // Catálogo de productos (público)
+    "/api/categories", // Categorías (público)
+    "/api/orders", // Creación de pedidos
+    "/api/coupons", // Validación de cupones
+    "/api/search", // Búsqueda de productos
+    "/api/auth", // Autenticación (NextAuth maneja su propio CSRF)
+    "/api/ai-faq", // FAQ con IA
+    "/api/live-chat", // Chat en vivo
+    "/api/cms", // Contenido CMS público
+    "/api/home", // Página de inicio
+    "/api/health", // Health check
+    "/api/ready", // Ready check
+  ];
+
+  // Verificar si la ruta actual es una ruta pública
+  const isPublicRoute = publicApiRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (isPublicRoute) {
+    return null; // No aplicar CSRF a rutas públicas
+  }
+
+  const token =
+    request.headers.get("x-csrf-token") ||
+    request.cookies.get("csrf-token")?.value;
+
+  const sessionToken = request.cookies.get("session-csrf")?.value;
 
   if (!token || !sessionToken || token !== sessionToken) {
     return NextResponse.json(
-      { success: false, error: 'CSRF token inválido' },
+      { success: false, error: "CSRF token inválido" },
       { status: 403 }
     );
   }
@@ -58,6 +98,6 @@ export function csrfProtection(request: NextRequest) {
 
 export function generateCSRFToken(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
