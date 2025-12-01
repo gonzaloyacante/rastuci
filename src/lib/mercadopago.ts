@@ -41,6 +41,14 @@ function getBaseUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
+/**
+ * Verifica si la URL base es localhost (desarrollo local)
+ * MercadoPago no acepta auto_return con URLs de localhost
+ */
+function isLocalhost(url: string): boolean {
+  return url.includes("localhost") || url.includes("127.0.0.1");
+}
+
 function getNotificationUrl() {
   const candidate = process.env.MP_WEBHOOK_URL;
   if (candidate) {
@@ -117,6 +125,10 @@ export async function createPreference(
   const pref = new Preference(client);
 
   const baseUrl = getBaseUrl();
+  const isLocal = isLocalhost(baseUrl);
+
+  // MercadoPago no acepta auto_return con localhost
+  // En desarrollo local, omitimos auto_return y back_urls o usamos URLs de prueba
   const body = {
     items: items.map((i) => ({
       id: i.id,
@@ -126,17 +138,31 @@ export async function createPreference(
       currency_id: i.currency_id || "ARS",
     })),
     payer: payer || undefined,
-    back_urls: {
-      success: `${baseUrl}/checkout/success`,
-      failure: `${baseUrl}/checkout/failure`,
-      pending: `${baseUrl}/checkout/pending`,
-    },
-    notification_url: getNotificationUrl(),
-    auto_return: "approved",
+    // Solo incluir back_urls si NO es localhost
+    ...(isLocal
+      ? {} // En localhost, no enviar back_urls ni auto_return
+      : {
+          back_urls: {
+            success: `${baseUrl}/checkout/success`,
+            failure: `${baseUrl}/checkout/failure`,
+            pending: `${baseUrl}/checkout/pending`,
+          },
+          auto_return: "approved",
+        }),
+    // notification_url también debe ser accesible públicamente
+    ...(isLocal ? {} : { notification_url: getNotificationUrl() }),
     binary_mode: false,
     external_reference: options?.external_reference,
     metadata: options?.metadata,
   } as Record<string, unknown>;
+
+  // Log para debugging
+  logger.info("[mercadopago] Creating preference", {
+    baseUrl,
+    isLocal,
+    hasBackUrls: !isLocal,
+    itemsCount: items.length,
+  });
 
   return await safeCreate(
     async () => await pref.create({ body: body as PreferenceRequestLike })

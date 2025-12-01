@@ -487,6 +487,12 @@ export class CorreoArgentinoService {
 
         const responseData = await response.json();
 
+        // Log detallado de la respuesta para debugging
+        logger.info(`[CorreoArgentino] Response from ${endpoint}`, {
+          status: response.status,
+          responseData: JSON.stringify(responseData),
+        });
+
         // Manejar errores HTTP
         if (!response.ok) {
           logger.error(

@@ -10,7 +10,9 @@ import { ShippingOption, useCart } from "@/context/CartContext";
 import { logger } from "@/lib/logger";
 import { formatPriceARS } from "@/utils/formatters";
 import {
+  AlertCircle,
   Check,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -31,16 +33,19 @@ function createFallbackShippingOptions(type: "D" | "S"): ShippingOption[] {
       {
         id: "standard-home",
         name: "Envío Estándar a Domicilio",
-        description: "Correo Argentino - Entrega en tu domicilio",
+        description:
+          "Correo Argentino - Entrega en tu domicilio (precio estimado)",
         price: 4500,
         estimatedDays: "5-7 días hábiles",
+        isFallback: true,
       },
       {
         id: "express-home",
         name: "Envío Express a Domicilio",
-        description: "Correo Argentino - Entrega rápida",
+        description: "Correo Argentino - Entrega rápida (precio estimado)",
         price: 7000,
         estimatedDays: "2-3 días hábiles",
+        isFallback: true,
       },
     ];
   }
@@ -48,9 +53,11 @@ function createFallbackShippingOptions(type: "D" | "S"): ShippingOption[] {
     {
       id: "standard-agency",
       name: "Envío a Sucursal",
-      description: "Retirá en la sucursal de Correo Argentino",
+      description:
+        "Retirá en la sucursal de Correo Argentino (precio estimado)",
       price: 3500,
       estimatedDays: "5-7 días hábiles",
+      isFallback: true,
     },
   ];
 }
@@ -63,6 +70,7 @@ function createPickupOption(): ShippingOption {
     description: "Gratis en nuestro local",
     price: 0,
     estimatedDays: "Inmediato",
+    isFallback: false,
   };
 }
 
@@ -226,6 +234,29 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
     return (
       <div className="space-y-3 mt-6">
+        {/* Indicador de origen de datos */}
+        {shippingOptions.length > 0 && (
+          <div
+            className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full w-fit ${
+              shippingOptions[0]?.isFallback
+                ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+            }`}
+          >
+            {shippingOptions[0]?.isFallback ? (
+              <>
+                <AlertCircle size={14} />
+                <span>Precios estimados (API no disponible)</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={14} />
+                <span>Precios actualizados de Correo Argentino</span>
+              </>
+            )}
+          </div>
+        )}
+
         {shippingOptions.map((option) => {
           const disabled =
             String(selectedPaymentMethod) === "cash" && option.id !== "pickup";

@@ -21,6 +21,7 @@ export interface ShippingOption {
   price: number;
   estimatedDays: string;
   originalRate?: Record<string, unknown>; // Para guardar datos crudos de la API
+  isFallback?: boolean; // Indica si es dato de fallback o de la API real
 }
 
 export interface PaymentMethod {
@@ -389,7 +390,6 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       // noop
     }
     setHasLoadedStorage(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

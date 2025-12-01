@@ -8,25 +8,30 @@ const FALLBACK_SHIPPING_OPTIONS = {
     {
       id: "standard-home",
       name: "Envío Estándar a Domicilio",
-      description: "Correo Argentino - Entrega en tu domicilio",
+      description:
+        "Correo Argentino - Entrega en tu domicilio (precio estimado)",
       price: 4500,
       estimatedDays: "5-7 días hábiles",
+      isFallback: true,
     },
     {
       id: "express-home",
       name: "Envío Express a Domicilio",
-      description: "Correo Argentino - Entrega rápida",
+      description: "Correo Argentino - Entrega rápida (precio estimado)",
       price: 7000,
       estimatedDays: "2-3 días hábiles",
+      isFallback: true,
     },
   ],
   agency: [
     {
       id: "standard-agency",
       name: "Envío a Sucursal",
-      description: "Retirá en la sucursal de Correo Argentino más cercana",
+      description:
+        "Retirá en la sucursal de Correo Argentino (precio estimado)",
       price: 3500,
       estimatedDays: "5-7 días hábiles",
+      isFallback: true,
     },
   ],
 };
@@ -96,12 +101,15 @@ export async function POST(request: Request) {
           price: rate.price,
           estimatedDays: `${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días`,
           originalRate: rate,
+          isFallback: false, // Datos reales de la API
         }));
 
         return NextResponse.json({
           success: true,
           options,
           isFallback: false,
+          source: "correo-argentino-api",
+          validTo: result.data.validTo,
         });
       }
 
