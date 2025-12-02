@@ -378,6 +378,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   // Persistencia en localStorage
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    
     try {
       const saved = localStorage.getItem("rastuci-cart");
       if (saved) {
@@ -393,7 +395,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   }, []);
 
   useEffect(() => {
-    if (!hasLoadedStorage) {
+    if (!hasLoadedStorage || typeof window === "undefined") {
       return;
     }
     try {
