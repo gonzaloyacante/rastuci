@@ -17,7 +17,8 @@ import Select from "@/components/ui/Select";
 import { useCategories } from "@/hooks/useCategories";
 import { Product } from "@/types";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 
 // ==============================================================================
@@ -66,6 +67,7 @@ export default function ProductsPageClient({
   const [currentPage, setCurrentPage] = useState(
     Number(searchParams.pagina) || 1
   );
+  const isPageNavigationRef = useRef(false);
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
@@ -95,9 +97,15 @@ export default function ProductsPageClient({
     if (sortOrder !== "desc") params.set("sortOrder", sortOrder);
     if (currentPage > 1) params.set("pagina", currentPage.toString());
 
-    const newUrl = params.toString()
-      ? `/productos?${params.toString()}`
-      : "/productos";
+    const newUrl = params.toString() ? `/productos?${params.toString()}` : "/productos";
+
+    // If this navigation was triggered by a page change, perform the
+    // router.replace without scrolling and then animate a smooth scroll
+    // to top once the replace completes. This avoids fighting Next.js
+    // default scroll behavior while keeping the UX smooth.
+    // router.replace does not always return a Promise in this runtime,
+    // so just call replace and rely on the pathname observer below
+    // to trigger the smooth scroll when the navigation completes.
     router.replace(newUrl, { scroll: false });
   }, [
     debouncedSearch,
@@ -107,6 +115,30 @@ export default function ProductsPageClient({
     currentPage,
     router,
   ]);
+
+  // Observe search params changes (query string) to trigger scroll after
+  // navigation completes. We watch the serialized search params because
+  // pagination updates only change the query (e.g. ?pagina=2) and not the
+  // pathname.
+  const searchParamsNav = useSearchParams();
+  const serializedSearch = searchParamsNav ? searchParamsNav.toString() : "";
+  useEffect(() => {
+    if (isPageNavigationRef.current) {
+      try {
+        // Primero intentamos un scroll suave para la UX,
+        // luego forzamos la posición a 0 tras 400ms para asegurar
+        // que quede *literalmente* arriba incluso con headers sticky.
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => {
+          try {
+            window.scrollTo(0, 0);
+          } catch {}
+        }, 700);
+      } finally {
+        isPageNavigationRef.current = false;
+      }
+    }
+  }, [serializedSearch]);
 
   // Fetch products with SWR
   const { data, isLoading, error } = useSWR(apiUrl, fetcher, {
@@ -131,8 +163,8 @@ export default function ProductsPageClient({
     setCurrentPage(1);
   };
   const handlePageChange = (page: number) => {
+    isPageNavigationRef.current = true;
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const clearFilters = () => {
     setSearchInput("");
