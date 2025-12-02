@@ -314,8 +314,11 @@ function CheckoutSuccessContent() {
                     Pago Procesado con MercadoPago
                   </h3>
                   <p className="muted mt-1">
-                    Tu pago ha sido procesado exitosamente. Te enviaremos
-                    actualizaciones sobre el estado de tu pedido por email.
+                    Tu pago ha sido procesado exitosamente.
+                  </p>
+                  <p className="muted mt-1">
+                    Te enviaremos actualizaciones sobre el estado de tu pedido
+                    por email.
                   </p>
                 </div>
               </div>
