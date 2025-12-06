@@ -50,6 +50,8 @@ interface OrderItem {
 interface Order {
   id: string;
   orderNumber: string;
+  customerName: string;
+  customerAddress?: string;
   status: OrderStatus["status"];
   items: OrderItem[];
   total: number;
@@ -199,12 +201,83 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     return () => clearInterval(interval);
   }, [order?.trackingNumber, refreshTracking]);
 
-  const downloadInvoice = () => {
+  const downloadInvoice = async () => {
     if (!order) {
       return;
     }
-    // TODO: Implementar descarga de factura
-    logger.info("Download invoice", { orderId: order.id });
+    
+    try {
+      logger.info("Downloading invoice", { orderId: order.id });
+      
+      // Generar contenido HTML de la factura
+      const invoiceHTML = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <title>Factura #${order.id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .info { margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+            .total { font-weight: bold; font-size: 1.2em; margin-top: 20px; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>RASTUCI</h1>
+            <p>Factura de Compra</p>
+          </div>
+          <div class="info">
+            <p><strong>Factura #:</strong> ${order.id}</p>
+            <p><strong>Fecha:</strong> ${new Date(order.createdAt).toLocaleDateString('es-AR')}</p>
+            <p><strong>Cliente:</strong> ${order.customerName}</p>
+            <p><strong>Dirección:</strong> ${order.customerAddress || 'N/A'}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${order.items.map((item: { product?: { name?: string }; quantity: number; price: number }) => `
+                <tr>
+                  <td>${item.product?.name || 'Producto'}</td>
+                  <td>${item.quantity}</td>
+                  <td>$${item.price.toFixed(2)}</td>
+                  <td>$${(item.quantity * item.price).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="total">
+            <p>TOTAL: $${order.total.toFixed(2)}</p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      // Crear blob y descargar
+      const blob = new Blob([invoiceHTML], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `factura_${order.id}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      logger.info("Invoice downloaded successfully", { orderId: order.id });
+    } catch (error) {
+      logger.error("Error downloading invoice", { orderId: order.id, error });
+    }
   };
 
   const getStatusColor = (

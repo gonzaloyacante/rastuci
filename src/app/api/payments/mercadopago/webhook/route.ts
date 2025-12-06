@@ -4,6 +4,7 @@ import { validateWebhookSignature } from "@/lib/mercadopago";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { NextRequest, NextResponse } from "next/server";
 
 // Tipos para el webhook de MercadoPago
@@ -75,6 +76,188 @@ const _mapPaymentStatus = (status: string, statusDetail: string) => {
   }
 };
 
+/**
+ * Crea el envío en Correo Argentino automáticamente
+ * Prioridad: SIEMPRE guardar pedido en DB primero
+ * Si CA falla, el pedido queda PENDING_SHIPMENT para gestión manual
+ */
+async function createCAShipment(orderId: string): Promise<void> {
+  try {
+    logger.info("[CA Shipment] Starting automatic shipment creation", {
+      orderId,
+    });
+
+    // 1. Obtener datos completos del pedido
+    const order = await prisma.orders.findUnique({
+      where: { id: orderId },
+      include: {
+        order_items: {
+          include: {
+            products: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new Error(`Order not found: ${orderId}`);
+    }
+
+    // 2. Validar que tengamos datos necesarios para envío
+    if (!order.customerAddress || !order.customerEmail || !order.customerName) {
+      throw new Error(
+        `Order ${orderId} missing required shipping data (address, email, or name)`
+      );
+    }
+
+    // 3. Validar credenciales de CA
+    const customerId =
+      process.env.CORREO_ARGENTINO_CUSTOMER_ID ||
+      correoArgentinoService.getCustomerId();
+
+    if (!customerId) {
+      throw new Error(
+        "CORREO_ARGENTINO_CUSTOMER_ID not configured - cannot create shipment"
+      );
+    }
+
+    // 4. Parsear dirección del cliente (formato: "Calle 123, Piso 1, Dpto A, Ciudad, CP")
+    const addressParts = order.customerAddress.split(",").map((s) => s.trim());
+    const streetPart = addressParts[0] || "";
+    const streetMatch = streetPart.match(/^(.+?)\s+(\d+)/);
+    const streetName = streetMatch ? streetMatch[1].trim() : streetPart;
+    const streetNumber = streetMatch ? streetMatch[2] : "S/N";
+
+    // Extraer CP y provincia del final de la dirección
+    const postalCodeMatch = order.customerAddress.match(/\b(\d{4})\b/);
+    const postalCode = postalCodeMatch ? postalCodeMatch[1] : "1611"; // Default: Don Torcuato
+
+    // Determinar provincia por CP (simplificado)
+    const getProvinceCode = (cp: string): "B" | "C" => {
+      const cpNum = parseInt(cp);
+      if (cpNum >= 1000 && cpNum <= 1439) return "C"; // CABA
+      return "B"; // Buenos Aires por defecto
+    };
+
+    const provinceCode = getProvinceCode(postalCode);
+
+    // 5. Calcular dimensiones estimadas del paquete
+    const totalItems = order.order_items.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+    const estimatedWeight = Math.max(500, totalItems * 300); // Min 500g, ~300g por item
+    const estimatedDimensions = {
+      weight: estimatedWeight,
+      height: 10,
+      width: 20,
+      length: 30,
+    };
+
+    // 6. Preparar datos para /shipping/import según documentación oficial
+    const shipmentData = {
+      customerId: customerId,
+      extOrderId: orderId,
+      orderNumber: orderId.substring(0, 20), // Max 20 chars para MiCorreo
+      sender: {
+        name: "Rastuci E-commerce",
+        phone: "1123456789",
+        cellPhone: "1123456789",
+        email: "ventas@rastuci.com",
+        originAddress: {
+          streetName: "Av. San Martín",
+          streetNumber: "1234",
+          floor: null,
+          apartment: null,
+          city: "Don Torcuato",
+          provinceCode: "B" as const,
+          postalCode: "1611",
+        },
+      },
+      recipient: {
+        name: order.customerName,
+        phone: order.customerPhone || "",
+        cellPhone: order.customerPhone || "",
+        email: order.customerEmail,
+      },
+      shipping: {
+        deliveryType: "D" as const, // Domicilio por defecto
+        productType: "CP", // Correo Argentino Clásico
+        agency: null,
+        address: {
+          streetName: streetName || "Dirección",
+          streetNumber: streetNumber,
+          floor: addressParts[1] || "",
+          apartment: addressParts[2] || "",
+          city: addressParts[3] || "Buenos Aires",
+          provinceCode: provinceCode,
+          postalCode: postalCode,
+        },
+        weight: estimatedDimensions.weight,
+        declaredValue: order.total,
+        height: estimatedDimensions.height,
+        length: estimatedDimensions.length,
+        width: estimatedDimensions.width,
+      },
+    };
+
+    logger.info("[CA Shipment] Sending shipment data to CA", {
+      orderId,
+      shipmentData: JSON.stringify(shipmentData),
+    });
+
+    // 7. Llamar a la API de Correo Argentino
+    const response = await correoArgentinoService.importShipment(shipmentData);
+
+    if (!response.success) {
+      throw new Error(
+        `CA API error: ${response.error?.message || "Unknown error"} (code: ${response.error?.code})`
+      );
+    }
+
+    // 8. Actualizar pedido con tracking number
+    const trackingNumber = response.data?.trackingNumber;
+    const shipmentId = response.data?.shipmentId;
+
+    await prisma.orders.update({
+      where: { id: orderId },
+      data: {
+        trackingNumber: trackingNumber || shipmentId || null,
+        shippingMethod: "correo-argentino",
+        status: "PROCESSED", // Envío creado exitosamente
+        updatedAt: new Date(),
+      },
+    });
+
+    logger.info("[CA Shipment] Shipment created successfully", {
+      orderId,
+      trackingNumber,
+      shipmentId,
+    });
+
+    // 9. Notificar a administradores (si la función existe)
+    try {
+      const oneSignalLib = await import("@/lib/onesignal");
+      if ("notifyShipmentCreated" in oneSignalLib) {
+        await (oneSignalLib as { notifyShipmentCreated: (orderId: string, customerName: string) => Promise<void> }).notifyShipmentCreated(orderId, order.customerName);
+      } else {
+        logger.info("[CA Shipment] notifyShipmentCreated not available, skipping notification");
+      }
+    } catch (notifError) {
+      logger.warn("[CA Shipment] Failed to send admin notification", {
+        orderId,
+        error: notifError,
+      });
+    }
+  } catch (error) {
+    logger.error("[CA Shipment] Failed to create shipment", {
+      orderId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error; // Re-throw para que el caller pueda manejar
+  }
+}
+
 // Función para notificar al cliente por email/SMS
 async function _notifyCustomer(
   orderId: string,
@@ -82,41 +265,89 @@ async function _notifyCustomer(
   paymentDetails: MercadoPagoPayment
 ) {
   try {
-    // Aquí se puede integrar con servicios de email (SendGrid, Resend, etc.)
-    // y notificaciones push (OneSignal)
-
-    const order = await prisma.order.findUnique({
+    const order = await prisma.orders.findUnique({
       where: { id: orderId },
-      select: { customerEmail: true, customerName: true },
+      select: {
+        customerEmail: true,
+        customerName: true,
+        total: true,
+        order_items: {
+          include: {
+            products: true,
+          },
+        },
+      },
     });
 
     if (!order?.customerEmail) {
+      logger.warn("[Webhook] Order has no email, skipping notification", {
+        orderId,
+      });
       return;
     }
 
-    const _notifications = [];
+    // Enviar email de confirmación solo si el pago fue aprobado
+    if (status === "approved") {
+      const { sendEmail, getOrderConfirmationEmail, getNewOrderNotificationEmail } = await import(
+        "@/lib/resend"
+      );
 
-    // Log para desarrollo
-    logger.info("[Webhook] Customer notification", {
-      orderId,
-      email: order.customerEmail,
-      status,
-      paymentMethod: paymentDetails.payment_method_id,
-    });
+      const items = order.order_items.map((item) => ({
+        name: item.products.name,
+        quantity: item.quantity,
+        price: item.price,
+      }));
 
-    // Aquí se puede enviar email real
-    // await sendEmail({
-    //   to: order.customerEmail,
-    //   subject: getEmailSubject(status),
-    //   template: getEmailTemplate(status, paymentDetails),
-    // });
+      // Email al cliente
+      const customerEmailHtml = getOrderConfirmationEmail({
+        customerName: order.customerName,
+        orderId,
+        total: order.total,
+        items,
+      });
 
-    // Aquí se puede enviar notificación push
-    // await sendPushNotification({
-    //   userId: order.customerId,
-    //   title: getPushTitle(status),
-    //   body: getPushBody(status, orderId),
-    // });
+      await sendEmail({
+        to: order.customerEmail,
+        subject: "✅ Confirmación de tu pedido en Rastuci",
+        html: customerEmailHtml,
+      });
+
+      logger.info("[Webhook] Order confirmation email sent to customer", {
+        orderId,
+        email: order.customerEmail,
+        paymentMethod: paymentDetails.payment_method_id,
+      });
+
+      // Email al admin
+      const adminEmail = process.env.ADMIN_EMAIL || "contacto@rastuci.com";
+      const adminEmailHtml = getNewOrderNotificationEmail({
+        orderId,
+        customerName: order.customerName,
+        customerEmail: order.customerEmail,
+        total: order.total,
+        items,
+      });
+
+      await sendEmail({
+        to: adminEmail,
+        subject: `🔔 Nuevo Pedido #${orderId.slice(0, 8)} - ${order.customerName}`,
+        html: adminEmailHtml,
+      });
+
+      logger.info("[Webhook] New order notification email sent to admin", {
+        orderId,
+        adminEmail,
+      });
+
+      // Enviar notificación push al cliente
+      const { notifyPaymentConfirmed, notifyNewOrder } = await import(
+        "@/lib/onesignal"
+      );
+      await notifyPaymentConfirmed(orderId, order.customerName);
+
+      // Notificar a admins sobre nuevo pedido
+      await notifyNewOrder(orderId, order.customerName, order.total);
+    }
   } catch (error) {
     logger.error("[Webhook] Failed to send customer notification", {
       orderId,
@@ -244,7 +475,24 @@ export async function POST(req: NextRequest) {
     const metadata = payment.metadata || {};
 
     // Build items from metadata and DB (prices from DB to avoid tampering)
-    const metaItems = Array.isArray(metadata.items) ? metadata.items : [];
+    // metadata.items puede venir como string JSON o array directo
+    let metaItems: Record<string, unknown>[] = [];
+    if (Array.isArray(metadata.items)) {
+      metaItems = metadata.items;
+    } else if (typeof metadata.items === "string") {
+      try {
+        const parsed = JSON.parse(metadata.items);
+        metaItems = Array.isArray(parsed) ? parsed : [];
+      } catch (parseError) {
+        logger.error("[MP webhook] Failed to parse metadata.items", {
+          requestId,
+          mpPaymentId,
+          items: metadata.items,
+          error: parseError,
+        });
+      }
+    }
+
     const shippingId = metadata.shipping as string | undefined;
     const discountPercent = Number(metadata.discountPercent || 0);
     const safeDiscount =
@@ -257,6 +505,9 @@ export async function POST(req: NextRequest) {
       logger.warn("[MP webhook] No metadata.items in payment", {
         requestId,
         mpPaymentId,
+        metadataKeys: Object.keys(metadata),
+        hasItems: !!metadata.items,
+        itemsType: typeof metadata.items,
       });
       return ok({ ok: true });
     }
@@ -264,7 +515,7 @@ export async function POST(req: NextRequest) {
     const productIds: string[] = metaItems.map((i: Record<string, unknown>) =>
       String(i.productId)
     );
-    const dbProducts = await prisma.product.findMany({
+    const dbProducts = await prisma.products.findMany({
       where: { id: { in: productIds } },
       select: { id: true, name: true, price: true, stock: true },
     });
@@ -289,8 +540,8 @@ export async function POST(req: NextRequest) {
           productId: prod.id,
           quantity: Number(it.quantity) || 1,
           unitPrice,
-          size: it.size,
-          color: it.color,
+          size: typeof it.size === "string" ? it.size : undefined,
+          color: typeof it.color === "string" ? it.color : undefined,
         };
       }
     );
@@ -312,9 +563,12 @@ export async function POST(req: NextRequest) {
     const total = Number((itemsTotal + shippingCost).toFixed(2));
 
     // Map MP status to our OrderStatus
+    // approved → PENDING_PAYMENT (cliente pagó, admin debe crear envío en CA)
+    // in_process/pending → PENDING (esperando confirmación de pago)
+    // rejected/cancelled → PENDING (revisión manual)
     const mapStatus = (s: string) => {
       if (s === "approved") {
-        return "PROCESSED" as const;
+        return "PENDING_PAYMENT" as const; // Cliente pagó, crear envío automáticamente
       }
       if (s === "in_process" || s === "pending") {
         return "PENDING" as const;
@@ -325,14 +579,14 @@ export async function POST(req: NextRequest) {
     // 1. Try to find order by external_reference (our order.id)
     if (payment.external_reference) {
       const orderId = payment.external_reference;
-      const existingOrder = await prisma.order.findUnique({
+      const existingOrder = await prisma.orders.findUnique({
         where: { id: orderId },
-        include: { items: true },
+        include: { order_items: true },
       });
 
       if (existingOrder) {
         // Update existing order
-        await prisma.order.update({
+        await prisma.orders.update({
           where: { id: orderId },
           data: {
             mpPaymentId: mpPaymentId,
@@ -342,15 +596,16 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // If approved, decrement stock (if not already done)
-        // Note: We should ideally check if stock was already decremented to avoid double counting
-        // For now, we assume stock is decremented only when status changes to PROCESSED
-        if (
-          mapStatus(mpStatus) === "PROCESSED" &&
-          existingOrder.status !== "PROCESSED"
-        ) {
-          for (const item of existingOrder.items) {
-            await prisma.product.update({
+        // Si pago aprobado, decrementar stock (solo la primera vez)
+        const shouldDecrementStock =
+          mapStatus(mpStatus) === "PENDING_PAYMENT" &&
+          existingOrder.status !== "PENDING_PAYMENT" &&
+          existingOrder.status !== "PROCESSED" &&
+          existingOrder.status !== "DELIVERED";
+
+        if (shouldDecrementStock) {
+          for (const item of existingOrder.order_items) {
+            await prisma.products.update({
               where: { id: item.productId },
               data: {
                 stock: { decrement: item.quantity },
@@ -363,6 +618,23 @@ export async function POST(req: NextRequest) {
           orderId,
           status: mpStatus,
         });
+
+        // Si pago aprobado, intentar crear envío en Correo Argentino
+        if (mapStatus(mpStatus) === "PENDING_PAYMENT" && shouldDecrementStock) {
+          try {
+            await createCAShipment(orderId);
+          } catch (caError) {
+            logger.error(
+              "[MP webhook] CA shipment creation failed, order remains PENDING_PAYMENT for manual processing",
+              {
+                orderId,
+                error: caError,
+              }
+            );
+            // No lanzar error - el pedido ya está guardado en DB
+          }
+        }
+
         return ok({ ok: true });
       } else {
         logger.warn(
@@ -376,13 +648,13 @@ export async function POST(req: NextRequest) {
 
     // 2. Fallback: Try to find by preference_id
     if (preferenceId) {
-      const existingOrder = await prisma.order.findFirst({
+      const existingOrder = await prisma.orders.findFirst({
         where: { mpPreferenceId: preferenceId },
-        include: { items: true },
+        include: { order_items: true },
       });
 
       if (existingOrder) {
-        await prisma.order.update({
+        await prisma.orders.update({
           where: { id: existingOrder.id },
           data: {
             mpPaymentId: mpPaymentId,
@@ -392,12 +664,15 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        if (
-          mapStatus(mpStatus) === "PROCESSED" &&
-          existingOrder.status !== "PROCESSED"
-        ) {
-          for (const item of existingOrder.items) {
-            await prisma.product.update({
+        const shouldDecrementStock2 =
+          mapStatus(mpStatus) === "PENDING_PAYMENT" &&
+          existingOrder.status !== "PENDING_PAYMENT" &&
+          existingOrder.status !== "PROCESSED" &&
+          existingOrder.status !== "DELIVERED";
+
+        if (shouldDecrementStock2) {
+          for (const item of existingOrder.order_items) {
+            await prisma.products.update({
               where: { id: item.productId },
               data: {
                 stock: { decrement: item.quantity },
@@ -410,6 +685,22 @@ export async function POST(req: NextRequest) {
           orderId: existingOrder.id,
           status: mpStatus,
         });
+
+        // Si pago aprobado, intentar crear envío en Correo Argentino
+        if (mapStatus(mpStatus) === "PENDING_PAYMENT" && shouldDecrementStock2) {
+          try {
+            await createCAShipment(existingOrder.id);
+          } catch (caError) {
+            logger.error(
+              "[MP webhook] CA shipment creation failed, order remains PENDING_PAYMENT for manual processing",
+              {
+                orderId: existingOrder.id,
+                error: caError,
+              }
+            );
+          }
+        }
+
         return ok({ ok: true });
       }
     }
@@ -435,11 +726,11 @@ export async function POST(req: NextRequest) {
     await prisma.$transaction(
       async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
         // If order already exists (by payment ID), update status and return
-        const existing = await tx.order.findFirst({
+        const existing = await tx.orders.findFirst({
           where: { mpPaymentId: mpPaymentId },
         });
         if (existing) {
-          await tx.order.update({
+          await tx.orders.update({
             where: { id: existing.id },
             data: {
               mpStatus: mpStatus,
@@ -450,8 +741,9 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        await tx.order.create({
+        await tx.orders.create({
           data: {
+            id: `ord_${mpPaymentId}_${Date.now()}`,
             customerName: customerName,
             customerPhone: customerPhone,
             customerAddress: customerAddress,
@@ -461,13 +753,17 @@ export async function POST(req: NextRequest) {
             mpPaymentId: mpPaymentId,
             mpPreferenceId: preferenceId,
             mpStatus: mpStatus,
-            items: {
+            updatedAt: new Date(),
+            order_items: {
               create: orderItems.map((it) => ({
-                productId: it.productId,
+                id: `${mpPaymentId}-${it.productId}-${Date.now()}`,
                 quantity: it.quantity,
                 price: it.unitPrice,
                 size: it.size,
                 color: it.color,
+                products: {
+                  connect: { id: it.productId },
+                },
               })),
             },
           },
@@ -475,7 +771,7 @@ export async function POST(req: NextRequest) {
 
         // Decrement stock for each product
         for (const it of orderItems) {
-          await tx.product.update({
+          await tx.products.update({
             where: { id: it.productId },
             data: {
               stock: { decrement: it.quantity },

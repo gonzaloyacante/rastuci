@@ -48,7 +48,7 @@ export async function GET(
     }
 
     // Buscar la orden en la base de datos
-    const order = await prisma.order.findFirst({
+    const order = await prisma.orders.findFirst({
       where: {
         trackingNumber: trackingCode
       },
@@ -56,6 +56,7 @@ export async function GET(
         id: true,
         status: true,
         trackingNumber: true,
+        caTrackingNumber: true,
         customerAddress: true,
         updatedAt: true,
       }
@@ -69,15 +70,40 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // TODO: Obtener tracking desde API de Correo Argentino
-    const events: TrackingEvent[] = [
-      {
-        date: new Date(order.updatedAt).toLocaleDateString('es-AR'),
-        description: `Pedido ${getStatusLabel(order.status)}`,
-        status: order.status,
-        location: order.customerAddress || undefined,
+    // Obtener tracking desde API de Correo Argentino
+    let events: TrackingEvent[] = [];
+    
+    if (order.caTrackingNumber) {
+      try {
+        const { correoArgentinoService } = await import('@/lib/correo-argentino-service');
+        await correoArgentinoService.authenticate();
+        
+        const trackingData = await correoArgentinoService.getTracking(order.caTrackingNumber);
+        
+        if (trackingData.success && trackingData.data && !Array.isArray(trackingData.data) && 'events' in trackingData.data) {
+          events = trackingData.data.events.map(event => ({
+            date: new Date(event.date).toLocaleDateString('es-AR'),
+            description: event.event,
+            status: event.status,
+            location: event.branch,
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching CA tracking:', error);
       }
-    ];
+    }
+    
+    // Si no hay eventos de CA, usar datos de la orden
+    if (events.length === 0) {
+      events = [
+        {
+          date: new Date(order.updatedAt).toLocaleDateString('es-AR'),
+          description: `Pedido ${getStatusLabel(order.status)}`,
+          status: order.status,
+          location: order.customerAddress || undefined,
+        }
+      ];
+    }
 
     const trackingData: MobileTrackingData = {
       orderId: order.id,

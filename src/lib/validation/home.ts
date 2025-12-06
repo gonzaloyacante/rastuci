@@ -75,9 +75,9 @@ export const defaultHomeSettings: HomeSettings = {
     email: "contacto@rastuci.com",
     phone: "+54 9 11 1234-5678",
     socialLinks: {
-      instagram: "#",
-      facebook: "#",
-      twitter: "#",
+      instagram: "",
+      facebook: "",
+      twitter: "",
     },
   },
 };

@@ -60,7 +60,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Categories - optimized query
   let categoryEntries: MetadataRoute.Sitemap = [];
   try {
-    const categories = await prisma.category.findMany({
+    const categories = await prisma.categories.findMany({
       select: {
         id: true,
         name: true,
@@ -92,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Products - optimized query with stock filter
   let productEntries: MetadataRoute.Sitemap = [];
   try {
-    const products = await prisma.product.findMany({
+    const products = await prisma.products.findMany({
       select: {
         id: true,
         name: true,

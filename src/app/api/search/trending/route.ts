@@ -10,7 +10,7 @@ export async function GET(): Promise<
 > {
   try {
     // Top products by number of orderItems (proxy de ventas)
-    const topProducts = await prisma.orderItem.groupBy({
+    const topProducts = await prisma.order_items.groupBy({
       by: ["productId"],
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: "desc" } },
@@ -21,7 +21,7 @@ export async function GET(): Promise<
     const productIds = topProducts.map((t: TopProductType) => t.productId);
     const products =
       productIds.length > 0
-        ? await prisma.product.findMany({
+        ? await prisma.products.findMany({
             where: { id: { in: productIds } },
             select: { id: true, name: true },
           })
@@ -32,7 +32,7 @@ export async function GET(): Promise<
 
     // Completar con categorías top si hace falta
     if (trending.length < 8) {
-      const catCounts = await prisma.product.groupBy({
+      const catCounts = await prisma.products.groupBy({
         by: ["categoryId"],
         _count: { id: true },
         orderBy: { _count: { id: "desc" } },
@@ -42,7 +42,7 @@ export async function GET(): Promise<
       const catIds = catCounts.map((c: CatCountType) => c.categoryId);
       const cats =
         catIds.length > 0
-          ? await prisma.category.findMany({
+          ? await prisma.categories.findMany({
               where: { id: { in: catIds } },
               select: { id: true, name: true },
             })

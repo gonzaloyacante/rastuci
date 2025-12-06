@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/context/CartContext"; // ✅ Usar CartContext que maneja size y color
 import { useFavorites } from "@/hooks/useFavorites";
 import { Product } from "@/types";
 import { formatPriceARS } from "@/utils/formatters";
@@ -22,6 +22,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 // ============================================================================
 // Sub-componentes reutilizables
@@ -197,7 +198,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   const [imageLoading, setImageLoading] = useState(true);
 
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { addItem } = useCart();
+  const { addToCart } = useCart(); // ✅ Cambiar addItem por addToCart
 
   const productImages = useMemo(() => {
     try {
@@ -342,9 +343,9 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                 )}
             </div>
 
-            {product.category && (
+            {product.categories && (
               <Badge variant="outline" className="text-xs">
-                {product.category.name}
+                {product.categories.name}
               </Badge>
             )}
           </div>
@@ -445,7 +446,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                     ? "https://placehold.co/400x500.png"
                     : mainImage
                 }
-                alt={`${product.name} - ${product.category?.name || "Producto"}`}
+                alt={`${product.name} - ${product.categories?.name || "Producto"}`}
                 width={400}
                 height={200}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -471,7 +472,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           <div className="p-5 flex flex-col flex-1 surface">
             {/* Categoría */}
             <p className="text-[11px] font-semibold tracking-[1px] uppercase muted mb-[5px]">
-              {product.category?.name || "Sin categoría"}
+              {product.categories?.name || "Sin categoría"}
             </p>
 
             {/* Título - altura fija para alineación */}
@@ -533,7 +534,15 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (product.stock > 0) {
-                      addItem(product, 1);
+                      // Agregar DIRECTO al carrito con primera talla/color disponible
+                      const size = (product.sizes && product.sizes.length > 0) ? product.sizes[0] : 'Único';
+                      const color = (product.colors && product.colors.length > 0) ? product.colors[0] : 'Único';
+                      addToCart(product, 1, size, color); // ✅ Usar addToCart con signature correcta
+                      // Mostrar feedback visual
+                      toast.success(`${product.name} agregado al carrito`, {
+                        icon: '🛒',
+                        duration: 2000,
+                      });
                     }
                   }}
                   aria-label="Agregar al carrito"
@@ -624,7 +633,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                     ? "https://placehold.co/400x400.png"
                     : mainImage
                 }
-                alt={`${product.name} - ${product.category?.name || "Producto"}`}
+                alt={`${product.name} - ${product.categories?.name || "Producto"}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                 onError={handleImageError}
@@ -655,7 +664,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           {/* Header: Categoría + Rating */}
           <div className="flex items-center justify-between gap-2 mb-1">
             <p className="text-[9px] sm:text-[10px] uppercase tracking-wide muted font-semibold truncate">
-              {product.category?.name}
+              {product.categories?.name}
             </p>
             {product.rating && product.rating > 0 && (
               <div className="shrink-0">
@@ -751,7 +760,15 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (product.stock > 0) {
-                    addItem(product, 1);
+                    // Agregar DIRECTO al carrito con primera talla/color disponible
+                    const size = (product.sizes && product.sizes.length > 0) ? product.sizes[0] : 'Único';
+                    const color = (product.colors && product.colors.length > 0) ? product.colors[0] : 'Único';
+                    addToCart(product, 1, size, color); // ✅ Usar addToCart
+                    // Mostrar feedback visual
+                    toast.success(`${product.name} agregado al carrito`, {
+                      icon: '🛒',
+                      duration: 2000,
+                    });
                   }
                 }}
                 aria-label="Agregar al carrito"

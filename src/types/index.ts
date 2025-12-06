@@ -38,7 +38,7 @@ export interface Product {
   width?: number | null; // Ancho en cm
   length?: number | null; // Largo en cm
   categoryId: string;
-  category?: Category;
+  categories?: Category;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,6 +60,7 @@ export interface Order {
   customerName: string;
   customerPhone: string;
   customerAddress?: string;
+  customerEmail?: string;
   total: number;
   status: OrderStatus;
   createdAt: Date;
@@ -73,6 +74,7 @@ export interface SerializedOrder {
   customerName: string;
   customerPhone: string;
   customerAddress?: string;
+  customerEmail?: string;
   total: number;
   status: OrderStatus;
   createdAt: string;
@@ -86,6 +88,8 @@ export interface OrderItem {
   price: number;
   orderId: string;
   productId: string;
+  size?: string;
+  color?: string;
   product?: Product;
 }
 
@@ -106,9 +110,10 @@ export interface SerializedOrderItem {
 }
 
 export enum OrderStatus {
-  PENDING = "PENDING",
-  PROCESSED = "PROCESSED",
-  DELIVERED = "DELIVERED",
+  PENDING = "PENDING",              // Pedido creado, esperando pago del cliente
+  PENDING_PAYMENT = "PENDING_PAYMENT", // Cliente pagó, admin debe pagar envío
+  PROCESSED = "PROCESSED",          // Envío pagado, listo para entregar
+  DELIVERED = "DELIVERED",          // Entregado al cliente
 }
 
 // Tipos para formularios

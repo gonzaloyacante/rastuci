@@ -11,7 +11,7 @@ interface ApiResponse<T = unknown> {
 export const POST = withAdminAuth(async (_request: NextRequest): Promise<NextResponse> => {
   try {
     // Actualizar todos los tracking codes activos
-    const orders = await prisma.order.findMany({
+    const orders = await prisma.orders.findMany({
       where: {
         status: { notIn: ['DELIVERED'] } // Solo actualizar envíos activos
       }
@@ -23,18 +23,22 @@ export const POST = withAdminAuth(async (_request: NextRequest): Promise<NextRes
     for (const order of orders) {
       if (order.trackingNumber) {
         try {
-          // TODO: Integrar con API de Correo Argentino para obtener estado actualizado
-          // const caService = new CorreoArgentinoService({...credentials});
-          // const trackingData = await caService.getTracking({trackingNumber: order.trackingNumber});
+          // Integrar con API de Correo Argentino para obtener estado actualizado
+          const { correoArgentinoService } = await import('@/lib/correo-argentino-service');
+          
+          await correoArgentinoService.authenticate();
+          const trackingData = await correoArgentinoService.getTracking(order.trackingNumber);
 
-          // Actualizar el pedido con nueva información
-          await prisma.order.update({
-            where: { id: order.id },
-            data: {
-              updatedAt: new Date()
-            }
-          });
-          updatedCount++;
+          if (trackingData.success && trackingData.data && !Array.isArray(trackingData.data) && 'events' in trackingData.data) {
+            // Tracking data actualizado desde CA
+            await prisma.orders.update({
+              where: { id: order.id },
+              data: {
+                updatedAt: new Date()
+              }
+            });
+            updatedCount++;
+          }
         } catch (error) {
           errors.push(`Error actualizando orden ${order.id}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
           continue;

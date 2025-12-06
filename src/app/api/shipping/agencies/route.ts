@@ -48,6 +48,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const provinceCode = searchParams.get("provinceCode");
+    const postalCode = searchParams.get("postalCode"); // Filtro opcional
 
     if (!provinceCode) {
       return NextResponse.json(
@@ -78,9 +79,29 @@ export async function GET(request: Request) {
       });
 
       if (result.success && result.data && result.data.length > 0) {
+        let filteredAgencies = result.data;
+
+        // Filtrar por código postal si se proporciona
+        if (postalCode) {
+          filteredAgencies = result.data.filter((agency) => {
+            const agencyPostalCode = agency.location?.address?.postalCode;
+            // Match exacto o parcial (primeros 4 dígitos)
+            return (
+              agencyPostalCode === postalCode ||
+              agencyPostalCode?.startsWith(postalCode) ||
+              postalCode.startsWith(agencyPostalCode || "")
+            );
+          });
+
+          logger.info(`[Agencies] Filtered by postalCode ${postalCode}`, {
+            total: result.data.length,
+            filtered: filteredAgencies.length,
+          });
+        }
+
         return NextResponse.json({
           success: true,
-          agencies: result.data,
+          agencies: filteredAgencies,
           isFallback: false,
         });
       }

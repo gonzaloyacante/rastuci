@@ -3,13 +3,13 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
 // Define the type for the order with nested relations
-type OrderWithItems = Prisma.OrderGetPayload<{
+type OrderWithItems = Prisma.ordersGetPayload<{
   include: {
-    items: {
+    order_items: {
       include: {
-        product: {
+        products: {
           include: {
-            category: true;
+            categories: true;
           };
         };
       };
@@ -17,39 +17,40 @@ type OrderWithItems = Prisma.OrderGetPayload<{
   };
 }>;
 
-type OrderItem = OrderWithItems['items'][0];
+type OrderItem = OrderWithItems['order_items'][0];
 
 // Map a Prisma order (with nested items->product->category) to the API Order DTO
 export function mapOrderToDTO(order: OrderWithItems): Order {
   return {
     ...order,
     customerAddress: order.customerAddress ?? undefined,
+    customerEmail: order.customerEmail ?? undefined,
     status: order.status as OrderStatus,
-    items: order.items.map((item: OrderItem) => ({
+    items: order.order_items.map((item: OrderItem) => ({
       id: item.id,
       quantity: item.quantity,
       price: item.price,
       orderId: item.orderId,
       productId: item.productId,
       product: {
-        id: item.product.id,
-        name: item.product.name,
-        description: item.product.description ?? undefined,
-        price: item.product.price,
-        stock: item.product.stock,
+        id: item.products.id,
+        name: item.products.name,
+        description: item.products.description ?? undefined,
+        price: item.products.price,
+        stock: item.products.stock,
         images:
-          typeof item.product.images === "string"
-            ? JSON.parse(item.product.images)
-            : item.product.images,
-        categoryId: item.product.categoryId,
-        createdAt: item.product.createdAt,
-        updatedAt: item.product.updatedAt,
-        category: {
-          id: item.product.category.id,
-          name: item.product.category.name,
-          description: item.product.category.description ?? undefined,
-          createdAt: item.product.category.createdAt,
-          updatedAt: item.product.category.updatedAt,
+          typeof item.products.images === "string"
+            ? JSON.parse(item.products.images)
+            : item.products.images,
+        categoryId: item.products.categoryId,
+        createdAt: item.products.createdAt,
+        updatedAt: item.products.updatedAt,
+        categories: {
+          id: item.products.categories.id,
+          name: item.products.categories.name,
+          description: item.products.categories.description ?? undefined,
+          createdAt: item.products.categories.createdAt,
+          updatedAt: item.products.categories.updatedAt,
         },
       },
     })),
@@ -61,13 +62,13 @@ export async function updateOrderStatus(
   id: string,
   status: OrderStatus
 ) {
-  const order = await prisma.order.update({
+  const order = await prisma.orders.update({
     where: { id },
     data: { status },
     include: {
-      items: {
+      order_items: {
         include: {
-          product: { include: { category: true } },
+          products: { include: { categories: true } },
         },
       },
     },

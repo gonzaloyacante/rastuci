@@ -57,6 +57,7 @@ export function AgencySelector({
   }, [initialPostalCode, agencies.length]);
 
   // Efecto para cargar sucursales cuando cambia la provincia
+  // OPTIMIZADO: SOLO busca por CP si está disponible, NO carga todas las sucursales
   useEffect(() => {
     if (!province) {
       setAgencies([]);
@@ -67,19 +68,32 @@ export function AgencySelector({
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(
-          `/api/shipping/agencies?provinceCode=${province}`
-        );
+        // SIEMPRE buscar con filtro de CP si está disponible (no fallback a toda la provincia)
+        const queryParams = new URLSearchParams({
+          provinceCode: province,
+        });
+
+        if (initialPostalCode) {
+          queryParams.append("postalCode", initialPostalCode);
+        }
+
+        const response = await fetch(`/api/shipping/agencies?${queryParams.toString()}`);
         const data = await response.json();
+        
         if (data.success && data.agencies) {
           // Filtrar solo sucursales activas con servicio de retiro
           const activeAgencies = data.agencies.filter(
-            (a: Agency) =>
-              a.status === "ACTIVE" && a.services?.pickupAvailability
+            (a: Agency) => a.status === "ACTIVE" && a.services?.pickupAvailability
           );
+          
           setAgencies(activeAgencies);
+          
           if (activeAgencies.length === 0) {
-            setError("No hay sucursales disponibles en esta provincia");
+            setError(
+              initialPostalCode 
+                ? `No hay sucursales disponibles en el código postal ${initialPostalCode}. Ingresa una ciudad en el buscador.`
+                : "No hay sucursales disponibles en esta provincia"
+            );
           }
         } else {
           setAgencies([]);
@@ -94,33 +108,75 @@ export function AgencySelector({
     };
 
     fetchAgencies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [province]);
 
-  // Filtrar sucursales por término de búsqueda
+  // Filtrar sucursales por término de búsqueda con scoring para mejorar relevancia
   const filteredAgencies = useMemo(() => {
     if (!searchTerm.trim()) return agencies;
 
     const term = searchTerm.toLowerCase().trim();
-    return agencies.filter(
-      (agency) =>
-        agency.name.toLowerCase().includes(term) ||
-        agency.location.address.city?.toLowerCase().includes(term) ||
-        agency.location.address.locality?.toLowerCase().includes(term) ||
-        agency.location.address.postalCode?.toLowerCase().includes(term) ||
-        agency.location.address.streetName?.toLowerCase().includes(term) ||
-        agency.code.toLowerCase().includes(term)
-    );
+    
+    // Dar puntaje de relevancia para ordenar resultados
+    const scored = agencies.map(agency => {
+      let score = 0;
+      const cp = agency.location.address.postalCode?.toLowerCase() || "";
+      const city = (agency.location.address.city || agency.location.address.locality || "").toLowerCase();
+      const name = agency.name.toLowerCase();
+      const street = agency.location.address.streetName?.toLowerCase() || "";
+      
+      // Código postal exacto tiene máxima prioridad
+      if (cp === term) score += 100;
+      else if (cp.startsWith(term)) score += 50;
+      else if (cp.includes(term)) score += 25;
+      
+      // Ciudad/Localidad
+      if (city === term) score += 80;
+      else if (city.startsWith(term)) score += 40;
+      else if (city.includes(term)) score += 20;
+      
+      // Nombre de sucursal
+      if (name.includes(term)) score += 15;
+      
+      // Calle
+      if (street.includes(term)) score += 10;
+      
+      return { agency, score };
+    });
+    
+    // Filtrar solo los que tienen puntaje > 0 y ordenar por score descendente
+    return scored
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(item => item.agency);
   }, [agencies, searchTerm]);
 
-  // Opciones de sucursales para el Select (limitadas a 50 para rendimiento)
-  const agencyOptions = useMemo(
-    () =>
-      filteredAgencies.slice(0, 50).map((agency) => ({
-        value: agency.code,
-        label: `${agency.name} - ${agency.location.address.streetName} ${agency.location.address.streetNumber}, ${agency.location.address.city || agency.location.address.locality}`,
-      })),
-    [filteredAgencies]
-  );
+  // Opciones de sucursales para el Select con mejor formato
+  const agencyOptions = useMemo(() => {
+    // Agrupar por ciudad para mejor organización
+    const byCity = filteredAgencies.reduce((acc, agency) => {
+      const city = agency.location.address.city || agency.location.address.locality || "Otras";
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(agency);
+      return acc;
+    }, {} as Record<string, Agency[]>);
+    
+    const options: { value: string; label: string; group?: string }[] = [];
+    
+    // Mostrar TODAS las sucursales filtradas (no limitar artificialmente)
+    Object.entries(byCity).forEach(([city, cityAgencies]) => {
+      cityAgencies.forEach(agency => {
+        const label = `${agency.name} - ${agency.location.address.streetName} ${agency.location.address.streetNumber} (CP: ${agency.location.address.postalCode})`;
+        options.push({
+          value: agency.code,
+          label,
+          group: Object.keys(byCity).length > 1 ? city : undefined
+        });
+      });
+    });
+
+    return options; // Retornar TODAS las opciones filtradas
+  }, [filteredAgencies]);
 
   const handleAgencyChange = useCallback(
     (agencyCode: string) => {
@@ -178,13 +234,21 @@ export function AgencySelector({
               </button>
             )}
           </div>
-          {searchTerm && filteredAgencies.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {filteredAgencies.length} sucursal
-              {filteredAgencies.length !== 1 ? "es" : ""} encontrada
-              {filteredAgencies.length !== 1 ? "s" : ""}
-              {filteredAgencies.length > 50 && " (mostrando primeras 50)"}
-            </p>
+          {searchTerm && (
+            <div className="flex items-center gap-2">
+              {filteredAgencies.length > 0 ? (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  ✓ {filteredAgencies.length} sucursal
+                  {filteredAgencies.length !== 1 ? "es" : ""} encontrada
+                  {filteredAgencies.length !== 1 ? "s" : ""}
+                  {filteredAgencies.length > 50 && " (mostrando primeras 50)"}
+                </p>
+              ) : (
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  ⚠ No se encontraron sucursales con "{searchTerm}". Intenta buscar por código postal o ciudad.
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}

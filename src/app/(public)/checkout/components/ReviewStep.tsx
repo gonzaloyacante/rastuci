@@ -132,7 +132,7 @@ export default function ReviewStep({
                             </div>
                           );
                         }
-                      } catch (e) {
+                      } catch {
                         // fallthrough to placeholder
                       }
 

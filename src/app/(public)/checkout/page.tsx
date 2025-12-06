@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 const CheckoutPageSkeleton = () => (
   <div className="surface text-primary min-h-screen flex flex-col">
-    <main className="flex-grow max-w-[1200px] mx-auto py-8 px-6 w-full">
+    <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
       {/* Header Skeleton */}
       <div className="h-10 surface-secondary rounded animate-pulse w-48 mb-8" />
 

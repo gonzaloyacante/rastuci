@@ -157,31 +157,31 @@ function SuppliersGrid({ suppliers }: { suppliers: Supplier[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {suppliers.map((supplier) => (
         <Card
           key={supplier.id}
-          className="p-4 hover:shadow-md transition-shadow"
+          className="p-3 sm:p-4 hover:shadow-md transition-shadow"
         >
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-primary">{supplier.name}</h3>
-              <p className="text-sm text-muted">{supplier.category}</p>
+          <div className="flex items-start justify-between mb-3 gap-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm sm:text-base text-primary truncate">{supplier.name}</h3>
+              <p className="text-xs sm:text-sm text-muted truncate">{supplier.category}</p>
             </div>
             <StatusBadge status={supplier.isActive ? "active" : "inactive"} />
           </div>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-xs sm:text-sm">
             <div className="flex items-center gap-2 text-muted">
-              <Mail size={14} />
-              {supplier.email}
+              <Mail size={14} className="shrink-0" />
+              <span className="break-all">{supplier.email}</span>
             </div>
             <div className="flex items-center gap-2 text-muted">
-              <Phone size={14} />
-              {supplier.phone}
+              <Phone size={14} className="shrink-0" />
+              <span className="break-all">{supplier.phone}</span>
             </div>
             <div className="flex items-center gap-2 text-muted">
-              <MapPin size={14} />
-              {supplier.address}
+              <MapPin size={14} className="shrink-0" />
+              <span className="wrap-break-word">{supplier.address}</span>
             </div>
           </div>
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-muted">
@@ -217,9 +217,9 @@ function RoutesGrid({ routes }: { routes: OptimizedRoute[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {routes.map((route) => (
-        <Card key={route.id} className="p-4 hover:shadow-md transition-shadow">
+        <Card key={route.id} className="p-3 sm:p-4 hover:shadow-md transition-shadow">
           <div className="flex items-start justify-between mb-3">
             <div>
               <h3 className="font-semibold text-primary">Ruta {route.id}</h3>
@@ -275,28 +275,28 @@ function ReturnsGrid({ returns }: { returns: ReturnRequest[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
       {returns.map((returnReq) => (
         <Card
           key={returnReq.id}
-          className="p-4 hover:shadow-md transition-shadow"
+          className="p-3 sm:p-4 hover:shadow-md transition-shadow"
         >
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-primary">
+          <div className="flex flex-col sm:flex-row items-start justify-between mb-3 gap-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm sm:text-base text-primary">
                 Devolución #{returnReq.id}
               </h3>
-              <p className="text-sm text-muted">Pedido: {returnReq.orderId}</p>
+              <p className="text-xs sm:text-sm text-muted truncate">Pedido: {returnReq.orderId}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <StatusBadge status={returnReq.status} />
-              <Badge className="badge-default">{returnReq.returnType}</Badge>
+              <Badge className="badge-default text-xs">{returnReq.returnType}</Badge>
             </div>
           </div>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-xs sm:text-sm">
             <div className="flex items-center gap-2 text-muted">
-              <Mail size={14} />
-              {returnReq.customerEmail}
+              <Mail size={14} className="shrink-0" />
+              <span className="break-all">{returnReq.customerEmail}</span>
             </div>
             <p className="text-muted line-clamp-2">
               {returnReq.customerReason}

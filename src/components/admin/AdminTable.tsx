@@ -98,7 +98,7 @@ export const AdminTable = <T extends Record<string, unknown>>({
       )}
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="border-b border-muted surface">
                 {columns.map((column) => (
@@ -106,14 +106,14 @@ export const AdminTable = <T extends Record<string, unknown>>({
                     key={column.key}
                     className={`${getAlignClass(
                       column.align
-                    )} p-4 font-semibold muted tracking-wide`}
+                    )} p-2 sm:p-4 font-semibold muted tracking-wide text-xs sm:text-sm`}
                     style={{ width: column.width }}
                   >
                     {column.label}
                   </th>
                 ))}
                 {actions && actions.length > 0 && (
-                  <th className="text-left p-4 font-semibold muted">
+                  <th className="text-left p-2 sm:p-4 font-semibold muted text-xs sm:text-sm">
                     Acciones
                   </th>
                 )}
@@ -133,7 +133,7 @@ export const AdminTable = <T extends Record<string, unknown>>({
                       key={column.key}
                       className={`${getAlignClass(
                         column.align
-                      )} p-4 align-middle`}
+                      )} p-2 sm:p-4 align-middle text-xs sm:text-sm`}
                     >
                       {column.render
                         ? column.render(row[column.key], row)
@@ -141,8 +141,8 @@ export const AdminTable = <T extends Record<string, unknown>>({
                     </td>
                   ))}
                   {actions && actions.length > 0 && (
-                    <td className="p-4 align-middle">
-                      <div className="flex gap-2">
+                    <td className="p-2 sm:p-4 align-middle">
+                      <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
                         {actions
                           .filter(
                             (action) =>
@@ -153,7 +153,7 @@ export const AdminTable = <T extends Record<string, unknown>>({
                               key={actionIndex}
                               variant={action.variant || "outline"}
                               size="sm"
-                              className={`text-xs flex items-center gap-1 ${
+                              className={`text-xs flex items-center gap-1 justify-center ${
                                 action.className || ""
                               }`}
                               onClick={(e) => {
@@ -162,7 +162,7 @@ export const AdminTable = <T extends Record<string, unknown>>({
                               }}
                             >
                               {action.icon && <span>{action.icon}</span>}
-                              {action.label}
+                              <span className="hidden sm:inline">{action.label}</span>
                             </Button>
                           ))}
                       </div>

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Carrito de Compras - Rastuci",
   description:
     "Revisa y gestiona los productos en tu carrito de compras. Procede al checkout cuando estés listo.",
-  keywords: "carrito, compras, checkout, productos, pago, envío gratis",
+  keywords: "carrito, compras, checkout, productos, pago",
   openGraph: {
     title: "Carrito de Compras - Rastuci",
     description: "Gestiona tu carrito de compras y procede al checkout.",

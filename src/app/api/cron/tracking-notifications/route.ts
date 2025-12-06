@@ -26,6 +26,7 @@
 
 import { logger } from "@/lib/logger";
 import { trackingNotificationService } from "@/lib/tracking-notifications";
+import { cleanExpiredReservations } from "@/utils/stockReservations";
 import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 10; // Máximo 10 segundos en Vercel Hobby (gratis)
@@ -47,16 +48,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    logger.info("[Cron] Starting tracking notifications check");
+    logger.info("[Cron] Starting daily tasks");
 
-    // Ejecutar chequeo manualmente (sin iniciar el servicio de polling)
+    // 1. Ejecutar chequeo de tracking (sin iniciar el servicio de polling)
     await trackingNotificationService["checkAllActiveShipments"]();
-
     logger.info("[Cron] Tracking notifications check completed");
+
+    // 2. Limpiar reservas de stock expiradas
+    await cleanExpiredReservations();
+    logger.info("[Cron] Stock reservations cleanup completed");
 
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
+      tasks: ["tracking-notifications", "stock-reservations-cleanup"],
     });
   } catch (error) {
     logger.error("[Cron] Error in tracking notifications cron", { error });

@@ -48,14 +48,16 @@ export default function CreateUserPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="Crear Nuevo Usuario"
-        subtitle="Añade un nuevo usuario al sistema"
-      />
+    <div className="min-h-screen surface p-4 sm:p-6 lg:p-8">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <AdminPageHeader
+          title="Crear Nuevo Usuario"
+          subtitle="Añade un nuevo usuario al sistema"
+        />
 
-      <div className="card">
-        <UserForm onSubmit={handleSubmit} onCancel={handleCancel} />
+        <div className="card p-4 sm:p-6 lg:p-8">
+          <UserForm onSubmit={handleSubmit} onCancel={handleCancel} />
+        </div>
       </div>
     </div>
   );

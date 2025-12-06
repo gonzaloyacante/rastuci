@@ -30,7 +30,7 @@ export async function GET(
     }
     const { id } = await params;
 
-    const category = await prisma.category.findUnique({
+    const category = await prisma.categories.findUnique({
       where: { id },
       include: {
         products: {
@@ -101,7 +101,7 @@ export const PUT = withAdminAuth(
       }
 
       // Verificar si existe otra categoría con ese nombre
-      const existingCategory = await prisma.category.findFirst({
+      const existingCategory = await prisma.categories.findFirst({
         where: {
           name,
           NOT: { id },
@@ -117,7 +117,7 @@ export const PUT = withAdminAuth(
         );
       }
 
-      const category = await prisma.category.update({
+      const category = await prisma.categories.update({
         where: { id },
         data: {
           name,
@@ -167,7 +167,7 @@ export const DELETE = withAdminAuth(
       const { id } = await params;
 
       // Verificar si hay productos asociados a esta categoría
-      const productsCount = await prisma.product.count({
+      const productsCount = await prisma.products.count({
         where: { categoryId: id },
       });
 
@@ -180,7 +180,7 @@ export const DELETE = withAdminAuth(
         );
       }
 
-      await prisma.category.delete({
+      await prisma.categories.delete({
         where: { id },
       });
 

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-// import { Badge } from "@/components/ui/Badge"; // TODO: Implement when needed
 import { Globe, Check, ChevronDown } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 

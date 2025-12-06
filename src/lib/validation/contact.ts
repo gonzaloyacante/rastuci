@@ -74,28 +74,7 @@ export const defaultContactSettings: ContactSettings = {
       "Gracias por contactarnos. Te responderemos dentro de las próximas 24 horas.",
     sendAnotherLabel: "Enviar otro mensaje",
   },
-  faqs: [
-    {
-      question: "¿Cuál es el tiempo de entrega?",
-      answer:
-        "Los envíos a todo el país tardan entre 3 a 7 días hábiles, dependiendo de la ubicación.",
-    },
-    {
-      question: "¿Puedo cambiar o devolver un producto?",
-      answer:
-        "Sí, aceptamos cambios y devoluciones dentro de los 30 días posteriores a la compra.",
-    },
-    {
-      question: "¿Qué métodos de pago aceptan?",
-      answer:
-        "Aceptamos todas las tarjetas de crédito y débito, transferencias bancarias y efectivo.",
-    },
-    {
-      question: "¿Las prendas vienen con garantía?",
-      answer:
-        "Todas nuestras prendas cuentan con garantía de calidad por defectos de fabricación.",
-    },
-  ],
+  faqs: [], // FAQs now come from API
   social: {
     instagram: "",
     facebook: "",

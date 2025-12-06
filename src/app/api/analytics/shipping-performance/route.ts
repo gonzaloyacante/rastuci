@@ -64,7 +64,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const end = endDate ? new Date(endDate) : now;
 
     // Obtener pedidos
-    const orders = await prisma.order.findMany({
+    const orders = await prisma.orders.findMany({
       where: {
         createdAt: {
           gte: start,
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const previousStart = new Date(start);
     previousStart.setDate(previousStart.getDate() - previousPeriodDays);
 
-    const previousOrders = await prisma.order.count({
+    const previousOrders = await prisma.orders.count({
       where: {
         createdAt: {
           gte: previousStart,
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Agregar datos de satisfacción si se solicitan (basados en reviews reales)
     if (includeDetails) {
-      const reviews = await prisma.productReview.findMany({
+      const reviews = await prisma.product_reviews.findMany({
         where: {
           createdAt: {
             gte: start,

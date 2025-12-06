@@ -115,7 +115,7 @@ function determineAlertLevel(
 export const GET = withAdminAuth(async () => {
   try {
     // Obtener pedidos con envío (shippingMethod diferente de 'pickup')
-    const ordersWithShipping = await prisma.order.findMany({
+    const ordersWithShipping = await prisma.orders.findMany({
       where: {
         OR: [
           { caTrackingNumber: { not: null } },
@@ -163,6 +163,27 @@ export const GET = withAdminAuth(async () => {
       };
     });
 
+    // Calcular tiempo promedio de entrega desde órdenes entregadas
+    const deliveredOrders = await prisma.orders.findMany({
+      where: {
+        status: "DELIVERED",
+      },
+      select: {
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    const avgDeliveryTime =
+      deliveredOrders.length > 0
+        ? deliveredOrders.reduce((sum, order) => {
+            const deliveryDays =
+              (order.updatedAt.getTime() - order.createdAt.getTime()) /
+              (1000 * 60 * 60 * 24);
+            return sum + deliveryDays;
+          }, 0) / deliveredOrders.length
+        : 0;
+
     // Calcular estadísticas
     const stats: TrackingStats = {
       total: trackings.length,
@@ -172,20 +193,8 @@ export const GET = withAdminAuth(async () => {
       delayed: trackings.filter(
         (t) => t.status === "delayed" || t.status === "error"
       ).length,
-      avgDeliveryTime: 0, // TODO: Calcular cuando tengamos datos de entrega
+      avgDeliveryTime: Math.round(avgDeliveryTime * 10) / 10,
     };
-
-    // Calcular tiempo promedio de entrega si hay pedidos entregados
-    const deliveredOrders = await prisma.order.findMany({
-      where: {
-        status: "DELIVERED",
-        shippingMethod: { not: "pickup" },
-      },
-      select: {
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
 
     if (deliveredOrders.length > 0) {
       const totalDays = deliveredOrders.reduce((sum, order) => {

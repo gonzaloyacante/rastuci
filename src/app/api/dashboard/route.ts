@@ -9,8 +9,8 @@ interface OrderWithItems {
   total: number;
   createdAt: Date;
   status: string;
-  items: Array<{
-    product: {
+  order_items: Array<{
+    products: {
       id: string;
       name: string;
     };
@@ -61,28 +61,28 @@ export async function GET() {
       productsAddedThisMonth,
       productsAddedLastMonth,
     ] = await Promise.all([
-      prisma.product.count(),
-      prisma.category.count(),
-      prisma.order.count(),
-      prisma.order.count({ where: { status: "PENDING" } }),
-      prisma.order.findMany({
+      prisma.products.count(),
+      prisma.categories.count(),
+      prisma.orders.count(),
+      prisma.orders.count({ where: { status: "PENDING" } }),
+      prisma.orders.findMany({
         where: { status: "PENDING" },
         take: 5,
         orderBy: { createdAt: "desc" },
         include: {
-          items: {
+          order_items: {
             include: {
-              product: true,
+              products: true,
             },
           },
         },
       }),
       // Pedidos este mes
-      prisma.order.count({
+      prisma.orders.count({
         where: { createdAt: { gte: startOfThisMonth } },
       }),
       // Pedidos mes anterior
-      prisma.order.count({
+      prisma.orders.count({
         where: {
           createdAt: {
             gte: startOfLastMonth,
@@ -91,11 +91,11 @@ export async function GET() {
         },
       }),
       // Productos agregados este mes
-      prisma.product.count({
+      prisma.products.count({
         where: { createdAt: { gte: startOfThisMonth } },
       }),
       // Productos agregados mes anterior
-      prisma.product.count({
+      prisma.products.count({
         where: {
           createdAt: {
             gte: startOfLastMonth,
@@ -108,12 +108,12 @@ export async function GET() {
     // Calcular ingresos totales y por período
     const [totalRevenueResult, revenueThisMonth, revenueLastMonth] =
       await Promise.all([
-        prisma.order.aggregate({ _sum: { total: true } }),
-        prisma.order.aggregate({
+        prisma.orders.aggregate({ _sum: { total: true } }),
+        prisma.orders.aggregate({
           _sum: { total: true },
           where: { createdAt: { gte: startOfThisMonth } },
         }),
-        prisma.order.aggregate({
+        prisma.orders.aggregate({
           _sum: { total: true },
           where: {
             createdAt: {
@@ -141,7 +141,7 @@ export async function GET() {
     const categoriesChange = calculateChange(totalCategories, totalCategories); // Categorías no cambian mucho
 
     // Obtener productos con bajo stock
-    const lowStockProducts = await prisma.product.findMany({
+    const lowStockProducts = await prisma.products.findMany({
       where: {
         stock: {
           lt: 10,
@@ -160,11 +160,11 @@ export async function GET() {
       total: order.total,
       date: order.createdAt,
       status: order.status,
-      items: order.items.length,
+      items: order.order_items.length,
     }));
 
     // Obtener productos por categoría usando Prisma
-    const productsByCategory = await prisma.category.findMany({
+    const productsByCategory = await prisma.categories.findMany({
       select: {
         name: true,
         _count: {
@@ -188,7 +188,7 @@ export async function GET() {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
 
-      const monthRevenue = await prisma.order.aggregate({
+      const monthRevenue = await prisma.orders.aggregate({
         _sum: { total: true },
         where: {
           createdAt: {

@@ -16,7 +16,7 @@ interface OrderForExport {
 
 export const GET = withAdminAuth(async (_request: NextRequest): Promise<NextResponse> => {
   try {
-    const orders = await prisma.order.findMany({
+    const orders = await prisma.orders.findMany({
       orderBy: {
         createdAt: 'desc'
       }

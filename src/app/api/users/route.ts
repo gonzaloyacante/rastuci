@@ -13,6 +13,12 @@ interface SafeUser {
   name: string;
   email: string;
   isAdmin: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  lastLoginAt?: string | null;
+  lastLoginIp?: string | null;
+  loginCount?: number;
+  activeSessions?: number;
 }
 
 // PATCH /api/users - Actualizar password/isAdmin por email (para recuperar acceso admin)
@@ -60,6 +66,7 @@ export async function PATCH(
         })
       : await prisma.user.create({
           data: {
+            id: `user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
             email,
             name: body.name || "",
             password: hashedPassword,
@@ -133,9 +140,21 @@ export async function GET(
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        orderBy: { name: "asc" },
+        orderBy: { createdAt: "desc" },
         skip: offset,
         take: limit,
+        include: {
+          Session: {
+            where: {
+              expires: {
+                gt: new Date(),
+              },
+            },
+            select: {
+              id: true,
+            },
+          },
+        },
       }),
       prisma.user.count({ where }),
     ]);
@@ -146,6 +165,12 @@ export async function GET(
       name: user.name || "",
       email: user.email || "",
       isAdmin: user.isAdmin,
+      createdAt: user.createdAt?.toISOString(),
+      updatedAt: user.updatedAt?.toISOString(),
+      lastLoginAt: user.lastLoginAt?.toISOString() || null,
+      lastLoginIp: user.lastLoginIp || null,
+      loginCount: user.loginCount || 0,
+      activeSessions: user.Session?.length || 0,
     }));
 
     const totalPages = Math.ceil(total / limit);
@@ -212,6 +237,7 @@ export async function POST(
     // Crear el usuario
     const user = await prisma.user.create({
       data: {
+        id: `user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         name,
         email,
         password: hashedPassword,

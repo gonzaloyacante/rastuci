@@ -37,10 +37,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   className = "",
   showResetButton = true,
 }) => {
+  // Verificar si hay filtros activos (excluyendo valores por defecto como null, "", "ALL")
   const hasActiveFilters = Object.values(values).some(
     (value) =>
       value !== null &&
       value !== "" &&
+      value !== "ALL" && // "ALL" significa "todos", no es un filtro activo
       (!Array.isArray(value) || value.length > 0)
   );
 
@@ -63,7 +65,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               ...(field.options || []),
             ]}
             placeholder={field.placeholder}
-            className="min-w-[150px]"
+            className="w-full"
           />
         );
 
@@ -88,7 +90,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               ...(field.options || []),
             ]}
             placeholder={field.placeholder}
-            className="min-w-[150px]"
+            className="w-full"
           />
         );
 
@@ -100,7 +102,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             type={field.type === "daterange" ? "date" : "date"}
             value={(value as string) || ""}
             onChange={(e) => onChange(field.key, e.target.value || null)}
-            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-w-[150px]"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
             placeholder={field.placeholder}
           />
         );
@@ -112,16 +114,16 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 bg-surface-secondary rounded-lg ${className}`}
+      className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-surface-secondary rounded-lg ${className}`}
     >
-      <div className="flex items-center gap-2 text-content-secondary">
+      <div className="flex items-center gap-2 text-content-secondary shrink-0">
         <Filter className="h-4 w-4" />
-        <span className="text-sm font-medium">Filtros:</span>
+        <span className="text-xs sm:text-sm font-medium">Filtros:</span>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap flex-1">
         {fields.map((field) => (
-          <div key={field.key} className="flex flex-col">
+          <div key={field.key} className="flex flex-col flex-1 min-w-[140px] sm:min-w-[150px]">
             <label className="text-xs text-content-secondary mb-1">
               {field.label}
             </label>
@@ -135,7 +137,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           variant="outline"
           size="sm"
           onClick={onReset}
-          className="ml-auto"
+          className="self-start sm:self-auto sm:ml-auto w-full sm:w-auto"
           leftIcon={<RotateCcw className="h-4 w-4" />}
         >
           Limpiar

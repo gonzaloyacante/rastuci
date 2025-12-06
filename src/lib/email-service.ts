@@ -12,7 +12,7 @@ export async function handleOrderStatusChange(
 ): Promise<void> {
   try {
     // Obtener detalles de la orden con tracking
-    const order = await prisma.order.findUnique({
+    const order = await prisma.orders.findUnique({
       where: { id: input.orderId },
       select: {
         customerEmail: true,

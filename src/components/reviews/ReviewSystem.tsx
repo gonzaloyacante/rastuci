@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Button } from '@/components/ui/Button';
-// import { Input } from "@/components/ui/Input"; // TODO: Implement when needed
 import { Badge } from '@/components/ui/Badge';
 import { Star, ThumbsUp, ThumbsDown, Flag, User } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';

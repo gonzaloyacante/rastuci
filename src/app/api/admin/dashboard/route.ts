@@ -178,7 +178,7 @@ export const GET = withAdminAuth(
       // ========================================
 
       // Órdenes del período actual
-      const currentOrders = await prisma.order.findMany({
+      const currentOrders = await prisma.orders.findMany({
         where: {
           createdAt: {
             gte: currentStart,
@@ -186,11 +186,11 @@ export const GET = withAdminAuth(
           },
         },
         include: {
-          items: {
+          order_items: {
             include: {
-              product: {
+              products: {
                 include: {
-                  category: true,
+                  categories: true,
                 },
               },
             },
@@ -199,7 +199,7 @@ export const GET = withAdminAuth(
       });
 
       // Órdenes del período anterior
-      const previousOrders = await prisma.order.findMany({
+      const previousOrders = await prisma.orders.findMany({
         where: {
           createdAt: {
             gte: previousStart,
@@ -251,6 +251,34 @@ export const GET = withAdminAuth(
           ? (previousPendingIssues / previousOrderCount) * 100
           : 0;
 
+      // Calcular tiempo promedio de entrega desde órdenes entregadas
+      const currentDeliveredOrders = currentOrders.filter(
+        (o) => o.status === "DELIVERED" && o.updatedAt && o.createdAt
+      );
+      const previousDeliveredOrders = previousOrders.filter(
+        (o) => o.status === "DELIVERED" && o.updatedAt && o.createdAt
+      );
+
+      const currentAvgDeliveryTime =
+        currentDeliveredOrders.length > 0
+          ? currentDeliveredOrders.reduce((sum, order) => {
+              const deliveryDays =
+                (order.updatedAt.getTime() - order.createdAt.getTime()) /
+                (1000 * 60 * 60 * 24);
+              return sum + deliveryDays;
+            }, 0) / currentDeliveredOrders.length
+          : 0;
+
+      const previousAvgDeliveryTime =
+        previousDeliveredOrders.length > 0
+          ? previousDeliveredOrders.reduce((sum, order) => {
+              const deliveryDays =
+                (order.updatedAt.getTime() - order.createdAt.getTime()) /
+                (1000 * 60 * 60 * 24);
+              return sum + deliveryDays;
+            }, 0) / previousDeliveredOrders.length
+          : 0;
+
       // Top productos vendidos
       const productSalesMap = new Map<
         string,
@@ -263,10 +291,10 @@ export const GET = withAdminAuth(
         }
       >();
       currentOrders.forEach((order) => {
-        order.items.forEach((item) => {
+        order.order_items.forEach((item) => {
           const existing = productSalesMap.get(item.productId) || {
             id: item.productId,
-            name: item.product?.name || "Producto desconocido",
+            name: item.products?.name || "Producto desconocido",
             sales: 0,
             orders: 0,
             revenue: 0,
@@ -287,8 +315,8 @@ export const GET = withAdminAuth(
         { name: string; sales: number }
       >();
       currentOrders.forEach((order) => {
-        order.items.forEach((item) => {
-          const categoryName = item.product?.category?.name || "Sin categoría";
+        order.order_items.forEach((item) => {
+          const categoryName = item.products?.categories?.name || "Sin categoría";
           const existing = categorySalesMap.get(categoryName) || {
             name: categoryName,
             sales: 0,
@@ -313,15 +341,15 @@ export const GET = withAdminAuth(
         .slice(0, 5);
 
       // Métricas de productos
-      const totalProducts = await prisma.product.count();
-      const previousTotalProducts = await prisma.product.count({
+      const totalProducts = await prisma.products.count();
+      const previousTotalProducts = await prisma.products.count({
         where: {
           createdAt: {
             lte: previousEnd,
           },
         },
       });
-      const lowStockProducts = await prisma.product.count({
+      const lowStockProducts = await prisma.products.count({
         where: {
           stock: {
             gt: 0,
@@ -329,30 +357,24 @@ export const GET = withAdminAuth(
           },
         },
       });
-      const outOfStockProducts = await prisma.product.count({
+      const outOfStockProducts = await prisma.products.count({
         where: {
           stock: 0,
         },
       });
 
       // Rating promedio de productos (si existe campo rating)
-      const productsWithRating = await prisma.product.aggregate({
+      const productsWithRating = await prisma.products.aggregate({
         _avg: {
           rating: true,
         },
       });
       const averageRating = productsWithRating._avg.rating || 0;
 
-      // Órdenes entregadas para métricas de envío
-      const deliveredOrders = currentOrders.filter(
-        (o) => o.status === "DELIVERED"
-      );
-      const previousDeliveredOrders = previousOrders.filter(
-        (o) => o.status === "DELIVERED"
-      );
+      // Órdenes entregadas para métricas de envío (reutilizar variables ya definidas)
       const onTimeDeliveryRate =
         currentOrderCount > 0
-          ? (deliveredOrders.length / currentOrderCount) * 100
+          ? (currentDeliveredOrders.length / currentOrderCount) * 100
           : 0;
       const previousOnTimeRate =
         previousOrderCount > 0
@@ -392,7 +414,7 @@ export const GET = withAdminAuth(
       );
 
       // Actividad reciente
-      const recentOrders = await prisma.order.findMany({
+      const recentOrders = await prisma.orders.findMany({
         orderBy: { createdAt: "desc" },
         take: 5,
         select: {
@@ -415,7 +437,7 @@ export const GET = withAdminAuth(
       // Nuevos clientes vs recurrentes
       const allTimeCustomerNames = new Set(
         (
-          await prisma.order.findMany({
+          await prisma.orders.findMany({
             where: {
               createdAt: {
                 lt: currentStart,
@@ -477,10 +499,10 @@ export const GET = withAdminAuth(
         topCategories,
         shippingMetrics: {
           averageDeliveryTime: calculateMetric(
-            3.2,
-            3.8,
+            currentAvgDeliveryTime,
+            previousAvgDeliveryTime,
             "Tiempo Promedio de Entrega"
-          ), // TODO: Calcular desde tracking real
+          ),
           onTimeDeliveryRate: calculateMetric(
             Math.round(onTimeDeliveryRate * 10) / 10,
             Math.round(previousOnTimeRate * 10) / 10,

@@ -59,14 +59,14 @@ export async function GET(
     }
     const { id } = await params;
 
-    const order = await prisma.order.findUnique({
+    const order = await prisma.orders.findUnique({
       where: { id },
       include: {
-        items: {
+        order_items: {
           include: {
-            product: {
+            products: {
               include: {
-                category: true,
+                categories: true,
               },
             },
           },
@@ -192,10 +192,10 @@ export async function DELETE(
     const { id } = await params;
 
     // Obtener el pedido con sus items para restaurar el stock si es necesario
-    const order = await prisma.order.findUnique({
+    const order = await prisma.orders.findUnique({
       where: { id },
       include: {
-        items: true,
+        order_items: true,
       },
     });
 
@@ -211,8 +211,8 @@ export async function DELETE(
     // Eliminar el pedido y restaurar stock en transacción
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Restaurar el stock de los productos
-      for (const item of order.items) {
-        await tx.product.update({
+      for (const item of order.order_items) {
+        await tx.products.update({
           where: { id: item.productId },
           data: {
             stock: {
@@ -223,7 +223,7 @@ export async function DELETE(
       }
 
       // Eliminar el pedido (los items se eliminan en cascada)
-      await tx.order.delete({
+      await tx.orders.delete({
         where: { id },
       });
     });

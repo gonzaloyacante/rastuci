@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Eye, EyeOff } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -17,6 +18,7 @@ interface UserFormData {
   email: string;
   isAdmin: boolean;
   password?: string;
+  confirmPassword?: string;
 }
 
 interface UserFormErrors {
@@ -24,6 +26,7 @@ interface UserFormErrors {
   email?: string;
   isAdmin?: string;
   password?: string;
+  confirmPassword?: string;
 }
 
 interface UserFormProps {
@@ -46,9 +49,12 @@ export const UserForm: React.FC<UserFormProps> = ({
     email: "",
     isAdmin: false,
     password: "",
+    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState<UserFormErrors>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -57,6 +63,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         email: user.email || "",
         isAdmin: user.isAdmin || false,
         password: "",
+        confirmPassword: "",
       });
     }
   }, [user]);
@@ -80,8 +87,14 @@ export const UserForm: React.FC<UserFormProps> = ({
 
     if (!isEdit && !formData.password) {
       newErrors.password = "La contraseña es requerida para crear un usuario";
-    } else if (formData.password && formData.password.length < 6) {
-      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
+    } else if (formData.password && formData.password.length < 8) {
+      newErrors.password = "La contraseña debe tener al menos 8 caracteres";
+    }
+
+    if (!isEdit && formData.password && !formData.confirmPassword) {
+      newErrors.confirmPassword = "Debes confirmar la contraseña";
+    } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
 
     setErrors(newErrors);
@@ -176,23 +189,72 @@ export const UserForm: React.FC<UserFormProps> = ({
             className="block text-sm font-medium text-content-primary mb-2">
             Contraseña {!isEdit && "*"}
           </label>
-          <Input
-            id="password"
-            type="password"
-            value={formData.password || ""}
-            onChange={(e) => handleChange("password", e.target.value)}
-            placeholder={
-              isEdit ? "Dejar vacío para no cambiar" : "Ingresa una contraseña"
-            }
-            error={errors.password}
-            disabled={loading}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password || ""}
+              onChange={(e) => handleChange("password", e.target.value)}
+              placeholder={
+                isEdit ? "Dejar vacío para no cambiar" : "Mínimo 8 caracteres"
+              }
+              error={errors.password}
+              disabled={loading}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-content-secondary hover:text-content-primary transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
+          </div>
           {isEdit && (
             <p className="mt-1 text-xs text-content-secondary">
               Deja vacío para mantener la contraseña actual
             </p>
           )}
         </div>
+
+        {!isEdit && (
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-content-primary mb-2">
+              Confirmar Contraseña *
+            </label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword || ""}
+                onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                placeholder="Repite la contraseña"
+                error={errors.confirmPassword}
+                disabled={loading}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-content-secondary hover:text-content-primary transition-colors"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end space-x-3 pt-6 border-t border-border">

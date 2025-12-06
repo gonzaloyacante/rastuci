@@ -59,7 +59,20 @@ export function safeCtx(ctx?: LogContext): LogContext {
     return ctx;
   }
   try {
-    return maskObject(ctx as Record<string, unknown>);
+    // If the context contains an Error instance, extract its message/stack
+    const cloned = { ...(ctx as Record<string, unknown>) };
+    const maybeErr = (cloned as Record<string, unknown>).error;
+    if (maybeErr instanceof Error) {
+      const err = maybeErr as Error;
+      (cloned as Record<string, unknown>).error = {
+        name: err.name,
+        message: err.message,
+        // keep only first 3 lines of stack to avoid huge logs
+        stack: err.stack ? err.stack.split("\n").slice(0, 3).join("\\n") : undefined,
+      };
+    }
+
+    return maskObject(cloned as Record<string, unknown>);
   } catch {
     return { error: "ctx_mask_failed" };
   }

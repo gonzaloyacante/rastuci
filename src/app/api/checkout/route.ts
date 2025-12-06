@@ -77,40 +77,87 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Crear el pedido en base de datos (estado inicial PENDING)
-    // Para MercadoPago, esto nos da un ID para usar como external_reference
-    const order = await prisma.order.create({
-      data: {
-        customerName: customer.name,
-        customerPhone: customer.phone,
-        customerEmail: customer.email,
-        customerAddress: `${customer.address}, ${customer.city}, ${customer.province}`,
-        total: orderData.total,
-        status: "PENDING",
-        mpPaymentId: null,
-        mpPreferenceId: null,
-        mpStatus: paymentMethod === "cash" ? "cash_payment" : "pending_payment",
-        items: {
-          create: items.map((item: OrderItem) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            size: item.size || null,
-            color: item.color || null,
-          })),
-        },
-      },
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-      },
+    // ========================================================================
+    // 🔴 VALIDACIÓN DE STOCK CRÍTICA
+    // ========================================================================
+    // Validar stock ANTES de crear la orden para evitar ventas de productos agotados
+    const productIds = items.map((item: OrderItem) => item.productId);
+    const products = await prisma.products.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, name: true, stock: true, price: true },
     });
 
-    // Si es pago en efectivo
+    // Verificar que todos los productos existen y tienen stock suficiente
+    for (const item of items) {
+      const product = products.find((p) => p.id === item.productId);
+
+      if (!product) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Producto no encontrado: ${item.productId}`,
+          },
+          { status: 400 }
+        );
+      }
+
+      if (product.stock < item.quantity) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${item.quantity}`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 🔴 IMPORTANTE: Para MercadoPago NO crear pedido todavía
+    // El pedido se creará cuando el webhook confirme el pago exitoso
+    // Para efectivo, crear pedido inmediatamente porque no requiere confirmación externa
+    
+    let order;
+    let orderId: string;
+
+    // Si es pago en efectivo, crear pedido ahora
     if (paymentMethod === "cash") {
+      orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      order = await prisma.orders.create({
+        data: {
+          id: orderId,
+          customerName: customer.name,
+          customerPhone: customer.phone,
+          customerEmail: customer.email,
+          customerAddress: `${customer.address}, ${customer.city}, ${customer.province}`,
+          total: orderData.total,
+          status: "PENDING",
+          mpPaymentId: null,
+          mpPreferenceId: null,
+          mpStatus: "cash_payment",
+          updatedAt: new Date(),
+          order_items: {
+            create: items.map((item: OrderItem) => ({
+              id: `${orderId}_${item.productId}_${Date.now()}`,
+              quantity: item.quantity,
+              price: item.price,
+              size: item.size || null,
+              color: item.color || null,
+              products: {
+                connect: { id: item.productId },
+              },
+            })),
+          },
+        },
+        include: {
+          order_items: {
+            include: {
+              products: true,
+            },
+          },
+        },
+      });
+
+
       // Si el método de envío es Correo Argentino (id empieza con 'ca-')
       if (
         shippingMethod &&
@@ -186,7 +233,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           });
 
           if (shipmentResult.success && shipmentResult.data) {
-            await prisma.order.update({
+            await prisma.orders.update({
               where: { id: order.id },
               data: {
                 caTrackingNumber: shipmentResult.data.trackingNumber,
@@ -227,9 +274,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Si es MercadoPago, crear preferencia y redirigir
+    // 🔴 NO crear pedido todavía - se creará cuando el webhook confirme el pago
     if (paymentMethod === "mercadopago") {
       const origin =
         request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
+
+      // Generar ID temporal para usar como external_reference
+      const tempOrderId = `tmp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
       // Preparar items para MercadoPago
       const mpItems = items.map((item: OrderItem) => ({
@@ -268,21 +319,42 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
         };
 
-        // Pasar external_reference (order.id) y metadata
+        // 🔴 CRÍTICO: Pasar TODOS los datos del pedido en metadata
+        // El webhook usará esto para crear el pedido cuando se confirme el pago
         preference = await createPreference(mpItems, payer, {
-          external_reference: order.id,
+          external_reference: tempOrderId,
           metadata: {
-            orderId: order.id,
+            tempOrderId,
+            customerName: customer.name,
             customerEmail: customer.email,
+            customerPhone: customer.phone,
+            customerAddress: customer.address,
+            customerCity: customer.city,
+            customerProvince: customer.province,
+            customerPostalCode: customer.postalCode,
+            total: orderData.total,
+            subtotal: orderData.subtotal,
+            shippingCost: orderData.shippingCost,
+            discount: orderData.discount,
+            shippingMethodId: shippingMethod?.id || null,
+            shippingMethodName: shippingMethod?.name || null,
+            shippingMethodPrice: shippingMethod?.price || null,
+            shippingAgencyCode: body.shippingAgency?.code || null,
+            // Items serializado como JSON string
+            items: JSON.stringify(items.map((item: OrderItem) => ({
+              productId: item.productId,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              size: item.size || null,
+              color: item.color || null,
+            }))),
           },
         });
 
-        // Actualizar orden con ID de preferencia
-        await prisma.order.update({
-          where: { id: order.id },
-          data: {
-            mpPreferenceId: preference.id,
-          },
+        logger.info("[checkout] MercadoPago preference created (NO order yet)", {
+          tempOrderId,
+          preferenceId: preference.id,
         });
       } catch (mpError) {
         logger.error("[checkout] MercadoPago preference creation error:", {

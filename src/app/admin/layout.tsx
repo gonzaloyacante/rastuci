@@ -12,6 +12,7 @@ import {
   MapPin,
   Menu,
   MessageCircle,
+  Settings,
   ShoppingBag,
   Tag,
   Terminal,
@@ -38,6 +39,7 @@ const NAV_LINKS = [
   { name: "Métricas", href: "/admin/metricas", icon: BarChart3 },
   { name: "Usuarios", href: "/admin/usuarios", icon: User },
   { name: "Soporte", href: "/admin/soporte", icon: MessageCircle },
+  { name: "Configuración", href: "/admin/configuracion", icon: Settings },
 ] as const;
 
 function isNavActive(pathname: string, href: string): boolean {

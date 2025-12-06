@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const productIds: string[] = metaItems.map((i: Record<string, unknown>) =>
       String(i.productId)
     );
-    const dbProducts = await prisma.product.findMany({
+    const dbProducts = await prisma.products.findMany({
       where: { id: { in: productIds } },
       select: {
         id: true,
@@ -201,11 +201,12 @@ export async function POST(req: NextRequest) {
           }
         : undefined,
       back_urls: {
-        success: `${origin}/checkout?status=success`,
-        failure: `${origin}/checkout?status=failure`,
-        pending: `${origin}/checkout?status=pending`,
+        success: `${origin}/checkout/success`,
+        failure: `${origin}/checkout/failure`,
+        pending: `${origin}/checkout/pending`,
       },
-      auto_return: "approved",
+      // "all" = redirige automáticamente en TODOS los casos (approved, pending, rejected)
+      auto_return: "all",
       // Only include notification_url if it's a non-local MP webhook URL
       ...(mpNotificationUrl ? { notification_url: mpNotificationUrl } : {}),
       metadata,

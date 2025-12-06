@@ -161,17 +161,30 @@ export default function UsuariosPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <span
-                        className={`badge-${
-                          getRoleBadge(user.role).variant
-                        } text-xs`}
-                      >
-                        {getRoleBadge(user.role).label}
-                      </span>
-                      <span className="text-xs text-content-tertiary">
-                        {formatDate(user.createdAt)}
-                      </span>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`badge-${
+                            getRoleBadge(user.role).variant
+                          } text-xs`}
+                        >
+                          {getRoleBadge(user.role).label}
+                        </span>
+                        {user.activeSessions !== undefined && user.activeSessions > 0 && (
+                          <span className="text-xs px-2 py-1 bg-green-500/10 text-green-600 rounded-full">
+                            {user.activeSessions} sesión{user.activeSessions > 1 ? 'es' : ''} activa{user.activeSessions > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-content-tertiary space-y-1">
+                        <div>Creado: {formatDate(user.createdAt)}</div>
+                        {user.lastLoginAt && (
+                          <div>Último login: {formatDate(user.lastLoginAt)}</div>
+                        )}
+                        {user.loginCount !== undefined && user.loginCount > 0 && (
+                          <div>Inicios de sesión: {user.loginCount}</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -211,7 +224,10 @@ export default function UsuariosPage() {
                     Rol
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
-                    Fecha de Registro
+                    Actividad
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+                    Sesiones
                   </th>
                   <th className="relative px-6 py-3">
                     <span className="sr-only">Acciones</span>
@@ -250,9 +266,30 @@ export default function UsuariosPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-content-secondary">
-                        {formatDate(user.createdAt)}
+                      <div className="text-sm space-y-1">
+                        <div className="text-content-secondary">
+                          Creado: {formatDate(user.createdAt)}
+                        </div>
+                        {user.lastLoginAt && (
+                          <div className="text-content-tertiary text-xs">
+                            Último login: {formatDate(user.lastLoginAt)}
+                          </div>
+                        )}
+                        {user.loginCount !== undefined && user.loginCount > 0 && (
+                          <div className="text-content-tertiary text-xs">
+                            {user.loginCount} inicio{user.loginCount > 1 ? 's' : ''}
+                          </div>
+                        )}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.activeSessions !== undefined && user.activeSessions > 0 ? (
+                        <span className="text-xs px-2 py-1 bg-green-500/10 text-green-600 rounded-full font-medium">
+                          {user.activeSessions} activa{user.activeSessions > 1 ? 's' : ''}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-content-tertiary">Sin sesiones</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button

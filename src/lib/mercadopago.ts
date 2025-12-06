@@ -43,10 +43,11 @@ function getBaseUrl() {
 
 /**
  * Verifica si la URL base es localhost (desarrollo local)
- * MercadoPago no acepta auto_return con URLs de localhost
+ * Nota: DevTunnels son URLs públicas válidas, no se consideran localhost
  */
 function isLocalhost(url: string): boolean {
-  return url.includes("localhost") || url.includes("127.0.0.1");
+  // Solo URLs de localhost reales, NO DevTunnels
+  return url.includes("://localhost") || url.includes("://127.0.0.1");
 }
 
 function getNotificationUrl() {
@@ -127,9 +128,9 @@ export async function createPreference(
   const baseUrl = getBaseUrl();
   const isLocal = isLocalhost(baseUrl);
 
-  // MercadoPago no acepta auto_return con localhost
-  // En desarrollo local, omitimos auto_return y back_urls o usamos URLs de prueba
-  const body = {
+  // Construir body base con back_urls SIEMPRE para forzar redirección
+  // auto_return: "all" redirecciona en todos los estados (approved, pending, rejected)
+  const body: Record<string, unknown> = {
     items: items.map((i) => ({
       id: i.id,
       title: i.title,
@@ -138,23 +139,19 @@ export async function createPreference(
       currency_id: i.currency_id || "ARS",
     })),
     payer: payer || undefined,
-    // Solo incluir back_urls si NO es localhost
-    ...(isLocal
-      ? {} // En localhost, no enviar back_urls ni auto_return
-      : {
-          back_urls: {
-            success: `${baseUrl}/checkout/success`,
-            failure: `${baseUrl}/checkout/failure`,
-            pending: `${baseUrl}/checkout/pending`,
-          },
-          auto_return: "approved",
-        }),
-    // notification_url también debe ser accesible públicamente
-    ...(isLocal ? {} : { notification_url: getNotificationUrl() }),
+    notification_url: getNotificationUrl(),
     binary_mode: false,
     external_reference: options?.external_reference,
     metadata: options?.metadata,
-  } as Record<string, unknown>;
+    // SIEMPRE agregar back_urls para forzar redirección después del pago
+    back_urls: {
+      success: `${baseUrl}/checkout/success`,
+      failure: `${baseUrl}/checkout/failure`,
+      pending: `${baseUrl}/checkout/pending`,
+    },
+    // "all" = redirige en TODOS los casos (approved, pending, rejected)
+    auto_return: "all",
+  };
 
   // Log para debugging
   logger.info("[mercadopago] Creating preference", {

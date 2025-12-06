@@ -53,7 +53,7 @@ interface OrderItem {
     name: string;
     images?: string | string[];
     description?: string;
-    category: {
+    categories: {
       id: string;
       name: string;
     };
@@ -65,6 +65,7 @@ interface Order {
   customerName: string;
   customerPhone: string;
   customerAddress?: string;
+  customerEmail?: string;
   total: number;
   status: "PENDING" | "PROCESSED" | "DELIVERED";
   createdAt: string;
@@ -153,8 +154,7 @@ export default function OrderDetailPage() {
         } else {
           setError(data.error || "No se pudo cargar el pedido");
         }
-      } catch (err) {
-        logger.error("Error fetching order:", { error: err });
+      } catch {
         setError("Ocurrió un error al conectar con el servidor");
       } finally {
         setLoading(false);
@@ -287,7 +287,7 @@ export default function OrderDetailPage() {
         recipient: {
           name: order.customerName,
           phone: order.customerPhone,
-          email: "noemail@example.com", // TODO: Agregar campo customerEmail a Order
+          email: order.customerEmail || "cliente@example.com",
         },
         shipping: {
           deliveryType:
@@ -475,7 +475,7 @@ export default function OrderDetailPage() {
                         {item.product.name}
                       </Link>
                       <div className="text-sm muted">
-                        Categoría: {item.product.category.name}
+                        Categoría: {item.product.categories.name}
                       </div>
                       <div className="text-sm muted">
                         {item.quantity} x {formatCurrency(item.price)}

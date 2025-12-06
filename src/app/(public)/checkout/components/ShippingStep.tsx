@@ -20,7 +20,7 @@ import {
   Store,
   Truck,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 // ============================================================================
 // HELPER FUNCTIONS (fuera del componente)
@@ -99,6 +99,12 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
   const [error, setError] = useState<string | null>(null);
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("home");
+  
+  // 🚀 CACHÉ: Guardar opciones de envío previamente calculadas - useRef persiste entre renders
+  const cachedOptionsRef = useRef<{
+    home?: ShippingOption[];
+    agency?: ShippingOption[];
+  }>({});
 
   // ============================================================================
   // EFECTOS
@@ -121,7 +127,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     }
   }, [deliveryMode, setSelectedShippingOption]);
 
-  // Calcular costos de envío - solo cuando cambia el modo, CP o agencia seleccionada
+  // Calcular costos de envío - CON CACHÉ OPTIMIZADO
   useEffect(() => {
     // Si es retiro en tienda (local), ya se maneja en otro useEffect
     if (deliveryMode === "pickup") {
@@ -141,6 +147,19 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
       return;
     }
 
+    const mode = deliveryMode === "agency" ? "agency" : "home";
+    
+    // 🚀 Verificar si ya tenemos opciones en caché para este modo
+    const cached = cachedOptionsRef.current[mode];
+    if (cached && cached.length > 0) {
+      setShippingOptions(cached);
+      // Si no hay opción seleccionada o no está en las nuevas opciones, seleccionar la primera
+      if (!selectedShippingOption || !cached.find(o => o.id === selectedShippingOption.id)) {
+        setSelectedShippingOption(cached[0]);
+      }
+      return; // ✅ Usar datos cacheados, no hacer llamada API
+    }
+
     const fetchShippingOptions = async () => {
       setLoading(true);
       setError(null);
@@ -154,12 +173,15 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
         if (options && options.length > 0) {
           setShippingOptions(options);
+          // 🚀 Guardar en caché (useRef persiste entre renders)
+          cachedOptionsRef.current = { ...cachedOptionsRef.current, [mode]: options };
           // Seleccionar la primera opción automáticamente
           setSelectedShippingOption(options[0]);
         } else {
           // Usar fallback si no hay opciones
           const fallbackOptions = createFallbackShippingOptions(type);
           setShippingOptions(fallbackOptions);
+          cachedOptionsRef.current = { ...cachedOptionsRef.current, [mode]: fallbackOptions };
           setSelectedShippingOption(fallbackOptions[0]);
         }
       } catch (err) {
@@ -168,6 +190,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         const type = deliveryMode === "agency" ? "S" : "D";
         const fallbackOptions = createFallbackShippingOptions(type);
         setShippingOptions(fallbackOptions);
+        cachedOptionsRef.current = { ...cachedOptionsRef.current, [mode]: fallbackOptions };
         setSelectedShippingOption(fallbackOptions[0]);
       } finally {
         setLoading(false);

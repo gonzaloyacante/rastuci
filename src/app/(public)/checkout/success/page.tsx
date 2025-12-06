@@ -41,52 +41,106 @@ function CheckoutSuccessContent() {
   const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
-    // Obtener datos de la URL
+    // MercadoPago redirige con estos parámetros:
+    // - external_reference: nuestro tempOrderId (tmp_xxxxx) o orderId
+    // - payment_id: ID del pago en MP
+    // - status: approved, pending, rejected
+    // - payment_status: estado del pago
+    // - merchant_order_id: ID de la orden en MP
     const method = searchParams.get("method") || "mercadopago";
-    const id =
-      searchParams.get("order_id") ||
-      searchParams.get("external_reference") ||
-      "";
+    const externalRef = searchParams.get("external_reference") || "";
+    const paymentId = searchParams.get("payment_id") || "";
+    const mpStatus = searchParams.get("status") || searchParams.get("payment_status") || "";
+    
+    // Priorizar external_reference que tiene nuestro ID
+    const id = searchParams.get("order_id") || externalRef || "";
 
     setPaymentMethod(method);
     setOrderId(id);
+
+    // Log para debugging
+    console.log("[Success] MercadoPago redirect params:", {
+      external_reference: externalRef,
+      payment_id: paymentId,
+      status: mpStatus,
+      orderId: id,
+    });
 
     // Limpiar carrito después de compra exitosa
     clearCart();
   }, [searchParams, clearCart]);
 
-  // Cargar información del pedido
+  // Cargar información del pedido con retry (el webhook puede tardar unos segundos)
   useEffect(() => {
-    const loadOrderInfo = async () => {
-      if (!orderId) {
-        setLoadingOrder(false);
-        return;
+    const paymentId = searchParams.get("payment_id");
+    
+    const loadOrderInfo = async (retryCount = 0): Promise<boolean> => {
+      // Intentar buscar por orderId o por payment_id
+      const searchId = orderId || paymentId;
+      
+      if (!searchId) {
+        return false;
       }
 
       try {
-        setLoadingOrder(true);
-        const response = await fetch(`/api/orders/${orderId}`);
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data) {
-            setOrderInfo(result.data);
-
-            // Si hay tracking number, guardar estado
-            if (result.data.trackingNumber) {
-              setTrackingStatus("En preparación");
+        // Primero intentar por orderId directo
+        if (orderId) {
+          const response = await fetch(`/api/orders/${orderId}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data) {
+              setOrderInfo(result.data);
+              if (result.data.trackingNumber) {
+                setTrackingStatus("En preparación");
+              }
+              return true;
             }
           }
         }
+
+        // Si no encontró, buscar por payment_id
+        if (paymentId) {
+          const response = await fetch(`/api/orders?mpPaymentId=${paymentId}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data?.data?.[0]) {
+              const order = result.data.data[0];
+              setOrderInfo(order);
+              setOrderId(order.id);
+              if (order.trackingNumber) {
+                setTrackingStatus("En preparación");
+              }
+              return true;
+            }
+          }
+        }
+
+        return false;
       } catch {
-        // Error silencioso para evitar console.error
-      } finally {
-        setLoadingOrder(false);
+        return false;
       }
     };
 
-    loadOrderInfo();
-  }, [orderId]);
+    const attemptLoad = async () => {
+      setLoadingOrder(true);
+      
+      // Intentar cargar inmediatamente
+      let found = await loadOrderInfo();
+      
+      // Si no encuentra, el webhook puede estar procesando. Reintentar hasta 5 veces
+      if (!found && (orderId || paymentId)) {
+        for (let i = 1; i <= 5 && !found; i++) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
+          found = await loadOrderInfo(i);
+          console.log(`[Success] Retry ${i}/5, found:`, found);
+        }
+      }
+      
+      setLoadingOrder(false);
+    };
+
+    attemptLoad();
+  }, [orderId, searchParams]);
 
   const copyTrackingNumber = async (trackingNumber: string) => {
     try {

@@ -95,7 +95,7 @@ const alertOptions = [
 
 function StatsCards({ stats }: { stats: TrackingStats }) {
   return (
-    <MetricsGrid columns={4}>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <MetricCard title="Total Envíos" value={stats.total} icon={Package} />
       <MetricCard title="En Tránsito" value={stats.inTransit} icon={Truck} />
       <MetricCard
@@ -108,7 +108,7 @@ function StatsCards({ stats }: { stats: TrackingStats }) {
         value={`${stats.avgDeliveryTime} días`}
         icon={Clock}
       />
-    </MetricsGrid>
+    </div>
   );
 }
 
@@ -142,7 +142,60 @@ function TrackingTable({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        {/* Mobile View - Cards */}
+        <div className="block lg:hidden space-y-3">
+          {data.map((item) => {
+            const StatusIcon = statusIcons[item.status] || Clock;
+            return (
+              <div key={item.id} className="border rounded-lg p-3 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(item.id)}
+                      onChange={() => onToggleItem(item.id)}
+                      className="rounded mt-1"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-xs sm:text-sm font-medium break-all">
+                        {item.trackingCode}
+                      </div>
+                      <div className="text-xs text-muted">Pedido: {item.orderId}</div>
+                    </div>
+                  </div>
+                  <Badge className={statusColors[item.status] || "surface-secondary"}>
+                    <StatusIcon className="h-3 w-3 mr-1" />
+                    <span className="text-xs">{item.status}</span>
+                  </Badge>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="font-medium text-sm">{item.customerName}</div>
+                  <div className="text-xs text-muted break-all">{item.customerEmail}</div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted">CA: {item.ocaStatus || "N/A"}</span>
+                  <span className="text-muted">{new Date(item.lastUpdated).toLocaleDateString()}</span>
+                </div>
+
+                {item.alertLevel !== "none" && (
+                  <Badge variant={item.alertLevel === "error" ? "destructive" : "secondary"}>
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    <span className="text-xs">{item.alertLevel}</span>
+                  </Badge>
+                )}
+
+                <Button variant="ghost" size="sm" className="w-full">
+                  Ver Detalles
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b">
@@ -156,14 +209,14 @@ function TrackingTable({
                     className="rounded"
                   />
                 </th>
-                <th className="text-left p-2">Código</th>
-                <th className="text-left p-2">Pedido</th>
-                <th className="text-left p-2">Cliente</th>
-                <th className="text-left p-2">Estado</th>
-                <th className="text-left p-2">Estado Correo Arg.</th>
-                <th className="text-left p-2">Última Act.</th>
-                <th className="text-left p-2">Alertas</th>
-                <th className="text-left p-2">Acciones</th>
+                <th className="text-left p-2 text-xs">Código</th>
+                <th className="text-left p-2 text-xs">Pedido</th>
+                <th className="text-left p-2 text-xs">Cliente</th>
+                <th className="text-left p-2 text-xs">Estado</th>
+                <th className="text-left p-2 text-xs">Estado CA</th>
+                <th className="text-left p-2 text-xs">Última Act.</th>
+                <th className="text-left p-2 text-xs">Alertas</th>
+                <th className="text-left p-2 text-xs">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -519,27 +572,27 @@ export default function AdminTrackingDashboard() {
         </TabsList>
 
         <TabsContent value="tracking" className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted h-4 w-4" />
               <Input
-                placeholder="Buscar por código, pedido, cliente..."
+                placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
               />
             </div>
             <Select
               value={statusFilter}
               onChange={setStatusFilter}
               options={statusOptions}
-              className="w-48"
+              className="w-full sm:w-48"
             />
             <Select
               value={alertFilter}
               onChange={setAlertFilter}
               options={alertOptions}
-              className="w-48"
+              className="w-full sm:w-48"
             />
           </div>
 

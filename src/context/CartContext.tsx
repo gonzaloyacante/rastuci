@@ -223,51 +223,38 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   // Estados del checkout - Información del cliente
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
-  // Opciones disponibles (estáticas por ahora)
-  const availableShippingOptions: ShippingOption[] = useMemo(
-    () => [
-      {
-        id: "pickup",
-        name: "Retiro en tienda",
-        description: "Retira tu pedido en nuestra tienda física",
-        price: 0,
-        estimatedDays: "Inmediato",
-      },
-      {
-        id: "standard",
-        name: "Envío estándar",
-        description: "Envío a domicilio en 3-5 días hábiles",
-        price: 1500,
-        estimatedDays: "3-5 días",
-      },
-      {
-        id: "express",
-        name: "Envío express",
-        description: "Envío prioritario en 24-48 horas",
-        price: 2500,
-        estimatedDays: "24-48 horas",
-      },
-    ],
-    []
-  );
+  // Opciones dinámicas desde API
+  const [availableShippingOptions, setAvailableShippingOptions] = useState<ShippingOption[]>([]);
+  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<PaymentMethod[]>([]);
 
-  const availablePaymentMethods: PaymentMethod[] = [
-    {
-      id: "mercadopago",
-      name: "MercadoPago",
-      icon: "wallet",
-      description: "Tarjetas, transferencias y más - Redirección a MercadoPago",
-      requiresShipping: true,
-    },
-    {
-      id: "cash",
-      name: "Efectivo - Retiro en Local",
-      icon: "dollar-sign",
-      description:
-        "Retiro en nuestro local de Buenos Aires - Sin costo de envío",
-      requiresShipping: false,
-    },
-  ];
+  // Cargar opciones desde la API al montar el componente
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        // Cargar opciones de envío
+        const shippingRes = await fetch('/api/settings/shipping-options');
+        if (shippingRes.ok) {
+          const shippingData = await shippingRes.json();
+          if (shippingData.success && shippingData.data) {
+            setAvailableShippingOptions(shippingData.data);
+          }
+        }
+
+        // Cargar métodos de pago
+        const paymentRes = await fetch('/api/settings/payment-methods');
+        if (paymentRes.ok) {
+          const paymentData = await paymentRes.json();
+          if (paymentData.success && paymentData.data) {
+            setAvailablePaymentMethods(paymentData.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
+
+    loadSettings();
+  }, []);
 
   const availableBillingOptions: BillingOption[] = [
     {
@@ -366,10 +353,13 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   }, []);
 
   const getCartTotal = useCallback(() => {
-    return cartItems.reduce(
-      (total, item) => total + item.product.price * item.quantity,
-      0
-    );
+    return cartItems.reduce((total, item) => {
+      // Usar salePrice si existe y el producto está en oferta, sino usar price normal
+      const effectivePrice = item.product.onSale && item.product.salePrice 
+        ? item.product.salePrice 
+        : item.product.price;
+      return total + effectivePrice * item.quantity;
+    }, 0);
   }, [cartItems]);
 
   const getItemCount = useCallback(() => {

@@ -43,7 +43,7 @@ export async function GET(
     const filters = parsedQuery.data;
 
     // Construir filtros para Prisma
-    const where: Prisma.ProductWhereInput = {};
+    const where: Prisma.productsWhereInput = {};
 
     if (filters.categoryId) {
       where.categoryId = filters.categoryId;
@@ -80,19 +80,19 @@ export async function GET(
     const offset = (page - 1) * limit;
 
     // Construir ordenamiento dinámico de forma segura
-    let orderBy: Prisma.ProductOrderByWithRelationInput | undefined;
+    let orderBy: Prisma.productsOrderByWithRelationInput | undefined;
     if (filters.sortBy) {
       // los campos permitidos vienen del schema de validación
       orderBy = {
         [filters.sortBy]: filters.sortOrder,
-      } as Prisma.ProductOrderByWithRelationInput;
+      } as Prisma.productsOrderByWithRelationInput;
     }
 
     // Preparar argumentos para Prisma
-    const prismaArgs: Parameters<typeof prisma.product.findMany>[0] = {
+    const prismaArgs: Parameters<typeof prisma.products.findMany>[0] = {
       where,
       include: {
-        category: {
+        categories: {
           select: { id: true, name: true, description: true },
         },
       },
@@ -117,8 +117,8 @@ export async function GET(
       [k: string]: unknown;
     };
 
-    const prismaProducts = await prisma.product.findMany(
-      prismaArgs as unknown as Parameters<typeof prisma.product.findMany>[0]
+    const prismaProducts = await prisma.products.findMany(
+      prismaArgs as unknown as Parameters<typeof prisma.products.findMany>[0]
     );
 
     // Mapear imágenes si vienen como JSON string
@@ -142,7 +142,7 @@ export async function GET(
     );
 
     // Calcular total para paginación
-    const total = await prisma.product.count({ where });
+    const total = await prisma.products.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
     const paginated: PaginatedResponse<Product> = {
@@ -189,6 +189,9 @@ export async function POST(
 
     const body = await request.json();
 
+    // DEBUG: Log del body recibido
+    logger.info("POST /api/products - Body recibido:", { body });
+
     // Sanitize and validate input
     const validation = validateAndSanitize(
       ProductCreateSchema,
@@ -203,13 +206,20 @@ export async function POST(
         typeof validation.error === "string"
           ? validation.error
           : JSON.stringify(validation.error);
+      
+      // DEBUG: Log del error de validación
+      logger.error("POST /api/products - Error de validación:", { 
+        error: validation.error,
+        body 
+      });
+      
       return fail("BAD_REQUEST", `validación: ${msg}`, 400);
     }
 
     const productData = validation.data;
 
     // Verificar que la categoría existe
-    const category = await prisma.category.findUnique({
+    const category = await prisma.categories.findUnique({
       where: { id: productData.categoryId },
     });
 
@@ -218,15 +228,30 @@ export async function POST(
     }
 
     // Crear el producto
-    const newProduct = await prisma.product.create({
+    const newProduct = await prisma.products.create({
       data: {
-        ...productData,
+        id: `product-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        name: productData.name,
+        description: productData.description ?? null,
+        price: Number(productData.price),
+        salePrice: productData.salePrice ? Number(productData.salePrice) : null,
+        stock: Number(productData.stock),
+        categoryId: productData.categoryId,
+        onSale: productData.onSale ?? false,
+        sizes: productData.sizes ?? undefined,
+        colors: productData.colors ?? undefined,
+        features: productData.features ?? undefined,
+        weight: productData.weight ?? null,
+        height: productData.height ?? null,
+        width: productData.width ?? null,
+        length: productData.length ?? null,
+        updatedAt: new Date(),
         images: Array.isArray(productData.images)
           ? JSON.stringify(productData.images)
           : productData.images,
       },
       include: {
-        category: true,
+        categories: true,
       },
     });
 
@@ -238,9 +263,9 @@ export async function POST(
         typeof newProduct.images === "string"
           ? JSON.parse(newProduct.images)
           : newProduct.images,
-      category: {
-        ...newProduct.category,
-        description: newProduct.category.description ?? undefined,
+      categories: {
+        ...newProduct.categories,
+        description: newProduct.categories.description ?? undefined,
       },
     };
 

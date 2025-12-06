@@ -101,7 +101,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // DELETE - Eliminar registro
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     return NextResponse.json(
       {

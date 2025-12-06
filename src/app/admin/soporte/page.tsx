@@ -187,26 +187,26 @@ function TicketList({ tickets, selectedId, onSelect }: TicketListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {tickets.map((ticket) => (
         <ListItemCard
           key={ticket.id}
           isSelected={selectedId === ticket.id}
           onClick={() => onSelect(ticket)}
         >
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="font-medium text-primary line-clamp-1">
+          <div className="flex items-start justify-between mb-2 gap-2">
+            <h3 className="font-medium text-sm sm:text-base text-primary line-clamp-1 flex-1 min-w-0">
               {ticket.title}
             </h3>
             <PriorityBadge priority={ticket.priority} />
           </div>
-          <p className="text-sm text-muted line-clamp-2 mb-3">
+          <p className="text-xs sm:text-sm text-muted line-clamp-2 mb-3">
             {ticket.description}
           </p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted">
-              <User size={14} />
-              {ticket.customerName}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted">
+              <User size={14} className="shrink-0" />
+              <span className="truncate">{ticket.customerName}</span>
             </div>
             <StatusBadge status={ticket.status} />
           </div>
@@ -244,10 +244,10 @@ function TicketDetail({
       emptyDescription="Elige un ticket de la lista para ver los detalles"
     >
       {ticket && (
-        <Card className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-primary">
+        <Card className="p-3 sm:p-4 lg:p-6">
+          <div className="flex flex-col sm:flex-row items-start justify-between mb-3 sm:mb-4 gap-2">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg sm:text-xl font-semibold text-primary truncate">
                 {ticket.title}
               </h2>
               <p className="text-sm text-muted">Ticket #{ticket.id}</p>

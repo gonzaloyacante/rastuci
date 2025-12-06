@@ -89,7 +89,11 @@ const CartItemComponent = ({
   }, [item.product.images]);
 
   const isLowStock = item.product.stock < 5;
-  const itemTotal = item.product.price * (pendingQuantity || item.quantity);
+  // Usar salePrice si el producto está en oferta, sino usar price normal
+  const effectivePrice = item.product.onSale && item.product.salePrice 
+    ? item.product.salePrice 
+    : item.product.price;
+  const itemTotal = effectivePrice * (pendingQuantity || item.quantity);
 
   return (
     <div
@@ -139,7 +143,7 @@ const CartItemComponent = ({
           {/* Precio - visible en mobile debajo del nombre */}
           <div className="mt-2 sm:hidden">
             <p className="text-base font-bold text-primary">
-              {formatPriceARS(item.product.price)}
+              {formatPriceARS(effectivePrice)}
             </p>
             {pendingQuantity > 1 && (
               <p className="text-xs muted">
@@ -152,7 +156,7 @@ const CartItemComponent = ({
         {/* Precio desktop */}
         <div className="hidden sm:block text-right shrink-0">
           <p className="text-lg font-bold text-primary">
-            {formatPriceARS(item.product.price)}
+            {formatPriceARS(effectivePrice)}
           </p>
           {pendingQuantity > 1 && (
             <p className="text-sm muted">Total: {formatPriceARS(itemTotal)}</p>
@@ -160,16 +164,18 @@ const CartItemComponent = ({
         </div>
       </div>
 
-      {/* Controles: cantidad y eliminar - en fila separada en mobile */}
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-muted sm:border-0 sm:pt-0 sm:mt-0 sm:absolute sm:right-4 sm:bottom-4">
+      {/* Controles: cantidad y eliminar */}
+      <div className="mt-3 pt-3 border-t border-muted">
+        {/* Stock warning mobile */}
         {isLowStock && (
-          <p className="text-[10px] sm:text-xs text-warning flex items-center gap-1 sm:hidden">
-            <AlertCircle size={10} />
-            Stock: {item.product.stock}
+          <p className="text-[10px] sm:text-xs text-warning flex items-center gap-1 mb-2">
+            <AlertCircle size={10} className="sm:w-3 sm:h-3" />
+            Stock limitado: {item.product.stock} disponibles
           </p>
         )}
 
-        <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+        {/* Controles */}
+        <div className="flex items-center justify-between gap-2">
           <QuantityButton
             quantity={pendingQuantity}
             onIncrement={() => handleQuantityChange(pendingQuantity + 1)}
@@ -180,25 +186,18 @@ const CartItemComponent = ({
           <button
             onClick={handleRemove}
             disabled={isRemoving}
-            className="text-error hover:text-error transition-colors p-1.5 sm:p-2 rounded-full hover:bg-error/10 disabled:opacity-50"
+            className="text-error hover:text-error transition-colors p-2 rounded-lg hover:bg-error/10 disabled:opacity-50 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium"
             title="Eliminar producto"
           >
             {isRemoving ? (
-              <X size={18} className="animate-spin sm:w-5 sm:h-5" />
+              <X size={16} className="animate-spin sm:w-5 sm:h-5" />
             ) : (
-              <Trash2 size={18} className="sm:w-5 sm:h-5" />
+              <Trash2 size={16} className="sm:w-5 sm:h-5" />
             )}
+            <span className="hidden sm:inline">Eliminar</span>
           </button>
         </div>
       </div>
-
-      {/* Stock warning - solo desktop */}
-      {isLowStock && (
-        <p className="hidden sm:flex text-xs text-warning items-center gap-1 mt-2">
-          <AlertCircle size={12} />
-          Stock limitado: {item.product.stock} disponibles
-        </p>
-      )}
     </div>
   );
 };
@@ -224,29 +223,29 @@ const OrderSummary = ({
   const finalTotal = total + shipping;
 
   return (
-    <div className="surface p-4 sm:p-6 rounded-lg shadow-sm sticky top-20 sm:top-24 border border-muted">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 font-montserrat">
+    <div className="surface p-4 sm:p-6 rounded-lg shadow-sm border border-muted lg:sticky lg:top-24">
+      <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-4 sm:mb-6 font-montserrat">
         Resumen del Pedido
       </h2>
 
-      <div className="space-y-2.5 sm:space-y-3 mb-4 sm:mb-6">
-        <div className="flex justify-between text-sm">
-          <span>Productos ({itemCount})</span>
-          <span>{formatPriceARS(total)}</span>
+      <div className="space-y-3 mb-4 sm:mb-6">
+        <div className="flex justify-between text-sm sm:text-base">
+          <span className="text-content-secondary">Productos ({itemCount})</span>
+          <span className="font-semibold">{formatPriceARS(total)}</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span>Envío</span>
+        <div className="flex justify-between text-sm sm:text-base">
+          <span className="text-content-secondary">Envío</span>
           {shippingSettings.freeShipping ? (
-            <span className="text-success flex items-center gap-1">
-              <Check size={14} />
+            <span className="text-success flex items-center gap-1 font-semibold">
+              <Check size={14} className="sm:w-4 sm:h-4" />
               Gratis
             </span>
           ) : (
-            <span>{formatPriceARS(shipping)}</span>
+            <span className="font-semibold">{formatPriceARS(shipping)}</span>
           )}
         </div>
-        <div className="border-t border-muted my-3 sm:my-4"></div>
-        <div className="flex justify-between font-bold text-lg sm:text-xl">
+        <div className="border-t border-muted my-3"></div>
+        <div className="flex justify-between font-bold text-xl sm:text-2xl">
           <span>Total</span>
           <span className="text-primary">{formatPriceARS(finalTotal)}</span>
         </div>
@@ -259,16 +258,18 @@ const OrderSummary = ({
         onClick={onCheckout}
         disabled={isLoading || itemCount === 0}
         loading={isLoading}
-        className="mb-3 sm:mb-4"
+        className="mb-4 text-base sm:text-lg py-3 sm:py-4"
       >
-        Proceder al Pago
+        PROCEDER AL PAGO
       </Button>
 
-      <div className="text-[11px] sm:text-xs muted text-center space-y-0.5 sm:space-y-1">
+      <div className="text-xs sm:text-sm muted text-center space-y-1">
         {shippingSettings.freeShipping && (
           <p>{shippingSettings.freeShippingDescription}</p>
         )}
-        <p>Pago seguro con MercadoPago</p>
+        <p className="flex items-center justify-center gap-1">
+          <span>🔒</span> Pago seguro con MercadoPago
+        </p>
       </div>
     </div>
   );
@@ -369,9 +370,9 @@ export default function CartPageClient() {
     <div className="surface text-primary min-h-screen flex flex-col">
       <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
         {/* Header - responsive */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary font-montserrat">
-            Mi Carrito ({itemCount} {itemCount === 1 ? "item" : "items"})
+        <div className="flex items-center justify-between mb-4 sm:mb-6 lg:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary font-montserrat">
+            Mi Carrito <span className="text-muted">({itemCount})</span>
           </h1>
 
           {cartItems.length > 0 && (
@@ -379,18 +380,18 @@ export default function CartPageClient() {
               variant="ghost"
               size="sm"
               onClick={handleClearCart}
-              className="text-muted hover:text-error self-start sm:self-auto"
+              className="text-error hover:text-error hover:bg-error/10 text-xs sm:text-sm"
             >
-              <Trash2 size={16} className="mr-1.5" />
-              Vaciar Carrito
+              <Trash2 size={14} className="sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline ml-1.5">Vaciar</span>
             </Button>
           )}
         </div>
 
-        {/* Grid responsive: en mobile el resumen va arriba como sticky */}
-        <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-6 sm:gap-8">
+        {/* Grid responsive */}
+        <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4 order-2 lg:order-1">
             {cartItems.map((item) => (
               <CartItemComponent
                 key={`${item.product.id}-${item.size}-${item.color}`}
@@ -401,8 +402,8 @@ export default function CartPageClient() {
             ))}
           </div>
 
-          {/* Order Summary - en mobile aparece primero (sticky) */}
-          <div className="lg:col-span-1">
+          {/* Order Summary */}
+          <div className="lg:col-span-1 order-1 lg:order-2">
             <OrderSummary
               total={total}
               itemCount={itemCount}

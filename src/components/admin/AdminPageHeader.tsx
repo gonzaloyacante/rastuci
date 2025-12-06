@@ -39,16 +39,16 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
       </div>
 
       {actions && actions.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap sm:flex-nowrap">
           {actions.map((action, index) => (
             <Button
               key={`item-${index}`}
               variant={action.variant || "primary"}
-              className={`btn-primary w-full sm:w-auto ${action.className || ""}`}
+              className={`w-full sm:w-auto text-xs sm:text-sm ${action.className || ""}`}
               onClick={action.onClick}
             >
-              {action.icon && <span className="mr-2">{action.icon}</span>}
-              {action.label}
+              {action.icon && <span className="mr-1 sm:mr-2">{action.icon}</span>}
+              <span className="truncate">{action.label}</span>
             </Button>
           ))}
         </div>

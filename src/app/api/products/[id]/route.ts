@@ -29,10 +29,10 @@ export async function GET(
     }
     const { id } = await params;
 
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id },
       include: {
-        category: true,
+        categories: true,
       },
     });
 
@@ -48,9 +48,9 @@ export async function GET(
         typeof product.images === "string"
           ? JSON.parse(product.images)
           : product.images,
-      category: {
-        ...product.category,
-        description: product.category.description ?? undefined,
+      categories: {
+        ...product.categories,
+        description: product.categories.description ?? undefined,
       },
     };
 
@@ -87,8 +87,18 @@ export async function PUT(
     }
     const { id } = await params;
     const body = await request.json();
+    
+    // DEBUG: Log del body recibido
+    logger.info(`PUT /api/products/${id} - Body recibido:`, { body });
+    
     const parsed = ProductCreateSchema.safeParse(body);
     if (!parsed.success) {
+      // DEBUG: Log del error de validación
+      logger.error(`PUT /api/products/${id} - Error de validación:`, { 
+        error: parsed.error.issues,
+        body 
+      });
+      
       return fail("BAD_REQUEST", "Datos inválidos", 400, {
         issues: parsed.error.issues,
       });
@@ -97,6 +107,7 @@ export async function PUT(
       name,
       description,
       price,
+      salePrice,
       stock,
       categoryId,
       images,
@@ -104,10 +115,14 @@ export async function PUT(
       sizes,
       colors,
       features,
+      weight,
+      height,
+      width,
+      length,
     } = parsed.data;
 
     // Verificar que la categoría existe
-    const category = await prisma.category.findUnique({
+    const category = await prisma.categories.findUnique({
       where: { id: categoryId },
     });
 
@@ -115,22 +130,28 @@ export async function PUT(
       return fail("BAD_REQUEST", "La categoría especificada no existe", 400);
     }
 
-    const updatedPrismaProduct = await prisma.product.update({
+    const updatedPrismaProduct = await prisma.products.update({
       where: { id },
       data: {
         name,
-        description,
+        description: description ?? null,
         price: Number(price),
+        salePrice: salePrice ? Number(salePrice) : null,
         stock: Number(stock),
         categoryId,
         images: Array.isArray(images) ? JSON.stringify(images) : images,
-        onSale: onSale ?? undefined,
+        onSale: onSale ?? false,
         sizes: sizes ?? undefined,
         colors: colors ?? undefined,
         features: features ?? undefined,
+        weight: weight ?? null,
+        height: height ?? null,
+        width: width ?? null,
+        length: length ?? null,
+        updatedAt: new Date(),
       },
       include: {
-        category: true,
+        categories: true,
       },
     });
 
@@ -142,9 +163,9 @@ export async function PUT(
         typeof updatedPrismaProduct.images === "string"
           ? JSON.parse(updatedPrismaProduct.images)
           : updatedPrismaProduct.images,
-      category: {
-        ...updatedPrismaProduct.category,
-        description: updatedPrismaProduct.category.description ?? undefined,
+      categories: {
+        ...updatedPrismaProduct.categories,
+        description: updatedPrismaProduct.categories.description ?? undefined,
       },
     };
 
@@ -182,7 +203,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Verificar si hay pedidos asociados a este producto
-    const orderItemsCount = await prisma.orderItem.count({
+    const orderItemsCount = await prisma.order_items.count({
       where: { productId: id },
     });
 
@@ -194,7 +215,7 @@ export async function DELETE(
       );
     }
 
-    await prisma.product.delete({
+    await prisma.products.delete({
       where: { id },
     });
 

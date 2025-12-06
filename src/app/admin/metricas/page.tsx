@@ -117,25 +117,25 @@ function MetricCard({ metric, format = "number" }: MetricCardProps) {
       : "badge-error";
 
   return (
-    <Card className="p-4">
+    <Card className="p-3 sm:p-4">
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-content-secondary">
+        <h3 className="text-xs sm:text-sm font-medium text-content-secondary">
           {metric.label}
         </h3>
-        <div className="flex items-end justify-between">
-          <span className="text-2xl font-bold">
+        <div className="flex items-end justify-between gap-2">
+          <span className="text-lg sm:text-xl lg:text-2xl font-bold">
             {formatValue(metric.value, format)}
           </span>
           <Badge className={bgColor}>
             <span className={trendColor}>{trendIcon}</span>
-            <span className="ml-1">
+            <span className="ml-1 text-xs">
               {Math.abs(metric.changePercent).toFixed(1)}%
             </span>
           </Badge>
         </div>
         <p className="text-xs text-content-tertiary">
           {metric.change >= 0 ? "+" : "-"}
-          {formatValue(Math.abs(metric.change), format)} vs período anterior
+          {formatValue(Math.abs(metric.change), format)} vs anterior
         </p>
       </div>
     </Card>
@@ -161,9 +161,9 @@ function MiniStat({ label, value, color = "default" }: MiniStatProps) {
   };
 
   return (
-    <div className="p-3 surface-secondary rounded">
-      <p className="text-sm text-content-secondary">{label}</p>
-      <p className={`text-xl font-bold ${colorClass[color]}`}>{value}</p>
+    <div className="p-2 sm:p-3 surface-secondary rounded">
+      <p className="text-xs sm:text-sm text-content-secondary truncate">{label}</p>
+      <p className={`text-base sm:text-lg lg:text-xl font-bold ${colorClass[color]}`}>{value}</p>
     </div>
   );
 }
@@ -210,26 +210,26 @@ function TopProducts({ products }: TopProductsProps) {
   }
 
   return (
-    <Card className="p-4">
-      <h3 className="text-lg font-semibold mb-4">Top Productos Vendidos</h3>
-      <div className="space-y-3">
+    <Card className="p-3 sm:p-4">
+      <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Top Productos</h3>
+      <div className="space-y-2 sm:space-y-3">
         {products.map((product, index) => (
           <div
             key={product.id}
-            className="flex items-center justify-between p-3 surface-secondary rounded"
+            className="flex items-center justify-between p-2 sm:p-3 surface-secondary rounded gap-2"
           >
-            <div className="flex items-center gap-3">
-              <span className="w-6 h-6 flex items-center justify-center bg-primary/10 text-primary rounded-full text-sm font-bold">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-primary/10 text-primary rounded-full text-xs sm:text-sm font-bold shrink-0">
                 {index + 1}
               </span>
-              <div>
-                <h4 className="font-medium">{product.name}</h4>
-                <p className="text-sm text-content-secondary">
-                  {product.sales} unidades • {product.orders} órdenes
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-sm sm:text-base truncate">{product.name}</h4>
+                <p className="text-xs sm:text-sm text-content-secondary truncate">
+                  {product.sales} unids • {product.orders} ord.
                 </p>
               </div>
             </div>
-            <span className="font-semibold text-success">
+            <span className="font-semibold text-success text-xs sm:text-sm whitespace-nowrap">
               ${product.revenue.toLocaleString("es-AR")}
             </span>
           </div>

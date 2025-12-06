@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-// Image import removed: logos not shown when limiting payment methods
-import { CreditCard, Banknote, Building2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { CreditCard, Banknote, Building2, Wallet } from "lucide-react";
 
 interface PaymentMethodSelectorProps {
   selectedMethod: string;
@@ -10,40 +9,50 @@ interface PaymentMethodSelectorProps {
   allowedMethods?: string[];
 }
 
-// Lista canónica de métodos de pago disponibles en la UI. Los ids deben
-// coincidir con los usados en `CartContext` y en la API ('mercadopago', 'cash', ...)
-const paymentMethods = [
-  {
-    id: "mercadopago",
-    name: "MercadoPago",
-    description: "Paga con MercadoPago (redirección)",
-    icon: CreditCard,
-    popular: true,
-  },
-  {
-    id: "cash",
-    name: "Efectivo",
-    description: "Retiro en local - pagar en efectivo",
-    icon: Banknote,
-    popular: false,
-  },
-  {
-    id: "bank_transfer",
-    name: "Transferencia",
-    description: "Transferencia bancaria",
-    icon: Building2,
-    popular: false,
-  },
-];
+interface PaymentMethod {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  requiresShipping?: boolean;
+}
+
+const getIconComponent = (iconName: string) => {
+  const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+    "credit-card": CreditCard,
+    "wallet": Wallet,
+    "dollar-sign": Banknote,
+    "banknote": Banknote,
+    "building": Building2,
+  };
+  return icons[iconName] || Wallet;
+};
 
 export function PaymentMethodSelector({
   selectedMethod,
   onMethodChange,
   allowedMethods,
 }: PaymentMethodSelectorProps) {
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+
+  useEffect(() => {
+    fetch('/api/settings/payment-methods')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setPaymentMethods(data.data);
+        }
+      })
+      .catch(err => console.error('Error loading payment methods:', err));
+  }, []);
+
   const methodsToShow = allowedMethods
     ? paymentMethods.filter((m) => allowedMethods.includes(m.id))
     : paymentMethods;
+
+  if (methodsToShow.length === 0) {
+    return <div className="text-muted">Cargando métodos de pago...</div>;
+  }
 
   return (
     <div>
@@ -51,7 +60,7 @@ export function PaymentMethodSelector({
 
       <div className="space-y-3">
         {methodsToShow.map((method) => {
-          const Icon = method.icon;
+          const Icon = getIconComponent(method.icon);
           const isSelected = selectedMethod === method.id;
 
           return (
@@ -72,11 +81,6 @@ export function PaymentMethodSelector({
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{method.name}</span>
-                    {method.popular && (
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-primary text-white">
-                        Popular
-                      </span>
-                    )}
                   </div>
                   <p
                     className={`text-sm ${isSelected ? "text-primary/80" : "muted"}`}

@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
   const debugAuthHeader = session ? "present" : "missing";
 
   // Rutas públicas que cualquiera puede acceder (página de login/admin landing)
-  const publicRoutes = ["/admin"];
+  const publicRoutes = ["/admin", "/admin/auth/forgot-password", "/admin/auth/reset-password"];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   const isAdminPage = pathname.startsWith("/admin");

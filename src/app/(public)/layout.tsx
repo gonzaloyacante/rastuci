@@ -7,7 +7,7 @@ import { defaultHomeSettings, HomeSettingsSchema } from "@/lib/validation/home";
 
 async function getHomeSettings() {
   try {
-    const settingsData = await prisma.setting.findUnique({
+    const settingsData = await prisma.settings.findUnique({
       where: { key: "home" },
     });
 

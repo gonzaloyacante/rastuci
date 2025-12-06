@@ -2,10 +2,9 @@
 
 import { Button } from "@/components/ui/Button";
 import { logger } from "@/lib/logger";
-import axios from "axios";
 import { AlertCircle, Check, Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 interface ImageUploadZoneProps {
@@ -35,23 +34,36 @@ export default function ImageUploadZone({
   );
   const [isDragging, setIsDragging] = useState(false);
 
+  // Notificar cambios de imágenes cuando el estado cambia
+  useEffect(() => {
+    const updatedUrls = images
+      .map((img) => img.url)
+      .filter(Boolean) as string[];
+    onImagesChange(updatedUrls);
+  }, [images, onImagesChange]);
+
   const uploadToCloudinary = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await axios.post<{
-      success: boolean;
-      url?: string;
-      error?: string;
-    }>("/api/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+      // NO incluir Content-Type header - el browser lo configura automáticamente con boundary
     });
 
-    if (!response.data.success || !response.data.url) {
-      throw new Error(response.data.error || "Error al subir imagen");
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error ${response.status}: ${errorText}`);
     }
 
-    return response.data.url;
+    const data: { success: boolean; url?: string; error?: string } = await response.json();
+
+    if (!data.success || !data.url) {
+      throw new Error(data.error || "Error al subir imagen");
+    }
+
+    return data.url;
   };
 
   const addFiles = useCallback(
@@ -111,20 +123,13 @@ export default function ImageUploadZone({
         try {
           const url = await uploadToCloudinary(newImages[i].file!);
 
-          setImages((prev) =>
-            prev.map((img, idx) =>
+          setImages((prev) => {
+            return prev.map((img, idx) =>
               idx === imageIndex
                 ? { url, uploaded: true, uploading: false }
                 : img
-            )
-          );
-
-          // Notificar cambios
-          const updatedUrls = images
-            .map((img) => img.url)
-            .filter(Boolean) as string[];
-          updatedUrls.push(url);
-          onImagesChange(updatedUrls);
+            );
+          });
 
           toast.success(`Imagen ${i + 1}/${newImages.length} subida`);
         } catch (error) {

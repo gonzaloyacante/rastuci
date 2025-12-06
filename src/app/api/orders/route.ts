@@ -38,13 +38,19 @@ export async function GET(
       });
     }
     const { page, limit, status, search } = parsedQuery.data;
+    
+    // Soporte para buscar por mpPaymentId (usado por página de success)
+    const mpPaymentId = searchParams.get("mpPaymentId");
 
     // Construir filtros
     const where: Record<string, unknown> = {};
     if (status) {
       where.status = status;
     }
-    if (search) {
+    if (mpPaymentId) {
+      // Búsqueda directa por payment ID de MercadoPago
+      where.mpPaymentId = mpPaymentId;
+    } else if (search) {
       // Buscar por nombre, email o ID exacto
       where.OR = [
         { customerName: { contains: search, mode: "insensitive" } },
@@ -58,24 +64,24 @@ export async function GET(
 
     // Obtener pedidos y total
     const [prismaOrders, total] = await Promise.all([
-      prisma.order.findMany({
+      prisma.orders.findMany({
         where,
         include: {
-          items: {
+          order_items: {
             include: {
-              product: {
+              products: {
                 include: {
-                  category: true,
+                  categories: true,
                 },
               },
             },
           },
         },
         orderBy: { createdAt: "desc" },
-        skip: offset,
-        take: limit,
+        skip: limit ? offset : undefined,
+        take: limit || undefined,
       }),
-      prisma.order.count({ where }),
+      prisma.orders.count({ where }),
     ]);
 
     type OrderType = (typeof prismaOrders)[0];
@@ -139,13 +145,14 @@ export async function POST(
     // Validar y calcular el total
     let total = 0;
     const validatedItems: {
+      id: string;
       productId: string;
       quantity: number;
       price: number;
     }[] = [];
 
     for (const item of items) {
-      const product = await prisma.product.findUnique({
+      const product = await prisma.products.findUnique({
         where: { id: item.productId },
       });
 
@@ -169,6 +176,7 @@ export async function POST(
       total += itemTotal;
 
       validatedItems.push({
+        id: `item-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         productId: item.productId,
         quantity: item.quantity,
         price: product.price, // Precio al momento de la compra
@@ -179,22 +187,24 @@ export async function POST(
     const order = await prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         // Crear el pedido
-        const newOrder = await tx.order.create({
+        const newOrder = await tx.orders.create({
           data: {
+            id: `order-${Date.now()}-${Math.random().toString(36).substring(7)}`,
             customerName,
             customerPhone,
             customerAddress,
             total,
-            items: {
+            updatedAt: new Date(),
+            order_items: {
               create: validatedItems,
             },
           },
           include: {
-            items: {
+            order_items: {
               include: {
-                product: {
+                products: {
                   include: {
-                    category: true,
+                    categories: true,
                   },
                 },
               },
@@ -204,7 +214,7 @@ export async function POST(
 
         // Actualizar el stock de los productos
         for (const item of validatedItems) {
-          await tx.product.update({
+          await tx.products.update({
             where: { id: item.productId },
             data: {
               stock: {

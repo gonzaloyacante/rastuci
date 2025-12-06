@@ -158,20 +158,20 @@ async function getMobileAppStats() {
       deliveredOrders,
       activeTracking
     ] = await Promise.all([
-      prisma.order.count(),
-      prisma.order.count({
+      prisma.orders.count(),
+      prisma.orders.count({
         where: {
           status: {
             in: ['PENDING', 'PROCESSED']
           }
         }
       }),
-      prisma.order.count({
+      prisma.orders.count({
         where: {
           status: 'DELIVERED'
         }
       }),
-      prisma.order.count({
+      prisma.orders.count({
         where: {
           trackingNumber: {
             not: null

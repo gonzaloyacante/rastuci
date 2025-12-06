@@ -117,7 +117,7 @@ export default function SmartSearch({
           id: product.id,
           type: "product",
           text: product.name,
-          subtitle: product.category?.name || "Producto",
+          subtitle: product.categories?.name || "Producto",
           rating: product.rating || undefined,
           price: product.price,
           href: `/productos/${product.id}`,

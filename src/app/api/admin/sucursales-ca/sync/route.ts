@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         const streetName = addressParts.slice(0, -1).join(' ') || agency.address;
         const streetNumber = addressParts[addressParts.length - 1] || null;
 
-        await prisma.cAAgency.upsert({
+        await prisma.ca_agencies.upsert({
           where: { code: agency.code },
           update: {
             name: agency.name,
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
             email: agency.email || null,
             latitude: agency.latitude || null,
             longitude: agency.longitude || null,
+            updatedAt: new Date(),
           },
           create: {
             code: agency.code,
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
             email: agency.email || null,
             latitude: agency.latitude || null,
             longitude: agency.longitude || null,
+            updatedAt: new Date(),
           },
         });
 
@@ -107,7 +109,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const agencies = await prisma.cAAgency.findMany({
+    const agencies = await prisma.ca_agencies.findMany({
       orderBy: [{ province: "asc" }, { city: "asc" }, { name: "asc" }],
     });
 

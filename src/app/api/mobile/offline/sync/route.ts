@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar pedidos del cliente desde la base de datos
-    const orders = await prisma.order.findMany({
+    const orders = await prisma.orders.findMany({
       where: {
         customerEmail: customerEmail,
       },
@@ -40,9 +40,9 @@ export async function GET(request: NextRequest) {
       },
       take: 10,
       include: {
-        items: {
+        order_items: {
           include: {
-            product: {
+            products: {
               select: {
                 id: true,
                 name: true,
@@ -64,14 +64,14 @@ export async function GET(request: NextRequest) {
         createdAt: order.createdAt.toISOString(),
         trackingCode:
           order.caTrackingNumber || order.trackingNumber || undefined,
-        items: order.items.map((item) => ({
+        items: order.order_items.map((item) => ({
           id: item.id,
           quantity: item.quantity,
           product: {
-            id: item.product.id,
-            name: item.product.name,
-            price: Number(item.product.price),
-            image: item.product.images?.[0] || undefined,
+            id: item.products.id,
+            name: item.products.name,
+            price: Number(item.products.price),
+            image: item.products.images?.[0] || undefined,
           },
         })),
       })),

@@ -3,7 +3,6 @@
 import { Product } from "@/types";
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
-// import { Card, CardContent } from "@/components/ui/Card"; // TODO: Implement when needed
 
 interface RelatedProductsProps {
   categoryId?: string;

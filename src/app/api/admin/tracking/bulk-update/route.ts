@@ -34,7 +34,7 @@ export const POST = withAdminAuth(async (request: NextRequest): Promise<NextResp
     const mappedStatus = statusMapping[status];
 
     // Actualizar los estados en batch
-    const updateResult = await prisma.order.updateMany({
+    const updateResult = await prisma.orders.updateMany({
       where: {
         id: { in: trackingIds }
       },

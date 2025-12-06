@@ -112,17 +112,18 @@ export default function AdminCategoriasPage() {
         ]}
       />
 
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
-        <div className="w-full sm:w-96">
+      <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="w-full sm:flex-1 sm:max-w-md">
           <Input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Buscar categorías por nombre o descripción..."
+            placeholder="Buscar categorías..."
             aria-label="Buscar categorías"
+            className="w-full"
           />
         </div>
-        <Button variant="primary">Buscar</Button>
+        <Button variant="primary" className="w-full sm:w-auto">Buscar</Button>
       </div>
 
       {filteredCategories.length === 0 ? (

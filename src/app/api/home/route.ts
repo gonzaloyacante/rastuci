@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const setting = await prisma.setting.findUnique({ where: { key: SETTINGS_KEY } });
+    const setting = await prisma.settings.findUnique({ where: { key: SETTINGS_KEY } });
     const value = setting?.value ?? defaultHomeSettings;
 
     const parsed = HomeSettingsSchema.safeParse(value);
@@ -51,10 +51,10 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(fail("BAD_REQUEST", parsed.error.message, 400));
     }
 
-    const saved = await prisma.setting.upsert({
+    const saved = await prisma.settings.upsert({
       where: { key: SETTINGS_KEY },
-      update: { value: parsed.data },
-      create: { key: SETTINGS_KEY, value: parsed.data },
+      update: { value: parsed.data, updatedAt: new Date() },
+      create: { key: SETTINGS_KEY, value: parsed.data, updatedAt: new Date() },
     });
 
     return NextResponse.json(ok(saved.value));

@@ -8,200 +8,8 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ============================================================================
-// MODELOS PRINCIPALES (E-COMMERCE)
-// ============================================================================
-
-model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  description String?
-  imageUrl    String?
-  icon        String? // Nombre del icono (e.g., 'ShoppingBag', 'Laptop')
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  products    Product[]
-
-  @@map("categories")
-}
-
-model Product {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  salePrice   Float?
-  stock       Int      @default(0)
-  images      String
-  onSale      Boolean  @default(false)
-  sizes       String[] @default([])
-  colors      String[] @default([])
-  features    String[] @default([])
-  rating      Float?   @default(0)
-  reviewCount Int      @default(0)
-
-  // Dimensiones y peso para envíos (min 1g, max 25000g | max 150cm)
-  weight    Int?  @default(1000) // Peso en gramos
-  height    Int?  @default(10) // Alto en cm
-  width     Int?  @default(20) // Ancho en cm
-  length    Int?  @default(30) // Largo en cm
-  sizeGuide Json? // Guía de talles JSON
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  categoryId String
-
-  orderItems OrderItem[]
-  reviews    ProductReview[]
-  category   Category        @relation(fields: [categoryId], references: [id])
-
-  @@index([name])
-  @@index([categoryId])
-  @@index([onSale])
-  @@index([price])
-  @@index([createdAt])
-  @@index([categoryId, onSale])
-  @@map("products")
-}
-
-model Order {
-  id              String      @id @default(cuid())
-  customerName    String
-  customerPhone   String
-  customerAddress String?
-  customerEmail   String?
-  total           Float
-  status          OrderStatus @default(PENDING)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  items           OrderItem[]
-
-  // ===== MERCADOPAGO =====
-  mpPaymentId    String?
-  mpPreferenceId String?
-  mpStatus       String?
-
-  // ===== CORREO ARGENTINO (MiCorreo API) - ÚNICO PROVEEDOR =====
-
-  // IDs y tracking
-  caTrackingNumber String? @unique
-  caShipmentId     String?
-  caExtOrderId     String? @unique
-  caOrderNumber    String? // Visible en MiCorreo
-
-  // Remitente (sender)
-  senderName         String?
-  senderPhone        String?
-  senderCellPhone    String?
-  senderEmail        String?
-  senderStreetName   String?
-  senderStreetNumber String?
-  senderFloor        String? @db.VarChar(3)
-  senderApartment    String? @db.VarChar(3)
-  senderLocality     String?
-  senderCity         String?
-  senderProvinceCode String? @db.Char(1)
-  senderPostalCode   String?
-
-  // Destinatario (recipient) - REQUERIDO
-  recipientName      String?
-  recipientPhone     String?
-  recipientCellPhone String?
-  recipientEmail     String?
-
-  // Envío
-  shippingMethod      String? // 'D' = domicilio | 'S' = sucursal
-  shippingProductType String? @default("CP")
-  shippingAgency      String?
-  shippingCost        Float?
-
-  // Dirección de envío
-  shippingStreet       String?
-  shippingNumber       String?
-  shippingFloor        String? @db.VarChar(3)
-  shippingApartment    String? @db.VarChar(3)
-  shippingLocality     String?
-  shippingCity         String?
-  shippingProvince     String?
-  shippingProvinceCode String? @db.Char(1)
-  shippingPostalCode   String?
-
-  // Paquete
-  packageWeight Int?
-  packageHeight Int?
-  packageWidth  Int?
-  packageLength Int?
-
-  // Valor y cotización
-  declaredValue        Float?
-  rateValidTo          DateTime?
-  estimatedDeliveryMin String?
-  estimatedDeliveryMax String?
-  estimatedDelivery    DateTime?
-
-  // Tracking genérico (backward compat)
-  trackingNumber String?
-
-  // Relaciones CA
-  caCustomerId     String?
-  caCustomer       CACustomer? @relation(fields: [caCustomerId], references: [customerId])
-  caShipmentId_rel String?
-  caShipment       CAShipment? @relation(fields: [caShipmentId_rel], references: [id])
-
-  @@index([status])
-  @@index([createdAt])
-  @@index([caTrackingNumber])
-  @@index([trackingNumber])
-  @@index([caExtOrderId])
-  @@index([caCustomerId])
-  @@index([shippingProvinceCode])
-  @@map("orders")
-}
-
-model OrderItem {
-  id        String  @id @default(cuid())
-  quantity  Int
-  price     Float
-  orderId   String
-  productId String
-  size      String?
-  color     String?
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
-
-  @@map("order_items")
-}
-
-model ProductReview {
-  id           String   @id @default(cuid())
-  rating       Int      @db.SmallInt
-  comment      String?
-  customerName String
-  createdAt    DateTime @default(now())
-  productId    String
-  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@map("product_reviews")
-}
-
-// ============================================================================
-// AUTENTICACIÓN (NextAuth)
-// ============================================================================
-
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  isAdmin       Boolean   @default(false)
-  accounts      Account[]
-  sessions      Session[]
-}
-
 model Account {
-  id                String  @id @default(cuid())
+  id                String  @id
   userId            String
   type              String
   provider          String
@@ -213,17 +21,49 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                String    @id
+  name              String?
+  email             String?   @unique
+  emailVerified     DateTime?
+  image             String?
+  password          String?
+  isAdmin           Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  loginCount        Int       @default(0)
+  Account           Account[]
+  Session           Session[]
+  SessionLog        SessionLog[]
+}
+
+model SessionLog {
+  id          String   @id @default(cuid())
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  loginAt     DateTime @default(now())
+  logoutAt    DateTime?
+  isActive    Boolean  @default(true)
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loginAt])
 }
 
 model VerificationToken {
@@ -234,145 +74,69 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ============================================================================
-// CMS
-// ============================================================================
+model ca_agencies {
+  code               String   @id
+  name               String
+  manager            String?
+  email              String?
+  phone              String?
+  packageReception   Boolean  @default(false)
+  pickupAvailability Boolean  @default(false)
+  streetName         String?
+  streetNumber       String?
+  floor              String?
+  apartment          String?
+  locality           String?
+  city               String?
+  province           String?
+  provinceCode       String   @db.Char(1)
+  postalCode         String?
+  latitude           Float?
+  longitude          Float?
+  hours              Json?
+  status             String   @default("ACTIVE")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime
 
-model Setting {
-  key       String   @id
-  value     Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("settings")
+  @@index([city])
+  @@index([provinceCode])
+  @@index([status])
 }
 
-// ============================================================================
-// ENUMS
-// ============================================================================
+model ca_customers {
+  customerId        String              @id
+  firstName         String
+  lastName          String
+  email             String              @unique
+  documentType      CADocumentType
+  documentId        String              @unique
+  phone             String?
+  cellPhone         String?
+  streetName        String?
+  streetNumber      String?
+  floor             String?
+  apartment         String?
+  locality          String?
+  city              String?
+  provinceCode      String?             @db.Char(1)
+  postalCode        String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  ca_shipments      ca_shipments[]
+  ca_shipping_rates ca_shipping_rates[]
+  orders            orders[]
 
-enum OrderStatus {
-  PENDING
-  PROCESSED
-  DELIVERED
-}
-
-enum CADeliveryType {
-  D // Domicilio
-  S // Sucursal
-}
-
-enum CADocumentType {
-  DNI // Consumidor final
-  CUIT // Monotributista o Responsable Inscripto
-}
-
-enum CAProvinceCode {
-  A // Salta
-  B // Provincia de Buenos Aires
-  C // Ciudad Autonoma Buenos Aires (Capital Federal)
-  D // San Luis
-  E // Entre Rios
-  F // La Rioja
-  G // Santiago del Estero
-  H // Chaco
-  J // San Juan
-  K // Catamarca
-  L // La Pampa
-  M // Mendoza
-  N // Misiones
-  P // Formosa
-  Q // Neuquen
-  R // Rio Negro
-  S // Santa Fe
-  T // Tucuman
-  U // Chubut
-  V // Tierra del Fuego
-  W // Corrientes
-  X // Cordoba
-  Y // Jujuy
-  Z // Santa Cruz
-}
-
-// ============================================================================
-// CORREO ARGENTINO (MiCorreo API)
-// ============================================================================
-
-/// Usuario registrado en MiCorreo (API /register y /users/validate)
-model CACustomer {
-  customerId   String         @id
-  firstName    String
-  lastName     String
-  email        String         @unique
-  documentType CADocumentType
-  documentId   String         @unique
-  phone        String?
-  cellPhone    String?
-
-  streetName   String?
-  streetNumber String?
-  floor        String?
-  apartment    String?
-  locality     String?
-  city         String?
-  provinceCode String? @db.Char(1)
-  postalCode   String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  orders    Order[]
-  shipments CAShipment[]
-  rates     CAShippingRate[]
-
-  @@index([email])
   @@index([documentId])
-  @@map("ca_customers")
+  @@index([email])
 }
 
-/// Cotización de envío (API /rates)
-model CAShippingRate {
-  id         String     @id @default(cuid())
-  customerId String
-  customer   CACustomer @relation(fields: [customerId], references: [customerId])
-
-  postalCodeOrigin      String
-  postalCodeDestination String
-  deliveryType          CADeliveryType
-  productType           String // "CP"
-  productName           String // "Correo Argentino Clasico"
-
-  weight Int // Gramos (1-25000)
-  height Int // cm (max 150)
-  width  Int // cm (max 150)
-  length Int // cm (max 150)
-
-  price           Float
-  deliveryTimeMin String // "2"
-  deliveryTimeMax String // "5"
-  validTo         DateTime
-
-  createdAt DateTime @default(now())
-
-  @@index([customerId])
-  @@index([postalCodeOrigin])
-  @@index([postalCodeDestination])
-  @@index([validTo])
-  @@map("ca_shipping_rates")
-}
-
-/// Envío importado a MiCorreo (API /shipping/import)
-model CAShipment {
-  id         String     @id @default(cuid())
-  customerId String
-  customer   CACustomer @relation(fields: [customerId], references: [customerId])
-
-  extOrderId     String  @unique
-  orderNumber    String?
-  trackingNumber String? @unique
-  productId      String? // "HC"
-
-  // Sender
+model ca_shipments {
+  id                 String               @id
+  customerId         String
+  extOrderId         String               @unique
+  orderNumber        String?
+  trackingNumber     String?              @unique
+  productId          String?
   senderName         String?
   senderPhone        String?
   senderCellPhone    String?
@@ -383,131 +147,290 @@ model CAShipment {
   senderApartment    String?
   senderLocality     String?
   senderCity         String?
-  senderProvinceCode String? @db.Char(1)
+  senderProvinceCode String?              @db.Char(1)
   senderPostalCode   String?
-
-  // Recipient
   recipientName      String
   recipientPhone     String?
   recipientCellPhone String?
   recipientEmail     String
-
-  // Shipping
-  deliveryType CADeliveryType
-  productType  String // "CP"
-  agencyCode   String?
-
-  // Destination address
-  destStreetName   String?
-  destStreetNumber String?
-  destFloor        String?
-  destApartment    String?
-  destLocality     String?
-  destCity         String?
-  destProvinceCode String? @db.Char(1)
-  destPostalCode   String?
-
-  // Package
-  weight        Int
-  height        Int
-  width         Int
-  length        Int
-  declaredValue Float
-
-  // Status
-  status     String?
-  importedAt DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  orders         Order[]
-  trackingEvents CATrackingEvent[]
+  deliveryType       CADeliveryType
+  productType        String
+  agencyCode         String?
+  destStreetName     String?
+  destStreetNumber   String?
+  destFloor          String?
+  destApartment      String?
+  destLocality       String?
+  destCity           String?
+  destProvinceCode   String?              @db.Char(1)
+  destPostalCode     String?
+  weight             Int
+  height             Int
+  width              Int
+  length             Int
+  declaredValue      Float
+  status             String?
+  importedAt         DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  ca_customers       ca_customers         @relation(fields: [customerId], references: [customerId])
+  ca_tracking_events ca_tracking_events[]
+  orders             orders[]
 
   @@index([customerId])
-  @@index([trackingNumber])
   @@index([extOrderId])
   @@index([status])
-  @@map("ca_shipments")
+  @@index([trackingNumber])
 }
 
-/// Evento de tracking (API /shipping/tracking)
-model CATrackingEvent {
-  id         String     @id @default(cuid())
-  shipmentId String
-  shipment   CAShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+model ca_shipping_rates {
+  id                    String         @id
+  customerId            String
+  postalCodeOrigin      String
+  postalCodeDestination String
+  deliveryType          CADeliveryType
+  productType           String
+  productName           String
+  weight                Int
+  height                Int
+  width                 Int
+  length                Int
+  price                 Float
+  deliveryTimeMin       String
+  deliveryTimeMax       String
+  validTo               DateTime
+  createdAt             DateTime       @default(now())
+  ca_customers          ca_customers   @relation(fields: [customerId], references: [customerId])
 
-  event     String // "PREIMPOSICION", "CADUCA", etc.
-  eventDate DateTime // "09-12-2024 05:00"
-  branch    String // "CORREO ARGENTINO"
-  status    String?
-  sign      String?
+  @@index([customerId])
+  @@index([postalCodeDestination])
+  @@index([postalCodeOrigin])
+  @@index([validTo])
+}
 
-  createdAt DateTime @default(now())
+model ca_tracking_events {
+  id           String       @id
+  shipmentId   String
+  event        String
+  eventDate    DateTime
+  branch       String
+  status       String?
+  sign         String?
+  createdAt    DateTime     @default(now())
+  ca_shipments ca_shipments @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
 
-  @@index([shipmentId])
   @@index([eventDate])
   @@index([event])
-  @@map("ca_tracking_events")
+  @@index([shipmentId])
 }
 
-/// Sucursal de Correo Argentino (API /agencies)
-model CAAgency {
-  code    String  @id // "B0107"
-  name    String // "Monte Grande"
-  manager String?
-  email   String?
-  phone   String?
-
-  packageReception   Boolean @default(false)
-  pickupAvailability Boolean @default(false)
-
-  streetName   String?
-  streetNumber String?
-  floor        String?
-  apartment    String?
-  locality     String?
-  city         String?
-  province     String? // "Buenos Aires"
-  provinceCode String  @db.Char(1) // "B"
-  postalCode   String?
-  latitude     Float?
-  longitude    Float?
-
-  hours  Json? // {monday: {start, end}, ...}
-  status String @default("ACTIVE")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([provinceCode])
-  @@index([status])
-  @@index([city])
-  @@map("ca_agencies")
+model categories {
+  id          String     @id
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime
+  imageUrl    String?
+  icon        String?
+  products    products[]
 }
 
-// ============================================================================
-// MENSAJES DE CONTACTO
-// ============================================================================
-
-enum ResponsePreference {
-  EMAIL
-  PHONE
-  WHATSAPP
+model order_items {
+  id        String   @id
+  quantity  Int
+  price     Float
+  orderId   String
+  productId String
+  color     String?
+  size      String?
+  orders    orders   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  products  products @relation(fields: [productId], references: [id])
 }
 
-model ContactMessage {
-  id                 String             @id @default(cuid())
-  name               String
-  email              String
-  phone              String?
-  message            String             @db.Text
-  responsePreference ResponsePreference @default(EMAIL)
-  isRead             Boolean            @default(false)
-  isArchived         Boolean            @default(false)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model orders {
+  id                   String        @id
+  customerName         String
+  customerPhone        String
+  customerAddress      String?
+  total                Float
+  status               OrderStatus   @default(PENDING)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime
+  customerEmail        String?
+  mpPaymentId          String?
+  mpPreferenceId       String?
+  mpStatus             String?
+  caTrackingNumber     String?       @unique
+  caShipmentId         String?
+  caExtOrderId         String?       @unique
+  shippingAgency       String?
+  shippingStreet       String?
+  shippingNumber       String?
+  shippingFloor        String?       @db.VarChar(3)
+  shippingApartment    String?       @db.VarChar(3)
+  shippingCity         String?
+  shippingProvince     String?
+  shippingPostalCode   String?
+  trackingNumber       String?
+  ocaTrackingNumber    String?
+  ocaOrderId           String?
+  shippingMethod       String?
+  estimatedDelivery    DateTime?
+  shippingCost         Float?
+  caCustomerId         String?
+  caOrderNumber        String?
+  caShipmentId_rel     String?
+  declaredValue        Float?
+  estimatedDeliveryMax String?
+  estimatedDeliveryMin String?
+  packageHeight        Int?
+  packageLength        Int?
+  packageWeight        Int?
+  packageWidth         Int?
+  rateValidTo          DateTime?
+  recipientCellPhone   String?
+  recipientEmail       String?
+  recipientName        String?
+  recipientPhone       String?
+  senderApartment      String?       @db.VarChar(3)
+  senderCellPhone      String?
+  senderCity           String?
+  senderEmail          String?
+  senderFloor          String?       @db.VarChar(3)
+  senderLocality       String?
+  senderName           String?
+  senderPhone          String?
+  senderPostalCode     String?
+  senderProvinceCode   String?       @db.Char(1)
+  senderStreetName     String?
+  senderStreetNumber   String?
+  shippingLocality     String?
+  shippingProductType  String?       @default("CP")
+  shippingProvinceCode String?       @db.Char(1)
+  order_items          order_items[]
+  ca_customers         ca_customers? @relation(fields: [caCustomerId], references: [customerId])
+  ca_shipments         ca_shipments? @relation(fields: [caShipmentId_rel], references: [id])
 
-  @@index([isRead])
+  @@index([caCustomerId])
+  @@index([caExtOrderId])
+  @@index([caTrackingNumber])
   @@index([createdAt])
-  @@map("contact_messages")
+  @@index([ocaTrackingNumber])
+  @@index([shippingProvinceCode])
+  @@index([status])
+  @@index([trackingNumber])
+}
+
+model product_reviews {
+  id           String   @id
+  rating       Int      @db.SmallInt
+  comment      String?
+  customerName String
+  createdAt    DateTime @default(now())
+  productId    String
+  products     products @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model products {
+  id              String            @id
+  name            String
+  description     String?
+  price           Float
+  stock           Int               @default(0)
+  images          String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  categoryId      String
+  onSale          Boolean           @default(false)
+  colors          String[]          @default([])
+  features        String[]          @default([])
+  rating          Float?            @default(0)
+  reviewCount     Int               @default(0)
+  sizes           String[]          @default([])
+  salePrice       Float?
+  weight          Int?              @default(1000)
+  height          Int?              @default(10)
+  width           Int?              @default(20)
+  length          Int?              @default(30)
+  sizeGuide       Json?
+  order_items        order_items[]
+  product_reviews    product_reviews[]
+  stock_reservations stock_reservations[]
+  categories         categories           @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([categoryId, onSale])
+  @@index([createdAt])
+  @@index([name])
+  @@index([onSale])
+  @@index([price])
+}
+
+model settings {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model stock_reservations {
+  id         String   @id @default(cuid())
+  productId  String
+  quantity   Int
+  sessionId  String   // ID único de la sesión de checkout
+  expiresAt  DateTime // Expiración de la reserva (15 min)
+  createdAt  DateTime @default(now())
+  product    products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([sessionId])
+  @@index([expiresAt])
+}
+
+enum CADeliveryType {
+  D
+  S
+}
+
+enum CADocumentType {
+  DNI
+  CUIT
+}
+
+enum CAProvinceCode {
+  A
+  B
+  C
+  D
+  E
+  F
+  G
+  H
+  J
+  K
+  L
+  M
+  N
+  P
+  Q
+  R
+  S
+  T
+  U
+  V
+  W
+  X
+  Y
+  Z
+}
+
+enum OrderStatus {
+  PENDING           // Pedido creado, esperando pago del cliente
+  PENDING_PAYMENT   // Cliente pagó, esperando que admin pague envío en MiCorreo
+  PROCESSED         // Envío pagado, listo para preparar y entregar
+  DELIVERED         // Entregado al cliente
 }

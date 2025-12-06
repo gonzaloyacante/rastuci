@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     if (key) {
       // Obtener un setting específico
-      const setting = await prisma.setting.findUnique({
+      const setting = await prisma.settings.findUnique({
         where: { key },
       });
 
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener todos los settings
-    const settings = await prisma.setting.findMany({
+    const settings = await prisma.settings.findMany({
       orderBy: { key: "asc" },
     });
 
@@ -109,10 +109,10 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
     }
 
     // Upsert: crear o actualizar
-    const setting = await prisma.setting.upsert({
+    const setting = await prisma.settings.upsert({
       where: { key },
-      update: { value },
-      create: { key, value },
+      update: { value, updatedAt: new Date() },
+      create: { key, value, updatedAt: new Date() },
     });
 
     return NextResponse.json<ApiResponse<Record<string, unknown>>>({

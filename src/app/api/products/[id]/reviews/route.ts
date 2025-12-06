@@ -28,7 +28,7 @@ export async function GET(
     }
     const { id } = await params;
 
-    const reviews = await prisma.productReview.findMany({
+    const reviews = await prisma.product_reviews.findMany({
       where: { productId: id },
       orderBy: { createdAt: "desc" },
     });
@@ -64,7 +64,7 @@ export async function POST(
     const { rating, comment, customerName } = parsed.data;
 
     // Verificar que el producto existe
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id },
     });
 
@@ -73,8 +73,9 @@ export async function POST(
     }
 
     // Crear la reseña
-    const review = await prisma.productReview.create({
+    const review = await prisma.product_reviews.create({
       data: {
+        id: `review-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         rating,
         comment,
         customerName,
@@ -83,7 +84,7 @@ export async function POST(
     });
 
     // Actualizar el rating promedio y conteo de reseñas del producto
-    const allReviews = await prisma.productReview.findMany({
+    const allReviews = await prisma.product_reviews.findMany({
       where: { productId: id },
     });
 
@@ -92,7 +93,7 @@ export async function POST(
       allReviews.reduce((acc: number, rev: ReviewType) => acc + rev.rating, 0) /
       allReviews.length;
 
-    await prisma.product.update({
+    await prisma.products.update({
       where: { id },
       data: {
         rating: averageRating,

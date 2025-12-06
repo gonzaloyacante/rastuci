@@ -92,24 +92,55 @@ export default function AdminLoginPage() {
     setAuthError(null);
 
     try {
-      // Usar NextAuth para iniciar sesión (Credentials Provider).
-      // Pedimos a NextAuth que redirija (redirect: true) y especificamos
-      // `callbackUrl` para que la cookie de sesión se escriba correctamente
-      // por el servidor y evitemos condiciones de carrera cliente/servidor.
-      await signIn("credentials", {
-        redirect: true,
-        callbackUrl: "/admin/dashboard",
+      // Usar NextAuth con redirect: false para manejar errores manualmente
+      const result = await signIn("credentials", {
+        redirect: false,
         email: data.email,
         password: data.password,
         remember: rememberMe,
       });
 
-      // Nota: al usar `redirect: true` NextAuth hace la navegación, así
-      // que no llegaremos aquí en el flujo normal. Dejamos el setLoading
-      // por si hay errores inesperados.
+      if (result?.error) {
+        // Mensajes de error detallados según el tipo
+        if (result.error === "CredentialsSignin") {
+          setAuthError("Credenciales incorrectas");
+          toast.error("Email o contraseña incorrectos. Por favor, verifica tus datos.", {
+            duration: 4000,
+          });
+        } else if (result.error.includes("password")) {
+          setAuthError("Contraseña incorrecta");
+          toast.error("La contraseña ingresada es incorrecta", {
+            duration: 3000,
+          });
+        } else if (result.error.includes("email") || result.error.includes("user")) {
+          setAuthError("Usuario no encontrado");
+          toast.error("No existe una cuenta con este email", {
+            duration: 3000,
+          });
+        } else {
+          setAuthError(result.error);
+          toast.error(`Error: ${result.error}`, {
+            duration: 3000,
+          });
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (result?.ok) {
+        toast.success("¡Inicio de sesión exitoso!", {
+          duration: 2000,
+        });
+        // Pequeña demora para que se vea el toast de éxito
+        await new Promise(resolve => setTimeout(resolve, 500));
+        router.push("/admin/dashboard");
+      } else {
+        toast.error("Error desconocido al iniciar sesión");
+        setLoading(false);
+      }
     } catch (error) {
       logger.error("Error de inicio de sesión", { error });
-      toast.error("Ha ocurrido un error al iniciar sesión");
+      toast.error("Ha ocurrido un error inesperado al iniciar sesión");
       setLoading(false);
     }
   };
@@ -226,13 +257,12 @@ export default function AdminLoginPage() {
                   Recordarme por 30 días
                 </label>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowForgotPassword(true)}
+              <a
+                href="/admin/auth/forgot-password"
                 className="text-sm font-medium text-primary hover:text-primary/80"
               >
                 ¿Olvidaste tu contraseña?
-              </button>
+              </a>
             </div>
             <Button
               type="submit"

@@ -1,5 +1,6 @@
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
 import { logger } from "@/lib/logger";
+import { generateProductJsonLd } from "@/lib/metadata";
 import prisma from "@/lib/prisma";
 import { generateProductMetadata } from "@/lib/seo";
 import { Metadata } from "next";
@@ -18,10 +19,10 @@ export async function generateMetadata({
 
   try {
     // Consultar directamente a Prisma en lugar de fetch (mejor para build time)
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id },
       include: {
-        category: true,
+        categories: true,
       },
     });
 
@@ -44,7 +45,7 @@ export async function generateMetadata({
         description: product.description || undefined,
         price: product.price,
         images,
-        category: product.category?.name || "General",
+        category: product.categories?.name || "General",
         inStock: product.stock > 0,
       },
     });
@@ -60,7 +61,7 @@ export async function generateMetadata({
 // Generar params estáticos para los productos más recientes/populares (SSG)
 export async function generateStaticParams() {
   try {
-    const products = await prisma.product.findMany({
+    const products = await prisma.products.findMany({
       take: 20, // Pre-renderizar los 20 primeros productos
       select: { id: true },
       orderBy: { createdAt: "desc" },
@@ -79,10 +80,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
   // Fetch product data on server to pass to client (avoid double fetch)
-  const product = await prisma.product.findUnique({
+  const product = await prisma.products.findUnique({
     where: { id },
     include: {
-      category: true,
+      categories: true,
     },
   });
 
@@ -94,19 +95,44 @@ export default async function ProductPage({ params }: ProductPageProps) {
         price: Number(product.price),
         createdAt: product.createdAt.toISOString(),
         updatedAt: product.updatedAt.toISOString(),
-        category: product.category
+        category: product.categories
           ? {
-              ...product.category,
-              createdAt: product.category.createdAt.toISOString(),
-              updatedAt: product.category.updatedAt.toISOString(),
+              ...product.categories,
+              createdAt: product.categories.createdAt.toISOString(),
+              updatedAt: product.categories.updatedAt.toISOString(),
             }
           : undefined,
       }
     : null;
 
+  // Generate JSON-LD structured data
+  const jsonLd = serializedProduct
+    ? generateProductJsonLd({
+        name: serializedProduct.name,
+        description: serializedProduct.description || "",
+        image: Array.isArray(serializedProduct.images)
+          ? serializedProduct.images[0]
+          : "",
+        price: serializedProduct.price,
+        currency: "ARS",
+        availability: serializedProduct.stock > 0 ? "InStock" : "OutOfStock",
+        condition: "NewCondition",
+        brand: "Rastuci",
+        sku: serializedProduct.id,
+      })
+    : null;
+
   return (
-    <Suspense fallback={<ProductDetailSkeleton />}>
-      <ProductDetailClient productId={id} initialProduct={serializedProduct} />
-    </Suspense>
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <Suspense fallback={<ProductDetailSkeleton />}>
+        <ProductDetailClient productId={id} initialProduct={serializedProduct} />
+      </Suspense>
+    </>
   );
 }

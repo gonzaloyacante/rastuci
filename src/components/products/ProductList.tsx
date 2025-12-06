@@ -153,7 +153,7 @@ export default function ProductList() {
       ["Nombre", "Categoría", "Precio", "Stock", "En Oferta"],
       ...products.map((p: Product) => [
         `"${p.name.replace(/"/g, '""')}"`,
-        `"${p.category?.name || "Sin categoría"}"`,
+        `"${p.categories?.name || "Sin categoría"}"`,
         p.price.toString(),
         p.stock.toString(),
         p.onSale ? "Sí" : "No",

@@ -12,19 +12,19 @@ export async function GET(): Promise<
     // Estadísticas de inventario (ejecutar en paralelo)
     const [totalProducts, inStock, lowStock, outOfStock, priceAgg] =
       await Promise.all([
-        prisma.product.count(),
-        prisma.product.count({ where: { stock: { gt: 0 } } }),
-        prisma.product.count({ where: { stock: { gt: 0, lte: 5 } } }),
-        prisma.product.count({ where: { stock: 0 } }),
+        prisma.products.count(),
+        prisma.products.count({ where: { stock: { gt: 0 } } }),
+        prisma.products.count({ where: { stock: { gt: 0, lte: 5 } } }),
+        prisma.products.count({ where: { stock: 0 } }),
         // Min/Max price
-        prisma.product.aggregate({
+        prisma.products.aggregate({
           _min: { price: true },
           _max: { price: true },
         }),
       ]);
 
     // Sizes and colors aggregation (scan products)
-    const products = await prisma.product.findMany({
+    const products = await prisma.products.findMany({
       select: { sizes: true, colors: true, rating: true, categoryId: true },
     });
 

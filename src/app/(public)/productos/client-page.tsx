@@ -186,6 +186,14 @@ export default function ProductsPageClient({
   const hasActiveFilters = Boolean(debouncedSearch || selectedCategory);
   const sortValue = `${sortBy}-${sortOrder}`;
 
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (debouncedSearch) count++;
+    if (selectedCategory) count++;
+    return count;
+  }, [debouncedSearch, selectedCategory]);
+
   // Filter chips for mobile
   const filterChips = useMemo(() => {
     const chips = [];
@@ -281,46 +289,7 @@ export default function ProductsPageClient({
 
   return (
     <div className="min-h-screen surface">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Mobile Controls */}
-        <div className="mb-6 lg:hidden">
-          <div className="mb-4">
-            <SearchInput
-              value={searchInput}
-              onChange={setSearchInput}
-              onSearch={handleSearch}
-            />
-          </div>
-
-          <div className="flex gap-2 mb-4">
-            <div className="flex-1">
-              <Select
-                options={categoryOptions}
-                value={selectedCategory}
-                onChange={handleCategoryChange}
-                placeholder="Categoría"
-              />
-            </div>
-            <div className="flex-1">
-              <Select
-                options={SORT_OPTIONS}
-                value={sortValue}
-                onChange={handleSortChange}
-                placeholder="Ordenar"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
-            {hasActiveFilters && (
-              <Button onClick={clearFilters} variant="outline" size="sm">
-                Limpiar filtros
-              </Button>
-            )}
-          </div>
-        </div>
-
+      <div className="max-w-7xl mx-auto px-4 py-4 lg:py-8">
         {/* Desktop Layout */}
         <div className="hidden lg:block">
           <div className="flex gap-8 items-start">
@@ -359,15 +328,61 @@ export default function ProductsPageClient({
           </div>
         </div>
 
-        {/* Mobile Filter Chips */}
-        {hasActiveFilters && (
-          <div className="mb-6 lg:hidden">
-            <ActiveFilterChips chips={filterChips} />
-          </div>
-        )}
+        {/* Mobile & Tablet Layout */}
+        <div className="lg:hidden space-y-4">
+          {/* Search Bar */}
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            onSearch={handleSearch}
+          />
 
-        {/* Mobile Products Grid */}
-        <div className="lg:hidden">{renderProducts(true)}</div>
+          {/* Filters Row */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <Select
+                value={selectedCategory}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                options={categoryOptions}
+                placeholder="Categoría"
+                className="w-full"
+              />
+            </div>
+            <div className="flex-1">
+              <Select
+                value={sortValue}
+                onChange={(e) => handleSortChange(e.target.value)}
+                options={SORT_OPTIONS}
+                placeholder="Ordenar"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Active Filters */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <ActiveFilterChips chips={filterChips} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-xs"
+              >
+                Limpiar todo
+              </Button>
+            </div>
+          )}
+
+          {/* Products Count & View Toggle */}
+          <div className="flex justify-between items-center">
+            <ProductsCountLabel isLoading={isLoading} count={totalProducts} />
+            <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
+          </div>
+
+          {/* Products */}
+          {renderProducts(true)}
+        </div>
       </div>
     </div>
   );

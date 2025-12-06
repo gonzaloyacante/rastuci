@@ -14,11 +14,11 @@ type OrderWithItems = {
   trackingNumber: string | null;
   customerAddress: string | null;
   customerPhone: string | null;
-  items: {
+  order_items: {
     id: string;
     quantity: number;
     price: number;
-    product: {
+    products: {
       id: string;
       name: string;
       images: string;
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener pedidos con información optimizada para móvil
     const [orders, totalCount] = await Promise.all([
-      prisma.order.findMany({
+      prisma.orders.findMany({
         where: whereClause,
         select: {
           id: true,
@@ -81,21 +81,21 @@ export async function GET(request: NextRequest) {
           trackingNumber: true,
           customerAddress: true,
           customerPhone: true,
-          items: {
+          order_items: {
             select: {
               id: true,
               quantity: true,
               price: true,
-              product: {
+              products: {
                 select: {
                   id: true,
                   name: true,
                   images: true,
                   price: true,
-                }
-              }
-            }
-          }
+                },
+              },
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc'
@@ -103,13 +103,13 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
       }),
-      prisma.order.count({
+      prisma.orders.count({
         where: whereClause,
       })
     ]);
 
     // Formatear para consumo móvil
-    const mobileOrders = orders.map((order: OrderWithItems) => ({
+    const mobileOrders = orders.map((order) => ({
       id: order.id,
       status: order.status,
       statusLabel: getStatusLabel(order.status),
@@ -120,17 +120,17 @@ export async function GET(request: NextRequest) {
       hasTracking: !!order.trackingNumber,
       shippingAddress: order.customerAddress,
       paymentMethod: order.customerPhone,
-      itemsCount: order.items.length,
-      firstProductImage: order.items[0]?.product?.images || null,
-      items: order.items.map((item) => ({
+      itemsCount: order.order_items.length,
+      firstProductImage: order.order_items[0]?.products?.images || null,
+      items: order.order_items.map((item) => ({
         id: item.id,
         quantity: item.quantity,
         price: item.price,
         product: {
-          id: item.product.id,
-          name: item.product.name,
-          image: item.product.images,
-          price: item.product.price,
+          id: item.products.id,
+          name: item.products.name,
+          image: item.products.images,
+          price: item.products.price,
         }
       }))
     }));

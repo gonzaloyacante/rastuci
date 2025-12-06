@@ -69,7 +69,7 @@ export function Pagination({
     <nav
       role="navigation"
       aria-label="Paginación"
-      className={`flex items-center justify-center space-x-1 ${className}`}
+      className={`flex items-center justify-center gap-1 sm:gap-2 flex-wrap ${className}`}
     >
       {/* Previous button */}
       <Button
@@ -78,7 +78,7 @@ export function Pagination({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
         aria-label="Página anterior"
-        className="px-3 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200 disabled:hover:bg-transparent disabled:hover:border-border"
+        className="px-2 sm:px-3 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200 disabled:hover:bg-transparent disabled:hover:border-border"
       >
         <ChevronLeft className="w-4 h-4" />
       </Button>
@@ -126,7 +126,7 @@ export function Pagination({
             onClick={() => onPageChange(page)}
             aria-label={`Ir a la página ${page}`}
             aria-current={page === currentPage ? "page" : undefined}
-            className={`min-w-10 ${page !== currentPage ? "hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200" : ""}`}
+            className={`min-w-9 sm:min-w-10 text-xs sm:text-sm ${page !== currentPage ? "hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200" : ""}`}
           >
             {page}
           </Button>
@@ -165,7 +165,7 @@ export function Pagination({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
         aria-label="Página siguiente"
-        className="px-3 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200 disabled:hover:bg-transparent disabled:hover:border-border"
+        className="px-2 sm:px-3 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-200 disabled:hover:bg-transparent disabled:hover:border-border"
       >
         <ChevronRight className="w-4 h-4" />
       </Button>
@@ -191,7 +191,7 @@ export function PaginationInfo({
   className,
 }: PaginationInfoProps) {
   return (
-    <div className={`text-sm muted ${className}`}>
+    <div className={`text-xs sm:text-sm muted text-center ${className}`}>
       Mostrando {startItem} a {endItem} de {totalItems} resultados
     </div>
   );

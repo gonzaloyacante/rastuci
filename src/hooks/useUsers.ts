@@ -8,6 +8,10 @@ export interface User {
   role: "ADMIN" | "USER";
   createdAt: string;
   updatedAt: string;
+  lastLoginAt?: string | null;
+  lastLoginIp?: string | null;
+  loginCount?: number;
+  activeSessions?: number;
 }
 
 interface UseUsersParams {

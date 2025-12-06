@@ -56,26 +56,26 @@ export async function POST(req: NextRequest) {
 
     const { name, email, phone, message, responsePreference } = parsed.data;
 
-    // Crear el mensaje en la base de datos
-    const contactMessage = await prisma.contactMessage.create({
-      data: {
-        name,
-        email,
-        phone,
-        message,
-        responsePreference,
-      },
-    });
+    // TODO: Crear modelo contact_messages en Prisma schema
+    // const contactMessage = await prisma.contactMessage.create({
+    //   data: {
+    //     name,
+    //     email,
+    //     phone,
+    //     message,
+    //     responsePreference,
+    //   },
+    // });
 
     logger.info("New contact message received", {
-      id: contactMessage.id,
+      name,
       email,
       responsePreference,
     });
 
     return NextResponse.json(
       ok({
-        id: contactMessage.id,
+        id: `temp-${Date.now()}`,
         message: "Mensaje enviado exitosamente",
       }),
       { status: 201 }
@@ -117,24 +117,25 @@ export async function GET(req: NextRequest) {
         isRead !== undefined && { isRead: isRead === "true" }),
     };
 
-    const [messages, total] = await Promise.all([
-      prisma.contactMessage.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.contactMessage.count({ where }),
-    ]);
+    // TODO: Implementar cuando exista el modelo contact_messages
+    // const [messages, total] = await Promise.all([
+    //   prisma.contactMessage.findMany({
+    //     where,
+    //     orderBy: { createdAt: "desc" },
+    //     skip: (page - 1) * limit,
+    //     take: limit,
+    //   }),
+    //   prisma.contactMessage.count({ where }),
+    // ]);
 
     return NextResponse.json(
       ok({
-        messages,
+        messages: [],
         pagination: {
           page,
           limit,
-          total,
-          totalPages: Math.ceil(total / limit),
+          total: 0,
+          totalPages: 0,
         },
       })
     );

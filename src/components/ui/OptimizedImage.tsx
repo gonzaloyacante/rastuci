@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
-// import { getOptimizedImageUrl } from "@/lib/image-optimization"; // TODO: Implement when needed
 
 const PRODUCT_IMAGE_SIZES = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
 

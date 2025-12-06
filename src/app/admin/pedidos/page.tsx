@@ -18,7 +18,7 @@ import { DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-type StatusFilter = "ALL" | "PENDING" | "PROCESSED" | "DELIVERED";
+type StatusFilter = "ALL" | "PENDING" | "PENDING_PAYMENT" | "PROCESSED" | "DELIVERED";
 
 // Configuración de filtros
 const FILTER_FIELDS = [
@@ -28,9 +28,10 @@ const FILTER_FIELDS = [
     type: "select" as const,
     options: [
       { value: "ALL", label: "Todos los estados" },
-      { value: "PENDING", label: "Pendientes" },
-      { value: "PROCESSED", label: "Procesados" },
-      { value: "DELIVERED", label: "Entregados" },
+      { value: "PENDING", label: "Sin pagar" },
+      { value: "PENDING_PAYMENT", label: "⚠️ Esperando pago de envío" },
+      { value: "PROCESSED", label: "Listo para entregar" },
+      { value: "DELIVERED", label: "Entregado" },
     ],
   },
   {
@@ -61,11 +62,22 @@ const formatCurrency = (value: number) => `$${value.toLocaleString("es-AR")}`;
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    PENDING: "pendiente",
-    PROCESSED: "procesado",
+    PENDING: "sin pagar",
+    PENDING_PAYMENT: "esperando pago de envío",
+    PROCESSED: "listo para entregar",
     DELIVERED: "entregado",
   };
   return labels[status] || status;
+};
+
+  const _getStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    PENDING: "bg-gray-100 text-gray-800",
+    PENDING_PAYMENT: "bg-yellow-100 text-yellow-800 border-2 border-yellow-400",
+    PROCESSED: "bg-green-100 text-green-800",
+    DELIVERED: "bg-blue-100 text-blue-800",
+  };
+  return colors[status] || "bg-gray-100 text-gray-800";
 };
 
 // Transform Order to OrderCardData
@@ -140,31 +152,74 @@ export default function OrdersPage() {
         return;
       }
 
+      // Cabeceras completas con toda la información relevante
+      const headers = [
+        "ID",
+        "Cliente",
+        "Email",
+        "Teléfono",
+        "Dirección",
+        "Total",
+        "Subtotal Productos",
+        "Costo Envío",
+        "Estado",
+        "Estado Pago MP",
+        "Método de Envío",
+        "Tracking",
+        "Fecha Creación",
+        "Productos",
+        "Tallas/Colores"
+      ];
+
       const csvContent = [
-        "ID,Cliente,Teléfono,Dirección,Total,Estado,Fecha,Productos",
+        headers.join(","),
         ...orders.map((order: Order) => {
+          // Calcular subtotal de productos
+          const subtotalProducts = order.items.reduce(
+            (sum, item) => sum + (item.price * item.quantity),
+            0
+          );
+          
+          // Productos con detalle
           const products = order.items
-            .map(
-              (item) =>
-                `${item.quantity}x ${(item.product as { name: string }).name}`
-            )
+            .map((item) => `${item.quantity}x ${item.product.name}`)
             .join("; ");
+          
+          // Tallas y colores
+          const variants = order.items
+            .map((item) => {
+              const parts = [];
+              if (item.size) parts.push(`Talla: ${item.size}`);
+              if (item.color) parts.push(`Color: ${item.color}`);
+              return parts.length > 0 ? parts.join(", ") : "-";
+            })
+            .join("; ");
+
           return [
             order.id,
             order.customerName,
+            order.customerEmail || "No especificado",
             order.customerPhone,
             order.customerAddress || "No especificada",
             order.total,
+            subtotalProducts,
+            order.shippingCost || 0,
             getStatusLabel(order.status),
+            order.mpStatus || "N/A",
+            order.shippingMethod || "No especificado",
+            order.caTrackingNumber || "Sin tracking",
             formatDate(order.createdAt),
             products,
+            variants,
           ]
-            .map((v) => `"${v}"`)
+            .map((v) => `"${String(v).replace(/"/g, '""')}"`) // Escapar comillas dobles
             .join(",");
         }),
       ].join("\n");
 
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      // Agregar BOM para UTF-8 y que Excel lo lea bien
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `pedidos_rastuci_${new Date().toISOString().split("T")[0]}.csv`;
@@ -190,23 +245,25 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader
-        title="Pedidos"
-        subtitle="Gestiona todos los pedidos de la tienda"
-        actions={[
-          {
-            label: "Exportar",
-            onClick: exportToCSV,
-            variant: "outline",
-            icon: <DownloadIcon size={16} />,
-          },
-          {
-            label: "Ver Pendientes",
-            onClick: () => (window.location.href = "/admin/pedidos/pendientes"),
-            variant: "primary",
-          },
-        ]}
-      />
+      <div className="space-y-4">
+        <AdminPageHeader
+          title="Pedidos"
+          subtitle="Gestiona todos los pedidos de la tienda"
+          actions={[
+            {
+              label: "Exportar",
+              onClick: exportToCSV,
+              variant: "outline",
+              icon: <DownloadIcon size={16} />,
+            },
+            {
+              label: "Ver Pendientes",
+              onClick: () => (window.location.href = "/admin/pedidos/pendientes"),
+              variant: "primary",
+            },
+          ]}
+        />
+      </div>
 
       {/* Search and Filters */}
       <div className="space-y-4">
@@ -258,13 +315,14 @@ export default function OrdersPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {orders.map((order) => (
               <OrderCard
                 key={order.id}
                 order={toOrderCardData(order)}
                 formatDate={formatDate}
                 formatCurrency={formatCurrency}
+                onStatusChange={() => setCurrentPage(1)} // Recargar datos
               />
             ))}
           </div>

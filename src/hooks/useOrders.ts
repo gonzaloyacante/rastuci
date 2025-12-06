@@ -1,15 +1,41 @@
 import { useCallback, useRef, useState } from "react";
 
+export interface OrderItem {
+  id: string;
+  quantity: number;
+  price: number;
+  productId: string;
+  size?: string;
+  color?: string;
+  product: {
+    id: string;
+    name: string;
+  };
+}
+
 export interface Order {
   id: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   customerAddress?: string;
   total: number;
   status: string;
   createdAt: string;
   updatedAt: string;
-  items: Array<Record<string, unknown>>;
+  // Campos de MercadoPago
+  mpPaymentId?: string;
+  mpPreferenceId?: string;
+  mpStatus?: string;
+  // Campos de envío
+  shippingMethod?: string;
+  shippingCost?: number;
+  shippingAgency?: string;
+  // Campos de tracking
+  caTrackingNumber?: string;
+  trackingNumber?: string;
+  // Items del pedido
+  items: OrderItem[];
 }
 
 interface UseOrdersParams {

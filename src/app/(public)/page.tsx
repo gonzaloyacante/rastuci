@@ -19,18 +19,18 @@ async function getHomeData() {
   try {
     const [settingsData, rawCategories, rawFeaturedProducts] =
       await Promise.all([
-        prisma.setting.findUnique({ where: { key: "home" } }),
-        prisma.category.findMany({
+        prisma.settings.findUnique({ where: { key: "home" } }),
+        prisma.categories.findMany({
           orderBy: { name: "asc" },
           take: 12,
         }),
-        prisma.product.findMany({
+        prisma.products.findMany({
           where: {
             stock: { gt: 0 },
             onSale: true,
           },
           take: 4,
-          include: { category: true },
+          include: { categories: true },
           orderBy: { updatedAt: "desc" },
         }),
       ]);

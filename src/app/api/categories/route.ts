@@ -60,7 +60,7 @@ export async function GET(request: NextRequest): Promise<
     const offset = (page - 1) * limit;
 
     // Obtener categorías (incluir conteo solo si se solicita)
-    const categoriesWithCount = await prisma.category.findMany({
+    const categoriesWithCount = await prisma.categories.findMany({
       where,
       orderBy: { name: "asc" },
       skip: offset,
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest): Promise<
         : undefined,
     });
 
-    const total = await prisma.category.count({ where });
+    const total = await prisma.categories.count({ where });
 
     type CategoryType = (typeof categoriesWithCount)[0];
     const transformedCategories = categoriesWithCount.map(
@@ -149,7 +149,7 @@ export const POST = withAdminAuth(
       const { name, description } = parsed.data;
 
       // Verificar si ya existe una categoría con ese nombre
-      const existingCategory = await prisma.category.findUnique({
+      const existingCategory = await prisma.categories.findUnique({
         where: { name },
       });
 
@@ -157,10 +157,14 @@ export const POST = withAdminAuth(
         return fail("CONFLICT", "Ya existe una categoría con ese nombre", 409);
       }
 
-      const category = await prisma.category.create({
+      const categoryId = `cat-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      
+      const category = await prisma.categories.create({
         data: {
+          id: categoryId,
           name,
           description,
+          updatedAt: new Date(),
         },
       });
 

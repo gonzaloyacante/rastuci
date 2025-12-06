@@ -65,7 +65,7 @@ export function InventoryManagement() {
           productName: p.name,
           productImage: img,
           sku: p.id,
-          category: p.category?.name ?? "Sin categoría",
+          category: p.categories?.name ?? "Sin categoría",
           currentStock,
           minStock: 5,
           maxStock: Math.max(100, currentStock),

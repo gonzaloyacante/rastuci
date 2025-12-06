@@ -2,7 +2,6 @@
 
 import { logger } from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -221,33 +220,154 @@ export default function ProductForm({
     try {
       setLoading(true);
 
+      // ============================================================================
+      // VALIDACIONES EXHAUSTIVAS ANTES DEL SUBMIT
+      // ============================================================================
+      
+      // 1. Validar nombre
+      if (!data.name || data.name.trim().length < 3) {
+        toast.error("El nombre debe tener al menos 3 caracteres");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Validar precio
+      if (!data.price || data.price <= 0 || isNaN(data.price)) {
+        toast.error("El precio debe ser mayor a 0");
+        setLoading(false);
+        return;
+      }
+
+      // 3. Validar stock
+      if (data.stock === undefined || data.stock === null || data.stock < 0 || !Number.isInteger(data.stock)) {
+        toast.error("El stock debe ser un número entero no negativo");
+        setLoading(false);
+        return;
+      }
+
+      // 4. Validar categoría
+      if (!data.categoryId || data.categoryId.trim() === "") {
+        toast.error("Debes seleccionar una categoría");
+        setLoading(false);
+        return;
+      }
+
+      // 5. Validar imágenes - DEBE tener al menos una imagen
+      if (!productImages || productImages.length === 0) {
+        toast.error("Debes subir al menos una imagen del producto");
+        setLoading(false);
+        return;
+      }
+
+      // 6. Validar que todas las imágenes sean URLs válidas
+      const invalidImages = productImages.filter(img => !img || typeof img !== 'string' || img.trim() === '');
+      if (invalidImages.length > 0) {
+        toast.error("Hay imágenes inválidas. Por favor, vuelve a subirlas.");
+        setLoading(false);
+        return;
+      }
+
+      // 7. Validar dimensiones si están presentes
+      if (data.weight !== null && data.weight !== undefined) {
+        if (!Number.isInteger(data.weight) || data.weight < 1 || data.weight > 30000) {
+          toast.error("El peso debe ser un número entero entre 1 y 30000 gramos");
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (data.height !== null && data.height !== undefined) {
+        if (!Number.isInteger(data.height) || data.height < 1 || data.height > 150) {
+          toast.error("La altura debe ser un número entero entre 1 y 150 cm");
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (data.width !== null && data.width !== undefined) {
+        if (!Number.isInteger(data.width) || data.width < 1 || data.width > 150) {
+          toast.error("El ancho debe ser un número entero entre 1 y 150 cm");
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (data.length !== null && data.length !== undefined) {
+        if (!Number.isInteger(data.length) || data.length < 1 || data.length > 150) {
+          toast.error("El largo debe ser un número entero entre 1 y 150 cm");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 8. Validar descuento
+      if (data.discountPercentage !== null && data.discountPercentage !== undefined) {
+        if (data.discountPercentage < 0 || data.discountPercentage > 100) {
+          toast.error("El descuento debe estar entre 0 y 100%");
+          setLoading(false);
+          return;
+        }
+      }
+
       const salePrice =
         data.discountPercentage && data.discountPercentage > 0
           ? data.price * (1 - data.discountPercentage / 100)
           : null;
 
       const productData = {
-        name: data.name,
-        description: data.description || null,
-        price: data.price,
-        salePrice,
-        stock: data.stock,
-        categoryId: data.categoryId,
+        name: data.name.trim(),
+        description: data.description?.trim() || null,
+        price: Number(data.price),
+        salePrice: salePrice ? Number(salePrice) : null,
+        stock: Number(data.stock),
+        categoryId: data.categoryId.trim(),
         images: productImages,
-        onSale: data.onSale || false,
-        sizes,
-        colors,
-        features,
+        onSale: Boolean(data.onSale),
+        sizes: sizes && sizes.length > 0 ? sizes : undefined,
+        colors: colors && colors.length > 0 ? colors : undefined,
+        features: features && features.length > 0 ? features : undefined,
         weight: data.weight || null,
         height: data.height || null,
         width: data.width || null,
         length: data.length || null,
       };
 
-      if (initialData) {
-        await axios.put(`/api/products/${initialData.id}`, productData);
-      } else {
-        await axios.post("/api/products", productData);
+      // DEBUG: Log completo de lo que se está enviando
+      logger.info("Enviando datos del producto:", { 
+        productData,
+        method: initialData ? "PUT" : "POST",
+        url: initialData ? `/api/products/${initialData.id}` : "/api/products"
+      });
+
+      const url = initialData 
+        ? `/api/products/${initialData.id}` 
+        : "/api/products";
+      const method = initialData ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error("Error response del servidor:", { 
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: { message: errorText } };
+        }
+        
+        const errorMsg = errorData.error?.message || errorData.message || `Error ${response.status}`;
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       router.push("/admin/productos");
@@ -314,38 +434,38 @@ export default function ProductForm({
   return (
     <div className="min-h-screen surface py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-primary to-primary/80 rounded-full mb-4 shadow-lg">
-            <Package className="h-10 w-10 text-white" />
+        {/* Header - responsive */}
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br from-primary to-primary/80 rounded-full mb-3 sm:mb-4 shadow-lg">
+            <Package className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent px-4">
             {title}
           </h1>
-          <p className="muted mt-2 text-lg">
+          <p className="muted mt-2 text-sm sm:text-base lg:text-lg px-4">
             {initialData
               ? `Modifica los datos del producto: ${initialData.name}`
               : "Completa toda la información para crear un producto completo"}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 lg:space-y-8">
           {/* Información Básica */}
           <Card className="shadow-xl border-0 overflow-hidden">
-            <CardHeader className="bg-linear-to-r from-primary to-primary/90 text-white">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <Info className="h-5 w-5" />
+            <CardHeader className="bg-linear-to-r from-primary to-primary/90 text-white p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+                <Info className="h-4 w-4 sm:h-5 sm:w-5" />
                 Información Básica
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8 space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium mb-2"
+                    className="block text-xs sm:text-sm font-medium mb-2"
                   >
-                    <Package className="h-4 w-4 inline mr-2" />
+                    <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
                     Nombre del Producto *
                   </label>
                   <Input
@@ -424,13 +544,13 @@ export default function ProductForm({
 
           {/* Precios y Stock */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-green-600 to-green-700 text-white">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
+            <CardHeader className="bg-linear-to-r from-green-600 to-green-700 text-white p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
                 Precios y Stock
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 lg:p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div>
                   <label
@@ -513,9 +633,9 @@ export default function ProductForm({
                 <div>
                   <label
                     htmlFor="stock"
-                    className="block text-sm font-medium mb-2"
+                    className="block text-xs sm:text-sm font-medium mb-2"
                   >
-                    <Hash className="h-4 w-4 inline mr-2" />
+                    <Hash className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
                     Stock Disponible *
                   </label>
                   <Input
@@ -542,7 +662,7 @@ export default function ProductForm({
                 <div>
                   <label
                     htmlFor="onSale"
-                    className="block text-sm font-medium mb-2"
+                    className="block text-xs sm:text-sm font-medium mb-2"
                   >
                     Estado de Venta
                   </label>
@@ -571,15 +691,15 @@ export default function ProductForm({
 
           {/* Dimensiones para Envío */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-orange-600 to-orange-700 text-white">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <Package className="h-5 w-5" />
+            <CardHeader className="bg-linear-to-r from-orange-600 to-orange-700 text-white p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                 Dimensiones para Envío
                 <HelpTooltip text="Estas medidas son requeridas para calcular el costo de envío con Correo Argentino." />
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CardContent className="p-4 sm:p-6 lg:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {[
                   {
                     id: "weight",
@@ -613,9 +733,9 @@ export default function ProductForm({
                   <div key={id}>
                     <label
                       htmlFor={id}
-                      className="block text-sm font-medium mb-2"
+                      className="block text-xs sm:text-sm font-medium mb-2"
                     >
-                      <Ruler className="h-4 w-4 inline mr-2" />
+                      <Ruler className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
                       {label}
                     </label>
                     <Input
@@ -651,32 +771,32 @@ export default function ProductForm({
 
           {/* Variantes del Producto */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-purple-600 to-purple-700 text-white">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <Palette className="h-5 w-5" />
+            <CardHeader className="bg-linear-to-r from-purple-600 to-purple-700 text-white p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+                <Palette className="h-4 w-4 sm:h-5 sm:w-5" />
                 Variantes del Producto
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8 space-y-8">
+            <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
               <div>
-                <label className="block text-sm font-medium mb-3">
-                  <Ruler className="h-4 w-4 inline mr-2" />
+                <label className="block text-xs sm:text-sm font-medium mb-3">
+                  <Ruler className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
                   Talles Disponibles
                 </label>
                 <SizeManager sizes={sizes} onSizesChange={setSizes} />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-3">
-                  <Palette className="h-4 w-4 inline mr-2" />
+                <label className="block text-xs sm:text-sm font-medium mb-3">
+                  <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
                   Colores Disponibles
                 </label>
                 <ColorPicker colors={colors} onColorsChange={setColors} />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-3">
-                  <List className="h-4 w-4 inline mr-2" />
+                <label className="block text-xs sm:text-sm font-medium mb-3">
+                  <List className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
                   Características Especiales
                 </label>
                 <FeatureManager
@@ -689,13 +809,13 @@ export default function ProductForm({
 
           {/* Imágenes del Producto */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-blue-600 to-blue-700 text-white">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <Upload className="h-5 w-5" />
+            <CardHeader className="bg-linear-to-r from-blue-600 to-blue-700 text-white p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+                <Upload className="h-4 w-4 sm:h-5 sm:w-5" />
                 Galería de Imágenes
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 lg:p-8">
               <ImageUploadZone
                 existingImages={productImages}
                 onImagesChange={setProductImages}
@@ -707,13 +827,13 @@ export default function ProductForm({
 
           {/* Vista Previa */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <Eye className="h-5 w-5" />
+            <CardHeader className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+                <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                 Vista Previa del Producto
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 lg:p-8">
               <ProductPreview
                 images={productImages}
                 name={watch("name")}
@@ -739,7 +859,7 @@ export default function ProductForm({
               type="submit"
               disabled={loading}
               variant="hero"
-              className="flex-1 h-14 text-lg font-semibold shadow-lg"
+              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold shadow-lg"
             >
               {loading ? (
                 <>
@@ -757,7 +877,7 @@ export default function ProductForm({
               type="button"
               variant="outline"
               onClick={() => router.push("/admin/productos")}
-              className="flex-1 h-14 text-lg font-semibold border-2"
+              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold border-2"
               disabled={loading}
             >
               <ArrowLeft className="h-5 w-5 mr-3" />
@@ -803,8 +923,8 @@ function ProductPreview({
   colors,
 }: ProductPreviewProps) {
   return (
-    <div className="bg-surface rounded-lg p-6 border">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="bg-surface rounded-lg p-4 sm:p-6 border">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         {/* Galería de Imágenes */}
         <div className="space-y-4">
           {images.length > 0 ? (
@@ -848,10 +968,10 @@ function ProductPreview({
         {/* Información del Producto */}
         <div className="space-y-5">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+            <p className="text-xs sm:text-sm uppercase tracking-wide text-muted-foreground mb-2">
               Categoría: {category || "No seleccionada"}
             </p>
-            <h3 className="text-3xl font-bold text-primary">
+            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">
               {name || "Nombre del producto"}
             </h3>
           </div>
@@ -863,14 +983,14 @@ function ProductPreview({
             {discountPercentage && discountPercentage > 0 && salePrice ? (
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl font-bold text-success">
+                  <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-success">
                     {formatPriceARS(Number(salePrice))}
                   </span>
-                  <span className="bg-error text-white px-2.5 py-1 rounded-lg text-sm font-bold">
+                  <span className="bg-error text-white px-2.5 py-1 rounded-lg text-xs sm:text-sm font-bold">
                     -{discountPercentage}% OFF
                   </span>
                 </div>
-                <span className="text-lg text-muted-foreground line-through">
+                <span className="text-base sm:text-lg text-muted-foreground line-through">
                   {formatPriceARS(price)}
                 </span>
                 <p className="text-sm text-success font-medium">
@@ -878,7 +998,7 @@ function ProductPreview({
                 </p>
               </div>
             ) : (
-              <span className="text-3xl font-bold text-primary">
+              <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">
                 {formatPriceARS(price)}
               </span>
             )}
