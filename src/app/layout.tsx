@@ -1,7 +1,6 @@
 import AppProviders from "@/components/providers/AppProviders";
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
-// @ts-expect-error: import de CSS global como efecto secundario (declaración de módulo no encontrada)
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });

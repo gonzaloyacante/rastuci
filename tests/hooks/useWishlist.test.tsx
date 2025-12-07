@@ -41,7 +41,7 @@ const mockProduct: Omit<Product, "createdAt" | "updatedAt"> = {
   price: 100,
   images: ["/test-image.jpg"],
   categoryId: "cat-1",
-  category: {
+  categories: {
     id: "cat-1",
     name: "Test Category",
     description: "Test",

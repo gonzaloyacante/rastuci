@@ -108,17 +108,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Generate JSON-LD structured data
   const jsonLd = serializedProduct
     ? generateProductJsonLd({
-        name: serializedProduct.name,
+      id: serializedProduct.id,
+      name: serializedProduct.name,
         description: serializedProduct.description || "",
         image: Array.isArray(serializedProduct.images)
           ? serializedProduct.images[0]
           : "",
         price: serializedProduct.price,
         currency: "ARS",
-        availability: serializedProduct.stock > 0 ? "InStock" : "OutOfStock",
-        condition: "NewCondition",
+        availability: serializedProduct.stock > 0 ? "instock" : "outofstock",
         brand: "Rastuci",
-        sku: serializedProduct.id,
       })
     : null;
 

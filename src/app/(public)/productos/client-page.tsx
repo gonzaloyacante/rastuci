@@ -342,7 +342,7 @@ export default function ProductsPageClient({
             <div className="flex-1">
               <Select
                 value={selectedCategory}
-                onChange={(e) => handleCategoryChange(e.target.value)}
+                onChange={(value) => handleCategoryChange(value)}
                 options={categoryOptions}
                 placeholder="Categoría"
                 className="w-full"
@@ -351,7 +351,7 @@ export default function ProductsPageClient({
             <div className="flex-1">
               <Select
                 value={sortValue}
-                onChange={(e) => handleSortChange(e.target.value)}
+                onChange={(value) => handleSortChange(value)}
                 options={SORT_OPTIONS}
                 placeholder="Ordenar"
                 className="w-full"

@@ -21,6 +21,8 @@ interface CartItem {
     price: number;
     images: string | string[];
     stock: number;
+    onSale?: boolean;
+    salePrice?: number | null;
   };
   quantity: number;
   size: string;
@@ -89,9 +91,10 @@ const CartItemComponent = ({
   }, [item.product.images]);
 
   const isLowStock = item.product.stock < 5;
-  // Usar salePrice si el producto está en oferta, sino usar price normal
-  const effectivePrice = item.product.onSale && item.product.salePrice 
-    ? item.product.salePrice 
+  // Usar salePrice si el producto está en oferta y tiene precio de oferta válido
+  const hasSale = !!(item.product.onSale && typeof item.product.salePrice === "number");
+  const effectivePrice = hasSale && (item.product.salePrice as number) > 0
+    ? (item.product.salePrice as number)
     : item.product.price;
   const itemTotal = effectivePrice * (pendingQuantity || item.quantity);
 

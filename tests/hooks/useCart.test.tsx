@@ -10,7 +10,7 @@ const mockProduct: Product = {
   price: 100,
   images: ["/test-image.jpg"],
   categoryId: "cat1",
-  category: {
+  categories: {
     id: "cat1",
     name: "Categoría Test",
     description: "Descripción categoría",
