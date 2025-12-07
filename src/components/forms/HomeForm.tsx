@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { HomeSettings, HomeSettingsSchema, defaultHomeSettings } from "@/lib/validation/home";
 import { Button } from "@/components/ui/Button";
+import { IconPicker } from "@/components/ui/IconPicker";
+import * as Icons from "lucide-react";
 
 type Props = {
   initial?: HomeSettings;
@@ -10,7 +12,7 @@ type Props = {
 
 interface BenefitItem {
   id: string;
-  icon: "truck" | "credit" | "shield";
+  icon: string;
   title: string;
   description: string;
 }
@@ -19,6 +21,9 @@ export default function HomeForm({ initial }: Props) {
   const [values, setValues] = useState<HomeSettings>(initial ?? defaultHomeSettings);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  
+  // Estado para el modal de selección de iconos
+  const [iconPickerOpen, setIconPickerOpen] = useState<string | null>(null);
 
   // Estado para manejar beneficios con IDs únicos
   const [benefitItems, setBenefitItems] = useState<BenefitItem[]>([]);
@@ -61,17 +66,14 @@ export default function HomeForm({ initial }: Props) {
 
   const updateBenefitItem = (id: string, key: "icon" | "title" | "description", value: string) => {
     setBenefitItems(items => items.map(item => 
-      item.id === id ? { 
-        ...item, 
-        [key]: key === "icon" ? value as "truck" | "credit" | "shield" : value 
-      } : item
+      item.id === id ? { ...item, [key]: value } : item
     ));
   };
 
   const addBenefitItem = () => {
     setBenefitItems(items => [...items, {
       id: `benefit-new-${Date.now()}-${Math.random()}`,
-      icon: "truck",
+      icon: "Truck",
       title: "Nuevo",
       description: "Descripción"
     }]);
@@ -170,48 +172,63 @@ export default function HomeForm({ initial }: Props) {
       <section>
         <h3 className="text-lg font-semibold mb-3">Beneficios</h3>
         <div className="space-y-4">
-          {benefitItems.map((benefitItem) => (
-            <div key={benefitItem.id} className="grid md:grid-cols-12 gap-3 items-end">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Ícono</label>
-                <select
-                  className="w-full border rounded-md px-3 py-2"
-                  value={benefitItem.icon}
-                  onChange={(e) => updateBenefitItem(benefitItem.id, "icon", e.target.value)}
-                >
-                  <option value="truck">Camión</option>
-                  <option value="credit">Tarjeta</option>
-                  <option value="shield">Escudo</option>
-                </select>
+          {benefitItems.map((benefitItem) => {
+            const IconComponent = (Icons as any)[benefitItem.icon];
+            
+            return (
+              <div key={benefitItem.id} className="grid md:grid-cols-12 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Ícono</label>
+                  <button
+                    type="button"
+                    onClick={() => setIconPickerOpen(benefitItem.id)}
+                    className="w-full border rounded-md px-3 py-2 flex items-center justify-center gap-2 hover:bg-accent transition-colors"
+                  >
+                    {IconComponent && <IconComponent size={20} />}
+                    <span className="text-sm truncate">{benefitItem.icon}</span>
+                  </button>
+                </div>
+                <div className="md:col-span-4">
+                  <label className="block text-sm font-medium mb-1">Título</label>
+                  <input
+                    className="w-full border rounded-md px-3 py-2"
+                    value={benefitItem.title}
+                    onChange={(e) => updateBenefitItem(benefitItem.id, "title", e.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-5">
+                  <label className="block text-sm font-medium mb-1">Descripción</label>
+                  <input
+                    className="w-full border rounded-md px-3 py-2"
+                    value={benefitItem.description}
+                    onChange={(e) => updateBenefitItem(benefitItem.id, "description", e.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <Button type="button" variant="destructive" onClick={() => removeBenefitItem(benefitItem.id)}>
+                    Quitar
+                  </Button>
+                </div>
               </div>
-              <div className="md:col-span-4">
-                <label className="block text-sm font-medium mb-1">Título</label>
-                <input
-                  className="w-full border rounded-md px-3 py-2"
-                  value={benefitItem.title}
-                  onChange={(e) => updateBenefitItem(benefitItem.id, "title", e.target.value)}
-                />
-              </div>
-              <div className="md:col-span-5">
-                <label className="block text-sm font-medium mb-1">Descripción</label>
-                <input
-                  className="w-full border rounded-md px-3 py-2"
-                  value={benefitItem.description}
-                  onChange={(e) => updateBenefitItem(benefitItem.id, "description", e.target.value)}
-                />
-              </div>
-              <div className="md:col-span-1">
-                <Button type="button" variant="destructive" onClick={() => removeBenefitItem(benefitItem.id)}>
-                  Quitar
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="mt-3">
           <Button type="button" onClick={addBenefitItem}>Agregar beneficio</Button>
         </div>
       </section>
+      
+      {/* Icon Picker Modal */}
+      {iconPickerOpen && (
+        <IconPicker
+          value={benefitItems.find(b => b.id === iconPickerOpen)?.icon}
+          onChange={(iconName) => {
+            updateBenefitItem(iconPickerOpen, "icon", iconName);
+            setIconPickerOpen(null);
+          }}
+          onClose={() => setIconPickerOpen(null)}
+        />
+      )}
 
       {message && <p className="text-sm muted">{message}</p>}
       <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar"}</Button>

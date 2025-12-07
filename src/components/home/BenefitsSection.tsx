@@ -1,4 +1,4 @@
-import { Truck, CreditCard, ShieldCheck } from "lucide-react";
+import * as Icons from "lucide-react";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
 
 interface BenefitsSectionProps {
@@ -16,11 +16,7 @@ export function BenefitsSection({ home }: BenefitsSectionProps) {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           {benefits.map((benefit, idx) => {
-            const IconComponent = benefit.icon === "truck" 
-              ? Truck 
-              : benefit.icon === "credit" 
-                ? CreditCard 
-                : ShieldCheck;
+            const IconComponent = (Icons as any)[benefit.icon] || Icons.Truck;
 
             return (
               <div className="flex flex-col items-center" key={idx}>

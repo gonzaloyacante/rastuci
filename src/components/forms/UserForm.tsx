@@ -47,7 +47,7 @@ export const UserForm: React.FC<UserFormProps> = ({
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     email: "",
-    isAdmin: false,
+    isAdmin: true, // Todos los usuarios del panel admin son administradores
     password: "",
     confirmPassword: "",
   });
@@ -61,7 +61,7 @@ export const UserForm: React.FC<UserFormProps> = ({
       setFormData({
         name: user.name || "",
         email: user.email || "",
-        isAdmin: user.isAdmin || false,
+        isAdmin: true, // Todos son administradores
         password: "",
         confirmPassword: "",
       });
@@ -79,10 +79,6 @@ export const UserForm: React.FC<UserFormProps> = ({
       newErrors.email = "El email es requerido";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "El email no es válido";
-    }
-
-    if (!formData.isAdmin && formData.isAdmin !== false) {
-      newErrors.isAdmin = "Debe seleccionar un rol";
     }
 
     if (!isEdit && !formData.password) {
@@ -117,11 +113,6 @@ export const UserForm: React.FC<UserFormProps> = ({
       setErrors((prev: UserFormErrors) => ({ ...prev, [field]: undefined }));
     }
   };
-
-  const roleOptions = [
-    { value: "false", label: "Usuario" },
-    { value: "true", label: "Administrador" },
-  ];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -161,25 +152,6 @@ export const UserForm: React.FC<UserFormProps> = ({
             <p className="mt-1 text-xs text-content-secondary">
               El email no se puede modificar en modo edición
             </p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="isAdmin"
-            className="block text-sm font-medium text-content-primary mb-2">
-            Rol *
-          </label>
-          <Select
-            id="isAdmin"
-            value={formData.isAdmin.toString()}
-            onChange={(value) => handleChange("isAdmin", value === "true")}
-            options={roleOptions}
-            error={!!errors.isAdmin}
-            disabled={loading}
-          />
-          {errors.isAdmin && (
-            <p className="mt-1 text-sm text-error">{errors.isAdmin}</p>
           )}
         </div>
 

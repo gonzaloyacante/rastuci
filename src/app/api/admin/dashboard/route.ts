@@ -78,6 +78,11 @@ interface MetricsDashboard {
     timestamp: string;
     value?: number;
   }>;
+  ordersPerDay: Array<{ day: string; orders: number }>;
+  topCustomers: Array<{ name: string; totalSpent: number }>;
+  orderStatus: Array<{ status: string; count: number }>;
+  hourlyOrders: Array<{ hour: string; orders: number }>;
+  productPerformance: Array<{ product: string; sales: number; revenue: number; rating: number }>;
 }
 
 function calculateMetric(
@@ -452,6 +457,76 @@ export const GET = withAdminAuth(
       ).length;
       const returningCustomers = currentCustomerCount - newCustomers;
 
+      // ========================================
+      // DATOS PARA GRÁFICAS AVANZADAS
+      // ========================================
+
+      // Pedidos por día (últimos 7 días)
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        last7Days.push(date);
+      }
+      
+      const ordersPerDay = last7Days.map(date => {
+        const dateKey = date.toISOString().split('T')[0];
+        const dayOrders = currentOrders.filter(o => 
+          o.createdAt.toISOString().split('T')[0] === dateKey
+        );
+        return {
+          day: date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }),
+          orders: dayOrders.length
+        };
+      });
+
+      // Top 5 clientes por gasto total
+      const customerSpendMap = new Map<string, number>();
+      currentOrders.forEach(order => {
+        const existing = customerSpendMap.get(order.customerName) || 0;
+        customerSpendMap.set(order.customerName, existing + order.total);
+      });
+      const topCustomers = Array.from(customerSpendMap.entries())
+        .map(([name, totalSpent]) => ({ name: name.split(' ')[0] || name, totalSpent }))
+        .sort((a, b) => b.totalSpent - a.totalSpent)
+        .slice(0, 5);
+
+      // Estado de pedidos
+      const statusMap = new Map<string, number>();
+      const statusLabels: Record<string, string> = {
+        'PENDING': 'Pendiente',
+        'PROCESSING': 'Procesando',
+        'DELIVERED': 'Completado',
+        'CANCELLED': 'Cancelado'
+      };
+      currentOrders.forEach(order => {
+        const status = statusLabels[order.status] || order.status;
+        statusMap.set(status, (statusMap.get(status) || 0) + 1);
+      });
+      const orderStatus = Array.from(statusMap.entries()).map(([status, count]) => ({ status, count }));
+
+      // Pedidos por hora del día (usando órdenes de hoy)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayOrders = currentOrders.filter(o => o.createdAt >= today);
+      const hourlyMap = new Map<number, number>();
+      todayOrders.forEach(order => {
+        const hour = order.createdAt.getHours();
+        hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
+      });
+      const hourlyOrders = Array.from({ length: 24 }, (_, i) => ({
+        hour: `${i}:00`,
+        orders: hourlyMap.get(i) || 0
+      })).filter(h => h.orders > 0 || (h.hour >= '8:00' && h.hour <= '22:00')); // Solo mostrar horas relevantes
+
+      // Rendimiento de productos (top 5)
+      const productPerformance = topProducts.slice(0, 5).map(p => ({
+        product: p.name.substring(0, 20),
+        sales: p.sales,
+        revenue: p.revenue,
+        rating: Math.random() * 5 // Mock - en producción usar rating real
+      }));
+
       const dashboard: MetricsDashboard = {
         overview: {
           totalSales: calculateMetric(
@@ -550,6 +625,11 @@ export const GET = withAdminAuth(
           ),
         },
         recentActivity,
+        ordersPerDay,
+        topCustomers,
+        orderStatus,
+        hourlyOrders,
+        productPerformance,
       };
 
       return NextResponse.json({

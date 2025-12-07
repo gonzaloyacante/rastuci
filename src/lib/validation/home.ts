@@ -14,7 +14,7 @@ export const HomeSettingsSchema = z.object({
   benefits: z
     .array(
       z.object({
-        icon: z.enum(["truck", "credit", "shield"]).default("truck"),
+        icon: z.string().min(1).max(50).default("Truck"),
         title: z.string().min(1).max(80),
         description: z.string().min(1).max(160),
       })
@@ -54,17 +54,17 @@ export const defaultHomeSettings: HomeSettings = {
     "Descubrí los favoritos de esta semana con descuentos exclusivos.",
   benefits: [
     {
-      icon: "truck",
+      icon: "Truck",
       title: "Envíos a todo el país",
       description: "Recibí tu compra donde quieras.",
     },
     {
-      icon: "credit",
+      icon: "CreditCard",
       title: "3 Cuotas sin interés",
       description: "Con todas las tarjetas de crédito.",
     },
     {
-      icon: "shield",
+      icon: "Shield",
       title: "Compra Segura",
       description: "Tus datos siempre protegidos.",
     },

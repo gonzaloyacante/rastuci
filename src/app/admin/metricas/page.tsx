@@ -5,6 +5,7 @@ import { MetricsSkeleton } from "@/components/admin/skeletons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import AdvancedCharts from "@/components/admin/dashboard/AdvancedCharts";
 import React, { useCallback, useEffect, useState } from "react";
 
 // ============================================================================
@@ -59,6 +60,11 @@ interface MetricsDashboard {
     timestamp: string;
     value?: number;
   }>;
+  ordersPerDay?: Array<{ day: string; orders: number }>;
+  topCustomers?: Array<{ name: string; totalSpent: number }>;
+  orderStatus?: Array<{ status: string; count: number }>;
+  hourlyOrders?: Array<{ hour: string; orders: number }>;
+  productPerformance?: Array<{ product: string; sales: number; revenue: number; rating: number }>;
 }
 
 type Period = "week" | "month" | "quarter" | "year";
@@ -470,6 +476,19 @@ export default function MetricasPage() {
       </div>
 
       <RecentActivity activities={dashboard.recentActivity} />
+
+      {/* Gráficas Avanzadas */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-6">Análisis Detallado</h2>
+        <AdvancedCharts
+          ordersPerDay={dashboard.ordersPerDay}
+          topCustomers={dashboard.topCustomers}
+          orderStatus={dashboard.orderStatus}
+          hourlyOrders={dashboard.hourlyOrders}
+          productPerformance={dashboard.productPerformance}
+          loading={loading}
+        />
+      </div>
 
       {/* Footer */}
       <div className="text-center text-xs text-content-tertiary py-4">

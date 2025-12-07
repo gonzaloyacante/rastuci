@@ -36,11 +36,11 @@ export const ContactSettingsSchema = z.object({
     .min(0)
     .max(20),
   social: z.object({
-    instagram: z.string().url().optional().or(z.literal("")),
-    facebook: z.string().url().optional().or(z.literal("")),
-    whatsapp: z.string().url().optional().or(z.literal("")),
-    tiktok: z.string().url().optional().or(z.literal("")),
-    youtube: z.string().url().optional().or(z.literal("")),
+    instagram: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
+    facebook: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
+    whatsapp: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
+    tiktok: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
+    youtube: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
   }),
 });
 
@@ -76,10 +76,10 @@ export const defaultContactSettings: ContactSettings = {
   },
   faqs: [], // FAQs now come from API
   social: {
-    instagram: "",
-    facebook: "",
-    whatsapp: "",
-    tiktok: "",
-    youtube: "",
+    instagram: { username: "", url: "" },
+    facebook: { username: "", url: "" },
+    whatsapp: { username: "", url: "" },
+    tiktok: { username: "", url: "" },
+    youtube: { username: "", url: "" },
   },
 };

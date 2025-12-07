@@ -53,7 +53,7 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
   <div>
     <h2 className="text-2xl mb-6 font-montserrat">Información de Contacto</h2>
 
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
       <Card className="surface border border-theme rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200">
         <CardContent className="p-6">
           <div className="flex items-start space-x-4">
@@ -444,71 +444,41 @@ const FaqSection = () => {
 };
 
 const SocialLinks = ({ contact }: { contact: ContactSettings }) => {
-  const hasSocialLinks =
-    contact.social.instagram ||
-    contact.social.facebook ||
-    contact.social.whatsapp ||
-    contact.social.tiktok ||
-    contact.social.youtube;
+  const socialNetworks = [
+    { key: "instagram", icon: "📷", label: "Instagram" },
+    { key: "facebook", icon: "👥", label: "Facebook" },
+    { key: "whatsapp", icon: "💬", label: "WhatsApp" },
+    { key: "tiktok", icon: "🎵", label: "TikTok" },
+    { key: "youtube", icon: "▶️", label: "YouTube" },
+  ] as const;
 
-  if (!hasSocialLinks) {
+  const activeSocial = socialNetworks.filter(
+    (network) => contact.social[network.key]?.url && contact.social[network.key]?.username
+  );
+
+  if (activeSocial.length === 0) {
     return null;
   }
 
   return (
     <div className="mt-12 text-center">
       <h3 className="text-xl font-semibold mb-4 font-montserrat">Seguinos</h3>
-      <div className="flex items-center justify-center gap-4 text-sm muted">
-        {contact.social.instagram && (
+      <div className="flex items-center justify-center flex-wrap gap-4">
+        {activeSocial.map((network) => (
           <a
-            className="underline hover:text-primary transition-colors duration-200"
-            href={contact.social.instagram}
+            key={network.key}
+            className="flex items-center gap-2 px-4 py-2 surface border border-theme rounded-lg hover:border-primary hover:bg-primary/10 transition-all duration-200"
+            href={contact.social[network.key]?.url}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Instagram
+            <span className="text-xl">{network.icon}</span>
+            <div className="text-left">
+              <div className="text-xs text-muted">{network.label}</div>
+              <div className="text-sm font-medium">@{contact.social[network.key]?.username}</div>
+            </div>
           </a>
-        )}
-        {contact.social.facebook && (
-          <a
-            className="underline hover:text-primary transition-colors duration-200"
-            href={contact.social.facebook}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Facebook
-          </a>
-        )}
-        {contact.social.whatsapp && (
-          <a
-            className="underline hover:text-primary transition-colors duration-200"
-            href={contact.social.whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            WhatsApp
-          </a>
-        )}
-        {contact.social.tiktok && (
-          <a
-            className="underline hover:text-primary transition-colors duration-200"
-            href={contact.social.tiktok}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            TikTok
-          </a>
-        )}
-        {contact.social.youtube && (
-          <a
-            className="underline hover:text-primary transition-colors duration-200"
-            href={contact.social.youtube}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            YouTube
-          </a>
-        )}
+        ))}
       </div>
     </div>
   );

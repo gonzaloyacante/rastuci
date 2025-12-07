@@ -315,7 +315,7 @@ export default function ProductDetailClient({
           <div className="space-y-6">
             {/* Categoría */}
             <p className="text-sm muted uppercase tracking-wide">
-              {product.categories?.name}
+              {product.category?.name}
             </p>
 
             {/* Nombre */}
@@ -492,7 +492,7 @@ export default function ProductDetailClient({
         {/* Productos relacionados */}
         <Suspense fallback={<RelatedProductsSkeleton />}>
           <RelatedProducts
-            categoryId={product.categories?.id}
+            categoryId={product.category?.id}
             currentProductId={productId}
           />
         </Suspense>

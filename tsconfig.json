@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "plugins": [
       {
         "name": "next"
@@ -62,7 +62,7 @@
     "prisma/seed.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next", "dist", "build", "coverage", "**/*.config.js", "**/*.config.ts"],
+  "exclude": ["node_modules", ".next", "dist", "build", "coverage", "backup", "**/*.config.js", "**/*.config.ts"],
   "ts-node": {
     "esm": true,
     "compilerOptions": {

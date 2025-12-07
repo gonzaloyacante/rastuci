@@ -16,12 +16,6 @@ interface PhoneItem {
   value: string;
 }
 
-interface FaqItem {
-  id: string;
-  question: string;
-  answer: string;
-}
-
 export default function ContactForm({ initial }: Props) {
   const [values, setValues] = useState<ContactSettings>(initial ?? defaultContactSettings);
   const [saving, setSaving] = useState(false);
@@ -30,7 +24,6 @@ export default function ContactForm({ initial }: Props) {
   // Estados para manejar arrays con IDs únicos
   const [emailItems, setEmailItems] = useState<EmailItem[]>([]);
   const [phoneItems, setPhoneItems] = useState<PhoneItem[]>([]);
-  const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
 
   useEffect(() => { 
     if (initial) {
@@ -44,11 +37,6 @@ export default function ContactForm({ initial }: Props) {
         id: `phone-${Date.now()}-${idx}-${Math.random()}`,
         value: phone
       })));
-      setFaqItems(initial.faqs.map((faq, idx) => ({
-        id: `faq-${Date.now()}-${idx}-${Math.random()}`,
-        question: faq.question,
-        answer: faq.answer
-      })));
     } else {
       // Inicializar con arrays vacíos o por defecto
       setEmailItems(defaultContactSettings.emails.map((email, idx) => ({
@@ -59,11 +47,6 @@ export default function ContactForm({ initial }: Props) {
         id: `phone-default-${idx}-${Math.random()}`,
         value: phone
       })));
-      setFaqItems(defaultContactSettings.faqs.map((faq, idx) => ({
-        id: `faq-default-${idx}-${Math.random()}`,
-        question: faq.question,
-        answer: faq.answer
-      })));
     }
   }, [initial]);
 
@@ -72,10 +55,9 @@ export default function ContactForm({ initial }: Props) {
     setValues(v => ({
       ...v,
       emails: emailItems.map(item => item.value),
-      phones: phoneItems.map(item => item.value),
-      faqs: faqItems.map(item => ({ question: item.question, answer: item.answer }))
+      phones: phoneItems.map(item => item.value)
     }));
-  }, [emailItems, phoneItems, faqItems]);
+  }, [emailItems, phoneItems]);
 
   const update = <K extends keyof ContactSettings>(key: K, val: ContactSettings[K]) =>
     setValues((v) => ({ ...v, [key]: val }));
@@ -112,24 +94,6 @@ export default function ContactForm({ initial }: Props) {
 
   const removePhoneItem = (id: string) => {
     setPhoneItems(items => items.filter(item => item.id !== id));
-  };
-
-  const updateFaqItem = (id: string, field: "question" | "answer", value: string) => {
-    setFaqItems(items => items.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
-  const addFaqItem = () => {
-    setFaqItems(items => [...items, {
-      id: `faq-new-${Date.now()}-${Math.random()}`,
-      question: "",
-      answer: ""
-    }]);
-  };
-
-  const removeFaqItem = (id: string) => {
-    setFaqItems(items => items.filter(item => item.id !== id));
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -221,35 +185,36 @@ export default function ContactForm({ initial }: Props) {
       </section>
 
       <section>
-        <h3 className="font-semibold mb-2">Preguntas Frecuentes</h3>
+        <h3 className="font-semibold mb-3">Redes Sociales</h3>
         <div className="space-y-4">
-          {faqItems.map((faqItem) => (
-            <div key={faqItem.id} className="grid md:grid-cols-12 gap-3 items-end">
-              <div className="md:col-span-5">
-                <input className="w-full border rounded-md px-3 py-2" placeholder="Pregunta" value={faqItem.question} onChange={(e) => updateFaqItem(faqItem.id, "question", e.target.value)} />
+          {(["instagram", "facebook", "whatsapp", "tiktok", "youtube"] as const).map(network => (
+            <div key={network} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 border border-muted rounded-lg">
+              <div>
+                <label className="block text-xs font-medium mb-1 capitalize">{network} - Usuario</label>
+                <input 
+                  className="w-full border rounded-md px-3 py-2" 
+                  placeholder={`@usuario`}
+                  value={values.social[network]?.username ?? ""} 
+                  onChange={(e) => update("social", { 
+                    ...values.social, 
+                    [network]: { ...values.social[network], username: e.target.value }
+                  })} 
+                />
               </div>
-              <div className="md:col-span-6">
-                <input className="w-full border rounded-md px-3 py-2" placeholder="Respuesta" value={faqItem.answer} onChange={(e) => updateFaqItem(faqItem.id, "answer", e.target.value)} />
-              </div>
-              <div className="md:col-span-1">
-                <Button type="button" variant="destructive" onClick={() => removeFaqItem(faqItem.id)}>Quitar</Button>
+              <div>
+                <label className="block text-xs font-medium mb-1 capitalize">{network} - URL</label>
+                <input 
+                  className="w-full border rounded-md px-3 py-2" 
+                  placeholder={`https://${network}.com/...`}
+                  value={values.social[network]?.url ?? ""} 
+                  onChange={(e) => update("social", { 
+                    ...values.social, 
+                    [network]: { ...values.social[network], url: e.target.value }
+                  })} 
+                />
               </div>
             </div>
           ))}
-        </div>
-        <div className="mt-3"><Button type="button" onClick={addFaqItem}>Agregar FAQ</Button></div>
-      </section>
-
-      <section className="grid md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-semibold mb-2">Redes sociales</h3>
-          <div className="space-y-2">
-            <input className="w-full border rounded-md px-3 py-2" placeholder="Instagram URL" value={values.social.instagram ?? ""} onChange={(e) => update("social", { ...values.social, instagram: e.target.value })} />
-            <input className="w-full border rounded-md px-3 py-2" placeholder="Facebook URL" value={values.social.facebook ?? ""} onChange={(e) => update("social", { ...values.social, facebook: e.target.value })} />
-            <input className="w-full border rounded-md px-3 py-2" placeholder="WhatsApp URL" value={values.social.whatsapp ?? ""} onChange={(e) => update("social", { ...values.social, whatsapp: e.target.value })} />
-            <input className="w-full border rounded-md px-3 py-2" placeholder="TikTok URL" value={values.social.tiktok ?? ""} onChange={(e) => update("social", { ...values.social, tiktok: e.target.value })} />
-            <input className="w-full border rounded-md px-3 py-2" placeholder="YouTube URL" value={values.social.youtube ?? ""} onChange={(e) => update("social", { ...values.social, youtube: e.target.value })} />
-          </div>
         </div>
       </section>
 

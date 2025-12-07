@@ -68,18 +68,7 @@ interface ChatSession {
   unreadCount: number;
 }
 
-interface FAQItem {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-  isActive: boolean;
-  viewCount: number;
-  helpfulVotes: number;
-  notHelpfulVotes: number;
-}
-
-type TabType = "tickets" | "chat" | "faq";
+type TabType = "tickets" | "chat";
 
 // ============================================================================
 // Status Badges
@@ -350,65 +339,12 @@ function ChatSessions({ sessions }: ChatSessionsProps) {
 }
 
 // ============================================================================
-// FAQ List Component
-// ============================================================================
-
-interface FAQListProps {
-  faqs: FAQItem[];
-}
-
-function FAQList({ faqs }: FAQListProps) {
-  if (faqs.length === 0) {
-    return (
-      <EmptyState
-        icon={<HelpCircle size={48} />}
-        title="No hay preguntas frecuentes"
-        description="Agrega FAQs para ayudar a tus clientes"
-        action={{ label: "Agregar FAQ", onClick: () => {} }}
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {faqs.map((faq) => (
-        <Card key={faq.id} className="p-4">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="font-semibold text-primary">{faq.question}</h3>
-            <div className="flex gap-2">
-              <Badge className="badge-default">{faq.category}</Badge>
-              <Badge
-                className={faq.isActive ? "badge-success" : "badge-default"}
-              >
-                {faq.isActive ? "Activa" : "Inactiva"}
-              </Badge>
-            </div>
-          </div>
-          <p className="text-muted mb-3">{faq.answer}</p>
-          <div className="flex items-center justify-between text-sm text-muted">
-            <div className="flex gap-4">
-              <span>👁️ {faq.viewCount} vistas</span>
-              <span>👍 {faq.helpfulVotes}</span>
-              <span>👎 {faq.notHelpfulVotes}</span>
-            </div>
-            <Button variant="outline" size="sm">
-              Editar
-            </Button>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-// ============================================================================
 // Main Component
 // ============================================================================
 
 const tabs = [
   { id: "tickets", label: "Tickets", icon: <TicketIcon size={16} /> },
   { id: "chat", label: "Chat en Vivo", icon: <MessageSquare size={16} /> },
-  { id: "faq", label: "FAQ", icon: <HelpCircle size={16} /> },
 ];
 
 const ticketStatusOptions = [
@@ -431,7 +367,6 @@ export default function SupportPage() {
   const [activeTab, setActiveTab] = useState<TabType>("tickets");
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
-  const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -453,12 +388,12 @@ export default function SupportPage() {
         if (activeTab === "tickets") setTickets(result.data.tickets || []);
         else if (activeTab === "chat")
           setChatSessions(result.data.sessions || []);
-        else if (activeTab === "faq") setFaqs(result.data.faqs || []);
+
       }
     } catch {
       if (activeTab === "tickets") setTickets([]);
       else if (activeTab === "chat") setChatSessions([]);
-      else if (activeTab === "faq") setFaqs([]);
+
     } finally {
       setLoading(false);
     }
@@ -496,7 +431,6 @@ export default function SupportPage() {
 
   const getAddLabel = () => {
     if (activeTab === "tickets") return "Nuevo Ticket";
-    if (activeTab === "faq") return "Nueva FAQ";
     return undefined;
   };
 
@@ -558,10 +492,6 @@ export default function SupportPage() {
 
         <TabPanel id="chat" activeTab={activeTab}>
           <ChatSessions sessions={chatSessions} />
-        </TabPanel>
-
-        <TabPanel id="faq" activeTab={activeTab}>
-          <FAQList faqs={faqs} />
         </TabPanel>
       </TabLayout>
     </div>
