@@ -240,20 +240,11 @@ async function createCAShipment(orderId: string): Promise<void> {
       shipmentId,
     });
 
-    // 9. Notificar a administradores (si la función existe)
-    try {
-      const oneSignalLib = await import("@/lib/onesignal");
-      if ("notifyShipmentCreated" in oneSignalLib) {
-        await (oneSignalLib as { notifyShipmentCreated: (orderId: string, customerName: string) => Promise<void> }).notifyShipmentCreated(orderId, order.customerName);
-      } else {
-        logger.info("[CA Shipment] notifyShipmentCreated not available, skipping notification");
-      }
-    } catch (notifError) {
-      logger.warn("[CA Shipment] Failed to send admin notification", {
-        orderId,
-        error: notifError,
-      });
-    }
+    // 9. Admin notification handled via email in main webhook flow
+    logger.info("[CA Shipment] Shipment created, admin notified via email", {
+      orderId,
+      shipmentId,
+    });
   } catch (error) {
     logger.error("[CA Shipment] Failed to create shipment", {
       orderId,

@@ -1,7 +1,6 @@
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { getRequestId, logger } from "@/lib/logger";
-import { sendNotification } from "@/lib/onesignal";
 import { mapOrderToDTO } from "@/lib/orders";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
@@ -38,7 +37,7 @@ export async function GET(
       });
     }
     const { page, limit, status, search } = parsedQuery.data;
-    
+
     // Soporte para buscar por mpPaymentId (usado por página de success)
     const mpPaymentId = searchParams.get("mpPaymentId");
 
@@ -230,19 +229,12 @@ export async function POST(
 
     const responseOrder: Order = mapOrderToDTO(order);
 
-    // Enviar notificación push para nuevos pedidos
-    try {
-      await sendNotification(
-        `Nuevo pedido de ${customerName} por $${total.toFixed(2)}`,
-        "Nuevo Pedido Recibido"
-      );
-    } catch (notificationError) {
-      logger.error("Error sending notification", {
-        requestId: _requestId,
-        error: String(notificationError),
-      });
-      // No fallar el pedido si la notificación falla
-    }
+    // Push notifications disabled - admin gets email notifications instead
+    logger.info("Order created", {
+      orderId: order.id,
+      customerName,
+      total,
+    });
 
     return ok(responseOrder, "Pedido creado exitosamente");
   } catch (error) {

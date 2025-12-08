@@ -86,20 +86,18 @@ export async function PATCH(
             carrier: "Correo Argentino",
           });
 
-        await sendEmail({
-          to: order.customerEmail,
-          subject: "📦 Tu pedido está en camino - Rastuci",
-          html: emailHtml,
-        });
+          await sendEmail({
+            to: order.customerEmail,
+            subject: "📦 Tu pedido está en camino - Rastuci",
+            html: emailHtml,
+          });
 
-        // Enviar notificación push
-        const { notifyOrderShipped } = await import("@/lib/onesignal");
-        await notifyOrderShipped(orderId, updatedOrder.caTrackingNumber);
+          // Note: Push notifications disabled, email is sufficient
+        }
+      } catch (emailError) {
+        logger.error("[Admin] Failed to send shipped email", { emailError });
       }
-    } catch (emailError) {
-      logger.error("[Admin] Failed to send shipped email", { emailError });
-    }
-  }    return ok({
+    } return ok({
       order: updatedOrder,
       message: "Pedido marcado como procesado exitosamente",
     });

@@ -15,7 +15,6 @@
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { sendTrackingUpdateEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
-import { sendNotification } from "@/lib/onesignal";
 import { prisma } from "@/lib/prisma";
 import type { OrderStatus } from "@/types";
 
@@ -47,7 +46,7 @@ export interface TrackingChangeEvent {
 
 const DEFAULT_CONFIG: TrackingNotificationConfig = {
   enableEmail: true,
-  enablePush: true,
+  enablePush: false, // Disabled - using email only
   pollingIntervalMinutes: 15, // Revisar cada 15 minutos
   notifiableStatuses: [
     "ENTREGADO",
@@ -307,36 +306,15 @@ export class TrackingNotificationService {
   }
 
   /**
-   * Envía push notification al cliente
+   * Envía push notification al cliente (DESHABILITADO - solo emails)
    */
   private async sendPushNotificationToCustomer(
     event: TrackingChangeEvent
   ): Promise<void> {
-    try {
-      const statusEmojis: Record<string, string> = {
-        ENTREGADO: "📦✅",
-        DEVUELTO: "↩️",
-        EN_TRANSITO: "🚚",
-        EN_SUCURSAL: "🏪",
-        RETENIDO_ADUANA: "⚠️",
-        NO_ENTREGADO: "❌",
-      };
-
-      const emoji = statusEmojis[event.newStatus] || "📬";
-      const title = `${emoji} Actualización de tu pedido`;
-      const message = `${event.statusDescription} - Tracking: ${event.trackingNumber}`;
-
-      await sendNotification(message, title);
-
-      logger.info(
-        `[TrackingNotifications] Push notification sent for order ${event.orderId}`
-      );
-    } catch (error) {
-      logger.error("[TrackingNotifications] Failed to send push notification", {
-        error,
-        event,
-      });
-    }
+    // Push notifications disabled - using email notifications only
+    logger.info(
+      `[TrackingNotifications] Push disabled, email sent for order ${event.orderId}`
+    );
   }
 
   /**

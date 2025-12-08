@@ -83,9 +83,7 @@ export async function PATCH(
           html: emailHtml,
         });
 
-        // Enviar notificación push
-        const { notifyOrderDelivered } = await import("@/lib/onesignal");
-        await notifyOrderDelivered(orderId);
+        // Note: Push notifications disabled, email is sufficient
       } catch (emailError) {
         logger.error("[Admin] Failed to send delivered email", {
           emailError,
