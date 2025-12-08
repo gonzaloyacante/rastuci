@@ -10,7 +10,7 @@ const SETTINGS_KEY = "home";
 
 export async function GET(req: NextRequest) {
   try {
-    const rl = checkRateLimit(req, { key: "home:get", limit: 60, windowMs: 60_000 });
+    const rl = await checkRateLimit(req, { key: "home:get", limit: 60, windowMs: 60_000 });
     if (!rl.ok) {
       return NextResponse.json(
         fail("RATE_LIMITED", "Too many requests", 429, { retryAfterMs: rl.retryAfterMs }),
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const rl = checkRateLimit(req, { key: "home:put", limit: 20, windowMs: 60_000 });
+    const rl = await checkRateLimit(req, { key: "home:put", limit: 20, windowMs: 60_000 });
     if (!rl.ok) {
       return NextResponse.json(
         fail("RATE_LIMITED", "Too many requests", 429, { retryAfterMs: rl.retryAfterMs }),

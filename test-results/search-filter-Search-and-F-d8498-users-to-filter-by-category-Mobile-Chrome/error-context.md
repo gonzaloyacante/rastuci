@@ -1,0 +1,422 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Saltar al contenido principal" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - link "Saltar a la navegación" [ref=e4] [cursor=pointer]:
+      - /url: "#navigation"
+    - banner [ref=e5]:
+      - generic [ref=e7]:
+        - link "R Rastuci" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e9]: R
+          - generic [ref=e10]: Rastuci
+        - generic [ref=e11]:
+          - link "Ver favoritos (0 productos)" [ref=e12] [cursor=pointer]:
+            - /url: /favoritos
+            - img [ref=e13]
+          - link "Ver carrito (0 productos)" [ref=e15] [cursor=pointer]:
+            - /url: /carrito
+            - img [ref=e16]
+          - button "Abrir menú móvil" [ref=e20] [cursor=pointer]:
+            - img [ref=e21]
+    - main [ref=e23]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - textbox "Buscar productos..." [ref=e30]
+          - button "Buscar" [ref=e31] [cursor=pointer]
+        - generic [ref=e32]:
+          - button "Todas las categorías" [ref=e35] [cursor=pointer]:
+            - generic [ref=e36]: Todas las categorías
+            - img [ref=e37]
+          - button "🆕 Más recientes" [ref=e41] [cursor=pointer]:
+            - generic [ref=e42]: 🆕 Más recientes
+            - img [ref=e43]
+        - generic [ref=e45]:
+          - generic [ref=e46]: 15 productos encontrados
+          - generic [ref=e47]:
+            - button "Vista de cuadrícula" [ref=e48] [cursor=pointer]:
+              - img [ref=e49]
+            - button "Vista de lista" [ref=e51] [cursor=pointer]:
+              - img [ref=e52]
+        - generic [ref=e53]:
+          - article [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: "-20% OFF"
+            - link "Ver detalles de Manta Polar con Capucha" [ref=e56]:
+              - /url: /productos/cvj7at1ptergwxahbkdhnpno
+              - img "Manta Polar con Capucha - Ropa de Bebés" [ref=e59]
+              - generic [ref=e60]:
+                - paragraph [ref=e61]: Ropa de Bebés
+                - heading "Manta Polar con Capucha" [level=3] [ref=e62]
+                - paragraph [ref=e63]: Manta de polar premium con capucha bordada. Tamaño 75x75cm, perfecta para abrigar al bebé en el cochecito o en casa. Súper suave y calientita.
+                - generic [ref=e65]: 75x75 cm
+                - generic [ref=e67]:
+                  - generic [ref=e68]:
+                    - generic [ref=e69]:
+                      - generic [ref=e70]: $6.400
+                      - generic [ref=e71]: $5.120
+                    - button "Agregar al carrito" [ref=e72]:
+                      - img [ref=e73]
+                  - generic [ref=e77]:
+                    - generic [ref=e78]:
+                      - img [ref=e79]
+                      - generic [ref=e81]: "4.9"
+                      - generic [ref=e82]: (52)
+                    - generic [ref=e83]: En stock
+            - button "Agregar Manta Polar con Capucha a favoritos" [ref=e84]:
+              - img [ref=e85]
+          - article [ref=e87] [cursor=pointer]:
+            - link "Ver detalles de Pijama 2 Piezas Estrellas" [ref=e88]:
+              - /url: /productos/gmbhxrxr61p6f1egtygija39
+              - img "Pijama 2 Piezas Estrellas - Ropa de Bebés" [ref=e91]
+              - generic [ref=e92]:
+                - paragraph [ref=e93]: Ropa de Bebés
+                - heading "Pijama 2 Piezas Estrellas" [level=3] [ref=e94]
+                - paragraph [ref=e95]: Pijama de dos piezas con estampado de estrellas. Remera de manga larga y pantalón con piecitos antideslizantes. Perfecto para dormir seguro.
+                - generic [ref=e96]:
+                  - generic [ref=e97]: 6-9 meses
+                  - generic [ref=e98]: 9-12 meses
+                  - generic [ref=e99]: 12-18 meses
+                - generic [ref=e100]:
+                  - generic [ref=e101]:
+                    - generic [ref=e103]: $5.600
+                    - button "Agregar al carrito" [ref=e104]:
+                      - img [ref=e105]
+                  - generic [ref=e109]:
+                    - generic [ref=e110]:
+                      - img [ref=e111]
+                      - generic [ref=e113]: "4.7"
+                      - generic [ref=e114]: (43)
+                    - generic [ref=e115]: En stock
+            - button "Agregar Pijama 2 Piezas Estrellas a favoritos" [ref=e116]:
+              - img [ref=e117]
+          - article [ref=e119] [cursor=pointer]:
+            - link "Ver detalles de Conjunto 3 Piezas Algodón" [ref=e120]:
+              - /url: /productos/r4yzck7vddlfn8vyz8b4i4q6
+              - img "Conjunto 3 Piezas Algodón - Ropa de Bebés" [ref=e123]
+              - generic [ref=e124]:
+                - paragraph [ref=e125]: Ropa de Bebés
+                - heading "Conjunto 3 Piezas Algodón" [level=3] [ref=e126]
+                - paragraph [ref=e127]: "Set completo: body, pantalón y gorrito a juego. Confeccionado en algodón orgánico certificado, ideal para pieles sensibles."
+                - generic [ref=e128]:
+                  - generic [ref=e129]: 0-3 meses
+                  - generic [ref=e130]: 3-6 meses
+                  - generic [ref=e131]: 6-9 meses
+                - generic [ref=e133]:
+                  - generic [ref=e134]:
+                    - generic [ref=e136]: $7.800
+                    - button "Agregar al carrito" [ref=e137]:
+                      - img [ref=e138]
+                  - generic [ref=e142]:
+                    - generic [ref=e143]:
+                      - img [ref=e144]
+                      - generic [ref=e146]: "4.8"
+                      - generic [ref=e147]: (64)
+                    - generic [ref=e148]: En stock
+            - button "Agregar Conjunto 3 Piezas Algodón a favoritos" [ref=e149]:
+              - img [ref=e150]
+          - article [ref=e152] [cursor=pointer]:
+            - generic [ref=e153]: "-20% OFF"
+            - link "Ver detalles de Enterito Osito Polar" [ref=e154]:
+              - /url: /productos/y7ryyrx93n4m57ri5lvuxezw
+              - img "Enterito Osito Polar - Ropa de Bebés" [ref=e157]
+              - generic [ref=e158]:
+                - paragraph [ref=e159]: Ropa de Bebés
+                - heading "Enterito Osito Polar" [level=3] [ref=e160]
+                - paragraph [ref=e161]: Enterito de polar súper suave con capucha de osito. Incluye piecitos cerrados y cierre frontal completo. Ideal para los días fríos.
+                - generic [ref=e162]:
+                  - generic [ref=e163]: 0-3 meses
+                  - generic [ref=e164]: 3-6 meses
+                  - generic [ref=e165]: 6-9 meses
+                - generic [ref=e166]:
+                  - generic [ref=e167]:
+                    - generic [ref=e168]:
+                      - generic [ref=e169]: $8.500
+                      - generic [ref=e170]: $6.800
+                    - button "Agregar al carrito" [ref=e171]:
+                      - img [ref=e172]
+                  - generic [ref=e176]:
+                    - generic [ref=e177]:
+                      - img [ref=e178]
+                      - generic [ref=e180]: "5.0"
+                      - generic [ref=e181]: (89)
+                    - generic [ref=e182]: En stock
+            - button "Agregar Enterito Osito Polar a favoritos" [ref=e183]:
+              - img [ref=e184]
+          - article [ref=e186] [cursor=pointer]:
+            - link "Ver detalles de Pack 3 Bodies de Algodón" [ref=e187]:
+              - /url: /productos/abblj0pv1aolq6wt0hkcvu1r
+              - img "Pack 3 Bodies de Algodón - Ropa de Bebés" [ref=e190]
+              - generic [ref=e191]:
+                - paragraph [ref=e192]: Ropa de Bebés
+                - heading "Pack 3 Bodies de Algodón" [level=3] [ref=e193]
+                - paragraph [ref=e194]: Set de 3 bodies de algodón peinado extra suave. Broches en la entrepierna para facilitar el cambio de pañal. Perfectos para uso diario.
+                - generic [ref=e195]:
+                  - generic [ref=e196]: 0-3 meses
+                  - generic [ref=e197]: 3-6 meses
+                  - generic [ref=e198]: 6-9 meses
+                  - generic [ref=e199]: 9-12 meses
+                - generic [ref=e200]:
+                  - generic [ref=e201]:
+                    - generic [ref=e203]: $6.900
+                    - button "Agregar al carrito" [ref=e204]:
+                      - img [ref=e205]
+                  - generic [ref=e209]:
+                    - generic [ref=e210]:
+                      - img [ref=e211]
+                      - generic [ref=e213]: "4.9"
+                      - generic [ref=e214]: (127)
+                    - generic [ref=e215]: En stock
+            - button "Agregar Pack 3 Bodies de Algodón a favoritos" [ref=e216]:
+              - img [ref=e217]
+          - article [ref=e219] [cursor=pointer]:
+            - link "Ver detalles de Bermuda Cargo con Bolsillos" [ref=e220]:
+              - /url: /productos/flm12g3qd9d0hzhnekq1elye
+              - img "Bermuda Cargo con Bolsillos - Ropa de Niños" [ref=e223]
+              - generic [ref=e224]:
+                - paragraph [ref=e225]: Ropa de Niños
+                - heading "Bermuda Cargo con Bolsillos" [level=3] [ref=e226]
+                - paragraph [ref=e227]: Bermuda de gabardina con múltiples bolsillos cargo. Ideal para el verano y actividades al aire libre. Cintura regulable con elástico interno.
+                - generic [ref=e228]:
+                  - generic [ref=e229]: "6"
+                  - generic [ref=e230]: "8"
+                  - generic [ref=e231]: "10"
+                  - generic [ref=e232]: "12"
+                  - generic [ref=e233]: "+1"
+                - generic [ref=e235]:
+                  - generic [ref=e236]:
+                    - generic [ref=e238]: $5.400
+                    - button "Agregar al carrito" [ref=e239]:
+                      - img [ref=e240]
+                  - generic [ref=e244]:
+                    - generic [ref=e245]:
+                      - img [ref=e246]
+                      - generic [ref=e248]: "4.5"
+                      - generic [ref=e249]: (29)
+                    - generic [ref=e250]: En stock
+            - button "Agregar Bermuda Cargo con Bolsillos a favoritos" [ref=e251]:
+              - img [ref=e252]
+          - article [ref=e254] [cursor=pointer]:
+            - link "Ver detalles de Buzo Canguro Gamer" [ref=e255]:
+              - /url: /productos/p3b4mdvbr2a1gsy0d2vmiz8i
+              - img "Buzo Canguro Gamer - Ropa de Niños" [ref=e258]
+              - generic [ref=e259]:
+                - paragraph [ref=e260]: Ropa de Niños
+                - heading "Buzo Canguro Gamer" [level=3] [ref=e261]
+                - paragraph [ref=e262]: Buzo con capucha y diseño gamer, perfecto para los fanáticos de los videojuegos. Tela francesa afelpada súper cómoda, con bolsillo tipo canguro.
+                - generic [ref=e263]:
+                  - generic [ref=e264]: "8"
+                  - generic [ref=e265]: "10"
+                  - generic [ref=e266]: "12"
+                  - generic [ref=e267]: "14"
+                - generic [ref=e269]:
+                  - generic [ref=e270]:
+                    - generic [ref=e272]: $6.800
+                    - button "Agregar al carrito" [ref=e273]:
+                      - img [ref=e274]
+                  - generic [ref=e278]:
+                    - generic [ref=e279]:
+                      - img [ref=e280]
+                      - generic [ref=e282]: "4.9"
+                      - generic [ref=e283]: (67)
+                    - generic [ref=e284]: En stock
+            - button "Agregar Buzo Canguro Gamer a favoritos" [ref=e285]:
+              - img [ref=e286]
+          - article [ref=e288] [cursor=pointer]:
+            - link "Ver detalles de Jean Recto Clásico Azul" [ref=e289]:
+              - /url: /productos/ba7o9xgfwf6f0bpagiwqxsz1
+              - img "Jean Recto Clásico Azul - Ropa de Niños" [ref=e292]
+              - generic [ref=e293]:
+                - paragraph [ref=e294]: Ropa de Niños
+                - heading "Jean Recto Clásico Azul" [level=3] [ref=e295]
+                - paragraph [ref=e296]: Jean clásico de corte recto, cinco bolsillos funcionales. Denim de alta resistencia, ideal para el uso diario y el colegio.
+                - generic [ref=e297]:
+                  - generic [ref=e298]: "6"
+                  - generic [ref=e299]: "8"
+                  - generic [ref=e300]: "10"
+                  - generic [ref=e301]: "12"
+                  - generic [ref=e302]: "+2"
+                - generic [ref=e303]:
+                  - generic [ref=e304]:
+                    - generic [ref=e306]: $7.200
+                    - button "Agregar al carrito" [ref=e307]:
+                      - img [ref=e308]
+                  - generic [ref=e312]:
+                    - generic [ref=e313]:
+                      - img [ref=e314]
+                      - generic [ref=e316]: "4.6"
+                      - generic [ref=e317]: (38)
+                    - generic [ref=e318]: En stock
+            - button "Agregar Jean Recto Clásico Azul a favoritos" [ref=e319]:
+              - img [ref=e320]
+          - article [ref=e322] [cursor=pointer]:
+            - generic [ref=e323]: "-20% OFF"
+            - link "Ver detalles de Conjunto Deportivo Nike Style" [ref=e324]:
+              - /url: /productos/fuw177q7ouc8ke8prze89orr
+              - img "Conjunto Deportivo Nike Style - Ropa de Niños" [ref=e327]
+              - generic [ref=e328]:
+                - paragraph [ref=e329]: Ropa de Niños
+                - heading "Conjunto Deportivo Nike Style" [level=3] [ref=e330]
+                - paragraph [ref=e331]: "Conjunto deportivo inspirado en las grandes marcas: buzo canguro con capucha y pantalón jogger. Tela francesa de primera calidad con interior afelpado."
+                - generic [ref=e332]:
+                  - generic [ref=e333]: "6"
+                  - generic [ref=e334]: "8"
+                  - generic [ref=e335]: "10"
+                  - generic [ref=e336]: "12"
+                  - generic [ref=e337]: "+1"
+                - generic [ref=e338]:
+                  - generic [ref=e339]:
+                    - generic [ref=e340]:
+                      - generic [ref=e341]: $8.900
+                      - generic [ref=e342]: $7.120
+                    - button "Agregar al carrito" [ref=e343]:
+                      - img [ref=e344]
+                  - generic [ref=e348]:
+                    - generic [ref=e349]:
+                      - img [ref=e350]
+                      - generic [ref=e352]: "4.7"
+                      - generic [ref=e353]: (45)
+                    - generic [ref=e354]: En stock
+            - button "Agregar Conjunto Deportivo Nike Style a favoritos" [ref=e355]:
+              - img [ref=e356]
+          - article [ref=e358] [cursor=pointer]:
+            - link "Ver detalles de Remera Selección Argentina" [ref=e359]:
+              - /url: /productos/hc8jq5tgalo3q2f67ttgz486
+              - img "Remera Selección Argentina - Ropa de Niños" [ref=e362]
+              - generic [ref=e363]:
+                - paragraph [ref=e364]: Ropa de Niños
+                - heading "Remera Selección Argentina" [level=3] [ref=e365]
+                - paragraph [ref=e366]: Remera deportiva con los colores de la Selección Argentina. Tela deportiva de secado rápido, perfecta para jugar al fútbol o uso diario.
+                - generic [ref=e367]:
+                  - generic [ref=e368]: "4"
+                  - generic [ref=e369]: "6"
+                  - generic [ref=e370]: "8"
+                  - generic [ref=e371]: "10"
+                  - generic [ref=e372]: "+2"
+                - generic [ref=e374]:
+                  - generic [ref=e375]:
+                    - generic [ref=e377]: $4.500
+                    - button "Agregar al carrito" [ref=e378]:
+                      - img [ref=e379]
+                  - generic [ref=e383]:
+                    - generic [ref=e384]:
+                      - img [ref=e385]
+                      - generic [ref=e387]: "4.8"
+                      - generic [ref=e388]: (94)
+                    - generic [ref=e389]: En stock
+            - button "Agregar Remera Selección Argentina a favoritos" [ref=e390]:
+              - img [ref=e391]
+          - article [ref=e393] [cursor=pointer]:
+            - link "Ver detalles de Campera Acolchada con Capucha" [ref=e394]:
+              - /url: /productos/afgsvrfm0h692g0cksu58a6k
+              - img "Campera Acolchada con Capucha - Ropa de Niñas" [ref=e397]
+              - generic [ref=e398]:
+                - paragraph [ref=e399]: Ropa de Niñas
+                - heading "Campera Acolchada con Capucha" [level=3] [ref=e400]
+                - paragraph [ref=e401]: Campera ultraliviana con relleno sintético de alta calidad. Repelente al agua, con capucha desmontable y bolsillos con cierre. Ideal para entretiempo.
+                - generic [ref=e402]:
+                  - generic [ref=e403]: "6"
+                  - generic [ref=e404]: "8"
+                  - generic [ref=e405]: "10"
+                  - generic [ref=e406]: "12"
+                - generic [ref=e408]:
+                  - generic [ref=e409]:
+                    - generic [ref=e411]: $12.500
+                    - button "Agregar al carrito" [ref=e412]:
+                      - img [ref=e413]
+                  - generic [ref=e417]:
+                    - generic [ref=e418]:
+                      - img [ref=e419]
+                      - generic [ref=e421]: "4.8"
+                      - generic [ref=e422]: (19)
+                    - generic [ref=e423]: En stock
+            - button "Agregar Campera Acolchada con Capucha a favoritos" [ref=e424]:
+              - img [ref=e425]
+          - article [ref=e427] [cursor=pointer]:
+            - link "Ver detalles de Jean Skinny Celeste" [ref=e428]:
+              - /url: /productos/lfdikf36j9qvmri1yigg4f0q
+              - img "Jean Skinny Celeste - Ropa de Niñas" [ref=e431]
+              - generic [ref=e432]:
+                - paragraph [ref=e433]: Ropa de Niñas
+                - heading "Jean Skinny Celeste" [level=3] [ref=e434]
+                - paragraph [ref=e435]: Jean elastizado de corte skinny, cómodo y moderno. Tela denim con elastano para mayor movilidad. Cinco bolsillos y cierre con botón.
+                - generic [ref=e436]:
+                  - generic [ref=e437]: "6"
+                  - generic [ref=e438]: "8"
+                  - generic [ref=e439]: "10"
+                  - generic [ref=e440]: "12"
+                  - generic [ref=e441]: "+1"
+                - generic [ref=e442]:
+                  - generic [ref=e443]:
+                    - generic [ref=e445]: $6.900
+                    - button "Agregar al carrito" [ref=e446]:
+                      - img [ref=e447]
+                  - generic [ref=e451]:
+                    - generic [ref=e452]:
+                      - img [ref=e453]
+                      - generic [ref=e455]: "4.7"
+                      - generic [ref=e456]: (31)
+                    - generic [ref=e457]: En stock
+            - button "Agregar Jean Skinny Celeste a favoritos" [ref=e458]:
+              - img [ref=e459]
+        - generic [ref=e461]:
+          - navigation "Paginación" [ref=e462]:
+            - button "Página anterior" [disabled] [ref=e463]:
+              - img [ref=e464]
+            - button "Ir a la página 1" [ref=e466] [cursor=pointer]: "1"
+            - button "Ir a la página 2" [ref=e467] [cursor=pointer]: "2"
+            - button "Página siguiente" [ref=e468] [cursor=pointer]:
+              - img [ref=e469]
+          - generic [ref=e471]: Página 1 de 2 - 15 productos
+    - contentinfo [ref=e472]:
+      - generic [ref=e473]:
+        - generic [ref=e474]:
+          - heading "Rastući" [level=3] [ref=e475]
+          - paragraph [ref=e476]: Ropa con amor para los más peques.
+        - generic [ref=e477]:
+          - heading "Navegación" [level=4] [ref=e478]
+          - list [ref=e479]:
+            - listitem [ref=e480]:
+              - link "Inicio" [ref=e481] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e482]:
+              - link "Productos" [ref=e483] [cursor=pointer]:
+                - /url: /productos
+            - listitem [ref=e484]:
+              - link "Contacto" [ref=e485] [cursor=pointer]:
+                - /url: /contacto
+        - generic [ref=e486]:
+          - heading "Legal" [level=4] [ref=e487]
+          - list [ref=e488]:
+            - listitem [ref=e489]:
+              - link "Términos y Condiciones" [ref=e490] [cursor=pointer]:
+                - /url: /legal/terminos
+            - listitem [ref=e491]:
+              - link "Política de Privacidad" [ref=e492] [cursor=pointer]:
+                - /url: /legal/privacidad
+            - listitem [ref=e493]:
+              - link "Defensa del Consumidor" [ref=e494] [cursor=pointer]:
+                - /url: /contacto
+        - generic [ref=e495]:
+          - heading "Contacto" [level=4] [ref=e496]
+          - paragraph [ref=e497]: contacto@rastuci.com
+          - paragraph [ref=e498]: +54 9 11 1234-5678
+        - generic [ref=e499]:
+          - heading "Tema" [level=4] [ref=e500]
+          - generic [ref=e501]:
+            - button "Modo claro" [ref=e502] [cursor=pointer]:
+              - img [ref=e503]
+              - generic [ref=e509]: Claro
+            - button "Tema del sistema" [ref=e510] [cursor=pointer]:
+              - img [ref=e511]
+              - generic [ref=e513]: Sistema
+            - button "Modo oscuro" [ref=e514] [cursor=pointer]:
+              - img [ref=e515]
+              - generic [ref=e517]: Oscuro
+      - paragraph [ref=e519]: © 2025 Rastući. Todos los derechos reservados.
+  - button "Open Next.js Dev Tools" [ref=e525] [cursor=pointer]:
+    - img [ref=e526]
+  - alert [ref=e529]
+```

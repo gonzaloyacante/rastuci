@@ -6,11 +6,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock Prisma
 vi.mock("@/lib/prisma", () => ({
   default: {
-    order: {
+    orders: {
       create: vi.fn(),
     },
-    product: {
+    products: {
       findUnique: vi.fn(),
+      findMany: vi.fn(), // Checkout might use findMany now
     },
   },
 }));
@@ -29,12 +30,18 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 
+// Mock rate limiter
+vi.mock("@/lib/rateLimiter", () => ({
+  checkRateLimit: vi.fn(() => Promise.resolve({ ok: true })),
+}));
+
 const mockPrisma = prisma as unknown as {
-  order: {
+  orders: {
     create: ReturnType<typeof vi.fn>;
   };
-  product: {
+  products: {
     findUnique: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
   };
 };
 
@@ -142,7 +149,10 @@ describe("Checkout API - POST /api/checkout", () => {
         items: [],
       };
 
-      mockPrisma.order.create.mockResolvedValue(mockOrder);
+      mockPrisma.orders.create.mockResolvedValue(mockOrder);
+      mockPrisma.products.findMany.mockResolvedValue([
+        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+      ]);
 
       const request = new NextRequest("http://localhost:3000/api/checkout", {
         method: "POST",
@@ -169,7 +179,10 @@ describe("Checkout API - POST /api/checkout", () => {
     });
 
     it("debe crear order items correctamente", async () => {
-      mockPrisma.order.create.mockResolvedValue({
+      mockPrisma.products.findMany.mockResolvedValue([
+        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+      ]);
+      mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
         customerName: "Juan Pérez",
         customerEmail: "juan@example.com",
@@ -199,13 +212,17 @@ describe("Checkout API - POST /api/checkout", () => {
 
       await POST(request);
 
-      expect(mockPrisma.order.create).toHaveBeenCalledWith(
+      expect(mockPrisma.orders.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            items: expect.objectContaining({
+            order_items: expect.objectContaining({
               create: expect.arrayContaining([
                 expect.objectContaining({
-                  productId: "prod-1",
+                  products: expect.objectContaining({
+                    connect: expect.objectContaining({
+                      id: "prod-1",
+                    }),
+                  }),
                   quantity: 2,
                   price: 100,
                 }),
@@ -219,7 +236,10 @@ describe("Checkout API - POST /api/checkout", () => {
 
   describe("Información del cliente", () => {
     it("debe guardar nombre del cliente", async () => {
-      mockPrisma.order.create.mockResolvedValue({
+      mockPrisma.products.findMany.mockResolvedValue([
+        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+      ]);
+      mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
         customerName: "Juan Pérez",
         total: 200,
@@ -241,7 +261,7 @@ describe("Checkout API - POST /api/checkout", () => {
 
       await POST(request);
 
-      expect(mockPrisma.order.create).toHaveBeenCalledWith(
+      expect(mockPrisma.orders.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             customerName: "Juan Pérez",
@@ -251,7 +271,10 @@ describe("Checkout API - POST /api/checkout", () => {
     });
 
     it("debe guardar email del cliente", async () => {
-      mockPrisma.order.create.mockResolvedValue({
+      mockPrisma.products.findMany.mockResolvedValue([
+        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+      ]);
+      mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
         customerEmail: "juan@example.com",
         total: 200,
@@ -273,7 +296,7 @@ describe("Checkout API - POST /api/checkout", () => {
 
       await POST(request);
 
-      expect(mockPrisma.order.create).toHaveBeenCalledWith(
+      expect(mockPrisma.orders.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             customerEmail: "juan@example.com",
@@ -283,7 +306,10 @@ describe("Checkout API - POST /api/checkout", () => {
     });
 
     it("debe combinar dirección completa", async () => {
-      mockPrisma.order.create.mockResolvedValue({
+      mockPrisma.products.findMany.mockResolvedValue([
+        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+      ]);
+      mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
         total: 200,
         items: [],
@@ -304,7 +330,7 @@ describe("Checkout API - POST /api/checkout", () => {
 
       await POST(request);
 
-      expect(mockPrisma.order.create).toHaveBeenCalledWith(
+      expect(mockPrisma.orders.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             customerAddress: expect.stringContaining("Calle 123"),
@@ -316,7 +342,10 @@ describe("Checkout API - POST /api/checkout", () => {
 
   describe("Cálculo de totales", () => {
     it("debe usar el total proporcionado", async () => {
-      mockPrisma.order.create.mockResolvedValue({
+      mockPrisma.products.findMany.mockResolvedValue([
+        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+      ]);
+      mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
         total: 500,
         items: [],
@@ -337,7 +366,7 @@ describe("Checkout API - POST /api/checkout", () => {
 
       await POST(request);
 
-      expect(mockPrisma.order.create).toHaveBeenCalledWith(
+      expect(mockPrisma.orders.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             total: 500,

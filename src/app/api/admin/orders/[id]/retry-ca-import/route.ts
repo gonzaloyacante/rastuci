@@ -153,13 +153,22 @@ export async function POST(
         const response = await correoArgentinoService.importShipment(shipmentData);
 
         if (!response.success) {
+            const errorMsg = response.error?.message || "Error desconocido";
+            await prisma.orders.update({
+                where: { id: orderId },
+                data: {
+                    caImportStatus: "ERROR",
+                    caImportError: errorMsg,
+                }
+            });
+
             logger.error("[Admin] Retry CA import failed", {
                 orderId,
                 error: response.error,
             });
             return fail(
                 "BAD_REQUEST",
-                `Error de Correo Argentino: ${response.error?.message || "Error desconocido"}`,
+                `Error de Correo Argentino: ${errorMsg}`,
                 400
             );
         }
@@ -177,6 +186,8 @@ export async function POST(
                 shippingMethod: "correo-argentino",
                 status: "PROCESSED",
                 updatedAt: new Date(),
+                caImportStatus: "SUCCESS",
+                caImportError: null,
             },
         });
 

@@ -1,29 +1,39 @@
-"use client";
-
-import { Pagination as UIPagination } from "@/components/ui/Pagination";
-import { LucideIcon, Package, TruckIcon } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+// Removed unused Select imports
+import { ORDER_STATUS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/utils/formatters";
+import {
+  Calendar,
+  CreditCard,
+  MapPin,
+  Package,
+  Printer,
+  Search,
+  Truck as TruckIcon, // Alias Truck to TruckIcon to match usage
+  LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import React, { ReactNode } from "react";
+import { Pagination as UIPagination } from "@/components/ui/Pagination";
 
 // ============================================================================
 // Status Badge System
 // ============================================================================
 
-export type OrderStatus = "PENDING" | "PENDING_PAYMENT" | "PROCESSED" | "DELIVERED" | "CANCELLED";
-
-const statusConfig: Record<
-  OrderStatus,
-  { label: string; variant: "warning" | "info" | "success" | "error" }
-> = {
-  PENDING: { label: "Sin pagar", variant: "warning" },
-  PENDING_PAYMENT: { label: "⚠️ Esperando pago de envío", variant: "warning" },
-  PROCESSED: { label: "Listo para entregar", variant: "info" },
-  DELIVERED: { label: "Entregado", variant: "success" },
-  CANCELLED: { label: "Cancelado", variant: "error" },
-};
+// Configuración de visualización por estado
+// Configuración de visualización por estado
+export const STATUS_CONFIG = {
+  [ORDER_STATUS.PENDING]: { label: "Sin pagar", variant: "warning" },
+  [ORDER_STATUS.PENDING_PAYMENT]: { label: "⚠️ Esperando pago de envío", variant: "warning" },
+  [ORDER_STATUS.PROCESSED]: { label: "Empaquetado / Listo", variant: "info" },
+  [ORDER_STATUS.DELIVERED]: { label: "Entregado", variant: "success" },
+} as const;
 
 export function OrderStatusBadge({ status }: { status: string }) {
-  const config = statusConfig[status as OrderStatus] || {
+  const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || {
     label: "Desconocido",
     variant: "info" as const,
   };
@@ -33,6 +43,10 @@ export function OrderStatusBadge({ status }: { status: string }) {
     info: "badge-info",
     success: "badge-success",
     error: "badge-error",
+    destructive: "badge-error", // map destructive to error style
+    primary: "badge-primary",
+    secondary: "badge-secondary",
+    default: "badge-neutral", // fallback
   };
 
   return (
@@ -121,18 +135,18 @@ export function OrderCard({
 
   const handleMarkProcessed = async () => {
     if (!confirm("¿Confirmas que ya pagaste el envío en MiCorreo?")) return;
-    
+
     setIsUpdating(true);
     try {
       const response = await fetch(`/api/admin/orders/${order.id}/mark-processed`, {
         method: "PATCH",
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Error al actualizar el pedido");
       }
-      
+
       // Éxito
       if (onStatusChange) onStatusChange();
     } catch (error) {
@@ -144,18 +158,18 @@ export function OrderCard({
 
   const handleMarkDelivered = async () => {
     if (!confirm("¿Confirmas que este pedido fue entregado al cliente?")) return;
-    
+
     setIsUpdating(true);
     try {
       const response = await fetch(`/api/admin/orders/${order.id}/mark-delivered`, {
         method: "PATCH",
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Error al actualizar el pedido");
       }
-      
+
       // Éxito
       if (onStatusChange) onStatusChange();
     } catch (error) {
@@ -186,10 +200,10 @@ export function OrderCard({
 
       {/* Content - Stack en móvil, grid en tablet */}
       <div className="p-4 space-y-4">
-        
+
         {/* Info principal en 2 columnas tablet */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
+
           {/* Contacto */}
           <div className="space-y-2">
             <h4 className="text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">

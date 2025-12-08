@@ -4,6 +4,7 @@ export const HomeSettingsSchema = z.object({
   heroTitle: z.string().min(1).max(120),
   heroSubtitle: z.string().min(1).max(220),
   heroLogoUrl: z.string().url().optional(),
+  heroImage: z.string().url().optional(),
   ctaPrimaryLabel: z.string().min(1).max(40),
   ctaSecondaryLabel: z.string().min(1).max(40),
   categoriesTitle: z.string().min(1).max(80),

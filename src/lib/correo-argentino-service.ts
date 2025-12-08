@@ -16,7 +16,14 @@
  * @see https://api.correoargentino.com.ar/micorreo/v1
  */
 
-import { logger } from "./logger";
+import {
+  PROVINCE_CODE_MAP,
+  type ProvinceCode,
+} from "@/lib/constants";
+import { logger } from "@/lib/logger";
+
+export type { ProvinceCode };
+
 
 // ============================================================================
 // TIPOS Y INTERFACES - BASADOS EN API MICORREO
@@ -36,31 +43,7 @@ export interface TokenResponse {
 }
 
 // Códigos de provincia argentinos (según documentación)
-export type ProvinceCode =
-  | "A" // Salta
-  | "B" // Buenos Aires
-  | "C" // CABA
-  | "D" // San Luis
-  | "E" // Entre Ríos
-  | "F" // La Rioja
-  | "G" // Santiago del Estero
-  | "H" // Chaco
-  | "J" // San Juan
-  | "K" // Catamarca
-  | "L" // La Pampa
-  | "M" // Mendoza
-  | "N" // Misiones
-  | "P" // Formosa
-  | "Q" // Neuquén
-  | "R" // Río Negro
-  | "S" // Santa Fe
-  | "T" // Tucumán
-  | "U" // Chubut
-  | "V" // Tierra del Fuego
-  | "W" // Corrientes
-  | "X" // Córdoba
-  | "Y" // Jujuy
-  | "Z"; // Santa Cruz
+
 
 // Dirección según formato API
 export interface Address {
@@ -284,32 +267,8 @@ const INITIAL_RETRY_DELAY = 1000; // 1 segundo inicial
 const MAX_RETRY_DELAY = 8000; // 8 segundos máximo
 
 // Mapeo de códigos de provincia a nombres
-export const PROVINCE_NAMES: Record<ProvinceCode, string> = {
-  A: "Salta",
-  B: "Buenos Aires",
-  C: "Ciudad Autónoma de Buenos Aires",
-  D: "San Luis",
-  E: "Entre Ríos",
-  F: "La Rioja",
-  G: "Santiago del Estero",
-  H: "Chaco",
-  J: "San Juan",
-  K: "Catamarca",
-  L: "La Pampa",
-  M: "Mendoza",
-  N: "Misiones",
-  P: "Formosa",
-  Q: "Neuquén",
-  R: "Río Negro",
-  S: "Santa Fe",
-  T: "Tucumán",
-  U: "Chubut",
-  V: "Tierra del Fuego",
-  W: "Corrientes",
-  X: "Córdoba",
-  Y: "Jujuy",
-  Z: "Santa Cruz",
-};
+// Mapeo de códigos de provincia a nombres
+export const PROVINCE_NAMES: Record<ProvinceCode, string> = PROVINCE_CODE_MAP;
 
 // ============================================================================
 // CLASE PRINCIPAL DEL SERVICIO

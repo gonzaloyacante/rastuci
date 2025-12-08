@@ -264,6 +264,8 @@ model orders {
   caTrackingNumber     String?       @unique
   caShipmentId         String?
   caExtOrderId         String?       @unique
+  caImportStatus       String?
+  caImportError        String?
   shippingAgency       String?
   shippingStreet       String?
   shippingNumber       String?

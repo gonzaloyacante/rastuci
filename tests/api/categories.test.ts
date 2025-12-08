@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock Prisma
 vi.mock("@/lib/prisma", () => ({
   default: {
-    category: {
+    categories: {
       findMany: vi.fn(),
       count: vi.fn(),
       create: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock("@/lib/prisma", () => ({
 
 // Mock rate limiter
 vi.mock("@/lib/rateLimiter", () => ({
-  checkRateLimit: vi.fn(() => ({ ok: true })),
+  checkRateLimit: vi.fn(() => Promise.resolve({ ok: true })),
 }));
 
 // Mock logger
@@ -32,10 +32,11 @@ vi.mock("@/lib/logger", () => ({
 // Mock admin auth
 vi.mock("@/lib/adminAuth", () => ({
   withAdminAuth: (handler: unknown) => handler,
+  auth: () => ({ user: { role: "admin" } }), // Ensure auth mock if needed
 }));
 
 const mockPrisma = prisma as unknown as {
-  category: {
+  categories: {
     findMany: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
@@ -67,8 +68,8 @@ describe("Categories API", () => {
         },
       ];
 
-      mockPrisma.category.findMany.mockResolvedValue(mockCategories);
-      mockPrisma.category.count.mockResolvedValue(2);
+      mockPrisma.categories.findMany.mockResolvedValue(mockCategories);
+      mockPrisma.categories.count.mockResolvedValue(2);
 
       const request = new NextRequest(
         "http://localhost:3000/api/categories?page=1&limit=10"
@@ -85,7 +86,7 @@ describe("Categories API", () => {
     });
 
     it("debe aplicar búsqueda por nombre", async () => {
-      mockPrisma.category.findMany.mockResolvedValue([
+      mockPrisma.categories.findMany.mockResolvedValue([
         {
           id: "cat-1",
           name: "Electrónica",
@@ -94,14 +95,14 @@ describe("Categories API", () => {
           updatedAt: new Date(),
         },
       ]);
-      mockPrisma.category.count.mockResolvedValue(1);
+      mockPrisma.categories.count.mockResolvedValue(1);
 
       const request = new NextRequest(
         "http://localhost:3000/api/categories?search=Electr"
       );
       await GET(request);
 
-      expect(mockPrisma.category.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.categories.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
@@ -115,7 +116,7 @@ describe("Categories API", () => {
     });
 
     it("debe incluir conteo de productos si se solicita", async () => {
-      mockPrisma.category.findMany.mockResolvedValue([
+      mockPrisma.categories.findMany.mockResolvedValue([
         {
           id: "cat-1",
           name: "Electrónica",
@@ -125,7 +126,7 @@ describe("Categories API", () => {
           _count: { products: 5 },
         },
       ]);
-      mockPrisma.category.count.mockResolvedValue(1);
+      mockPrisma.categories.count.mockResolvedValue(1);
 
       const request = new NextRequest(
         "http://localhost:3000/api/categories?includeProductCount=true"
@@ -137,8 +138,8 @@ describe("Categories API", () => {
     });
 
     it("debe calcular totalPages correctamente", async () => {
-      mockPrisma.category.findMany.mockResolvedValue([]);
-      mockPrisma.category.count.mockResolvedValue(25);
+      mockPrisma.categories.findMany.mockResolvedValue([]);
+      mockPrisma.categories.count.mockResolvedValue(25);
 
       const request = new NextRequest(
         "http://localhost:3000/api/categories?page=1&limit=10"
@@ -171,8 +172,8 @@ describe("Categories API", () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.category.findUnique.mockResolvedValue(null);
-      mockPrisma.category.create.mockResolvedValue(newCategory);
+      mockPrisma.categories.findUnique.mockResolvedValue(null);
+      mockPrisma.categories.create.mockResolvedValue(newCategory);
 
       const request = new NextRequest("http://localhost:3000/api/categories", {
         method: "POST",
@@ -194,7 +195,7 @@ describe("Categories API", () => {
     });
 
     it("debe retornar 409 si ya existe categoría con ese nombre", async () => {
-      mockPrisma.category.findUnique.mockResolvedValue({
+      mockPrisma.categories.findUnique.mockResolvedValue({
         id: "cat-existing",
         name: "Existente",
         description: null,
@@ -248,8 +249,8 @@ describe("Categories API", () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.category.findUnique.mockResolvedValue(null);
-      mockPrisma.category.create.mockResolvedValue(newCategory);
+      mockPrisma.categories.findUnique.mockResolvedValue(null);
+      mockPrisma.categories.create.mockResolvedValue(newCategory);
 
       const request = new NextRequest("http://localhost:3000/api/categories", {
         method: "POST",

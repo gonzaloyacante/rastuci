@@ -63,7 +63,20 @@ describe("CA API Endpoints", () => {
         const getProvinceCode = (provinceName: string): string | null => {
             const normalizedName = provinceName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-            for (const [code, name] of Object.entries(provinceCodes)) {
+            // Sort by length slightly helps, but better to check exact match first if possible.
+            // Or just iterate `provinceCodes` in a way that prioritizes CABA if needed.
+            // Since this is a test utility, simple length sort is usually enough for this subset.
+            const entries = Object.entries(provinceCodes).sort((a, b) => b[1].length - a[1].length);
+
+            for (const [code, name] of entries) {
+                const normalizedProvince = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                // Use strict equality first or confirm strict containment
+                if (normalizedName === normalizedProvince) {
+                    return code;
+                }
+            }
+            // Fallback for partial?
+            for (const [code, name] of entries) {
                 const normalizedProvince = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 if (normalizedProvince.includes(normalizedName) || normalizedName.includes(normalizedProvince)) {
                     return code;

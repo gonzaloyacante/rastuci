@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { HomeSettings, HomeSettingsSchema, defaultHomeSettings } from "@/lib/validation/home";
+import { ImageUploader } from "@/components/ui/ImageUploader";
 import { Button } from "@/components/ui/Button";
 import { IconPicker } from "@/components/ui/IconPicker";
 import * as Icons from "lucide-react";
@@ -21,7 +22,7 @@ export default function HomeForm({ initial }: Props) {
   const [values, setValues] = useState<HomeSettings>(initial ?? defaultHomeSettings);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  
+
   // Estado para el modal de selección de iconos
   const [iconPickerOpen, setIconPickerOpen] = useState<string | null>(null);
 
@@ -31,23 +32,32 @@ export default function HomeForm({ initial }: Props) {
   useEffect(() => {
     if (initial) {
       setValues(initial);
-      // Convertir array a objetos con ID
-      setBenefitItems(initial.benefits.map((benefit, idx) => ({
-        id: `benefit-${Date.now()}-${idx}-${Math.random()}`,
-        icon: benefit.icon,
-        title: benefit.title,
-        description: benefit.description
-      })));
+      initBenefits(initial.benefits);
     } else {
-      // Inicializar con beneficios por defecto
-      setBenefitItems(defaultHomeSettings.benefits.map((benefit, idx) => ({
-        id: `benefit-default-${idx}-${Math.random()}`,
-        icon: benefit.icon,
-        title: benefit.title,
-        description: benefit.description
-      })));
+      // Fetch from API
+      fetch("/api/home")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setValues(data.data);
+            initBenefits(data.data.benefits);
+          } else {
+            // If allow defaults on error
+            initBenefits(defaultHomeSettings.benefits);
+          }
+        })
+        .catch(() => initBenefits(defaultHomeSettings.benefits));
     }
   }, [initial]);
+
+  const initBenefits = (benefits: HomeSettings["benefits"]) => {
+    setBenefitItems(benefits.map((benefit, idx) => ({
+      id: `benefit-${Date.now()}-${idx}-${Math.random()}`,
+      icon: benefit.icon,
+      title: benefit.title,
+      description: benefit.description
+    })));
+  };
 
   // Sincronizar los beneficios con IDs con el estado principal
   useEffect(() => {
@@ -65,7 +75,7 @@ export default function HomeForm({ initial }: Props) {
     setValues((v) => ({ ...v, [key]: val }));
 
   const updateBenefitItem = (id: string, key: "icon" | "title" | "description", value: string) => {
-    setBenefitItems(items => items.map(item => 
+    setBenefitItems(items => items.map(item =>
       item.id === id ? { ...item, [key]: value } : item
     ));
   };
@@ -99,7 +109,7 @@ export default function HomeForm({ initial }: Props) {
         body: JSON.stringify(parsed.data),
       });
       const json = await res.json();
-      if (!json.success) {throw new Error(json.error?.message || "Error al guardar");}
+      if (!json.success) { throw new Error(json.error?.message || "Error al guardar"); }
       setMessage("Guardado correctamente");
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : "Error inesperado");
@@ -111,6 +121,16 @@ export default function HomeForm({ initial }: Props) {
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       <section className="grid md:grid-cols-2 gap-6">
+        <div className="md:col-span-2">
+          <ImageUploader
+            label="Imagen de Fondo del Hero"
+            value={values.heroImage}
+            onChange={(url) => update("heroImage", url ?? undefined)}
+          />
+          <p className="text-xs text-muted mt-1">
+            Recomendado: 1920x1080px o superior. Formatos: JPG, WEBP.
+          </p>
+        </div>
         <div>
           <label className="block text-sm font-medium mb-1">Título del Hero</label>
           <input
@@ -174,7 +194,7 @@ export default function HomeForm({ initial }: Props) {
         <div className="space-y-4">
           {benefitItems.map((benefitItem) => {
             const IconComponent = (Icons as any)[benefitItem.icon];
-            
+
             return (
               <div key={benefitItem.id} className="grid md:grid-cols-12 gap-3 items-end">
                 <div className="md:col-span-2">
@@ -217,7 +237,7 @@ export default function HomeForm({ initial }: Props) {
           <Button type="button" onClick={addBenefitItem}>Agregar beneficio</Button>
         </div>
       </section>
-      
+
       {/* Icon Picker Modal */}
       {iconPickerOpen && (
         <IconPicker

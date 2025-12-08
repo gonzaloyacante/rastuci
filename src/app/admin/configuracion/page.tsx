@@ -3,6 +3,7 @@
 import { PageHeaderWithActions, TabLayout, TabPanel } from "@/components/admin";
 import ContactForm from "@/components/forms/ContactForm";
 import HomeForm from "@/components/forms/HomeForm";
+import StoreForm from "@/components/forms/StoreForm";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -12,7 +13,7 @@ import { Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
-type TabType = "home" | "contacto" | "faqs" | "envios";
+type TabType = "tienda" | "home" | "contacto" | "faqs" | "envios";
 
 interface FAQ {
   question: string;
@@ -21,7 +22,7 @@ interface FAQ {
 
 export default function ConfiguracionPage() {
   useDocumentTitle({ title: "Configuración del Sitio" });
-  const [activeTab, setActiveTab] = useState<TabType>("home");
+  const [activeTab, setActiveTab] = useState<TabType>("tienda");
   const [loading, setLoading] = useState(false);
 
   // FAQs state
@@ -83,14 +84,23 @@ export default function ConfiguracionPage() {
 
       <TabLayout
         tabs={[
+          { id: "tienda", label: "Tienda y Envíos" },
           { id: "home", label: "Inicio" },
           { id: "contacto", label: "Contacto" },
           { id: "faqs", label: "FAQs" },
-          { id: "envios", label: "Envío Gratis" },
+          { id: "envios", label: "Envío Gratis (Promo)" },
         ]}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as TabType)}
       >
+        <TabPanel id="tienda" activeTab={activeTab}>
+          <Card>
+            <CardContent className="p-6">
+              <StoreForm />
+            </CardContent>
+          </Card>
+        </TabPanel>
+
         <TabPanel id="home" activeTab={activeTab}>
           <Card>
             <CardContent className="p-6">
@@ -199,7 +209,7 @@ export default function ConfiguracionPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Promoción de Envío Gratis</h3>
                   <p className="text-sm text-muted mb-4">
-                    Activa esta opción para ofrecer envío gratis en todos los pedidos. 
+                    Activa esta opción para ofrecer envío gratis en todos los pedidos.
                     El costo real del envío se mostrará tachado como descuento en el checkout.
                   </p>
                 </div>

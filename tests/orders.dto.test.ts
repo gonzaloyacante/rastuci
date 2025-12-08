@@ -12,14 +12,14 @@ describe("mapOrderToDTO", () => {
       status: "PENDING",
       createdAt: new Date("2025-01-01T00:00:00Z"),
       updatedAt: new Date("2025-01-02T00:00:00Z"),
-      items: [
+      order_items: [
         {
           id: "item_1",
           quantity: 2,
           price: 25,
           orderId: "ord_1",
           productId: "prod_1",
-          product: {
+          products: {
             id: "prod_1",
             name: "Sample Product",
             description: null,
@@ -29,7 +29,7 @@ describe("mapOrderToDTO", () => {
             categoryId: "cat_1",
             createdAt: new Date("2024-12-31T00:00:00Z"),
             updatedAt: new Date("2025-01-01T00:00:00Z"),
-            category: {
+            categories: {
               id: "cat_1",
               name: "Cat",
               description: null,

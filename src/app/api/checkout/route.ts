@@ -1,8 +1,13 @@
 import {
   correoArgentinoService,
-  PROVINCE_NAMES,
   type ProvinceCode,
 } from "@/lib/correo-argentino-service";
+import {
+  ORDER_STATUS,
+  PAYMENT_METHODS,
+  PROVINCE_CODE_MAP,
+  PROVINCIAS
+} from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { createPreference } from "@/lib/mercadopago";
 import prisma from "@/lib/prisma";
@@ -115,12 +120,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 🔴 IMPORTANTE: Para MercadoPago NO crear pedido todavía
     // El pedido se creará cuando el webhook confirme el pago exitoso
     // Para efectivo, crear pedido inmediatamente porque no requiere confirmación externa
-    
+
     let order;
     let orderId: string;
 
     // Si es pago en efectivo, crear pedido ahora
-    if (paymentMethod === "cash") {
+    if (paymentMethod === PAYMENT_METHODS.CASH) {
       orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       order = await prisma.orders.create({
         data: {
@@ -130,10 +135,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           customerEmail: customer.email,
           customerAddress: `${customer.address}, ${customer.city}, ${customer.province}`,
           total: orderData.total,
-          status: "PENDING",
+          status: ORDER_STATUS.PENDING,
           mpPaymentId: null,
           mpPreferenceId: null,
-          mpStatus: "cash_payment",
+          mpStatus: "cash_payment", // Custom status for cash
           updatedAt: new Date(),
           order_items: {
             create: items.map((item: OrderItem) => ({
@@ -178,8 +183,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           // Mapear código de provincia
           let provinceCode: ProvinceCode = "B"; // Default Buenos Aires
           if (customer.province) {
-            // Import PROVINCE_NAMES to find key by value
-            const entry = Object.entries(PROVINCE_NAMES).find(
+            // Import PROVINCE_CODE_MAP to find key by value
+            const entry = Object.entries(PROVINCE_CODE_MAP).find(
               ([_, name]) =>
                 name.toLowerCase() === customer.province?.toLowerCase() ||
                 name
@@ -217,12 +222,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               address:
                 deliveryType === "D"
                   ? {
-                      streetName: customer.address,
-                      streetNumber: customer.address.match(/\d+/)?.[0] || "0", // Extract number or default
-                      city: customer.city,
-                      provinceCode: provinceCode,
-                      postalCode: customer.postalCode,
-                    }
+                    streetName: customer.address,
+                    streetNumber: customer.address.match(/\d+/)?.[0] || "0", // Extract number or default
+                    city: customer.city,
+                    provinceCode: provinceCode,
+                    postalCode: customer.postalCode,
+                  }
                   : undefined,
               weight: orderData.weight || 1000,
               height: orderData.height || 10,
@@ -267,7 +272,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({
         success: true,
         orderId: order.id,
-        paymentMethod: "cash",
+        paymentMethod: PAYMENT_METHODS.CASH,
         message:
           "Pedido creado exitosamente. Te confirmaremos por WhatsApp cuando esté listo para retirar.",
       });
@@ -275,7 +280,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Si es MercadoPago, crear preferencia y redirigir
     // 🔴 NO crear pedido todavía - se creará cuando el webhook confirme el pago
-    if (paymentMethod === "mercadopago") {
+    if (paymentMethod === PAYMENT_METHODS.MERCADOPAGO) {
       const origin =
         request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
 
@@ -348,6 +353,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               price: item.price,
               size: item.size || null,
               color: item.color || null,
+              products: {
+                connect: { id: item.productId },
+              },
             }))),
           },
         });
@@ -388,7 +396,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: true,
         preferenceId: preference.id,
         initPoint: preference.init_point,
-        paymentMethod: "mercadopago",
+        paymentMethod: PAYMENT_METHODS.MERCADOPAGO,
       });
     }
 

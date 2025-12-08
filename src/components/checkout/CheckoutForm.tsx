@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
+import { PAYMENT_METHODS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { CreditCard, Loader2, Lock, Shield } from "lucide-react";
 import { useState } from "react";
@@ -189,13 +190,13 @@ export function CheckoutForm({
           <PaymentMethodSelector
             selectedMethod={selectedPaymentMethod}
             onMethodChange={setSelectedPaymentMethod}
-            allowedMethods={["mercadopago", "cash"]}
+            allowedMethods={[PAYMENT_METHODS.MERCADOPAGO, PAYMENT_METHODS.CASH]}
           />
 
           {/* Nota: el formulario de tarjeta se mantiene en el repo pero no se muestra en el flujo simplificado */}
 
           {/* Información de efectivo */}
-          {selectedPaymentMethod === "cash" && (
+          {selectedPaymentMethod === PAYMENT_METHODS.CASH && (
             <div className="p-4 surface rounded-lg border border-muted">
               <h4 className="font-medium mb-2">Pago en efectivo</h4>
               <p className="text-sm muted mb-3">

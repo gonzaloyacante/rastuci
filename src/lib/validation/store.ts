@@ -50,29 +50,4 @@ export const defaultStoreSettings: StoreSettings = {
 /**
  * Province code mapping for Correo Argentino
  */
-export const provinceCodeMap: Record<string, string> = {
-    A: "Salta",
-    B: "Buenos Aires",
-    C: "Ciudad Autónoma de Buenos Aires",
-    D: "San Luis",
-    E: "Entre Ríos",
-    F: "La Rioja",
-    G: "Santiago del Estero",
-    H: "Chaco",
-    J: "San Juan",
-    K: "Catamarca",
-    L: "La Pampa",
-    M: "Mendoza",
-    N: "Misiones",
-    P: "Formosa",
-    Q: "Neuquén",
-    R: "Río Negro",
-    S: "Santa Fe",
-    T: "Tucumán",
-    U: "Chubut",
-    V: "Tierra del Fuego",
-    W: "Corrientes",
-    X: "Córdoba",
-    Y: "Jujuy",
-    Z: "Santa Cruz",
-};
+// provinceCodeMap moved to @/lib/constants as PROVINCE_CODE_MAP

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { useCorreoArgentino } from '@/hooks/useCorreoArgentino';
-import type { ProvinceCode } from '@/lib/correo-argentino-service';
+import { PROVINCIAS, type ProvinceCode } from "@/lib/constants";
+import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { normalizeAgency, type NormalizedAgency } from '@/utils/agency-helpers';
 import {
   AlertCircle,
@@ -21,32 +22,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-const PROVINCIAS = [
-  { code: 'A', name: 'Salta' },
-  { code: 'B', name: 'Buenos Aires' },
-  { code: 'C', name: 'Ciudad de Buenos Aires' },
-  { code: 'D', name: 'San Luis' },
-  { code: 'E', name: 'Entre Ríos' },
-  { code: 'F', name: 'La Rioja' },
-  { code: 'G', name: 'Santiago del Estero' },
-  { code: 'H', name: 'Chaco' },
-  { code: 'J', name: 'San Juan' },
-  { code: 'K', name: 'Catamarca' },
-  { code: 'L', name: 'La Pampa' },
-  { code: 'M', name: 'Mendoza' },
-  { code: 'N', name: 'Misiones' },
-  { code: 'P', name: 'Formosa' },
-  { code: 'Q', name: 'Neuquén' },
-  { code: 'R', name: 'Río Negro' },
-  { code: 'S', name: 'Santa Fe' },
-  { code: 'T', name: 'Tucumán' },
-  { code: 'U', name: 'Chubut' },
-  { code: 'V', name: 'Tierra del Fuego' },
-  { code: 'W', name: 'Corrientes' },
-  { code: 'X', name: 'Córdoba' },
-  { code: 'Y', name: 'Jujuy' },
-  { code: 'Z', name: 'Santa Cruz' },
-];
+// PROVINCIAS imported from @/lib/constants
 
 export default function SucursalesCAPage() {
   const [agencies, setAgencies] = useState<NormalizedAgency[]>([]);
@@ -59,7 +35,7 @@ export default function SucursalesCAPage() {
   const { getAgencies } = useCorreoArgentino();
 
   const loadAgencies = useCallback(async (province: ProvinceCode) => {
-    if (!province) {return;}
+    if (!province) { return; }
 
     try {
       setLoading(true);
@@ -139,7 +115,7 @@ export default function SucursalesCAPage() {
   };
 
   const exportToCSV = () => {
-    if (filteredAgencies.length === 0) {return;}
+    if (filteredAgencies.length === 0) { return; }
 
     const headers = [
       'Código',

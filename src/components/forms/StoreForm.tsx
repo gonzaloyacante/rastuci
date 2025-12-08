@@ -1,24 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import {
     type StoreSettings,
-    provinceCodeMap,
+    defaultStoreSettings,
 } from "@/lib/validation/store";
+import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
 import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
 
 interface StoreFormProps {
-    initial: StoreSettings;
+    initial?: StoreSettings;
     onSave?: (data: StoreSettings) => void;
 }
 
 export default function StoreForm({ initial, onSave }: StoreFormProps) {
-    const [data, setData] = useState<StoreSettings>(initial);
+    const [data, setData] = useState<StoreSettings>(initial || defaultStoreSettings);
     const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(!initial);
+
+    useEffect(() => {
+        if (!initial) {
+            fetch("/api/settings/store")
+                .then((res) => res.json())
+                .then((json) => {
+                    if (json.success) {
+                        setData(json.data);
+                    }
+                })
+                .catch((e) => console.error(e))
+                .finally(() => setLoading(false));
+        }
+    }, [initial]);
+
+    if (loading) return <div className="p-4">Cargando configuración...</div>;
 
     const handleChange = (field: keyof StoreSettings, value: string) => {
         setData((prev) => ({ ...prev, [field]: value }));

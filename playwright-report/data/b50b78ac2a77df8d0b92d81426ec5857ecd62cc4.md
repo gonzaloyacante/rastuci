@@ -1,0 +1,252 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Saltar al contenido principal" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - link "Saltar a la navegación" [ref=e4] [cursor=pointer]:
+      - /url: "#navigation"
+    - banner [ref=e5]:
+      - generic [ref=e7]:
+        - link "R Rastuci" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e9]: R
+          - generic [ref=e10]: Rastuci
+        - generic [ref=e11]:
+          - link "Ver favoritos (0 productos)" [ref=e12] [cursor=pointer]:
+            - /url: /favoritos
+            - img [ref=e13]
+          - link "Ver carrito (0 productos)" [ref=e15] [cursor=pointer]:
+            - /url: /carrito
+            - img [ref=e16]
+          - button "Abrir menú móvil" [ref=e20] [cursor=pointer]:
+            - img [ref=e21]
+    - main [active] [ref=e23]:
+      - main [ref=e24]:
+        - region [ref=e25]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: ✨ Nueva temporada
+            - img "Rastući" [ref=e30]
+            - paragraph [ref=e31]: Ropa infantil de calidad, comodidad y estilo para los más pequeños
+            - generic [ref=e32]:
+              - link "Ver Productos" [ref=e33] [cursor=pointer]:
+                - /url: /productos
+                - button "Ver Productos" [ref=e34]
+              - link "Explorar categorías" [ref=e35] [cursor=pointer]:
+                - /url: "#categorias"
+                - button "Explorar categorías" [ref=e36]
+        - region "Nuestras Categorías" [ref=e37]:
+          - generic [ref=e38]:
+            - heading "Nuestras Categorías" [level=2] [ref=e39]
+            - paragraph [ref=e40]: Explorá nuestras categorías de productos
+            - generic [ref=e41]:
+              - link "Ver productos de la categoría Ropa de Bebés" [ref=e42] [cursor=pointer]:
+                - /url: /productos?categoryId=h0bflw0qk8r13p3b3nlimgq0
+                - generic [ref=e45]:
+                  - heading "Ropa de Bebés" [level=3] [ref=e46]
+                  - generic [ref=e47]:
+                    - generic [ref=e48]: Ver
+                    - img [ref=e49]
+              - link "Ver productos de la categoría Ropa de Niñas" [ref=e51] [cursor=pointer]:
+                - /url: /productos?categoryId=h5azwlpn29cshha660et0iga
+                - generic [ref=e54]:
+                  - heading "Ropa de Niñas" [level=3] [ref=e55]
+                  - generic [ref=e56]:
+                    - generic [ref=e57]: Ver
+                    - img [ref=e58]
+              - link "Ver productos de la categoría Ropa de Niños" [ref=e60] [cursor=pointer]:
+                - /url: /productos?categoryId=oft4ggqu8ucb2lbatpzjt9z5
+                - generic [ref=e63]:
+                  - heading "Ropa de Niños" [level=3] [ref=e64]
+                  - generic [ref=e65]:
+                    - generic [ref=e66]: Ver
+                    - img [ref=e67]
+        - region "Productos en Oferta" [ref=e69]:
+          - generic [ref=e70]:
+            - heading "Productos en Oferta" [level=2] [ref=e71]
+            - paragraph [ref=e72]: Descubrí los favoritos de esta semana con descuentos exclusivos.
+            - generic [ref=e73]:
+              - article [ref=e74] [cursor=pointer]:
+                - generic [ref=e75]: "-20% OFF"
+                - link "Ver detalles de Manta Polar con Capucha" [ref=e76]:
+                  - /url: /productos/cvj7at1ptergwxahbkdhnpno
+                  - img "Manta Polar con Capucha - Ropa de Bebés" [ref=e79]
+                  - generic [ref=e80]:
+                    - paragraph [ref=e81]: Ropa de Bebés
+                    - heading "Manta Polar con Capucha" [level=3] [ref=e82]
+                    - paragraph [ref=e83]: Manta de polar premium con capucha bordada. Tamaño 75x75cm, perfecta para abrigar al bebé en el cochecito o en casa. Súper suave y calientita.
+                    - generic [ref=e85]: 75x75 cm
+                    - generic [ref=e87]:
+                      - generic [ref=e88]:
+                        - generic [ref=e89]:
+                          - generic [ref=e90]: $6.400
+                          - generic [ref=e91]: $5.120
+                        - button "Agregar al carrito" [ref=e92]:
+                          - img [ref=e93]
+                      - generic [ref=e97]:
+                        - generic [ref=e98]:
+                          - img [ref=e99]
+                          - generic [ref=e101]: "4.9"
+                          - generic [ref=e102]: (52)
+                        - generic [ref=e103]: En stock
+                - button "Agregar Manta Polar con Capucha a favoritos" [ref=e104]:
+                  - img [ref=e105]
+              - article [ref=e107] [cursor=pointer]:
+                - generic [ref=e108]: "-20% OFF"
+                - link "Ver detalles de Enterito Osito Polar" [ref=e109]:
+                  - /url: /productos/y7ryyrx93n4m57ri5lvuxezw
+                  - img "Enterito Osito Polar - Ropa de Bebés" [ref=e112]
+                  - generic [ref=e113]:
+                    - paragraph [ref=e114]: Ropa de Bebés
+                    - heading "Enterito Osito Polar" [level=3] [ref=e115]
+                    - paragraph [ref=e116]: Enterito de polar súper suave con capucha de osito. Incluye piecitos cerrados y cierre frontal completo. Ideal para los días fríos.
+                    - generic [ref=e117]:
+                      - generic [ref=e118]: 0-3 meses
+                      - generic [ref=e119]: 3-6 meses
+                      - generic [ref=e120]: 6-9 meses
+                    - generic [ref=e121]:
+                      - generic [ref=e122]:
+                        - generic [ref=e123]:
+                          - generic [ref=e124]: $8.500
+                          - generic [ref=e125]: $6.800
+                        - button "Agregar al carrito" [ref=e126]:
+                          - img [ref=e127]
+                      - generic [ref=e131]:
+                        - generic [ref=e132]:
+                          - img [ref=e133]
+                          - generic [ref=e135]: "5.0"
+                          - generic [ref=e136]: (89)
+                        - generic [ref=e137]: En stock
+                - button "Agregar Enterito Osito Polar a favoritos" [ref=e138]:
+                  - img [ref=e139]
+              - article [ref=e141] [cursor=pointer]:
+                - generic [ref=e142]: "-20% OFF"
+                - link "Ver detalles de Conjunto Deportivo Nike Style" [ref=e143]:
+                  - /url: /productos/fuw177q7ouc8ke8prze89orr
+                  - img "Conjunto Deportivo Nike Style - Ropa de Niños" [ref=e146]
+                  - generic [ref=e147]:
+                    - paragraph [ref=e148]: Ropa de Niños
+                    - heading "Conjunto Deportivo Nike Style" [level=3] [ref=e149]
+                    - paragraph [ref=e150]: "Conjunto deportivo inspirado en las grandes marcas: buzo canguro con capucha y pantalón jogger. Tela francesa de primera calidad con interior afelpado."
+                    - generic [ref=e151]:
+                      - generic [ref=e152]: "6"
+                      - generic [ref=e153]: "8"
+                      - generic [ref=e154]: "10"
+                      - generic [ref=e155]: "12"
+                      - generic [ref=e156]: "+1"
+                    - generic [ref=e157]:
+                      - generic [ref=e158]:
+                        - generic [ref=e159]:
+                          - generic [ref=e160]: $8.900
+                          - generic [ref=e161]: $7.120
+                        - button "Agregar al carrito" [ref=e162]:
+                          - img [ref=e163]
+                      - generic [ref=e167]:
+                        - generic [ref=e168]:
+                          - img [ref=e169]
+                          - generic [ref=e171]: "4.7"
+                          - generic [ref=e172]: (45)
+                        - generic [ref=e173]: En stock
+                - button "Agregar Conjunto Deportivo Nike Style a favoritos" [ref=e174]:
+                  - img [ref=e175]
+              - article [ref=e177] [cursor=pointer]:
+                - generic [ref=e178]: "-25% OFF"
+                - link "Ver detalles de Remera Unicornio con Lentejuelas" [ref=e179]:
+                  - /url: /productos/gkh5iwpsqrx0befveklnwa9g
+                  - img "Remera Unicornio con Lentejuelas - Ropa de Niñas" [ref=e182]
+                  - generic [ref=e183]:
+                    - paragraph [ref=e184]: Ropa de Niñas
+                    - heading "Remera Unicornio con Lentejuelas" [level=3] [ref=e185]
+                    - paragraph [ref=e186]: Remera mágica con diseño de unicornio en lentejuelas reversibles. Al pasar la mano cambia de color. Confeccionada en algodón suave.
+                    - generic [ref=e187]:
+                      - generic [ref=e188]: "2"
+                      - generic [ref=e189]: "4"
+                      - generic [ref=e190]: "6"
+                      - generic [ref=e191]: "8"
+                      - generic [ref=e192]: "+1"
+                    - generic [ref=e193]:
+                      - generic [ref=e194]:
+                        - generic [ref=e195]:
+                          - generic [ref=e196]: $4.800
+                          - generic [ref=e197]: $3.600
+                        - button "Agregar al carrito" [ref=e198]:
+                          - img [ref=e199]
+                      - generic [ref=e203]:
+                        - generic [ref=e204]:
+                          - img [ref=e205]
+                          - generic [ref=e207]: "4.9"
+                          - generic [ref=e208]: (67)
+                        - generic [ref=e209]: En stock
+                - button "Agregar Remera Unicornio con Lentejuelas a favoritos" [ref=e210]:
+                  - img [ref=e211]
+            - link "Ver todas las ofertas" [ref=e214] [cursor=pointer]:
+              - /url: /productos?onSale=true
+              - text: Ver todas las ofertas
+              - img [ref=e215]
+        - region "Beneficios de compra" [ref=e217]:
+          - generic [ref=e218]:
+            - heading "Beneficios de compra" [level=2] [ref=e219]
+            - generic [ref=e220]:
+              - generic [ref=e221]:
+                - img [ref=e222]
+                - heading "Envíos a todo el país" [level=3] [ref=e227]
+                - paragraph [ref=e228]: Recibí tu compra donde quieras.
+              - generic [ref=e229]:
+                - img [ref=e230]
+                - heading "3 Cuotas sin interés" [level=3] [ref=e232]
+                - paragraph [ref=e233]: Con todas las tarjetas de crédito.
+              - generic [ref=e234]:
+                - img [ref=e235]
+                - heading "Compra Segura" [level=3] [ref=e237]
+                - paragraph [ref=e238]: Tus datos siempre protegidos.
+    - contentinfo [ref=e239]:
+      - generic [ref=e240]:
+        - generic [ref=e241]:
+          - heading "Rastući" [level=3] [ref=e242]
+          - paragraph [ref=e243]: Ropa con amor para los más peques.
+        - generic [ref=e244]:
+          - heading "Navegación" [level=4] [ref=e245]
+          - list [ref=e246]:
+            - listitem [ref=e247]:
+              - link "Inicio" [ref=e248] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e249]:
+              - link "Productos" [ref=e250] [cursor=pointer]:
+                - /url: /productos
+            - listitem [ref=e251]:
+              - link "Contacto" [ref=e252] [cursor=pointer]:
+                - /url: /contacto
+        - generic [ref=e253]:
+          - heading "Legal" [level=4] [ref=e254]
+          - list [ref=e255]:
+            - listitem [ref=e256]:
+              - link "Términos y Condiciones" [ref=e257] [cursor=pointer]:
+                - /url: /legal/terminos
+            - listitem [ref=e258]:
+              - link "Política de Privacidad" [ref=e259] [cursor=pointer]:
+                - /url: /legal/privacidad
+            - listitem [ref=e260]:
+              - link "Defensa del Consumidor" [ref=e261] [cursor=pointer]:
+                - /url: /contacto
+        - generic [ref=e262]:
+          - heading "Contacto" [level=4] [ref=e263]
+          - paragraph [ref=e264]: contacto@rastuci.com
+          - paragraph [ref=e265]: +54 9 11 1234-5678
+        - generic [ref=e266]:
+          - heading "Tema" [level=4] [ref=e267]
+          - generic [ref=e268]:
+            - button "Modo claro" [ref=e269] [cursor=pointer]:
+              - img [ref=e270]
+              - generic [ref=e276]: Claro
+            - button "Tema del sistema" [ref=e277] [cursor=pointer]:
+              - img [ref=e278]
+              - generic [ref=e280]: Sistema
+            - button "Modo oscuro" [ref=e281] [cursor=pointer]:
+              - img [ref=e282]
+              - generic [ref=e284]: Oscuro
+      - paragraph [ref=e286]: © 2025 Rastući. Todos los derechos reservados.
+  - button "Open Next.js Dev Tools" [ref=e292] [cursor=pointer]:
+    - img [ref=e293]
+  - alert [ref=e298]
+```

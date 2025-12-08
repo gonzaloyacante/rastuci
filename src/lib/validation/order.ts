@@ -1,32 +1,40 @@
+import { ORDER_STATUS } from "@/lib/constants";
 import { z } from "zod";
+
+export const OrderStatusSchema = z.enum(
+  Object.values(ORDER_STATUS) as [string, ...string[]]
+);
 
 export const OrdersQuerySchema = z.object({
   page: z
-    .preprocess((v) => (v === null || v === undefined ? undefined : Number(v)), z.number().int().min(1).optional())
-    .default(1),
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : 1)),
   limit: z
-    .preprocess((v) => (v === null || v === undefined ? undefined : Number(v)), z.number().int().min(1).max(50).optional())
-    .default(10),
-  status: z.enum(["PENDING", "PROCESSED", "DELIVERED"]).optional(),
-  search: z.string().trim().min(1).max(100).optional(),
-});
-
-export const OrderItemSchema = z.object({
-  productId: z.string().trim().min(1),
-  quantity: z.number().int().min(1),
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : 10)),
+  status: OrderStatusSchema.optional(),
+  search: z.string().optional(),
 });
 
 export const OrderCreateSchema = z.object({
-  customerName: z.string().trim().min(1).max(120),
-  customerPhone: z.string().trim().min(1).max(40),
-  customerAddress: z.string().trim().min(1).max(300).optional(),
-  items: z.array(OrderItemSchema).min(1),
-});
-
-export const OrderStatusUpdateSchema = z.object({
-  status: z.enum(["PENDING", "PROCESSED", "DELIVERED"]),
+  customerName: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
+  customerPhone: z.string().min(8, "Teléfono inválido"),
+  customerAddress: z.string().min(5, "Dirección inválida"),
+  items: z.array(
+    z.object({
+      productId: z.string(),
+      quantity: z.number().int().positive(),
+    })
+  ),
+  status: OrderStatusSchema.optional(),
 });
 
 export type OrdersQuery = z.infer<typeof OrdersQuerySchema>;
 export type OrderCreate = z.infer<typeof OrderCreateSchema>;
+
+export const OrderStatusUpdateSchema = z.object({
+  status: OrderStatusSchema,
+});
 export type OrderStatusUpdate = z.infer<typeof OrderStatusUpdateSchema>;

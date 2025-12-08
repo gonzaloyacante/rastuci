@@ -3,7 +3,8 @@ import { normalizeApiError } from "@/lib/errors";
 import { sanitizers, validateAndSanitize } from "@/lib/input-sanitization";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { RATE_LIMITS } from "@/lib/rateLimiterConfig";
 import {
   ProductCreateSchema,
   ProductsQuerySchema,
@@ -18,8 +19,8 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<PaginatedResponse<Product>>>> {
   try {
     // Rate limiting
-    const rateLimitPassed = await checkRateLimit(request, RATE_LIMITS.products);
-    if (!rateLimitPassed) {
+    const rl = await checkRateLimit(request, RATE_LIMITS.products);
+    if (!rl.ok) {
       return fail("RATE_LIMITED", "Too many requests", 429);
     }
 
@@ -182,8 +183,8 @@ export async function POST(
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
     // Rate limiting para creación
-    const rateLimitPassed = await checkRateLimit(request, RATE_LIMITS.adminApi);
-    if (!rateLimitPassed) {
+    const rl = await checkRateLimit(request, RATE_LIMITS.adminApi);
+    if (!rl.ok) {
       return fail("RATE_LIMITED", "Too many requests", 429);
     }
 
@@ -206,13 +207,13 @@ export async function POST(
         typeof validation.error === "string"
           ? validation.error
           : JSON.stringify(validation.error);
-      
+
       // DEBUG: Log del error de validación
-      logger.error("POST /api/products - Error de validación:", { 
+      logger.error("POST /api/products - Error de validación:", {
         error: validation.error,
-        body 
+        body
       });
-      
+
       return fail("BAD_REQUEST", `validación: ${msg}`, 400);
     }
 

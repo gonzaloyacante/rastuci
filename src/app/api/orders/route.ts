@@ -17,7 +17,7 @@ export async function GET(
   try {
     const _requestId = getRequestId(request.headers);
     // Rate limit per IP
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/orders"),
       ...getPreset("publicRead"),
     });
@@ -125,7 +125,7 @@ export async function POST(
   try {
     const _requestId = getRequestId(request.headers);
     // Rate limit per IP for creating orders
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("POST", "/api/orders"),
       ...getPreset("mutatingLow"),
     });

@@ -1,0 +1,75 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Saltar al contenido principal" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - link "Saltar a la navegación" [ref=e4] [cursor=pointer]:
+      - /url: "#navigation"
+    - banner [ref=e5]:
+      - generic [ref=e7]:
+        - link "R Rastuci" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e9]: R
+          - generic [ref=e10]: Rastuci
+        - generic [ref=e11]:
+          - link "Ver favoritos (0 productos)" [ref=e12] [cursor=pointer]:
+            - /url: /favoritos
+            - img [ref=e13]
+          - link "Ver carrito (0 productos)" [ref=e15] [cursor=pointer]:
+            - /url: /carrito
+            - img [ref=e16]
+          - button "Abrir menú móvil" [ref=e20] [cursor=pointer]:
+            - img [ref=e21]
+    - main [ref=e23]
+    - contentinfo [ref=e94]:
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - heading "Rastući" [level=3] [ref=e97]
+          - paragraph [ref=e98]: Ropa con amor para los más peques.
+        - generic [ref=e99]:
+          - heading "Navegación" [level=4] [ref=e100]
+          - list [ref=e101]:
+            - listitem [ref=e102]:
+              - link "Inicio" [ref=e103] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e104]:
+              - link "Productos" [ref=e105] [cursor=pointer]:
+                - /url: /productos
+            - listitem [ref=e106]:
+              - link "Contacto" [ref=e107] [cursor=pointer]:
+                - /url: /contacto
+        - generic [ref=e108]:
+          - heading "Legal" [level=4] [ref=e109]
+          - list [ref=e110]:
+            - listitem [ref=e111]:
+              - link "Términos y Condiciones" [ref=e112] [cursor=pointer]:
+                - /url: /legal/terminos
+            - listitem [ref=e113]:
+              - link "Política de Privacidad" [ref=e114] [cursor=pointer]:
+                - /url: /legal/privacidad
+            - listitem [ref=e115]:
+              - link "Defensa del Consumidor" [ref=e116] [cursor=pointer]:
+                - /url: /contacto
+        - generic [ref=e117]:
+          - heading "Contacto" [level=4] [ref=e118]
+          - paragraph [ref=e119]: contacto@rastuci.com
+          - paragraph [ref=e120]: +54 9 11 1234-5678
+        - generic [ref=e121]:
+          - heading "Tema" [level=4] [ref=e122]
+          - generic [ref=e123]:
+            - button "Modo claro" [ref=e124] [cursor=pointer]:
+              - img [ref=e125]
+              - generic [ref=e131]: Claro
+            - button "Tema del sistema" [ref=e132] [cursor=pointer]:
+              - img [ref=e133]
+              - generic [ref=e135]: Sistema
+            - button "Modo oscuro" [ref=e136] [cursor=pointer]:
+              - img [ref=e137]
+              - generic [ref=e139]: Oscuro
+      - paragraph [ref=e141]: © 2025 Rastući. Todos los derechos reservados.
+  - button "Open Next.js Dev Tools" [ref=e147] [cursor=pointer]:
+    - img [ref=e148]
+  - alert [ref=e151]: Productos - Ropa Infantil de Calidad | Rastuci
+```

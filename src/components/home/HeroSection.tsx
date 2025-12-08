@@ -33,6 +33,17 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
   return (
     <section className="w-full" aria-labelledby="hero-title">
       <div className="relative h-[calc(100svh-4rem)] overflow-hidden surface flex items-center justify-center">
+        {home?.heroImage && (
+          <div className="absolute inset-0 z-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={home.heroImage}
+              alt="Hero Background"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+          </div>
+        )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center p-6 max-w-4xl mx-auto">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full surface-muted backdrop-blur border border-theme text-base-primary text-sm font-medium mb-6 shadow-sm">
             ✨ Nueva temporada
@@ -67,7 +78,7 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
                 {loading
                   ? "Ver Productos"
                   : home?.ctaPrimaryLabel ||
-                    defaultHomeSettings.ctaPrimaryLabel}
+                  defaultHomeSettings.ctaPrimaryLabel}
               </Button>
             </Link>
             <a
@@ -79,7 +90,7 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
                 {loading
                   ? "Explorar Categorías"
                   : home?.ctaSecondaryLabel ||
-                    defaultHomeSettings.ctaSecondaryLabel}
+                  defaultHomeSettings.ctaSecondaryLabel}
               </Button>
             </a>
           </div>

@@ -27,7 +27,7 @@ export async function PATCH(
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("PATCH", "/api/users"),
       ...getPreset("mutatingLow"),
     });
@@ -58,21 +58,21 @@ export async function PATCH(
     const existing = await prisma.user.findUnique({ where: { email } });
     const user = existing
       ? await prisma.user.update({
-          where: { email },
-          data: {
-            password: hashedPassword,
-            ...(typeof isAdmin === "boolean" ? { isAdmin } : {}),
-          },
-        })
+        where: { email },
+        data: {
+          password: hashedPassword,
+          ...(typeof isAdmin === "boolean" ? { isAdmin } : {}),
+        },
+      })
       : await prisma.user.create({
-          data: {
-            id: `user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-            email,
-            name: body.name || "",
-            password: hashedPassword,
-            isAdmin: !!isAdmin,
-          },
-        });
+        data: {
+          id: `user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          email,
+          name: body.name || "",
+          password: hashedPassword,
+          isAdmin: !!isAdmin,
+        },
+      });
 
     const safeUser: SafeUser = {
       id: user.id,
@@ -115,7 +115,7 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<UsersPage>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/users"),
       ...getPreset("publicRead"),
     });
@@ -203,7 +203,7 @@ export async function POST(
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("POST", "/api/users"),
       ...getPreset("mutatingLow"),
     });

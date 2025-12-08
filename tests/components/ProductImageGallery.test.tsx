@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 import ProductImageGallery from "@/components/products/ProductImageGallery";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { vi } from "vitest";
 
 // Mock Next.js Image component
 jest.mock("next/image", () => {
@@ -16,6 +17,14 @@ describe("ProductImageGallery Component", () => {
     images: mockImages,
     productName: "Test Product",
   };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it("renders with single image", () => {
     render(
@@ -54,6 +63,11 @@ describe("ProductImageGallery Component", () => {
     );
     fireEvent.click(nextButton);
 
+    // Fast-forward time to complete transition (150ms delay + 50ms buffer)
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
     expect(
       screen.getByAltText("Test Product - Imagen 2 de 3")
     ).toBeInTheDocument();
@@ -66,6 +80,11 @@ describe("ProductImageGallery Component", () => {
       /imagen anterior de test product/i
     );
     fireEvent.click(prevButton);
+
+    // Fast-forward time
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
 
     // Should wrap to last image
     expect(
@@ -81,11 +100,21 @@ describe("ProductImageGallery Component", () => {
     );
 
     fireEvent.keyDown(nextButton, { key: "Enter" });
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
     expect(
       screen.getByAltText("Test Product - Imagen 2 de 3")
     ).toBeInTheDocument();
 
     fireEvent.keyDown(nextButton, { key: " " });
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
     expect(
       screen.getByAltText("Test Product - Imagen 3 de 3")
     ).toBeInTheDocument();
@@ -98,6 +127,10 @@ describe("ProductImageGallery Component", () => {
       name: /seleccionar imagen/i,
     });
     fireEvent.click(thumbnails[2]);
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
 
     expect(
       screen.getByAltText("Test Product - Imagen 3 de 3")
@@ -112,6 +145,11 @@ describe("ProductImageGallery Component", () => {
     });
 
     fireEvent.keyDown(thumbnails[1], { key: "Enter" });
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
     expect(
       screen.getByAltText("Test Product - Imagen 2 de 3")
     ).toBeInTheDocument();

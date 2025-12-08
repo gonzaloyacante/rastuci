@@ -7,7 +7,7 @@ import { render, screen } from "@testing-library/react";
 jest.mock("next/image", () => ({
   __esModule: true,
   // eslint-disable-next-line @next/next/no-img-element
-  default: (props: { src: string; alt: string; [key: string]: unknown }) => (
+  default: (props: { src: string; alt: string;[key: string]: unknown }) => (
     <img src={props.src} alt={props.alt} />
   ),
 }));
@@ -52,6 +52,16 @@ const renderWithCart = (component: React.ReactElement) => {
 describe("ProductCard Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ success: true, data: [] }),
+      })
+    ) as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("debe renderizar información básica del producto", () => {
@@ -106,7 +116,9 @@ describe("ProductCard Component", () => {
     renderWithCart(<ProductCard product={outOfStockProduct} />);
 
     // El botón de favoritos siempre está disponible
-    const favoriteButton = screen.getByRole("button");
+    const favoriteButton = screen.getByRole("button", {
+      name: /agregar producto test a favoritos/i,
+    });
     expect(favoriteButton).toBeInTheDocument();
     expect(favoriteButton).not.toBeDisabled();
   });

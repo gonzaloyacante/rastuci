@@ -25,7 +25,7 @@ const ContactMessageSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     // Rate limit más estricto para evitar spam
-    const rl = checkRateLimit(req, {
+    const rl = await checkRateLimit(req, {
       key: "contact:message",
       limit: 5,
       windowMs: 60_000,
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 // GET - Listar mensajes de contacto (solo admin)
 export async function GET(req: NextRequest) {
   try {
-    const rl = checkRateLimit(req, {
+    const rl = await checkRateLimit(req, {
       key: "contact:messages:get",
       limit: 30,
       windowMs: 60_000,

@@ -22,7 +22,7 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/users/[id]"),
       ...getPreset("publicRead"),
     });
@@ -70,7 +70,7 @@ export async function PATCH(
 ): Promise<NextResponse<ApiResponse<SafeUser>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("PATCH", "/api/users/[id]"),
       ...getPreset("mutatingLow"),
     });
@@ -164,7 +164,7 @@ export async function DELETE(
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("DELETE", "/api/users/[id]"),
       ...getPreset("mutatingLow"),
     });

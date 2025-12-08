@@ -34,9 +34,8 @@ interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 const Badge = ({ className, children, ...props }: BadgeProps) => {
   return (
     <div
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-        className || ""
-      }`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${className || ""
+        }`}
       {...props}
     >
       {children}
@@ -84,6 +83,8 @@ interface Order {
   shippingProvince?: string;
   shippingPostalCode?: string;
   shippingAgency?: string;
+  caImportStatus?: string | null;
+  caImportError?: string | null;
 }
 
 const statusInfo = {
@@ -535,6 +536,16 @@ export default function OrderDetailPage() {
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="space-y-3">
+                  {/* Status de Importación CA (si hubo error) */}
+                  {order.caImportStatus === "ERROR" && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm mb-3">
+                      <p className="font-bold flex items-center gap-2">
+                        <span className="text-lg">⚠️</span> Error al enviar a CA
+                      </p>
+                      <p className="mt-1">{order.caImportError}</p>
+                    </div>
+                  )}
+
                   {order.caTrackingNumber && (
                     <div>
                       <h3 className="text-sm font-medium muted">Tracking</h3>
@@ -600,9 +611,26 @@ export default function OrderDetailPage() {
                         {order.shippingCity}, {order.shippingProvince}
                       </p>
                       <p className="text-sm">CP: {order.shippingPostalCode}</p>
+
                       <Button
                         className="w-full mt-3 btn-hero"
-                        onClick={handleImportShipment}
+                        onClick={async () => {
+                          if (!confirm("¿Reintentar envío a Correo Argentino?")) return;
+                          try {
+                            const res = await fetch(`/api/admin/orders/${order.id}/retry-ca-import`, { method: "POST" });
+                            const json = await res.json();
+                            if (json.success) {
+                              toast.success("Envío creado correctamente");
+                              setOrder(json.data.order);
+                            } else {
+                              toast.error(json.error || "Error al crear envío");
+                              // Force reload to see error status if updated
+                              window.location.reload();
+                            }
+                          } catch (e) {
+                            toast.error("Error de conexión");
+                          }
+                        }}
                         disabled={caLoading}
                       >
                         {caLoading ? (
@@ -610,7 +638,7 @@ export default function OrderDetailPage() {
                         ) : (
                           <Send size={16} className="mr-2" />
                         )}
-                        Importar a Correo Argentino
+                        {order.caImportStatus === "ERROR" ? "Reintentar envío a CA" : "Importar a Correo Argentino"}
                       </Button>
                     </div>
                   )}

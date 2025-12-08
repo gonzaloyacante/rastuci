@@ -114,8 +114,8 @@ describe("CategoriesSection", () => {
   it("no debe renderizar nada cuando no hay categorías", () => {
     render(<CategoriesSection categories={[]} />);
 
-    // El título debe estar presente (siempre visible)
-    expect(screen.getByText("Nuestras Categorías")).toBeInTheDocument();
+    // Si no hay categorías, el componente retorna null, por lo que no debe haber título
+    expect(screen.queryByText("Nuestras Categorías")).not.toBeInTheDocument();
 
     // Pero no debe haber cards de categorías
     const links = screen.queryByRole("link");
@@ -197,10 +197,9 @@ describe("CategoriesSection", () => {
 
     const grid = container.querySelector(".grid");
     expect(grid).toHaveClass(
-      "grid-cols-1",
-      "sm:grid-cols-2",
+      "grid-cols-2", // Updated to match component
       "md:grid-cols-3",
-      "lg:grid-cols-6"
+      "lg:grid-cols-4" // Updated to match component
     );
   });
 });

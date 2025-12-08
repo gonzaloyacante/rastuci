@@ -21,7 +21,7 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<Category>>> {
   try {
     const requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/categories/[id]"),
       ...getPreset("publicRead"),
     });
@@ -80,7 +80,7 @@ export const PUT = withAdminAuth(
   ): Promise<NextResponse<ApiResponse<Category>>> => {
     try {
       const requestId = getRequestId(request.headers);
-      const rl = checkRateLimit(request, {
+      const rl = await checkRateLimit(request, {
         key: makeKey("PUT", "/api/categories/[id]"),
         ...getPreset("mutatingLow"),
       });
@@ -157,7 +157,7 @@ export const DELETE = withAdminAuth(
   ): Promise<NextResponse<ApiResponse<null>>> => {
     try {
       const requestId = getRequestId(request.headers);
-      const rl = checkRateLimit(request, {
+      const rl = await checkRateLimit(request, {
         key: makeKey("DELETE", "/api/categories/[id]"),
         ...getPreset("mutatingLow"),
       });

@@ -20,7 +20,7 @@ export function generateMetadata({
   availability,
 }: GenerateMetadataProps): Metadata {
   const baseUrl = 'https://rastuci.com';
-  
+
   const metadata: Metadata = {
     title,
     description,
@@ -73,7 +73,7 @@ export function generateProductJsonLd(product: {
   brand?: string;
 }) {
   const baseUrl = 'https://rastuci.com';
-  
+
   // Normalizar imágenes a array
   let images: string[] = [];
   if (Array.isArray(product.image)) {
@@ -85,7 +85,7 @@ export function generateProductJsonLd(product: {
       images = [product.image];
     }
   }
-  
+
   return {
     '@context': 'https://schema.org/',
     '@type': 'Product',
@@ -116,7 +116,7 @@ export function generateProductJsonLd(product: {
 
 export function generateBreadcrumbJsonLd(items: Array<{ name: string; url: string }>) {
   const baseUrl = 'https://rastuci.com';
-  
+
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -136,4 +136,48 @@ export function formatPrice(value: number, currency: string = 'ARS'): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+export function generateStoreJsonLd() {
+  const baseUrl = 'https://rastuci.com';
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    name: 'Rastuci',
+    image: `${baseUrl}/logo.png`,
+    '@id': baseUrl,
+    url: baseUrl,
+    telephone: '+5491112345678', // Placeholder, should be config driven ideally
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Calle Falsa 123',
+      addressLocality: 'Buenos Aires',
+      postalCode: '1000',
+      addressCountry: 'AR'
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: -34.6037,
+      longitude: -58.3816
+    },
+    openingHoursSpecification: {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday'
+      ],
+      opens: '00:00',
+      closes: '23:59'
+    },
+    sameAs: [
+      'https://www.facebook.com/rastuci',
+      'https://www.instagram.com/rastuci'
+    ]
+  };
 }

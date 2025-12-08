@@ -10,6 +10,7 @@ import { OrderStatusUpdateSchema } from "@/lib/validation/order";
 import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { logger, getRequestId } from "@/lib/logger";
+import { ORDER_STATUS } from "@/lib/constants";
 
 interface RouteParams {
   params: Promise<{
@@ -50,7 +51,7 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
     const _requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/orders/[id]"),
       ...getPreset("publicReadHeavy"),
     });
@@ -96,7 +97,7 @@ export async function PATCH(
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
     const _requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("PATCH", "/api/orders/[id]"),
       ...getPreset("mutatingMedium"),
     });
@@ -107,7 +108,7 @@ export async function PATCH(
     const json = await request.json();
     const parsed = OrderStatusUpdateSchema.safeParse(json);
     if (!parsed.success) {
-      return fail("BAD_REQUEST", "Estado inválido. Debe ser: PENDING, PROCESSED o DELIVERED", 400, { issues: parsed.error.issues });
+      return fail("BAD_REQUEST", `Estado inválido. Debe ser uno de: ${Object.values(ORDER_STATUS).join(", ")}`, 400, { issues: parsed.error.issues });
     }
     const { status } = parsed.data;
 
@@ -139,7 +140,7 @@ export async function PUT(
 ): Promise<NextResponse<ApiResponse<Order>>> {
   try {
     const _requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("PUT", "/api/orders/[id]"),
       ...getPreset("mutatingMedium"),
     });
@@ -150,7 +151,7 @@ export async function PUT(
     const json = await request.json();
     const parsed = OrderStatusUpdateSchema.safeParse(json);
     if (!parsed.success) {
-      return fail("BAD_REQUEST", "Estado inválido. Debe ser: PENDING, PROCESSED o DELIVERED", 400, { issues: parsed.error.issues });
+      return fail("BAD_REQUEST", `Estado inválido. Debe ser uno de: ${Object.values(ORDER_STATUS).join(", ")}`, 400, { issues: parsed.error.issues });
     }
     const { status } = parsed.data;
 
@@ -182,7 +183,7 @@ export async function DELETE(
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
     const _requestId = getRequestId(request.headers);
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("DELETE", "/api/orders/[id]"),
       ...getPreset("mutatingLow"),
     });
@@ -204,7 +205,7 @@ export async function DELETE(
     }
 
     // Solo permitir cancelar pedidos pendientes
-    if (order.status !== "PENDING") {
+    if (order.status !== ORDER_STATUS.PENDING) {
       return fail("BAD_REQUEST", "Solo se pueden cancelar pedidos con estado PENDING", 400);
     }
 

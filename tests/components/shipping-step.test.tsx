@@ -1,17 +1,29 @@
 import { render, screen } from "@testing-library/react";
+import { vi } from "vitest";
 import ShippingStep from "../../src/app/(public)/checkout/components/ShippingStep";
 import { CartProvider } from "../../src/context/CartContext";
 
 describe("ShippingStep", () => {
+  beforeEach(() => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ success: true, data: [] })
+      })
+    ) as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("muestra aviso cuando el método de pago es cash y deshabilita opciones distintas de pickup", () => {
-    // Renderizando con provider y forzando selectedPaymentMethod a cash
     render(
       <CartProvider>
-        <ShippingStep onNext={() => {}} onBack={() => {}} />
+        <ShippingStep onNext={() => { }} onBack={() => { }} />
       </CartProvider>,
     );
 
-    // Al inicio no habrá código postal ni selección; solo verificamos que el título está presente
     expect(screen.getByText(/Entrega \/ Retiro/i)).toBeInTheDocument();
   });
 });

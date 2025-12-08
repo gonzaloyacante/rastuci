@@ -26,7 +26,7 @@ export async function GET(request: NextRequest): Promise<
 > {
   try {
     // Rate limit per IP to protect endpoint
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/categories"),
       ...getPreset("publicRead"),
     });
@@ -67,10 +67,10 @@ export async function GET(request: NextRequest): Promise<
       take: limit,
       include: includeProductCount
         ? {
-            _count: {
-              select: { products: true },
-            },
-          }
+          _count: {
+            select: { products: true },
+          },
+        }
         : undefined,
     });
 
@@ -83,10 +83,10 @@ export async function GET(request: NextRequest): Promise<
         description: category.description ?? undefined,
         ...(includeProductCount
           ? {
-              productCount:
-                (category as unknown as { _count?: { products?: number } })
-                  ._count?.products ?? 0,
-            }
+            productCount:
+              (category as unknown as { _count?: { products?: number } })
+                ._count?.products ?? 0,
+          }
           : {}),
       })
     );
@@ -131,7 +131,7 @@ export const POST = withAdminAuth(
   ): Promise<NextResponse<ApiResponse<Category>>> => {
     try {
       // Rate limit per IP to protect category creation
-      const rl = checkRateLimit(request, {
+      const rl = await checkRateLimit(request, {
         key: makeKey("POST", "/api/categories"),
         ...getPreset("mutatingLow"),
       });
@@ -158,7 +158,7 @@ export const POST = withAdminAuth(
       }
 
       const categoryId = `cat-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      
+
       const category = await prisma.categories.create({
         data: {
           id: categoryId,

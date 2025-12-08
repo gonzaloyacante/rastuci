@@ -19,7 +19,7 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<ProductReview[]>>> {
   try {
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/products/[id]/reviews"),
       ...getPreset("publicRead"),
     });
@@ -46,7 +46,7 @@ export async function POST(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<ProductReview>>> {
   try {
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("POST", "/api/products/[id]/reviews"),
       ...getPreset("mutatingLow"),
     });

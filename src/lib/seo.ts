@@ -14,11 +14,11 @@ export interface SEOConfig {
 export const seoConfig: SEOConfig = {
   siteName: 'Rastuci',
   siteUrl: 'https://rastuci.com',
-  defaultTitle: 'Rastuci - Premium Fashion & Lifestyle',
-  defaultDescription: 'Discover premium fashion and lifestyle products at Rastuci. Shop the latest trends with fast shipping and excellent customer service.',
+  defaultTitle: 'Rastuci - Ropa Infantil de Calidad',
+  defaultDescription: 'Descubre la mejor ropa infantil de calidad, comodidad y estilo para los más pequeños. Envíos a todo el país.',
   defaultImage: '/og-image.jpg',
   twitterHandle: '@rastuci',
-  locale: 'es_ES',
+  locale: 'es_AR',
 };
 
 // Generate metadata for pages
@@ -37,10 +37,10 @@ export function generateMetadata({
   noIndex?: boolean;
   type?: 'website' | 'article' | 'product';
 }): Metadata {
-  const fullTitle = title 
+  const fullTitle = title
     ? `${title} | ${seoConfig.siteName}`
     : seoConfig.defaultTitle;
-  
+
   const fullDescription = description || seoConfig.defaultDescription;
   const fullImage = image || seoConfig.defaultImage;
   const fullUrl = url ? `${seoConfig.siteUrl}${url}` : seoConfig.siteUrl;
@@ -118,8 +118,8 @@ export function generateProductMetadata({
       '@type': 'Offer',
       price: product.price,
       priceCurrency: 'USD',
-      availability: product.inStock 
-        ? 'https://schema.org/InStock' 
+      availability: product.inStock
+        ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
       seller: {
         '@type': 'Organization',

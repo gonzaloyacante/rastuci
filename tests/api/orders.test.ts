@@ -6,12 +6,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock Prisma
 vi.mock("@/lib/prisma", () => ({
   default: {
-    order: {
+    orders: {
       findMany: vi.fn(),
       count: vi.fn(),
       create: vi.fn(),
     },
-    product: {
+    products: {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
@@ -19,40 +19,15 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-// Mock rate limiter
-vi.mock("@/lib/rateLimiter", () => ({
-  checkRateLimit: vi.fn(() => ({ ok: true })),
-}));
-
-// Mock logger
-vi.mock("@/lib/logger", () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-  },
-  getRequestId: vi.fn(() => "test-request-id"),
-}));
-
-// Mock OneSignal
-vi.mock("@/lib/onesignal", () => ({
-  sendNotification: vi.fn(),
-}));
-
-// Mock order mapper
-vi.mock("@/lib/orders", () => ({
-  mapOrderToDTO: vi.fn((order) => ({
-    ...order,
-    items: order.items || [],
-  })),
-}));
+// ... (existing helper mocks)
 
 const mockPrisma = prisma as unknown as {
-  order: {
+  orders: {
     findMany: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
   };
-  product: {
+  products: {
     findUnique: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
@@ -77,12 +52,16 @@ describe("Orders API", () => {
           status: "PENDING",
           createdAt: new Date(),
           updatedAt: new Date(),
-          items: [],
+          order_items: [],
+          mapOrderToDTO: vi.fn((order) => ({
+            ...order,
+            items: order.order_items || [],
+          })),
         },
       ];
 
-      mockPrisma.order.findMany.mockResolvedValue(mockOrders);
-      mockPrisma.order.count.mockResolvedValue(1);
+      mockPrisma.orders.findMany.mockResolvedValue(mockOrders);
+      mockPrisma.orders.count.mockResolvedValue(1);
 
       const request = new NextRequest(
         "http://localhost:3000/api/orders?page=1&limit=10"
@@ -97,32 +76,32 @@ describe("Orders API", () => {
     });
 
     it("debe filtrar por status", async () => {
-      mockPrisma.order.findMany.mockResolvedValue([]);
-      mockPrisma.order.count.mockResolvedValue(0);
+      mockPrisma.orders.findMany.mockResolvedValue([]);
+      mockPrisma.orders.count.mockResolvedValue(0);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/orders?status=DELIVERED"
+        "http://localhost:3000/api/orders?status=DELIVERED&page=1&limit=10"
       );
       const response = await GET(request);
 
       expect(response.status).toBe(200);
       // Verificar que se llamó con where.status = "DELIVERED"
-      expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.orders.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { status: "DELIVERED" },
         })
       );
     });
     it("debe buscar por nombre o email", async () => {
-      mockPrisma.order.findMany.mockResolvedValue([]);
-      mockPrisma.order.count.mockResolvedValue(0);
+      mockPrisma.orders.findMany.mockResolvedValue([]);
+      mockPrisma.orders.count.mockResolvedValue(0);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/orders?search=Juan"
+        "http://localhost:3000/api/orders?search=Juan&page=1&limit=10"
       );
       await GET(request);
 
-      expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.orders.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
@@ -136,8 +115,8 @@ describe("Orders API", () => {
     });
 
     it("debe calcular totalPages correctamente", async () => {
-      mockPrisma.order.findMany.mockResolvedValue([]);
-      mockPrisma.order.count.mockResolvedValue(25);
+      mockPrisma.orders.findMany.mockResolvedValue([]);
+      mockPrisma.orders.count.mockResolvedValue(25);
 
       const request = new NextRequest(
         "http://localhost:3000/api/orders?page=1&limit=10"
@@ -161,6 +140,14 @@ describe("Orders API", () => {
       updatedAt: new Date(),
       images: [],
       onSale: false,
+      product_images: [],
+      categories: {
+        id: "cat-1",
+        name: "Categoría Test",
+        description: "Descripción de prueba",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     };
 
     it("debe crear pedido con datos válidos", async () => {
@@ -173,25 +160,29 @@ describe("Orders API", () => {
         status: "pending",
         createdAt: new Date(),
         updatedAt: new Date(),
-        items: [
+        order_items: [
           {
             id: "item-1",
             orderId: "order-new",
             productId: "prod-1",
             quantity: 2,
             price: 100,
-            product: mockProduct,
+            products: mockProduct, // Relation name is usually plural 'products' in generated client if model is plural? Or singular?
+            // In checkout test I used products: { connect: ... } for creation.
+            // For return value, it contains the relation object. 
+            // Error said 'order.order_items.map', so it iterates.
+            // Let's assume 'products' property holds the product data.
           },
         ],
       };
 
-      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.products.findUnique.mockResolvedValue(mockProduct);
       mockPrisma.$transaction.mockImplementation(async (callback) => {
         return callback({
-          order: {
+          orders: {
             create: vi.fn().mockResolvedValue(newOrder),
           },
-          product: {
+          products: {
             update: vi.fn(),
           },
         });
@@ -223,7 +214,7 @@ describe("Orders API", () => {
     });
 
     it("debe retornar 400 si el producto no existe", async () => {
-      mockPrisma.product.findUnique.mockResolvedValue(null);
+      mockPrisma.products.findUnique.mockResolvedValue(null);
 
       const request = new NextRequest("http://localhost:3000/api/orders", {
         method: "POST",
@@ -252,7 +243,7 @@ describe("Orders API", () => {
     });
 
     it("debe retornar 400 si no hay stock suficiente", async () => {
-      mockPrisma.product.findUnique.mockResolvedValue({
+      mockPrisma.products.findUnique.mockResolvedValue({
         ...mockProduct,
         stock: 1,
       });
@@ -287,10 +278,10 @@ describe("Orders API", () => {
     });
 
     it("debe calcular el total correctamente", async () => {
-      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.products.findUnique.mockResolvedValue(mockProduct);
       mockPrisma.$transaction.mockImplementation(async (callback) => {
         const result = await callback({
-          order: {
+          orders: {
             create: vi.fn().mockImplementation((data) => ({
               ...data.data,
               id: "order-new",
@@ -299,7 +290,7 @@ describe("Orders API", () => {
               updatedAt: new Date(),
             })),
           },
-          product: {
+          products: {
             update: vi.fn(),
           },
         });

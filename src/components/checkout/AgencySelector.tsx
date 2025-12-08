@@ -1,8 +1,9 @@
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { WEEKDAY_NAMES_SHORT, type WeekdayKey } from "@/lib/constants";
-import { Agency, PROVINCE_NAMES } from "@/lib/correo-argentino-service";
+import { WEEKDAY_NAMES_SHORT, type WeekdayKey, PROVINCE_CODE_MAP as PROVINCE_NAMES } from "@/lib/constants";
+import { Agency } from "@/lib/correo-argentino-service";
 import { Loader2, MapPin, Search, Store, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -79,18 +80,18 @@ export function AgencySelector({
 
         const response = await fetch(`/api/shipping/agencies?${queryParams.toString()}`);
         const data = await response.json();
-        
+
         if (data.success && data.agencies) {
           // Filtrar solo sucursales activas con servicio de retiro
           const activeAgencies = data.agencies.filter(
             (a: Agency) => a.status === "ACTIVE" && a.services?.pickupAvailability
           );
-          
+
           setAgencies(activeAgencies);
-          
+
           if (activeAgencies.length === 0) {
             setError(
-              initialPostalCode 
+              initialPostalCode
                 ? `No hay sucursales disponibles en el código postal ${initialPostalCode}. Ingresa una ciudad en el buscador.`
                 : "No hay sucursales disponibles en esta provincia"
             );
@@ -116,7 +117,7 @@ export function AgencySelector({
     if (!searchTerm.trim()) return agencies;
 
     const term = searchTerm.toLowerCase().trim();
-    
+
     // Dar puntaje de relevancia para ordenar resultados
     const scored = agencies.map(agency => {
       let score = 0;
@@ -124,26 +125,26 @@ export function AgencySelector({
       const city = (agency.location.address.city || agency.location.address.locality || "").toLowerCase();
       const name = agency.name.toLowerCase();
       const street = agency.location.address.streetName?.toLowerCase() || "";
-      
+
       // Código postal exacto tiene máxima prioridad
       if (cp === term) score += 100;
       else if (cp.startsWith(term)) score += 50;
       else if (cp.includes(term)) score += 25;
-      
+
       // Ciudad/Localidad
       if (city === term) score += 80;
       else if (city.startsWith(term)) score += 40;
       else if (city.includes(term)) score += 20;
-      
+
       // Nombre de sucursal
       if (name.includes(term)) score += 15;
-      
+
       // Calle
       if (street.includes(term)) score += 10;
-      
+
       return { agency, score };
     });
-    
+
     // Filtrar solo los que tienen puntaje > 0 y ordenar por score descendente
     return scored
       .filter(item => item.score > 0)
@@ -160,9 +161,9 @@ export function AgencySelector({
       acc[city].push(agency);
       return acc;
     }, {} as Record<string, Agency[]>);
-    
+
     const options: { value: string; label: string; group?: string }[] = [];
-    
+
     // Mostrar TODAS las sucursales filtradas (no limitar artificialmente)
     Object.entries(byCity).forEach(([city, cityAgencies]) => {
       cityAgencies.forEach(agency => {
@@ -352,11 +353,11 @@ export function AgencySelector({
                 }}
               >
                 Ver en Google Maps
-              </Button>
-            </div>
-          </div>
-        </div>
+              </Button >
+            </div >
+          </div >
+        </div >
       )}
-    </div>
+    </div >
   );
 }

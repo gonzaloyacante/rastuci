@@ -1,14 +1,23 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import type { NextRequest } from "next/server";
 
-// Simple in-memory rate limiter for Next.js Route Handlers
-// NOTE: For production at scale, prefer a distributed limiter (e.g., Upstash Ratelimit)
-
+// Simple in-memory rate limiter for Next.js Route Handlers (fallback)
 type Bucket = {
   count: number;
   resetAt: number; // timestamp in ms
 };
 
 const buckets = new Map<string, Bucket>();
+
+// Upstash Redis instance
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    })
+    : null;
 
 function getIp(req: NextRequest): string {
   const xff = req.headers.get("x-forwarded-for");
@@ -22,7 +31,6 @@ function getIp(req: NextRequest): string {
   if (realIp) {
     return realIp;
   }
-  // NextRequest does not expose req.ip; fall back to user-agent as last resort
   return "unknown";
 }
 
@@ -33,7 +41,7 @@ export type RateLimitResult = {
   key: string;
 };
 
-export function checkRateLimit(
+export async function checkRateLimit(
   req: NextRequest,
   {
     key,
@@ -44,9 +52,35 @@ export function checkRateLimit(
     limit: number;
     windowMs: number;
   }
-): RateLimitResult {
+): Promise<RateLimitResult> {
   const ip = getIp(req);
   const compositeKey = `${key}:${ip}`;
+
+  // Use Upstash if configured
+  if (redis) {
+    try {
+      const ratelimit = new Ratelimit({
+        redis: redis,
+        limiter: Ratelimit.slidingWindow(limit, `${windowMs} ms`),
+        analytics: true,
+        prefix: "@upstash/ratelimit",
+      });
+
+      const result = await ratelimit.limit(compositeKey);
+
+      return {
+        ok: result.success,
+        remaining: result.remaining,
+        retryAfterMs: result.reset - Date.now(),
+        key: compositeKey,
+      };
+    } catch (error) {
+      console.error("Upstash rate limit error, falling back to in-memory", error);
+      // Fallback to in-memory if Redis fails
+    }
+  }
+
+  // In-memory fallback
   const now = Date.now();
   const bucket = buckets.get(compositeKey);
 

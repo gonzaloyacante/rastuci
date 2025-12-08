@@ -20,7 +20,7 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/products/[id]"),
       ...getPreset("publicRead"),
     });
@@ -78,7 +78,7 @@ export async function PUT(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<Product>>> {
   try {
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("PUT", "/api/products/[id]"),
       ...getPreset("mutatingMedium"),
     });
@@ -87,18 +87,18 @@ export async function PUT(
     }
     const { id } = await params;
     const body = await request.json();
-    
+
     // DEBUG: Log del body recibido
     logger.info(`PUT /api/products/${id} - Body recibido:`, { body });
-    
+
     const parsed = ProductCreateSchema.safeParse(body);
     if (!parsed.success) {
       // DEBUG: Log del error de validación
-      logger.error(`PUT /api/products/${id} - Error de validación:`, { 
+      logger.error(`PUT /api/products/${id} - Error de validación:`, {
         error: parsed.error.issues,
-        body 
+        body
       });
-      
+
       return fail("BAD_REQUEST", "Datos inválidos", 400, {
         issues: parsed.error.issues,
       });
@@ -193,7 +193,7 @@ export async function DELETE(
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
-    const rl = checkRateLimit(request, {
+    const rl = await checkRateLimit(request, {
       key: makeKey("DELETE", "/api/products/[id]"),
       ...getPreset("mutatingLow"),
     });

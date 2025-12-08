@@ -3,6 +3,7 @@ import { CategoriesSection } from "@/components/home/CategoriesSection";
 import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
 import { HeroSection } from "@/components/home/HeroSection";
 import { logger } from "@/lib/logger";
+import { generateStoreJsonLd } from "@/lib/metadata";
 import { prisma } from "@/lib/prisma";
 import { defaultHomeSettings, HomeSettingsSchema } from "@/lib/validation/home";
 import { Metadata } from "next";
@@ -86,8 +87,15 @@ async function getHomeData() {
 export default async function HomePage() {
   const { settings, categories, featuredProducts } = await getHomeData();
 
+  const jsonLd = generateStoreJsonLd();
+
   return (
     <main className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <HeroSection home={settings} />
 
       <CategoriesSection

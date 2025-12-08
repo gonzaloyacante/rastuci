@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
+import { ORDER_STATUS, PAYMENT_METHODS } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 
 // Tipos para el webhook de MercadoPago
@@ -48,7 +49,7 @@ interface MercadoPagoPayment {
 const _mapPaymentStatus = (status: string, statusDetail: string) => {
   switch (status) {
     case "approved":
-      return "COMPLETED";
+      return "COMPLETED"; // Internal payment status, not OrderStatus
     case "pending":
       // Diferentes tipos de pending
       switch (statusDetail) {
@@ -229,7 +230,7 @@ async function createCAShipment(orderId: string): Promise<void> {
       data: {
         trackingNumber: trackingNumber || shipmentId || null,
         shippingMethod: "correo-argentino",
-        status: "PROCESSED", // Envío creado exitosamente
+        status: ORDER_STATUS.PROCESSED, // Envío creado exitosamente
         updatedAt: new Date(),
       },
     });
@@ -373,7 +374,7 @@ export async function POST(req: NextRequest) {
     const ts = req.headers.get("ts") || "";
 
     // Rate-limit webhook bursts per IP to protect server. If limited, ACK 200 to avoid retries.
-    const rl = checkRateLimit(req, {
+    const rl = await checkRateLimit(req, {
       key: makeKey("POST", "/api/payments/mercadopago/webhook"),
       ...getPreset("publicReadHeavy"),
     });
@@ -568,12 +569,12 @@ export async function POST(req: NextRequest) {
     // rejected/cancelled → PENDING (revisión manual)
     const mapStatus = (s: string) => {
       if (s === "approved") {
-        return "PENDING_PAYMENT" as const; // Cliente pagó, crear envío automáticamente
+        return ORDER_STATUS.PENDING_PAYMENT; // Cliente pagó, crear envío automáticamente
       }
       if (s === "in_process" || s === "pending") {
-        return "PENDING" as const;
+        return ORDER_STATUS.PENDING;
       }
-      return "PENDING" as const; // rejected/cancelled -> keep pending for manual review
+      return ORDER_STATUS.PENDING; // rejected/cancelled -> keep pending for manual review
     };
 
     // 1. Try to find order by external_reference (our order.id)
@@ -598,10 +599,10 @@ export async function POST(req: NextRequest) {
 
         // Si pago aprobado, decrementar stock (solo la primera vez)
         const shouldDecrementStock =
-          mapStatus(mpStatus) === "PENDING_PAYMENT" &&
-          existingOrder.status !== "PENDING_PAYMENT" &&
-          existingOrder.status !== "PROCESSED" &&
-          existingOrder.status !== "DELIVERED";
+          mapStatus(mpStatus) === ORDER_STATUS.PENDING_PAYMENT &&
+          existingOrder.status !== ORDER_STATUS.PENDING_PAYMENT &&
+          existingOrder.status !== ORDER_STATUS.PROCESSED &&
+          existingOrder.status !== ORDER_STATUS.DELIVERED;
 
         if (shouldDecrementStock) {
           for (const item of existingOrder.order_items) {
@@ -620,7 +621,7 @@ export async function POST(req: NextRequest) {
         });
 
         // Si pago aprobado, intentar crear envío en Correo Argentino
-        if (mapStatus(mpStatus) === "PENDING_PAYMENT" && shouldDecrementStock) {
+        if (mapStatus(mpStatus) === ORDER_STATUS.PENDING_PAYMENT && shouldDecrementStock) {
           try {
             await createCAShipment(orderId);
           } catch (caError) {
@@ -665,10 +666,10 @@ export async function POST(req: NextRequest) {
         });
 
         const shouldDecrementStock2 =
-          mapStatus(mpStatus) === "PENDING_PAYMENT" &&
-          existingOrder.status !== "PENDING_PAYMENT" &&
-          existingOrder.status !== "PROCESSED" &&
-          existingOrder.status !== "DELIVERED";
+          mapStatus(mpStatus) === ORDER_STATUS.PENDING_PAYMENT &&
+          existingOrder.status !== ORDER_STATUS.PENDING_PAYMENT &&
+          existingOrder.status !== ORDER_STATUS.PROCESSED &&
+          existingOrder.status !== ORDER_STATUS.DELIVERED;
 
         if (shouldDecrementStock2) {
           for (const item of existingOrder.order_items) {
@@ -687,7 +688,7 @@ export async function POST(req: NextRequest) {
         });
 
         // Si pago aprobado, intentar crear envío en Correo Argentino
-        if (mapStatus(mpStatus) === "PENDING_PAYMENT" && shouldDecrementStock2) {
+        if (mapStatus(mpStatus) === ORDER_STATUS.PENDING_PAYMENT && shouldDecrementStock2) {
           try {
             await createCAShipment(existingOrder.id);
           } catch (caError) {
@@ -713,14 +714,18 @@ export async function POST(req: NextRequest) {
     );
 
     const customerName: string =
-      payment.payer?.first_name && payment.payer?.last_name
+      (metadata.customerName as string) ||
+      (payment.payer?.first_name && payment.payer?.last_name
         ? `${payment.payer.first_name} ${payment.payer.last_name}`
-        : payment.payer?.first_name || metadata.customerName || "Cliente";
+        : payment.payer?.first_name || "Cliente");
+
     const customerPhone: string =
-      payment.payer?.phone?.number || metadata.customerPhone || "";
-    const customerAddress: string | undefined = metadata.customerAddress;
+      (metadata.customerPhone as string) || payment.payer?.phone?.number || "";
+
+    const customerAddress: string | undefined = metadata.customerAddress as string;
+
     const customerEmail: string | undefined =
-      payment.payer?.email || metadata.customerEmail;
+      (metadata.customerEmail as string) || payment.payer?.email;
 
     // Extraer campos de shipping estructurados desde metadata
     const shippingStreet: string | undefined =
@@ -802,18 +807,13 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    return ok({ ok: true });
-  } catch (e: unknown) {
-    logger.error("[MP webhook] error", {
-      requestId,
-      error: e instanceof Error ? e.message : String(e),
-    });
-    // Always return 200 so MP stops retrying; log for later inspection
-    return ok({ ok: true });
-  }
-}
+    // Notificar al cliente (solo después de crear la orden)
+    await _notifyCustomer(mpPaymentId, mpStatus, payment);
 
-// Optional GET handler for quick checks
-export async function GET() {
-  return NextResponse.json({ ok: true });
+    return ok({ ok: true });
+  } catch (error) {
+    logger.error("Error processing MP webhook:", { error });
+    // Return 200 even on error to prevent MP retrying indefinitely
+    return ok({ ok: true, error: String(error) });
+  }
 }
