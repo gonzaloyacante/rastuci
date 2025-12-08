@@ -1,5 +1,6 @@
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
+import { getStorePostalCode } from "@/lib/store-settings";
 import { NextResponse } from "next/server";
 
 // Opciones de envío de fallback cuando la API de CA no está disponible
@@ -74,13 +75,13 @@ export async function POST(request: Request) {
       length: 40,
     };
 
-    // Código postal de origen (tienda en Don Torcuato)
-    const STORE_POSTAL_CODE = process.env.STORE_POSTAL_CODE || "1611";
+    // Código postal de origen desde configuración de la tienda (DB)
+    const storePostalCode = await getStorePostalCode();
 
     try {
       const result = await correoArgentinoService.calculateRates({
         customerId,
-        postalCodeOrigin: STORE_POSTAL_CODE,
+        postalCodeOrigin: storePostalCode,
         postalCodeDestination: postalCode,
         deliveredType: deliveredType || undefined,
         dimensions: dimensions || defaultDimensions,
@@ -94,9 +95,8 @@ export async function POST(request: Request) {
         // Mapear respuesta al formato que espera el frontend
         const options = result.data.rates.map((rate) => ({
           id: `ca-${rate.productType}-${rate.deliveredType}`,
-          name: `${rate.productName} (${
-            rate.deliveredType === "D" ? "Domicilio" : "Sucursal"
-          })`,
+          name: `${rate.productName} (${rate.deliveredType === "D" ? "Domicilio" : "Sucursal"
+            })`,
           description: `Entrega en ${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días hábiles`,
           price: rate.price,
           estimatedDays: `${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días`,

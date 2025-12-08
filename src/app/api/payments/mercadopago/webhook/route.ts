@@ -296,6 +296,7 @@ async function _notifyCustomer(
       const { sendEmail, getOrderConfirmationEmail, getNewOrderNotificationEmail } = await import(
         "@/lib/resend"
       );
+      const { getAdminEmail } = await import("@/lib/store-settings");
 
       // Log email configuration status for debugging
       logger.info("[Webhook] Preparing to send confirmation email", {
@@ -332,8 +333,8 @@ async function _notifyCustomer(
         paymentMethod: paymentDetails.payment_method_id,
       });
 
-      // Email al admin
-      const adminEmail = process.env.ADMIN_EMAIL || "contacto@rastuci.com";
+      // Email al admin (desde configuración de tienda en DB)
+      const adminEmail = await getAdminEmail();
       const adminEmailHtml = getNewOrderNotificationEmail({
         orderId,
         customerName: order.customerName,
@@ -354,14 +355,7 @@ async function _notifyCustomer(
         sent: adminEmailSent,
       });
 
-      // Enviar notificación push al cliente
-      const { notifyPaymentConfirmed, notifyNewOrder } = await import(
-        "@/lib/onesignal"
-      );
-      await notifyPaymentConfirmed(orderId, order.customerName);
-
-      // Notificar a admins sobre nuevo pedido
-      await notifyNewOrder(orderId, order.customerName, order.total);
+      // Nota: OneSignal push removido - emails son suficientes
     }
   } catch (error) {
     logger.error("[Webhook] Failed to send customer notification", {
