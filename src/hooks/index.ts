@@ -17,7 +17,6 @@ export { useProductStats } from "./useProductStats";
 export { useUsers } from "./useUsers";
 
 // Hooks específicos de dominio
-export { useCart } from "./useCart";
 export { useDashboard } from "./useDashboard";
 export { useDocumentTitle } from "./useDocumentTitle";
 export { useHomeData } from "./useHomeData";

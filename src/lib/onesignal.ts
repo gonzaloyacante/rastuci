@@ -65,7 +65,7 @@ export const sendPushNotification = async (
 
     // Segmentos o usuarios específicos
     if (params.playerIds && params.playerIds.length > 0) {
-      // @ts-ignore - OneSignal API property
+      // @ts-expect-error - OneSignal SDK types incomplete for include_player_ids
       notification.include_player_ids = params.playerIds;
     } else if (params.segments && params.segments.length > 0) {
       notification.included_segments = params.segments;

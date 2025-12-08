@@ -121,25 +121,30 @@ async function createCAShipment(orderId: string): Promise<void> {
       );
     }
 
-    // 4. Parsear dirección del cliente (formato: "Calle 123, Piso 1, Dpto A, Ciudad, CP")
-    const addressParts = order.customerAddress.split(",").map((s) => s.trim());
-    const streetPart = addressParts[0] || "";
-    const streetMatch = streetPart.match(/^(.+?)\s+(\d+)/);
-    const streetName = streetMatch ? streetMatch[1].trim() : streetPart;
-    const streetNumber = streetMatch ? streetMatch[2] : "S/N";
+    // 4. Usar campos estructurados si existen, sino parsear dirección
+    // Prioridad: campos estructurados > parsing de customerAddress
+    let streetName = order.shippingStreet || "";
+    let streetNumber = order.shippingNumber || "S/N";
+    let city = order.shippingCity || "";
+    let postalCode = order.shippingPostalCode || "1611";
+    let provinceCode: "B" | "C" = order.shippingProvinceCode as "B" | "C" || "B";
 
-    // Extraer CP y provincia del final de la dirección
-    const postalCodeMatch = order.customerAddress.match(/\b(\d{4})\b/);
-    const postalCode = postalCodeMatch ? postalCodeMatch[1] : "1611"; // Default: Don Torcuato
+    // Fallback: parsear customerAddress si no hay campos estructurados
+    if (!streetName && order.customerAddress) {
+      const addressParts = order.customerAddress.split(",").map((s) => s.trim());
+      const streetPart = addressParts[0] || "";
+      const streetMatch = streetPart.match(/^(.+?)\s+(\d+)/);
+      streetName = streetMatch ? streetMatch[1].trim() : streetPart;
+      streetNumber = streetMatch ? streetMatch[2] : "S/N";
+      city = addressParts[3] || addressParts[1] || "Buenos Aires";
 
-    // Determinar provincia por CP (simplificado)
-    const getProvinceCode = (cp: string): "B" | "C" => {
-      const cpNum = parseInt(cp);
-      if (cpNum >= 1000 && cpNum <= 1439) return "C"; // CABA
-      return "B"; // Buenos Aires por defecto
-    };
+      const postalCodeMatch = order.customerAddress.match(/\b(\d{4})\b/);
+      postalCode = postalCodeMatch ? postalCodeMatch[1] : "1611";
 
-    const provinceCode = getProvinceCode(postalCode);
+      // Determinar provincia por CP
+      const cpNum = parseInt(postalCode);
+      provinceCode = (cpNum >= 1000 && cpNum <= 1439) ? "C" : "B";
+    }
 
     // 5. Calcular dimensiones estimadas del paquete
     const totalItems = order.order_items.reduce(
@@ -187,9 +192,9 @@ async function createCAShipment(orderId: string): Promise<void> {
         address: {
           streetName: streetName || "Dirección",
           streetNumber: streetNumber,
-          floor: addressParts[1] || "",
-          apartment: addressParts[2] || "",
-          city: addressParts[3] || "Buenos Aires",
+          floor: order.shippingFloor || "",
+          apartment: order.shippingApartment || "",
+          city: city || "Buenos Aires",
           provinceCode: provinceCode,
           postalCode: postalCode,
         },
@@ -292,6 +297,14 @@ async function _notifyCustomer(
         "@/lib/resend"
       );
 
+      // Log email configuration status for debugging
+      logger.info("[Webhook] Preparing to send confirmation email", {
+        orderId,
+        customerEmail: order.customerEmail,
+        resendConfigured: !!process.env.RESEND_API_KEY,
+        resendKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 8) + "...",
+      });
+
       const items = order.order_items.map((item) => ({
         name: item.products.name,
         quantity: item.quantity,
@@ -306,15 +319,16 @@ async function _notifyCustomer(
         items,
       });
 
-      await sendEmail({
+      const customerEmailSent = await sendEmail({
         to: order.customerEmail,
         subject: "✅ Confirmación de tu pedido en Rastuci",
         html: customerEmailHtml,
       });
 
-      logger.info("[Webhook] Order confirmation email sent to customer", {
+      logger.info("[Webhook] Customer email send result", {
         orderId,
         email: order.customerEmail,
+        sent: customerEmailSent,
         paymentMethod: paymentDetails.payment_method_id,
       });
 
@@ -328,15 +342,16 @@ async function _notifyCustomer(
         items,
       });
 
-      await sendEmail({
+      const adminEmailSent = await sendEmail({
         to: adminEmail,
         subject: `🔔 Nuevo Pedido #${orderId.slice(0, 8)} - ${order.customerName}`,
         html: adminEmailHtml,
       });
 
-      logger.info("[Webhook] New order notification email sent to admin", {
+      logger.info("[Webhook] Admin notification email result", {
         orderId,
         adminEmail,
+        sent: adminEmailSent,
       });
 
       // Enviar notificación push al cliente
@@ -722,6 +737,20 @@ export async function POST(req: NextRequest) {
     const customerEmail: string | undefined =
       payment.payer?.email || metadata.customerEmail;
 
+    // Extraer campos de shipping estructurados desde metadata
+    const shippingStreet: string | undefined =
+      typeof metadata.customerAddress === 'string' ? metadata.customerAddress : undefined;
+    const shippingCity: string | undefined =
+      typeof metadata.customerCity === 'string' ? metadata.customerCity : undefined;
+    const shippingProvince: string | undefined =
+      typeof metadata.customerProvince === 'string' ? metadata.customerProvince : undefined;
+    const shippingPostalCode: string | undefined =
+      typeof metadata.customerPostalCode === 'string' ? metadata.customerPostalCode : undefined;
+    const shippingAgencyCode: string | undefined =
+      typeof metadata.shippingAgencyCode === 'string' ? metadata.shippingAgencyCode : undefined;
+    const shippingMethodId: string | undefined =
+      typeof metadata.shippingMethodId === 'string' ? metadata.shippingMethodId : undefined;
+
     // Idempotent upsert using mpPaymentId
     await prisma.$transaction(
       async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
@@ -753,6 +782,13 @@ export async function POST(req: NextRequest) {
             mpPaymentId: mpPaymentId,
             mpPreferenceId: preferenceId,
             mpStatus: mpStatus,
+            // Campos de shipping estructurados para CA
+            shippingStreet: shippingStreet,
+            shippingCity: shippingCity,
+            shippingProvince: shippingProvince,
+            shippingPostalCode: shippingPostalCode,
+            shippingAgency: shippingAgencyCode,
+            shippingMethod: shippingMethodId,
             updatedAt: new Date(),
             order_items: {
               create: orderItems.map((it) => ({

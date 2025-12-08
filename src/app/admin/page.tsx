@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -257,12 +258,12 @@ export default function AdminLoginPage() {
                   Recordarme por 30 días
                 </label>
               </div>
-              <a
+              <Link
                 href="/admin/auth/forgot-password"
                 className="text-sm font-medium text-primary hover:text-primary/80"
               >
                 ¿Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
             <Button
               type="submit"
