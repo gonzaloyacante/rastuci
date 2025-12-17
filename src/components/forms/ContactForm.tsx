@@ -25,7 +25,7 @@ export default function ContactForm({ initial }: Props) {
   const [emailItems, setEmailItems] = useState<EmailItem[]>([]);
   const [phoneItems, setPhoneItems] = useState<PhoneItem[]>([]);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (initial) {
       setValues(initial);
       // Convertir arrays a objetos con ID
@@ -63,13 +63,13 @@ export default function ContactForm({ initial }: Props) {
     setValues((v) => ({ ...v, [key]: val }));
 
   const updateEmailItem = (id: string, value: string) => {
-    setEmailItems(items => items.map(item => 
+    setEmailItems(items => items.map(item =>
       item.id === id ? { ...item, value } : item
     ));
   };
 
   const updatePhoneItem = (id: string, value: string) => {
-    setPhoneItems(items => items.map(item => 
+    setPhoneItems(items => items.map(item =>
       item.id === id ? { ...item, value } : item
     ));
   };
@@ -99,12 +99,12 @@ export default function ContactForm({ initial }: Props) {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setMessage(null);
     const parsed = ContactSettingsSchema.safeParse(values);
-    if (!parsed.success) { setMessage(parsed.error.errors.map((er) => er.message).join("; ")); return; }
+    if (!parsed.success) { setMessage(parsed.error.issues.map((er) => er.message).join("; ")); return; }
     setSaving(true);
     try {
       const res = await fetch("/api/contact", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
       const json = await res.json();
-      if (!json.success) {throw new Error(json.error || "Error al guardar");}
+      if (!json.success) { throw new Error(json.error || "Error al guardar"); }
       setMessage("Guardado correctamente");
     } catch (err: unknown) { setMessage(err instanceof Error ? err.message : "Error inesperado"); } finally { setSaving(false); }
   };
@@ -191,26 +191,26 @@ export default function ContactForm({ initial }: Props) {
             <div key={network} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 border border-muted rounded-lg">
               <div>
                 <label className="block text-xs font-medium mb-1 capitalize">{network} - Usuario</label>
-                <input 
-                  className="w-full border rounded-md px-3 py-2" 
+                <input
+                  className="w-full border rounded-md px-3 py-2"
                   placeholder={`@usuario`}
-                  value={values.social[network]?.username ?? ""} 
-                  onChange={(e) => update("social", { 
-                    ...values.social, 
+                  value={values.social[network]?.username ?? ""}
+                  onChange={(e) => update("social", {
+                    ...values.social,
                     [network]: { ...values.social[network], username: e.target.value }
-                  })} 
+                  })}
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1 capitalize">{network} - URL</label>
-                <input 
-                  className="w-full border rounded-md px-3 py-2" 
+                <input
+                  className="w-full border rounded-md px-3 py-2"
                   placeholder={`https://${network}.com/...`}
-                  value={values.social[network]?.url ?? ""} 
-                  onChange={(e) => update("social", { 
-                    ...values.social, 
+                  value={values.social[network]?.url ?? ""}
+                  onChange={(e) => update("social", {
+                    ...values.social,
                     [network]: { ...values.social[network], url: e.target.value }
-                  })} 
+                  })}
                 />
               </div>
             </div>

@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 
 const analyticsEventSchema = z.object({
   name: z.string(),
-  properties: z.record(z.unknown()).optional(),
+  properties: z.record(z.string(), z.unknown()).optional(),
   userId: z.string().optional(),
   sessionId: z.string(),
   timestamp: z.string().transform((str) => new Date(str)),
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request format", details: error.errors },
+        { error: "Invalid request format", details: error.issues },
         { status: 400 }
       );
     }

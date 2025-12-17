@@ -98,7 +98,7 @@ export default function HomeForm({ initial }: Props) {
     setMessage(null);
     const parsed = HomeSettingsSchema.safeParse(values);
     if (!parsed.success) {
-      setMessage(parsed.error.errors.map((er) => er.message).join("; "));
+      setMessage(parsed.error.issues.map((er) => er.message).join("; "));
       return;
     }
     setSaving(true);

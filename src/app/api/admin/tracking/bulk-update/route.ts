@@ -27,7 +27,7 @@ export const POST = withAdminAuth(async (request: NextRequest): Promise<NextResp
   try {
     const body = await request.json();
     const validatedData = BulkUpdateSchema.parse(body);
-    
+
     const { trackingIds, status } = validatedData;
 
     // Mapear el status a un valor válido de OrderStatus
@@ -45,9 +45,9 @@ export const POST = withAdminAuth(async (request: NextRequest): Promise<NextResp
 
     const response: ApiResponse = {
       success: true,
-      data: { 
+      data: {
         updatedCount: updateResult.count,
-        updatedIds: trackingIds 
+        updatedIds: trackingIds
       }
     };
 
@@ -56,9 +56,9 @@ export const POST = withAdminAuth(async (request: NextRequest): Promise<NextResp
     if (error instanceof z.ZodError) {
       const response: ApiResponse = {
         success: false,
-        error: `Datos inválidos: ${error.errors.map(e => e.message).join(', ')}`
+        error: `Datos inválidos: ${error.issues.map(e => e.message).join(', ')}`
       };
-      
+
       return NextResponse.json(response, { status: 400 });
     }
 

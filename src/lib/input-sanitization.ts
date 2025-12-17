@@ -56,7 +56,7 @@ export function sanitizeUrl(url: string): string {
 export function sanitizePagination(page?: string, limit?: string) {
   const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
   const limitNum = Math.min(50, Math.max(1, parseInt(limit || '20', 10) || 20));
-  
+
   return {
     page: pageNum,
     limit: limitNum,
@@ -133,7 +133,7 @@ export function validateAndSanitize<T>(
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const message = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      const message = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
       return { success: false, error: `Validation error: ${message}` };
     }
     return { success: false, error: 'Invalid input' };

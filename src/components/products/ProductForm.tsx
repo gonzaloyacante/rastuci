@@ -145,7 +145,7 @@ export default function ProductForm({
     watch,
     reset,
   } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as any,
   });
 
   const watchPrice = watch("price");
@@ -177,10 +177,10 @@ export default function ProductForm({
       const discountPercentage =
         initialData.salePrice && initialData.price
           ? Math.round(
-              ((initialData.price - initialData.salePrice) /
-                initialData.price) *
-                100
-            )
+            ((initialData.price - initialData.salePrice) /
+              initialData.price) *
+            100
+          )
           : null;
 
       reset({
@@ -223,7 +223,7 @@ export default function ProductForm({
       // ============================================================================
       // VALIDACIONES EXHAUSTIVAS ANTES DEL SUBMIT
       // ============================================================================
-      
+
       // 1. Validar nombre
       if (!data.name || data.name.trim().length < 3) {
         toast.error("El nombre debe tener al menos 3 caracteres");
@@ -333,14 +333,14 @@ export default function ProductForm({
       };
 
       // DEBUG: Log completo de lo que se está enviando
-      logger.info("Enviando datos del producto:", { 
+      logger.info("Enviando datos del producto:", {
         productData,
         method: initialData ? "PUT" : "POST",
         url: initialData ? `/api/products/${initialData.id}` : "/api/products"
       });
 
-      const url = initialData 
-        ? `/api/products/${initialData.id}` 
+      const url = initialData
+        ? `/api/products/${initialData.id}`
         : "/api/products";
       const method = initialData ? "PUT" : "POST";
 
@@ -352,19 +352,19 @@ export default function ProductForm({
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error("Error response del servidor:", { 
+        logger.error("Error response del servidor:", {
           status: response.status,
           statusText: response.statusText,
           body: errorText
         });
-        
+
         let errorData;
         try {
           errorData = JSON.parse(errorText);
         } catch {
           errorData = { error: { message: errorText } };
         }
-        
+
         const errorMsg = errorData.error?.message || errorData.message || `Error ${response.status}`;
         toast.error(errorMsg);
         throw new Error(errorMsg);
@@ -623,7 +623,7 @@ export default function ProductForm({
                           El descuento será de{" "}
                           {formatPriceARS(
                             Number(watchPrice || 0) -
-                              Number(calculatedSalePrice)
+                            Number(calculatedSalePrice)
                           )}
                         </p>
                       </>
