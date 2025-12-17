@@ -193,7 +193,7 @@ export default function HomeForm({ initial }: Props) {
         <h3 className="text-lg font-semibold mb-3">Beneficios</h3>
         <div className="space-y-4">
           {benefitItems.map((benefitItem) => {
-            const IconComponent = (Icons as any)[benefitItem.icon];
+            const IconComponent = (Icons as unknown as Record<string, React.ElementType>)[benefitItem.icon];
 
             return (
               <div key={benefitItem.id} className="grid md:grid-cols-12 gap-3 items-end">

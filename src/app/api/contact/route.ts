@@ -1,53 +1,49 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
-import { normalizeApiError } from "@/lib/errors";
-import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { ContactSettingsSchema, defaultContactSettings } from "@/lib/validation/contact";
+import { apiHandler, AppError } from "@/lib/api-handler";
+import { logger } from "@/lib/logger";
 
 const SETTINGS_KEY = "contact";
 
+// Handler for GET
 export async function GET(req: NextRequest) {
-  try {
+  return apiHandler(async () => {
+    // 1. Rate Limit
     const rl = await checkRateLimit(req, { key: "contact:get", limit: 60, windowMs: 60_000 });
     if (!rl.ok) {
-      return NextResponse.json(
-        fail("RATE_LIMITED", "Too many requests", 429, { retryAfterMs: rl.retryAfterMs }),
-      );
+      throw new AppError("Too many requests", 429);
     }
 
+    // 2. Logic
     const setting = await prisma.settings.findUnique({ where: { key: SETTINGS_KEY } });
     const value = setting?.value ?? defaultContactSettings;
 
     const parsed = ContactSettingsSchema.safeParse(value);
     if (!parsed.success) {
       logger.warn("Invalid contact settings in DB, returning defaults", { issues: parsed.error.flatten() });
-      return NextResponse.json(ok(defaultContactSettings));
+      return defaultContactSettings;
     }
 
-    return NextResponse.json(ok(parsed.data));
-  } catch (err) {
-    const e = normalizeApiError(err);
-    logger.error("GET /api/contact failed", e);
-    const code: ApiErrorCode = e.code === "INTERNAL" ? "INTERNAL_ERROR" : e.code as ApiErrorCode;
-    return NextResponse.json(fail(code, e.message, e.status ?? 500));
-  }
+    return parsed.data;
+  }, "GET /api/contact");
 }
 
+// Handler for PUT
 export async function PUT(req: NextRequest) {
-  try {
+  return apiHandler(async () => {
+    // 1. Rate Limit
     const rl = await checkRateLimit(req, { key: "contact:put", limit: 20, windowMs: 60_000 });
     if (!rl.ok) {
-      return NextResponse.json(
-        fail("RATE_LIMITED", "Too many requests", 429, { retryAfterMs: rl.retryAfterMs }),
-      );
+      throw new AppError("Too many requests", 429);
     }
 
+    // 2. Logic
     const body = await req.json();
     const parsed = ContactSettingsSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(fail("BAD_REQUEST", parsed.error.message, 400));
+      throw new AppError(parsed.error.message, 400);
     }
 
     const saved = await prisma.settings.upsert({
@@ -56,11 +52,6 @@ export async function PUT(req: NextRequest) {
       create: { key: SETTINGS_KEY, value: parsed.data, updatedAt: new Date() },
     });
 
-    return NextResponse.json(ok(saved.value));
-  } catch (err) {
-    const e = normalizeApiError(err);
-    logger.error("PUT /api/contact failed", e);
-    const code: ApiErrorCode = e.code === "INTERNAL" ? "INTERNAL_ERROR" : e.code as ApiErrorCode;
-    return NextResponse.json(fail(code, e.message, e.status ?? 500));
-  }
+    return saved.value;
+  }, "PUT /api/contact");
 }

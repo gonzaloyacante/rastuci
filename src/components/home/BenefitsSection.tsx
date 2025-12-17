@@ -16,14 +16,14 @@ export function BenefitsSection({ home }: BenefitsSectionProps) {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           {benefits.map((benefit, idx) => {
-            const IconComponent = (Icons as any)[benefit.icon] || Icons.Truck;
+            const IconComponent = (Icons as unknown as Record<string, React.ElementType>)[benefit.icon] || Icons.Truck;
 
             return (
               <div className="flex flex-col items-center" key={idx}>
-                <IconComponent 
-                  size={48} 
-                  className="text-primary mb-3" 
-                  aria-hidden="true" 
+                <IconComponent
+                  size={48}
+                  className="text-primary mb-3"
+                  aria-hidden="true"
                 />
                 <h3 className="font-bold text-lg font-montserrat">
                   {benefit.title}

@@ -47,6 +47,7 @@ export async function uploadImage(file: File, folder = "rastuci") {
   }
 }
 
+
 // Función para eliminar una imagen
 export async function deleteImage(publicId: string) {
   try {
@@ -55,5 +56,21 @@ export async function deleteImage(publicId: string) {
   } catch (error) {
     logger.error("Error deleting from Cloudinary", { error });
     throw error;
+  }
+}
+
+export function extractPublicId(url: string): string | null {
+  try {
+    // Regex para extraer el public_id de URLs de Cloudinary
+    // Soporta: https://res.cloudinary.com/.../upload/v1234/folder/id.jpg
+    const regex = /\/upload\/(?:v\d+\/)?(.+)(?:\.[^.]+)$/;
+    const match = url.match(regex);
+    if (match && match[1]) {
+      return match[1];
+    }
+    return null;
+  } catch (error) {
+    logger.warn("Error extracting Cloudinary public_id", { url, error });
+    return null;
   }
 }

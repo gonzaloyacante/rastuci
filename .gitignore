@@ -100,3 +100,7 @@ next-env.d.ts
 
 # AI rules (privado)
 .github/instructions/codacy.instructions.md
+
+
+#Ignore cursor AI rules
+.cursor/rules/codacy.mdc

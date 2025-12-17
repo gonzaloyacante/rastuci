@@ -58,13 +58,20 @@ function getNotificationUrl() {
   return `${getBaseUrl()}/api/payments/mercadopago/webhook`;
 }
 
+interface MPOperationError {
+  message?: string;
+  response?: {
+    status?: number;
+    data?: unknown;
+  };
+}
+
 async function safeCreate<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (err) {
     // capture and log SDK error details if present
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = err as any;
+    const e = err as MPOperationError;
     try {
       logger.error("[mercadopago] SDK error", { message: e?.message ?? e });
       if (e?.response) {

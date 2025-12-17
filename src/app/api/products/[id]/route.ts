@@ -1,5 +1,6 @@
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
+import { deleteImage, extractPublicId } from "@/lib/cloudinary";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
@@ -130,6 +131,35 @@ export async function PUT(
       return fail("BAD_REQUEST", "La categoría especificada no existe", 400);
     }
 
+    // Obtener producto actual para comparar imágenes
+    const currentProduct = await prisma.products.findUnique({
+      where: { id },
+    });
+
+    if (currentProduct && currentProduct.images) {
+      const oldImages: string[] = typeof currentProduct.images === 'string'
+        ? JSON.parse(currentProduct.images)
+        : currentProduct.images;
+
+      const newImages = Array.isArray(images) ? images : [];
+
+      // Identificar imágenes eliminadas
+      const imagesToDelete = oldImages.filter(img => !newImages.includes(img));
+
+      if (imagesToDelete.length > 0) {
+        logger.info(`Deleting ${imagesToDelete.length} removed images from Cloudinary`);
+        // Eliminar en segundo plano para no bloquear la respuesta
+        Promise.allSettled(imagesToDelete.map(async (url) => {
+          const publicId = extractPublicId(url);
+          if (publicId) {
+            await deleteImage(publicId);
+          }
+        })).then(results => {
+          logger.info("Image deletion results", { results });
+        });
+      }
+    }
+
     const updatedPrismaProduct = await prisma.products.update({
       where: { id },
       data: {
@@ -215,9 +245,32 @@ export async function DELETE(
       );
     }
 
+    const productToDelete = await prisma.products.findUnique({
+      where: { id },
+    });
+
     await prisma.products.delete({
       where: { id },
     });
+
+    // Eliminar imágenes de Cloudinary si existen
+    if (productToDelete && productToDelete.images) {
+      const images: string[] = typeof productToDelete.images === 'string'
+        ? JSON.parse(productToDelete.images)
+        : productToDelete.images;
+
+      if (images.length > 0) {
+        logger.info(`Deleting ${images.length} images for deleted product ${id}`);
+        // No esperamos (await) para no demorar la respuesta, o podemos esperar si es crítico.
+        // Dado que el producto ya se borró de la DB, mejor limpiar asíncronamente.
+        Promise.allSettled(images.map(async (url) => {
+          const publicId = extractPublicId(url);
+          if (publicId) {
+            await deleteImage(publicId);
+          }
+        })).catch(err => logger.error("Error cleaning up images", { err }));
+      }
+    }
 
     return ok(null, "Producto eliminado exitosamente");
   } catch (error) {
