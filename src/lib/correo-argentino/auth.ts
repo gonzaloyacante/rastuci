@@ -4,6 +4,8 @@ import {
     CorreoArgentinoCredentials,
     TokenResponse,
     ApiResponse,
+    RegisterUserParams,
+    RegisterUserResponse,
     ValidateUserParams,
     ValidateUserResponse
 } from "./types";
@@ -108,6 +110,25 @@ export class CorreoArgentinoAuth {
                 error: {
                     code: "USER_VALIDATION_FAILED",
                     message: "Error validando usuario",
+                    details: error.response?.data,
+                },
+            };
+        }
+    }
+
+    /**
+     * Registra un nuevo usuario en MiCorreo
+     */
+    public async registerUser(params: RegisterUserParams): Promise<ApiResponse<RegisterUserResponse>> {
+        try {
+            const response = await this.api.post<RegisterUserResponse>("/register", params);
+            return { success: true, data: response.data };
+        } catch (error: any) {
+            return {
+                success: false,
+                error: {
+                    code: "REGISTER_FAILED",
+                    message: "Error registrando usuario",
                     details: error.response?.data,
                 },
             };

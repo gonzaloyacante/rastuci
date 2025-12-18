@@ -79,12 +79,23 @@ export async function POST(request: Request) {
     const storePostalCode = await getStorePostalCode();
 
     try {
-      const result = await correoArgentinoService.calculateRates({
-        customerId,
+      const {
+        width = defaultDimensions.width,
+        height = defaultDimensions.height,
+        length = defaultDimensions.length,
+        weight = defaultDimensions.weight,
+      } = dimensions || {};
+
+      const result = await correoArgentinoService.getRates({
+        customerId: process.env.CORREO_ARGENTINO_CUSTOMER_ID || "",
         postalCodeOrigin: storePostalCode,
         postalCodeDestination: postalCode,
-        deliveredType: deliveredType || undefined,
-        dimensions: dimensions || defaultDimensions,
+        dimensions: {
+          width: Math.round(width),
+          height: Math.round(height),
+          length: Math.round(length),
+          weight: Math.round(weight),
+        },
       });
 
       if (

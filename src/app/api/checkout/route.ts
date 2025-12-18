@@ -101,7 +101,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       };
 
       // Create Order via Service
-      const order = await orderService.createCashOrder(customer, items, orderData.total, shippingData);
+      const order = await orderService.createCashOrder(
+        { ...customer, phone: customer.phone || "" },
+        items,
+        orderData.total,
+        shippingData
+      );
 
       // Handle CA Shipment Immediate Creation if needed
       // Original logic checked for 'ca-' id. Reuse logic or move to shipment service?

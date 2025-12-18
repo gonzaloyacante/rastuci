@@ -185,6 +185,29 @@ export interface ImportShipmentResponse {
     trackingNumber?: string; // A veces devuelven tracking directo
 }
 
+// Tracking
+export interface GetTrackingParams {
+    shippingId: string;
+}
+
+export interface TrackingEvent {
+    eventDate: string;
+    eventDescription: string;
+    branchName: string;
+    branchCode: string;
+}
+
+export interface TrackingInfo {
+    shippingId: string;
+    status: string;
+    events: TrackingEvent[];
+}
+
+export interface TrackingErrorResponse {
+    code: string;
+    message: string;
+}
+
 // Respuesta genérica de API
 export interface ApiResponse<T> {
     success: boolean;

@@ -207,7 +207,7 @@ export function useCorreoArgentino(): UseCorreoArgentinoResult {
           destination: params.postalCodeDestination,
         });
 
-        const result = await correoArgentinoService.calculateRates(params);
+        const result = await correoArgentinoService.getRates(params);
 
         if (!result.success || !result.data) {
           const errorMsg = result.error?.message || "Error al calcular tarifas";
@@ -374,7 +374,7 @@ export function useCorreoArgentino(): UseCorreoArgentinoResult {
 
   // Obtener customerId
   const getCustomerId = useCallback((): string | undefined => {
-    return correoArgentinoService.getCustomerId();
+    return correoArgentinoService.getCustomerId() ?? undefined;
   }, []);
 
   // Establecer customerId

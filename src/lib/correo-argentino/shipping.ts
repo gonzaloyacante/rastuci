@@ -1,9 +1,9 @@
-
 import { AxiosInstance } from "axios";
 import {
     ImportShipmentParams,
     ImportShipmentResponse,
-    ApiResponse
+    ApiResponse,
+    GetTrackingParams
 } from "./types";
 import { logger } from "@/lib/logger";
 
@@ -119,10 +119,10 @@ export class CorreoArgentinoShipping {
     /**
      * Obtiene el tracking de un envío (si estuviera disponible en REST)
      */
-    public async getTracking(shippingId: string): Promise<ApiResponse<any>> {
+    public async getTracking(params: GetTrackingParams): Promise<ApiResponse<any>> {
         try {
             // Implementación base según doc, aunque endpoint suele ser inestable
-            const response = await this.api.get(`/shipping/tracking?shippingId=${shippingId}`);
+            const response = await this.api.get(`/shipping/tracking?shippingId=${params.shippingId}`);
             return { success: true, data: response.data };
         } catch (error: any) {
             return {

@@ -25,9 +25,9 @@ export const POST = withAdminAuth(async (_request: NextRequest): Promise<NextRes
         try {
           // Integrar con API de Correo Argentino para obtener estado actualizado
           const { correoArgentinoService } = await import('@/lib/correo-argentino-service');
-          
+
           await correoArgentinoService.authenticate();
-          const trackingData = await correoArgentinoService.getTracking(order.trackingNumber);
+          const trackingData = await correoArgentinoService.getTracking({ shippingId: order.trackingNumber });
 
           if (trackingData.success && trackingData.data && !Array.isArray(trackingData.data) && 'events' in trackingData.data) {
             // Tracking data actualizado desde CA

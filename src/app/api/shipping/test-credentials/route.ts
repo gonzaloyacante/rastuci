@@ -55,19 +55,20 @@ export async function GET() {
   // Paso 2: Probar autenticación
   const authStart = Date.now();
   try {
-    logger.info("[Test] Probando autenticación con Correo Argentino...");
-    const authResult = await correoArgentinoService.authenticate();
+    // 2. Probar autenticación
+    const authResult = await correoArgentinoService.authenticate({
+      username: process.env.CORREO_ARGENTINO_USERNAME || "",
+      password: process.env.CORREO_ARGENTINO_PASSWORD || "",
+    });
+
+    if (!authResult.success || !authResult.data) {
+      throw new Error(authResult.error?.message || "Auth failed");
+    }
 
     results.push({
       step: "2. Autenticación API",
-      success: authResult.success,
-      data: authResult.success
-        ? {
-            tokenPrefix: authResult.data?.token?.substring(0, 20) + "...",
-            expires: authResult.data?.expires,
-          }
-        : null,
-      error: authResult.error?.message,
+      success: true,
+      data: { tokenPrefix: authResult.data.substring(0, 20) + "..." },
       duration: Date.now() - authStart,
     });
 
@@ -111,16 +112,16 @@ export async function GET() {
 
         for (const testCase of testCases) {
           const caseStart = Date.now();
-          const ratesResult = await correoArgentinoService.calculateRates({
-            customerId,
-            postalCodeOrigin: testCase.origin,
-            postalCodeDestination: testCase.dest,
+          const ratesResult = await correoArgentinoService.getRates({
+            customerId: "0000000000", // Dummy
+            postalCodeOrigin: "1000",
+            postalCodeDestination: "2000",
             deliveredType: testCase.deliveredType,
             dimensions: {
-              weight: 2500, // 2500g - igual que la documentación
-              height: 10, // igual que la documentación
-              width: 20, // igual que la documentación
-              length: 30, // igual que la documentación
+              weight: 1000,
+              height: 10,
+              width: 10,
+              length: 10,
             },
           });
 

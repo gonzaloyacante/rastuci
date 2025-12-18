@@ -21,7 +21,13 @@ import {
   ApiResponse,
   ValidateUserParams,
   ValidateUserResponse,
-  ProvinceCode
+  ProvinceCode,
+  RegisterUserParams,
+  RegisterUserResponse,
+  CorreoArgentinoCredentials,
+  GetTrackingParams,
+  TrackingInfo,
+  TrackingErrorResponse
 } from "./correo-argentino/types";
 import { logger } from "@/lib/logger";
 
@@ -38,6 +44,7 @@ export class CorreoArgentinoService {
   private shippingService: CorreoArgentinoShipping;
 
   private isProduction: boolean;
+  private customerId: string | null = null;
 
   constructor(isProduction: boolean = false) {
     this.isProduction = isProduction;
@@ -94,7 +101,58 @@ export class CorreoArgentinoService {
     // validateUser tiene su propio manejo de auth si es necesario
     return this.auth.validateUser(params);
   }
+
+  public async registerUser(params: RegisterUserParams): Promise<ApiResponse<RegisterUserResponse>> {
+    return this.auth.registerUser(params);
+  }
+
+  public async authenticate(credentials?: CorreoArgentinoCredentials): Promise<ApiResponse<string>> {
+    if (credentials) {
+      return this.auth.authenticate(credentials);
+    }
+    // Fallback to env vars if available (Server Side)
+    if (process.env.CORREO_ARGENTINO_USERNAME && process.env.CORREO_ARGENTINO_PASSWORD) {
+      return this.auth.authenticate({
+        username: process.env.CORREO_ARGENTINO_USERNAME,
+        password: process.env.CORREO_ARGENTINO_PASSWORD,
+        customerId: process.env.CORREO_ARGENTINO_CUSTOMER_ID
+      });
+    }
+    return {
+      success: false,
+      error: { code: "AUTH_NO_CREDS", message: "Credenciales no proporcionadas" }
+    };
+  }
+
+  public async getTracking(params: GetTrackingParams): Promise<ApiResponse<any>> {
+    await this.ensureAuth();
+    return this.shippingService.getTracking(params);
+  }
+
+  // Métodos de utilidad y compatibilidad con hooks
+
+  public setCustomerId(id: string): void {
+    this.customerId = id;
+  }
+
+  public getCustomerId(): string | null {
+    return this.customerId;
+  }
+
+  public isValidPostalCode(postalCode: string): boolean {
+    // Validación básica de CP argentino (4 dígitos o CPA 8 caracteres)
+    // Ej: 1414, C1414AAA
+    if (!postalCode) return false;
+    const numericPattern = /^\d{4}$/;
+    const cpaPattern = /^[A-Z]\d{4}[A-Z]{3}$/;
+    return numericPattern.test(postalCode) || cpaPattern.test(postalCode);
+  }
 }
+
+// Instancia singleton para compatibilidad y uso general
+export const correoArgentinoService = new CorreoArgentinoService(
+  process.env.NODE_ENV === "production"
+);
 
 // Re-exportar tipos para uso externo
 export type {
@@ -105,5 +163,13 @@ export type {
   GetAgenciesParams,
   Agency,
   ApiResponse,
-  ProvinceCode
+  ProvinceCode,
+  RegisterUserParams,
+  RegisterUserResponse,
+  ValidateUserParams,
+  ValidateUserResponse,
+  CorreoArgentinoCredentials,
+  GetTrackingParams,
+  TrackingInfo,
+  TrackingErrorResponse
 };

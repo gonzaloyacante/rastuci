@@ -195,7 +195,10 @@ export class ShipmentService {
             }
 
             const trackingNumber = response.data?.trackingNumber;
-            const shipmentId = response.data?.shipmentId;
+            // Algunos endpoints devuelven shipmentId o label
+            // Usamos 'any' temp para propiedades no documentadas que pueden variar
+            const responseData = response.data as any;
+            const shipmentId = responseData?.shipmentId || responseData?.id;
 
             await prisma.orders.update({
                 where: { id: orderId },

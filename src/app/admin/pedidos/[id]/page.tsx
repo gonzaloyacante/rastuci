@@ -27,6 +27,18 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 // Componente Badge interno para evitar problemas de importación
+// Fix getTracking call
+// const trackingInfoRequest = await correoArgentinoService.getTracking({ shippingId: order.trackingNumber! });
+
+// Fix shipmentId access
+// const shipmentId = (apiData as any)?.shipmentId || (apiData as any)?.id;
+
+// Fix TrackingEvent properties
+// In UI loop:
+/*
+<p><strong>Estado:</strong> {event.eventDescription}</p>
+<p><strong>Sucursal:</strong> {event.branchName} ({event.branchCode})</p>
+*/
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
@@ -238,7 +250,7 @@ export default function OrderDetailPage() {
 
     setLoadingTracking(true);
     try {
-      const result = await getTracking(order.caTrackingNumber);
+      const result = await getTracking({ shippingId: order.caTrackingNumber });
       if (result) {
         setTrackingInfo(result);
         toast.success("Información de tracking obtenida");
@@ -316,12 +328,16 @@ export default function OrderDetailPage() {
 
       if (result) {
         // Actualizar orden con información de CA
+        // Cast a any para acceder a propiedades no tipadas estricamente si existen
+        const resultAny = result as any;
+        const shipmentId = resultAny.shipmentId || resultAny.id || result.trackingNumber;
+
         await fetch(`/api/orders/${orderId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             caTrackingNumber: result.trackingNumber,
-            caShipmentId: result.shipmentId,
+            caShipmentId: shipmentId,
             caExtOrderId: order.id,
           }),
         });
@@ -329,7 +345,7 @@ export default function OrderDetailPage() {
         setOrder({
           ...order,
           caTrackingNumber: result.trackingNumber,
-          caShipmentId: result.shipmentId,
+          caShipmentId: shipmentId,
           caExtOrderId: order.id,
         });
 
@@ -573,23 +589,23 @@ export default function OrderDetailPage() {
                       <div className="p-3 surface-secondary rounded text-sm">
                         <p>
                           <strong>Tracking:</strong>{" "}
-                          {trackingInfo.trackingNumber}
+                          {trackingInfo.shippingId}
                         </p>
                         {trackingInfo.events &&
                           trackingInfo.events.length > 0 && (
                             <>
                               <p>
                                 <strong>Estado:</strong>{" "}
-                                {trackingInfo.events[0].status}
+                                {trackingInfo.events[0].eventDescription}
                               </p>
                               <p>
                                 <strong>Ubicación:</strong>{" "}
-                                {trackingInfo.events[0].branch}
+                                {trackingInfo.events[0].branchName}
                               </p>
                               <p>
                                 <strong>Fecha:</strong>{" "}
                                 {new Date(
-                                  trackingInfo.events[0].date
+                                  trackingInfo.events[0].eventDate
                                 ).toLocaleString("es-AR")}
                               </p>
                             </>

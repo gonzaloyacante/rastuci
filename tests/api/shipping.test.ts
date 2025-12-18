@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/correo-argentino-service", () => ({
     correoArgentinoService: {
         authenticate: vi.fn(),
-        calculateRates: vi.fn(),
+        getRates: vi.fn(),
         getAgencies: vi.fn(),
         importShipment: vi.fn(),
         getTracking: vi.fn(),
@@ -38,7 +38,7 @@ describe("Correo Argentino Service", () => {
         vi.clearAllMocks();
     });
 
-    describe("calculateRates", () => {
+    describe("getRates", () => {
         it("should return rates for valid postal codes", async () => {
             const mockRates = {
                 success: true,
@@ -58,11 +58,11 @@ describe("Correo Argentino Service", () => {
                 },
             };
 
-            vi.mocked(correoArgentinoService.calculateRates).mockResolvedValueOnce(
+            vi.mocked(correoArgentinoService.getRates).mockResolvedValueOnce(
                 mockRates
             );
 
-            const result = await correoArgentinoService.calculateRates({
+            const result = await correoArgentinoService.getRates({
                 customerId: "0000550997",
                 postalCodeOrigin: "1757",
                 postalCodeDestination: "1704",
@@ -80,7 +80,7 @@ describe("Correo Argentino Service", () => {
         });
 
         it("should handle API errors gracefully", async () => {
-            vi.mocked(correoArgentinoService.calculateRates).mockResolvedValueOnce({
+            vi.mocked(correoArgentinoService.getRates).mockResolvedValueOnce({
                 success: false,
                 error: {
                     code: "INVALID_POSTAL_CODE",
@@ -88,15 +88,15 @@ describe("Correo Argentino Service", () => {
                 },
             });
 
-            const result = await correoArgentinoService.calculateRates({
-                customerId: "0000550997",
-                postalCodeOrigin: "9999",
-                postalCodeDestination: "0000",
+            const result = await correoArgentinoService.getRates({
+                customerId: "123",
+                postalCodeOrigin: "1000",
+                postalCodeDestination: "2000",
                 dimensions: {
-                    weight: 2500,
+                    weight: 1000,
                     height: 10,
-                    width: 20,
-                    length: 30,
+                    width: 10,
+                    length: 10,
                 },
             });
 

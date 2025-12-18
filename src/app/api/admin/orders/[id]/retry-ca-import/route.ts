@@ -175,7 +175,9 @@ export async function POST(
 
         // 9. Actualizar orden con datos del envío
         const trackingNumber = response.data?.trackingNumber;
-        const shipmentId = response.data?.shipmentId;
+        // Usamos 'any' para propiedades no garantizadas por la interfaz estricta
+        const responseData = response.data as any;
+        const shipmentId = responseData?.shipmentId || responseData?.id;
 
         const updatedOrder = await prisma.orders.update({
             where: { id: orderId },
