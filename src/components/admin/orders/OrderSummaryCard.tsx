@@ -3,32 +3,50 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import { OrderItem } from "@/types"; // We might need to define this or import from a shared location
 
 interface OrderSummaryCardProps {
     order: {
         id: string;
         status: string;
+        paymentStatus?: string; // Add optional payment status
+        paymentMethod: string;
         createdAt: string;
         updatedAt: string;
         total: number;
-        items: any[]; // refined type below
+        items: any[];
+        shippingMethod?: any; // To determine if it needs shipping
+        caTrackingNumber?: string; // To determine if shipped
+        caImportStatus?: string; // To determine if imported
     };
 }
 
-const statusInfo: Record<string, { label: string; color: string }> = {
-    PENDING: {
-        label: "Pendiente",
-        color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    },
-    PROCESSED: {
-        label: "Procesado",
-        color: "bg-blue-100 text-blue-800 border-blue-200", // Adjusted for better visibility
-    },
-    DELIVERED: {
-        label: "Entregado",
-        color: "bg-green-100 text-green-800 border-green-200",
-    },
+const getDetailedStatus = (order: OrderSummaryCardProps['order']) => {
+    // 1. Payment Status
+    const isPaid = order.paymentStatus === 'approved' || order.status === 'PROCESSED';
+
+    // 2. Shipping Status (only if shipping is required)
+    const requiresShipping = order.shippingMethod && order.shippingMethod.id !== 'pickup';
+    const isShipped = !!order.caTrackingNumber;
+    const isImported = order.caImportStatus === 'processed' || !!order.caTrackingNumber;
+
+    if (order.status === 'DELIVERED') {
+        return { label: "Entregado", color: "bg-green-100 text-green-800 border-green-200" };
+    }
+
+    if (isPaid) {
+        if (!requiresShipping) {
+            return { label: "Pagado (Retiro en Local)", color: "bg-blue-100 text-blue-800 border-blue-200" };
+        }
+        if (isShipped) {
+            return { label: "Enviado / En Tránsito", color: "bg-purple-100 text-purple-800 border-purple-200" };
+        }
+        if (isImported) {
+            return { label: "Etiqueta Generada (Esperando Pago Envío)", color: "bg-orange-100 text-orange-800 border-orange-200" };
+        }
+        return { label: "Pagado (Pendiente Envío)", color: "bg-blue-100 text-blue-800 border-blue-200" };
+    }
+
+    return { label: "Pendiente de Pago", color: "bg-yellow-100 text-yellow-800 border-yellow-200" };
 };
 
 const getProductImage = (item: any) => {
@@ -42,7 +60,7 @@ const getProductImage = (item: any) => {
 };
 
 export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
-    const status = statusInfo[order.status] || { label: order.status, color: "bg-gray-100" };
+    const status = getDetailedStatus(order);
 
     return (
         <div className="space-y-6">
@@ -51,7 +69,7 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
                 <CardHeader className="surface border-b border-muted">
                     <div className="flex justify-between items-center">
                         <CardTitle className="text-lg">Información General</CardTitle>
-                        <Badge className={status.color}>
+                        <Badge className={`${status.color} border px-3 py-1 text-sm font-medium`}>
                             {status.label}
                         </Badge>
                     </div>
@@ -76,9 +94,11 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
                         </div>
                         <div>
                             <h3 className="text-sm font-medium muted">
-                                Última Actualización
+                                Método de Pago
                             </h3>
-                            <p className="text-sm">{formatDate(order.updatedAt)}</p>
+                            <p className="text-sm capitalize">
+                                {order.paymentMethod === 'mercadopago' ? 'Mercado Pago' : order.paymentMethod}
+                            </p>
                         </div>
                     </div>
                 </CardContent>
