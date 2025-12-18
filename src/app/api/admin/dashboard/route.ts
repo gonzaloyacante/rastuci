@@ -59,6 +59,12 @@ interface MetricsDashboard {
     averageDeliveryTime: MetricData;
     onTimeDeliveryRate: MetricData;
     shippingCost: MetricData;
+    shippingDistribution: {
+      homeDelivery: number;
+      branchPickup: number;
+      homePercentage: number;
+      branchPercentage: number;
+    };
   };
   customerMetrics: {
     newCustomers: MetricData;
@@ -267,21 +273,21 @@ export const GET = withAdminAuth(
       const currentAvgDeliveryTime =
         currentDeliveredOrders.length > 0
           ? currentDeliveredOrders.reduce((sum, order) => {
-              const deliveryDays =
-                (order.updatedAt.getTime() - order.createdAt.getTime()) /
-                (1000 * 60 * 60 * 24);
-              return sum + deliveryDays;
-            }, 0) / currentDeliveredOrders.length
+            const deliveryDays =
+              (order.updatedAt.getTime() - order.createdAt.getTime()) /
+              (1000 * 60 * 60 * 24);
+            return sum + deliveryDays;
+          }, 0) / currentDeliveredOrders.length
           : 0;
 
       const previousAvgDeliveryTime =
         previousDeliveredOrders.length > 0
           ? previousDeliveredOrders.reduce((sum, order) => {
-              const deliveryDays =
-                (order.updatedAt.getTime() - order.createdAt.getTime()) /
-                (1000 * 60 * 60 * 24);
-              return sum + deliveryDays;
-            }, 0) / previousDeliveredOrders.length
+            const deliveryDays =
+              (order.updatedAt.getTime() - order.createdAt.getTime()) /
+              (1000 * 60 * 60 * 24);
+            return sum + deliveryDays;
+          }, 0) / previousDeliveredOrders.length
           : 0;
 
       // Top productos vendidos
@@ -393,9 +399,9 @@ export const GET = withAdminAuth(
       const avgShippingCost =
         ordersWithShipping.length > 0
           ? ordersWithShipping.reduce(
-              (sum, o) => sum + (o.shippingCost || 0),
-              0
-            ) / ordersWithShipping.length
+            (sum, o) => sum + (o.shippingCost || 0),
+            0
+          ) / ordersWithShipping.length
           : 0;
       const previousOrdersWithShipping = previousOrders.filter(
         (o) => o.shippingCost && o.shippingCost > 0
@@ -403,9 +409,9 @@ export const GET = withAdminAuth(
       const previousAvgShipping =
         previousOrdersWithShipping.length > 0
           ? previousOrdersWithShipping.reduce(
-              (sum, o) => sum + (o.shippingCost || 0),
-              0
-            ) / previousOrdersWithShipping.length
+            (sum, o) => sum + (o.shippingCost || 0),
+            0
+          ) / previousOrdersWithShipping.length
           : 0;
 
       // Generar datos para gráficos basados en órdenes reales
@@ -468,10 +474,10 @@ export const GET = withAdminAuth(
         date.setDate(date.getDate() - i);
         last7Days.push(date);
       }
-      
+
       const ordersPerDay = last7Days.map(date => {
         const dateKey = date.toISOString().split('T')[0];
-        const dayOrders = currentOrders.filter(o => 
+        const dayOrders = currentOrders.filter(o =>
           o.createdAt.toISOString().split('T')[0] === dateKey
         );
         return {
@@ -552,13 +558,13 @@ export const GET = withAdminAuth(
           conversionRate: calculateMetric(
             currentOrderCount > 0
               ? Math.round(
-                  (currentOrderCount / (currentOrderCount + 10)) * 100 * 10
-                ) / 10
+                (currentOrderCount / (currentOrderCount + 10)) * 100 * 10
+              ) / 10
               : 0,
             previousOrderCount > 0
               ? Math.round(
-                  (previousOrderCount / (previousOrderCount + 10)) * 100 * 10
-                ) / 10
+                (previousOrderCount / (previousOrderCount + 10)) * 100 * 10
+              ) / 10
               : 0,
             "Tasa de Conversión"
           ),
@@ -588,6 +594,7 @@ export const GET = withAdminAuth(
             Math.round(previousAvgShipping),
             "Costo de Envío Promedio"
           ),
+          shippingDistribution,
         },
         customerMetrics: {
           newCustomers: calculateMetric(
@@ -703,8 +710,8 @@ function generateSalesChartFromOrders(
           period === "quarter"
             ? `Sem ${Math.floor(i / 7) + 1}`
             : new Date(chunk[0]?.date || "").toLocaleDateString("es-AR", {
-                month: "short",
-              }),
+              month: "short",
+            }),
       });
     }
     return groupedData;
@@ -767,8 +774,8 @@ function generateOrdersChartFromOrders(
           period === "quarter"
             ? `Sem ${Math.floor(i / 7) + 1}`
             : new Date(chunk[0]?.date || "").toLocaleDateString("es-AR", {
-                month: "short",
-              }),
+              month: "short",
+            }),
       });
     }
     return groupedData;
