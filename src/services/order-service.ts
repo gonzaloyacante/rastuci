@@ -36,7 +36,13 @@ export class OrderService {
     async updateOrder(orderId: string, data: OrderUpdateData) {
         const order = await prisma.orders.findUnique({
             where: { id: orderId },
-            include: { order_items: true }
+            include: {
+                order_items: {
+                    include: {
+                        products: true
+                    }
+                }
+            }
         });
 
         if (!order) return null;
@@ -195,7 +201,13 @@ export class OrderService {
                     })),
                 },
             },
-            include: { order_items: true }
+            include: {
+                order_items: {
+                    include: {
+                        products: true
+                    }
+                }
+            }
         });
 
         // Stock decrement logic

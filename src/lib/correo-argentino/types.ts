@@ -195,6 +195,7 @@ export interface TrackingEvent {
     eventDescription: string;
     branchName: string;
     branchCode: string;
+    status: string; // Add status back (e.g. ZE, ZD)
 }
 
 export interface TrackingInfo {

@@ -80,11 +80,14 @@ export async function GET(
 
         const trackingData = await correoArgentinoService.getTracking({ shippingId: order.caTrackingNumber });
 
-        if (trackingData.success && trackingData.data?.events) {
-          events = trackingData.data.events.map((event: any) => ({
-            timestamp: event.eventDate,
-            status: event.status || event.eventDescription,
-            location: event.branchName || event.branch,
+        if (trackingData.success && trackingData.data && !Array.isArray(trackingData.data) && 'events' in trackingData.data) {
+          // Transform events to local format
+          events = trackingData.data.events.map((event) => ({
+            date: new Date(event.eventDate).toLocaleDateString('es-AR'),
+            time: new Date(event.eventDate).toLocaleTimeString('es-AR'),
+            description: event.eventDescription,
+            status: event.eventDescription,
+            location: event.branchName,
           }));
         }
       } catch (error) {

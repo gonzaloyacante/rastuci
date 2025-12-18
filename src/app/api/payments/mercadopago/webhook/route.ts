@@ -10,17 +10,23 @@ import { shipmentService } from "@/services/shipment-service";
 import prisma from "@/lib/prisma"; // Needed for direct lookups if not fully moved yet
 
 // Helper to notify admin/customer - could be moved to notification-service too
-import { orders } from "@prisma/client";
+import { orders, order_items, products } from "@prisma/client";
 
-async function notifyParties(order: orders & { order_items: any[] }, orderId: string, mpPaymentId: string) {
+type OrderWithItems = orders & {
+  order_items: (order_items & {
+    products: products;
+  })[];
+};
+
+async function notifyParties(order: OrderWithItems, orderId: string, mpPaymentId: string) {
   try {
     if (!order?.customerEmail) return;
 
     const { sendEmail, getOrderConfirmationEmail, getNewOrderNotificationEmail } = await import("@/lib/resend");
     const { getAdminEmail } = await import("@/lib/store-settings");
 
-    const items = order.order_items.map((item: any) => ({
-      name: item.products?.name || "Producto",
+    const items = order.order_items.map((item) => ({
+      name: item.products.name,
       quantity: item.quantity,
       price: item.price,
     }));

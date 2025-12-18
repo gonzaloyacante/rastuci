@@ -124,7 +124,7 @@ export class CorreoArgentinoService {
     };
   }
 
-  public async getTracking(params: GetTrackingParams): Promise<ApiResponse<any>> {
+  public async getTracking(params: GetTrackingParams): Promise<ApiResponse<TrackingInfo | TrackingInfo[] | TrackingErrorResponse>> {
     await this.ensureAuth();
     return this.shippingService.getTracking(params);
   }

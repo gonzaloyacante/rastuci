@@ -194,7 +194,7 @@ export class TrackingNotificationService {
         return;
       }
 
-      const currentStatus = currentEvent.status;
+      const currentStatus = currentEvent.status; // Now valid in interface
       const previousStatus = order.status;
 
       // Detectar cambio de estado
@@ -215,8 +215,8 @@ export class TrackingNotificationService {
           trackingNumber: order.trackingNumber || "",
           previousStatus: previousStatus || null,
           newStatus: currentStatus,
-          statusDescription: currentEvent.event || "Actualización de estado",
-          timestamp: new Date(currentEvent.date),
+          statusDescription: currentEvent.eventDescription || "Actualización de estado",
+          timestamp: new Date(currentEvent.eventDate),
         };
 
         // Enviar notificaciones si el estado es notificable
