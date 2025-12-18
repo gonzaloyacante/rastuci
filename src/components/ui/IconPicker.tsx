@@ -13,7 +13,7 @@ interface IconPickerProps {
 
 // Lista de iconos comunes para beneficios
 const COMMON_ICONS = [
-  "Truck", "Package", "Shield", "CheckCircle", "CreditCard", 
+  "Truck", "Package", "Shield", "CheckCircle", "CreditCard",
   "Wallet", "Clock", "Phone", "Mail", "MapPin",
   "Gift", "Heart", "Star", "ThumbsUp", "Award",
   "BadgeCheck", "Verified", "Lock", "Unlock", "Eye",
@@ -46,7 +46,7 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div 
+      <div
         className="bg-surface border border-theme rounded-xl shadow-2xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
@@ -74,7 +74,7 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
         <div className="flex-1 overflow-y-auto p-4">
           <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
             {filteredIcons.map((iconName) => {
-              const IconComponent = (Icons as any)[iconName];
+              const IconComponent = (Icons as unknown as Record<string, React.ElementType>)[iconName];
               if (!IconComponent) return null;
 
               const isSelected = value === iconName;
@@ -89,8 +89,8 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
                   className={`
                     flex flex-col items-center justify-center p-3 rounded-lg
                     transition-all duration-200 hover:scale-110
-                    ${isSelected 
-                      ? "bg-primary text-white ring-2 ring-primary" 
+                    ${isSelected
+                      ? "bg-primary text-white ring-2 ring-primary"
                       : "surface border border-theme hover:border-primary hover:bg-primary/10"
                     }
                   `}

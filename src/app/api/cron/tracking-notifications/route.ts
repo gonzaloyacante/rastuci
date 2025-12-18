@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     logger.info("[Cron] Starting daily tasks");
 
     // 1. Ejecutar chequeo de tracking (sin iniciar el servicio de polling)
-    await trackingNotificationService["checkAllActiveShipments"]();
+    await trackingNotificationService.checkAllActiveShipments();
     logger.info("[Cron] Tracking notifications check completed");
 
     // 2. Limpiar reservas de stock expiradas

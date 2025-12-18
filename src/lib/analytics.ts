@@ -195,7 +195,7 @@ class AnalyticsManager {
     const trackScroll = () => {
       const depth = Math.round(
         (window.scrollY / (document.body.scrollHeight - window.innerHeight)) *
-          100
+        100
       );
       if (depth > scrollDepth && depth % 25 === 0) {
         scrollDepth = depth;
@@ -511,11 +511,26 @@ class GoogleAnalyticsProvider extends AnalyticsProvider {
     }
 
     events.forEach((event) => {
-      windowWithGtag.gtag!("event", event.name, {
+      // Map generic events to specific GA4 structure if needed
+      // For now we assume event.name matches GA4 recommendations or is custom
+      // We explicitly map 'purchase' and 'add_to_cart' to ensure correct ecommerce params
+      const gaParams: Record<string, unknown> = {
         ...event.properties,
         custom_parameter_user_id: event.userId,
         custom_parameter_session_id: event.sessionId,
-      });
+      };
+
+      // Ensure 'value' and 'currency' are top-level for ecommerce events
+      if (['purchase', 'add_to_cart'].includes(event.name)) {
+        if (event.properties && typeof event.properties === 'object') {
+          const props = event.properties as Record<string, unknown>;
+          if (props.value) gaParams.value = props.value;
+          if (props.currency) gaParams.currency = props.currency;
+          if (props.items) gaParams.items = props.items; // GA4 items array
+        }
+      }
+
+      windowWithGtag.gtag!("event", event.name, gaParams);
     });
   }
 }

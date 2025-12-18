@@ -22,7 +22,7 @@ const stepVariants = {
     scale: 1,
     transition: {
       duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94],
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
     },
   },
   exit: (direction: number) => ({
@@ -31,7 +31,7 @@ const stepVariants = {
     scale: 0.95,
     transition: {
       duration: 0.3,
-      ease: [0.25, 0.46, 0.45, 0.94],
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
     },
   }),
 };
@@ -239,11 +239,11 @@ export function PulseHighlight({
       animate={
         isActive
           ? {
-              boxShadow: [
-                `0 0 0 0px rgba(var(--${color}), 0.4)`,
-                `0 0 0 10px rgba(var(--${color}), 0)`,
-              ],
-            }
+            boxShadow: [
+              `0 0 0 0px rgba(var(--${color}), 0.4)`,
+              `0 0 0 10px rgba(var(--${color}), 0)`,
+            ],
+          }
           : {}
       }
       transition={{

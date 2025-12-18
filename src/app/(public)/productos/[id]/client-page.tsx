@@ -38,6 +38,7 @@ const ProductReviews = React.lazy(
 const RelatedProducts = React.lazy(
   () => import("@/components/products/RelatedProducts")
 );
+import { SizeGuide } from "@/components/products/SizeGuide";
 
 interface ProductDetailClientProps {
   productId: string;
@@ -335,7 +336,7 @@ export default function ProductDetailClient({
                     -
                     {Math.round(
                       ((product.price - product.salePrice) / product.price) *
-                        100
+                      100
                     )}
                     %
                   </span>
@@ -366,11 +367,10 @@ export default function ProductDetailClient({
                       <button
                         key={`color-${color}-${idx}`}
                         onClick={() => setSelectedColor(color)}
-                        className={`w-10 h-10 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? "border-base-primary ring-2 ring-offset-2 ring-offset-surface ring-primary"
-                            : "border-theme hover:border-primary"
-                        }`}
+                        className={`w-10 h-10 rounded-lg border-2 transition-all ${isSelected
+                          ? "border-base-primary ring-2 ring-offset-2 ring-offset-surface ring-primary"
+                          : "border-theme hover:border-primary"
+                          }`}
                         style={{ backgroundColor: colorHex }}
                         title={`Seleccionar color ${color}`}
                         aria-label={`Color ${color}${isSelected ? " (seleccionado)" : ""}`}
@@ -384,19 +384,22 @@ export default function ProductDetailClient({
             {/* Talle - Solo mostrar si hay talles definidos */}
             {sizes.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-primary mb-2">
-                  Talle
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium text-primary">
+                    Talle
+                  </label>
+                  {/* @ts-expect-error - El tipado de sizeGuide es dinámico desde Prisma */}
+                  <SizeGuide data={product.sizeGuide} />
+                </div>
                 <div className="flex space-x-2 flex-wrap">
                   {sizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 border rounded-lg transition-colors ${
-                        selectedSize === size
-                          ? "border-primary text-primary surface"
-                          : "border-muted hover:border-primary"
-                      }`}
+                      className={`px-4 py-2 border rounded-lg transition-colors ${selectedSize === size
+                        ? "border-primary text-primary surface"
+                        : "border-muted hover:border-primary"
+                        }`}
                     >
                       {size}
                     </button>
@@ -454,9 +457,8 @@ export default function ProductDetailClient({
                 className="px-4"
               >
                 <Heart
-                  className={`w-4 h-4 ${
-                    isProductFavorite ? "fill-current text-primary" : ""
-                  }`}
+                  className={`w-4 h-4 ${isProductFavorite ? "fill-current text-primary" : ""
+                    }`}
                 />
               </Button>
               <Button onClick={handleShare} variant="outline" className="px-4">

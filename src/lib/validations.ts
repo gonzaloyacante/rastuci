@@ -128,14 +128,14 @@ export const validateReview = (data: unknown) => {
 
 // Función helper para extraer errores de validación
 export const getValidationErrors = (
-  result: z.SafeParseReturnType<unknown, unknown>
+  result: z.SafeParseReturnType<any, any>
 ) => {
   if (result.success) {
     return {};
   }
 
   const errors: Record<string, string> = {};
-  result.error.errors.forEach((error) => {
+  result.error.issues.forEach((error: z.ZodIssue) => {
     const path = error.path.join(".");
     errors[path] = error.message;
   });

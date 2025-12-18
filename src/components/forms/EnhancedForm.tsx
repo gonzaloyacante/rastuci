@@ -89,12 +89,12 @@ interface EnhancedFormProps<T extends FieldValues = FieldValues> {
   schema: z.ZodSchema<T>;
   onSubmit: (data: T) => Promise<void> | void;
   children:
-    | React.ReactNode
-    | ((props: {
-        register: UseFormRegister<T>;
-        errors: FieldErrors<T>;
-        watch: UseFormWatch<T>;
-      }) => React.ReactNode);
+  | React.ReactNode
+  | ((props: {
+    register: UseFormRegister<T>;
+    errors: FieldErrors<T>;
+    watch: UseFormWatch<T>;
+  }) => React.ReactNode);
   className?: string;
   submitText?: string;
   isLoading?: boolean;
@@ -120,7 +120,7 @@ export function EnhancedForm<T extends FieldValues = FieldValues>({
     reset,
     watch,
   } = useForm<T>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any) as any,
     mode: "onChange",
   });
 
@@ -214,7 +214,7 @@ export const userFormSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Please enter a valid email address"),
   role: z.enum(["USER", "ADMIN"], {
-    errorMap: () => ({ message: "Please select a valid role" }),
+    message: "Please select a valid role",
   }),
 });
 
@@ -272,9 +272,8 @@ export function ContactForm() {
               rows={4}
               placeholder="Enter your message"
               {...register("message")}
-              className={`w-full px-3 py-2 border rounded-md surface focus:outline-none focus:ring-2 focus:ring-primary/20 ${
-                errors.message ? "border-error" : "border-muted"
-              }`}
+              className={`w-full px-3 py-2 border rounded-md surface focus:outline-none focus:ring-2 focus:ring-primary/20 ${errors.message ? "border-error" : "border-muted"
+                }`}
               aria-invalid={errors.message ? "true" : "false"}
             />
             {errors.message && (

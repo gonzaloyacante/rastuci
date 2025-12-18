@@ -20,7 +20,7 @@ const paymentSchema = z.object({
   transaction_amount: z.number().positive(),
   description: z.string(),
   external_reference: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "Datos de pago inválidos",
-          details: error.errors,
+          details: error.issues,
         },
         { status: 400 }
       );

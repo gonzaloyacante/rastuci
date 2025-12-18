@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         fail(
           "BAD_REQUEST",
-          parsed.error.errors[0]?.message || "Datos inválidos",
+          parsed.error.issues[0]?.message || "Datos inválidos",
           400
         )
       );

@@ -103,20 +103,20 @@ export async function POST(
             extOrderId: orderId,
             orderNumber: orderId.substring(0, 20),
             sender: {
-                name: process.env.STORE_NAME || "Rastuci E-commerce",
-                phone: process.env.STORE_PHONE || "1123456789",
-                cellPhone: process.env.STORE_PHONE || "1123456789",
-                email: process.env.STORE_EMAIL || "ventas@rastuci.com",
+                name: null,
+                phone: null,
+                cellPhone: null,
+                email: null,
                 originAddress: {
-                    streetName: process.env.STORE_ADDRESS || "Av. San Martín",
-                    streetNumber: "1234",
+                    streetName: null,
+                    streetNumber: null,
                     floor: null,
                     apartment: null,
-                    city: "Don Torcuato",
-                    provinceCode: "B" as const,
-                    postalCode: "1611",
+                    city: null,
+                    provinceCode: null,
+                    postalCode: null,
                 },
-            },
+            }, // Se envían campos en null para que tome la sucursal configurada por defecto (Ventanilla)
             recipient: {
                 name: order.customerName,
                 phone: order.customerPhone || "",
@@ -175,7 +175,9 @@ export async function POST(
 
         // 9. Actualizar orden con datos del envío
         const trackingNumber = response.data?.trackingNumber;
-        const shipmentId = response.data?.shipmentId;
+        // Usamos 'any' para propiedades no garantizadas por la interfaz estricta
+        const responseData = response.data as any;
+        const shipmentId = responseData?.shipmentId || responseData?.id;
 
         const updatedOrder = await prisma.orders.update({
             where: { id: orderId },

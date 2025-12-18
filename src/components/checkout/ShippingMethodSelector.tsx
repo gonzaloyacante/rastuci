@@ -13,25 +13,25 @@ const deliveryOptions: {
   title: string;
   description: string;
 }[] = [
-  {
-    id: "home",
-    icon: Home,
-    title: "Envío a Domicilio",
-    description: "Recibí tu pedido en tu casa",
-  },
-  {
-    id: "agency",
-    icon: Building2,
-    title: "Retiro en Correo",
-    description: "Sucursal Correo Argentino",
-  },
-  {
-    id: "pickup",
-    icon: Store,
-    title: "Retiro en Local",
-    description: "Gratis en nuestro local",
-  },
-];
+    {
+      id: "home",
+      icon: Home,
+      title: "Envío a Domicilio",
+      description: "Recibí tu pedido en tu casa",
+    },
+    {
+      id: "agency",
+      icon: Building2,
+      title: "Retiro en Correo",
+      description: "Sucursal Correo Argentino",
+    },
+    {
+      id: "pickup",
+      icon: Store,
+      title: "Retiro en Local",
+      description: "Sin cargo",
+    },
+  ];
 
 export function ShippingMethodSelector({
   value,
@@ -52,11 +52,10 @@ export function ShippingMethodSelector({
               key={option.id}
               type="button"
               onClick={() => onChange(option.id)}
-              className={`flex flex-col items-center justify-center rounded-md border-2 p-4 transition-all cursor-pointer h-full ${
-                isSelected
+              className={`flex flex-col items-center justify-center rounded-md border-2 p-4 transition-all cursor-pointer h-full ${isSelected
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
                   : "border-muted bg-popover hover:bg-accent hover:border-primary/50"
-              }`}
+                }`}
             >
               <Icon
                 className={`mb-3 h-6 w-6 ${isSelected ? "text-primary" : "text-muted-foreground"}`}

@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
     handleSubmit: handleLoginSubmit,
     formState: { errors: loginErrors },
   } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema) as any,
   });
 
   // Form para recuperación de contraseña
@@ -84,7 +84,7 @@ export default function AdminLoginPage() {
     formState: { errors: forgotPasswordErrors },
     reset: resetForgotPasswordForm,
   } = useForm<ForgotPasswordFormValues>({
-    resolver: zodResolver(forgotPasswordSchema),
+    resolver: zodResolver(forgotPasswordSchema) as any,
   });
 
   // Manejo de inicio de sesión

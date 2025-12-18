@@ -5,6 +5,7 @@ import { Select } from "@/components/ui/Select";
 import { WEEKDAY_NAMES_SHORT, type WeekdayKey, PROVINCE_CODE_MAP as PROVINCE_NAMES } from "@/lib/constants";
 import { Agency } from "@/lib/correo-argentino-service";
 import { Loader2, MapPin, Search, Store, X } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface AgencySelectorProps {
@@ -57,48 +58,35 @@ export function AgencySelector({
     }
   }, [initialPostalCode, agencies.length]);
 
+  const { getAgencies } = useCart();
+
   // Efecto para cargar sucursales cuando cambia la provincia
-  // OPTIMIZADO: SOLO busca por CP si está disponible, NO carga todas las sucursales
   useEffect(() => {
     if (!province) {
       setAgencies([]);
       return;
     }
 
-    const fetchAgencies = async () => {
+    const loadAgencies = async () => {
       setLoading(true);
       setError(null);
       try {
-        // SIEMPRE buscar con filtro de CP si está disponible (no fallback a toda la provincia)
-        const queryParams = new URLSearchParams({
-          provinceCode: province,
-        });
+        const data = await getAgencies(province);
 
-        if (initialPostalCode) {
-          queryParams.append("postalCode", initialPostalCode);
-        }
-
-        const response = await fetch(`/api/shipping/agencies?${queryParams.toString()}`);
-        const data = await response.json();
-
-        if (data.success && data.agencies) {
+        if (data && data.length > 0) {
           // Filtrar solo sucursales activas con servicio de retiro
-          const activeAgencies = data.agencies.filter(
+          const activeAgencies = data.filter(
             (a: Agency) => a.status === "ACTIVE" && a.services?.pickupAvailability
           );
 
           setAgencies(activeAgencies);
 
           if (activeAgencies.length === 0) {
-            setError(
-              initialPostalCode
-                ? `No hay sucursales disponibles en el código postal ${initialPostalCode}. Ingresa una ciudad en el buscador.`
-                : "No hay sucursales disponibles en esta provincia"
-            );
+            setError("No hay sucursales disponibles en esta provincia");
           }
         } else {
           setAgencies([]);
-          setError(data.error || "Error al cargar sucursales");
+          setError("Error al cargar sucursales o no hay agencias disponibles");
         }
       } catch {
         setAgencies([]);
@@ -108,9 +96,8 @@ export function AgencySelector({
       }
     };
 
-    fetchAgencies();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [province]);
+    loadAgencies();
+  }, [province, getAgencies]);
 
   // Filtrar sucursales por término de búsqueda con scoring para mejorar relevancia
   const filteredAgencies = useMemo(() => {
@@ -217,23 +204,25 @@ export function AgencySelector({
             </span>
           </label>
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Ej: Monte Grande, 1842, B0107..."
-              className="pl-10 pr-9"
+              className="pl-3 pr-20"
               disabled={loading || agencies.length === 0}
             />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              <Search className="h-4 w-4 text-muted-foreground pointer-events-none" />
+            </div>
           </div>
           {searchTerm && (
             <div className="flex items-center gap-2">

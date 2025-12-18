@@ -9,6 +9,7 @@ import { CreditCard, Loader2, Lock, Shield } from "lucide-react";
 import { useState } from "react";
 import { CustomerForm } from "./CustomerForm";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
+import { OrderSummaryCard } from "./OrderSummaryCard";
 // import {
 //   ShippingCostCalculator,
 //   type ShippingOption,
@@ -30,7 +31,15 @@ export function CheckoutForm({
   onPaymentSuccess: _onPaymentSuccess,
   onPaymentError,
 }: CheckoutFormProps) {
-  const { cartItems, getCartTotal, clearCart: _clearCart } = useCart();
+  const {
+    cartItems,
+    getCartTotal,
+    clearCart: _clearCart,
+    getOrderSummary,
+    selectedShippingOption,
+    selectedAgency,
+    customerInfo,
+  } = useCart();
   const { show } = useToast();
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -49,9 +58,8 @@ export function CheckoutForm({
 
   // Card data state removed: tarjetas no están visibles en el flujo simplificado
 
-  const subtotal = getCartTotal();
-  const shippingCost = shippingOption?.cost || 0;
-  const total = subtotal + shippingCost;
+  const { items: _items, discount, shippingCost, total } = getOrderSummary();
+  const subtotal = getCartTotal(); // Gross subtotal
 
   const handlePayment = async () => {
     if (!selectedPaymentMethod) {
@@ -81,11 +89,16 @@ export function CheckoutForm({
     setIsProcessing(true);
 
     try {
-      // Preparar items para MercadoPago
-      const items = cartItems.map((item) => ({
+      const { items, discount, shippingCost } = getOrderSummary();
+
+      // Preparar items para MercadoPago - USAR PRECIO CON DESCUENTO (salePrice) SI APLICA
+      const mpItems = items.map((item) => ({
         title: `${item.product.name} (${item.size} - ${item.color})`,
         quantity: item.quantity,
-        unit_price: item.product.price,
+        unit_price:
+          item.product.onSale && item.product.salePrice
+            ? item.product.salePrice
+            : item.product.price,
         currency_id: "ARS",
         picture_url: Array.isArray(item.product.images)
           ? item.product.images[0]
@@ -104,6 +117,8 @@ export function CheckoutForm({
         customerName: customer.name,
         customerEmail: customer.email,
         paymentMethod: selectedPaymentMethod,
+        discount: discount,
+        shippingCost: shippingCost,
         items: cartItems.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
@@ -119,9 +134,11 @@ export function CheckoutForm({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          items,
+          items: mpItems,
           customer,
           metadata,
+          discount: discount, // Send explicit discount to API
+          shippingCost: shippingCost, // Send explicit shipping cost
         }),
       });
 
@@ -173,31 +190,22 @@ export function CheckoutForm({
         {/* Formulario de pago */}
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-bold mb-2">Finalizar compra</h2>
-            <p className="muted">Completa tus datos para procesar el pago</p>
+            <h2 className="text-2xl font-bold mb-2">Revisar Pedido</h2>
+            <p className="muted">Confirma los detalles antes de pagar</p>
           </div>
 
           {/* Datos del cliente */}
           <CustomerForm data={customerData} onChange={setCustomerData} />
 
-          {/* Calculadora de envío */}
-          {/* <ShippingCostCalculator
-            onShippingChange={setShippingOption}
-            className="border border-muted rounded-lg p-4"
-          /> */}
-
-          {/* Método de pago (solo MercadoPago y Efectivo) */}
+          {/* Método de pago */}
           <PaymentMethodSelector
             selectedMethod={selectedPaymentMethod}
             onMethodChange={setSelectedPaymentMethod}
             allowedMethods={[PAYMENT_METHODS.MERCADOPAGO, PAYMENT_METHODS.CASH]}
           />
 
-          {/* Nota: el formulario de tarjeta se mantiene en el repo pero no se muestra en el flujo simplificado */}
-
-          {/* Información de efectivo */}
           {selectedPaymentMethod === PAYMENT_METHODS.CASH && (
-            <div className="p-4 surface rounded-lg border border-muted">
+            <div className="p-4 surface rounded-lg border border-muted mt-4">
               <h4 className="font-medium mb-2">Pago en efectivo</h4>
               <p className="text-sm muted mb-3">
                 Podrás pagar en Rapipago, Pago Fácil y otros centros de pago.
@@ -209,11 +217,10 @@ export function CheckoutForm({
             </div>
           )}
 
-          {/* Botón de pago */}
           <Button
             onClick={handlePayment}
             disabled={isProcessing || !selectedPaymentMethod}
-            className="w-full h-12 text-lg font-medium"
+            className="w-full h-12 text-lg font-medium mt-6"
           >
             {isProcessing ? (
               <>
@@ -228,8 +235,7 @@ export function CheckoutForm({
             )}
           </Button>
 
-          {/* Seguridad */}
-          <div className="flex items-center justify-center gap-2 text-sm muted">
+          <div className="flex items-center justify-center gap-2 text-sm muted mt-4">
             <Shield className="w-4 h-4" />
             <span>Pago seguro con MercadoPago</span>
           </div>
@@ -237,66 +243,56 @@ export function CheckoutForm({
 
         {/* Resumen del pedido */}
         <div className="lg:sticky lg:top-6">
-          <div className="surface rounded-lg border border-muted p-6">
-            <h3 className="text-lg font-semibold mb-4">Resumen del pedido</h3>
-
-            <div className="space-y-3 mb-4">
-              {cartItems.map((item) => (
-                <div
-                  key={`${item.product.id}-${item.size}-${item.color}`}
-                  className="flex justify-between"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{item.product.name}</p>
-                    <p className="text-xs muted">
-                      Talle: {item.size} • Color: {item.color} • Cant:{" "}
-                      {item.quantity}
-                    </p>
-                  </div>
-                  <p className="font-medium">
-                    $
-                    {(item.product.price * item.quantity).toLocaleString(
-                      "es-AR"
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-muted pt-4 space-y-2">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>${subtotal.toLocaleString("es-AR")}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Envío</span>
-                {shippingOption ? (
-                  <div className="text-right">
-                    <div
-                      className={
-                        shippingOption.cost === 0
-                          ? "text-success font-medium"
-                          : ""
-                      }
-                    >
-                      {shippingOption.cost === 0
-                        ? "Gratis"
-                        : `$${shippingOption.cost.toLocaleString("es-AR")}`}
-                    </div>
-                    <div className="text-xs text-muted">
-                      {shippingOption.description}
-                    </div>
-                  </div>
-                ) : (
-                  <span className="text-muted">Calcular envío</span>
-                )}
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t border-muted pt-2">
-                <span>Total</span>
-                <span>${total.toLocaleString("es-AR")}</span>
-              </div>
-            </div>
-          </div>
+          <OrderSummaryCard
+            items={cartItems.map((item) => ({
+              id: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              image: Array.isArray(item.product.images)
+                ? item.product.images[0]
+                : undefined,
+              quantity: item.quantity,
+              size: item.size,
+              color: item.color,
+              onSale: item.product.onSale,
+              salePrice: item.product.salePrice || undefined,
+            }))}
+            customerInfo={{
+              name:
+                `${customerData.firstName} ${customerData.lastName}`.trim() ||
+                customerInfo?.name ||
+                "",
+              email: customerData.email || customerInfo?.email || "",
+              phone: customerInfo?.phone || "",
+              address: customerInfo?.address || "",
+              city: customerInfo?.city || "",
+              province: customerInfo?.province || "",
+              postalCode: customerInfo?.postalCode || "",
+            }}
+            shippingOption={{
+              id: selectedShippingOption?.id || "",
+              name: selectedShippingOption?.name || "Envío por definir",
+              description: selectedShippingOption?.description || "",
+              price: selectedShippingOption?.price || 0,
+              estimatedDays: selectedShippingOption?.estimatedDays || "",
+            }}
+            paymentMethod={{
+              id: selectedPaymentMethod,
+              name:
+                selectedPaymentMethod === PAYMENT_METHODS.MERCADOPAGO
+                  ? "Mercado Pago"
+                  : selectedPaymentMethod === PAYMENT_METHODS.CASH
+                    ? "Efectivo"
+                    : "No seleccionado",
+              description: selectedPaymentMethod ? "Procesamiento seguro" : "",
+            }}
+            subtotal={subtotal}
+            shippingCost={shippingCost}
+            discount={discount}
+            total={total}
+            onEditStep={() => {}}
+            agency={selectedAgency}
+          />
         </div>
       </div>
     </div>

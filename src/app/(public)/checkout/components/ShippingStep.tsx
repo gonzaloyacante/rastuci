@@ -67,7 +67,7 @@ function createPickupOption(): ShippingOption {
   return {
     id: "pickup",
     name: "Retiro en Local",
-    description: "Gratis en nuestro local",
+    description: "Sin cargo",
     price: 0,
     estimatedDays: "Inmediato",
     isFallback: false,
@@ -83,7 +83,10 @@ interface ShippingStepProps {
   onBack: () => void;
 }
 
+import { useShippingSettings } from "@/hooks/useShippingSettings";
+
 export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
+  const { shipping: shippingSettings } = useShippingSettings();
   const {
     customerInfo,
     selectedShippingOption,
@@ -99,12 +102,6 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
   const [error, setError] = useState<string | null>(null);
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("home");
-  
-  // 🚀 CACHÉ: Guardar opciones de envío previamente calculadas - useRef persiste entre renders
-  const cachedOptionsRef = useRef<{
-    home?: ShippingOption[];
-    agency?: ShippingOption[];
-  }>({});
 
   // ============================================================================
   // EFECTOS
@@ -127,7 +124,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     }
   }, [deliveryMode, setSelectedShippingOption]);
 
-  // Calcular costos de envío - CON CACHÉ OPTIMIZADO
+  // Calcular costos de envío - CON CACHÉ GLOBAL EN CONTEXT
   useEffect(() => {
     // Si es retiro en tienda (local), ya se maneja en otro useEffect
     if (deliveryMode === "pickup") {
@@ -147,19 +144,6 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
       return;
     }
 
-    const mode = deliveryMode === "agency" ? "agency" : "home";
-    
-    // 🚀 Verificar si ya tenemos opciones en caché para este modo
-    const cached = cachedOptionsRef.current[mode];
-    if (cached && cached.length > 0) {
-      setShippingOptions(cached);
-      // Si no hay opción seleccionada o no está en las nuevas opciones, seleccionar la primera
-      if (!selectedShippingOption || !cached.find(o => o.id === selectedShippingOption.id)) {
-        setSelectedShippingOption(cached[0]);
-      }
-      return; // ✅ Usar datos cacheados, no hacer llamada API
-    }
-
     const fetchShippingOptions = async () => {
       setLoading(true);
       setError(null);
@@ -173,15 +157,16 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
         if (options && options.length > 0) {
           setShippingOptions(options);
-          // 🚀 Guardar en caché (useRef persiste entre renders)
-          cachedOptionsRef.current = { ...cachedOptionsRef.current, [mode]: options };
-          // Seleccionar la primera opción automáticamente
-          setSelectedShippingOption(options[0]);
+
+          // Seleccionar la primera opción automáticamente si no hay una seleccionada
+          // o si la seleccionada no pertenece al nuevo set de opciones
+          if (!selectedShippingOption || !options.find(o => o.id === selectedShippingOption.id)) {
+            setSelectedShippingOption(options[0]);
+          }
         } else {
           // Usar fallback si no hay opciones
           const fallbackOptions = createFallbackShippingOptions(type);
           setShippingOptions(fallbackOptions);
-          cachedOptionsRef.current = { ...cachedOptionsRef.current, [mode]: fallbackOptions };
           setSelectedShippingOption(fallbackOptions[0]);
         }
       } catch (err) {
@@ -190,7 +175,6 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         const type = deliveryMode === "agency" ? "S" : "D";
         const fallbackOptions = createFallbackShippingOptions(type);
         setShippingOptions(fallbackOptions);
-        cachedOptionsRef.current = { ...cachedOptionsRef.current, [mode]: fallbackOptions };
         setSelectedShippingOption(fallbackOptions[0]);
       } finally {
         setLoading(false);
@@ -198,8 +182,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     };
 
     fetchShippingOptions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customerInfo?.postalCode, deliveryMode, selectedAgency]);
+  }, [customerInfo?.postalCode, deliveryMode, selectedAgency, calculateShippingCost, selectedShippingOption, setSelectedShippingOption]);
 
   // ============================================================================
   // HANDLERS
@@ -263,11 +246,10 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         {/* Indicador de origen de datos */}
         {shippingOptions.length > 0 && (
           <div
-            className={`inline-flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full ${
-              shippingOptions[0]?.isFallback
-                ? "bg-amber-100 text-amber-700"
-                : "bg-green-100 text-green-700"
-            }`}
+            className={`inline-flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full ${shippingOptions[0]?.isFallback
+              ? "bg-amber-100 text-amber-700"
+              : "bg-green-100 text-green-700"
+              }`}
           >
             {shippingOptions[0]?.isFallback ? (
               <>
@@ -294,11 +276,10 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
           return (
             <div
               key={option.id}
-              className={`border rounded-lg p-3 sm:p-4 transition-all cursor-pointer ${
-                isSelected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-muted surface hover:border-primary/50 hover:bg-muted/30"
-              } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`border rounded-lg p-3 sm:p-4 transition-all cursor-pointer ${isSelected
+                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                : "border-muted surface hover:border-primary/50 hover:bg-muted/30"
+                } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               onClick={() => !disabled && handleSelectOption(option)}
             >
               {/* Layout mobile: stack vertical */}
@@ -333,8 +314,10 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
                 {/* Precio y check - en mobile va abajo a la derecha */}
                 <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pl-7 sm:pl-0">
                   <span className="font-bold text-base sm:text-lg">
-                    {option.price === 0 ? (
-                      <span className="text-green-600">Gratis</span>
+                    {option.price === 0 && shippingSettings.freeShipping ? (
+                      <span className="text-green-600">Sin cargo</span>
+                    ) : option.price === 0 ? (
+                      <span className="text-muted-foreground">Gratis</span>
                     ) : (
                       formatPriceARS(option.price)
                     )}

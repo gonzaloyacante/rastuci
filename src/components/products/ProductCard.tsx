@@ -28,58 +28,9 @@ import toast from "react-hot-toast";
 // Sub-componentes reutilizables
 // ============================================================================
 
-/** Placeholder para cuando no hay imagen */
-export const ProductImagePlaceholder = ({
-  className,
-}: {
-  className?: string;
-}) => (
-  <div
-    className={`surface-secondary rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
-  >
-    <div className="text-center opacity-60">
-      <ImageIcon className="h-12 w-12 muted mx-auto mb-2" />
-      <p className="text-sm muted font-medium">Sin imagen</p>
-    </div>
-  </div>
-);
+import { StockBadge } from "@/components/ui/StockBadge";
+import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
 
-/** Badge de stock con estados visuales */
-export const StockBadge = ({ stock }: { stock: number }) => {
-  if (stock === 0) {
-    return (
-      <Badge variant="error" className="flex items-center gap-1">
-        <AlertTriangle className="h-3 w-3" />
-        Sin stock
-      </Badge>
-    );
-  }
-  if (stock <= 5) {
-    return (
-      <Badge variant="warning" className="flex items-center gap-1">
-        <AlertTriangle className="h-3 w-3" />
-        Stock bajo ({stock})
-      </Badge>
-    );
-  }
-  if (stock <= 10) {
-    return (
-      <Badge variant="info" className="flex items-center gap-1">
-        <Package className="h-3 w-3" />
-        Stock medio ({stock})
-      </Badge>
-    );
-  }
-  return (
-    <Badge
-      variant="outline"
-      className="flex items-center gap-1 border-emerald-500 text-emerald-600 dark:text-emerald-400"
-    >
-      <CheckCircle className="h-3 w-3" />
-      Stock bueno ({stock})
-    </Badge>
-  );
-};
 
 /** Badge de precio con descuento */
 export const PriceBadge = ({
@@ -140,13 +91,12 @@ const StarRating = ({
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`w-3.5 h-3.5 ${
-              i < fullStars
+            className={`w-3.5 h-3.5 ${i < fullStars
                 ? "fill-amber-400 text-amber-400"
                 : i === fullStars && hasHalfStar
                   ? "fill-amber-400/50 text-amber-400"
                   : "fill-zinc-200 text-zinc-200"
-            }`}
+              }`}
           />
         ))}
       </div>
@@ -191,7 +141,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
   const layout: "grid" | "list" = !isAdmin
     ? (props as PublicProductCardProps).layout ||
-      (props.variant === "list" ? "list" : "grid")
+    (props.variant === "list" ? "list" : "grid")
     : "grid";
 
   const [imageError, setImageError] = useState(false);
@@ -285,9 +235,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   src={mainImage}
                   alt={product.name}
                   fill
-                  className={`object-cover transition-opacity duration-300 ${
-                    imageLoading ? "opacity-0" : "opacity-100"
-                  }`}
+                  className={`object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"
+                    }`}
                   onLoad={handleImageLoad}
                   onError={handleImageError}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -511,8 +460,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                 {/* Precio */}
                 <div className="flex flex-col">
                   {product.onSale &&
-                  formattedSalePrice &&
-                  product.salePrice! < product.price ? (
+                    formattedSalePrice &&
+                    product.salePrice! < product.price ? (
                     <>
                       <span className="text-[13px] line-through muted mb-0.5">
                         {formattedPrice}
@@ -595,18 +544,16 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               ? `Quitar ${product.name} de favoritos`
               : `Agregar ${product.name} a favoritos`
           }
-          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${
-            isProductFavorite
+          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${isProductFavorite
               ? "opacity-100"
               : "opacity-0 group-hover:opacity-100"
-          }`}
+            }`}
         >
           <Heart
-            className={`w-4 h-4 transition-colors ${
-              isProductFavorite
+            className={`w-4 h-4 transition-colors ${isProductFavorite
                 ? "text-rose-500 fill-rose-500"
                 : "text-zinc-400 hover:text-rose-500"
-            }`}
+              }`}
             aria-hidden="true"
           />
         </button>
@@ -711,8 +658,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             <div className="flex flex-col gap-0.5">
               <div className="flex items-baseline gap-2">
                 {product.onSale &&
-                formattedSalePrice &&
-                product.salePrice! < product.price ? (
+                  formattedSalePrice &&
+                  product.salePrice! < product.price ? (
                   <>
                     <span className="text-base sm:text-lg font-bold text-base-primary">
                       {formattedSalePrice}
@@ -773,9 +720,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                 }}
                 aria-label="Agregar al carrito"
                 disabled={product.stock === 0}
-                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${
-                  product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 <ShoppingCart className="w-4 h-4" />
               </button>

@@ -52,7 +52,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { items = [], customer = null, metadata = {} } = body || {};
+    const {
+      items = [],
+      customer = null,
+      metadata = {},
+      discount = 0,
+      shippingCost = 0,
+    } = body || {};
 
     // Log para debugging (solo en desarrollo)
     if (process.env.NODE_ENV === "development") {
@@ -60,7 +66,8 @@ export async function POST(req: NextRequest) {
         requestId,
         itemsCount: items.length,
         hasCustomer: !!customer,
-        accessTokenPrefix: accessToken.substring(0, 10) + "...",
+        discount,
+        shippingCost,
       });
     }
 
@@ -95,18 +102,12 @@ export async function POST(req: NextRequest) {
         id: true,
         name: true,
         price: true,
+        salePrice: true,
+        onSale: true,
         description: true,
         images: true,
       },
     });
-
-    // Verificar stock: como el schema no tiene stock por variante, validamos cantidad >= 1 (stock global se ajustará en webhook)
-    // Calcular descuento proporcional enviado por el cliente como referencia pero aplicado en el server
-    const discountPercent = Number(metadata?.discountPercent || 0);
-    const safeDiscount =
-      isFinite(discountPercent) && discountPercent >= 0 && discountPercent <= 1
-        ? discountPercent
-        : 0;
 
     type ProductType = (typeof dbProducts)[0];
     const validatedItems = metaItems.map((it: Record<string, unknown>) => {
@@ -114,7 +115,11 @@ export async function POST(req: NextRequest) {
       if (!prod) {
         throw new Error(`Producto no encontrado: ${it.productId}`);
       }
-      const unitPrice = Number((prod.price * (1 - safeDiscount)).toFixed(2));
+      // CRITICAL: Use salePrice if product is on sale, otherwise use original price
+      const unitPrice =
+        prod.onSale && prod.salePrice
+          ? Number(prod.salePrice)
+          : Number(prod.price);
       const title =
         prod.name + (it.size && it.color ? ` (${it.size} - ${it.color})` : "");
       const firstImage = (() => {
@@ -135,36 +140,28 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // Agregar ítem de envío según metadata.shipping (fallback a 0)
-    const shippingId = metadata?.shipping as string | undefined;
-    if (shippingId) {
-      const shippingMap: Record<
-        string,
-        { name: string; price: number; description?: string }
-      > = {
-        pickup: { name: "Retiro en tienda", price: 0 },
-        standard: {
-          name: "Envío estándar",
-          price: 1500,
-          description: "3-5 días",
-        },
-        express: {
-          name: "Envío express",
-          price: 2500,
-          description: "24-48 horas",
-        },
-      };
-      const ship = shippingMap[shippingId];
-      if (ship) {
-        validatedItems.push({
-          title: `Envío - ${ship.name}`,
-          quantity: 1,
-          unit_price: Number(ship.price.toFixed(2)),
-          currency_id: "ARS",
-          picture_url: undefined,
-          description: ship.description,
-        });
-      }
+    // Agregar ítem de envío si shippingCost > 0
+    if (shippingCost > 0) {
+      validatedItems.push({
+        title: "Costo de envío",
+        quantity: 1,
+        unit_price: Number(shippingCost),
+        currency_id: "ARS",
+        picture_url: undefined,
+        description: "Envío",
+      });
+    }
+
+    // Agregar ítem de descuento si discount > 0 (negativo)
+    if (discount > 0) {
+      validatedItems.push({
+        title: "Descuento aplicado",
+        quantity: 1,
+        unit_price: -Number(discount),
+        currency_id: "ARS",
+        picture_url: undefined,
+        description: "Cupón o promoción",
+      });
     }
 
     // Build Mercado Pago preference con items validados
@@ -188,17 +185,17 @@ export async function POST(req: NextRequest) {
       items: validatedItems,
       payer: customer
         ? {
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone ? { number: customer.phone } : undefined,
-          address: customer.address
-            ? {
-              street_name: customer.address,
-              zip_code: customer.postalCode,
-              city: customer.city,
-            }
-            : undefined,
-        }
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone ? { number: customer.phone } : undefined,
+            address: customer.address
+              ? {
+                  street_name: customer.address,
+                  zip_code: customer.postalCode,
+                  city: customer.city,
+                }
+              : undefined,
+          }
         : undefined,
       back_urls: {
         success: `${origin}/checkout/success`,

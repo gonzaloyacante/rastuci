@@ -72,27 +72,29 @@ export async function GET(
 
     // Obtener tracking desde API de Correo Argentino
     let events: TrackingEvent[] = [];
-    
+
     if (order.caTrackingNumber) {
       try {
         const { correoArgentinoService } = await import('@/lib/correo-argentino-service');
         await correoArgentinoService.authenticate();
-        
-        const trackingData = await correoArgentinoService.getTracking(order.caTrackingNumber);
-        
+
+        const trackingData = await correoArgentinoService.getTracking({ shippingId: order.caTrackingNumber });
+
         if (trackingData.success && trackingData.data && !Array.isArray(trackingData.data) && 'events' in trackingData.data) {
-          events = trackingData.data.events.map(event => ({
-            date: new Date(event.date).toLocaleDateString('es-AR'),
-            description: event.event,
-            status: event.status,
-            location: event.branch,
+          // Transform events to local format
+          events = trackingData.data.events.map((event) => ({
+            date: new Date(event.eventDate).toLocaleDateString('es-AR'),
+            time: new Date(event.eventDate).toLocaleTimeString('es-AR'),
+            description: event.eventDescription,
+            status: event.eventDescription,
+            location: event.branchName,
           }));
         }
       } catch (error) {
         console.error('Error fetching CA tracking:', error);
       }
     }
-    
+
     // Si no hay eventos de CA, usar datos de la orden
     if (events.length === 0) {
       events = [
