@@ -370,6 +370,7 @@ model products {
   @@index([name])
   @@index([onSale])
   @@index([price])
+  @@index([stock])
 }
 
 model settings {
