@@ -130,6 +130,34 @@ export default function OrderDetailPage() {
     importShipment,
     loading: caLoading,
   } = useCorreoArgentino();
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncCA = async () => {
+    if (!order?.caShipmentId && !order?.caTrackingNumber) return;
+
+    setSyncing(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/sync-ca`, { method: "POST" });
+      const json = await res.json();
+
+      if (json.success) {
+        toast.success("Estado sincronizado con Correo Argentino");
+        if (json.data.emailSent) {
+          toast.success("Email de seguimiento enviado al cliente");
+        }
+        // Update local state if tracking number changed
+        if (json.data.trackingNumber && json.data.trackingNumber !== order!.caTrackingNumber) {
+          setOrder({ ...order!, caTrackingNumber: json.data.trackingNumber });
+        }
+      } else {
+        toast.error(json.error || "No se pudo sincronizar");
+      }
+    } catch (e) {
+      toast.error("Error de conexión al sincronizar");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -666,6 +694,16 @@ export default function OrderDetailPage() {
                       <p className="text-xs mt-1">
                         Envío registrado en Correo Argentino
                       </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2 bg-white text-black border-gray-300 hover:bg-gray-50"
+                        onClick={handleSyncCA}
+                        disabled={syncing}
+                      >
+                        <RefreshCw size={14} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                        Sincronizar Estado (Check Pago)
+                      </Button>
                     </div>
                   )}
                 </div>
