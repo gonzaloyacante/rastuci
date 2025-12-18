@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/// <reference types="jest" />
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import * as React from "react";
@@ -20,7 +19,7 @@ const originalJestMockAny: any = (globalThis as any).jest.mock;
 (globalThis as any).jest.mock = function (
   moduleName: string,
   factory?: any,
-  options?: any,
+  options?: any
 ) {
   try {
     if (typeof factory === "function") {
@@ -124,7 +123,7 @@ beforeAll(() => {
     }
     (originalError as unknown as (...d: unknown[]) => void).call(
       console,
-      ...args,
+      ...args
     );
   };
 });
