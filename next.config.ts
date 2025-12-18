@@ -1,9 +1,4 @@
-import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
-
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
-});
 
 const nextConfig: NextConfig = {
   // Configuración de Turbopack (silencia advertencia de compatibilidad webpack en Next.js 16)
@@ -112,6 +107,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+};
+
+const withBundleAnalyzer = (config: NextConfig) => {
+  if (process.env.ANALYZE === "true") {
+    try {
+      const bundleAnalyzer = require("@next/bundle-analyzer");
+      return bundleAnalyzer({ enabled: true })(config);
+    } catch (e) {
+      console.warn("Could not load @next/bundle-analyzer", e);
+    }
+  }
+  return config;
 };
 
 export default withBundleAnalyzer(nextConfig);
