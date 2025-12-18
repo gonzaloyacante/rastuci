@@ -88,7 +88,12 @@ interface MetricsDashboard {
   topCustomers: Array<{ name: string; totalSpent: number }>;
   orderStatus: Array<{ status: string; count: number }>;
   hourlyOrders: Array<{ hour: string; orders: number }>;
-  productPerformance: Array<{ product: string; sales: number; revenue: number; rating: number }>;
+  productPerformance: Array<{
+    product: string;
+    sales: number;
+    revenue: number;
+    rating: number;
+  }>;
 }
 
 function calculateMetric(
@@ -273,21 +278,21 @@ export const GET = withAdminAuth(
       const currentAvgDeliveryTime =
         currentDeliveredOrders.length > 0
           ? currentDeliveredOrders.reduce((sum, order) => {
-            const deliveryDays =
-              (order.updatedAt.getTime() - order.createdAt.getTime()) /
-              (1000 * 60 * 60 * 24);
-            return sum + deliveryDays;
-          }, 0) / currentDeliveredOrders.length
+              const deliveryDays =
+                (order.updatedAt.getTime() - order.createdAt.getTime()) /
+                (1000 * 60 * 60 * 24);
+              return sum + deliveryDays;
+            }, 0) / currentDeliveredOrders.length
           : 0;
 
       const previousAvgDeliveryTime =
         previousDeliveredOrders.length > 0
           ? previousDeliveredOrders.reduce((sum, order) => {
-            const deliveryDays =
-              (order.updatedAt.getTime() - order.createdAt.getTime()) /
-              (1000 * 60 * 60 * 24);
-            return sum + deliveryDays;
-          }, 0) / previousDeliveredOrders.length
+              const deliveryDays =
+                (order.updatedAt.getTime() - order.createdAt.getTime()) /
+                (1000 * 60 * 60 * 24);
+              return sum + deliveryDays;
+            }, 0) / previousDeliveredOrders.length
           : 0;
 
       // Top productos vendidos
@@ -327,7 +332,8 @@ export const GET = withAdminAuth(
       >();
       currentOrders.forEach((order) => {
         order.order_items.forEach((item) => {
-          const categoryName = item.products?.categories?.name || "Sin categoría";
+          const categoryName =
+            item.products?.categories?.name || "Sin categoría";
           const existing = categorySalesMap.get(categoryName) || {
             name: categoryName,
             sales: 0,
@@ -399,9 +405,9 @@ export const GET = withAdminAuth(
       const avgShippingCost =
         ordersWithShipping.length > 0
           ? ordersWithShipping.reduce(
-            (sum, o) => sum + (o.shippingCost || 0),
-            0
-          ) / ordersWithShipping.length
+              (sum, o) => sum + (o.shippingCost || 0),
+              0
+            ) / ordersWithShipping.length
           : 0;
       const previousOrdersWithShipping = previousOrders.filter(
         (o) => o.shippingCost && o.shippingCost > 0
@@ -409,10 +415,30 @@ export const GET = withAdminAuth(
       const previousAvgShipping =
         previousOrdersWithShipping.length > 0
           ? previousOrdersWithShipping.reduce(
-            (sum, o) => sum + (o.shippingCost || 0),
-            0
-          ) / previousOrdersWithShipping.length
+              (sum, o) => sum + (o.shippingCost || 0),
+              0
+            ) / previousOrdersWithShipping.length
           : 0;
+
+      // Distribución de envíos (Domicilio vs Sucursal)
+      const ordersWithAgency = currentOrders.filter(
+        (o) => !!o.shippingAgency
+      ).length;
+      const ordersHome = currentOrders.filter(
+        (o) => !o.shippingAgency && o.shippingMethod !== "pickup"
+      ).length;
+      const totalShipped = ordersWithAgency + ordersHome;
+
+      const shippingDistribution = {
+        homeDelivery: ordersHome,
+        branchPickup: ordersWithAgency,
+        homePercentage:
+          totalShipped > 0 ? Math.round((ordersHome / totalShipped) * 100) : 0,
+        branchPercentage:
+          totalShipped > 0
+            ? Math.round((ordersWithAgency / totalShipped) * 100)
+            : 0,
+      };
 
       // Generar datos para gráficos basados en órdenes reales
       const salesChartData = generateSalesChartFromOrders(
@@ -475,62 +501,72 @@ export const GET = withAdminAuth(
         last7Days.push(date);
       }
 
-      const ordersPerDay = last7Days.map(date => {
-        const dateKey = date.toISOString().split('T')[0];
-        const dayOrders = currentOrders.filter(o =>
-          o.createdAt.toISOString().split('T')[0] === dateKey
+      const ordersPerDay = last7Days.map((date) => {
+        const dateKey = date.toISOString().split("T")[0];
+        const dayOrders = currentOrders.filter(
+          (o) => o.createdAt.toISOString().split("T")[0] === dateKey
         );
         return {
-          day: date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }),
-          orders: dayOrders.length
+          day: date.toLocaleDateString("es-AR", {
+            day: "2-digit",
+            month: "short",
+          }),
+          orders: dayOrders.length,
         };
       });
 
       // Top 5 clientes por gasto total
       const customerSpendMap = new Map<string, number>();
-      currentOrders.forEach(order => {
+      currentOrders.forEach((order) => {
         const existing = customerSpendMap.get(order.customerName) || 0;
         customerSpendMap.set(order.customerName, existing + order.total);
       });
       const topCustomers = Array.from(customerSpendMap.entries())
-        .map(([name, totalSpent]) => ({ name: name.split(' ')[0] || name, totalSpent }))
+        .map(([name, totalSpent]) => ({
+          name: name.split(" ")[0] || name,
+          totalSpent,
+        }))
         .sort((a, b) => b.totalSpent - a.totalSpent)
         .slice(0, 5);
 
       // Estado de pedidos
       const statusMap = new Map<string, number>();
       const statusLabels: Record<string, string> = {
-        'PENDING': 'Pendiente',
-        'PROCESSING': 'Procesando',
-        'DELIVERED': 'Completado',
-        'CANCELLED': 'Cancelado'
+        PENDING: "Pendiente",
+        PROCESSING: "Procesando",
+        DELIVERED: "Completado",
+        CANCELLED: "Cancelado",
       };
-      currentOrders.forEach(order => {
+      currentOrders.forEach((order) => {
         const status = statusLabels[order.status] || order.status;
         statusMap.set(status, (statusMap.get(status) || 0) + 1);
       });
-      const orderStatus = Array.from(statusMap.entries()).map(([status, count]) => ({ status, count }));
+      const orderStatus = Array.from(statusMap.entries()).map(
+        ([status, count]) => ({ status, count })
+      );
 
       // Pedidos por hora del día (usando órdenes de hoy)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayOrders = currentOrders.filter(o => o.createdAt >= today);
+      const todayOrders = currentOrders.filter((o) => o.createdAt >= today);
       const hourlyMap = new Map<number, number>();
-      todayOrders.forEach(order => {
+      todayOrders.forEach((order) => {
         const hour = order.createdAt.getHours();
         hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
       });
       const hourlyOrders = Array.from({ length: 24 }, (_, i) => ({
         hour: `${i}:00`,
-        orders: hourlyMap.get(i) || 0
-      })).filter(h => h.orders > 0 || (h.hour >= '8:00' && h.hour <= '22:00')); // Solo mostrar horas relevantes
+        orders: hourlyMap.get(i) || 0,
+      })).filter(
+        (h) => h.orders > 0 || (h.hour >= "8:00" && h.hour <= "22:00")
+      ); // Solo mostrar horas relevantes
 
       // Rendimiento de productos (top 5)
-      const productPerformance = topProducts.slice(0, 5).map(p => ({
+      const productPerformance = topProducts.slice(0, 5).map((p) => ({
         product: p.name.substring(0, 20),
         sales: p.sales,
         revenue: p.revenue,
-        rating: Math.random() * 5 // Mock - en producción usar rating real
+        rating: Math.random() * 5, // Mock - en producción usar rating real
       }));
 
       const dashboard: MetricsDashboard = {
@@ -558,13 +594,13 @@ export const GET = withAdminAuth(
           conversionRate: calculateMetric(
             currentOrderCount > 0
               ? Math.round(
-                (currentOrderCount / (currentOrderCount + 10)) * 100 * 10
-              ) / 10
+                  (currentOrderCount / (currentOrderCount + 10)) * 100 * 10
+                ) / 10
               : 0,
             previousOrderCount > 0
               ? Math.round(
-                (previousOrderCount / (previousOrderCount + 10)) * 100 * 10
-              ) / 10
+                  (previousOrderCount / (previousOrderCount + 10)) * 100 * 10
+                ) / 10
               : 0,
             "Tasa de Conversión"
           ),
@@ -710,8 +746,8 @@ function generateSalesChartFromOrders(
           period === "quarter"
             ? `Sem ${Math.floor(i / 7) + 1}`
             : new Date(chunk[0]?.date || "").toLocaleDateString("es-AR", {
-              month: "short",
-            }),
+                month: "short",
+              }),
       });
     }
     return groupedData;
@@ -774,8 +810,8 @@ function generateOrdersChartFromOrders(
           period === "quarter"
             ? `Sem ${Math.floor(i / 7) + 1}`
             : new Date(chunk[0]?.date || "").toLocaleDateString("es-AR", {
-              month: "short",
-            }),
+                month: "short",
+              }),
       });
     }
     return groupedData;

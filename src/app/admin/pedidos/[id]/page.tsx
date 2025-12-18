@@ -36,6 +36,8 @@ interface Order {
   customerEmail?: string;
   total: number;
   status: "PENDING" | "PROCESSED" | "DELIVERED";
+  paymentStatus?: string;
+  paymentMethod: string;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
@@ -193,7 +195,10 @@ export default function OrderDetailPage() {
         {/* Columna lateral */}
         <div className="space-y-6">
           <CustomerInfoCard order={order} />
-          <ShipmentControlCard order={order} onOrderUpdate={handleOrderUpdate} />
+          <ShipmentControlCard
+            order={order}
+            onOrderUpdate={handleOrderUpdate}
+          />
           <OrderActionsCard order={order} onOrderUpdate={handleOrderUpdate} />
         </div>
       </div>

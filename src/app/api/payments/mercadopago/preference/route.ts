@@ -52,7 +52,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { items = [], customer = null, metadata = {}, discount = 0, shippingCost = 0 } = body || {};
+    const {
+      items = [],
+      customer = null,
+      metadata = {},
+      discount = 0,
+      shippingCost = 0,
+    } = body || {};
 
     // Log para debugging (solo en desarrollo)
     if (process.env.NODE_ENV === "development") {
@@ -61,7 +67,7 @@ export async function POST(req: NextRequest) {
         itemsCount: items.length,
         hasCustomer: !!customer,
         discount,
-        shippingCost
+        shippingCost,
       });
     }
 
@@ -96,6 +102,8 @@ export async function POST(req: NextRequest) {
         id: true,
         name: true,
         price: true,
+        salePrice: true,
+        onSale: true,
         description: true,
         images: true,
       },
@@ -107,8 +115,11 @@ export async function POST(req: NextRequest) {
       if (!prod) {
         throw new Error(`Producto no encontrado: ${it.productId}`);
       }
-      // Use original DB price. Discount is applied as separate item.
-      const unitPrice = Number(prod.price);
+      // CRITICAL: Use salePrice if product is on sale, otherwise use original price
+      const unitPrice =
+        prod.onSale && prod.salePrice
+          ? Number(prod.salePrice)
+          : Number(prod.price);
       const title =
         prod.name + (it.size && it.color ? ` (${it.size} - ${it.color})` : "");
       const firstImage = (() => {
@@ -149,7 +160,7 @@ export async function POST(req: NextRequest) {
         unit_price: -Number(discount),
         currency_id: "ARS",
         picture_url: undefined,
-        description: "Cupón o promoción"
+        description: "Cupón o promoción",
       });
     }
 
@@ -174,17 +185,17 @@ export async function POST(req: NextRequest) {
       items: validatedItems,
       payer: customer
         ? {
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone ? { number: customer.phone } : undefined,
-          address: customer.address
-            ? {
-              street_name: customer.address,
-              zip_code: customer.postalCode,
-              city: customer.city,
-            }
-            : undefined,
-        }
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone ? { number: customer.phone } : undefined,
+            address: customer.address
+              ? {
+                  street_name: customer.address,
+                  zip_code: customer.postalCode,
+                  city: customer.city,
+                }
+              : undefined,
+          }
         : undefined,
       back_urls: {
         success: `${origin}/checkout/success`,

@@ -31,7 +31,15 @@ export function CheckoutForm({
   onPaymentSuccess: _onPaymentSuccess,
   onPaymentError,
 }: CheckoutFormProps) {
-  const { cartItems, getCartTotal, clearCart: _clearCart, getOrderSummary, selectedShippingOption, selectedAgency, customerInfo } = useCart();
+  const {
+    cartItems,
+    getCartTotal,
+    clearCart: _clearCart,
+    getOrderSummary,
+    selectedShippingOption,
+    selectedAgency,
+    customerInfo,
+  } = useCart();
   const { show } = useToast();
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -83,11 +91,14 @@ export function CheckoutForm({
     try {
       const { items, discount, shippingCost } = getOrderSummary();
 
-      // Preparar items para MercadoPago
+      // Preparar items para MercadoPago - USAR PRECIO CON DESCUENTO (salePrice) SI APLICA
       const mpItems = items.map((item) => ({
         title: `${item.product.name} (${item.size} - ${item.color})`,
         quantity: item.quantity,
-        unit_price: item.product.price,
+        unit_price:
+          item.product.onSale && item.product.salePrice
+            ? item.product.salePrice
+            : item.product.price,
         currency_id: "ARS",
         picture_url: Array.isArray(item.product.images)
           ? item.product.images[0]
@@ -200,7 +211,8 @@ export function CheckoutForm({
                 Podrás pagar en Rapipago, Pago Fácil y otros centros de pago.
               </p>
               <p className="text-sm muted">
-                Te enviaremos las instrucciones por email después de confirmar la compra.
+                Te enviaremos las instrucciones por email después de confirmar
+                la compra.
               </p>
             </div>
           )}
@@ -218,7 +230,7 @@ export function CheckoutForm({
             ) : (
               <>
                 <Lock className="w-5 h-5 mr-2" />
-                Pagar ${(total).toLocaleString("es-AR")}
+                Pagar ${total.toLocaleString("es-AR")}
               </>
             )}
           </Button>
@@ -232,43 +244,53 @@ export function CheckoutForm({
         {/* Resumen del pedido */}
         <div className="lg:sticky lg:top-6">
           <OrderSummaryCard
-            items={cartItems.map(item => ({
+            items={cartItems.map((item) => ({
               id: item.product.id,
               name: item.product.name,
               price: item.product.price,
-              image: Array.isArray(item.product.images) ? item.product.images[0] : undefined,
+              image: Array.isArray(item.product.images)
+                ? item.product.images[0]
+                : undefined,
               quantity: item.quantity,
               size: item.size,
               color: item.color,
               onSale: item.product.onSale,
-              salePrice: item.product.salePrice || undefined
+              salePrice: item.product.salePrice || undefined,
             }))}
             customerInfo={{
-              name: `${customerData.firstName} ${customerData.lastName}`.trim() || customerInfo?.name || "",
+              name:
+                `${customerData.firstName} ${customerData.lastName}`.trim() ||
+                customerInfo?.name ||
+                "",
               email: customerData.email || customerInfo?.email || "",
               phone: customerInfo?.phone || "",
               address: customerInfo?.address || "",
               city: customerInfo?.city || "",
               province: customerInfo?.province || "",
-              postalCode: customerInfo?.postalCode || ""
+              postalCode: customerInfo?.postalCode || "",
             }}
             shippingOption={{
               id: selectedShippingOption?.id || "",
               name: selectedShippingOption?.name || "Envío por definir",
               description: selectedShippingOption?.description || "",
               price: selectedShippingOption?.price || 0,
-              estimatedDays: selectedShippingOption?.estimatedDays || ""
+              estimatedDays: selectedShippingOption?.estimatedDays || "",
             }}
             paymentMethod={{
               id: selectedPaymentMethod,
-              name: selectedPaymentMethod === PAYMENT_METHODS.MERCADOPAGO ? "Mercado Pago" : selectedPaymentMethod === PAYMENT_METHODS.CASH ? "Efectivo" : "No seleccionado",
-              description: selectedPaymentMethod ? "Procesamiento seguro" : ""
+              name:
+                selectedPaymentMethod === PAYMENT_METHODS.MERCADOPAGO
+                  ? "Mercado Pago"
+                  : selectedPaymentMethod === PAYMENT_METHODS.CASH
+                    ? "Efectivo"
+                    : "No seleccionado",
+              description: selectedPaymentMethod ? "Procesamiento seguro" : "",
             }}
             subtotal={subtotal}
             shippingCost={shippingCost}
             discount={discount}
             total={total}
-            onEditStep={() => { }}
+            onEditStep={() => {}}
             agency={selectedAgency}
           />
         </div>
