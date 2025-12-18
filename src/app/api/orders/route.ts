@@ -26,8 +26,8 @@ export async function GET(
     }
     const { searchParams } = new URL(request.url);
     const parsedQuery = OrdersQuerySchema.safeParse({
-      page: searchParams.get("page"),
-      limit: searchParams.get("limit"),
+      page: searchParams.get("page") || "1",
+      limit: searchParams.get("limit") || "10",
       status: searchParams.get("status") || undefined,
       search: searchParams.get("search") || undefined,
     });

@@ -10,9 +10,11 @@ import { logger } from "@/lib/logger";
 import { formatPriceARS } from "@/utils/formatters";
 import { AlertCircle, Check, ShoppingCart, Trash2, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { ShippingSettings } from "@/lib/validation/shipping";
 
 interface CartItem {
   product: {
@@ -110,13 +112,15 @@ const CartItemComponent = ({
       <div className="flex gap-3 sm:gap-4">
         {/* Imagen */}
         <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
-          <Image
-            src={imageUrl}
-            alt={item.product.name}
-            fill
-            sizes="(max-width: 640px) 80px, 96px"
-            className="object-cover rounded-md"
-          />
+          <Link href={`/productos/${item.product.id}`}>
+            <Image
+              src={imageUrl}
+              alt={item.product.name}
+              fill
+              sizes="(max-width: 640px) 80px, 96px"
+              className="object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+            />
+          </Link>
           {isLowStock && (
             <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-warning text-warning-foreground rounded-full p-0.5 sm:p-1">
               <AlertCircle size={10} className="sm:w-3 sm:h-3" />
@@ -127,12 +131,14 @@ const CartItemComponent = ({
         {/* Info del producto */}
         <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div>
-            <h3
-              className="font-semibold text-sm sm:text-lg line-clamp-2 sm:truncate leading-tight"
-              title={item.product.name}
-            >
-              {item.product.name}
-            </h3>
+            <Link href={`/productos/${item.product.id}`} className="hover:text-primary/80 transition-colors">
+              <h3
+                className="font-semibold text-sm sm:text-lg line-clamp-2 sm:truncate leading-tight cursor-pointer"
+                title={item.product.name}
+              >
+                {item.product.name}
+              </h3>
+            </Link>
             <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs sm:text-sm muted mt-1">
               <span className="px-1.5 py-0.5 surface rounded text-[11px] sm:text-xs">
                 {item.color}
@@ -145,6 +151,11 @@ const CartItemComponent = ({
 
           {/* Precio - visible en mobile debajo del nombre */}
           <div className="mt-2 sm:hidden">
+            {hasSale && (
+              <p className="text-xs text-muted-foreground line-through decoration-muted-foreground/60 mb-0.5">
+                {formatPriceARS(item.product.price)}
+              </p>
+            )}
             <p className="text-base font-bold text-primary">
               {formatPriceARS(effectivePrice)}
             </p>
@@ -158,6 +169,11 @@ const CartItemComponent = ({
 
         {/* Precio desktop */}
         <div className="hidden sm:block text-right shrink-0">
+          {hasSale && (
+            <p className="text-sm text-muted-foreground line-through decoration-muted-foreground/60 mb-0.5">
+              {formatPriceARS(item.product.price)}
+            </p>
+          )}
           <p className="text-lg font-bold text-primary">
             {formatPriceARS(effectivePrice)}
           </p>
@@ -216,14 +232,20 @@ const OrderSummary = ({
   itemCount: number;
   onCheckout: () => void;
   isLoading: boolean;
-  shippingSettings: {
-    freeShipping: boolean;
-    freeShippingLabel: string;
-    freeShippingDescription: string;
-  };
+  shippingSettings: ShippingSettings;
 }) => {
-  const shipping = shippingSettings.freeShipping ? 0 : 0; // Si no es gratis, calcular costo
-  const finalTotal = total + shipping;
+  // Check specifically if the global setting is enabled
+  const isFreeShippingEnabled = shippingSettings.freeShipping === true;
+
+  const isFreeShipping =
+    isFreeShippingEnabled &&
+    (shippingSettings.freeShippingMinAmount === undefined ||
+      total >= shippingSettings.freeShippingMinAmount);
+
+  // El costo de envío se calcula en el checkout si no es gratis
+  // Aquí solo mostramos el subtotal o sumamos 0 si es gratis o desconocido aún
+  const shippingCost = 0;
+  const finalTotal = total + shippingCost;
 
   return (
     <div className="surface p-4 sm:p-6 rounded-lg shadow-sm border border-muted lg:sticky lg:top-24">
@@ -237,14 +259,19 @@ const OrderSummary = ({
           <span className="font-semibold">{formatPriceARS(total)}</span>
         </div>
         <div className="flex justify-between text-sm sm:text-base">
-          <span className="text-content-secondary">Envío</span>
-          {shippingSettings.freeShipping ? (
+          <span className="text-content-secondary">
+            {shippingSettings.shippingLabel || "Envío"}
+          </span>
+          {isFreeShipping ? (
             <span className="text-success flex items-center gap-1 font-semibold">
               <Check size={14} className="sm:w-4 sm:h-4" />
-              Gratis
+              {shippingSettings.freeShippingLabel || "Gratis"}
             </span>
           ) : (
-            <span className="font-semibold">{formatPriceARS(shipping)}</span>
+            <span className="text-xs sm:text-sm text-content-secondary font-medium text-right max-w-[50%]">
+              {shippingSettings.shippingCostDescription ||
+                "Se calculará en el checkout"}
+            </span>
           )}
         </div>
         <div className="border-t border-muted my-3"></div>
@@ -267,9 +294,15 @@ const OrderSummary = ({
       </Button>
 
       <div className="text-xs sm:text-sm muted text-center space-y-1">
-        {shippingSettings.freeShipping && (
+        {isFreeShipping ? (
           <p>{shippingSettings.freeShippingDescription}</p>
-        )}
+        ) : isFreeShippingEnabled &&
+          shippingSettings.freeShippingMinAmount &&
+          total < shippingSettings.freeShippingMinAmount ? (
+          <p className="text-orange-600">
+            ¡Agregá {formatPriceARS(shippingSettings.freeShippingMinAmount - total)} más para envío gratis!
+          </p>
+        ) : null}
         <p className="flex items-center justify-center gap-1">
           <span>🔒</span> Pago seguro con MercadoPago
         </p>

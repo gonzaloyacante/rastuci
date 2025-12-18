@@ -36,10 +36,11 @@
     "db:reset": "prisma migrate reset --force && npm run db:seed",
     "prisma:migrate-dev": "node scripts/prisma-migrate-dev.js",
     "prisma:generate": "npx prisma generate",
-    "prepare": "husky install"
+    "test:shipping": "tsx scripts/test-shipping-options.ts",
+    "prepare": "husky"
   },
   "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -81,7 +82,7 @@
     "swr": "^2.3.8",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^4.2.1"
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.0.10",

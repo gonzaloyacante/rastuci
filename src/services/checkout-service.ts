@@ -46,7 +46,7 @@ export class CheckoutService {
     /**
      * Prepara los items para Mercado Pago
      */
-    prepareMPItems(items: OrderItem[], shippingMethod?: { name: string; price: number }) {
+    prepareMPItems(items: OrderItem[], shippingMethod?: { name: string; price: number }, discountAmount: number = 0) {
         const mpItems = items.map((item) => ({
             id: item.productId,
             title: item.name || "Producto",
@@ -61,6 +61,16 @@ export class CheckoutService {
                 title: `Envío - ${shippingMethod.name}`,
                 quantity: 1,
                 unit_price: shippingMethod.price,
+                currency_id: "ARS",
+            });
+        }
+
+        if (discountAmount > 0) {
+            mpItems.push({
+                id: "discount",
+                title: "Descuento",
+                quantity: 1,
+                unit_price: -discountAmount,
                 currency_id: "ARS",
             });
         }

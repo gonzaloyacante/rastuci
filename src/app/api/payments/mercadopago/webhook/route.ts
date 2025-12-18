@@ -10,7 +10,9 @@ import { shipmentService } from "@/services/shipment-service";
 import prisma from "@/lib/prisma"; // Needed for direct lookups if not fully moved yet
 
 // Helper to notify admin/customer - could be moved to notification-service too
-async function notifyParties(order: any, orderId: string, mpPaymentId: string) {
+import { orders } from "@prisma/client";
+
+async function notifyParties(order: orders & { order_items: any[] }, orderId: string, mpPaymentId: string) {
   try {
     if (!order?.customerEmail) return;
 

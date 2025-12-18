@@ -18,6 +18,7 @@ function CheckoutFailureContent() {
   const [_paymentMethod, setPaymentMethod] = useState<string>("");
   const [orderId, setOrderId] = useState<string>("");
   const [errorReason, setErrorReason] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     // Obtener datos de la URL
@@ -32,6 +33,7 @@ function CheckoutFailureContent() {
     setPaymentMethod(method);
     setOrderId(id);
     setErrorReason(reason);
+    setMounted(true);
   }, [searchParams]);
 
   const getErrorMessage = (reason: string) => {
@@ -108,7 +110,9 @@ function CheckoutFailureContent() {
           <h1 className="text-3xl font-bold text-primary mb-2">
             Pago Rechazado
           </h1>
-          <p className="muted">{orderId && `Referencia: #${orderId}`}</p>
+          <p className="muted">
+            {mounted && orderId && !orderId.startsWith("tmp_") ? `Referencia: #${orderId}` : "Referencia: Pago no procesado"}
+          </p>
         </div>
 
         {/* Mensaje de error específico */}

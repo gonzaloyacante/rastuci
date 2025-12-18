@@ -81,19 +81,24 @@ export async function GET(request: Request) {
       if (result.success && result.data && result.data.length > 0) {
         let filteredAgencies = result.data;
 
-        // Filtrar por código postal si se proporciona
+        // Filtrar por código postal si se proporciona (normalizando a solo números)
         if (postalCode) {
+          const cleanSearchCP = postalCode.replace(/\D/g, "");
+
           filteredAgencies = result.data.filter((agency) => {
-            const agencyPostalCode = agency.location?.address?.postalCode;
-            // Match exacto o parcial (primeros 4 dígitos)
+            const rawCP = agency.location?.address?.postalCode || "";
+            const cleanAgencyCP = rawCP.replace(/\D/g, "");
+
+            // Match exacto o parcial (primeros 4 dígitos) de la parte numérica
             return (
-              agencyPostalCode === postalCode ||
-              agencyPostalCode?.startsWith(postalCode) ||
-              postalCode.startsWith(agencyPostalCode || "")
+              cleanAgencyCP === cleanSearchCP ||
+              cleanAgencyCP.startsWith(cleanSearchCP) ||
+              cleanSearchCP.startsWith(cleanAgencyCP) ||
+              rawCP === postalCode // Mantener compatibilidad con match exacto de string
             );
           });
 
-          logger.info(`[Agencies] Filtered by postalCode ${postalCode}`, {
+          logger.info(`[Agencies] Filtered by postalCode ${postalCode} (${cleanSearchCP})`, {
             total: result.data.length,
             filtered: filteredAgencies.length,
           });
@@ -106,12 +111,12 @@ export async function GET(request: Request) {
         });
       }
 
-      // Si no hay sucursales, devolver fallback
-      logger.warn("[Agencies] CA API returned no agencies, using fallback");
+      // Si no hay sucursales, devolver lista vacía (NO fallback)
+      logger.info("[Agencies] CA API returned no agencies for this province");
       return NextResponse.json({
         success: true,
-        agencies: FALLBACK_AGENCIES,
-        isFallback: true,
+        agencies: [],
+        isFallback: false,
       });
     } catch (apiError) {
       logger.error("[Agencies] CA API error, using fallback:", { apiError });

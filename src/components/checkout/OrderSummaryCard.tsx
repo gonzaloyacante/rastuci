@@ -1,14 +1,16 @@
-"use client";
-
+import { Agency } from '@/lib/correo-argentino-service';
 import { Button } from '@/components/ui/Button';
 import { formatPriceARS } from '@/utils/formatters';
-import { CreditCard, Edit2, FileText, Mail, MapPin, Phone, Truck } from 'lucide-react';
+import { CreditCard, Edit2, FileText, Mail, MapPin, Phone, Truck, Store, Clock } from 'lucide-react';
 import Image from 'next/image';
+import { WEEKDAY_NAMES_SHORT, type WeekdayKey } from "@/lib/constants";
 
 interface OrderItem {
   id: string;
   name: string;
   price: number;
+  salePrice?: number;
+  onSale?: boolean;
   quantity: number;
   size: string;
   color: string;
@@ -49,6 +51,7 @@ interface OrderSummaryCardProps {
   discount: number;
   total: number;
   onEditStep: (step: 'customer' | 'shipping' | 'payment') => void;
+  agency?: Agency | null;
 }
 
 export function OrderSummaryCard({
@@ -56,26 +59,33 @@ export function OrderSummaryCard({
   customerInfo,
   shippingOption,
   paymentMethod,
-  subtotal,
+  subtotal: _subtotal,
   shippingCost,
   discount,
   total,
-  onEditStep
+  onEditStep,
+  agency,
 }: OrderSummaryCardProps) {
-  return (
-    <div className="space-y-6">
-      {/* Productos */}
-      <div className="surface rounded-xl border border-muted p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3">
-            <span className="text-primary font-bold text-sm">{items.length}</span>
-          </div>
-          Productos en tu pedido
-        </h3>
 
-        <div className="space-y-4">
-          {items.map((item) => (
-            <div key={`${item.id}-${item.size}-${item.color}`} className="flex items-center gap-4 p-3 surface-secondary rounded-lg">
+  const grossSubtotal = items.reduce((acc, item) => {
+    return acc + (item.price * item.quantity);
+  }, 0);
+
+  return (
+    <div className="space-y-4">
+      {/* Detalles del Pedido */}
+      <h3 className="text-xl font-bold mb-4">Detalles del Pedido</h3>
+
+      <div className="space-y-4">
+        {items.map((item) => {
+          const hasDiscount = item.onSale && item.salePrice && item.salePrice < item.price;
+          const itemTotal = (hasDiscount ? item.salePrice! : item.price) * item.quantity;
+
+          return (
+            <div
+              key={`${item.id}-${item.size}-${item.color}`}
+              className="flex items-center gap-4 p-3 surface-secondary rounded-lg"
+            >
               {item.image && (
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
                   <Image
@@ -87,34 +97,49 @@ export function OrderSummaryCard({
                   />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate">{item.name}</h4>
-                <div className="flex items-center gap-2 text-xs muted mt-1">
-                  <span className="px-2 py-1 surface rounded-full">{item.size}</span>
-                  <span className="px-2 py-1 surface rounded-full">{item.color}</span>
-                  <span>× {item.quantity}</span>
-                </div>
+              <div className="flex-1">
+                <p className="font-medium text-sm">{item.name}</p>
+                <p className="text-xs muted">
+                  {item.size} / {item.color} x {item.quantity}
+                </p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">{formatPriceARS(item.price * item.quantity)}</p>
-                {item.quantity > 1 && (
-                  <p className="text-xs muted">{formatPriceARS(item.price)} c/u</p>
+                {hasDiscount ? (
+                  <>
+                    <p className="text-xs line-through muted">{formatPriceARS(item.price * item.quantity)}</p>
+                    <p className="font-medium text-success">{formatPriceARS(itemTotal)}</p>
+                  </>
+                ) : (
+                  <p className="font-medium">{formatPriceARS(itemTotal)}</p>
                 )}
               </div>
             </div>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Cupón de Descuento */}
+      <div className="surface rounded-xl border border-muted p-4 mt-4">
+        <h4 className="text-sm font-semibold mb-3">Cupón de Descuento</h4>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Código de cupón"
+            className="flex-1 bg-muted/50 border border-muted rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <Button size="sm" variant="outline">Aplicar</Button>
         </div>
       </div>
 
-      {/* Información del cliente */}
+      {/* Información de Contacto */}
       <div className="surface rounded-xl border border-muted p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center">
             <MapPin className="w-5 h-5 text-primary mr-2" />
-            Información de entrega
+            Información de Contacto
           </h3>
           <Button
-            onClick={() => onEditStep('customer')}
+            onClick={() => onEditStep("customer")}
             variant="outline"
             size="sm"
             className="text-xs"
@@ -126,12 +151,12 @@ export function OrderSummaryCard({
 
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold text-center leading-none">
               {customerInfo.name.charAt(0)}
             </div>
             <div>
               <p className="font-medium">{customerInfo.name}</p>
-              <div className="flex items-center gap-4 text-sm muted">
+              <div className="flex items-center gap-4 text-xs muted">
                 <span className="flex items-center gap-1">
                   <Mail className="w-3 h-3" />
                   {customerInfo.email}
@@ -143,10 +168,9 @@ export function OrderSummaryCard({
               </div>
             </div>
           </div>
-
           <div className="pl-11">
             <p className="text-sm">{customerInfo.address}</p>
-            <p className="text-sm muted">
+            <p className="text-xs muted">
               {customerInfo.city}, {customerInfo.province} - CP: {customerInfo.postalCode}
             </p>
           </div>
@@ -158,10 +182,10 @@ export function OrderSummaryCard({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center">
             <Truck className="w-5 h-5 text-primary mr-2" />
-            Método de envío
+            Envío
           </h3>
           <Button
-            onClick={() => onEditStep('shipping')}
+            onClick={() => onEditStep("shipping")}
             variant="outline"
             size="sm"
             className="text-xs"
@@ -175,25 +199,85 @@ export function OrderSummaryCard({
           <div>
             <p className="font-medium">{shippingOption.name}</p>
             <p className="text-sm muted">{shippingOption.description}</p>
-            <p className="text-xs muted mt-1">Tiempo estimado: {shippingOption.estimatedDays}</p>
+            <p className="text-xs muted mt-1">Estimado: {shippingOption.estimatedDays}</p>
           </div>
           <div className="text-right">
             <p className="font-semibold text-success">
-              {shippingOption.price === 0 ? 'Gratis' : formatPriceARS(shippingOption.price)}
+              {shippingCost === 0 ? "Sin cargo" : formatPriceARS(shippingCost)}
             </p>
           </div>
         </div>
+
+        {/* Agencia con Borde Rosa */}
+        {agency && (
+          <div className="rounded-lg border border-pink-500 p-4 bg-white mt-4 text-sm shadow-sm relative overflow-hidden">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 bg-pink-50 rounded-lg shrink-0">
+                <Store className="h-5 w-5 text-pink-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-pink-600 text-base leading-tight uppercase">
+                  {agency.name}
+                </p>
+                <p className="text-gray-600 mt-1 font-medium">
+                  {agency.location.address.streetName} {agency.location.address.streetNumber}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {agency.location.address.city}, CP {agency.location.address.postalCode}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-pink-100 pt-4 mb-4">
+              <div>
+                <p className="text-[11px] font-bold text-pink-600 mb-2 uppercase tracking-tight">Horarios de atención:</p>
+                <div className="space-y-1">
+                  {Object.entries(agency.hours || {}).map(([day, hours]) => {
+                    if (!hours || day === "holidays") return null;
+                    const dayName = WEEKDAY_NAMES_SHORT[day as WeekdayKey];
+                    if (!dayName) return null;
+                    return (
+                      <div key={day} className="flex justify-between text-[11px] text-gray-600">
+                        <span className="font-medium">{dayName}:</span>
+                        <span>{hours.start.slice(0, 2)}:{hours.start.slice(2)} - {hours.end.slice(0, 2)}:{hours.end.slice(2)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="rounded-lg h-32 bg-muted overflow-hidden border border-muted">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  src={`https://maps.google.com/maps?q=${agency.location.latitude},${agency.location.longitude}&hl=es&z=15&output=embed`}
+                ></iframe>
+              </div>
+            </div>
+
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${agency.location.latitude},${agency.location.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2 border border-pink-500 rounded-lg text-pink-600 font-bold text-xs uppercase hover:bg-pink-50 transition-colors"
+            >
+              <MapPin size={12} />
+              Ver en Google Maps
+            </a>
+          </div>
+        )}
       </div>
 
-      {/* Método de pago */}
+      {/* Pago */}
       <div className="surface rounded-xl border border-muted p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center">
             <CreditCard className="w-5 h-5 text-primary mr-2" />
-            Método de pago
+            Pago
           </h3>
           <Button
-            onClick={() => onEditStep('payment')}
+            onClick={() => onEditStep("payment")}
             variant="outline"
             size="sm"
             className="text-xs"
@@ -202,53 +286,45 @@ export function OrderSummaryCard({
             Cambiar
           </Button>
         </div>
-
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <CreditCard className="w-5 h-5 text-primary" />
           </div>
           <div>
             <p className="font-medium">{paymentMethod.name}</p>
-            <p className="text-sm muted">{paymentMethod.description}</p>
+            <p className="text-xs muted">{paymentMethod.description}</p>
           </div>
         </div>
       </div>
 
-      {/* Resumen de costos */}
+      {/* Resumen */}
       <div className="surface rounded-xl border border-muted p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <FileText className="w-5 h-5 text-primary mr-2" />
-          Resumen del pedido
+          Resumen
         </h3>
-
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <span>Subtotal ({items.length} {items.length === 1 ? 'producto' : 'productos'})</span>
-            <span>{formatPriceARS(subtotal)}</span>
+            <span>Subtotal ({items.length} {items.length === 1 ? "producto" : "productos"})</span>
+            <span>{formatPriceARS(grossSubtotal)}</span>
           </div>
-
           <div className="flex justify-between text-sm">
             <span>Envío</span>
-            <span className={shippingCost === 0 ? 'text-success font-medium' : ''}>
-              {shippingCost === 0 ? 'Gratis' : formatPriceARS(shippingCost)}
+            <span className={shippingCost === 0 ? "text-success font-medium" : ""}>
+              {shippingCost === 0 ? "Sin cargo" : formatPriceARS(shippingCost)}
             </span>
           </div>
-
           {discount > 0 && (
-            <div className="flex justify-between text-sm text-success">
+            <div className="flex justify-between text-sm text-success font-medium">
               <span>Descuento aplicado</span>
               <span>-{formatPriceARS(discount)}</span>
             </div>
           )}
-
           <div className="border-t border-muted pt-3">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold">Total</span>
+              <span className="text-lg font-bold">Total</span>
               <span className="text-2xl font-bold text-primary">{formatPriceARS(total)}</span>
             </div>
-            <p className="text-xs muted mt-1 text-right">
-              Incluye impuestos y tasas
-            </p>
           </div>
         </div>
       </div>

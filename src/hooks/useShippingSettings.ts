@@ -33,8 +33,17 @@ const fetcher = async (url: string): Promise<ShippingSettings> => {
 
 export function useShippingSettings() {
   const { data, error, isLoading, mutate } = useSWR<ShippingSettings>(
-    "/api/cms?key=shipping",
-    fetcher,
+    "/api/settings/store",
+    async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) return defaultShippingSettings;
+      const json = await res.json();
+      if (json?.success && json.data?.shipping) {
+        return json.data.shipping;
+      }
+      // If no shipping settings found in store, use defaults
+      return defaultShippingSettings;
+    },
     {
       fallbackData: defaultShippingSettings,
       revalidateOnFocus: false,
@@ -44,15 +53,28 @@ export function useShippingSettings() {
 
   const updateShipping = async (settings: Partial<ShippingSettings>) => {
     try {
-      const newSettings = { ...data, ...settings };
-      const response = await fetch("/api/cms", {
+      // First get current store settings
+      const currentRes = await fetch("/api/settings/store");
+      const currentData = await currentRes.json();
+
+      if (!currentData.success) throw new Error("Error fetching store settings");
+
+      const newStoreSettings = {
+        ...currentData.data,
+        shipping: {
+          ...(currentData.data.shipping || defaultShippingSettings),
+          ...settings
+        }
+      };
+
+      const response = await fetch("/api/settings/store", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "shipping", value: newSettings }),
+        body: JSON.stringify(newStoreSettings),
       });
 
       if (response.ok) {
-        mutate(newSettings as ShippingSettings);
+        mutate({ ...data, ...settings } as ShippingSettings);
         return true;
       }
       return false;

@@ -3,6 +3,22 @@ import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { OrderStatus } from "@prisma/client";
 
+export interface OrderMetadata {
+    tempOrderId?: string;
+    customerName: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    customerCity?: string;
+    customerProvince?: string;
+    customerPostalCode?: string;
+    shippingAgencyCode?: string;
+    shippingMethodId?: string;
+    items: string | any[]; // Kept loose for parsing but stricter than 'any'
+    discountPercent?: string | number;
+    shipping?: string;
+}
+
 export type OrderUpdateData = {
     mpPaymentId: string;
     mpStatus: string;
@@ -62,7 +78,7 @@ export class OrderService {
         return { order, shouldShip: false };
     }
 
-    async createFromMetadata(mpPaymentId: string, mpStatus: string, mappedStatus: OrderStatus, preferenceId: string | undefined, metadata: any, paymentPayer: any) {
+    async createFromMetadata(mpPaymentId: string, mpStatus: string, mappedStatus: OrderStatus, preferenceId: string | undefined, metadata: OrderMetadata, paymentPayer: any) {
         // Idempotency check 
         const existing = await prisma.orders.findFirst({
             where: { mpPaymentId: mpPaymentId },
@@ -112,7 +128,7 @@ export class OrderService {
         }
 
         // Fetch products for price security
-        const productIds = metaItems.map((i: any) => String(i.productId));
+        const productIds = metaItems.map((i: { productId: string }) => String(i.productId));
         const dbProducts = await prisma.products.findMany({
             where: { id: { in: productIds } },
             select: { id: true, name: true, price: true, stock: true },
@@ -121,7 +137,7 @@ export class OrderService {
         const discountPercent = Number(metadata.discountPercent || 0);
         const safeDiscount = isFinite(discountPercent) && discountPercent >= 0 && discountPercent <= 1 ? discountPercent : 0;
 
-        const orderItemsData = metaItems.map((it: any) => {
+        const orderItemsData = metaItems.map((it: { productId: string; quantity: number | string; size?: string; color?: string }) => {
             const prod = dbProducts.find((p) => p.id === it.productId);
             if (!prod) throw new Error(`Product not found: ${it.productId}`);
             const unitPrice = Number((prod.price * (1 - safeDiscount)).toFixed(2));
@@ -151,7 +167,7 @@ export class OrderService {
 
         const newOrder = await prisma.orders.create({
             data: {
-                id: `ord_${mpPaymentId}_${Date.now()}`,
+                id: (metadata.tempOrderId as string) || `ord_${mpPaymentId}_${Date.now()}`,
                 customerName,
                 customerPhone,
                 customerAddress,
@@ -197,7 +213,7 @@ export class OrderService {
         return { order: newOrder, shouldShip: shouldDecrement };
     }
 
-    async createCashOrder(customer: any, items: any[], total: number, shippingData?: any) {
+    async createCashOrder(customer: { name: string; phone: string; email: string; address: string; city: string; province?: string }, items: any[], total: number, shippingData?: any) {
         const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
         // We assume items have price calculated already or passed in (safe enough for internal call if validated before)
@@ -221,7 +237,7 @@ export class OrderService {
                 mpStatus: "cash_payment",
                 updatedAt: new Date(),
                 order_items: {
-                    create: items.map((item: any) => ({
+                    create: items.map((item: { productId: string; quantity: number; price: number; size?: string; color?: string }) => ({
                         id: `${orderId}_${item.productId}_${Date.now()}`,
                         quantity: item.quantity,
                         price: item.price,

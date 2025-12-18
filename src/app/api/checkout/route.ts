@@ -1,5 +1,5 @@
 import {
-  correoArgentinoService,
+  CorreoArgentinoService,
   type ProvinceCode,
 } from "@/lib/correo-argentino-service";
 import {
@@ -27,8 +27,49 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // We can try to use it or keep manual try/catch for now to match current return types exactly.
   // Manual try-catch for safety during refactor to not break frontend expectations.
 
+  interface CheckoutItem {
+    productId: string;
+    quantity: number;
+    price: number;
+    name: string;
+    size?: string;
+    color?: string;
+  }
+
+  interface CheckoutCustomer {
+    name: string;
+    email: string;
+    phone?: string;
+    address: string;
+    city: string;
+    province: string;
+    postalCode: string;
+  }
+
+  interface CheckoutShippingMethod {
+    id: string;
+    name: string;
+    price: number;
+  }
+
+  interface CheckoutRequestBody {
+    items: CheckoutItem[];
+    customer: CheckoutCustomer;
+    shippingMethod?: CheckoutShippingMethod;
+    paymentMethod: string;
+    orderData: {
+      total: number;
+      subtotal: number;
+      shippingCost: number;
+      discount: number;
+    };
+    shippingAgency?: {
+      code: string;
+    };
+  }
+
   try {
-    const body = await request.json();
+    const body: CheckoutRequestBody = await request.json();
     const { items, customer, shippingMethod, paymentMethod, orderData } = body;
 
     // 1. Validate
@@ -101,7 +142,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
       const tempOrderId = `tmp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-      const mpItems = checkoutService.prepareMPItems(items, shippingMethod);
+      const mpItems = checkoutService.prepareMPItems(items, shippingMethod, orderData.discount);
+      const customerForMP = { ...customer, phone: customer.phone || "" };
 
       // Preference Creation
       // We still need local logic for Payer and Metadata construction because it depends on specific body fields
@@ -132,7 +174,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         shippingMethodName: shippingMethod?.name || null,
         shippingMethodPrice: shippingMethod?.price || null,
         shippingAgencyCode: body.shippingAgency?.code || null,
-        items: JSON.stringify(items.map((item: any) => ({
+        items: JSON.stringify(items.map((item: CheckoutItem) => ({
           productId: item.productId,
           name: item.name,
           quantity: item.quantity,
@@ -142,6 +184,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           products: { connect: { id: item.productId } },
         }))),
       };
+
+      logger.info("[Checkout] Creating MP Preference", {
+        itemsCount: mpItems.length,
+        hasDiscount: mpItems.some(i => i.id === 'discount'),
+        rawItems: JSON.stringify(mpItems)
+      });
 
       const preference = await createPreference(mpItems, payer, {
         external_reference: tempOrderId,

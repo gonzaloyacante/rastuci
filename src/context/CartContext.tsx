@@ -94,6 +94,7 @@ interface CartContextType {
   // Checkout - Sucursal
   selectedAgency: Agency | null;
   setSelectedAgency: (agency: Agency | null) => void;
+  getAgencies: (provinceCode: string) => Promise<Agency[]>;
 
   // Checkout - Pago
   availablePaymentMethods: PaymentMethod[];
@@ -140,35 +141,36 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Fallback seguro para usar los hooks fuera de un provider (no lanzar)
 const _defaultCart: CartContextType = {
   cartItems: [],
-  addToCart: (() => {}) as unknown as CartContextType["addToCart"],
-  removeFromCart: () => {},
-  updateQuantity: () => {},
-  clearCart: () => {},
+  addToCart: (() => { }) as unknown as CartContextType["addToCart"],
+  removeFromCart: () => { },
+  updateQuantity: () => { },
+  clearCart: () => { },
   getCartTotal: () => 0,
   getItemCount: () => 0,
 
   availableShippingOptions: [],
   selectedShippingOption: null,
-  setSelectedShippingOption: () => {},
+  setSelectedShippingOption: () => { },
   calculateShippingCost: async () => [],
 
   selectedAgency: null,
-  setSelectedAgency: () => {},
+  setSelectedAgency: () => { },
+  getAgencies: async () => [],
 
   availablePaymentMethods: [],
   selectedPaymentMethod: null,
-  setSelectedPaymentMethod: () => {},
+  setSelectedPaymentMethod: () => { },
 
   availableBillingOptions: [],
   selectedBillingOption: null,
-  setSelectedBillingOption: () => {},
+  setSelectedBillingOption: () => { },
 
   appliedCoupon: null,
   applyCoupon: async () => false,
-  removeCoupon: () => {},
+  removeCoupon: () => { },
 
   customerInfo: null,
-  updateCustomerInfo: () => {},
+  updateCustomerInfo: () => { },
 
   getOrderSummary: () => ({
     items: [],
@@ -222,6 +224,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   // Estados del checkout - Información del cliente
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+
+  // Caches para mejorar performance
+  const [shippingCache, setShippingCache] = useState<Record<string, ShippingOption[]>>({});
+  const [agencyCache, setAgencyCache] = useState<Record<string, Agency[]>>({});
 
   // Opciones dinámicas desde API
   const [availableShippingOptions, setAvailableShippingOptions] = useState<ShippingOption[]>([]);
@@ -338,8 +344,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       setCartItems((prevItems) =>
         prevItems.map((item) =>
           item.product.id === productId &&
-          item.size === size &&
-          item.color === color
+            item.size === size &&
+            item.color === color
             ? { ...item, quantity: newQuantity }
             : item
         )
@@ -355,8 +361,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const getCartTotal = useCallback(() => {
     return cartItems.reduce((total, item) => {
       // Usar salePrice si existe y el producto está en oferta, sino usar price normal
-      const effectivePrice = item.product.onSale && item.product.salePrice 
-        ? item.product.salePrice 
+      const effectivePrice = item.product.onSale && item.product.salePrice
+        ? item.product.salePrice
         : item.product.price;
       return total + effectivePrice * item.quantity;
     }, 0);
@@ -369,7 +375,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   // Persistencia en localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
+
     try {
       const saved = localStorage.getItem("rastuci-cart");
       if (saved) {
@@ -395,12 +401,19 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
   }, [cartItems, hasLoadedStorage]);
 
-  // Envío - Implementación del cálculo por código postal
   const calculateShippingCost = useCallback(
     async (
       postalCode: string,
       deliveredType?: "D" | "S"
     ): Promise<ShippingOption[]> => {
+      const cacheKey = `${postalCode}-${deliveredType || "D"}`;
+
+      // Consultar cache antes de ir a la API
+      if (shippingCache[cacheKey]) {
+        logger.info("[CartContext] Usando cache para costo de envío", { cacheKey });
+        return shippingCache[cacheKey];
+      }
+
       try {
         const response = await fetch("/api/shipping/calculate", {
           method: "POST",
@@ -413,16 +426,43 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         const result = await response.json();
 
         if (result.success && result.options) {
+          // Guardar en cache para la próxima vez
+          setShippingCache(prev => ({ ...prev, [cacheKey]: result.options }));
           return result.options;
         }
         throw new Error(result.error || "Error calculando envío");
       } catch (error) {
-        logger.error("Error loading customer info:", { error });
-        // Fallback to empty or throw? Throwing allows UI to show error.
+        logger.error("Error calculando costo de envío:", { error });
         throw error;
       }
     },
-    []
+    [shippingCache]
+  );
+
+  // Checkout - Sucursal: Obtener con cache
+  const getAgencies = useCallback(
+    async (provinceCode: string): Promise<Agency[]> => {
+      if (agencyCache[provinceCode]) {
+        logger.info("[CartContext] Usando cache para sucursales", { provinceCode });
+        return agencyCache[provinceCode];
+      }
+
+      try {
+        const customerId = process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID || "0001718183";
+        const response = await fetch(`/api/shipping/agencies?provinceCode=${provinceCode}&customerId=${customerId}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          setAgencyCache(prev => ({ ...prev, [provinceCode]: result.data }));
+          return result.data;
+        }
+        return [];
+      } catch (error) {
+        logger.error("Error obteniendo sucursales:", { error });
+        return [];
+      }
+    },
+    [agencyCache]
   );
 
   // Checkout - Cupones
@@ -629,6 +669,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     // Checkout - Sucursal
     selectedAgency,
     setSelectedAgency,
+    getAgencies,
 
     // Checkout - Pago
     availablePaymentMethods,

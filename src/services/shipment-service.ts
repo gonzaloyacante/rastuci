@@ -81,23 +81,77 @@ export class ShipmentService {
                 length: 30,
             };
 
+            // Fetch Store Settings for Origin Address
+            const storeSettings = await prisma.settings.findUnique({
+                where: { key: "store" },
+            });
+
+            interface StoreSettingsValue {
+                name?: string;
+                adminEmail?: string;
+                phone?: string;
+                address?: {
+                    street?: string;
+                    number?: string;
+                    floor?: string;
+                    apartment?: string;
+                    city?: string;
+                    postalCode?: string;
+                    province?: string;
+                };
+            }
+
+            let senderAddress = {
+                streetName: "Av. San Martín",
+                streetNumber: "1234",
+                floor: null as string | null,
+                apartment: null as string | null,
+                city: "Don Torcuato",
+                provinceCode: "B" as "B" | "C",
+                postalCode: "1611",
+                name: "Rastuci E-commerce",
+                email: "ventas@rastuci.com",
+                phone: "1123456789"
+            };
+
+            if (storeSettings && storeSettings.value) {
+                const settings = storeSettings.value as unknown as StoreSettingsValue;
+                if (settings.address) {
+                    const pCode = settings.address.province?.toLowerCase().includes("capital") ||
+                        settings.address.province?.toLowerCase().includes("caba") ? "C" as const : "B" as const;
+
+                    senderAddress = {
+                        streetName: settings.address.street || senderAddress.streetName,
+                        streetNumber: settings.address.number || senderAddress.streetNumber,
+                        floor: settings.address.floor || null,
+                        apartment: settings.address.apartment || null,
+                        city: settings.address.city || senderAddress.city,
+                        provinceCode: pCode,
+                        postalCode: settings.address.postalCode || senderAddress.postalCode,
+                        name: settings.name || senderAddress.name,
+                        email: settings.adminEmail || senderAddress.email,
+                        phone: settings.phone || senderAddress.phone
+                    };
+                }
+            }
+
             const shipmentData = {
                 customerId: customerId,
                 extOrderId: orderId,
                 orderNumber: orderId.substring(0, 20),
                 sender: {
-                    name: "Rastuci E-commerce",
-                    phone: "1123456789",
-                    cellPhone: "1123456789",
-                    email: "ventas@rastuci.com",
+                    name: senderAddress.name,
+                    phone: senderAddress.phone,
+                    cellPhone: senderAddress.phone,
+                    email: senderAddress.email,
                     originAddress: {
-                        streetName: "Av. San Martín",
-                        streetNumber: "1234",
-                        floor: null,
-                        apartment: null,
-                        city: "Don Torcuato",
-                        provinceCode: "B" as const,
-                        postalCode: "1611",
+                        streetName: senderAddress.streetName,
+                        streetNumber: senderAddress.streetNumber,
+                        floor: senderAddress.floor,
+                        apartment: senderAddress.apartment,
+                        city: senderAddress.city,
+                        provinceCode: senderAddress.provinceCode,
+                        postalCode: senderAddress.postalCode,
                     },
                 },
                 recipient: {
@@ -107,9 +161,9 @@ export class ShipmentService {
                     email: order.customerEmail,
                 },
                 shipping: {
-                    deliveryType: "D" as const,
-                    productType: "CP",
-                    agency: null,
+                    deliveryType: (order.shippingAgency ? "S" : "D") as "D" | "S",
+                    productType: order.shippingProductType || "CP",
+                    agency: order.shippingAgency || null,
                     address: {
                         streetName: streetName || "Dirección",
                         streetNumber: streetNumber,

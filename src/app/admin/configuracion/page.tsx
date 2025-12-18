@@ -203,52 +203,115 @@ export default function ConfiguracionPage() {
         </TabPanel>
 
         <TabPanel id="envios" activeTab={activeTab}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Promoción de Envío Gratis</h3>
-                  <p className="text-sm text-muted mb-4">
-                    Activa esta opción para ofrecer envío gratis en todos los pedidos.
-                    El costo real del envío se mostrará tachado como descuento en el checkout.
-                  </p>
-                </div>
-
-                <div className="p-4 border border-muted rounded-lg">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <div>
-                      <div className="font-medium">Activar Envío Gratis</div>
-                      <div className="text-sm text-muted">
-                        Los clientes verán el costo de envío tachado y "ENVÍO GRATIS" destacado
-                      </div>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">ℹ️ Cómo funciona</h4>
-                  <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-                    <li>El cliente elige su sucursal de envío normalmente</li>
-                    <li>El costo real se calcula con la API de Correo Argentino</li>
-                    <li>Se muestra el precio tachado con badge "ENVÍO GRATIS"</li>
-                    <li>El total final NO incluye el costo de envío</li>
-                    <li>Ideal para promociones de Black Friday, Navidad, etc.</li>
-                  </ul>
-                </div>
-
-                <Button onClick={() => toast.success("Configuración guardada")} disabled={loading} className="w-full">
-                  <Save className="w-4 h-4 mr-2" />
-                  {loading ? "Guardando..." : "Guardar Configuración"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ShippingPromoSettings />
         </TabPanel>
       </TabLayout>
     </div>
+  );
+}
+
+function ShippingPromoSettings() {
+  const [enabled, setEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/store")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setEnabled(data.data.shipping?.freeShipping || false);
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // First get current settings to avoid overwriting other fields
+      const currentRes = await fetch("/api/settings/store");
+      const currentData = await currentRes.json();
+
+      if (!currentData.success) throw new Error("Error al leer configuración");
+
+      const newSettings = {
+        ...currentData.data,
+        shipping: {
+          ...currentData.data.shipping,
+          freeShipping: enabled
+        }
+      };
+
+      const res = await fetch("/api/settings/store", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSettings),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Configuración actualizada");
+      } else {
+        toast.error(data.error || "Error al guardar");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al guardar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <Skeleton className="h-64 w-full" />;
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Promoción de Envío Gratis</h3>
+            <p className="text-sm text-muted mb-4">
+              Activa esta opción para ofrecer envío gratis en todos los pedidos.
+              El costo real del envío se mostrará tachado como descuento en el checkout.
+            </p>
+          </div>
+
+          <div className="p-4 border border-muted rounded-lg surface-secondary">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={enabled}
+                onChange={(e) => setEnabled(e.target.checked)}
+                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <div>
+                <div className="font-medium">Activar Envío Gratis</div>
+                <div className="text-sm text-muted">
+                  Los clientes verán el costo de envío tachado y "ENVÍO GRATIS" destacado
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">ℹ️ Cómo funciona</h4>
+            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+              <li>El cliente elige su sucursal de envío normalmente</li>
+              <li>El costo real se calcula con la API de Correo Argentino</li>
+              <li>Se muestra el precio tachado con badge "ENVÍO GRATIS"</li>
+              <li>El total final NO incluye el costo de envío</li>
+              <li>Ideal para promociones de Black Friday, Navidad, etc.</li>
+            </ul>
+          </div>
+
+          <Button onClick={handleSave} disabled={saving} className="w-full">
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? "Guardando..." : "Guardar Configuración"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

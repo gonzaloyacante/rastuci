@@ -27,6 +27,10 @@ export const StoreSettingsSchema = z.object({
         provinceCode: z.string().length(1).default("B"), // CA province code
         postalCode: z.string().regex(/^\d{4}$/).default("1611"),
     }),
+    // Shipping global settings
+    shipping: z.object({
+        freeShipping: z.boolean().default(false),
+    }).default({ freeShipping: false }),
 });
 
 export type StoreSettings = z.infer<typeof StoreSettingsSchema>;
@@ -44,6 +48,9 @@ export const defaultStoreSettings: StoreSettings = {
         city: "Buenos Aires",
         provinceCode: "B",
         postalCode: "1611",
+    },
+    shipping: {
+        freeShipping: false,
     },
 };
 
