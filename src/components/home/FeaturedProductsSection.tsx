@@ -23,9 +23,14 @@ export function FeaturedProductsSection({
           <h2 className="text-3xl font-bold text-center mb-10 font-montserrat">
             Productos en Oferta
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
             {[...Array(4)].map((_, index) => (
-              <UISkeletonProductCard key={`item-${index}`} />
+              <div
+                key={`item-${index}`}
+                className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]"
+              >
+                <UISkeletonProductCard />
+              </div>
             ))}
           </div>
         </div>
@@ -52,14 +57,18 @@ export function FeaturedProductsSection({
         <p className="text-center text-sm muted mb-10">
           {home?.featuredSubtitle || defaultHomeSettings.featuredSubtitle}
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6">
           {products.map((product, index) => (
-            <ProductCard
+            <div
               key={product.id}
-              product={product}
-              variant="grid"
-              priority={index < 2} // Prioridad para las primeras 2 imágenes
-            />
+              className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]"
+            >
+              <ProductCard
+                product={product}
+                variant="grid"
+                priority={index < 2}
+              />
+            </div>
           ))}
         </div>
 

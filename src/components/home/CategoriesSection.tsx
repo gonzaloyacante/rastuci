@@ -41,15 +41,23 @@ export function CategoriesSection({
             "Explorá nuestras categorías de productos"}
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6">
           {loading
-            ? Array.from({ length: 8 }, (_, i) => <CategorySkeleton key={i} />)
+            ? Array.from({ length: 8 }, (_, i) => (
+                <div
+                  key={i}
+                  className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]"
+                >
+                  <CategorySkeleton />
+                </div>
+              ))
             : categories.map((category) => (
-                <CategoryCard
+                <div
                   key={category.id}
-                  category={category}
-                  displayMode={display}
-                />
+                  className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]"
+                >
+                  <CategoryCard category={category} displayMode={display} />
+                </div>
               ))}
         </div>
       </div>
