@@ -41,6 +41,16 @@ export interface Product {
   categories?: Category;
   createdAt: Date;
   updatedAt: Date;
+  variants?: ProductVariant[];
+}
+
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  color: string;
+  size: string;
+  stock: number;
+  sku?: string | null;
 }
 
 export interface User {
@@ -110,10 +120,10 @@ export interface SerializedOrderItem {
 }
 
 export enum OrderStatus {
-  PENDING = "PENDING",              // Pedido creado, esperando pago del cliente
+  PENDING = "PENDING", // Pedido creado, esperando pago del cliente
   PENDING_PAYMENT = "PENDING_PAYMENT", // Cliente pagó, admin debe pagar envío
-  PROCESSED = "PROCESSED",          // Envío pagado, listo para entregar
-  DELIVERED = "DELIVERED",          // Entregado al cliente
+  PROCESSED = "PROCESSED", // Envío pagado, listo para entregar
+  DELIVERED = "DELIVERED", // Entregado al cliente
 }
 
 // Tipos para formularios

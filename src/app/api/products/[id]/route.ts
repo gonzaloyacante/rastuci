@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ProductCreateSchema } from "@/lib/validation/product";
+import { variantService } from "@/services/variant-service";
 import { ApiResponse, Product } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -34,6 +35,7 @@ export async function GET(
       where: { id },
       include: {
         categories: true,
+        variants: true,
       },
     });
 
@@ -53,6 +55,10 @@ export async function GET(
         ...product.categories,
         description: product.categories.description ?? undefined,
       },
+      variants: product.variants.map((v) => ({
+        ...v,
+        sku: v.sku ?? undefined,
+      })),
     };
 
     return ok(responseProduct);
@@ -97,7 +103,7 @@ export async function PUT(
       // DEBUG: Log del error de validación
       logger.error(`PUT /api/products/${id} - Error de validación:`, {
         error: parsed.error.issues,
-        body
+        body,
       });
 
       return fail("BAD_REQUEST", "Datos inválidos", 400, {
@@ -120,6 +126,7 @@ export async function PUT(
       height,
       width,
       length,
+      variants: inputVariants, // Rename to avoid conflict if necessary or just variants
     } = parsed.data;
 
     // Verificar que la categoría existe
@@ -131,30 +138,55 @@ export async function PUT(
       return fail("BAD_REQUEST", "La categoría especificada no existe", 400);
     }
 
+    if (inputVariants) {
+      try {
+        // Sync variants (create, update, delete)
+        await variantService.syncVariants(
+          id,
+          inputVariants.map((v) => ({
+            ...v,
+            productId: id,
+            id: "", // Service/DB handles IDs
+          }))
+        );
+      } catch (error) {
+        logger.error("Error syncing variants", { error });
+        // We could fail or continue. Let's fail because data integrity matters.
+        throw error;
+      }
+    }
+
     // Obtener producto actual para comparar imágenes
     const currentProduct = await prisma.products.findUnique({
       where: { id },
     });
 
     if (currentProduct && currentProduct.images) {
-      const oldImages: string[] = typeof currentProduct.images === 'string'
-        ? JSON.parse(currentProduct.images)
-        : currentProduct.images;
+      const oldImages: string[] =
+        typeof currentProduct.images === "string"
+          ? JSON.parse(currentProduct.images)
+          : currentProduct.images;
 
       const newImages = Array.isArray(images) ? images : [];
 
       // Identificar imágenes eliminadas
-      const imagesToDelete = oldImages.filter(img => !newImages.includes(img));
+      const imagesToDelete = oldImages.filter(
+        (img) => !newImages.includes(img)
+      );
 
       if (imagesToDelete.length > 0) {
-        logger.info(`Deleting ${imagesToDelete.length} removed images from Cloudinary`);
+        logger.info(
+          `Deleting ${imagesToDelete.length} removed images from Cloudinary`
+        );
         // Eliminar en segundo plano para no bloquear la respuesta
-        Promise.allSettled(imagesToDelete.map(async (url) => {
-          const publicId = extractPublicId(url);
-          if (publicId) {
-            await deleteImage(publicId);
-          }
-        })).then(results => {
+        Promise.allSettled(
+          imagesToDelete.map(async (url) => {
+            const publicId = extractPublicId(url);
+            if (publicId) {
+              await deleteImage(publicId);
+            }
+          })
+        ).then((results) => {
           logger.info("Image deletion results", { results });
         });
       }
@@ -182,6 +214,7 @@ export async function PUT(
       },
       include: {
         categories: true,
+        variants: true,
       },
     });
 
@@ -197,6 +230,12 @@ export async function PUT(
         ...updatedPrismaProduct.categories,
         description: updatedPrismaProduct.categories.description ?? undefined,
       },
+      variants: updatedPrismaProduct.variants
+        ? updatedPrismaProduct.variants.map((v) => ({
+            ...v,
+            sku: v.sku ?? undefined,
+          }))
+        : [],
     };
 
     return ok(updatedProduct, "Producto actualizado exitosamente");
@@ -255,20 +294,25 @@ export async function DELETE(
 
     // Eliminar imágenes de Cloudinary si existen
     if (productToDelete && productToDelete.images) {
-      const images: string[] = typeof productToDelete.images === 'string'
-        ? JSON.parse(productToDelete.images)
-        : productToDelete.images;
+      const images: string[] =
+        typeof productToDelete.images === "string"
+          ? JSON.parse(productToDelete.images)
+          : productToDelete.images;
 
       if (images.length > 0) {
-        logger.info(`Deleting ${images.length} images for deleted product ${id}`);
+        logger.info(
+          `Deleting ${images.length} images for deleted product ${id}`
+        );
         // No esperamos (await) para no demorar la respuesta, o podemos esperar si es crítico.
         // Dado que el producto ya se borró de la DB, mejor limpiar asíncronamente.
-        Promise.allSettled(images.map(async (url) => {
-          const publicId = extractPublicId(url);
-          if (publicId) {
-            await deleteImage(publicId);
-          }
-        })).catch(err => logger.error("Error cleaning up images", { err }));
+        Promise.allSettled(
+          images.map(async (url) => {
+            const publicId = extractPublicId(url);
+            if (publicId) {
+              await deleteImage(publicId);
+            }
+          })
+        ).catch((err) => logger.error("Error cleaning up images", { err }));
       }
     }
 
