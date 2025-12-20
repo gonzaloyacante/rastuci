@@ -41,6 +41,7 @@ export async function middleware(request: NextRequest) {
     session = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: process.env.NODE_ENV === "production",
     });
   } catch {
     // JWT decryption error - treat as no session (silent handling)
@@ -53,7 +54,11 @@ export async function middleware(request: NextRequest) {
   const debugAuthHeader = session ? "present" : "missing";
 
   // Rutas públicas que cualquiera puede acceder (página de login/admin landing)
-  const publicRoutes = ["/admin", "/admin/auth/forgot-password", "/admin/auth/reset-password"];
+  const publicRoutes = [
+    "/admin",
+    "/admin/auth/forgot-password",
+    "/admin/auth/reset-password",
+  ];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   const isAdminPage = pathname.startsWith("/admin");

@@ -63,6 +63,8 @@ export interface CartItem {
   quantity: number;
   size: string;
   color: string;
+  variantId?: string;
+  sku?: string;
 }
 
 interface CartContextType {
@@ -320,8 +322,23 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           };
           return updatedItems;
         } else {
+          // Buscar variante específica si existe
+          const variant = product.variants?.find(
+            (v) => v.color === color && v.size === size
+          );
+
           // Agregar nuevo item
-          return [...prevItems, { product, quantity, size, color }];
+          return [
+            ...prevItems,
+            {
+              product,
+              quantity,
+              size,
+              color,
+              variantId: variant?.id,
+              sku: variant?.sku || undefined,
+            },
+          ];
         }
       });
     },

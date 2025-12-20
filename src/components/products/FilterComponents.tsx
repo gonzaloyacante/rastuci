@@ -188,9 +188,9 @@ export function CheckboxOption({
         type="checkbox"
         checked={isChecked}
         onChange={(e) => onChange(groupId, option.id, e.target.checked)}
-        className="w-4 h-4 text-primary border-2 border-surface-secondary rounded focus:ring-2 focus:ring-pink-500"
+        className="w-4 h-4 text-gray-900 dark:text-white border-2 border-surface-secondary rounded focus:ring-2 focus:ring-pink-500"
       />
-      <span className="flex-1 text-sm text-primary group-hover:text-pink-600 transition-colors">
+      <span className="flex-1 text-sm text-gray-900 dark:text-white group-hover:text-pink-600 transition-colors">
         {option.label}
       </span>
       {option.count !== undefined && option.count > 0 && (
@@ -226,7 +226,9 @@ export function ColorOption({
         className="w-6 h-6 rounded-full border-2 border-surface-secondary"
         style={{ backgroundColor: option.color }}
       />
-      <span className="text-sm text-primary">{option.label}</span>
+      <span className="text-sm text-gray-900 dark:text-white">
+        {option.label}
+      </span>
       {option.count !== undefined && option.count > 0 && (
         <span className="text-xs muted">({option.count})</span>
       )}
@@ -260,9 +262,11 @@ export function RadioOption({
         value={option.id}
         checked={isChecked}
         onChange={() => onChange(groupId, option.id)}
-        className="w-4 h-4 text-primary border-2 border-surface-secondary focus:ring-2 focus:ring-pink-500"
+        className="w-4 h-4 text-gray-900 dark:text-white border-2 border-surface-secondary focus:ring-2 focus:ring-pink-500"
       />
-      <span className="flex-1 text-sm text-primary">{option.label}</span>
+      <span className="flex-1 text-sm text-gray-900 dark:text-white">
+        {option.label}
+      </span>
       {option.count !== undefined && option.count > 0 && (
         <span className="text-xs muted">({option.count})</span>
       )}
@@ -353,7 +357,9 @@ export function FilterGroupSection({
       >
         <div className="flex items-center space-x-2">
           {group.icon}
-          <span className="font-medium text-primary">{group.label}</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {group.label}
+          </span>
         </div>
         {isExpanded ? (
           <ChevronUp className="w-4 h-4 muted" />
@@ -449,7 +455,9 @@ export function ActiveFiltersBadges({
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-primary">Filtros activos</h3>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+          Filtros activos
+        </h3>
         <button
           onClick={onClearAll}
           className="text-sm text-pink-600 hover:text-pink-700"
@@ -554,7 +562,9 @@ export function MobileFiltersModal({
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-primary">Filtros</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Filtros
+                </h2>
                 <button
                   onClick={onClose}
                   className="p-2 hover:bg-surface rounded-full"
@@ -579,7 +589,7 @@ export function MobileFiltersModal({
               <div className="mt-6 flex space-x-3">
                 <button
                   onClick={onClearFilters}
-                  className="flex-1 px-4 py-2 border border-surface-secondary text-primary rounded-md hover:bg-surface"
+                  className="flex-1 px-4 py-2 border border-surface-secondary text-gray-900 dark:text-white rounded-md hover:bg-surface"
                 >
                   Limpiar
                 </button>

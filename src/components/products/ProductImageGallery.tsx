@@ -134,7 +134,7 @@ export default function ProductImageGallery({
         <div className="pt-2">
           {/* Thumbnail list for accessibility: tests expect a list role with this label */}
           <div
-            className="flex gap-3 overflow-x-auto pb-2"
+            className="flex gap-3 overflow-x-auto pb-4 pt-3 px-2"
             role="list"
             aria-label="Miniaturas de imágenes"
           >

@@ -359,6 +359,7 @@ model products {
   width           Int?              @default(20)
   length          Int?              @default(30)
   sizeGuide       Json?
+  variants        product_variants[]
   order_items        order_items[]
   product_reviews    product_reviews[]
   stock_reservations stock_reservations[]
@@ -371,6 +372,19 @@ model products {
   @@index([onSale])
   @@index([price])
   @@index([stock])
+}
+
+model product_variants {
+  id        String   @id @default(cuid())
+  productId String
+  color     String
+  size      String
+  stock     Int      @default(0)
+  sku       String?
+  product   products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, color, size])
+  @@index([productId])
 }
 
 model settings {

@@ -2,10 +2,7 @@ import {
   CorreoArgentinoService,
   type ProvinceCode,
 } from "@/lib/correo-argentino-service";
-import {
-  PAYMENT_METHODS,
-  PROVINCE_CODE_MAP,
-} from "@/lib/constants";
+import { PAYMENT_METHODS, PROVINCE_CODE_MAP } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { createPreference } from "@/lib/mercadopago"; // Leaving this here or move to checkout-service too? It's fine here or via service.
 import { NextRequest, NextResponse } from "next/server";
@@ -74,22 +71,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 1. Validate
     if (!items || items.length === 0) {
-      return NextResponse.json({ success: false, error: "No hay productos en el carrito" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "No hay productos en el carrito" },
+        { status: 400 }
+      );
     }
     if (!customer || !paymentMethod) {
-      return NextResponse.json({ success: false, error: "Faltan datos del cliente o método de pago" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Faltan datos del cliente o método de pago" },
+        { status: 400 }
+      );
     }
 
     // 2. Validate Stock via Service
+    let validatedProducts: any[] = [];
     try {
-      await checkoutService.validateStock(items);
+      validatedProducts = await checkoutService.validateStock(items);
     } catch (e: any) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: e.message },
+        { status: 400 }
+      );
     }
 
     // 3. Process Payment Method
     if (paymentMethod === PAYMENT_METHODS.CASH) {
-
       // Prepare Shipping Data
       const shippingData = {
         street: customer.address,
@@ -97,7 +103,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         province: customer.province,
         postalCode: customer.postalCode,
         agency: body.shippingAgency?.code,
-        methodName: shippingMethod?.name || "Correo Argentino"
+        methodName: shippingMethod?.name || "Correo Argentino",
       };
 
       // Create Order via Service
@@ -112,7 +118,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Original logic checked for 'ca-' id. Reuse logic or move to shipment service?
       // Let's implement CA creation call here if it was done before.
       // Logic was: if shippingMethod.id.startsWith("ca-") ... create shipment immediately
-      if (shippingMethod && shippingMethod.id && shippingMethod.id.startsWith("ca-") && customer.address && customer.postalCode) {
+      if (
+        shippingMethod &&
+        shippingMethod.id &&
+        shippingMethod.id.startsWith("ca-") &&
+        customer.address &&
+        customer.postalCode
+      ) {
         // ... CA Logic (Simplify or keep inline for now, ideally extract to shipmentService.createFromCheckoutData)
         // For now, let's keep the CA logic inline or move to shipment-service.
         // shipmentService methods are tailored for "Order exists in DB". We have the order now!
@@ -122,15 +134,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         // Async call to avoid blocking? Or await? Original awaited.
         try {
-          // However, createCAShipment logic relies on order fields. 
+          // However, createCAShipment logic relies on order fields.
           // We passed them to createCashOrder.
           // But wait, createCAShipment logic calculates weight from items in DB order_items.
           // Yes, createCashOrder creates order_items.
           // So this should work!
-          const { shipmentService } = await import("@/services/shipment-service");
+          const { shipmentService } =
+            await import("@/services/shipment-service");
           await shipmentService.createCAShipment(order.id);
         } catch (caError) {
-          logger.error("[checkout] Failed to import CA shipment", { orderId: order.id, error: caError });
+          logger.error("[checkout] Failed to import CA shipment", {
+            orderId: order.id,
+            error: caError,
+          });
           // Don't fail the request, just log.
         }
       }
@@ -139,15 +155,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: true,
         orderId: order.id,
         paymentMethod: PAYMENT_METHODS.CASH,
-        message: "Pedido creado exitosamente. Te confirmaremos por WhatsApp cuando esté listo para retirar.",
+        message:
+          "Pedido creado exitosamente. Te confirmaremos por WhatsApp cuando esté listo para retirar.",
       });
     }
 
     if (paymentMethod === PAYMENT_METHODS.MERCADOPAGO) {
-      const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
+      const origin =
+        request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
       const tempOrderId = `tmp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-      const mpItems = checkoutService.prepareMPItems(items, shippingMethod, orderData.discount);
+      const mpItems = checkoutService.prepareMPItems(
+        items,
+        shippingMethod,
+        orderData.discount,
+        validatedProducts
+      );
       const customerForMP = { ...customer, phone: customer.phone || "" };
 
       // Preference Creation
@@ -179,26 +202,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         shippingMethodName: shippingMethod?.name || null,
         shippingMethodPrice: shippingMethod?.price || null,
         shippingAgencyCode: body.shippingAgency?.code || null,
-        items: JSON.stringify(items.map((item: CheckoutItem) => ({
-          productId: item.productId,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          size: item.size || null,
-          color: item.color || null,
-          products: { connect: { id: item.productId } },
-        }))),
+        items: JSON.stringify(
+          items.map((item: CheckoutItem) => ({
+            productId: item.productId,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            size: item.size || null,
+            color: item.color || null,
+            products: { connect: { id: item.productId } },
+          }))
+        ),
       };
 
       logger.info("[Checkout] Creating MP Preference", {
         itemsCount: mpItems.length,
-        hasDiscount: mpItems.some(i => i.id === 'discount'),
-        rawItems: JSON.stringify(mpItems)
+        hasDiscount: mpItems.some((i) => i.id === "discount"),
+        rawItems: JSON.stringify(mpItems),
       });
 
       const preference = await createPreference(mpItems, payer, {
         external_reference: tempOrderId,
-        metadata: metadata
+        metadata: metadata,
       });
 
       return NextResponse.json({
@@ -209,10 +234,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
     }
 
-    return NextResponse.json({ success: false, error: "Método de pago no válido" }, { status: 400 });
-
+    return NextResponse.json(
+      { success: false, error: "Método de pago no válido" },
+      { status: 400 }
+    );
   } catch (error) {
     logger.error("Error processing checkout:", { error });
-    return NextResponse.json({ success: false, error: "Error interno del servidor" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Error interno del servidor" },
+      { status: 500 }
+    );
   }
 }

@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ColorChip } from "@/components/ui/ColorChip";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Product } from "@/types";
+import { Product, ProductVariant } from "@/types";
 import { formatPriceARS } from "@/utils/formatters";
 import {
   AlertCircle,
@@ -44,6 +44,7 @@ import {
   SizeManager,
   StockIndicator,
 } from "./ProductFormComponents";
+import VariantManager from "./VariantManager";
 
 // ==============================================================================
 // TYPES & SCHEMA
@@ -130,6 +131,7 @@ export default function ProductForm({
   const [colors, setColors] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
 
   const title = initialData ? "Editar Producto" : "Crear Nuevo Producto";
   const toastMessage = initialData
@@ -173,14 +175,16 @@ export default function ProductForm({
       setColors(initialData.colors || []);
       setSizes(initialData.sizes || []);
       setFeatures(initialData.features || []);
+      // Ensure variants are mapped correctly if they come from DB
+      setVariants(initialData.variants || []);
 
       const discountPercentage =
         initialData.salePrice && initialData.price
           ? Math.round(
-            ((initialData.price - initialData.salePrice) /
-              initialData.price) *
-            100
-          )
+              ((initialData.price - initialData.salePrice) /
+                initialData.price) *
+                100
+            )
           : null;
 
       reset({
@@ -205,6 +209,24 @@ export default function ProductForm({
       setPriceInput(formatPriceARS(Number(watchPrice)));
     }
   }, [watchPrice]);
+
+  // Auto-update total stock when variants change (optional convenience)
+  useEffect(() => {
+    if (variants.length > 0) {
+      const totalVariantStock = variants.reduce(
+        (acc, v) => acc + (v.stock || 0),
+        0
+      );
+      // Only update if it differs significantly or logic requires it.
+      // User can still manually override if they really want, but let's suggest it.
+      // setValue("stock", totalVariantStock);
+      // Actually, let's NOT auto-update to avoid fighting with user input,
+      // but we could show a warning or helper.
+      // Given the previous instructions, let's keep it simple. The VariantManager shows the total.
+      // The user can manually update the top stock field or we'll handle it in backend sync.
+      // Better: Backend `syncVariants` handles sum update. Frontend just sends data.
+    }
+  }, [variants, setValue]);
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
@@ -239,7 +261,12 @@ export default function ProductForm({
       }
 
       // 3. Validar stock
-      if (data.stock === undefined || data.stock === null || data.stock < 0 || !Number.isInteger(data.stock)) {
+      if (
+        data.stock === undefined ||
+        data.stock === null ||
+        data.stock < 0 ||
+        !Number.isInteger(data.stock)
+      ) {
         toast.error("El stock debe ser un número entero no negativo");
         setLoading(false);
         return;
@@ -260,7 +287,9 @@ export default function ProductForm({
       }
 
       // 6. Validar que todas las imágenes sean URLs válidas
-      const invalidImages = productImages.filter(img => !img || typeof img !== 'string' || img.trim() === '');
+      const invalidImages = productImages.filter(
+        (img) => !img || typeof img !== "string" || img.trim() === ""
+      );
       if (invalidImages.length > 0) {
         toast.error("Hay imágenes inválidas. Por favor, vuelve a subirlas.");
         setLoading(false);
@@ -269,15 +298,25 @@ export default function ProductForm({
 
       // 7. Validar dimensiones si están presentes
       if (data.weight !== null && data.weight !== undefined) {
-        if (!Number.isInteger(data.weight) || data.weight < 1 || data.weight > 30000) {
-          toast.error("El peso debe ser un número entero entre 1 y 30000 gramos");
+        if (
+          !Number.isInteger(data.weight) ||
+          data.weight < 1 ||
+          data.weight > 30000
+        ) {
+          toast.error(
+            "El peso debe ser un número entero entre 1 y 30000 gramos"
+          );
           setLoading(false);
           return;
         }
       }
 
       if (data.height !== null && data.height !== undefined) {
-        if (!Number.isInteger(data.height) || data.height < 1 || data.height > 150) {
+        if (
+          !Number.isInteger(data.height) ||
+          data.height < 1 ||
+          data.height > 150
+        ) {
           toast.error("La altura debe ser un número entero entre 1 y 150 cm");
           setLoading(false);
           return;
@@ -285,7 +324,11 @@ export default function ProductForm({
       }
 
       if (data.width !== null && data.width !== undefined) {
-        if (!Number.isInteger(data.width) || data.width < 1 || data.width > 150) {
+        if (
+          !Number.isInteger(data.width) ||
+          data.width < 1 ||
+          data.width > 150
+        ) {
           toast.error("El ancho debe ser un número entero entre 1 y 150 cm");
           setLoading(false);
           return;
@@ -293,7 +336,11 @@ export default function ProductForm({
       }
 
       if (data.length !== null && data.length !== undefined) {
-        if (!Number.isInteger(data.length) || data.length < 1 || data.length > 150) {
+        if (
+          !Number.isInteger(data.length) ||
+          data.length < 1 ||
+          data.length > 150
+        ) {
           toast.error("El largo debe ser un número entero entre 1 y 150 cm");
           setLoading(false);
           return;
@@ -301,7 +348,10 @@ export default function ProductForm({
       }
 
       // 8. Validar descuento
-      if (data.discountPercentage !== null && data.discountPercentage !== undefined) {
+      if (
+        data.discountPercentage !== null &&
+        data.discountPercentage !== undefined
+      ) {
         if (data.discountPercentage < 0 || data.discountPercentage > 100) {
           toast.error("El descuento debe estar entre 0 y 100%");
           setLoading(false);
@@ -330,13 +380,14 @@ export default function ProductForm({
         height: data.height || null,
         width: data.width || null,
         length: data.length || null,
+        variants: variants && variants.length > 0 ? variants : undefined,
       };
 
       // DEBUG: Log completo de lo que se está enviando
       logger.info("Enviando datos del producto:", {
         productData,
         method: initialData ? "PUT" : "POST",
-        url: initialData ? `/api/products/${initialData.id}` : "/api/products"
+        url: initialData ? `/api/products/${initialData.id}` : "/api/products",
       });
 
       const url = initialData
@@ -355,7 +406,7 @@ export default function ProductForm({
         logger.error("Error response del servidor:", {
           status: response.status,
           statusText: response.statusText,
-          body: errorText
+          body: errorText,
         });
 
         let errorData;
@@ -365,7 +416,10 @@ export default function ProductForm({
           errorData = { error: { message: errorText } };
         }
 
-        const errorMsg = errorData.error?.message || errorData.message || `Error ${response.status}`;
+        const errorMsg =
+          errorData.error?.message ||
+          errorData.message ||
+          `Error ${response.status}`;
         toast.error(errorMsg);
         throw new Error(errorMsg);
       }
@@ -449,7 +503,10 @@ export default function ProductForm({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 lg:space-y-8">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4 sm:space-y-6 lg:space-y-8"
+        >
           {/* Información Básica */}
           <Card className="shadow-xl border-0 overflow-hidden">
             <CardHeader className="bg-linear-to-r from-primary to-primary/90 text-white p-4 sm:p-6">
@@ -623,7 +680,7 @@ export default function ProductForm({
                           El descuento será de{" "}
                           {formatPriceARS(
                             Number(watchPrice || 0) -
-                            Number(calculatedSalePrice)
+                              Number(calculatedSalePrice)
                           )}
                         </p>
                       </>
@@ -802,6 +859,20 @@ export default function ProductForm({
                 <FeatureManager
                   features={features}
                   onFeaturesChange={setFeatures}
+                />
+              </div>
+
+              {/* Variant Manager */}
+              <div className="pt-4 border-t">
+                <label className="block text-xs sm:text-sm font-medium mb-3">
+                  <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
+                  Gestión de Stock por Variante
+                </label>
+                <VariantManager
+                  variants={variants}
+                  onChange={setVariants}
+                  availableColors={colors}
+                  availableSizes={sizes}
                 />
               </div>
             </CardContent>

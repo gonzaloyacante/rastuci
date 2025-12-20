@@ -211,7 +211,7 @@ export async function POST(
       // DEBUG: Log del error de validación
       logger.error("POST /api/products - Error de validación:", {
         error: validation.error,
-        body
+        body,
       });
 
       return fail("BAD_REQUEST", `validación: ${msg}`, 400);
@@ -250,9 +250,21 @@ export async function POST(
         images: Array.isArray(productData.images)
           ? JSON.stringify(productData.images)
           : productData.images,
+        variants:
+          productData.variants && productData.variants.length > 0
+            ? {
+                create: productData.variants.map((v) => ({
+                  color: v.color,
+                  size: v.size,
+                  stock: v.stock,
+                  sku: v.sku,
+                })),
+              }
+            : undefined,
       },
       include: {
         categories: true,
+        variants: true,
       },
     });
 
@@ -268,6 +280,10 @@ export async function POST(
         ...newProduct.categories,
         description: newProduct.categories.description ?? undefined,
       },
+      variants: newProduct.variants.map((v) => ({
+        ...v,
+        sku: v.sku ?? undefined,
+      })),
     };
 
     // Devuelve 201 para creación

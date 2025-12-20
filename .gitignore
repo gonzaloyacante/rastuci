@@ -76,6 +76,7 @@ update-*.sql
 temp-*
 *.tmp
 *.temp
+.unlighthouse/
 
 # IDE
 .vscode/
@@ -104,4 +105,16 @@ next-env.d.ts
 
 #Ignore cursor AI rules
 .cursor/rules/codacy.mdc
+# Local env files
 .env*.local
+
+# Backups and Reports
+backup/
+backups/
+playwright-report/
+test-results/
+
+# Compiler Cache & Locks
+.swc/
+package-lock.json
+
