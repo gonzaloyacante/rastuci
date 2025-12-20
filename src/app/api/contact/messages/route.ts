@@ -1,4 +1,5 @@
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { withAdminAuth } from "@/lib/adminAuth";
 import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
@@ -89,8 +90,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET - Listar mensajes de contacto (solo admin)
-export async function GET(req: NextRequest) {
+// GET - Listar mensajes de contacto (ADMIN ONLY)
+export const GET = withAdminAuth(async (req: NextRequest) => {
   try {
     const rl = await checkRateLimit(req, {
       key: "contact:messages:get",
@@ -146,4 +147,4 @@ export async function GET(req: NextRequest) {
       e.code === "INTERNAL" ? "INTERNAL_ERROR" : (e.code as ApiErrorCode);
     return NextResponse.json(fail(code, e.message, e.status ?? 500));
   }
-}
+});

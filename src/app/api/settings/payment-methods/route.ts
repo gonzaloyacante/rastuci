@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -28,14 +29,16 @@ export async function GET() {
             id: "mercadopago",
             name: "MercadoPago",
             icon: "wallet",
-            description: "Tarjetas, transferencias y más - Redirección a MercadoPago",
+            description:
+              "Tarjetas, transferencias y más - Redirección a MercadoPago",
             requiresShipping: true,
           },
           {
             id: "cash",
             name: "Efectivo - Retiro en Local",
             icon: "dollar-sign",
-            description: "Retiro en nuestro local de Buenos Aires - Sin costo de envío",
+            description:
+              "Retiro en nuestro local de Buenos Aires - Sin costo de envío",
             requiresShipping: false,
           },
         ],
@@ -52,8 +55,8 @@ export async function GET() {
   }
 }
 
-// POST /api/settings/payment-methods - Crear/actualizar métodos (solo admin)
-export async function POST(req: NextRequest) {
+// POST /api/settings/payment-methods - Crear/actualizar métodos (ADMIN ONLY)
+export const POST = withAdminAuth(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const validated = PaymentMethodsSchema.parse(body);
@@ -85,4 +88,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
