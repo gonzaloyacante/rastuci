@@ -106,120 +106,154 @@ const CartItemComponent = ({
   return (
     <div
       className={`
-        surface p-3 sm:p-4 rounded-lg shadow-sm border border-muted
+        surface p-4 sm:p-6 rounded-xl shadow-sm border border-muted
         transition-all duration-300 hover:shadow-md
         ${isRemoving ? "opacity-50 scale-95" : ""}
       `}
     >
-      {/* Layout mobile: más compacto */}
-      <div className="flex gap-3 sm:gap-4">
-        {/* Imagen */}
-        <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
+      <div className="flex gap-4 sm:gap-6 items-start">
+        {/* Imagen - más grande */}
+        <div className="relative w-24 h-24 sm:w-32 sm:h-32 shrink-0">
           <Link href={`/productos/${item.product.id}`}>
             <Image
               src={imageUrl}
               alt={item.product.name}
               fill
-              sizes="(max-width: 640px) 80px, 96px"
-              className="object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+              sizes="(max-width: 640px) 96px, 128px"
+              className="object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border border-muted/50"
             />
           </Link>
           {isLowStock && (
-            <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-warning text-warning-foreground rounded-full p-0.5 sm:p-1">
-              <AlertCircle size={10} className="sm:w-3 sm:h-3" />
+            <div className="absolute -top-2 -right-2 bg-warning text-warning-foreground rounded-full p-1 shadow-sm z-10">
+              <AlertCircle size={14} className="sm:w-4 sm:h-4" />
             </div>
           )}
         </div>
 
         {/* Info del producto */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
-          <div>
+        <div className="flex-1 min-w-0 flex flex-col justify-between h-full min-h-[96px] sm:min-h-[128px]">
+          <div className="space-y-2">
             <Link
               href={`/productos/${item.product.id}`}
-              className="hover:text-primary/80 transition-colors"
+              className="group block"
             >
               <h3
-                className="font-semibold text-sm sm:text-lg line-clamp-2 sm:truncate leading-tight cursor-pointer"
+                className="font-bold text-lg sm:text-xl leading-tight group-hover:text-primary/80 transition-colors font-montserrat"
                 title={item.product.name}
               >
                 {item.product.name}
               </h3>
             </Link>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs sm:text-sm muted mt-1">
-              <span className="px-1.5 py-0.5 surface rounded text-[11px] sm:text-xs">
-                {item.color}
-              </span>
-              <span className="px-1.5 py-0.5 surface rounded text-[11px] sm:text-xs">
-                Talle {item.size}
-              </span>
+
+            {/* Variantes más elegantes */}
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-3 h-3 rounded-full border border-muted-foreground/30"
+                  style={{
+                    backgroundColor:
+                      item.color.toLowerCase() === "blanco"
+                        ? "#ffffff"
+                        : item.color.toLowerCase() === "negro"
+                          ? "#000000"
+                          : "gray",
+                  }} /* Fallback simple para visualización */
+                />
+                <span className="capitalize">{item.color}</span>
+              </div>
+              <span className="text-muted-foreground/40">|</span>
+              <span className="font-medium">Talle {item.size}</span>
             </div>
           </div>
 
-          {/* Precio - visible en mobile debajo del nombre */}
-          <div className="mt-2 sm:hidden">
-            {hasSale && (
-              <p className="text-xs text-muted-foreground line-through decoration-muted-foreground/60 mb-0.5">
-                {formatPriceARS(item.product.price)}
-              </p>
-            )}
-            <p className="text-base font-bold text-primary">
-              {formatPriceARS(effectivePrice)}
-            </p>
+          {/* Precio - visible en mobile */}
+          <div className="mt-auto pt-2 sm:hidden">
+            <div className="flex items-baseline gap-2">
+              {hasSale && (
+                <span className="text-xs text-muted-foreground line-through decoration-muted-foreground/60">
+                  {formatPriceARS(item.product.price)}
+                </span>
+              )}
+              <span className="text-lg font-bold text-primary">
+                {formatPriceARS(effectivePrice)}
+              </span>
+            </div>
             {pendingQuantity > 1 && (
-              <p className="text-xs muted">
-                Total: {formatPriceARS(itemTotal)}
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Subtotal:{" "}
+                <span className="font-medium text-foreground">
+                  {formatPriceARS(itemTotal)}
+                </span>
               </p>
             )}
           </div>
         </div>
 
-        {/* Precio desktop */}
-        <div className="hidden sm:block text-right shrink-0">
+        {/* Precio desktop - Alineado arriba a la derecha */}
+        <div className="hidden sm:flex flex-col items-end text-right shrink-0 ml-4">
+          <p className="text-xl font-bold text-primary">
+            {formatPriceARS(effectivePrice)}
+          </p>
           {hasSale && (
-            <p className="text-sm text-muted-foreground line-through decoration-muted-foreground/60 mb-0.5">
+            <p className="text-sm text-muted-foreground line-through decoration-muted-foreground/60">
               {formatPriceARS(item.product.price)}
             </p>
           )}
-          <p className="text-lg font-bold text-primary">
-            {formatPriceARS(effectivePrice)}
-          </p>
           {pendingQuantity > 1 && (
-            <p className="text-sm muted">Total: {formatPriceARS(itemTotal)}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Subtotal:{" "}
+              <span className="font-medium text-foreground">
+                {formatPriceARS(itemTotal)}
+              </span>
+            </p>
           )}
         </div>
       </div>
 
-      {/* Controles: cantidad y eliminar */}
-      <div className="mt-3 pt-3 border-t border-muted">
-        {/* Stock warning mobile */}
-        {isLowStock && (
-          <p className="text-[10px] sm:text-xs text-warning flex items-center gap-1 mb-2">
-            <AlertCircle size={10} className="sm:w-3 sm:h-3" />
-            Stock limitado: {item.product.stock} disponibles
-          </p>
-        )}
+      {/* Footer: Controles */}
+      <div className="mt-4 pt-4 border-t border-muted/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Stock warning */}
+        <div>
+          {isLowStock ? (
+            <p className="text-xs text-warning flex items-center gap-1.5 font-medium">
+              <AlertCircle size={14} />
+              ¡Últimas {item.product.stock} unidades!
+            </p>
+          ) : (
+            <span className="hidden sm:block text-xs text-muted-foreground/50">
+              Disponible
+            </span>
+          )}
+        </div>
 
-        {/* Controles */}
-        <div className="flex items-center justify-between gap-2">
-          <QuantityButton
-            quantity={pendingQuantity}
-            onIncrement={() => handleQuantityChange(pendingQuantity + 1)}
-            onDecrement={() => handleQuantityChange(pendingQuantity - 1)}
-            disabled={isRemoving}
-          />
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground hidden sm:inline-block">
+              Cantidad:
+            </span>
+            <QuantityButton
+              quantity={pendingQuantity}
+              onIncrement={() => handleQuantityChange(pendingQuantity + 1)}
+              onDecrement={() => handleQuantityChange(pendingQuantity - 1)}
+              disabled={isRemoving}
+            />
+          </div>
+
+          <div className="h-6 w-px bg-muted hidden sm:block"></div>
 
           <button
             onClick={handleRemove}
             disabled={isRemoving}
-            className="text-error hover:text-error transition-colors p-2 rounded-lg hover:bg-error/10 disabled:opacity-50 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium"
+            className="text-muted-foreground hover:text-error hover:bg-error/5 transition-all px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium group"
             title="Eliminar producto"
           >
-            {isRemoving ? (
-              <X size={16} className="animate-spin sm:w-5 sm:h-5" />
-            ) : (
-              <Trash2 size={16} className="sm:w-5 sm:h-5" />
-            )}
-            <span className="hidden sm:inline">Eliminar</span>
+            <Trash2
+              size={16}
+              className="group-hover:text-error transition-colors"
+            />
+            <span className="group-hover:underline decoration-error/30 underline-offset-2">
+              Eliminar
+            </span>
           </button>
         </div>
       </div>
