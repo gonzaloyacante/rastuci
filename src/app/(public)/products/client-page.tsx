@@ -268,11 +268,12 @@ export default function ProductsPageClient({
     return (
       <>
         <ProductGrid viewMode={viewMode} isMobile={isMobile}>
-          {products.map((product) => (
+          {products.map((product, index) => (
             <ProductCard
               key={product.id}
               product={product}
               variant={viewMode}
+              priority={index < 4}
             />
           ))}
         </ProductGrid>

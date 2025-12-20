@@ -75,6 +75,8 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
 
     if (!formData.phone.trim()) {
       newErrors.phone = "El teléfono es obligatorio";
+    } else if (!/^[\d\s\-+()]{8,20}$/.test(formData.phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Formato de teléfono inválido";
     }
 
     if (!formData.address.trim()) {

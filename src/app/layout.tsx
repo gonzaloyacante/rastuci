@@ -92,6 +92,9 @@ export default async function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5"
         />
+        {/* Preconnect to Cloudinary for faster LCP */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
       <body className={`${inter.className} ${poppins.variable}`}>
         <AppProviders>{children}</AppProviders>

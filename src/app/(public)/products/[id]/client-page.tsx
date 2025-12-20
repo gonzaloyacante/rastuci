@@ -29,9 +29,7 @@ import React, { Suspense, useState } from "react";
 import useSWR from "swr";
 
 // Dynamic imports para componentes no críticos
-const ProductImageGallery = React.lazy(
-  () => import("@/components/products/ProductImageGallery")
-);
+import ProductImageGallery from "@/components/products/ProductImageGallery";
 const ProductReviews = React.lazy(
   () => import("@/components/products/ProductReviews")
 );
@@ -507,6 +505,11 @@ export default function ProductDetailClient({
                 onClick={handleToggleFavorite}
                 variant="outline"
                 className="px-4"
+                aria-label={
+                  isProductFavorite
+                    ? "Quitar de favoritos"
+                    : "Agregar a favoritos"
+                }
               >
                 <Heart
                   className={`w-4 h-4 ${
@@ -514,7 +517,12 @@ export default function ProductDetailClient({
                   }`}
                 />
               </Button>
-              <Button onClick={handleShare} variant="outline" className="px-4">
+              <Button
+                onClick={handleShare}
+                variant="outline"
+                className="px-4"
+                aria-label="Compartir este producto"
+              >
                 <Share2 className="w-4 h-4" />
               </Button>
             </div>
