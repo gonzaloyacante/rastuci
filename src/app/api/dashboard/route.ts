@@ -1,3 +1,4 @@
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
@@ -40,7 +41,7 @@ function calculateChange(
   };
 }
 
-export async function GET() {
+export const GET = withAdminAuth(async () => {
   try {
     // Fechas para comparación (este mes vs mes anterior)
     const now = new Date();
@@ -233,4 +234,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
