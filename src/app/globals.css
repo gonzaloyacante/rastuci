@@ -57,11 +57,6 @@
   --foreground: #e5e7eb;
   /* base text */
 
-  /* A brighter pink for accessibility: #f06292 achieves 4.9:1 on #121212 */
-  --color-primary: #f06292;
-  --color-primary-dark: #ec407a;
-  --color-primary-light: #f8bbd0;
-
   /* Surfaces */
   --color-background: #0b0b0e;
   --color-surface: #121212;

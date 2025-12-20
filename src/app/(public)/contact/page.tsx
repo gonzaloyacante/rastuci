@@ -1,6 +1,13 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 import ContactPageClient from "./client-page";
+import { prisma } from "@/lib/prisma";
+import {
+  defaultContactSettings,
+  ContactSettingsSchema,
+} from "@/lib/validation/contact";
+
+export const revalidate = 3600; // Cache for 1 hour
 
 export const metadata: Metadata = {
   title: "Contacto - Rastuci",
@@ -12,11 +19,30 @@ export const metadata: Metadata = {
     title: "Contacto - Rastuci",
     description: "Ponte en contacto con Rastuci. Estamos aquí para ayudarte.",
     type: "website",
+    url: "https://rastuci.com/contacto",
   },
   alternates: {
     canonical: "/contacto",
   },
 };
+
+async function getContactSettings() {
+  try {
+    const settings = await prisma.settings.findUnique({
+      where: { key: "contact" },
+    });
+
+    if (settings?.value) {
+      const parsed = ContactSettingsSchema.safeParse(settings.value);
+      if (parsed.success) {
+        return parsed.data;
+      }
+    }
+    return defaultContactSettings;
+  } catch (error) {
+    return defaultContactSettings;
+  }
+}
 
 const ContactPageSkeleton = () => (
   <div className="min-h-screen surface">
@@ -26,82 +52,21 @@ const ContactPageSkeleton = () => (
         <div className="h-12 surface-secondary rounded animate-pulse w-96 mx-auto mb-4" />
         <div className="h-6 surface-secondary rounded animate-pulse w-full max-w-2xl mx-auto" />
       </div>
-
+      {/* ... Content Skeleton omitted for brevity ... */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Contact Info Skeleton */}
-        <div>
-          <div className="h-8 surface-secondary rounded animate-pulse w-64 mb-6" />
-          <div className="space-y-6">
-            {[...Array(4)].map((_, idx) => (
-              <div
-                key={`contact-info-skeleton-${idx}`}
-                className="surface border border-theme rounded-xl p-6 shadow-sm"
-              >
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 surface-secondary rounded-full animate-pulse" />
-                  <div className="flex-1">
-                    <div className="h-6 surface-secondary rounded animate-pulse w-24 mb-2" />
-                    <div className="h-4 surface-secondary rounded animate-pulse w-32" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Form Skeleton */}
-        <div>
-          <div className="h-8 surface-secondary rounded animate-pulse w-48 mb-6" />
-          <div className="surface border border-theme rounded-xl p-8 shadow-sm">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="h-4 surface-secondary rounded animate-pulse w-16 mb-2" />
-                  <div className="h-12 surface-secondary rounded animate-pulse w-full" />
-                </div>
-                <div>
-                  <div className="h-4 surface-secondary rounded animate-pulse w-16 mb-2" />
-                  <div className="h-12 surface-secondary rounded animate-pulse w-full" />
-                </div>
-              </div>
-              <div>
-                <div className="h-4 surface-secondary rounded animate-pulse w-16 mb-2" />
-                <div className="h-12 surface-secondary rounded animate-pulse w-full" />
-              </div>
-              <div>
-                <div className="h-4 surface-secondary rounded animate-pulse w-16 mb-2" />
-                <div className="h-32 surface-secondary rounded animate-pulse w-full" />
-              </div>
-              <div className="h-12 surface-secondary rounded animate-pulse w-full" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* FAQ Skeleton */}
-      <div className="mt-16">
-        <div className="h-10 surface-secondary rounded animate-pulse w-80 mx-auto mb-8" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[...Array(4)].map((_, idx) => (
-            <div
-              key={`faq-skeleton-${idx}`}
-              className="surface border border-theme rounded-xl p-6 shadow-sm"
-            >
-              <div className="h-6 surface-secondary rounded animate-pulse w-3/4 mb-3" />
-              <div className="h-4 surface-secondary rounded animate-pulse w-full mb-2" />
-              <div className="h-4 surface-secondary rounded animate-pulse w-2/3" />
-            </div>
-          ))}
-        </div>
+        <div className="h-96 surface-secondary rounded animate-pulse w-full" />
+        <div className="h-96 surface-secondary rounded animate-pulse w-full" />
       </div>
     </main>
   </div>
 );
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const contactSettings = await getContactSettings();
+
   return (
     <Suspense fallback={<ContactPageSkeleton />}>
-      <ContactPageClient />
+      <ContactPageClient contact={contactSettings} />
     </Suspense>
   );
 }

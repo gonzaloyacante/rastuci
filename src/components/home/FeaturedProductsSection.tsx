@@ -27,7 +27,7 @@ export function FeaturedProductsSection({
             {[...Array(4)].map((_, index) => (
               <div
                 key={`item-${index}`}
-                className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]"
+                className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
               >
                 <UISkeletonProductCard />
               </div>
@@ -61,7 +61,7 @@ export function FeaturedProductsSection({
           {products.map((product, index) => (
             <div
               key={product.id}
-              className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]"
+              className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
             >
               <ProductCard
                 product={product}

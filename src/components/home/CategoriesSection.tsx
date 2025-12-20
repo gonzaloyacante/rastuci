@@ -46,7 +46,7 @@ export function CategoriesSection({
             ? Array.from({ length: 8 }, (_, i) => (
                 <div
                   key={i}
-                  className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]"
+                  className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
                 >
                   <CategorySkeleton />
                 </div>
@@ -54,7 +54,7 @@ export function CategoriesSection({
             : categories.map((category) => (
                 <div
                   key={category.id}
-                  className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]"
+                  className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
                 >
                   <CategoryCard category={category} displayMode={display} />
                 </div>

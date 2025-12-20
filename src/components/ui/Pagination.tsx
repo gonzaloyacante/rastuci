@@ -20,9 +20,10 @@ export function Pagination({
   maxVisiblePages = 5,
   className = "",
 }: PaginationProps) {
-  if (totalPages <= 1) {
-    return null;
-  }
+  // Always render pagination even if there's only one page
+  // if (totalPages <= 1) {
+  //   return null;
+  // }
 
   const getVisiblePages = () => {
     const pages: (number | "ellipsis")[] = [];

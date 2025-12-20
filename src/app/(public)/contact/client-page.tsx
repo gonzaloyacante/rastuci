@@ -103,22 +103,12 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
   </div>
 );
 
-export default function ContactPageClient() {
-  // Usar SWR para cargar la configuración de contacto
-  const {
-    data: contact,
-    error,
-    isLoading,
-  } = useSWR<ContactSettings>("/api/contact", fetcher, {
-    fallbackData: defaultContactSettings,
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-  });
-
-  if (error) {
-    logger.error("Error loading contact settings:", { error: error });
-  }
-
+export default function ContactPageClient({
+  contact,
+}: {
+  contact: ContactSettings;
+}) {
+  // Ya no necesitamos SWR aquí porque los datos vienen del servidor
   const contactData = contact || defaultContactSettings;
 
   return (
@@ -126,7 +116,7 @@ export default function ContactPageClient() {
       <main className="max-w-[1200px] mx-auto py-8 px-6">
         {/* Page Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl mb-4 font-montserrat">
+          <h1 className="text-4xl mb-4 font-heading text-base-primary">
             {contactData.headerTitle}
           </h1>
           <p className="muted text-lg max-w-2xl mx-auto">
@@ -134,27 +124,19 @@ export default function ContactPageClient() {
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 size={32} className="animate-spin" />
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              {/* Contact Information */}
-              <ContactInfo contact={contactData} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Contact Information */}
+          <ContactInfo contact={contactData} />
 
-              {/* Contact Form */}
-              <PublicContactForm contact={contactData} />
-            </div>
+          {/* Contact Form */}
+          <PublicContactForm contact={contactData} />
+        </div>
 
-            {/* FAQ Section */}
-            <FaqSection />
+        {/* FAQ Section */}
+        <FaqSection />
 
-            {/* Social links */}
-            <SocialLinks contact={contactData} />
-          </>
-        )}
+        {/* Social links */}
+        <SocialLinks contact={contactData} />
       </main>
     </div>
   );

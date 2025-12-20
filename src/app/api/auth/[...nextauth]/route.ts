@@ -8,65 +8,46 @@ import CredentialsProvider from "next-auth/providers/credentials";
 // import { Session } from "next-auth";
 // import { User } from "@prisma/client";
 
-// Derivar `cookieDomain` desde `COOKIE_DOMAIN` o `NEXTAUTH_URL`.
-// Para localhost / IPs devolvemos `undefined` para no forzar domain.
-const cookieDomain = (() => {
-  const envOverride = process.env.COOKIE_DOMAIN;
-  if (envOverride && envOverride.trim().length > 0) {
-    return envOverride.trim();
-  }
-  const nextAuthUrl = process.env.NEXTAUTH_URL || "";
-  if (!nextAuthUrl) {
-    return undefined;
-  }
-  try {
-    const parsed = new URL(nextAuthUrl);
-    const host = parsed.hostname;
-    const isLocalhost = host === "localhost" || host === "127.0.0.1";
-    const isIp = /^\d+\.\d+\.\d+\.\d+$/.test(host);
-    if (isLocalhost || isIp) {
-      return undefined;
-    }
-    return host.startsWith(".") ? host : `.${host}`;
-  } catch {
-    return undefined;
-  }
-})();
+// Configuración "Profesional" y estricta basada en variables de entorno.
+// NO hay lógica hardcodeada ni mágica. El comportamiento depende de la configuración del entorno.
+// - Localhost/Dev: COOKIE_DOMAIN no seteado -> undefined (funciona automático)
+// - Producción: Setear COOKIE_DOMAIN=.rastuci.com en variables de entorno si se quiere compartir cookies entre subdominios.
+// - Vercel Preview/Dev Deploy: COOKIE_DOMAIN no seteado -> undefined (funciona automático en dev.rastuci.com)
+
+const useSecureCookies = process.env.NODE_ENV === "production";
+const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+const cookieDomain = process.env.COOKIE_DOMAIN || undefined; // Solo usa variable de entorno
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
-  // Cookies configuradas para toda la aplicación (necesario para /api/auth/*)
   cookies: {
     sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
+      name: `${cookiePrefix}next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
-        path: "/", // Path raíz para que funcione en /api/auth/* y /admin/*
-        secure: process.env.NODE_ENV === "production",
-        domain: cookieDomain || undefined,
+        path: "/",
+        secure: useSecureCookies,
+        domain: cookieDomain,
       },
     },
     callbackUrl: {
-      name: "next-auth.callback-url",
+      name: `${cookiePrefix}next-auth.callback-url`,
       options: {
         path: "/",
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        domain: cookieDomain || undefined,
+        secure: useSecureCookies,
+        domain: cookieDomain,
       },
     },
     csrfToken: {
-      name: "next-auth.csrf-token",
+      name: `${cookiePrefix}next-auth.csrf-token`,
       options: {
         path: "/",
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        domain: cookieDomain || undefined,
+        secure: useSecureCookies,
+        domain: cookieDomain,
       },
     },
   },

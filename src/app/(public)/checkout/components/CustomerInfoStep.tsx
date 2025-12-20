@@ -37,6 +37,18 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
     }
   }, [customerInfo]);
 
+  // Optimization: Prefetch shipping costs when postal code is valid (4 digits)
+  const { calculateShippingCost } = useCart();
+  useEffect(() => {
+    const cp = formData.postalCode;
+    if (cp && /^\d{4}$/.test(cp)) {
+      // Trigger calculation in background to warm up cache
+      // We fire both 'D' (Domicilio) and 'S' (Sucursal)
+      calculateShippingCost(cp, "D").catch(() => {});
+      calculateShippingCost(cp, "S").catch(() => {});
+    }
+  }, [formData.postalCode, calculateShippingCost]);
+
   // Manejar cambios en los campos
   const handleChange = (
     e: React.ChangeEvent<
@@ -44,9 +56,40 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
     >
   ) => {
     const { name, value } = e.target;
+    let finalValue = value;
+
+    // Formateo de teléfono argentino (básico)
+    if (name === "phone") {
+      // Eliminar todo lo que no sea número
+      const numbers = value.replace(/\D/g, "");
+
+      // Aplicar formato visual simple mientras escribe
+      // Ej: 11 1234 5678 (Móvil BsAs) o 261 123 4567 (Interior)
+      // No es perfecto pero ayuda visualmente.
+      // Si empieza con 11 (BsAs) y tiene más de 2 números
+      if (numbers.length > 0) {
+        if (numbers.startsWith("11")) {
+          if (numbers.length <= 2) finalValue = numbers;
+          else if (numbers.length <= 6)
+            finalValue = `${numbers.slice(0, 2)} ${numbers.slice(2)}`;
+          else
+            finalValue = `${numbers.slice(0, 2)} ${numbers.slice(2, 6)} ${numbers.slice(6, 10)}`;
+        } else {
+          // Otros códigos de área (ej 261, 351) - asumiendo 3 dígitos + resto
+          if (numbers.length <= 3) finalValue = numbers;
+          else if (numbers.length <= 6)
+            finalValue = `${numbers.slice(0, 3)} ${numbers.slice(3)}`;
+          else
+            finalValue = `${numbers.slice(0, 3)} ${numbers.slice(3, 7)} ${numbers.slice(7, 11)}`;
+        }
+        // Limitar largo máximo para no romper
+        if (finalValue.length > 15) finalValue = finalValue.slice(0, 15);
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: finalValue,
     }));
 
     // Limpiar el error cuando el usuario escribe

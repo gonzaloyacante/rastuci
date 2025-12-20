@@ -31,7 +31,6 @@ import toast from "react-hot-toast";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
 
-
 /** Badge de precio con descuento */
 export const PriceBadge = ({
   price,
@@ -91,12 +90,13 @@ const StarRating = ({
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`w-3.5 h-3.5 ${i < fullStars
+            className={`w-3.5 h-3.5 ${
+              i < fullStars
                 ? "fill-amber-400 text-amber-400"
                 : i === fullStars && hasHalfStar
                   ? "fill-amber-400/50 text-amber-400"
                   : "fill-zinc-200 text-zinc-200"
-              }`}
+            }`}
           />
         ))}
       </div>
@@ -141,14 +141,14 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
   const layout: "grid" | "list" = !isAdmin
     ? (props as PublicProductCardProps).layout ||
-    (props.variant === "list" ? "list" : "grid")
+      (props.variant === "list" ? "list" : "grid")
     : "grid";
 
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { addToCart } = useCart(); // ✅ Cambiar addItem por addToCart
+  // const { addToCart } = useCart(); // Refactor: Removed to enforce Detail Page navigation
 
   const productImages = useMemo(() => {
     try {
@@ -235,8 +235,9 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   src={mainImage}
                   alt={product.name}
                   fill
-                  className={`object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"
-                    }`}
+                  className={`object-cover transition-opacity duration-300 ${
+                    imageLoading ? "opacity-0" : "opacity-100"
+                  }`}
                   onLoad={handleImageLoad}
                   onError={handleImageError}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -460,8 +461,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                 {/* Precio */}
                 <div className="flex flex-col">
                   {product.onSale &&
-                    formattedSalePrice &&
-                    product.salePrice! < product.price ? (
+                  formattedSalePrice &&
+                  product.salePrice! < product.price ? (
                     <>
                       <span className="text-[13px] line-through muted mb-0.5">
                         {formattedPrice}
@@ -477,29 +478,18 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   )}
                 </div>
 
-                {/* Botón agregar al carrito */}
-                <button
+                {/* Botón agregar al carrito -> Ahora Navega a Detalles */}
+                <Link
+                  href={`/productos/${product.id}`}
                   onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (product.stock > 0) {
-                      // Agregar DIRECTO al carrito con primera talla/color disponible
-                      const size = (product.sizes && product.sizes.length > 0) ? product.sizes[0] : 'Único';
-                      const color = (product.colors && product.colors.length > 0) ? product.colors[0] : 'Único';
-                      addToCart(product, 1, size, color); // ✅ Usar addToCart con signature correcta
-                      // Mostrar feedback visual
-                      toast.success(`${product.name} agregado al carrito`, {
-                        icon: '🛒',
-                        duration: 2000,
-                      });
-                    }
+                    // Allow navigation
                   }}
-                  aria-label="Agregar al carrito"
+                  aria-label="Ver opciones"
                   className={`btn-cart ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                  disabled={product.stock === 0}
                 >
+                  {/* Visualmente se ve igual pero funcionalmente lleva al detalle */}
                   <ShoppingCart className="w-5 h-5" />
-                </button>
+                </Link>
               </div>
 
               {/* Meta: Rating y Stock */}
@@ -544,16 +534,18 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               ? `Quitar ${product.name} de favoritos`
               : `Agregar ${product.name} a favoritos`
           }
-          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${isProductFavorite
+          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${
+            isProductFavorite
               ? "opacity-100"
               : "opacity-0 group-hover:opacity-100"
-            }`}
+          }`}
         >
           <Heart
-            className={`w-4 h-4 transition-colors ${isProductFavorite
+            className={`w-4 h-4 transition-colors ${
+              isProductFavorite
                 ? "text-rose-500 fill-rose-500"
                 : "text-zinc-400 hover:text-rose-500"
-              }`}
+            }`}
             aria-hidden="true"
           />
         </button>
@@ -658,8 +650,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             <div className="flex flex-col gap-0.5">
               <div className="flex items-baseline gap-2">
                 {product.onSale &&
-                  formattedSalePrice &&
-                  product.salePrice! < product.price ? (
+                formattedSalePrice &&
+                product.salePrice! < product.price ? (
                   <>
                     <span className="text-base sm:text-lg font-bold text-base-primary">
                       {formattedSalePrice}
@@ -702,29 +694,15 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                 />
               </button>
 
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (product.stock > 0) {
-                    // Agregar DIRECTO al carrito con primera talla/color disponible
-                    const size = (product.sizes && product.sizes.length > 0) ? product.sizes[0] : 'Único';
-                    const color = (product.colors && product.colors.length > 0) ? product.colors[0] : 'Único';
-                    addToCart(product, 1, size, color); // ✅ Usar addToCart
-                    // Mostrar feedback visual
-                    toast.success(`${product.name} agregado al carrito`, {
-                      icon: '🛒',
-                      duration: 2000,
-                    });
-                  }
-                }}
-                aria-label="Agregar al carrito"
-                disabled={product.stock === 0}
-                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+              <Link
+                href={`/productos/${product.id}`}
+                aria-label="Ver opciones"
+                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${
+                  product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <ShoppingCart className="w-4 h-4" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>
