@@ -15,12 +15,10 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const expectedSecret = process.env.CORREO_ARGENTINO_WEBHOOK_SECRET;
 
-    if (expectedSecret && authHeader !== `Bearer ${expectedSecret}`) {
+    // Fail-Closed: If secret is missing or mismatch, deny.
+    if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
       logger.warn("[Webhook CA] Unauthorized webhook attempt");
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Parsear payload

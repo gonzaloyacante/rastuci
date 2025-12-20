@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 // Tipos para OrderStatus (directos desde schema)
-type OrderStatus = 'PENDING' | 'PROCESSED' | 'DELIVERED';
+type OrderStatus = "PENDING" | "PROCESSED" | "DELIVERED";
 
 // Tipos para la consulta optimizada móvil
 type OrderWithItems = {
@@ -38,30 +39,51 @@ interface OrderWhereClause {
   status?: OrderStatus;
 }
 
-
-
-
 // GET /api/mobile/orders - Obtener pedidos para móvil
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const customerEmail = searchParams.get('customerEmail');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const status = searchParams.get('status');
+    const customerEmail = searchParams.get("customerEmail");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const status = searchParams.get("status");
 
     if (!customerEmail) {
-      return NextResponse.json<ApiResponse<null>>({
-        success: false,
-        message: "Email del cliente requerido",
-        data: null
-      }, { status: 400 });
+      return NextResponse.json<ApiResponse<null>>(
+        {
+          success: false,
+          message: "Email del cliente requerido",
+          data: null,
+        },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY FIX: Verify Session
+    const session = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    // Allow if admin OR if session email matches requested email
+    const isAuthorized =
+      session && (session.isAdmin || session.email === customerEmail);
+
+    if (!isAuthorized) {
+      return NextResponse.json<ApiResponse<null>>(
+        {
+          success: false,
+          message: "No autorizado para ver estos pedidos",
+          data: null,
+        },
+        { status: 401 }
+      );
     }
 
     const skip = (page - 1) * limit;
 
     const whereClause: OrderWhereClause = {
-        customerEmail,
+      customerEmail,
     };
 
     if (status) {
@@ -98,14 +120,14 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: {
-          createdAt: 'desc'
+          createdAt: "desc",
         },
         skip,
         take: limit,
       }),
       prisma.orders.count({
         where: whereClause,
-      })
+      }),
     ]);
 
     // Formatear para consumo móvil
@@ -131,25 +153,27 @@ export async function GET(request: NextRequest) {
           name: item.products.name,
           image: item.products.images,
           price: item.products.price,
-        }
-      }))
+        },
+      })),
     }));
 
     const totalPages = Math.ceil(totalCount / limit);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
 
-    return NextResponse.json<ApiResponse<{
-      orders: typeof mobileOrders;
-      pagination: {
-        page: number;
-        limit: number;
-        totalCount: number;
-        totalPages: number;
-        hasNextPage: boolean;
-        hasPrevPage: boolean;
-      };
-    }>>({
+    return NextResponse.json<
+      ApiResponse<{
+        orders: typeof mobileOrders;
+        pagination: {
+          page: number;
+          limit: number;
+          totalCount: number;
+          totalPages: number;
+          hasNextPage: boolean;
+          hasPrevPage: boolean;
+        };
+      }>
+    >({
       success: true,
       message: "Pedidos obtenidos exitosamente",
       data: {
@@ -161,16 +185,18 @@ export async function GET(request: NextRequest) {
           totalPages,
           hasNextPage,
           hasPrevPage,
-        }
-      }
+        },
+      },
     });
-
   } catch {
-    return NextResponse.json<ApiResponse<null>>({
-      success: false,
-      message: "Error interno del servidor",
-      data: null
-    }, { status: 500 });
+    return NextResponse.json<ApiResponse<null>>(
+      {
+        success: false,
+        message: "Error interno del servidor",
+        data: null,
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -182,12 +208,12 @@ function getStatusLabel(status: string): string {
     DELIVERED: "Entregado",
     CANCELLED: "Cancelado",
     // Estados de tracking específicos
-    'pending': "Pendiente",
-    'in-transit': "En tránsito",
-    'out-for-delivery': "En reparto",
-    'delivered': "Entregado",
-    'delayed': "Retrasado",
-    'error': "Error",
+    pending: "Pendiente",
+    "in-transit": "En tránsito",
+    "out-for-delivery": "En reparto",
+    delivered: "Entregado",
+    delayed: "Retrasado",
+    error: "Error",
   };
 
   return statusLabels[status] || status;

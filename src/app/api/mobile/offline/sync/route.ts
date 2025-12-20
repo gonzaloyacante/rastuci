@@ -6,6 +6,7 @@
 
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -21,12 +22,23 @@ export async function GET(request: NextRequest) {
 
     if (!customerEmail) {
       return NextResponse.json<ApiResponse<null>>(
-        {
-          success: false,
-          message: "Email del cliente requerido",
-          data: null,
-        },
+        { success: false, message: "Email del cliente requerido", data: null },
         { status: 400 }
+      );
+    }
+
+    // SECURITY: Auth Check
+    const session = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+    const isAuthorized =
+      session && (session.isAdmin || session.email === customerEmail);
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized", data: null },
+        { status: 401 }
       );
     }
 

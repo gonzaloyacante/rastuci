@@ -40,13 +40,13 @@ interface MobileAppConfig {
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const appVersion = searchParams.get('version');
-    const platform = searchParams.get('platform'); // 'ios' | 'android'
+    const appVersion = searchParams.get("version");
+    const platform = searchParams.get("platform"); // 'ios' | 'android'
 
     // Configuración base para la app móvil
     const config: MobileAppConfig = {
-      version: '1.0.0',
-      minimumVersion: '1.0.0',
+      version: "1.0.0",
+      minimumVersion: "1.0.0",
       features: {
         pushNotifications: true,
         offlineMode: true,
@@ -55,11 +55,11 @@ export async function GET(request: NextRequest) {
         cameraSearch: false, // Funcionalidad futura
       },
       endpoints: {
-        orders: '/api/mobile/orders',
-        tracking: '/api/mobile/tracking',
-        notifications: '/api/mobile/notifications',
-        products: '/api/products',
-        auth: '/api/auth',
+        orders: "/api/mobile/orders",
+        tracking: "/api/mobile/tracking",
+        notifications: "/api/mobile/notifications",
+        products: "/api/products",
+        auth: "/api/auth",
       },
       tracking: {
         refreshInterval: 300, // 5 minutos
@@ -69,42 +69,49 @@ export async function GET(request: NextRequest) {
       notifications: {
         enabled: true,
         types: [
-          'order_created',
-          'tracking_update',
-          'delivery_update',
-          'promotion',
-          'system'
+          "order_created",
+          "tracking_update",
+          "delivery_update",
+          "promotion",
+          "system",
         ],
-        sounds: ['default', 'notification', 'alert'],
+        sounds: ["default", "notification", "alert"],
       },
     };
 
     // Ajustes específicos por platform
-    if (platform === 'ios') {
+    if (platform === "ios") {
       config.features.biometrics = true; // Face ID / Touch ID
-      config.notifications.sounds.push('ios_default');
-    } else if (platform === 'android') {
+      config.notifications.sounds.push("ios_default");
+    } else if (platform === "android") {
       config.features.biometrics = true; // Fingerprint
-      config.notifications.sounds.push('android_default');
+      config.notifications.sounds.push("android_default");
     }
 
     // Verificar si hay actualizaciones disponibles
-    const isUpdateRequired = appVersion && isVersionOutdated(appVersion, config.minimumVersion);
-    const isUpdateAvailable = appVersion && isVersionOutdated(appVersion, config.version);
+    const isUpdateRequired =
+      appVersion && isVersionOutdated(appVersion, config.minimumVersion);
+    const isUpdateAvailable =
+      appVersion && isVersionOutdated(appVersion, config.version);
 
-    // Obtener estadísticas adicionales para la app
-    const stats = await getMobileAppStats();
+    // Estadísticas removidas por seguridad/privacidad
+    const stats = {
+      orders: { total: 0, pending: 0, delivered: 0, activeTracking: 0 },
+      lastUpdated: new Date().toISOString(),
+    };
 
-    return NextResponse.json<ApiResponse<{
-      config: MobileAppConfig;
-      updateInfo: {
-        required: boolean;
-        available: boolean;
-        currentVersion: string;
-        latestVersion: string;
-      };
-      stats: typeof stats;
-    }>>({
+    return NextResponse.json<
+      ApiResponse<{
+        config: MobileAppConfig;
+        updateInfo: {
+          required: boolean;
+          available: boolean;
+          currentVersion: string;
+          latestVersion: string;
+        };
+        stats: typeof stats;
+      }>
+    >({
       success: true,
       message: "Configuración obtenida exitosamente",
       data: {
@@ -112,24 +119,29 @@ export async function GET(request: NextRequest) {
         updateInfo: {
           required: isUpdateRequired || false,
           available: isUpdateAvailable || false,
-          currentVersion: appVersion || '1.0.0',
+          currentVersion: appVersion || "1.0.0",
           latestVersion: config.version,
         },
         stats,
-      }
+      },
     });
-
   } catch {
-    return NextResponse.json<ApiResponse<null>>({
-      success: false,
-      message: "Error interno del servidor",
-      data: null
-    }, { status: 500 });
+    return NextResponse.json<ApiResponse<null>>(
+      {
+        success: false,
+        message: "Error interno del servidor",
+        data: null,
+      },
+      { status: 500 }
+    );
   }
 }
 
 // Función helper para verificar versiones
-function isVersionOutdated(currentVersion: string, requiredVersion: string): boolean {
+function isVersionOutdated(
+  currentVersion: string,
+  requiredVersion: string
+): boolean {
   const current = parseVersion(currentVersion);
   const required = parseVersion(requiredVersion);
 
@@ -146,42 +158,38 @@ function isVersionOutdated(currentVersion: string, requiredVersion: string): boo
 }
 
 function parseVersion(version: string): number[] {
-  return version.split('.').map(v => parseInt(v, 10) || 0);
+  return version.split(".").map((v) => parseInt(v, 10) || 0);
 }
 
 // Obtener estadísticas para la app móvil
 async function getMobileAppStats() {
   try {
-    const [
-      totalOrders,
-      pendingOrders,
-      deliveredOrders,
-      activeTracking
-    ] = await Promise.all([
-      prisma.orders.count(),
-      prisma.orders.count({
-        where: {
-          status: {
-            in: ['PENDING', 'PROCESSED']
-          }
-        }
-      }),
-      prisma.orders.count({
-        where: {
-          status: 'DELIVERED'
-        }
-      }),
-      prisma.orders.count({
-        where: {
-          trackingNumber: {
-            not: null
+    const [totalOrders, pendingOrders, deliveredOrders, activeTracking] =
+      await Promise.all([
+        prisma.orders.count(),
+        prisma.orders.count({
+          where: {
+            status: {
+              in: ["PENDING", "PROCESSED"],
+            },
           },
-          status: {
-            not: 'DELIVERED'
-          }
-        }
-      })
-    ]);
+        }),
+        prisma.orders.count({
+          where: {
+            status: "DELIVERED",
+          },
+        }),
+        prisma.orders.count({
+          where: {
+            trackingNumber: {
+              not: null,
+            },
+            status: {
+              not: "DELIVERED",
+            },
+          },
+        }),
+      ]);
 
     return {
       orders: {

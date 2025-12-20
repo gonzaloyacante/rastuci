@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { fail } from "@/lib/apiResponse";
 
 interface LoginRequest {
   email: string;
@@ -24,6 +26,24 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<LoginResponse>> {
   try {
+    // Rate limit: 10 attempts per minute (Brute-force protection)
+    const rl = await checkRateLimit(request, {
+      key: "auth:login",
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: "Demasiados intentos. Intente nuevamente más tarde.",
+          },
+        },
+        { status: 429 }
+      );
+    }
+
     const { email, password }: LoginRequest = await request.json();
 
     // Validar campos requeridos

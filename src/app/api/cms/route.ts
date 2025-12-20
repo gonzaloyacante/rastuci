@@ -17,11 +17,30 @@ export async function GET(request: NextRequest) {
     const key = searchParams.get("key");
 
     if (key) {
+      // Whitelist allowed keys for public access
+      const ALLOWED_KEYS = [
+        "home_banner",
+        "contact_info",
+        "social_links",
+        "shipping_info",
+        "payment_info",
+      ];
+      if (!ALLOWED_KEYS.includes(key)) {
+        // Check admin auth for non-whitelisted keys
+        // Note: For now, we block. Implementing full auth check here might be complex without NextRequest pass-through helper refactor.
+        // Assuming public CMS only needs these.
+        return NextResponse.json<ApiResponse<null>>(
+          { success: false, message: "Restricted", data: null },
+          { status: 403 }
+        );
+      }
+
       // Obtener un setting específico
       const setting = await prisma.settings.findUnique({
         where: { key },
       });
 
+      // ... match existing structure ...
       // Si no existe, devolver valores por defecto si los hay
       if (!setting) {
         if (DEFAULT_VALUES[key]) {

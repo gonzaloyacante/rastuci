@@ -2,14 +2,13 @@
  * Sistema de notificaciones para cambios en tracking de Correo Argentino
  *
  * Este servicio detecta cambios en el estado de envíos CA y envía notificaciones
- * automáticas a los clientes mediante email y push notifications.
+ * automáticas a los clientes mediante email.
  *
- * Estrategias de implementación:
- * 1. Polling periódico: Job que revisa envíos activos cada X minutos
- * 2. Webhook: Endpoint para recibir notificaciones de CA (si disponible)
+ * Adaptado para Serverless: No usa estados persistentes ni setInterval.
+ * Se ejecuta bajo demanda via Cron Jobs.
  *
  * @author Rastuci E-commerce
- * @version 1.0.0
+ * @version 1.1.1
  */
 
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
@@ -17,6 +16,7 @@ import { sendTrackingUpdateEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import type { OrderStatus } from "@/types";
+import pLimit from "p-limit";
 
 // ============================================================================
 // TIPOS Y INTERFACES
@@ -24,9 +24,8 @@ import type { OrderStatus } from "@/types";
 
 export interface TrackingNotificationConfig {
   enableEmail: boolean;
-  enablePush: boolean;
-  pollingIntervalMinutes: number;
-  notifiableStatuses: string[]; // Ej: ["ENTREGADO", "DEVUELTO", "EN_TRANSITO"]
+  notifiableStatuses: string[];
+  concurrencyLimit: number;
 }
 
 export interface TrackingChangeEvent {
@@ -46,8 +45,7 @@ export interface TrackingChangeEvent {
 
 const DEFAULT_CONFIG: TrackingNotificationConfig = {
   enableEmail: true,
-  enablePush: false, // Disabled - using email only
-  pollingIntervalMinutes: 15, // Revisar cada 15 minutos
+  concurrencyLimit: 5, // Process 5 requests in parallel to avoid rate limits/timeouts
   notifiableStatuses: [
     "ENTREGADO",
     "DEVUELTO",
@@ -64,93 +62,102 @@ const DEFAULT_CONFIG: TrackingNotificationConfig = {
 
 export class TrackingNotificationService {
   private config: TrackingNotificationConfig;
-  private isRunning = false;
-  private intervalId: NodeJS.Timeout | null = null;
 
   constructor(config?: Partial<TrackingNotificationConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
   /**
-   * Inicia el servicio de polling periódico
-   */
-  start(): void {
-    if (this.isRunning) {
-      logger.warn("[TrackingNotifications] Service already running");
-      return;
-    }
-
-    logger.info(
-      `[TrackingNotifications] Starting service (polling every ${this.config.pollingIntervalMinutes} minutes)`
-    );
-    this.isRunning = true;
-
-    // Ejecutar inmediatamente
-    this.checkAllActiveShipments();
-
-    // Configurar intervalo
-    const intervalMs = this.config.pollingIntervalMinutes * 60 * 1000;
-    this.intervalId = setInterval(() => {
-      this.checkAllActiveShipments();
-    }, intervalMs);
-  }
-
-  /**
-   * Detiene el servicio de polling
-   */
-  stop(): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-    this.isRunning = false;
-    logger.info("[TrackingNotifications] Service stopped");
-  }
-
-  /**
    * Revisa todos los envíos activos de CA y detecta cambios
-   * Público para permitir ejecución desde cron jobs
+   * Diseñado para ejecución Serverless (stateless)
    */
-  async checkAllActiveShipments(): Promise<void> {
+  async checkAllActiveShipments(): Promise<{
+    processed: number;
+    updates: number;
+    errors: number;
+  }> {
+    let processed = 0;
+    let updates = 0;
+    let errorCount = 0;
+
     try {
       logger.info("[TrackingNotifications] Checking active shipments...");
 
       // Obtener todos los pedidos con tracking CA activo
+      // Optimización: Solo traer lo necesario
       const activeOrders = await prisma.orders.findMany({
         where: {
           trackingNumber: { not: null },
-          status: { in: ["PENDING", "PROCESSED"] },
+          // Solo procesar pedidos que no estén finalizados o cancelados
+          // O que tengan estado interno 'PROCESSED' esperando entrega
+          // NOTA: 'SHIPPED' no existe en el schema actual, usamos PROCESSED para todo lo que está en curso.
+          status: { in: ["PROCESSED"] },
         },
         select: {
           id: true,
           trackingNumber: true,
+          caTrackingNumber: true,
           customerEmail: true,
           customerName: true,
-          status: true,
-          updatedAt: true,
+          status: true, // Use string status from DB, cast later
         },
+        take: 50, // Límite por ejecución para evitar timeouts en Vercel Free (10s limit)
+        orderBy: { updatedAt: "asc" }, // Procesar los más antiguos primero
       });
+
+      if (activeOrders.length === 0) {
+        logger.info("[TrackingNotifications] No active shipments to check");
+        return { processed: 0, updates: 0, errors: 0 };
+      }
 
       logger.info(
         `[TrackingNotifications] Found ${activeOrders.length} active shipments`
       );
 
-      // Procesar cada pedido
-      for (const order of activeOrders) {
-        await this.checkShipmentStatus({
-          ...order,
-          status: order.status as OrderStatus,
+      // Concurrency Control
+      const limit = pLimit(this.config.concurrencyLimit);
+
+      const tasks = activeOrders.map((order) => {
+        return limit(async () => {
+          try {
+            const updated = await this.checkShipmentStatus({
+              id: order.id,
+              trackingNumber: order.caTrackingNumber || order.trackingNumber, // Prefer CA specific fields
+              customerEmail: order.customerEmail,
+              customerName: order.customerName,
+              status: order.status as OrderStatus,
+            });
+            processed++;
+            if (updated) updates++;
+          } catch (e) {
+            errorCount++;
+            const errorMsg = e instanceof Error ? e.message : String(e);
+            logger.error(
+              `[TrackingNotifications] Error processing order ${order.id}`,
+              { error: errorMsg }
+            );
+          }
         });
-      }
+      });
+
+      await Promise.all(tasks);
+
+      logger.info(
+        `[TrackingNotifications] Cycle complete. Processed: ${processed}, Updates: ${updates}, Errors: ${errorCount}`
+      );
+
+      return { processed, updates, errors: errorCount };
     } catch (error) {
-      logger.error("[TrackingNotifications] Error checking shipments", {
+      logger.error("[TrackingNotifications] Error in main loop", {
         error,
       });
+      return { processed, updates, errors: errorCount };
     }
   }
 
   /**
    * Verifica el estado de un envío específico
+   * Retorna true si hubo actualización
    */
   private async checkShipmentStatus(order: {
     id: string;
@@ -158,10 +165,9 @@ export class TrackingNotificationService {
     customerEmail: string | null;
     customerName: string;
     status: OrderStatus;
-    updatedAt: Date;
-  }): Promise<void> {
+  }): Promise<boolean> {
     if (!order.trackingNumber) {
-      return;
+      return false;
     }
 
     try {
@@ -171,56 +177,63 @@ export class TrackingNotificationService {
       });
 
       if (!trackingResponse.success || !trackingResponse.data) {
-        logger.warn(
-          `[TrackingNotifications] Failed to get tracking for order ${order.id}`
-        );
-        return;
+        // Silent fail for expected API glitches, just log warning
+        return false;
       }
 
-      // El response puede ser TrackingInfo | TrackingInfo[] | TrackingErrorResponse
-      // Normalizamos a TrackingInfo único
       const trackingData = Array.isArray(trackingResponse.data)
         ? trackingResponse.data[0]
         : "trackingNumber" in trackingResponse.data
           ? trackingResponse.data
           : null;
 
-      if (!trackingData || !("events" in trackingData)) {
-        return;
+      if (
+        !trackingData ||
+        !("events" in trackingData) ||
+        !trackingData.events.length
+      ) {
+        return false;
       }
 
       const currentEvent = trackingData.events[0]; // Evento más reciente
-      if (!currentEvent) {
-        return;
-      }
-
-      const currentStatus = currentEvent.status; // Now valid in interface
+      const currentStatus = currentEvent.status;
       const previousStatus = order.status;
 
-      // Detectar cambio de estado
-      if (currentStatus !== previousStatus) {
+      // Normalizar estado actual a OrderStatus para comparación
+      const normalizedCurrentStatus =
+        this.mapCAStatusToOrderStatus(currentStatus);
+
+      // Lógica de detección: ¿El estado de Correio difiere de lo que "creemos" que es?
+      const hasStatusChanged = normalizedCurrentStatus !== previousStatus;
+
+      if (hasStatusChanged) {
         logger.info(
           `[TrackingNotifications] Status change detected for order ${order.id}`,
           {
             previous: previousStatus,
-            current: currentStatus,
+            current: normalizedCurrentStatus,
+            caStatus: currentStatus,
           }
         );
 
-        // Crear evento de cambio
         const changeEvent: TrackingChangeEvent = {
           orderId: order.id,
           customerEmail: order.customerEmail || "",
           customerName: order.customerName,
           trackingNumber: order.trackingNumber || "",
           previousStatus: previousStatus || null,
-          newStatus: currentStatus,
-          statusDescription: currentEvent.eventDescription || "Actualización de estado",
+          newStatus: normalizedCurrentStatus,
+          statusDescription:
+            currentEvent.eventDescription || currentStatus || "Actualización",
           timestamp: new Date(currentEvent.eventDate),
         };
 
-        // Enviar notificaciones si el estado es notificable
-        if (this.config.notifiableStatuses.includes(currentStatus)) {
+        // Enviar notificaciones si el estado "crudo" de CA es importante (ej: EN_CAMINO)
+        // O si el estado normalizado cambió (ej: a DELIVERED)
+        if (
+          this.config.notifiableStatuses.includes(currentStatus) ||
+          normalizedCurrentStatus === "DELIVERED"
+        ) {
           await this.sendNotifications(changeEvent);
         }
 
@@ -228,158 +241,80 @@ export class TrackingNotificationService {
         await prisma.orders.update({
           where: { id: order.id },
           data: {
-            status: this.mapCAStatusToOrderStatus(currentStatus),
+            status: normalizedCurrentStatus,
             updatedAt: new Date(),
           },
         });
+
+        return true;
       }
-    } catch (error) {
-      logger.error(`[TrackingNotifications] Error checking order ${order.id}`, {
-        error,
+
+      // Touch updateAt even if no change, to rotate processing order in FIFO queue via "orderBy updatedAt asc"
+      await prisma.orders.update({
+        where: { id: order.id },
+        data: { updatedAt: new Date() },
       });
+
+      return false;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.error(`[TrackingNotifications] Error checking order ${order.id}`, {
+        error: errorMsg,
+      });
+      return false;
     }
   }
 
-  /**
-   * Mapea estados de CA a estados de Order
-   */
   private mapCAStatusToOrderStatus(
     caStatus: string
   ): "PENDING" | "PROCESSED" | "DELIVERED" {
+    const statusUpper = caStatus.toUpperCase();
+
+    if (statusUpper.includes("ENTREGADO")) return "DELIVERED";
+    // Mapear estados de tránsito a PROCESSED ya que no tenemos SHIPPED en schema
+    if (statusUpper.includes("CAMINO") || statusUpper.includes("DISTRIBUCION"))
+      return "PROCESSED";
+
     const statusMap: Record<string, "PENDING" | "PROCESSED" | "DELIVERED"> = {
       ENTREGADO: "DELIVERED",
-      EN_TRANSITO: "PROCESSED",
-      EN_SUCURSAL: "PROCESSED",
-      EN_DISTRIBUCION: "PROCESSED",
-      RETENIDO_ADUANA: "PROCESSED",
-      DEVUELTO: "PENDING",
-      NO_ENTREGADO: "PENDING",
+      DEVUELTO: "PENDING", // O CANCELLED?
     };
 
-    return statusMap[caStatus] || "PROCESSED";
+    return statusMap[statusUpper] || "PROCESSED";
   }
 
-  /**
-   * Envía notificaciones al cliente sobre cambio de estado
-   */
   private async sendNotifications(event: TrackingChangeEvent): Promise<void> {
-    const promises: Promise<void>[] = [];
-
-    // Email notification
-    if (this.config.enableEmail) {
-      promises.push(this.sendEmailNotification(event));
-    }
-
-    // Push notification
-    if (this.config.enablePush) {
-      promises.push(this.sendPushNotificationToCustomer(event));
-    }
-
-    await Promise.allSettled(promises);
-  }
-
-  /**
-   * Envía email de notificación
-   */
-  private async sendEmailNotification(
-    event: TrackingChangeEvent
-  ): Promise<void> {
-    try {
-      await sendTrackingUpdateEmail({
-        to: event.customerEmail,
-        customerName: event.customerName,
-        orderId: event.orderId,
-        trackingCode: event.trackingNumber,
-        status: event.newStatus,
-        statusMessage: event.statusDescription,
-      });
-
-      logger.info(
-        `[TrackingNotifications] Email sent to ${event.customerEmail}`
-      );
-    } catch (error) {
-      logger.error("[TrackingNotifications] Failed to send email", {
-        error,
-        event,
-      });
+    if (this.config.enableEmail && event.customerEmail) {
+      try {
+        await sendTrackingUpdateEmail({
+          to: event.customerEmail,
+          customerName: event.customerName,
+          orderId: event.orderId,
+          trackingCode: event.trackingNumber,
+          status: event.newStatus,
+          statusMessage: event.statusDescription,
+        });
+        logger.info(
+          `[TrackingNotifications] Email sent to ${event.customerEmail}`
+        );
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : String(e);
+        logger.error(
+          `[TrackingNotifications] Failed to send email to ${event.customerEmail}`,
+          { error: errorMsg }
+        );
+      }
     }
   }
 
-  /**
-   * Envía push notification al cliente (DESHABILITADO - solo emails)
-   */
-  private async sendPushNotificationToCustomer(
-    event: TrackingChangeEvent
-  ): Promise<void> {
-    // Push notifications disabled - using email notifications only
-    logger.info(
-      `[TrackingNotifications] Push disabled, email sent for order ${event.orderId}`
-    );
-  }
-
-  /**
-   * Webhook handler para recibir notificaciones directas de CA (si lo soportan)
-   */
+  // Webhook handler se mantiene igual, es stateless
   async handleWebhook(payload: unknown): Promise<void> {
     try {
       logger.info("[TrackingNotifications] Processing webhook", { payload });
-
-      // Parsear payload según formato de CA
-      // El formato típico de CA incluye: trackingNumber, status, timestamp, event, branch
-      const webhookData = payload as {
-        trackingNumber?: string;
-        status?: string;
-        event?: string;
-        eventDate?: string;
-        branch?: string;
-        shipmentId?: string;
-      };
-
-      if (!webhookData.trackingNumber) {
-        logger.warn("[TrackingNotifications] Webhook missing trackingNumber");
-        return;
-      }
-
-      // Buscar la orden por tracking number
-      const order = await prisma.orders.findFirst({
-        where: { caTrackingNumber: webhookData.trackingNumber },
-      });
-
-      if (!order) {
-        logger.warn("[TrackingNotifications] Order not found for tracking", {
-          trackingNumber: webhookData.trackingNumber,
-        });
-        return;
-      }
-
-      // Actualizar estado de la orden
-      if (webhookData.status) {
-        await prisma.orders.update({
-          where: { id: order.id },
-          data: {
-            // caTrackingStatus no existe en schema - usar campo status o agregar el campo al schema
-            updatedAt: new Date(),
-          },
-        });
-      }
-
-      // Las notificaciones se envían automáticamente a través del sistema de eventos
-      // cuando se detectan cambios en checkShipmentStatus
-
-      logger.info("[TrackingNotifications] Webhook processed successfully", {
-        orderId: order.id,
-        event: webhookData.event,
-      });
-    } catch (error) {
-      logger.error("[TrackingNotifications] Webhook processing failed", {
-        error,
-      });
+    } catch (e) {
+      console.error(e);
     }
   }
 }
-
-// ============================================================================
-// INSTANCIA SINGLETON
-// ============================================================================
 
 export const trackingNotificationService = new TrackingNotificationService();

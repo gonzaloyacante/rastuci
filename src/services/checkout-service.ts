@@ -85,7 +85,12 @@ export class CheckoutService {
     items: OrderItem[],
     shippingMethod?: { name: string; price: number },
     discountAmount: number = 0,
-    validatedProducts?: any[] // Should be typed properly as Product[]
+    validatedProducts?: {
+      id: string;
+      price: unknown;
+      salePrice: unknown;
+      onSale: boolean;
+    }[] // Better typing than any[]
   ) {
     const mpItems = items.map((item) => {
       let unitPrice = item.price;

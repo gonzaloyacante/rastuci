@@ -256,9 +256,26 @@ const knowledgeBase = new Map<string, CategoryData>([
 // Estadísticas de FAQs
 const faqStats = new Map<string, FAQStats>();
 
+import { checkRateLimit } from "@/lib/rateLimiter";
+
+// ...
+
 // GET - Buscar respuestas a preguntas
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 30 requests per minute
+    const rl = await checkRateLimit(request, {
+      key: "ai-faq:search",
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests" },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const question = searchParams.get("question");
     const category = searchParams.get("category");

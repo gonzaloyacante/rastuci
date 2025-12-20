@@ -1,8 +1,9 @@
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
+import { withAdminAuth } from "@/lib/adminAuth";
 
-export async function POST(request: Request) {
+export const POST = withAdminAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { extOrderId, orderNumber, sender, recipient, shipping } = body;
@@ -69,4 +70,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});

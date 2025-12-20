@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { fail } from "@/lib/apiResponse";
 
 const analyticsEventSchema = z.object({
   name: z.string(),
@@ -16,6 +18,16 @@ const analyticsRequestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 60 requests per minute per IP for analytics (Relaxed to prevent client loops)
+    const rl = await checkRateLimit(request, {
+      key: "analytics:events",
+      limit: 60,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      // Return success even if rate limited to prevent client retry loops
+      return NextResponse.json({ success: true, warning: "Rate limited" });
+    }
     const body = await request.json();
     const { events } = analyticsRequestSchema.parse(body);
 

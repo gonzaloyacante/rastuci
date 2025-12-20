@@ -8,6 +8,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { fail } from "@/lib/apiResponse";
+import { verifyAdminAuth } from "@/lib/adminAuth";
+import { randomUUID } from "crypto";
 
 // Esquemas de validacion
 const LiveChatMessageSchema = z.object({
@@ -52,8 +56,15 @@ const sessionMessages = new Map<
   }>
 >();
 
-let sessionCounter = 1;
 let messageCounter = 1;
+
+// Helper to check admin for specific actions
+async function checkAdmin(req: NextRequest) {
+  const isAdmin = await verifyAdminAuth(req);
+  if (!isAdmin) {
+    throw new Error("Unauthorized");
+  }
+}
 
 // GET - Obtener mensajes de una sesion
 export async function GET(request: NextRequest) {
@@ -63,6 +74,16 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get("action");
 
     if (action === "sessions") {
+      // SECURITY: Only admin can list sessions
+      try {
+        await checkAdmin(request);
+      } catch {
+        return NextResponse.json(
+          { success: false, error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
+
       return NextResponse.json({
         success: true,
         data: {
@@ -107,6 +128,18 @@ export async function GET(request: NextRequest) {
 // POST - Crear nueva sesion o enviar mensaje
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 20 -> 10 per minute per IP to prevent spam
+    const rl = await checkRateLimit(request, {
+      key: "live-chat-post",
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json(fail("RATE_LIMITED", "Too many requests", 429), {
+        status: 429,
+      });
+    }
+
     const body = await request.json();
     const { action, ...data } = body;
 
@@ -114,7 +147,7 @@ export async function POST(request: NextRequest) {
       case "start-session": {
         const validated = LiveChatSessionSchema.parse(data);
         const newSession = {
-          id: `CHAT-${String(sessionCounter++).padStart(3, "0")}`,
+          id: randomUUID(), // SECURITY: Unpredictable ID
           customerName: validated.customerName,
           customerEmail: validated.customerEmail,
           status: "waiting" as const,
@@ -132,6 +165,7 @@ export async function POST(request: NextRequest) {
           senderName: validated.customerName,
           timestamp: new Date().toISOString(),
           isRead: false,
+          isReadByAdmin: false,
         };
 
         activeSessions.set(newSession.id, newSession);
@@ -182,6 +216,16 @@ export async function POST(request: NextRequest) {
       }
 
       case "assign-agent": {
+        // SECURITY: Only admin can assign
+        try {
+          await checkAdmin(request);
+        } catch {
+          return NextResponse.json(
+            { success: false, error: "Unauthorized" },
+            { status: 401 }
+          );
+        }
+
         const { sessionId, agentName } = data;
         const session = activeSessions.get(sessionId);
 

@@ -39,10 +39,11 @@ export async function GET(request: NextRequest) {
     const querySecret = request.nextUrl.searchParams.get("secret");
     const expectedSecret = process.env.CRON_SECRET;
 
+    // Fail-Closed: If secret is missing or mismatch, deny.
     if (
-      expectedSecret &&
-      authHeader !== `Bearer ${expectedSecret}` &&
-      querySecret !== expectedSecret
+      !expectedSecret ||
+      (authHeader !== `Bearer ${expectedSecret}` &&
+        querySecret !== expectedSecret)
     ) {
       logger.warn("[Cron] Unauthorized cron attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

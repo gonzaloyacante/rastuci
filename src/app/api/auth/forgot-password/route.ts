@@ -2,9 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/resend";
 import { randomBytes } from "crypto";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 5 attempts per minute (Spam protection)
+    const rl = await checkRateLimit(req, {
+      key: "auth:forgot-password",
+      limit: 5,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { success: false, error: "Demasiados intentos" },
+        { status: 429 }
+      );
+    }
+
     const { email } = await req.json();
 
     if (!email) {
@@ -24,7 +38,8 @@ export async function POST(req: NextRequest) {
       // Por seguridad, NO revelar si el email existe
       return NextResponse.json({
         success: true,
-        message: "Si el email existe, recibirás instrucciones para recuperar tu contraseña",
+        message:
+          "Si el email existe, recibirás instrucciones para recuperar tu contraseña",
       });
     }
 
@@ -103,7 +118,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Si el email existe, recibirás instrucciones para recuperar tu contraseña",
+      message:
+        "Si el email existe, recibirás instrucciones para recuperar tu contraseña",
     });
   } catch (error) {
     console.error("Error en forgot-password:", error);

@@ -1,7 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { fail } from "@/lib/apiResponse";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 attempts per minute (Brute-force protection)
+    // Cast strict Request to NextRequest-like if needed by checkRateLimit or update usage
+    const rl = await checkRateLimit(request as any, {
+      key: "coupon:validate",
+      limit: 5,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        fail("RATE_LIMITED", "Too many requests", 429, {
+          retryAfterMs: rl.retryAfterMs,
+        }),
+        { status: 429 }
+      );
+    }
     const { code } = await request.json();
 
     if (!code) {
