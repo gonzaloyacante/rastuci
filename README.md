@@ -181,17 +181,23 @@ yarn dev
 ```env
 # Base de datos
 DATABASE_URL="postgresql://user:password@localhost:5432/rastuci"
-DIRECT_URL="postgresql://... (Pooling/Direct)"
+DIRECT_URL="postgresql://user:password@localhost:5432/rastuci"
 
-# Autenticación (NextAuth)
-NEXTAUTH_SECRET="your-secure-secret"
+# Autenticación
+NEXTAUTH_SECRET="your-super-secure-secret-here"
 NEXTAUTH_URL="http://localhost:3000"
 
-# Integraciones (MercadoPago, Cloudinary, OneSignal, Correo Argentino)
-MERCADOPAGO_ACCESS_TOKEN="<your_access_token>"
-CLOUDINARY_CLOUD_NAME="<your_cloud_name>"
-ONESIGNAL_APP_ID="<your_app_id>"
-# ... otras variables de configuración
+# MercadoPago (usa tus credenciales de sandbox)
+MERCADOPAGO_ACCESS_TOKEN="TEST-your-test-token-here"
+
+# Cloudinary (obtén tus credenciales en cloudinary.com)
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="your-api-secret"
+
+# OneSignal (obtén tus credenciales en onesignal.com)
+ONESIGNAL_APP_ID="your-app-id"
+ONESIGNAL_REST_API_KEY="your-rest-api-key"
 ```
 
 ---
