@@ -1,22 +1,39 @@
+import { ShippingOption } from "@/context/CartContext";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
+// Inline type matching actual data shape from admin/orders/[id]/page.tsx
+interface OrderItemForSummary {
+  id: string;
+  quantity: number;
+  price: number;
+  product: {
+    id: string;
+    name: string;
+    images?: string | string[];
+    categories?: {
+      id: string;
+      name: string;
+    };
+  };
+}
+
 interface OrderSummaryCardProps {
   order: {
     id: string;
     status: string;
-    paymentStatus?: string; // Add optional payment status
+    paymentStatus?: string;
     paymentMethod: string;
     createdAt: string;
     updatedAt: string;
     total: number;
-    items: any[];
-    shippingMethod?: any; // To determine if it needs shipping
-    caTrackingNumber?: string; // To determine if shipped
-    caImportStatus?: string | null; // To determine if imported
+    items: OrderItemForSummary[];
+    shippingMethod?: string | { id: string; name?: string };
+    caTrackingNumber?: string;
+    caImportStatus?: string | null;
   };
 }
 
@@ -26,8 +43,11 @@ const getDetailedStatus = (order: OrderSummaryCardProps["order"]) => {
     order.paymentStatus === "approved" || order.status === "PROCESSED";
 
   // 2. Shipping Status (only if shipping is required)
-  const requiresShipping =
-    order.shippingMethod && order.shippingMethod.id !== "pickup";
+  const shippingId =
+    typeof order.shippingMethod === "object"
+      ? order.shippingMethod?.id
+      : order.shippingMethod;
+  const requiresShipping = order.shippingMethod && shippingId !== "pickup";
   const isShipped = !!order.caTrackingNumber;
   const isImported =
     order.caImportStatus === "processed" || !!order.caTrackingNumber;
@@ -70,12 +90,24 @@ const getDetailedStatus = (order: OrderSummaryCardProps["order"]) => {
   };
 };
 
-const getProductImage = (item: any) => {
-  if (!item.product.images) {
+const getProductImage = (item: OrderItemForSummary) => {
+  const images = item.product.images;
+  if (!images) {
     return "https://placehold.co/800x800.png";
   }
-  if (Array.isArray(item.product.images) && item.product.images.length > 0) {
-    return item.product.images[0];
+  if (Array.isArray(images) && images.length > 0) {
+    return images[0];
+  }
+  if (typeof images === "string") {
+    // Handle case where images is a JSON string
+    try {
+      const parsed = JSON.parse(images);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed[0];
+      }
+    } catch {
+      return images; // Return as-is if not valid JSON
+    }
   }
   return "https://placehold.co/800x800.png";
 };

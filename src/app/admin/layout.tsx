@@ -1,7 +1,7 @@
 "use client";
 
 import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
-import SessionProvider from "@/components/providers/SessionProvider";
+
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart3,
@@ -61,7 +61,6 @@ function isNavActive(pathname: string, href: string): boolean {
 
 import { SidebarLink } from "@/components/admin/SidebarLink";
 
-
 export default function AdminLayout({
   children,
 }: {
@@ -82,8 +81,7 @@ export default function AdminLayout({
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (pathname === "/admin")
-    return <SessionProvider>{children}</SessionProvider>;
+  if (pathname === "/admin") return <>{children}</>;
 
   const toggle = () => setIsOpen((o) => !o);
   const close = () => isMobile && setIsOpen(false);
@@ -97,122 +95,130 @@ export default function AdminLayout({
   };
 
   return (
-    <SessionProvider>
-      <AdminAuthWrapper>
-        <div className="flex h-screen surface relative overflow-x-hidden">
-          {/* Mobile Overlay */}
-          <AnimatePresence>
-            {isMobile && isOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                onClick={close}
-              />
-            )}
-          </AnimatePresence>
+    <AdminAuthWrapper>
+      <div className="flex h-screen surface relative overflow-x-hidden">
+        {/* Mobile Overlay */}
+        <AnimatePresence>
+          {isMobile && isOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={close}
+            />
+          )}
+        </AnimatePresence>
 
-          {/* Sidebar */}
-          <AnimatePresence mode="wait">
-            {(!isMobile || isOpen) && (
-              <motion.div
-                initial={isMobile ? { x: "100%" } : false}
-                animate={{ x: 0 }}
-                exit={isMobile ? { x: "100%" } : { x: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  mass: 0.8,
-                }}
-                className={`${isOpen ? "w-64 items-stretch" : "w-18 items-center"}
+        {/* Sidebar */}
+        <AnimatePresence mode="wait">
+          {(!isMobile || isOpen) && (
+            <motion.div
+              initial={isMobile ? { x: "100%" } : false}
+              animate={{ x: 0 }}
+              exit={isMobile ? { x: "100%" } : { x: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                mass: 0.8,
+              }}
+              className={`${isOpen ? "w-64 items-stretch" : "w-18 items-center"}
                   ${isMobile ? "fixed right-0" : "relative"}
                   surface border-r border-muted flex flex-col z-50 h-full shadow-lg`}
+            >
+              {/* Header */}
+              <div
+                className={`p-4 border-b border-muted flex ${
+                  isOpen
+                    ? "items-center justify-between"
+                    : "flex-col items-center justify-center gap-4"
+                }`}
               >
-                {/* Header */}
                 <div
-                  className={`p-4 border-b border-muted flex ${isOpen ? "items-center justify-between" : "flex-col items-center justify-center gap-4"}`}
+                  className={
+                    isOpen
+                      ? "flex items-center gap-2"
+                      : "flex flex-col items-center"
+                  }
                 >
-                  <div
-                    className={
-                      isOpen
-                        ? "flex items-center gap-2"
-                        : "flex flex-col items-center"
-                    }
-                  >
-                    <div className="h-10 w-10 surface rounded-full flex items-center justify-center text-primary text-xl font-bold">
-                      R
-                    </div>
-                    {isOpen && (
-                      <span className="font-bold text-xl ml-2">Rastuci</span>
-                    )}
+                  <div className="h-10 w-10 surface rounded-full flex items-center justify-center text-primary text-xl font-bold">
+                    R
                   </div>
-                  <button
-                    onClick={toggle}
-                    className={`p-2 rounded-full hover-surface focus:outline-none cursor-pointer ${isOpen ? "" : "mt-2"}`}
-                  >
-                    {isOpen ? (
-                      <X className="h-6 w-6" />
-                    ) : (
-                      <Menu className="h-6 w-6" />
-                    )}
-                  </button>
+                  {isOpen && (
+                    <span className="font-bold text-xl ml-2">Rastuci</span>
+                  )}
                 </div>
-
-                {/* Navigation */}
-                <nav
-                  className={`flex-1 overflow-y-auto mt-4 ${isOpen ? "" : "flex flex-col items-center"}`}
+                <button
+                  onClick={toggle}
+                  className={`p-2 rounded-full hover-surface focus:outline-none cursor-pointer ${
+                    isOpen ? "" : "mt-2"
+                  }`}
                 >
-                  <ul
-                    className={`${isOpen ? "px-2" : "px-0"} space-y-1 w-full`}
-                  >
-                    {NAV_LINKS.map((link) => (
-                      <SidebarLink
-                        key={link.href}
-                        link={link}
-                        isOpen={isOpen}
-                        isActive={isNavActive(pathname, link.href)}
-                        onClick={close}
-                      />
-                    ))}
-                  </ul>
-                </nav>
-
-                {/* Logout */}
-                <div
-                  className={`p-4 border-t border-muted mt-2 ${isOpen ? "" : "flex flex-col items-center"}`}
-                >
-                  <button
-                    onClick={handleLogout}
-                    className={`flex items-center ${isOpen ? "w-full px-4 py-3" : "justify-center p-3"}
-                      rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary`}
-                  >
-                    <LogOut className="h-5 w-5 shrink-0" />
-                    {isOpen && <span>Cerrar sesión</span>}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Main content */}
-          <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
-            {isMobile && (
-              <div className="surface shadow-sm border-b border-muted p-3 flex items-center justify-between lg:hidden">
-                <h1 className="text-lg font-semibold text-content-primary">
-                  Panel de Administración
-                </h1>
-                <button onClick={toggle} className="btn-ghost">
-                  <Menu className="h-6 w-6" />
+                  {isOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
+                  )}
                 </button>
               </div>
-            )}
-            <main className="p-2 sm:p-3 lg:p-4">{children}</main>
-          </div>
+
+              {/* Navigation */}
+              <nav
+                className={`flex-1 overflow-y-auto mt-4 ${
+                  isOpen ? "" : "flex flex-col items-center"
+                }`}
+              >
+                <ul className={`${isOpen ? "px-2" : "px-0"} space-y-1 w-full`}>
+                  {NAV_LINKS.map((link) => (
+                    <SidebarLink
+                      key={link.href}
+                      link={link}
+                      isOpen={isOpen}
+                      isActive={isNavActive(pathname, link.href)}
+                      onClick={close}
+                    />
+                  ))}
+                </ul>
+              </nav>
+
+              {/* Logout */}
+              <div
+                className={`p-4 border-t border-muted mt-2 ${
+                  isOpen ? "" : "flex flex-col items-center"
+                }`}
+              >
+                <button
+                  onClick={handleLogout}
+                  className={`flex items-center ${
+                    isOpen ? "w-full px-4 py-3" : "justify-center p-3"
+                  }
+                      rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary`}
+                >
+                  <LogOut className="h-5 w-5 shrink-0" />
+                  {isOpen && <span>Cerrar sesión</span>}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
+          {isMobile && (
+            <div className="surface shadow-sm border-b border-muted p-3 flex items-center justify-between lg:hidden">
+              <h1 className="text-lg font-semibold text-content-primary">
+                Panel de Administración
+              </h1>
+              <button onClick={toggle} className="btn-ghost">
+                <Menu className="h-6 w-6" />
+              </button>
+            </div>
+          )}
+          <main className="p-2 sm:p-3 lg:p-4">{children}</main>
         </div>
-      </AdminAuthWrapper>
-    </SessionProvider>
+      </div>
+    </AdminAuthWrapper>
   );
 }

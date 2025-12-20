@@ -3,8 +3,10 @@
 import { logger } from "@/lib/logger";
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
   useState,
 } from "react";
@@ -123,35 +125,52 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.items, isLoaded]);
 
-  const addToWishlist = (item: Omit<WishlistItem, "addedAt">) => {
+  const addToWishlist = useCallback((item: Omit<WishlistItem, "addedAt">) => {
     dispatch({ type: "ADD_TO_WISHLIST", payload: item });
-  };
+  }, []);
 
-  const removeFromWishlist = (id: string) => {
+  const removeFromWishlist = useCallback((id: string) => {
     dispatch({ type: "REMOVE_FROM_WISHLIST", payload: id });
-  };
+  }, []);
 
-  const clearWishlist = () => {
+  const clearWishlist = useCallback(() => {
     dispatch({ type: "CLEAR_WISHLIST" });
-  };
+  }, []);
 
-  const isInWishlist = (id: string) => {
-    return state.items.some((item) => item.id === id);
-  };
+  // isInWishlist and getWishlistCount depend on state.items so they can't be static callbacks without dependency
+  // Ideally, consumers should calculate this from items, but for convenience we expose functions.
+  // We can wrap them in useCallback with [state.items] dependency.
+  const isInWishlist = useCallback(
+    (id: string) => {
+      return state.items.some((item) => item.id === id);
+    },
+    [state.items]
+  );
 
-  const getWishlistCount = () => {
+  const getWishlistCount = useCallback(() => {
     return state.items.length;
-  };
+  }, [state.items]);
 
-  const value: WishlistContextType = {
-    wishlistItems: state.items,
-    addToWishlist,
-    removeFromWishlist,
-    clearWishlist,
-    isInWishlist,
-    getWishlistCount,
-    isLoaded,
-  };
+  const value: WishlistContextType = useMemo(
+    () => ({
+      wishlistItems: state.items,
+      addToWishlist,
+      removeFromWishlist,
+      clearWishlist,
+      isInWishlist,
+      getWishlistCount,
+      isLoaded,
+    }),
+    [
+      state.items,
+      addToWishlist,
+      removeFromWishlist,
+      clearWishlist,
+      isInWishlist,
+      getWishlistCount,
+      isLoaded,
+    ]
+  );
 
   return (
     <WishlistContext.Provider value={value}>

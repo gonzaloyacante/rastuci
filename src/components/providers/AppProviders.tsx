@@ -1,5 +1,4 @@
-"use client";
-
+import SessionProvider from "@/components/providers/SessionProvider";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CartProvider } from "@/context/CartContext";
@@ -11,12 +10,14 @@ export default function AppProviders({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider>
-      <WishlistProvider>
-        <CartProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </CartProvider>
-      </WishlistProvider>
-    </ThemeProvider>
+    <SessionProvider>
+      <ThemeProvider>
+        <WishlistProvider>
+          <CartProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </CartProvider>
+        </WishlistProvider>
+      </ThemeProvider>
+    </SessionProvider>
   );
 }

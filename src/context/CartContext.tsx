@@ -693,50 +693,77 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     selectedAgency,
   ]);
 
-  const value: CartContextType = {
-    // Carrito y productos
-    cartItems,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    getCartTotal,
-    getItemCount,
+  const value: CartContextType = useMemo(
+    () => ({
+      // Carrito y productos
+      cartItems,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      getCartTotal,
+      getItemCount,
 
-    // Checkout - Envío
-    availableShippingOptions,
-    selectedShippingOption,
-    setSelectedShippingOption,
-    calculateShippingCost,
+      // Checkout - Envío
+      availableShippingOptions,
+      selectedShippingOption,
+      setSelectedShippingOption,
+      calculateShippingCost,
 
-    // Checkout - Sucursal
-    selectedAgency,
-    setSelectedAgency,
-    getAgencies,
+      // Checkout - Sucursal
+      selectedAgency,
+      setSelectedAgency,
+      getAgencies,
 
-    // Checkout - Pago
-    availablePaymentMethods,
-    selectedPaymentMethod,
-    setSelectedPaymentMethod,
+      // Checkout - Pago
+      availablePaymentMethods,
+      selectedPaymentMethod,
+      setSelectedPaymentMethod,
 
-    // Checkout - Facturación
-    availableBillingOptions,
-    selectedBillingOption,
-    setSelectedBillingOption,
+      // Checkout - Facturación
+      availableBillingOptions,
+      selectedBillingOption,
+      setSelectedBillingOption,
 
-    // Checkout - Cupones
-    appliedCoupon,
-    applyCoupon,
-    removeCoupon,
+      // Checkout - Cupones
+      appliedCoupon,
+      applyCoupon,
+      removeCoupon,
 
-    // Checkout - Información del cliente
-    customerInfo,
-    updateCustomerInfo,
+      // Checkout - Información del cliente
+      customerInfo,
+      updateCustomerInfo,
 
-    // Checkout - Finalización
-    getOrderSummary,
-    placeOrder,
-  };
+      // Checkout - Finalización
+      getOrderSummary,
+      placeOrder,
+    }),
+    [
+      cartItems,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      getCartTotal,
+      getItemCount,
+      availableShippingOptions,
+      selectedShippingOption,
+      calculateShippingCost,
+      selectedAgency,
+      getAgencies,
+      availablePaymentMethods,
+      selectedPaymentMethod,
+      availableBillingOptions,
+      selectedBillingOption,
+      appliedCoupon,
+      applyCoupon,
+      removeCoupon,
+      customerInfo,
+      updateCustomerInfo,
+      getOrderSummary,
+      placeOrder,
+    ]
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
