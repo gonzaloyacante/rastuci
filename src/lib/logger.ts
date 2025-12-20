@@ -45,7 +45,21 @@ function maskObject(obj: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
     // If explicit sensitive keys, always redact fully
-    if (["email", "customerEmail", "phone", "customerPhone"].includes(k)) {
+    if (
+      [
+        "email",
+        "customerEmail",
+        "phone",
+        "customerPhone",
+        "password",
+        "token",
+        "access_token",
+        "refresh_token",
+        "secret",
+        "creditCard",
+        "cvv",
+      ].includes(k)
+    ) {
       out[k] = typeof v === "string" ? "***redacted***" : null;
     } else {
       out[k] = maskValue(v);
@@ -68,7 +82,9 @@ export function safeCtx(ctx?: LogContext): LogContext {
         name: err.name,
         message: err.message,
         // keep only first 3 lines of stack to avoid huge logs
-        stack: err.stack ? err.stack.split("\n").slice(0, 3).join("\\n") : undefined,
+        stack: err.stack
+          ? err.stack.split("\n").slice(0, 3).join("\\n")
+          : undefined,
       };
     }
 

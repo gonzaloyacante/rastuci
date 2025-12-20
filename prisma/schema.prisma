@@ -245,6 +245,9 @@ model order_items {
   size      String?
   orders    orders   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   products  products @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
