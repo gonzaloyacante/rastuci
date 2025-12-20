@@ -95,3 +95,5 @@ export function getCloudinaryUrl(
 
   return `https://res.cloudinary.com/${cloudName}/image/upload/${transformString}/${publicId}`;
 }
+
+export default cloudinaryLoader;

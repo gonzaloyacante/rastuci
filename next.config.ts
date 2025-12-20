@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
+    loader: "custom",
+    loaderFile: "./src/lib/cloudinaryLoader.ts",
     formats: ["image/webp", "image/avif"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -141,6 +143,11 @@ const nextConfig: NextConfig = {
           {
             key: "Referrer-Policy",
             value: "origin-when-cross-origin",
+          },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: res.cloudinary.com images.unsplash.com placehold.co via.placeholder.com picsum.photos; font-src 'self' fonts.gstatic.com; connect-src 'self' res.cloudinary.com;",
           },
         ],
       },

@@ -43,14 +43,20 @@ export async function GET(
       return fail("NOT_FOUND", "Producto no encontrado", 404);
     }
 
+    const safelyParseImages = (images: string | string[]): string[] => {
+      if (Array.isArray(images)) return images;
+      try {
+        return JSON.parse(images);
+      } catch {
+        return [];
+      }
+    };
+
     const responseProduct: Product = {
       ...product,
       description: product.description ?? undefined,
       salePrice: product.salePrice ?? undefined,
-      images:
-        typeof product.images === "string"
-          ? JSON.parse(product.images)
-          : product.images,
+      images: safelyParseImages(product.images),
       categories: {
         ...product.categories,
         description: product.categories.description ?? undefined,
