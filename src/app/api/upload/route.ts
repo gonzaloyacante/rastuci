@@ -1,5 +1,6 @@
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 import { NextRequest, NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 
 // Configurar Cloudinary
@@ -9,7 +10,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withAdminAuth(async (request: NextRequest) => {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -58,9 +59,9 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = withAdminAuth(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const publicId = searchParams.get("publicId");
@@ -85,4 +86,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

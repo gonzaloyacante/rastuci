@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withAdminAuth } from "@/lib/adminAuth";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { ContactSettingsSchema, defaultContactSettings } from "@/lib/validation/contact";
+import {
+  ContactSettingsSchema,
+  defaultContactSettings,
+} from "@/lib/validation/contact";
 import { apiHandler, AppError } from "@/lib/api-handler";
 import { logger } from "@/lib/logger";
 
@@ -11,18 +15,26 @@ const SETTINGS_KEY = "contact";
 export async function GET(req: NextRequest) {
   return apiHandler(async () => {
     // 1. Rate Limit
-    const rl = await checkRateLimit(req, { key: "contact:get", limit: 60, windowMs: 60_000 });
+    const rl = await checkRateLimit(req, {
+      key: "contact:get",
+      limit: 60,
+      windowMs: 60_000,
+    });
     if (!rl.ok) {
       throw new AppError("Too many requests", 429);
     }
 
     // 2. Logic
-    const setting = await prisma.settings.findUnique({ where: { key: SETTINGS_KEY } });
+    const setting = await prisma.settings.findUnique({
+      where: { key: SETTINGS_KEY },
+    });
     const value = setting?.value ?? defaultContactSettings;
 
     const parsed = ContactSettingsSchema.safeParse(value);
     if (!parsed.success) {
-      logger.warn("Invalid contact settings in DB, returning defaults", { issues: parsed.error.flatten() });
+      logger.warn("Invalid contact settings in DB, returning defaults", {
+        issues: parsed.error.flatten(),
+      });
       return defaultContactSettings;
     }
 
@@ -30,11 +42,15 @@ export async function GET(req: NextRequest) {
   }, "GET /api/contact");
 }
 
-// Handler for PUT
-export async function PUT(req: NextRequest) {
+// Handler for PUT (ADMIN ONLY)
+export const PUT = withAdminAuth(async (req: NextRequest) => {
   return apiHandler(async () => {
     // 1. Rate Limit
-    const rl = await checkRateLimit(req, { key: "contact:put", limit: 20, windowMs: 60_000 });
+    const rl = await checkRateLimit(req, {
+      key: "contact:put",
+      limit: 20,
+      windowMs: 60_000,
+    });
     if (!rl.ok) {
       throw new AppError("Too many requests", 429);
     }
@@ -54,4 +70,4 @@ export async function PUT(req: NextRequest) {
 
     return saved.value;
   }, "PUT /api/contact");
-}
+});

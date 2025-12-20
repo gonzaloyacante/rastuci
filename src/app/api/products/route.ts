@@ -1,4 +1,5 @@
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { withAdminAuth } from "@/lib/adminAuth";
 import { normalizeApiError } from "@/lib/errors";
 import { sanitizers, validateAndSanitize } from "@/lib/input-sanitization";
 import { logger } from "@/lib/logger";
@@ -177,133 +178,138 @@ export async function GET(
   }
 }
 
-// POST /api/products - Crear nuevo producto
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse<ApiResponse<Product>>> {
-  try {
-    // Rate limiting para creación
-    const rl = await checkRateLimit(request, RATE_LIMITS.adminApi);
-    if (!rl.ok) {
-      return fail("RATE_LIMITED", "Too many requests", 429);
-    }
+// POST /api/products - Crear nuevo producto (ADMIN ONLY)
+export const POST = withAdminAuth(
+  async (request: NextRequest): Promise<NextResponse<ApiResponse<Product>>> => {
+    try {
+      // Rate limiting para creación
+      const rl = await checkRateLimit(request, RATE_LIMITS.adminApi);
+      if (!rl.ok) {
+        return fail("RATE_LIMITED", "Too many requests", 429);
+      }
 
-    const body = await request.json();
+      const body = await request.json();
 
-    // DEBUG: Log del body recibido
-    logger.info("POST /api/products - Body recibido:", { body });
+      // DEBUG: Log del body recibido
+      logger.info("POST /api/products - Body recibido:", { body });
 
-    // Sanitize and validate input
-    const validation = validateAndSanitize(
-      ProductCreateSchema,
-      body,
-      sanitizers.product
-    );
-
-    if (!validation.success) {
-      // Devolver un mensaje que incluya la palabra 'validación' para los tests y
-      // mantener el detalle original en English/technical para logging.
-      const msg =
-        typeof validation.error === "string"
-          ? validation.error
-          : JSON.stringify(validation.error);
-
-      // DEBUG: Log del error de validación
-      logger.error("POST /api/products - Error de validación:", {
-        error: validation.error,
+      // Sanitize and validate input
+      const validation = validateAndSanitize(
+        ProductCreateSchema,
         body,
+        sanitizers.product
+      );
+
+      if (!validation.success) {
+        // Devolver un mensaje que incluya la palabra 'validación' para los tests y
+        // mantener el detalle original en English/technical para logging.
+        const msg =
+          typeof validation.error === "string"
+            ? validation.error
+            : JSON.stringify(validation.error);
+
+        // DEBUG: Log del error de validación
+        logger.error("POST /api/products - Error de validación:", {
+          error: validation.error,
+          body,
+        });
+
+        return fail("BAD_REQUEST", `validación: ${msg}`, 400);
+      }
+
+      const productData = validation.data;
+
+      // Verificar que la categoría existe
+      const category = await prisma.categories.findUnique({
+        where: { id: productData.categoryId },
       });
 
-      return fail("BAD_REQUEST", `validación: ${msg}`, 400);
+      if (!category) {
+        return fail("NOT_FOUND", "Categoría no encontrada", 404);
+      }
+
+      // Crear el producto
+      const newProduct = await prisma.products.create({
+        data: {
+          id: `product-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          name: productData.name,
+          description: productData.description ?? null,
+          price: Number(productData.price),
+          salePrice: productData.salePrice
+            ? Number(productData.salePrice)
+            : null,
+          stock: Number(productData.stock),
+          categoryId: productData.categoryId,
+          onSale: productData.onSale ?? false,
+          sizes: productData.sizes ?? undefined,
+          colors: productData.colors ?? undefined,
+          features: productData.features ?? undefined,
+          weight: productData.weight ?? null,
+          height: productData.height ?? null,
+          width: productData.width ?? null,
+          length: productData.length ?? null,
+          updatedAt: new Date(),
+          images: Array.isArray(productData.images)
+            ? JSON.stringify(productData.images)
+            : productData.images,
+          variants:
+            productData.variants && productData.variants.length > 0
+              ? {
+                  create: productData.variants.map((v) => ({
+                    color: v.color,
+                    size: v.size,
+                    stock: v.stock,
+                    sku: v.sku,
+                  })),
+                }
+              : undefined,
+        },
+        include: {
+          categories: true,
+          variants: true,
+        },
+      });
+
+      const product: Product = {
+        ...newProduct,
+        description: newProduct.description ?? undefined,
+        salePrice: newProduct.salePrice ?? undefined,
+        images:
+          typeof newProduct.images === "string"
+            ? JSON.parse(newProduct.images)
+            : newProduct.images,
+        categories: {
+          ...newProduct.categories,
+          description: newProduct.categories.description ?? undefined,
+        },
+        variants: newProduct.variants.map((v) => ({
+          ...v,
+          sku: v.sku ?? undefined,
+        })),
+      };
+
+      // Devuelve 201 para creación
+      return NextResponse.json(
+        { success: true, data: product },
+        { status: 201 }
+      );
+    } catch (error) {
+      logger.error("Error creating product:", { error: error });
+      const e = normalizeApiError(
+        error,
+        "INTERNAL_ERROR",
+        "Error al crear producto",
+        500
+      );
+      // Algunos tests esperan 400 en casos de contrainte/validation, así que si el error parece de validación devolvemos 400
+      const status =
+        e.status && e.status >= 400 && e.status < 500 ? e.status : 500;
+      return fail(
+        e.code as ApiErrorCode,
+        e.message,
+        status,
+        e.details as Record<string, unknown>
+      );
     }
-
-    const productData = validation.data;
-
-    // Verificar que la categoría existe
-    const category = await prisma.categories.findUnique({
-      where: { id: productData.categoryId },
-    });
-
-    if (!category) {
-      return fail("NOT_FOUND", "Categoría no encontrada", 404);
-    }
-
-    // Crear el producto
-    const newProduct = await prisma.products.create({
-      data: {
-        id: `product-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        name: productData.name,
-        description: productData.description ?? null,
-        price: Number(productData.price),
-        salePrice: productData.salePrice ? Number(productData.salePrice) : null,
-        stock: Number(productData.stock),
-        categoryId: productData.categoryId,
-        onSale: productData.onSale ?? false,
-        sizes: productData.sizes ?? undefined,
-        colors: productData.colors ?? undefined,
-        features: productData.features ?? undefined,
-        weight: productData.weight ?? null,
-        height: productData.height ?? null,
-        width: productData.width ?? null,
-        length: productData.length ?? null,
-        updatedAt: new Date(),
-        images: Array.isArray(productData.images)
-          ? JSON.stringify(productData.images)
-          : productData.images,
-        variants:
-          productData.variants && productData.variants.length > 0
-            ? {
-                create: productData.variants.map((v) => ({
-                  color: v.color,
-                  size: v.size,
-                  stock: v.stock,
-                  sku: v.sku,
-                })),
-              }
-            : undefined,
-      },
-      include: {
-        categories: true,
-        variants: true,
-      },
-    });
-
-    const product: Product = {
-      ...newProduct,
-      description: newProduct.description ?? undefined,
-      salePrice: newProduct.salePrice ?? undefined,
-      images:
-        typeof newProduct.images === "string"
-          ? JSON.parse(newProduct.images)
-          : newProduct.images,
-      categories: {
-        ...newProduct.categories,
-        description: newProduct.categories.description ?? undefined,
-      },
-      variants: newProduct.variants.map((v) => ({
-        ...v,
-        sku: v.sku ?? undefined,
-      })),
-    };
-
-    // Devuelve 201 para creación
-    return NextResponse.json({ success: true, data: product }, { status: 201 });
-  } catch (error) {
-    logger.error("Error creating product:", { error: error });
-    const e = normalizeApiError(
-      error,
-      "INTERNAL_ERROR",
-      "Error al crear producto",
-      500
-    );
-    // Algunos tests esperan 400 en casos de contrainte/validation, así que si el error parece de validación devolvemos 400
-    const status =
-      e.status && e.status >= 400 && e.status < 500 ? e.status : 500;
-    return fail(
-      e.code as ApiErrorCode,
-      e.message,
-      status,
-      e.details as Record<string, unknown>
-    );
   }
-}
+);

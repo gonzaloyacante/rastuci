@@ -6,6 +6,7 @@
  * Por ahora retorna estructuras vacías hasta que se implemente la BD.
  */
 
+import { withAdminAuth } from "@/lib/adminAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 // Tipos para la API
@@ -18,7 +19,7 @@ interface SupportStats {
 }
 
 // GET - Obtener datos de soporte
-export async function GET(request: NextRequest) {
+export const GET = withAdminAuth(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "stats";
@@ -56,10 +57,10 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // POST - Crear nuevo registro
-export async function POST(request: NextRequest) {
+export const POST = withAdminAuth(async (request: NextRequest) => {
   try {
     await request.json();
     return NextResponse.json(
@@ -77,10 +78,10 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // PUT - Actualizar registro
-export async function PUT(request: NextRequest) {
+export const PUT = withAdminAuth(async (request: NextRequest) => {
   try {
     await request.json();
     return NextResponse.json(
@@ -98,10 +99,10 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE - Eliminar registro
-export async function DELETE(_request: NextRequest) {
+export const DELETE = withAdminAuth(async (_request: NextRequest) => {
   try {
     return NextResponse.json(
       {
@@ -118,4 +119,4 @@ export async function DELETE(_request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -1,8 +1,21 @@
 import { SignJWT, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
 
+// SECURITY: JWT_SECRET must be configured in environment variables
+const JWT_SECRET_STRING = process.env.JWT_SECRET;
+if (!JWT_SECRET_STRING) {
+  // In development, warn but allow startup
+  if (process.env.NODE_ENV === "development") {
+    console.warn(
+      "[SECURITY WARNING] JWT_SECRET not configured. Using insecure fallback for development only."
+    );
+  }
+}
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "your-secret-key-change-in-production"
+  JWT_SECRET_STRING ||
+    (process.env.NODE_ENV === "development"
+      ? "dev-only-secret-do-not-use-in-prod"
+      : "")
 );
 
 export interface SessionData {

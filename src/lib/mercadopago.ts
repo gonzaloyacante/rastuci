@@ -235,8 +235,12 @@ export function validateWebhookSignature(
 ): boolean {
   const secret = process.env.MP_WEBHOOK_SECRET;
   if (!secret) {
-    return true;
-  } // allow if secret not configured (dev)
+    // SECURITY: Fail-closed if secret not configured
+    logger.error(
+      "[mercadopago] MP_WEBHOOK_SECRET not configured - rejecting webhook"
+    );
+    return false;
+  }
 
   try {
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;

@@ -1,3 +1,4 @@
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import type { ApiResponse } from "@/types";
@@ -18,7 +19,7 @@ interface AgencyData {
   services?: string[];
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAdminAuth(async (request: NextRequest) => {
   try {
     const { agencies }: { agencies: AgencyData[] } = await request.json();
 
@@ -39,7 +40,8 @@ export async function POST(request: NextRequest) {
       try {
         // Extract street data from address if possible
         const addressParts = agency.address?.split(/\s+/) || [];
-        const streetName = addressParts.slice(0, -1).join(' ') || agency.address;
+        const streetName =
+          addressParts.slice(0, -1).join(" ") || agency.address;
         const streetNumber = addressParts[addressParts.length - 1] || null;
 
         await prisma.ca_agencies.upsert({
@@ -105,9 +107,9 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function GET() {
+export const GET = withAdminAuth(async () => {
   try {
     const agencies = await prisma.ca_agencies.findMany({
       orderBy: [{ province: "asc" }, { city: "asc" }, { name: "asc" }],
@@ -130,4 +132,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
