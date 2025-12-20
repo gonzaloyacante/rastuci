@@ -143,6 +143,10 @@ const nextConfig: NextConfig = {
             value:
               "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: res.cloudinary.com images.unsplash.com placehold.co via.placeholder.com picsum.photos; font-src 'self' fonts.gstatic.com; connect-src 'self' res.cloudinary.com; frame-ancestors 'none';",
           },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
         ],
       },
       {
