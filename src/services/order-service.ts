@@ -67,12 +67,25 @@ export class OrderService {
       order.status !== ORDER_STATUS.DELIVERED;
 
     if (shouldDecrement) {
-      for (const item of order.order_items) {
-        await prisma.products.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
-      }
+      // Use transaction to ensure partial failures don't leave inconsistent state
+      await prisma.$transaction(async (tx) => {
+        for (const item of order.order_items) {
+          try {
+            await tx.products.update({
+              where: {
+                id: item.productId,
+                stock: { gte: item.quantity }, // Atomic check: prevent negative stock
+              },
+              data: { stock: { decrement: item.quantity } },
+            });
+          } catch {
+            // If update fails (e.g. stock too low), we throw to abort the whole transaction
+            throw new Error(
+              `Stock insuficiente para el producto ${item.productId} (Orden ${orderId})`
+            );
+          }
+        }
+      });
     }
 
     // Handle CA Shipment Creation logic availability
@@ -262,11 +275,31 @@ export class OrderService {
     const shouldDecrement = mappedStatus === ORDER_STATUS.PENDING_PAYMENT;
 
     if (shouldDecrement) {
-      for (const it of orderItemsData) {
-        await prisma.products.update({
-          where: { id: it.productId },
-          data: { stock: { decrement: it.quantity } },
+      try {
+        await prisma.$transaction(async (tx) => {
+          for (const it of orderItemsData) {
+            await tx.products.update({
+              where: {
+                id: it.productId,
+                stock: { gte: Number(it.quantity) },
+              },
+              data: { stock: { decrement: Number(it.quantity) } },
+            });
+          }
         });
+      } catch (error) {
+        // Critical: If stock decrement fails after Payment Approved, we have a problem.
+        // We log clearly. In a real system, we'd trigger an auto-refund or "Manual Review" flag.
+        logger.error(
+          "CRITICAL: Payment Approved but Stock Decrement FAILED (Race Condition)",
+          {
+            mpPaymentId,
+            error,
+          }
+        );
+        // Note: We do NOT throw here because the Order IS created and Paid.
+        // We accept the "Overselling" risk rather than crashing the webhook (which would retry and duplicate).
+        // The admin must resolve this manually.
       }
     }
 

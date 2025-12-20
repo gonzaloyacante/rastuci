@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
 import { withAdminAuth } from "@/lib/adminAuth";
 import prisma from "@/lib/prisma";
 import { ApiResponse, Order, OrderStatus } from "@/types";
@@ -60,6 +63,7 @@ export async function GET(
       return fail("RATE_LIMITED", "Too many requests", 429);
     }
     const { id } = await params;
+    const session = await getServerSession(authOptions);
 
     const order = await prisma.orders.findUnique({
       where: { id },
@@ -78,6 +82,24 @@ export async function GET(
 
     if (!order) {
       return fail("NOT_FOUND", "Pedido no encontrado", 404);
+    }
+
+    // Hybrid Auth:
+    // 1. If Admin -> Allowed
+    // 2. If Logged In User -> Must match email
+    // 3. If Guest (No Session) -> Allowed (Public UUID assumption)
+    if (session?.user) {
+      const isAdmin = session.user.isAdmin;
+      const isOwner = session.user.email === order.customerEmail;
+
+      if (!isAdmin && !isOwner) {
+        // Logged in user trying to access another's order
+        logger.warn(
+          `Unauthorized access attempt to order ${id} by user ${session.user.email}`
+        );
+        // Return 404 to avoid leaking existence
+        return fail("NOT_FOUND", "Pedido no encontrado", 404);
+      }
     }
 
     const responseOrder: Order = mapOrderToDTO(order);
