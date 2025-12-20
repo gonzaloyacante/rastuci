@@ -33,6 +33,8 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
           {
             resource_type: "auto",
             folder: "Rastuci",
+            allowed_formats: ["jpg", "jpeg", "png", "webp", "avif"], // Prevent SVG (XSS) or EXE
+            transformation: [{ quality: "auto", fetch_format: "auto" }], // Optimization
           },
           (error, result) => {
             if (error) {
