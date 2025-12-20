@@ -141,7 +141,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: res.cloudinary.com images.unsplash.com placehold.co via.placeholder.com picsum.photos; font-src 'self' fonts.gstatic.com; connect-src 'self' res.cloudinary.com;",
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: res.cloudinary.com images.unsplash.com placehold.co via.placeholder.com picsum.photos; font-src 'self' fonts.gstatic.com; connect-src 'self' res.cloudinary.com; frame-ancestors 'none';",
           },
         ],
       },
