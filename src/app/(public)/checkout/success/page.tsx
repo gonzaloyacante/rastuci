@@ -50,8 +50,9 @@ function CheckoutSuccessContent() {
     const method = searchParams.get("method") || "mercadopago";
     const externalRef = searchParams.get("external_reference") || "";
     const paymentId = searchParams.get("payment_id") || "";
-    const mpStatus = searchParams.get("status") || searchParams.get("payment_status") || "";
-    
+    const mpStatus =
+      searchParams.get("status") || searchParams.get("payment_status") || "";
+
     // Priorizar external_reference que tiene nuestro ID
     const id = searchParams.get("order_id") || externalRef || "";
 
@@ -59,12 +60,6 @@ function CheckoutSuccessContent() {
     setOrderId(id);
 
     // Log para debugging
-    console.log("[Success] MercadoPago redirect params:", {
-      external_reference: externalRef,
-      payment_id: paymentId,
-      status: mpStatus,
-      orderId: id,
-    });
 
     // Limpiar carrito después de compra exitosa
     clearCart();
@@ -73,11 +68,11 @@ function CheckoutSuccessContent() {
   // Cargar información del pedido con retry (el webhook puede tardar unos segundos)
   useEffect(() => {
     const paymentId = searchParams.get("payment_id");
-    
+
     const loadOrderInfo = async (retryCount = 0): Promise<boolean> => {
       // Intentar buscar por orderId o por payment_id
       const searchId = orderId || paymentId;
-      
+
       if (!searchId) {
         return false;
       }
@@ -123,19 +118,18 @@ function CheckoutSuccessContent() {
 
     const attemptLoad = async () => {
       setLoadingOrder(true);
-      
+
       // Intentar cargar inmediatamente
       let found = await loadOrderInfo();
-      
+
       // Si no encuentra, el webhook puede estar procesando. Reintentar hasta 5 veces
       if (!found && (orderId || paymentId)) {
         for (let i = 1; i <= 5 && !found; i++) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Esperar 2 segundos
           found = await loadOrderInfo(i);
-          console.log(`[Success] Retry ${i}/5, found:`, found);
         }
       }
-      
+
       setLoadingOrder(false);
     };
 
