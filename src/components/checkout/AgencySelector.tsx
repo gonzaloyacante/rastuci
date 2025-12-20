@@ -1,8 +1,11 @@
-
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { WEEKDAY_NAMES_SHORT, type WeekdayKey, PROVINCE_CODE_MAP as PROVINCE_NAMES } from "@/lib/constants";
+import {
+  WEEKDAY_NAMES_SHORT,
+  type WeekdayKey,
+  PROVINCE_CODE_MAP as PROVINCE_NAMES,
+} from "@/lib/constants";
 import { Agency } from "@/lib/correo-argentino-service";
 import { Loader2, MapPin, Search, Store, X } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -76,17 +79,28 @@ export function AgencySelector({
         if (data && data.length > 0) {
           // Filtrar solo sucursales activas con servicio de retiro
           const activeAgencies = data.filter(
-            (a: Agency) => a.status === "ACTIVE" && a.services?.pickupAvailability
+            (a: Agency) =>
+              a.status === "ACTIVE" && a.services?.pickupAvailability
           );
 
           setAgencies(activeAgencies);
 
           if (activeAgencies.length === 0) {
-            setError("No hay sucursales disponibles en esta provincia");
+            // No mostrar error bloqueante, permitir búsqueda
+            setError(null);
+            // setAgencies([]); // Ya está implícito si data es [] pero aquí filtramos data
           }
         } else {
           setAgencies([]);
-          setError("Error al cargar sucursales o no hay agencias disponibles");
+          // Si la API no devuelve nada, no bloquear. El usuario podría buscar por CP si tuviéramos una base local,
+          // pero si depende 100% de la API de CA y falla, estamos fritos.
+          // Asumamos que si falla, permitimos intentar buscar (aunque el filtro es CLIENT SIDE sobre 'agencies').
+          // Ah! El filtro es sobre 'agencies'. Si 'agencies' está vacío, la búsqueda no sirve de nada porque filtra sobre vacío.
+          // EL PROBLEMA ES QUE LA API DE CA DEVUELVE VACÍO PARA 'B' (Buenos Aires) a veces.
+          // Necesitamos manejar mejor el error o el fallback.
+          setError(
+            "No se encontraron sucursales para esta provincia. Intenta otra provincia o recarga."
+          );
         }
       } catch {
         setAgencies([]);
@@ -106,10 +120,14 @@ export function AgencySelector({
     const term = searchTerm.toLowerCase().trim();
 
     // Dar puntaje de relevancia para ordenar resultados
-    const scored = agencies.map(agency => {
+    const scored = agencies.map((agency) => {
       let score = 0;
       const cp = agency.location.address.postalCode?.toLowerCase() || "";
-      const city = (agency.location.address.city || agency.location.address.locality || "").toLowerCase();
+      const city = (
+        agency.location.address.city ||
+        agency.location.address.locality ||
+        ""
+      ).toLowerCase();
       const name = agency.name.toLowerCase();
       const street = agency.location.address.streetName?.toLowerCase() || "";
 
@@ -134,31 +152,37 @@ export function AgencySelector({
 
     // Filtrar solo los que tienen puntaje > 0 y ordenar por score descendente
     return scored
-      .filter(item => item.score > 0)
+      .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
-      .map(item => item.agency);
+      .map((item) => item.agency);
   }, [agencies, searchTerm]);
 
   // Opciones de sucursales para el Select con mejor formato
   const agencyOptions = useMemo(() => {
     // Agrupar por ciudad para mejor organización
-    const byCity = filteredAgencies.reduce((acc, agency) => {
-      const city = agency.location.address.city || agency.location.address.locality || "Otras";
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(agency);
-      return acc;
-    }, {} as Record<string, Agency[]>);
+    const byCity = filteredAgencies.reduce(
+      (acc, agency) => {
+        const city =
+          agency.location.address.city ||
+          agency.location.address.locality ||
+          "Otras";
+        if (!acc[city]) acc[city] = [];
+        acc[city].push(agency);
+        return acc;
+      },
+      {} as Record<string, Agency[]>
+    );
 
     const options: { value: string; label: string; group?: string }[] = [];
 
     // Mostrar TODAS las sucursales filtradas (no limitar artificialmente)
     Object.entries(byCity).forEach(([city, cityAgencies]) => {
-      cityAgencies.forEach(agency => {
+      cityAgencies.forEach((agency) => {
         const label = `${agency.name} - ${agency.location.address.streetName} ${agency.location.address.streetNumber} (CP: ${agency.location.address.postalCode})`;
         options.push({
           value: agency.code,
           label,
-          group: Object.keys(byCity).length > 1 ? city : undefined
+          group: Object.keys(byCity).length > 1 ? city : undefined,
         });
       });
     });
@@ -209,7 +233,7 @@ export function AgencySelector({
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Ej: Monte Grande, 1842, B0107..."
               className="pl-3 pr-20"
-              disabled={loading || agencies.length === 0}
+              disabled={loading || !province}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
               {searchTerm && (
@@ -235,7 +259,8 @@ export function AgencySelector({
                 </p>
               ) : (
                 <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                  ⚠ No se encontraron sucursales con "{searchTerm}". Intenta buscar por código postal o ciudad.
+                  ⚠ No se encontraron sucursales con "{searchTerm}". Intenta
+                  buscar por código postal o ciudad.
                 </p>
               )}
             </div>
@@ -342,11 +367,11 @@ export function AgencySelector({
                 }}
               >
                 Ver en Google Maps
-              </Button >
-            </div >
-          </div >
-        </div >
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
-    </div >
+    </div>
   );
 }

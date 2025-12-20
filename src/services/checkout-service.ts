@@ -29,6 +29,8 @@ export class CheckoutService {
         name: true,
         stock: true,
         price: true,
+        salePrice: true,
+        onSale: true,
         variants: true, // Incluimos variantes en la consulta
       },
     });
@@ -82,15 +84,33 @@ export class CheckoutService {
   prepareMPItems(
     items: OrderItem[],
     shippingMethod?: { name: string; price: number },
-    discountAmount: number = 0
+    discountAmount: number = 0,
+    validatedProducts?: any[] // Should be typed properly as Product[]
   ) {
-    const mpItems = items.map((item) => ({
-      id: item.productId,
-      title: item.name || "Producto",
-      quantity: item.quantity,
-      unit_price: item.price,
-      currency_id: "ARS",
-    }));
+    const mpItems = items.map((item) => {
+      let unitPrice = item.price;
+
+      // If we have validated products from DB, prefer DB price logic
+      if (validatedProducts) {
+        const product = validatedProducts.find((p) => p.id === item.productId);
+        if (product) {
+          // Check for sale price
+          if (product.onSale && product.salePrice) {
+            unitPrice = Number(product.salePrice);
+          } else {
+            unitPrice = Number(product.price);
+          }
+        }
+      }
+
+      return {
+        id: item.productId,
+        title: item.name || "Producto",
+        quantity: item.quantity,
+        unit_price: unitPrice,
+        currency_id: "ARS",
+      };
+    });
 
     if (shippingMethod && shippingMethod.price > 0) {
       mpItems.push({
