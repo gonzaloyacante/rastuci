@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -59,8 +60,8 @@ export async function GET() {
   }
 }
 
-// POST /api/settings/shipping-options - Crear/actualizar opciones (solo admin)
-export async function POST(req: NextRequest) {
+// POST /api/settings/shipping-options - Crear/actualizar opciones (ADMIN ONLY)
+export const POST = withAdminAuth(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const validated = ShippingOptionsSchema.parse(body);
@@ -92,4 +93,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
