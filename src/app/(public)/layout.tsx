@@ -31,7 +31,7 @@ export default async function PublicLayout({
   const home = await getHomeSettings();
 
   return (
-    <div className="min-h-screen flex flex-col pt-20">
+    <div className="min-h-screen flex flex-col pt-16">
       <SkipLink href="#main-content">Saltar al contenido principal</SkipLink>
       <SkipLink href="#navigation">Saltar a la navegación</SkipLink>
       <HeaderShell />

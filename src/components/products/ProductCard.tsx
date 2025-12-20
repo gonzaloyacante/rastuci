@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useCart } from "@/context/CartContext"; // ✅ Usar CartContext que maneja size y color
 import { useFavorites } from "@/hooks/useFavorites";
 import { Product } from "@/types";
 import { formatPriceARS } from "@/utils/formatters";
@@ -22,7 +21,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { useHotToast } from "@/hooks/use-hot-toast";
 
 // ============================================================================
 // Sub-componentes reutilizables
@@ -136,6 +135,7 @@ export type ProductCardProps = PublicProductCardProps | AdminProductCardProps;
 
 const ProductCard = React.memo((props: ProductCardProps) => {
   const { product, priority = false } = props;
+  const { success: toastSuccess, error: toastError } = useHotToast();
 
   const isAdmin = props.variant === "admin";
 
@@ -382,149 +382,146 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           </div>
         )}
 
-        <Link
-          href={`/productos/${product.id}`}
-          aria-label={`Ver detalles de ${product.name}`}
-          className="flex flex-col h-full"
-        >
-          {/* Imagen */}
-          <div className="overflow-hidden shrink-0">
-            <div className="h-[200px] overflow-hidden">
-              <Image
-                src={
-                  imageError || !mainImage
-                    ? "https://placehold.co/400x500.png"
-                    : mainImage
-                }
-                alt={`${product.name} - ${product.categories?.name || "Producto"}`}
-                width={400}
-                height={200}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                onError={handleImageError}
-                onLoad={handleImageLoad}
-                priority={priority}
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                quality={85}
-              />
-            </div>
+        {/* Imagen */}
+        <div className="overflow-hidden shrink-0">
+          <Link
+            href={`/productos/${product.id}`}
+            aria-label={`Ver detalles de ${product.name}`}
+            className="block h-[200px] overflow-hidden"
+          >
+            <Image
+              src={
+                imageError || !mainImage
+                  ? "https://placehold.co/400x500.png"
+                  : mainImage
+              }
+              alt={`${product.name} - ${product.categories?.name || "Producto"}`}
+              width={400}
+              height={200}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              priority={priority}
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+              quality={85}
+            />
+          </Link>
+        </div>
+
+        {/* Overlay de sin stock */}
+        {product.stock === 0 && (
+          <div className="absolute inset-0 z-10 bg-black/60 flex items-center justify-center pointer-events-none">
+            <span className="surface text-base-primary px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+              Agotado
+            </span>
           </div>
+        )}
 
-          {/* Overlay de sin stock */}
-          {product.stock === 0 && (
-            <div className="absolute inset-0 z-10 bg-black/60 flex items-center justify-center">
-              <span className="surface text-base-primary px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                Agotado
-              </span>
-            </div>
-          )}
+        {/* Info - flex-1 para ocupar todo el espacio disponible */}
+        <div className="p-5 flex flex-col flex-1 surface">
+          {/* Categoría */}
+          <p className="text-[11px] font-semibold tracking-[1px] uppercase muted mb-[5px]">
+            {product.categories?.name || "Sin categoría"}
+          </p>
 
-          {/* Info - flex-1 para ocupar todo el espacio disponible */}
-          <div className="p-5 flex flex-col flex-1 surface">
-            {/* Categoría */}
-            <p className="text-[11px] font-semibold tracking-[1px] uppercase muted mb-[5px]">
-              {product.categories?.name || "Sin categoría"}
-            </p>
-
-            {/* Título - altura fija para alineación */}
-            <h3 className="text-[18px] font-bold text-base-primary tracking-[-0.5px] m-0 mb-2.5 line-clamp-2 min-h-[2.7em]">
+          {/* Título - altura fija para alineación */}
+          <Link href={`/productos/${product.id}`} className="block mb-2.5">
+            <h3 className="text-[18px] font-bold text-base-primary tracking-[-0.5px] m-0 line-clamp-2 min-h-[2.7em] hover:text-pink-600 transition-colors">
               {product.name}
             </h3>
+          </Link>
 
-            {/* Descripción corta - altura fija */}
-            <p className="text-[13px] text-base-secondary leading-[1.4] mb-3 line-clamp-2 min-h-[2.8em]">
-              {product.description || "\u00A0"}
-            </p>
+          {/* Descripción corta - altura fija */}
+          <p className="text-[13px] text-base-secondary leading-[1.4] mb-3 line-clamp-2 min-h-[2.8em]">
+            {product.description || "\u00A0"}
+          </p>
 
-            {/* Features/Talles - altura fija */}
-            <div className="flex gap-1.5 mb-[15px] flex-wrap min-h-6">
-              {product.sizes && product.sizes.length > 0 ? (
-                <>
-                  {product.sizes.slice(0, 4).map((size, idx) => (
-                    <span key={idx} className="chip">
-                      {size}
+          {/* Features/Talles - altura fija */}
+          <div className="flex gap-1.5 mb-[15px] flex-wrap min-h-6">
+            {product.sizes && product.sizes.length > 0 ? (
+              <>
+                {product.sizes.slice(0, 4).map((size, idx) => (
+                  <span key={idx} className="chip">
+                    {size}
+                  </span>
+                ))}
+                {product.sizes.length > 4 && (
+                  <span className="chip">+{product.sizes.length - 4}</span>
+                )}
+              </>
+            ) : null}
+          </div>
+
+          {/* Spacer - empuja todo lo de abajo al fondo */}
+          <div className="flex-1" />
+
+          {/* Contenido inferior - siempre al fondo */}
+          <div className="shrink-0 mt-auto">
+            {/* Bottom: Precio y Botón */}
+            <div className="flex justify-between items-center mb-3">
+              {/* Precio */}
+              <div className="flex flex-col">
+                {product.onSale &&
+                formattedSalePrice &&
+                product.salePrice! < product.price ? (
+                  <>
+                    <span className="text-[13px] line-through muted mb-0.5">
+                      {formattedPrice}
                     </span>
-                  ))}
-                  {product.sizes.length > 4 && (
-                    <span className="chip">+{product.sizes.length - 4}</span>
-                  )}
-                </>
-              ) : null}
+                    <span className="text-[20px] font-bold text-base-primary">
+                      {formattedSalePrice}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[20px] font-bold text-base-primary">
+                    {formattedPrice}
+                  </span>
+                )}
+              </div>
+
+              {/* Botón agregar al carrito -> Ahora Navega a Detalles */}
+              <Link
+                href={`/productos/${product.id}`}
+                aria-label="Ver opciones"
+                className={`btn-cart ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                {/* Visualmente se ve igual pero funcionalmente lleva al detalle */}
+                <ShoppingCart className="w-5 h-5" />
+              </Link>
             </div>
 
-            {/* Spacer - empuja todo lo de abajo al fondo */}
-            <div className="flex-1" />
-
-            {/* Contenido inferior - siempre al fondo */}
-            <div className="shrink-0 mt-auto">
-              {/* Bottom: Precio y Botón */}
-              <div className="flex justify-between items-center mb-3">
-                {/* Precio */}
-                <div className="flex flex-col">
-                  {product.onSale &&
-                  formattedSalePrice &&
-                  product.salePrice! < product.price ? (
-                    <>
-                      <span className="text-[13px] line-through muted mb-0.5">
-                        {formattedPrice}
-                      </span>
-                      <span className="text-[20px] font-bold text-base-primary">
-                        {formattedSalePrice}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-[20px] font-bold text-base-primary">
-                      {formattedPrice}
+            {/* Meta: Rating y Stock */}
+            <div className="flex justify-between items-center border-t border-theme pt-3">
+              {/* Rating: 1 estrella + número */}
+              {product.rating && product.rating > 0 ? (
+                <div className="flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span className="text-[12px] font-medium text-base-primary">
+                    {product.rating.toFixed(1)}
+                  </span>
+                  {product.reviewCount && product.reviewCount > 0 && (
+                    <span className="text-[11px] muted">
+                      ({product.reviewCount})
                     </span>
                   )}
                 </div>
+              ) : (
+                <span className="text-[11px] muted">Sin reseñas</span>
+              )}
 
-                {/* Botón agregar al carrito -> Ahora Navega a Detalles */}
-                <Link
-                  href={`/productos/${product.id}`}
-                  onClick={(e) => {
-                    // Allow navigation
-                  }}
-                  aria-label="Ver opciones"
-                  className={`btn-cart ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                >
-                  {/* Visualmente se ve igual pero funcionalmente lleva al detalle */}
-                  <ShoppingCart className="w-5 h-5" />
-                </Link>
-              </div>
-
-              {/* Meta: Rating y Stock */}
-              <div className="flex justify-between items-center border-t border-theme pt-3">
-                {/* Rating: 1 estrella + número */}
-                {product.rating && product.rating > 0 ? (
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    <span className="text-[12px] font-medium text-base-primary">
-                      {product.rating.toFixed(1)}
-                    </span>
-                    {product.reviewCount && product.reviewCount > 0 && (
-                      <span className="text-[11px] muted">
-                        ({product.reviewCount})
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-[11px] muted">Sin reseñas</span>
-                )}
-
-                {/* Stock */}
-                {product.stock > 0 && product.stock <= 10 ? (
-                  <span className="text-[11px] font-semibold text-amber-500">
-                    ¡Últimas {product.stock}!
-                  </span>
-                ) : product.stock > 0 ? (
-                  <span className="text-[11px] font-semibold text-green-500">
-                    En stock
-                  </span>
-                ) : null}
-              </div>
+              {/* Stock */}
+              {product.stock > 0 && product.stock <= 10 ? (
+                <span className="text-[11px] font-semibold text-amber-500">
+                  ¡Últimas {product.stock}!
+                </span>
+              ) : product.stock > 0 ? (
+                <span className="text-[11px] font-semibold text-green-500">
+                  En stock
+                </span>
+              ) : null}
             </div>
           </div>
-        </Link>
+        </div>
 
         {/* Botón favorito flotante */}
         <button
