@@ -12,7 +12,8 @@
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=flat-square&logo=prisma)](https://www.prisma.io/)
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-000000?style=flat-square&logo=vercel)](https://vercel.com/)
 
-[ **Documentación**](#documentación)
+[ **Ver Sitio Oficial**](https://www.rastuci.com/) |
+[ **Mi Portfolio**](https://gonzaloyacante.com/)
 
 </div>
 
@@ -48,6 +49,12 @@ en línea.
 - **Lista de Favoritos**: Guarda productos para comprar después
 - **Sistema de Reviews**: Calificaciones y comentarios reales
 - **Notificaciones Push**: Alertas de ofertas y actualizaciones
+
+## ⚠️ **Aviso de Portfolio**
+
+Este proyecto es un **Showcase Personal** de arquitectura y desarrollo Full Stack. Aunque el código
+es abierto para fines educativos, **no se aceptan contribuciones (Pull Requests)** externas en este
+momento, ya que el objetivo es demostrar habilidades individuales.
 
 ### **👨‍💼 Para Administradores**
 
@@ -174,23 +181,17 @@ yarn dev
 ```env
 # Base de datos
 DATABASE_URL="postgresql://user:password@localhost:5432/rastuci"
-DIRECT_URL="postgresql://user:password@localhost:5432/rastuci"
+DIRECT_URL="postgresql://... (Pooling/Direct)"
 
-# Autenticación
-NEXTAUTH_SECRET="your-super-secure-secret-here"
+# Autenticación (NextAuth)
+NEXTAUTH_SECRET="your-secure-secret"
 NEXTAUTH_URL="http://localhost:3000"
 
-# MercadoPago (usa tus credenciales de sandbox)
-MERCADOPAGO_ACCESS_TOKEN="TEST-your-test-token-here"
-
-# Cloudinary (obtén tus credenciales en cloudinary.com)
-CLOUDINARY_CLOUD_NAME="your-cloud-name"
-CLOUDINARY_API_KEY="your-api-key"
-CLOUDINARY_API_SECRET="your-api-secret"
-
-# OneSignal (obtén tus credenciales en onesignal.com)
-ONESIGNAL_APP_ID="your-app-id"
-ONESIGNAL_REST_API_KEY="your-rest-api-key"
+# Integraciones (MercadoPago, Cloudinary, OneSignal, Correo Argentino)
+MERCADOPAGO_ACCESS_TOKEN="<your_access_token>"
+CLOUDINARY_CLOUD_NAME="<your_cloud_name>"
+ONESIGNAL_APP_ID="<your_app_id>"
+# ... otras variables de configuración
 ```
 
 ---
@@ -269,17 +270,8 @@ Para acceder al panel de administración en tu instalación local:
 1. Ejecuta `yarn prisma:seed` para crear datos de prueba
 2. O crea un usuario admin manualmente desde la base de datos
 
-### **💳 Pagos de Prueba**
-
-Para probar la integración con MercadoPago, usa las tarjetas de prueba oficiales:
-
-```
-Visa: 4509 9535 6623 3704
-CVV: 123 | Vencimiento: 11/30
-Titular: APRO (para aprobado)
-```
-
-_Consulta la documentación de MercadoPago para más tarjetas de prueba_
+_Para probar la integración, se recomienda utilizar el entorno Sandbox de MercadoPago con
+credenciales de prueba propias._
 
 ---
 
@@ -299,25 +291,11 @@ permitiendo cotización de envíos, importación de pedidos y tracking en tiempo
 
 ```env
 # Correo Argentino (MiCorreo API)
-# Ambiente de Testing (desarrollo)
-CORREO_ARGENTINO_API_URL="https://apitest.correoargentino.com.ar/micorreo/v1"
-
-# Ambiente de Producción (comentar en desarrollo)
-# CORREO_ARGENTINO_API_URL="https://api.correoargentino.com.ar/micorreo/v1"
-
-# Credenciales (solicitar a Correo Argentino)
-CORREO_ARGENTINO_USERNAME="YOUR_USERNAME_HERE"
-CORREO_ARGENTINO_PASSWORD="YOUR_PASSWORD_HERE"
-CORREO_ARGENTINO_CUSTOMER_ID="YOUR_CUSTOMER_ID_HERE"
-
-# Datos de la tienda (remitente)
-STORE_NAME="Rastuci"
-STORE_ADDRESS="Calle Ejemplo 123"
-STORE_CITY="CABA"
-STORE_PROVINCE="C"
-STORE_POSTAL_CODE="1425"
-STORE_PHONE="1122334455"
-STORE_EMAIL="info@rastuci.com.ar"
+CORREO_ARGENTINO_API_URL="https://api.correoargentino.com.ar/micorreo/v1"
+CORREO_ARGENTINO_USERNAME="<username>"
+CORREO_ARGENTINO_PASSWORD="<password>"
+CORREO_ARGENTINO_CUSTOMER_ID="<customer_id>"
+# ... (Configuración de remitente Store)
 ```
 
 ### **🚀 Flujo Completo: Checkout → Import → Tracking**
@@ -478,45 +456,15 @@ yarn test tests/lib/correo-argentino-service.test.ts
 
 ---
 
-## 🤝 **Contribuir**
-
-¡Las contribuciones son bienvenidas! Este proyecto está diseñado para ser un ejemplo de calidad y
-una base sólida para proyectos reales.
-
-### **🛠️ Cómo Contribuir**
-
-1. **Fork** el proyecto
-2. **Crea** una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** a la rama (`git push origin feature/AmazingFeature`)
-5. **Abre** un Pull Request
-
-### **📝 Guidelines**
-
-- Seguir las convenciones de código establecidas
-- Incluir tests para nuevas funcionalidades
-- Actualizar documentación si es necesario
-- Usar commits descriptivos y en inglés
-
----
-
 ## 📈 **Roadmap**
 
-### **🚀 v2.0 - Q1 2025**
+### **🚀 Futuras Mejoras (v2.0)**
 
-- [ ] **App Mobile** nativa con React Native
-- [ ] **Integración WhatsApp** para soporte en tiempo real
-- [ ] **Sistema de Afiliados** para vendedores
-- [ ] **Multi-idioma** (inglés, portugués)
-- [ ] **PWA Completa** con funcionalidades offline
-
-### **🎯 v2.1 - Q2 2025**
-
-- [ ] **IA para Recomendaciones** personalizadas
-- [ ] **Realidad Aumentada** para probadores virtuales
-- [ ] **Marketplace** multi-vendor
-- [ ] **Analytics Avanzados** con BI integrado
-- [ ] **API Pública** para integraciones
+- [ ] **App Mobile Nativa** (React Native / Flutter).
+- [ ] **Integración WhatsApp Business API** para soporte automatizado.
+- [ ] **Sistema de Marketplace** (Multi-vendor).
+- [ ] **Inteligencia Artificial** para recomendaciones de talla y estilo.
+- [ ] **Analítica Predictiva** de stock y demanda.
 
 ---
 
@@ -529,7 +477,7 @@ una base sólida para proyectos reales.
 _Full Stack Developer & Entrepreneur_
 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/gonzaloyacante)
-[![Email](https://img.shields.io/badge/Email-EA4335?style=flat-square&logo=gmail&logoColor=white)](mailto:contact@example.com)
+[![Email](https://img.shields.io/badge/Email-EA4335?style=flat-square&logo=gmail&logoColor=white)](mailto:gyacante9@gmail.com)
 
 </div>
 
@@ -567,10 +515,10 @@ _Construyendo el futuro del e-commerce infantil, una línea de código a la vez.
 
 **[� Ver Documentación](#instalación-y-configuración)** •
 **[💻 Descargar Código](https://github.com/gonzaloyacante/rastuci)** •
-**[📞 Contacto](mailto:contact@example.com)**
+**[📞 Contacto](mailto:gyacante9@gmail.com)**
 
 ---
 
-**© 2025 Rastuci - Hecho con ❤️ en Argentina 🇦🇷**
+**© 2026 Rastuci - Hecho con ❤️ en Argentina 🇦🇷**
 
 </div>
