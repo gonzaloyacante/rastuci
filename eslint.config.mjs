@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook";
+
 import nextPlugin from "@next/eslint-plugin-next";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
@@ -16,17 +19,13 @@ export default tseslint.config(
       "scripts/**",
       "prisma/**/*.js",
     ],
-  },
-
-  // Configuración base de TypeScript
-  ...tseslint.configs.recommended,
-
-  // Configuración para archivos TypeScript/React
+  }, // Configuración base de TypeScript
+  ...tseslint.configs.recommended, // Configuración para archivos TypeScript/React
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
     plugins: {
       "@next/next": nextPlugin,
-      "react": reactPlugin,
+      react: reactPlugin,
       "react-hooks": reactHooksPlugin,
     },
     languageOptions: {
@@ -50,11 +49,14 @@ export default tseslint.config(
       "react/display-name": "off",
 
       // TypeScript - relajadas para compatibilidad
-      "@typescript-eslint/no-unused-vars": ["warn", {
-        argsIgnorePattern: "^_",
-        varsIgnorePattern: "^_",
-        caughtErrorsIgnorePattern: "^_"
-      }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-require-imports": "off",
@@ -62,5 +64,6 @@ export default tseslint.config(
       // Console permitido
       "no-console": "off",
     },
-  }
+  },
+  storybook.configs["flat/recommended"]
 );

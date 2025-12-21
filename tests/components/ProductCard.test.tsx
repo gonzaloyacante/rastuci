@@ -74,23 +74,24 @@ describe("ProductCard Component", () => {
   it("debe mostrar badge de oferta cuando el producto está en oferta", () => {
     renderWithCart(<ProductCard product={mockProduct} />);
 
-    expect(screen.getByText("OFERTA")).toBeInTheDocument();
+    // Component shows discount percentage badge
+    expect(screen.getByText(/OFF/i)).toBeInTheDocument();
   });
 
-  it("debe mostrar el badge OFERTA cuando onSale es true", () => {
+  it("debe mostrar el badge de descuento cuando onSale es true", () => {
     const productOnSale = { ...mockProduct, onSale: true };
     renderWithCart(<ProductCard product={productOnSale} />);
 
-    // El componente muestra "OFERTA" cuando onSale es true
-    expect(screen.getByText("OFERTA")).toBeInTheDocument();
+    // El componente muestra el porcentaje de descuento cuando onSale es true
+    expect(screen.getByText(/OFF/i)).toBeInTheDocument();
   });
 
   it("debe mostrar stock bajo cuando queden pocos productos", () => {
     const lowStockProduct = { ...mockProduct, stock: 2 };
     renderWithCart(<ProductCard product={lowStockProduct} />);
 
-    // El componente muestra "¡Solo 2!" para stock <= 30
-    expect(screen.getByText("¡Solo 2!")).toBeInTheDocument();
+    // El componente muestra "¡Últimas X!" para stock bajo (texto dividido en elementos)
+    expect(screen.getByText(/Últimas/i)).toBeInTheDocument();
   });
 
   it("debe mostrar Agotado cuando stock es 0", () => {

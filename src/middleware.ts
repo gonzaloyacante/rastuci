@@ -1,8 +1,8 @@
 import { getRequestId } from "@/lib/logger";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
-import { logApiCall } from "./src/lib/api-logger";
-import { csrfProtection, securityHeaders } from "./src/middleware/security";
+import { logApiCall } from "@/lib/api-logger";
+import { csrfProtection, securityHeaders } from "@/middleware-utils/security";
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;

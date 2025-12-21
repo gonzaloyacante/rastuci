@@ -119,3 +119,9 @@ test-results/
 .swc/
 package-lock.json
 
+
+*storybook.log
+storybook-static
+
+# Sentry Config File
+.env.sentry-build-plugin

@@ -58,7 +58,15 @@ export function cloudinaryLoader({
     }
   }
 
-  // For non-Cloudinary URLs or if parsing failed, return as-is
+  // For Unsplash, append width and quality params
+  if (src.includes("images.unsplash.com")) {
+    const url = new URL(src);
+    url.searchParams.set("w", width.toString());
+    url.searchParams.set("q", (quality || "auto").toString());
+    return url.toString();
+  }
+
+  // For non-Cloudinary/Unsplash URLs or if parsing failed, return as-is
   return src;
 }
 

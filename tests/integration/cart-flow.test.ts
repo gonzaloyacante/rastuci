@@ -86,56 +86,66 @@ describe("Cart Flow Integration Tests", () => {
     return mergedCart;
   };
 
-  const itemA: CartItem = { id: "1", productId: "p1", quantity: 1, price: 100 };
-  const itemB: CartItem = { id: "2", productId: "p2", quantity: 2, price: 50 };
+  const createItemA = (): CartItem => ({
+    id: "1",
+    productId: "p1",
+    quantity: 1,
+    price: 100,
+  });
+  const createItemB = (): CartItem => ({
+    id: "2",
+    productId: "p2",
+    quantity: 2,
+    price: 50,
+  });
 
   it("should add item to empty cart", () => {
-    const cart = addItemToCart(createCart(), itemA);
+    const cart = addItemToCart(createCart(), createItemA());
     expect(cart.items).toHaveLength(1);
     expect(cart.total).toBe(100);
   });
 
   it("should accumulate quantity for same item", () => {
-    let cart = addItemToCart(createCart(), itemA);
-    cart = addItemToCart(cart, itemA);
+    let cart = addItemToCart(createCart(), createItemA());
+    cart = addItemToCart(cart, createItemA());
     expect(cart.items).toHaveLength(1);
     expect(cart.items[0].quantity).toBe(2);
     expect(cart.total).toBe(200);
   });
 
   it("should add different items", () => {
-    let cart = addItemToCart(createCart(), itemA);
-    cart = addItemToCart(cart, itemB);
+    let cart = addItemToCart(createCart(), createItemA());
+    cart = addItemToCart(cart, createItemB());
     expect(cart.items).toHaveLength(2);
     expect(cart.total).toBe(200); // 100*1 + 50*2
   });
 
   it("should remove item", () => {
-    let cart = addItemToCart(createCart(), itemA);
-    cart = removeItem(cart, itemA.productId);
+    let cart = addItemToCart(createCart(), createItemA());
+    cart = removeItem(cart, "p1");
     expect(cart.items).toHaveLength(0);
     expect(cart.total).toBe(0);
   });
 
   it("should update quantity", () => {
-    let cart = addItemToCart(createCart(), itemA);
-    cart = updateQuantity(cart, itemA.productId, 5);
+    let cart = addItemToCart(createCart(), createItemA());
+    cart = updateQuantity(cart, "p1", 5);
     expect(cart.items[0].quantity).toBe(5);
     expect(cart.total).toBe(500);
   });
 
   it("should remove item if quantity updated to 0", () => {
-    let cart = addItemToCart(createCart(), itemA);
-    cart = updateQuantity(cart, itemA.productId, 0);
+    let cart = addItemToCart(createCart(), createItemA());
+    cart = updateQuantity(cart, "p1", 0);
     expect(cart.items).toHaveLength(0);
   });
 
   it("should merge local and remote carts", () => {
-    const localCart = addItemToCart(createCart(), itemA); // p1: 1
-    const remoteCart = addItemToCart(createCart(), itemB); // p2: 2
+    const localCart = addItemToCart(createCart(), createItemA()); // p1: 1
+    const remoteCart = addItemToCart(createCart(), createItemB()); // p2: 2
 
     // Add some p1 to remote as well to test increment
-    const remoteWithP1 = addItemToCart(remoteCart, itemA); // p2: 2, p1: 1
+    const remoteWithP1 = addItemToCart(remoteCart, createItemA()); // p2: 2, p1: 1
 
     const merged = mergeCarts(localCart, remoteWithP1);
     // Should have p1: 2 (1 local + 1 remote), p2: 2 (remote)
@@ -149,8 +159,20 @@ describe("Cart Flow Integration Tests", () => {
   });
 
   it("should handle variants correctly", () => {
-    const variantItem1 = { ...itemA, variantId: "v1" };
-    const variantItem2 = { ...itemA, variantId: "v2" };
+    const variantItem1: CartItem = {
+      id: "v1",
+      productId: "p1",
+      variantId: "v1",
+      quantity: 1,
+      price: 100,
+    };
+    const variantItem2: CartItem = {
+      id: "v2",
+      productId: "p1",
+      variantId: "v2",
+      quantity: 1,
+      price: 100,
+    };
 
     let cart = addItemToCart(createCart(), variantItem1);
     cart = addItemToCart(cart, variantItem2);
