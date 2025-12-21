@@ -5,29 +5,29 @@ import { GET, POST } from "@/app/api/products/route";
 // Mock Prisma client
 const mockPrisma = {
   product: {
-    findMany: jest.fn(),
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   },
   category: {
-    findMany: jest.fn(),
+    findMany: vi.fn(),
   },
 };
 
-jest.mock("@/lib/prisma", () => ({
+vi.mock("@/lib/prisma", () => ({
   prisma: mockPrisma,
 }));
 
 // Mock rate limiting
-jest.mock("@/lib/rate-limit", () => ({
-  checkRateLimit: jest.fn(() => Promise.resolve(true)),
+vi.mock("@/lib/rate-limit", () => ({
+  checkRateLimit: vi.fn(() => Promise.resolve(true)),
 }));
 
-describe.skip("/api/products (skipped - legacy api tests)", () => {
+describe("/api/products (skipped - legacy api tests)", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("GET /api/products", () => {
@@ -64,7 +64,7 @@ describe.skip("/api/products (skipped - legacy api tests)", () => {
       mockPrisma.product.findMany.mockResolvedValue([]);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/products?page=2&limit=10",
+        "http://localhost:3000/api/products?page=2&limit=10"
       );
       await GET(request);
 
@@ -80,7 +80,7 @@ describe.skip("/api/products (skipped - legacy api tests)", () => {
       mockPrisma.product.findMany.mockResolvedValue([]);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/products?categoryId=cat-1",
+        "http://localhost:3000/api/products?categoryId=cat-1"
       );
       await GET(request);
 
@@ -97,7 +97,7 @@ describe.skip("/api/products (skipped - legacy api tests)", () => {
       mockPrisma.product.findMany.mockResolvedValue([]);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/products?search=test",
+        "http://localhost:3000/api/products?search=test"
       );
       await GET(request);
 
@@ -117,7 +117,7 @@ describe.skip("/api/products (skipped - legacy api tests)", () => {
 
     it("handles database errors", async () => {
       mockPrisma.product.findMany.mockRejectedValue(
-        new Error("Database error"),
+        new Error("Database error")
       );
 
       const request = new NextRequest("http://localhost:3000/api/products");
@@ -190,7 +190,7 @@ describe.skip("/api/products (skipped - legacy api tests)", () => {
 
     it("handles database constraint errors", async () => {
       mockPrisma.product.create.mockRejectedValue(
-        new Error("Unique constraint failed"),
+        new Error("Unique constraint failed")
       );
 
       const request = new NextRequest("http://localhost:3000/api/products", {

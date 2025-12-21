@@ -10,13 +10,13 @@ import * as React from "react";
 // Some tests assume React is globally available (older style tests).
 (globalThis as any).React = React;
 
-// Shim jest.mock to capture CartContext factory results for legacy tests.
-// Jest hoists jest.mock calls; Vitest does not. Some legacy tests rely on
+// Shim vi.mock to capture CartContext factory results for legacy tests.
+// Jest hoists vi.mock calls; Vitest does not. Some legacy tests rely on
 // the mock factory being available to other modules. We store the factory
 // return value on globalThis.__TEST_CART_CONTEXT__ so the real implementation
 // can pick it up during tests.
-const originalJestMockAny: any = (globalThis as any).jest.mock;
-(globalThis as any).jest.mock = function (
+const originalJestMockAny: any = (globalThis as any).vi.mock;
+(globalThis as any).vi.mock = function (
   moduleName: string,
   factory?: any,
   options?: any

@@ -4,21 +4,21 @@ import type { Product } from "@/types";
 import { render, screen } from "@testing-library/react";
 
 // Mock del componente Image de Next.js
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
-  // eslint-disable-next-line @next/next/no-img-element
-  default: (props: { src: string; alt: string;[key: string]: unknown }) => (
+
+  default: (props: { src: string; alt: string; [key: string]: unknown }) => (
     <img src={props.src} alt={props.alt} />
   ),
 }));
 
 // Mock del hook useCart
-const mockAddItem = jest.fn();
-jest.mock("@/hooks/useCart", () => ({
+const mockAddItem = vi.fn();
+vi.mock("@/hooks/useCart", () => ({
   useCart: () => ({
     addItem: mockAddItem,
-    isInCart: jest.fn(() => false),
-    getQuantity: jest.fn(() => 0),
+    isInCart: vi.fn(() => false),
+    getQuantity: vi.fn(() => 0),
   }),
 }));
 
@@ -51,8 +51,8 @@ const renderWithCart = (component: React.ReactElement) => {
 
 describe("ProductCard Component", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    global.fetch = jest.fn(() =>
+    vi.clearAllMocks();
+    global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ success: true, data: [] }),
@@ -61,7 +61,7 @@ describe("ProductCard Component", () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("debe renderizar información básica del producto", () => {
