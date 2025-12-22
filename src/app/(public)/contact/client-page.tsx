@@ -70,13 +70,12 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
               <MapPin size={24} />
             </div>
             <div>
-              <h3 className="text-lg mb-2 font-montserrat">Dirección</h3>
-              {contact.address.lines.map((ln) => (
-                <p className="muted" key={`address-line-${ln}`}>
-                  {ln}
-                </p>
-              ))}
+              <h3 className="text-lg mb-2 font-montserrat">Ubicación</h3>
+              {/* Solo mostramos ciudad/país para mantener privacidad */}
               <p className="muted">{contact.address.cityCountry}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                La dirección exacta se proporciona al coordinar el retiro
+              </p>
             </div>
           </div>
         </CardContent>

@@ -5,50 +5,11 @@ import {
 import { logger } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
-// Sucursales de ejemplo para fallback
-const FALLBACK_AGENCIES = [
-  {
-    code: "FALLBACK-001",
-    name: "Sucursal Centro",
-    manager: "N/A",
-    email: "centro@correoargentino.com.ar",
-    phone: "0810-999-0000",
-    services: {
-      packageReception: true,
-      pickupAvailability: true,
-    },
-    location: {
-      address: {
-        streetName: "Av. Corrientes",
-        streetNumber: "1234",
-        locality: "Centro",
-        city: "Capital Federal",
-        province: "Ciudad Autónoma de Buenos Aires",
-        provinceCode: "C",
-        postalCode: "1043",
-      },
-      latitude: "-34.604",
-      longitude: "-58.381",
-    },
-    hours: {
-      sunday: null,
-      monday: { start: "0900", end: "1800" },
-      tuesday: { start: "0900", end: "1800" },
-      wednesday: { start: "0900", end: "1800" },
-      thursday: { start: "0900", end: "1800" },
-      friday: { start: "0900", end: "1800" },
-      saturday: { start: "0900", end: "1300" },
-      holidays: null,
-    },
-    status: "ACTIVE",
-  },
-];
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const provinceCode = searchParams.get("provinceCode");
-    const postalCode = searchParams.get("postalCode"); // Filtro opcional
+    const postalCode = searchParams.get("postalCode");
 
     if (!provinceCode) {
       return NextResponse.json(
@@ -57,81 +18,81 @@ export async function GET(request: Request) {
       );
     }
 
-    // Obtener customerId del servicio o env
-    const customerId =
-      correoArgentinoService.getCustomerId() ||
-      process.env.CORREO_ARGENTINO_CUSTOMER_ID;
+    const customerId = process.env.CORREO_ARGENTINO_CUSTOMER_ID;
 
-    // Si no hay customerId, devolver fallback
     if (!customerId) {
-      logger.warn("[Agencies] No customerId configured, using fallback");
-      return NextResponse.json({
-        success: true,
-        agencies: FALLBACK_AGENCIES,
-        isFallback: true,
-      });
+      logger.error("[Agencies] CORREO_ARGENTINO_CUSTOMER_ID not configured");
+      return NextResponse.json(
+        { success: false, error: "Customer ID no configurado", agencies: [] },
+        { status: 500 }
+      );
     }
 
-    try {
-      const result = await correoArgentinoService.getAgencies({
-        customerId,
-        provinceCode: provinceCode as ProvinceCode,
+    logger.info("[Agencies] Fetching agencies from CA API", {
+      provinceCode,
+      customerId,
+      postalCode: postalCode || "none",
+    });
+
+    const result = await correoArgentinoService.getAgencies({
+      customerId,
+      provinceCode: provinceCode as ProvinceCode,
+    });
+
+    if (!result.success) {
+      logger.error("[Agencies] CA API failed", {
+        error: result.error,
       });
-
-      if (result.success && result.data && result.data.length > 0) {
-        let filteredAgencies = result.data;
-
-        // Filtrar por código postal si se proporciona (normalizando a solo números)
-        if (postalCode) {
-          const cleanSearchCP = postalCode.replace(/\D/g, "");
-
-          filteredAgencies = result.data.filter((agency) => {
-            const rawCP = agency.location?.address?.postalCode || "";
-            const cleanAgencyCP = rawCP.replace(/\D/g, "");
-
-            // Match exacto o parcial (primeros 4 dígitos) de la parte numérica
-            return (
-              cleanAgencyCP === cleanSearchCP ||
-              cleanAgencyCP.startsWith(cleanSearchCP) ||
-              cleanSearchCP.startsWith(cleanAgencyCP) ||
-              rawCP === postalCode // Mantener compatibilidad con match exacto de string
-            );
-          });
-
-          logger.info(`[Agencies] Filtered by postalCode ${postalCode} (${cleanSearchCP})`, {
-            total: result.data.length,
-            filtered: filteredAgencies.length,
-          });
-        }
-
-        return NextResponse.json({
-          success: true,
-          agencies: filteredAgencies,
-          isFallback: false,
-        });
-      }
-
-      // Si no hay sucursales, devolver lista vacía (NO fallback)
-      logger.info("[Agencies] CA API returned no agencies for this province");
       return NextResponse.json({
-        success: true,
+        success: false,
+        error: result.error?.message || "Error al obtener sucursales",
         agencies: [],
-        isFallback: false,
-      });
-    } catch (apiError) {
-      logger.error("[Agencies] CA API error, using fallback:", { apiError });
-      return NextResponse.json({
-        success: true,
-        agencies: FALLBACK_AGENCIES,
-        isFallback: true,
       });
     }
-  } catch (error) {
-    logger.error("Error getting agencies:", { error });
+
+    let agencies = result.data || [];
+
+    logger.info("[Agencies] CA API returned", {
+      count: agencies.length,
+      firstAgency: agencies[0]?.name || "none",
+    });
+
+    // Filtrar por código postal si se proporciona
+    if (postalCode && agencies.length > 0) {
+      const cleanSearchCP = postalCode.replace(/\D/g, "");
+
+      agencies = agencies.filter((agency) => {
+        const rawCP = agency.location?.address?.postalCode || "";
+        const cleanAgencyCP = rawCP.replace(/\D/g, "");
+
+        return (
+          cleanAgencyCP === cleanSearchCP ||
+          cleanAgencyCP.startsWith(cleanSearchCP) ||
+          cleanSearchCP.startsWith(cleanAgencyCP) ||
+          rawCP === postalCode
+        );
+      });
+
+      logger.info(`[Agencies] Filtered by postalCode ${postalCode}`, {
+        filtered: agencies.length,
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      agencies: FALLBACK_AGENCIES,
-      isFallback: true,
+      agencies,
+      isFallback: false,
+    });
+  } catch (error: any) {
+    logger.error("[Agencies] Unexpected error", {
+      message: error.message,
+      stack: error.stack?.substring(0, 500),
+    });
+
+    return NextResponse.json({
+      success: false,
+      error: error.message || "Error inesperado",
+      agencies: [],
     });
   }
 }

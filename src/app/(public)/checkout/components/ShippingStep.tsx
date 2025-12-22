@@ -156,12 +156,24 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         );
 
         if (options && options.length > 0) {
-          setShippingOptions(options);
+          // Filtrar por tipo (D=Domicilio, S=Sucursal) para evitar mezclas
+          const modeFiltered = options.filter((o) => {
+            if (deliveryMode === "agency")
+              return o.id.includes("-S") || o.name.includes("Sucursal");
+            if (deliveryMode === "home")
+              return o.id.includes("-D") || o.name.includes("Domicilio");
+            return true;
+          });
 
-          // Seleccionar la primera opción automáticamente si no hay una seleccionada
-          // o si la seleccionada no pertenece al nuevo set de opciones
-          if (!selectedShippingOption || !options.find(o => o.id === selectedShippingOption.id)) {
-            setSelectedShippingOption(options[0]);
+          setShippingOptions(modeFiltered);
+
+          // Seleccionar la primera automáticamente si es necesario
+          if (
+            modeFiltered.length > 0 &&
+            (!selectedShippingOption ||
+              !modeFiltered.find((o) => o.id === selectedShippingOption.id))
+          ) {
+            setSelectedShippingOption(modeFiltered[0]);
           }
         } else {
           // Usar fallback si no hay opciones
@@ -182,7 +194,14 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     };
 
     fetchShippingOptions();
-  }, [customerInfo?.postalCode, deliveryMode, selectedAgency, calculateShippingCost, selectedShippingOption, setSelectedShippingOption]);
+  }, [
+    customerInfo?.postalCode,
+    deliveryMode,
+    selectedAgency,
+    calculateShippingCost,
+    selectedShippingOption,
+    setSelectedShippingOption,
+  ]);
 
   // ============================================================================
   // HANDLERS
@@ -246,10 +265,11 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         {/* Indicador de origen de datos */}
         {shippingOptions.length > 0 && (
           <div
-            className={`inline-flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full ${shippingOptions[0]?.isFallback
-              ? "bg-amber-100 text-amber-700"
-              : "bg-green-100 text-green-700"
-              }`}
+            className={`inline-flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full ${
+              shippingOptions[0]?.isFallback
+                ? "bg-amber-100 text-amber-700"
+                : "bg-green-100 text-green-700"
+            }`}
           >
             {shippingOptions[0]?.isFallback ? (
               <>
@@ -276,10 +296,11 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
           return (
             <div
               key={option.id}
-              className={`border rounded-lg p-3 sm:p-4 transition-all cursor-pointer ${isSelected
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : "border-muted surface hover:border-primary/50 hover:bg-muted/30"
-                } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`border rounded-lg p-3 sm:p-4 transition-all cursor-pointer ${
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-muted surface hover:border-primary/50 hover:bg-muted/30"
+              } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               onClick={() => !disabled && handleSelectOption(option)}
             >
               {/* Layout mobile: stack vertical */}
@@ -394,6 +415,47 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
               initialProvince={customerInfo?.province}
               initialPostalCode={customerInfo?.postalCode}
             />
+          </div>
+        )}
+
+        {/* Mapa de ubicación para retiro en local */}
+        {deliveryMode === "pickup" && (
+          <div className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-top-4 duration-300">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+              <Store className="h-5 w-5 text-primary" />
+              Ubicación del local
+            </h3>
+            <div className="rounded-lg border border-muted overflow-hidden">
+              {/* Google Maps Embed - using simple embed format */}
+              <iframe
+                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13106.15!2d-58.63!3d-34.48!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcb0a5c!2s${encodeURIComponent(shippingSettings?.storeCity || "Don Torcuato, Buenos Aires, Argentina")}!5e0!3m2!1ses!2sar!4v1703000000000!5m2!1ses!2sar`}
+                width="100%"
+                height="280"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Ubicación aproximada del local"
+              />
+              <div className="p-4 surface-muted border-t border-muted">
+                <p className="text-sm font-medium text-primary">
+                  {shippingSettings?.storeCity || "Don Torcuato, Buenos Aires"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Coordinaremos la dirección exacta por WhatsApp después de
+                  confirmar tu pedido
+                </p>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shippingSettings?.storeCity || "Don Torcuato, Buenos Aires, Argentina")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-2 text-xs text-primary hover:underline"
+                >
+                  <MapPin className="h-3 w-3" />
+                  Abrir en Google Maps
+                </a>
+              </div>
+            </div>
           </div>
         )}
 

@@ -487,9 +487,12 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         );
         const result = await response.json();
 
-        if (result.success && result.data) {
-          setAgencyCache((prev) => ({ ...prev, [provinceCode]: result.data }));
-          return result.data;
+        if (result.success && result.agencies) {
+          setAgencyCache((prev) => ({
+            ...prev,
+            [provinceCode]: result.agencies,
+          }));
+          return result.agencies;
         }
         return [];
       } catch (error) {

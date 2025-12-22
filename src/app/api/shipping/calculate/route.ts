@@ -103,11 +103,35 @@ export async function POST(request: Request) {
         result.data?.rates &&
         result.data.rates.length > 0
       ) {
+        // Filtrar por tipo de entrega si se especificó (D=Domicilio, S=Sucursal)
+        let filteredRates = result.data.rates;
+        if (deliveredType) {
+          filteredRates = result.data.rates.filter(
+            (rate) => rate.deliveredType === deliveredType
+          );
+          logger.info("[Shipping] Filtered rates by deliveredType", {
+            requested: deliveredType,
+            total: result.data.rates.length,
+            filtered: filteredRates.length,
+          });
+        }
+
+        // Si no hay rates después del filtro, usar fallback
+        if (filteredRates.length === 0) {
+          const type = deliveredType === "S" ? "agency" : "home";
+          return NextResponse.json({
+            success: true,
+            options: FALLBACK_SHIPPING_OPTIONS[type],
+            isFallback: true,
+          });
+        }
+
         // Mapear respuesta al formato que espera el frontend
-        const options = result.data.rates.map((rate) => ({
+        const options = filteredRates.map((rate) => ({
           id: `ca-${rate.productType}-${rate.deliveredType}`,
-          name: `${rate.productName} (${rate.deliveredType === "D" ? "Domicilio" : "Sucursal"
-            })`,
+          name: `${rate.productName} (${
+            rate.deliveredType === "D" ? "Domicilio" : "Sucursal"
+          })`,
           description: `Entrega en ${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días hábiles`,
           price: rate.price,
           estimatedDays: `${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días`,

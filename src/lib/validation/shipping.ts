@@ -13,6 +13,8 @@ export const ShippingSettingsSchema = z.object({
     .string()
     .default("El costo de envío se calculará en el checkout"),
   estimatedDelivery: z.string().default("3-5 días hábiles"),
+  // Ciudad del local para mostrar en Google Maps (solo ciudad, no dirección completa)
+  storeCity: z.string().default("Don Torcuato, Buenos Aires, Argentina"),
 });
 
 export type ShippingSettings = z.infer<typeof ShippingSettingsSchema>;
@@ -27,4 +29,5 @@ export const defaultShippingSettings: ShippingSettings = {
   shippingCostLabel: "Costo de envío",
   shippingCostDescription: "El costo de envío se calculará en el checkout",
   estimatedDelivery: "3-5 días hábiles",
+  storeCity: "Don Torcuato, Buenos Aires, Argentina",
 };

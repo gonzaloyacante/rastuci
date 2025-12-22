@@ -27,7 +27,8 @@ export function AgencySelector({
   const [province, setProvince] = useState<string>("");
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [query, setQuery] = useState(""); // Valor inmediato del input
+  const [searchTerm, setSearchTerm] = useState(""); // Valor que dispara el filtrado
   const [error, setError] = useState<string | null>(null);
 
   // Cargar provincias
@@ -43,10 +44,13 @@ export function AgencySelector({
   // Efecto para setear provincia inicial
   useEffect(() => {
     if (initialProvince && !province) {
+      const normalizedInitial = initialProvince.toLowerCase().trim();
       const found = provinceOptions.find(
         (p) =>
-          p.value === initialProvince ||
-          p.label.toLowerCase() === initialProvince.toLowerCase()
+          p.value.toLowerCase() === normalizedInitial ||
+          p.label.toLowerCase() === normalizedInitial ||
+          normalizedInitial.includes(p.label.toLowerCase()) ||
+          p.label.toLowerCase().includes(normalizedInitial)
       );
       if (found) {
         setProvince(found.value);
@@ -54,12 +58,13 @@ export function AgencySelector({
     }
   }, [initialProvince, province, provinceOptions]);
 
-  // Pre-filtrar por código postal si viene
+  // Pre-filtrar por código postal si viene - mejorado para que persista
   useEffect(() => {
-    if (initialPostalCode && agencies.length > 0) {
-      setSearchTerm(initialPostalCode);
+    if (initialPostalCode && !query && !searchTerm) {
+      setQuery(initialPostalCode);
+      // No auto-trigger search immediately, let user click or press enter
     }
-  }, [initialPostalCode, agencies.length]);
+  }, [initialPostalCode, query, searchTerm]);
 
   const { getAgencies } = useCart();
 
@@ -200,7 +205,19 @@ export function AgencySelector({
     [agencies, onSelectAgency]
   );
 
+  const handleSearchTrigger = useCallback(() => {
+    setSearchTerm(query.trim());
+  }, [query]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSearchTrigger();
+    }
+  };
+
   const clearSearch = useCallback(() => {
+    setQuery("");
     setSearchTerm("");
   }, []);
 
@@ -211,7 +228,11 @@ export function AgencySelector({
         <label className="text-sm font-medium">Provincia</label>
         <Select
           value={province}
-          onChange={setProvince}
+          onChange={(val) => {
+            setProvince(val);
+            setQuery("");
+            setSearchTerm("");
+          }}
           options={provinceOptions}
           placeholder="Selecciona una provincia"
           searchable
@@ -227,26 +248,44 @@ export function AgencySelector({
               (por nombre, ciudad o CP)
             </span>
           </label>
-          <div className="relative">
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+          <div className="flex items-stretch border-2 border-muted hover:border-primary/50 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 rounded-md overflow-hidden bg-surface transition-all h-12">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Ej: Monte Grande, 1842, B0107..."
-              className="pl-3 pr-20"
+              className="flex-1 px-4 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground h-full"
               disabled={loading || !province}
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              {searchTerm && (
+            {query && (
+              <>
+                <div className="w-[1px] bg-muted shrink-0" />
                 <button
                   type="button"
-                  onClick={clearSearch}
-                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setQuery("");
+                    setSearchTerm("");
+                  }}
+                  className="px-4 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-all flex items-center justify-center shrink-0 h-full"
+                  title="Limpiar búsqueda"
                 >
                   <X className="h-4 w-4" />
                 </button>
-              )}
-              <Search className="h-4 w-4 text-muted-foreground pointer-events-none" />
-            </div>
+              </>
+            )}
+            <div className="w-[1px] bg-muted shrink-0" />
+            <button
+              type="button"
+              onClick={handleSearchTrigger}
+              disabled={loading || !province || !query.trim()}
+              className="px-6 bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shrink-0 h-full disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Search className="h-4 w-4" />
+              <span className="font-bold whitespace-nowrap">Buscar</span>
+            </button>
           </div>
           {searchTerm && (
             <div className="flex items-center gap-2">

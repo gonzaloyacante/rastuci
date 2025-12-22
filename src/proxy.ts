@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { logApiCall } from "@/lib/api-logger";
 import { csrfProtection, securityHeaders } from "@/middleware-utils/security";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Log all API requests
@@ -107,7 +107,7 @@ export async function middleware(request: NextRequest) {
   return res;
 }
 
-// Configurar el middleware para que se ejecute solo en las rutas especificadas
+// Configurar el proxy para que se ejecute solo en las rutas especificadas
 export const config = {
   matcher: ["/admin", "/admin/:path*", "/api/:path*"],
 };
