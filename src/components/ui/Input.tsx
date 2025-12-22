@@ -1,16 +1,52 @@
 "use client";
 
 import React, { useId, useState } from "react";
-// import { cn } from "@/lib/utils"; // Available when needed
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  /** Label text displayed above the input */
   label?: string;
+  /** Error message or boolean to show error state */
   error?: boolean | string;
+  /** Help text displayed below the input */
   helpText?: string;
-  icon?: string; // Nuevo prop para soportar iconos
-  iconPosition?: "left" | "right"; // Posición del icono
-  allowPasswordToggle?: boolean; // Mostrar botón ver/ocultar para contraseñas
+  /** Icon displayed on the left side (React node, e.g., Lucide icon) */
+  leftIcon?: React.ReactNode;
+  /** Icon displayed on the right side (React node, e.g., Lucide icon) */
+  rightIcon?: React.ReactNode;
+  /** @deprecated Use leftIcon/rightIcon instead */
+  icon?: string;
+  /** @deprecated Use leftIcon/rightIcon instead */
+  iconPosition?: "left" | "right";
+  /** Visual variant */
+  variant?: "default" | "filled" | "ghost";
+  /** Size variant */
+  inputSize?: "sm" | "md" | "lg";
+  /** Callback when clear button is clicked (shows X button when provided and value exists) */
+  onClear?: () => void;
+  /** Show password toggle button for password inputs */
+  allowPasswordToggle?: boolean;
+  /** Mark field as required (shows asterisk) */
+  required?: boolean;
+  /** Container class name */
+  containerClassName?: string;
 }
+
+const sizeClasses = {
+  sm: "h-8 text-xs px-2.5",
+  md: "h-10 text-sm px-3",
+  lg: "h-12 text-base px-4",
+};
+
+const variantClasses = {
+  default:
+    "border-2 border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20",
+  filled:
+    "border-0 bg-[var(--color-surface-secondary)] focus:bg-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]/20",
+  ghost:
+    "border-0 bg-transparent hover:bg-[var(--color-surface-secondary)] focus:bg-[var(--color-surface-secondary)] focus:ring-2 focus:ring-[var(--color-primary)]/20",
+};
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
@@ -18,10 +54,18 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       label,
       error,
       helpText,
-      icon,
-      iconPosition = "left",
-      className = "",
+      leftIcon,
+      rightIcon,
+      icon, // deprecated
+      iconPosition = "left", // deprecated
+      variant = "default",
+      inputSize = "md",
+      onClear,
       allowPasswordToggle,
+      required,
+      className = "",
+      containerClassName,
+      value,
       ...rest
     },
     ref
@@ -32,62 +76,112 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       type: restType,
       onChange: restOnChange,
       ["aria-label"]: restAria,
+      disabled,
       ...restProps
     } = rest || {};
+
     const id = restId || `input-${generatedId}`;
     const [showPassword, setShowPassword] = useState(false);
-    const isPassword = restType === "password" || rest.type === "password";
+    const isPassword = restType === "password";
     const showToggle = isPassword && allowPasswordToggle;
-    const effectiveType =
-      showToggle && showPassword ? "text" : restType || rest.type;
+    const effectiveType = showToggle && showPassword ? "text" : restType;
     const ariaLabel =
       restAria || (!label && isPassword ? "password" : undefined);
 
+    // Support legacy icon prop
+    const hasLeftIcon = leftIcon || (icon && iconPosition === "left");
+    const hasRightIcon = rightIcon || (icon && iconPosition === "right");
+    const showClearButton = onClear && value && !disabled;
+
+    // Calculate padding based on icons and buttons
+    const leftPadding = hasLeftIcon ? "pl-10" : "";
+    const rightPaddingNeeds = [
+      hasRightIcon && "pr-10",
+      showClearButton && "pr-10",
+      showToggle && "pr-12",
+      showClearButton && showToggle && "pr-20",
+    ].filter(Boolean);
+    const rightPadding = rightPaddingNeeds[rightPaddingNeeds.length - 1] || "";
+
     return (
-      <div className="w-full">
+      <div className={cn("w-full", containerClassName)}>
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium mb-2">
+          <label
+            htmlFor={id}
+            className="block text-sm font-medium mb-2 text-[var(--color-text)]"
+          >
             {label}
+            {required && <span className="text-error ml-1">*</span>}
           </label>
         )}
         <div className="relative">
-          {icon && iconPosition === "left" && (
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 muted pointer-events-none">
-              <i className={`icon-${icon}`}></i>
+          {/* Left Icon */}
+          {hasLeftIcon && (
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--color-text-muted)] pointer-events-none">
+              {leftIcon || <i className={`icon-${icon}`} />}
             </span>
           )}
+
           <input
             ref={ref}
-            className={`form-input input-base text-sm transition-all duration-200 ${
-              icon && iconPosition === "left" ? "pl-10" : "px-4"
-            } ${icon && iconPosition === "right" ? "pr-10" : ""} ${
-              showToggle ? "pr-16" : ""
-            } ${error ? "border-error" : ""} ${className}`}
-            {...(() => {
-              const p = { ...restProps };
-              // Asegurar que no duplicamos atributos controlados
-              const cleaned = p as Record<string, unknown>;
-              delete cleaned.id;
-              delete cleaned.type;
-              delete cleaned["aria-label"];
-              return cleaned;
-            })()}
             id={id}
             type={effectiveType}
+            value={value}
+            disabled={disabled}
             aria-label={ariaLabel}
             aria-invalid={!!error}
             aria-describedby={helpText || error ? `${id}-help` : undefined}
+            aria-required={required}
             onChange={(e) => {
               if (typeof restOnChange === "function") {
-                (restOnChange as React.ChangeEventHandler<HTMLInputElement>)(e);
+                restOnChange(e);
               }
             }}
+            className={cn(
+              // Base styles
+              "w-full rounded-lg outline-none transition-all duration-200",
+              "placeholder:text-[var(--color-text-muted)]",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              // Size
+              sizeClasses[inputSize],
+              // Variant
+              variantClasses[variant],
+              // Icons padding
+              leftPadding,
+              rightPadding,
+              // Error state
+              error && "border-error focus:border-error focus:ring-error/20",
+              // Custom classes
+              className
+            )}
+            {...restProps}
           />
-          {icon && iconPosition === "right" && (
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3 muted pointer-events-none">
-              <i className={`icon-${icon}`}></i>
+
+          {/* Right Icon (static) */}
+          {hasRightIcon && !showClearButton && !showToggle && (
+            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--color-text-muted)] pointer-events-none">
+              {rightIcon || <i className={`icon-${icon}`} />}
             </span>
           )}
+
+          {/* Clear Button */}
+          {showClearButton && (
+            <button
+              type="button"
+              aria-label="Limpiar"
+              onClick={onClear}
+              className={cn(
+                "absolute inset-y-0 flex items-center justify-center",
+                "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
+                "focus:outline-none transition-colors",
+                showToggle ? "right-10" : "right-3"
+              )}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+
+          {/* Password Toggle */}
           {showToggle && (
             <button
               type="button"
@@ -95,9 +189,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
               }
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-3 flex h-full items-center px-3 text-muted hover:text-foreground focus:outline-none z-10"
+              className="absolute inset-y-0 right-3 flex items-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus:outline-none transition-colors"
             >
-              {/* Simple eye icon using SVG to avoid external deps */}
               {showPassword ? (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -126,13 +219,23 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </button>
           )}
         </div>
-        {error && (
-          <p id={`${id}-help`} className="mt-1 text-xs text-error font-medium">
+
+        {/* Error Message */}
+        {error && typeof error === "string" && (
+          <p
+            id={`${id}-help`}
+            className="mt-1.5 text-xs text-error font-medium"
+          >
             {error}
           </p>
         )}
+
+        {/* Help Text */}
         {helpText && !error && (
-          <p id={`${id}-help`} className="mt-1 text-xs muted">
+          <p
+            id={`${id}-help`}
+            className="mt-1.5 text-xs text-[var(--color-text-muted)]"
+          >
             {helpText}
           </p>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import {
   useTrackingValidation,
   type TrackingValidationResponse,
@@ -109,17 +110,16 @@ export function TrackingValidator({
     <div className={`space-y-4 ${className}`}>
       {/* Input y botón de búsqueda */}
       <div className="flex gap-2">
-        <div className="flex-1">
-          <input
-            type="text"
-            value={trackingInput}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={placeholder}
-            className="w-full px-4 py-2 border border-muted rounded-lg surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            disabled={isLoading}
-          />
-        </div>
+        <Input
+          type="text"
+          value={trackingInput}
+          onChange={(e) => handleInputChange(e.target.value)}
+          onKeyDown={handleKeyPress}
+          placeholder={placeholder}
+          disabled={isLoading}
+          leftIcon={<Package className="w-4 h-4" />}
+          containerClassName="flex-1"
+        />
         <Button
           onClick={handleValidate}
           disabled={!trackingInput.trim() || isLoading}

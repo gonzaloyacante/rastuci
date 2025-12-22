@@ -7,7 +7,7 @@ import {
   PROVINCE_CODE_MAP as PROVINCE_NAMES,
 } from "@/lib/constants";
 import { Agency } from "@/lib/correo-argentino-service";
-import { Loader2, MapPin, Search, Store, X } from "lucide-react";
+import { Loader2, MapPin, Search, Store } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -248,42 +248,26 @@ export function AgencySelector({
               (por nombre, ciudad o CP)
             </span>
           </label>
-          <div className="flex items-stretch border-2 border-muted hover:border-primary/50 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 rounded-md overflow-hidden bg-surface transition-all h-12">
-            <input
+          <div className="flex items-stretch gap-0">
+            <Input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ej: Monte Grande, 1842, B0107..."
-              className="flex-1 px-4 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground h-full"
               disabled={loading || !province}
+              leftIcon={<Search className="h-4 w-4" />}
+              onClear={query ? clearSearch : undefined}
+              inputSize="lg"
+              className="rounded-r-none border-r-0"
+              containerClassName="flex-1"
             />
-            {query && (
-              <>
-                <div className="w-[1px] bg-muted shrink-0" />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setQuery("");
-                    setSearchTerm("");
-                  }}
-                  className="px-4 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-all flex items-center justify-center shrink-0 h-full"
-                  title="Limpiar búsqueda"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            <div className="w-[1px] bg-muted shrink-0" />
             <button
               type="button"
               onClick={handleSearchTrigger}
               disabled={loading || !province || !query.trim()}
-              className="px-6 bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shrink-0 h-full disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shrink-0 h-12 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-lg border-2 border-primary"
             >
-              <Search className="h-4 w-4" />
               <span className="font-bold whitespace-nowrap">Buscar</span>
             </button>
           </div>

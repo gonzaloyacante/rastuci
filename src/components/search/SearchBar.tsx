@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { X } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 
 interface SearchBarProps {
@@ -66,40 +65,32 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <div className={`relative ${className}`}>
-      <div className="relative">
-        <svg
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-content-tertiary h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
-        <Input
-          type="text"
-          value={searchValue}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
-          placeholder={placeholder}
-          disabled={disabled}
-          className="pl-10 pr-10"
-        />
-        {showClearButton && searchValue && (
-          <button
-            type="button"
-            onClick={handleClear}
-            disabled={disabled}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-content-tertiary hover:text-content-primary disabled:opacity-50">
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
+    <div className={className}>
+      <Input
+        type="text"
+        value={searchValue}
+        onChange={handleInputChange}
+        onKeyDown={handleKeyPress}
+        placeholder={placeholder}
+        disabled={disabled}
+        leftIcon={
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        }
+        onClear={showClearButton && searchValue ? handleClear : undefined}
+      />
     </div>
   );
 };
