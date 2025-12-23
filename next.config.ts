@@ -141,8 +141,17 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: res.cloudinary.com images.unsplash.com placehold.co via.placeholder.com picsum.photos; font-src 'self' fonts.gstatic.com; connect-src 'self' res.cloudinary.com; frame-ancestors 'none';",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' va.vercel-scripts.com https://www.googletagmanager.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' blob: data: https: res.cloudinary.com images.unsplash.com placehold.co via.placeholder.com picsum.photos",
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "connect-src 'self' https://api.mercadopago.com https://*.sentry.io https://*.google-analytics.com https://www.googletagmanager.com wss://localhost:* ws://localhost:*",
+              "worker-src 'self' blob:",
+              "child-src 'self' blob:",
+              "frame-ancestors 'none'",
+            ].join("; "),
           },
           {
             key: "Strict-Transport-Security",

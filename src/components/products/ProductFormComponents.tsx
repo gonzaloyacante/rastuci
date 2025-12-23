@@ -87,11 +87,16 @@ export function HelpTooltip({ text }: { text: string }) {
 export function PlaceholderImage({ className }: { className?: string }) {
   return (
     <div
-      className={`bg-muted rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
+      className={`bg-neutral-100 dark:bg-neutral-800 rounded-lg flex items-center justify-center border border-neutral-200 dark:border-neutral-700 ${className || "w-full h-48"}`}
     >
-      <div className="text-center">
-        <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-        <p className="text-sm text-muted-foreground">Sin imagen</p>
+      <div className="text-center p-4">
+        <ImageIcon className="h-10 w-10 text-neutral-400 mx-auto mb-2" />
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">
+          Imagen no disponible
+        </p>
+        <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
+          No se pudo cargar la imagen
+        </p>
       </div>
     </div>
   );
@@ -324,26 +329,24 @@ export function ColorPicker({
     <div className="space-y-6">
       {/* 1. Paleta de Selección Rápida */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col gap-3 mb-4">
           <h3 className="text-sm font-medium">Seleccionar Colores</h3>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-2">
             {Object.keys(COLOR_CATEGORIES).map((catKey) => (
               <button
                 key={catKey}
                 type="button"
                 onClick={() => setActiveCategory(catKey)}
                 className={cn(
-                  "w-2 h-2 rounded-full transition-all",
+                  "px-3 py-1.5 text-xs font-medium rounded-full border transition-all",
                   activeCategory === catKey
-                    ? "bg-primary scale-125"
-                    : "bg-muted hover:bg-primary/50"
+                    ? "bg-primary text-white border-primary"
+                    : "bg-surface border-muted hover:border-primary/50 text-foreground"
                 )}
-                title={COLOR_CATEGORIES[catKey].label}
-              />
+              >
+                {COLOR_CATEGORIES[catKey].label}
+              </button>
             ))}
-            <span className="text-xs text-muted-foreground ml-2">
-              {COLOR_CATEGORIES[activeCategory].label}
-            </span>
           </div>
         </div>
 

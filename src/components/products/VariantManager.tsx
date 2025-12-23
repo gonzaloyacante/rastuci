@@ -10,6 +10,7 @@ import {
   Calculator,
   Download,
   Check,
+  HelpCircle,
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { getColorHex } from "@/utils/colors"; // Assuming this utility exists, otherwise we'll handle it
@@ -261,13 +262,26 @@ export default function VariantManager({
       <div className="border rounded-lg overflow-hidden shadow-sm">
         <div className="max-h-[500px] overflow-y-auto">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
-              <tr>
-                <th className="p-3 text-left font-medium">
+            <thead className="bg-neutral-100 dark:bg-neutral-800 sticky top-0 z-10">
+              <tr className="border-b">
+                <th className="p-3 text-left font-medium text-sm text-foreground">
                   Variante (Color / Talle)
                 </th>
-                <th className="p-3 text-left font-medium w-32">Stock</th>
-                <th className="p-3 text-left font-medium w-48">SKU</th>
+                <th className="p-3 text-left font-medium text-sm text-foreground w-32">
+                  Stock
+                </th>
+                <th className="p-3 text-left font-medium text-sm text-foreground w-48">
+                  <div className="flex items-center gap-1">
+                    Código Interno
+                    <span className="relative group">
+                      <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
+                        Código único para identificar esta variante en
+                        inventario
+                      </span>
+                    </span>
+                  </div>
+                </th>
                 <th className="p-3 text-right font-medium w-16"></th>
               </tr>
             </thead>
@@ -323,7 +337,7 @@ export default function VariantManager({
                         value={variant.sku || ""}
                         onChange={(e) => handleUpdateSku(index, e.target.value)}
                         className="h-8 w-full text-xs font-mono"
-                        placeholder="SKU-AUTO-GEN"
+                        placeholder="Código automático"
                       />
                     </td>
                     <td className="p-3 text-right">

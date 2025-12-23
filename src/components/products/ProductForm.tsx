@@ -15,6 +15,7 @@ import { ColorChip } from "@/components/ui/ColorChip";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Product, ProductVariant } from "@/types";
+import { useMemo } from "react";
 import { getColorHex } from "@/utils/colors";
 import { formatPriceARS } from "@/utils/formatters";
 import {
@@ -154,9 +155,16 @@ export default function ProductForm({
   });
 
   const watchPrice = watch("price");
-  const watchStock = watch("stock");
-  const watchOnSale = watch("onSale");
   const watchDiscountPercentage = watch("discountPercentage");
+
+  // Stock calculado automáticamente desde variantes
+  const totalVariantStock = useMemo(
+    () => variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+    [variants]
+  );
+
+  // onSale es automático: si hay descuento > 0, está en oferta
+  const isOnSale = (watchDiscountPercentage ?? 0) > 0;
 
   // Price input state for locale formatting
   const [priceInput, setPriceInput] = useState<string>(
@@ -265,14 +273,9 @@ export default function ProductForm({
         return;
       }
 
-      // 3. Validar stock
-      if (
-        data.stock === undefined ||
-        data.stock === null ||
-        data.stock < 0 ||
-        !Number.isInteger(data.stock)
-      ) {
-        toast.error("El stock debe ser un número entero no negativo");
+      // 3. Validar que haya variantes con stock (stock se calcula automáticamente)
+      if (totalVariantStock <= 0 && variants.length === 0) {
+        toast.error("Debes agregar variantes con stock disponible");
         setLoading(false);
         return;
       }
@@ -381,12 +384,12 @@ export default function ProductForm({
         description: data.description?.trim() || null,
         price: Number(data.price),
         salePrice: salePrice ? Number(salePrice) : null,
-        stock: Number(data.stock),
+        stock: totalVariantStock,
         categoryId: data.categoryId.trim(),
         images: productImages,
         colorImages:
           Object.keys(colorImages).length > 0 ? colorImages : undefined,
-        onSale: Boolean(data.onSale),
+        onSale: (data.discountPercentage ?? 0) > 0,
         sizes: sizes && sizes.length > 0 ? sizes : undefined,
         colors: colors && colors.length > 0 ? colors : undefined,
         features: features && features.length > 0 ? features : undefined,
@@ -523,8 +526,8 @@ export default function ProductForm({
         >
           {/* Información Básica */}
           <Card className="shadow-xl border-0 overflow-hidden">
-            <CardHeader className="bg-linear-to-r from-primary to-primary/90 text-white p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <Info className="h-4 w-4 sm:h-5 sm:w-5" />
                 Información Básica
               </CardTitle>
@@ -615,8 +618,8 @@ export default function ProductForm({
 
           {/* Precios y Stock */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-green-600 to-green-700 text-white p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
                 Precios y Stock
               </CardTitle>
@@ -702,59 +705,49 @@ export default function ProductForm({
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="stock"
-                    className="block text-xs sm:text-sm font-medium mb-2"
-                  >
+                  <label className="block text-xs sm:text-sm font-medium mb-2">
                     <Hash className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
-                    Stock Disponible *
+                    Stock Total (calculado)
                   </label>
-                  <Input
-                    id="stock"
-                    type="number"
-                    {...register("stock")}
-                    placeholder="0"
-                    onKeyDown={numericKeyHandler}
-                    onPaste={numericPasteHandler}
-                    className={errors.stock ? "border-error" : ""}
-                    disabled={loading}
-                  />
-                  {watchStock !== undefined && (
-                    <StockIndicator stock={Number(watchStock)} />
-                  )}
-                  {errors.stock && (
-                    <p className="mt-1 text-sm text-error flex items-center gap-1">
-                      <AlertCircle className="h-4 w-4" />
-                      {errors.stock.message}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-3 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg border">
+                    <span className="text-xl font-bold text-foreground">
+                      {totalVariantStock}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      unidades
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Se calcula automáticamente de las variantes
+                  </p>
+                  <StockIndicator stock={totalVariantStock} />
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="onSale"
-                    className="block text-xs sm:text-sm font-medium mb-2"
-                  >
-                    Estado de Venta
+                  <label className="block text-xs sm:text-sm font-medium mb-2">
+                    Estado de Oferta
                   </label>
-                  <label
-                    htmlFor="onSale"
-                    className="inline-flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-surface transition-colors"
+                  <div
+                    className={`flex items-center gap-2 p-3 rounded-lg border ${isOnSale ? "bg-orange-50 dark:bg-orange-900/20 border-orange-300" : "bg-neutral-100 dark:bg-neutral-800"}`}
                   >
-                    <input
-                      id="onSale"
-                      type="checkbox"
-                      className="form-checkbox h-4 w-4 text-primary"
-                      {...register("onSale")}
-                      disabled={loading}
-                    />
-                    <span className="font-medium">En Oferta</span>
-                  </label>
-                  {watchOnSale && (
-                    <p className="text-xs text-orange-600 mt-1 font-medium">
-                      ✓ Producto marcado como oferta
-                    </p>
-                  )}
+                    {isOnSale ? (
+                      <>
+                        <span className="text-orange-600 font-medium">
+                          ✓ En Oferta
+                        </span>
+                        <span className="text-xs text-orange-500">
+                          (-{watchDiscountPercentage}%)
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Sin descuento
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Automático: si hay descuento, está en oferta
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -762,8 +755,8 @@ export default function ProductForm({
 
           {/* Dimensiones para Envío */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-orange-600 to-orange-700 text-white p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                 Dimensiones para Envío
                 <HelpTooltip text="Estas medidas son requeridas para calcular el costo de envío con Correo Argentino." />
@@ -842,8 +835,8 @@ export default function ProductForm({
 
           {/* Variantes del Producto */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-purple-600 to-purple-700 text-white p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <Palette className="h-4 w-4 sm:h-5 sm:w-5" />
                 Variantes del Producto
               </CardTitle>
@@ -872,21 +865,6 @@ export default function ProductForm({
                 />
               </div>
 
-              {/* Imágenes por Color */}
-              {colors.length > 0 && (
-                <div className="pt-4 border-t">
-                  <label className="block text-xs sm:text-sm font-medium mb-3">
-                    <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
-                    Imágenes por Color
-                  </label>
-                  <ColorImageManager
-                    colors={colors}
-                    colorImages={colorImages}
-                    onColorImagesChange={setColorImages}
-                  />
-                </div>
-              )}
-
               <div>
                 <label className="block text-xs sm:text-sm font-medium mb-3">
                   <List className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
@@ -914,28 +892,10 @@ export default function ProductForm({
             </CardContent>
           </Card>
 
-          {/* Imágenes del Producto */}
-          <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-blue-600 to-blue-700 text-white p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
-                <Upload className="h-4 w-4 sm:h-5 sm:w-5" />
-                Galería de Imágenes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 lg:p-8">
-              <ImageUploadZone
-                existingImages={productImages}
-                onImagesChange={setProductImages}
-                maxImages={10}
-                maxSizeMB={5}
-              />
-            </CardContent>
-          </Card>
-
           {/* Vista Previa */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                 Vista Previa del Producto
               </CardTitle>
@@ -951,8 +911,8 @@ export default function ProductForm({
                 price={Number(watch("price") || 0)}
                 salePrice={calculatedSalePrice}
                 discountPercentage={watchDiscountPercentage}
-                onSale={watchOnSale}
-                stock={Number(watch("stock"))}
+                onSale={isOnSale}
+                stock={totalVariantStock}
                 features={features}
                 sizes={sizes}
                 colors={colors}

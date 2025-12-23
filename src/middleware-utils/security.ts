@@ -11,6 +11,7 @@ export function securityHeaders(_request: NextRequest) {
     "img-src 'self' data: https: blob:",
     "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self' https://api.mercadopago.com",
+    "worker-src 'self' blob:",
     "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -69,6 +70,7 @@ export function csrfProtection(request: NextRequest) {
     "/api/home", // Página de inicio
     "/api/health", // Health check
     "/api/ready", // Ready check
+    "/api/analytics", // Analytics (tracking anónimo)
   ];
 
   // Verificar si la ruta actual es una ruta pública
