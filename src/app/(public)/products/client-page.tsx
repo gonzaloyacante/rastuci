@@ -297,7 +297,7 @@ export default function ProductsPageClient({
         <div className="hidden lg:block">
           <div className="flex gap-8 items-start">
             {/* Sidebar */}
-            <aside className="w-80 shrink-0 sticky top-20">
+            <aside className="w-96 shrink-0 sticky top-20">
               <FilterSidebar
                 searchValue={searchInput}
                 onSearchChange={setSearchInput}
