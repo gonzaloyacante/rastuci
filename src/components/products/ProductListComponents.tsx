@@ -13,7 +13,7 @@ import { ReactNode } from "react";
 // ==============================================================================
 export function ProductGridSkeleton({ count = 12 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
       {Array.from({ length: count }).map((_, i) => (
         <ProductCardSkeleton key={`skeleton-${i}`} />
       ))}
@@ -353,7 +353,9 @@ export function ProductGrid({
         ? "grid-cols-1 max-w-2xl mx-auto"
         : "grid-cols-1 max-w-4xl";
 
-  return <div className={`grid gap-6 mb-8 ${gridClasses}`}>{children}</div>;
+  return (
+    <div className={`grid gap-3 sm:gap-6 mb-8 ${gridClasses}`}>{children}</div>
+  );
 }
 
 // ==============================================================================

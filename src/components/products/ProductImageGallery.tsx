@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -19,18 +19,20 @@ export default function ProductImageGallery({
     "right"
   );
 
+  // Hover zoom state (MercadoLibre style)
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
   // Reset selected image when the image list changes
-  // We use a deep comparison or length check to avoid unnecessary resets if the array reference changes but content is same
-  // But for simple URL arrays, checking the first item or length usually suffices, or just stringifying
   const imagesKey = JSON.stringify(images);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: We want to trigger when the unified key changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: We want to trigger when the unified key changes
   useEffect(() => {
     setSelectedImage(0);
   }, [imagesKey]);
 
-  // Using useEffect or a key pattern. Since we are inside the component:
+  // Prevent index out of bounds
   if (images.length > 0 && selectedImage >= images.length) {
     setSelectedImage(0);
   }
@@ -47,6 +49,29 @@ export default function ProductImageGallery({
     },
     [isTransitioning]
   );
+
+  // Handle mouse move for zoom
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageContainerRef.current) return;
+
+    const rect = imageContainerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    // Clamp values between 0 and 100
+    setZoomPosition({
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    });
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsZooming(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsZooming(false);
+  }, []);
 
   if (!images || images.length === 0) {
     return (
@@ -79,73 +104,110 @@ export default function ProductImageGallery({
     }
   };
 
+  // Zoom factor for the magnified view
+  const zoomFactor = 2.5;
+
   return (
     <div
       className="space-y-4"
       role="region"
       aria-label={`Galería de imágenes de ${productName}`}
     >
-      {/* Imagen principal */}
-      <div
-        className="relative w-full aspect-square surface border border-muted rounded-lg overflow-hidden group"
-        style={{ position: "relative" }}
-      >
+      {/* Main image with zoom container */}
+      <div className="relative flex gap-4">
+        {/* Main image container */}
         <div
-          className={`absolute inset-0 transition-all duration-300 ease-out ${
-            isTransitioning
-              ? slideDirection === "right"
-                ? "opacity-0 translate-x-4"
-                : "opacity-0 -translate-x-4"
-              : "opacity-100 translate-x-0"
-          }`}
+          ref={imageContainerRef}
+          className="relative flex-1 aspect-square bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
-          <Image
-            src={images[selectedImage]}
-            alt={`${productName} - Imagen ${selectedImage + 1} de ${
-              images.length
+          <div
+            className={`absolute inset-0 transition-all duration-300 ease-out ${
+              isTransitioning
+                ? slideDirection === "right"
+                  ? "opacity-0 translate-x-4"
+                  : "opacity-0 -translate-x-4"
+                : "opacity-100 translate-x-0"
             }`}
-            fill
-            className="object-cover"
-            priority={selectedImage === 0}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            quality={90}
-          />
+          >
+            <Image
+              src={images[selectedImage]}
+              alt={`${productName} - Imagen ${selectedImage + 1} de ${images.length}`}
+              fill
+              className="object-contain"
+              priority={selectedImage === 0}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              quality={90}
+            />
+          </div>
+
+          {/* Zoom lens indicator - desktop only */}
+          {isZooming && (
+            <div
+              className="hidden lg:block absolute pointer-events-none border-2 border-primary/50 bg-white/10 rounded"
+              style={{
+                width: `${100 / zoomFactor}%`,
+                height: `${100 / zoomFactor}%`,
+                left: `${Math.min(Math.max(zoomPosition.x - 100 / zoomFactor / 2, 0), 100 - 100 / zoomFactor)}%`,
+                top: `${Math.min(Math.max(zoomPosition.y - 100 / zoomFactor / 2, 0), 100 - 100 / zoomFactor)}%`,
+              }}
+            />
+          )}
+
+          {/* Navigation controls */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                onKeyDown={(e) => handleKeyDown(e, prevImage)}
+                aria-label={`Imagen anterior de ${productName}`}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
+              >
+                <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+              </button>
+              <button
+                onClick={nextImage}
+                onKeyDown={(e) => handleKeyDown(e, nextImage)}
+                aria-label={`Imagen siguiente de ${productName}`}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
+              >
+                <ChevronRight className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </>
+          )}
+
+          {/* Current image indicator */}
+          {images.length > 1 && (
+            <div
+              className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-10"
+              aria-live="polite"
+            >
+              {selectedImage + 1} / {images.length}
+            </div>
+          )}
         </div>
 
-        {/* Controles de navegación */}
-        {images.length > 1 && (
-          <>
-            <button
-              onClick={prevImage}
-              onKeyDown={(e) => handleKeyDown(e, prevImage)}
-              aria-label={`Imagen anterior de ${productName}`}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-            </button>
-            <button
-              onClick={nextImage}
-              onKeyDown={(e) => handleKeyDown(e, nextImage)}
-              aria-label={`Imagen siguiente de ${productName}`}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              <ChevronRight className="w-5 h-5" aria-hidden="true" />
-            </button>
-          </>
-        )}
-
-        {/* Indicador de imagen actual */}
-        {images.length > 1 && (
+        {/* Zoom preview container - desktop only, appears on hover */}
+        <div
+          className={`hidden lg:block w-[400px] h-[400px] bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden transition-opacity duration-200 ${
+            isZooming ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
           <div
-            className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm"
-            aria-live="polite"
-          >
-            {selectedImage + 1} / {images.length}
-          </div>
-        )}
+            className="relative w-full h-full"
+            style={{
+              backgroundImage: `url(${images[selectedImage]})`,
+              backgroundSize: `${zoomFactor * 100}%`,
+              backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+              backgroundRepeat: "no-repeat",
+            }}
+          />
+        </div>
       </div>
 
-      {/* Miniaturas */}
+      {/* Thumbnails */}
       {images.length > 1 && (
         <div className="pt-2">
           {/* Thumbnail list for accessibility: tests expect a list role with this label */}
@@ -161,7 +223,7 @@ export default function ProductImageGallery({
                 onKeyDown={(e) => handleKeyDown(e, () => selectImage(index))}
                 aria-label={`Seleccionar imagen ${index + 1} de ${productName}`}
                 aria-current={index === selectedImage ? "true" : "false"}
-                className={`relative w-20 h-20 rounded-lg shrink-0 transition-all duration-200 focus:outline-none ${
+                className={`relative w-20 h-20 rounded-lg shrink-0 transition-all duration-200 focus:outline-none bg-neutral-100 dark:bg-neutral-800 ${
                   index === selectedImage
                     ? "ring-2 ring-primary ring-offset-2 ring-offset-surface"
                     : "opacity-70 hover:opacity-100 hover:ring-1 hover:ring-theme"
@@ -172,7 +234,7 @@ export default function ProductImageGallery({
                     src={image}
                     alt={`${productName} - Miniatura ${index + 1}`}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     sizes="80px"
                     quality={75}
                   />

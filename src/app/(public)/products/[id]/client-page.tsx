@@ -458,7 +458,7 @@ export default function ProductDetailClient({
                         title={`Seleccionar color ${color}`}
                       >
                         {colorImg ? (
-                          <div className="w-16 h-16 relative bg-white">
+                          <div className="w-16 h-16 relative bg-neutral-100 dark:bg-neutral-800 rounded-sm">
                             <img
                               src={colorImg}
                               alt={color}

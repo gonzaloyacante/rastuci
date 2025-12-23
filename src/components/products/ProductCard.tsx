@@ -411,7 +411,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           <Link
             href={`/productos/${product.id}`}
             aria-label={`Ver detalles de ${product.name}`}
-            className="block h-[200px] overflow-hidden"
+            className="block h-[160px] sm:h-[200px] overflow-hidden bg-neutral-100 dark:bg-neutral-800"
           >
             <Image
               src={
@@ -442,26 +442,29 @@ const ProductCard = React.memo((props: ProductCardProps) => {
         )}
 
         {/* Info - flex-1 para ocupar todo el espacio disponible */}
-        <div className="p-5 flex flex-col flex-1 surface">
+        <div className="p-3 sm:p-5 flex flex-col flex-1 surface">
           {/* Categoría */}
           <p className="text-[11px] font-semibold tracking-[1px] uppercase muted mb-[5px]">
             {product.categories?.name || "Sin categoría"}
           </p>
 
           {/* Título - altura fija para alineación */}
-          <Link href={`/productos/${product.id}`} className="block mb-2.5">
-            <h3 className="text-[18px] font-bold text-base-primary tracking-[-0.5px] m-0 line-clamp-2 min-h-[2.7em] hover:text-pink-600 transition-colors">
+          <Link
+            href={`/productos/${product.id}`}
+            className="block mb-1.5 sm:mb-2.5"
+          >
+            <h3 className="text-[15px] sm:text-[18px] font-bold text-base-primary tracking-[-0.5px] m-0 line-clamp-2 min-h-[2.4em] sm:min-h-[2.7em] hover:text-pink-600 transition-colors">
               {product.name}
             </h3>
           </Link>
 
           {/* Descripción corta - altura fija */}
-          <p className="text-[13px] text-base-secondary leading-[1.4] mb-3 line-clamp-2 min-h-[2.8em]">
+          <p className="text-[12px] sm:text-[13px] text-base-secondary leading-[1.4] mb-2 sm:mb-3 line-clamp-2 min-h-[2.6em] sm:min-h-[2.8em]">
             {product.description || "\u00A0"}
           </p>
 
           {/* Features/Talles - altura fija */}
-          <div className="flex gap-1.5 mb-[15px] flex-wrap min-h-6">
+          <div className="flex gap-1 sm:gap-1.5 mb-2 sm:mb-[15px] flex-wrap min-h-5 sm:min-h-6">
             {sortedSizes && sortedSizes.length > 0 ? (
               <>
                 {sortedSizes.slice(0, 4).map((size, idx) => (
