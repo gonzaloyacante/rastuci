@@ -48,6 +48,14 @@
   --color-text-muted-dark: #94a3b8;
   --color-border-dark: #334155;
   --color-border-muted-dark: #475569;
+
+  /* Chart colors - for Chart.js dark mode support */
+  --chart-text: rgb(107, 114, 128);
+  --chart-text-title: rgb(17, 24, 39);
+  --chart-text-body: rgb(75, 85, 99);
+  --chart-grid: rgba(209, 213, 219, 0.3);
+  --chart-tooltip-bg: rgba(255, 255, 255, 0.95);
+  --chart-tooltip-border: rgb(209, 213, 219);
 }
 
 .dark {
@@ -77,6 +85,14 @@
   /* gray-800 */
   --color-border-muted: #222222;
   /* darker */
+
+  /* Chart colors - dark mode */
+  --chart-text: rgb(156, 163, 175);
+  --chart-text-title: rgb(229, 231, 235);
+  --chart-text-body: rgb(156, 163, 175);
+  --chart-grid: rgba(55, 65, 81, 0.4);
+  --chart-tooltip-bg: rgba(31, 41, 55, 0.95);
+  --chart-tooltip-border: rgb(55, 65, 81);
 }
 
 /* Enhanced form styling for dark mode */
