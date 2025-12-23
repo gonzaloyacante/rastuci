@@ -195,7 +195,7 @@ class AnalyticsManager {
     const trackScroll = () => {
       const depth = Math.round(
         (window.scrollY / (document.body.scrollHeight - window.innerHeight)) *
-        100
+          100
       );
       if (depth > scrollDepth && depth % 25 === 0) {
         scrollDepth = depth;
@@ -252,8 +252,10 @@ class AnalyticsManager {
       );
     }
 
-    // Custom analytics endpoint
-    this.providers.push(new CustomAnalyticsProvider("/api/analytics/events"));
+    // Custom analytics endpoint with session support
+    const customProvider = new CustomAnalyticsProvider("/api/analytics/events");
+    customProvider.setSessionGetter(() => this.session);
+    this.providers.push(customProvider);
 
     // Initialize all providers
     await Promise.all(this.providers.map((provider) => provider.init()));
@@ -521,8 +523,8 @@ class GoogleAnalyticsProvider extends AnalyticsProvider {
       };
 
       // Ensure 'value' and 'currency' are top-level for ecommerce events
-      if (['purchase', 'add_to_cart'].includes(event.name)) {
-        if (event.properties && typeof event.properties === 'object') {
+      if (["purchase", "add_to_cart"].includes(event.name)) {
+        if (event.properties && typeof event.properties === "object") {
           const props = event.properties as Record<string, unknown>;
           if (props.value) gaParams.value = props.value;
           if (props.currency) gaParams.currency = props.currency;
@@ -536,8 +538,14 @@ class GoogleAnalyticsProvider extends AnalyticsProvider {
 }
 
 class CustomAnalyticsProvider extends AnalyticsProvider {
+  private sessionGetter: (() => UserSession | null) | null = null;
+
   constructor(private endpoint: string) {
     super();
+  }
+
+  setSessionGetter(getter: () => UserSession | null) {
+    this.sessionGetter = getter;
   }
 
   async init() {
@@ -546,10 +554,44 @@ class CustomAnalyticsProvider extends AnalyticsProvider {
 
   async sendEvents(events: AnalyticsEvent[]) {
     try {
+      const session = this.sessionGetter?.();
+      const sessionData = session
+        ? {
+            id: session.id,
+            userId: session.userId,
+            deviceType: session.device.type,
+            browser: session.device.browser,
+            os: session.device.os,
+            screenWidth: session.device.screen.width,
+            screenHeight: session.device.screen.height,
+            country: session.location?.country,
+            city: session.location?.city,
+            timezone: session.location?.timezone,
+            entryPage: events.find((e) => e.name === "page_view")?.properties
+              ? ((
+                  events.find((e) => e.name === "page_view")
+                    ?.properties as Record<string, unknown>
+                )?.url as string)
+              : undefined,
+          }
+        : undefined;
+
       await fetch(this.endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ events }),
+        body: JSON.stringify({
+          events: events.map((e) => ({
+            ...e,
+            pageUrl:
+              (e.properties as Record<string, unknown>)?.url ||
+              window.location.pathname,
+            referrer: document.referrer,
+            deviceType: session?.device.type,
+            browser: session?.device.browser,
+            os: session?.device.os,
+          })),
+          session: sessionData,
+        }),
       });
     } catch (error) {
       logger.error("Failed to send analytics events", { error });

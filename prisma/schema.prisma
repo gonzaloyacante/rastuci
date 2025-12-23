@@ -412,6 +412,102 @@ model stock_reservations {
   @@index([expiresAt])
 }
 
+// =============================================================================
+// ANALYTICS MODELS
+// =============================================================================
+
+model analytics_events {
+  id         String   @id @default(cuid())
+  sessionId  String
+  userId     String?
+  eventName  String
+  eventData  Json?
+  pageUrl    String?
+  referrer   String?
+  deviceType String?  // desktop, mobile, tablet
+  browser    String?
+  os         String?
+  country    String?
+  city       String?
+  createdAt  DateTime @default(now())
+
+  session    analytics_sessions @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([eventName])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model analytics_sessions {
+  id              String    @id
+  userId          String?
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  pageViews       Int       @default(0)
+  deviceType      String?
+  browser         String?
+  os              String?
+  screenWidth     Int?
+  screenHeight    Int?
+  country         String?
+  city            String?
+  timezone        String?
+  entryPage       String?
+  exitPage        String?
+  duration        Int?      // in seconds
+  isConverted     Boolean   @default(false)
+  conversionValue Float?
+  
+  events          analytics_events[]
+  searchQueries   search_analytics[]
+  abandonedCarts  cart_abandonment[]
+
+  @@index([userId])
+  @@index([startedAt])
+  @@index([isConverted])
+}
+
+model search_analytics {
+  id              String   @id @default(cuid())
+  sessionId       String
+  userId          String?
+  query           String
+  resultsCount    Int?
+  clickedProductId String?
+  clickPosition   Int?
+  convertedToCart Boolean  @default(false)
+  convertedToPurchase Boolean @default(false)
+  createdAt       DateTime @default(now())
+
+  session         analytics_sessions @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([query])
+  @@index([createdAt])
+}
+
+model cart_abandonment {
+  id              String    @id @default(cuid())
+  sessionId       String
+  userId          String?
+  cartItems       Json      // Array of { productId, name, quantity, price, color, size }
+  cartValue       Float
+  abandonedAt     DateTime  @default(now())
+  lastStep        String?   // 'cart', 'shipping', 'payment'
+  recoveredAt     DateTime?
+  recoveryOrderId String?
+  emailSent       Boolean   @default(false)
+  emailSentAt     DateTime?
+
+  session         analytics_sessions @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([abandonedAt])
+  @@index([recoveredAt])
+  @@index([userId])
+}
+
 enum CADeliveryType {
   D
   S
