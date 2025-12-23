@@ -61,6 +61,7 @@ async function getHomeData() {
         salePrice: p.salePrice || undefined,
         rating: p.rating || null,
         images,
+        colorImages: p.colorImages as Record<string, string[]> | null,
       };
     });
 

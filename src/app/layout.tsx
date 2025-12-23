@@ -96,7 +96,10 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
-      <body className={`${inter.className} ${poppins.variable}`}>
+      <body
+        className={`${inter.className} ${poppins.variable}`}
+        suppressHydrationWarning={true}
+      >
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

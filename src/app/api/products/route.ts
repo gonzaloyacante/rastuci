@@ -263,6 +263,7 @@ export const POST = withAdminAuth(
                   })),
                 }
               : undefined,
+          colorImages: productData.colorImages ?? undefined,
         },
         include: {
           categories: true,
@@ -286,6 +287,9 @@ export const POST = withAdminAuth(
           ...v,
           sku: v.sku ?? undefined,
         })),
+        colorImages:
+          (newProduct.colorImages as unknown as Record<string, string[]>) ??
+          null,
       };
 
       // Devuelve 201 para creación

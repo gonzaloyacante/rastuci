@@ -42,6 +42,7 @@ export interface Product {
   createdAt: Date;
   updatedAt: Date;
   variants?: ProductVariant[];
+  colorImages?: Record<string, string[]> | null;
 }
 
 export interface ProductVariant {

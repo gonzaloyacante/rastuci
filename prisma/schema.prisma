@@ -362,6 +362,7 @@ model products {
   width           Int?              @default(20)
   length          Int?              @default(30)
   sizeGuide       Json?
+  colorImages     Json?             // Mapa de Color -> URLs de imágenes { "Azul": ["url1", "url2"] }
   variants        product_variants[]
   order_items        order_items[]
   product_reviews    product_reviews[]

@@ -15,6 +15,7 @@ import { ColorChip } from "@/components/ui/ColorChip";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Product, ProductVariant } from "@/types";
+import { getColorHex } from "@/utils/colors";
 import { formatPriceARS } from "@/utils/formatters";
 import {
   AlertCircle,
@@ -35,6 +36,7 @@ import {
 } from "lucide-react";
 
 import ImageUploadZone from "./ImageUploadZone";
+import ColorImageManager from "./ColorImageManager";
 import {
   ColorPicker,
   FeatureManager,
@@ -128,6 +130,7 @@ export default function ProductForm({
     initialData?.categoryId || ""
   );
   const [productImages, setProductImages] = useState<string[]>([]);
+  const [colorImages, setColorImages] = useState<Record<string, string[]>>({});
   const [colors, setColors] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
@@ -172,6 +175,8 @@ export default function ProductForm({
           : [];
 
       setProductImages(parsedImages);
+      // Cargar imágenes por color si existen
+      setColorImages(initialData.colorImages || {});
       setColors(initialData.colors || []);
       setSizes(initialData.sizes || []);
       setFeatures(initialData.features || []);
@@ -279,8 +284,15 @@ export default function ProductForm({
         return;
       }
 
-      // 5. Validar imágenes - DEBE tener al menos una imagen
-      if (!productImages || productImages.length === 0) {
+      // 5. Validar imágenes - DEBE tener al menos una imagen (global o por color)
+      // Si tiene imágenes por color, no exigimos globales obligatoriamente, pero mejor si.
+      // Mantengamos validación simple: debe haber alguna imagen en total.
+      const hasGlobalImages = productImages && productImages.length > 0;
+      const hasColorImages = Object.values(colorImages).some(
+        (imgs) => imgs && imgs.length > 0
+      );
+
+      if (!hasGlobalImages && !hasColorImages) {
         toast.error("Debes subir al menos una imagen del producto");
         setLoading(false);
         return;
@@ -372,6 +384,8 @@ export default function ProductForm({
         stock: Number(data.stock),
         categoryId: data.categoryId.trim(),
         images: productImages,
+        colorImages:
+          Object.keys(colorImages).length > 0 ? colorImages : undefined,
         onSale: Boolean(data.onSale),
         sizes: sizes && sizes.length > 0 ? sizes : undefined,
         colors: colors && colors.length > 0 ? colors : undefined,
@@ -848,8 +862,30 @@ export default function ProductForm({
                   <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
                   Colores Disponibles
                 </label>
-                <ColorPicker colors={colors} onColorsChange={setColors} />
+                <ColorPicker
+                  colors={colors}
+                  onColorsChange={setColors}
+                  colorImages={colorImages}
+                  onColorImagesChange={(color, imgs) =>
+                    setColorImages((prev) => ({ ...prev, [color]: imgs }))
+                  }
+                />
               </div>
+
+              {/* Imágenes por Color */}
+              {colors.length > 0 && (
+                <div className="pt-4 border-t">
+                  <label className="block text-xs sm:text-sm font-medium mb-3">
+                    <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
+                    Imágenes por Color
+                  </label>
+                  <ColorImageManager
+                    colors={colors}
+                    colorImages={colorImages}
+                    onColorImagesChange={setColorImages}
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs sm:text-sm font-medium mb-3">
@@ -920,6 +956,7 @@ export default function ProductForm({
                 features={features}
                 sizes={sizes}
                 colors={colors}
+                colorImages={colorImages}
               />
             </CardContent>
           </Card>
@@ -977,6 +1014,7 @@ interface ProductPreviewProps {
   features: string[];
   sizes: string[];
   colors: string[];
+  colorImages?: Record<string, string[]>;
 }
 
 function ProductPreview({
@@ -992,6 +1030,7 @@ function ProductPreview({
   features,
   sizes,
   colors,
+  colorImages,
 }: ProductPreviewProps) {
   return (
     <div className="bg-surface rounded-lg p-4 sm:p-6 border">
@@ -1125,15 +1164,30 @@ function ProductPreview({
                 Colores Disponibles
               </p>
               <div className="flex flex-wrap gap-3">
-                {colors.map((color, index) => (
-                  <div
-                    key={`color-${index}`}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-surface-secondary rounded-full border border-muted"
-                  >
-                    <ColorChip color={color} size="sm" />
-                    <span className="text-sm font-medium">{color}</span>
-                  </div>
-                ))}
+                {colors.map((color, index) => {
+                  const colorImg = colorImages?.[color]?.[0];
+                  return (
+                    <div
+                      key={`color-${index}`}
+                      className="relative group w-10 h-10 rounded-lg border-2 border-muted overflow-hidden"
+                      title={color}
+                    >
+                      {colorImg ? (
+                        <Image
+                          src={colorImg}
+                          alt={color}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full"
+                          style={{ backgroundColor: getColorHex(color) }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

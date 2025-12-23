@@ -62,6 +62,7 @@ export const ProductCreateSchema = z.object({
       })
     )
     .optional(),
+  colorImages: z.record(z.string(), z.array(z.string())).optional().nullable(),
 });
 
 export type ProductCreate = z.infer<typeof ProductCreateSchema>;

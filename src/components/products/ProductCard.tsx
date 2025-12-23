@@ -160,6 +160,30 @@ const ProductCard = React.memo((props: ProductCardProps) => {
     }
   }, [product.images]);
 
+  const sortedSizes = useMemo(() => {
+    const SIZE_ORDER: Record<string, number> = {
+      XS: 1,
+      S: 2,
+      M: 3,
+      L: 4,
+      XL: 5,
+      XXL: 6,
+      "0": 10,
+      "1": 11,
+      "2": 12,
+      "3": 13,
+      "4": 14,
+      "5": 15,
+    };
+    if (!product.sizes) return [];
+    return [...product.sizes].sort((a, b) => {
+      const valA = SIZE_ORDER[a] || 99;
+      const valB = SIZE_ORDER[b] || 99;
+      if (valA === valB) return a.localeCompare(b);
+      return valA - valB;
+    });
+  }, [product.sizes]);
+
   const mainImage = useMemo(
     () => (productImages.length > 0 ? productImages[0] : null),
     [productImages]
@@ -301,11 +325,11 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           </div>
 
           <div className="space-y-2">
-            {product.sizes && product.sizes.length > 0 && (
+            {sortedSizes && sortedSizes.length > 0 && (
               <div>
                 <span className="text-xs muted mb-1 block">Talles:</span>
                 <div className="flex flex-wrap gap-1">
-                  {product.sizes.map((size, index) => (
+                  {sortedSizes.map((size, index) => (
                     <Badge
                       key={`size-${index}`}
                       variant="outline"
@@ -438,15 +462,15 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
           {/* Features/Talles - altura fija */}
           <div className="flex gap-1.5 mb-[15px] flex-wrap min-h-6">
-            {product.sizes && product.sizes.length > 0 ? (
+            {sortedSizes && sortedSizes.length > 0 ? (
               <>
-                {product.sizes.slice(0, 4).map((size, idx) => (
+                {sortedSizes.slice(0, 4).map((size, idx) => (
                   <span key={idx} className="chip">
                     {size}
                   </span>
                 ))}
-                {product.sizes.length > 4 && (
-                  <span className="chip">+{product.sizes.length - 4}</span>
+                {sortedSizes.length > 4 && (
+                  <span className="chip">+{sortedSizes.length - 4}</span>
                 )}
               </>
             ) : null}
@@ -620,9 +644,9 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           </Link>
 
           {/* Talles (si existen) */}
-          {product.sizes && product.sizes.length > 0 && (
+          {sortedSizes && sortedSizes.length > 0 && (
             <div className="flex gap-1 flex-wrap mb-2">
-              {product.sizes.slice(0, 5).map((size, idx) => (
+              {sortedSizes.slice(0, 5).map((size, idx) => (
                 <span
                   key={idx}
                   className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded surface-secondary muted font-medium"
@@ -630,9 +654,9 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   {size}
                 </span>
               ))}
-              {product.sizes.length > 5 && (
+              {sortedSizes.length > 5 && (
                 <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded surface-secondary muted font-medium">
-                  +{product.sizes.length - 5}
+                  +{sortedSizes.length - 5}
                 </span>
               )}
             </div>

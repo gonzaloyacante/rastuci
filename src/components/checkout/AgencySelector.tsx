@@ -58,13 +58,14 @@ export function AgencySelector({
     }
   }, [initialProvince, province, provinceOptions]);
 
-  // Pre-filtrar por código postal si viene - mejorado para que persista
+  // Pre-filtrar por código postal si viene
   useEffect(() => {
+    // Si tenemos un CP inicial y aún no hay búsqueda activa
     if (initialPostalCode && !query && !searchTerm) {
       setQuery(initialPostalCode);
-      // No auto-trigger search immediately, let user click or press enter
+      setSearchTerm(initialPostalCode); // Trigger search immediately
     }
-  }, [initialPostalCode, query, searchTerm]);
+  }, [initialPostalCode]); // Run once when initialPostalCode changes
 
   const { getAgencies } = useCart();
 
@@ -91,21 +92,13 @@ export function AgencySelector({
           setAgencies(activeAgencies);
 
           if (activeAgencies.length === 0) {
-            // No mostrar error bloqueante, permitir búsqueda
             setError(null);
-            // setAgencies([]); // Ya está implícito si data es [] pero aquí filtramos data
           }
         } else {
           setAgencies([]);
-          // Si la API no devuelve nada, no bloquear. El usuario podría buscar por CP si tuviéramos una base local,
-          // pero si depende 100% de la API de CA y falla, estamos fritos.
-          // Asumamos que si falla, permitimos intentar buscar (aunque el filtro es CLIENT SIDE sobre 'agencies').
-          // Ah! El filtro es sobre 'agencies'. Si 'agencies' está vacío, la búsqueda no sirve de nada porque filtra sobre vacío.
-          // EL PROBLEMA ES QUE LA API DE CA DEVUELVE VACÍO PARA 'B' (Buenos Aires) a veces.
-          // Necesitamos manejar mejor el error o el fallback.
-          setError(
-            "No se encontraron sucursales para esta provincia. Intenta otra provincia o recarga."
-          );
+          // Si la API no devuelve nada pero es una provincia válida,
+          // permitimos la búsqueda local (si hubiera datos cacheados) o mostramos mensaje
+          // En este caso, si la API falla, el usuario verá vacío.
         }
       } catch {
         setAgencies([]);
@@ -123,11 +116,15 @@ export function AgencySelector({
     if (!searchTerm.trim()) return agencies;
 
     const term = searchTerm.toLowerCase().trim();
+    // Extraer solo números para comparación flexible de CP (ej: 1611 vs B1611AAA)
+    const termNumeric = term.replace(/\D/g, "");
 
     // Dar puntaje de relevancia para ordenar resultados
     const scored = agencies.map((agency) => {
       let score = 0;
       const cp = agency.location.address.postalCode?.toLowerCase() || "";
+      const cpNumeric = cp.replace(/\D/g, "");
+
       const city = (
         agency.location.address.city ||
         agency.location.address.locality ||
@@ -136,9 +133,18 @@ export function AgencySelector({
       const name = agency.name.toLowerCase();
       const street = agency.location.address.streetName?.toLowerCase() || "";
 
-      // Código postal exacto tiene máxima prioridad
+      // Código postal: Prioridad máxima
+      // Coincidencia exacta de string
       if (cp === term) score += 100;
+      // Coincidencia exacta numérica (ej: busco 1611 y encuentro B1611ABC)
+      else if (termNumeric.length >= 4 && cpNumeric === termNumeric)
+        score += 90;
+      // Comienza con (ej: busco 1611 y encuentro 16110)
       else if (cp.startsWith(term)) score += 50;
+      // Contiene el término numerico (si es suficientemente largo)
+      else if (termNumeric.length >= 3 && cpNumeric.includes(termNumeric))
+        score += 40;
+      // Contiene el string
       else if (cp.includes(term)) score += 25;
 
       // Ciudad/Localidad
@@ -271,7 +277,7 @@ export function AgencySelector({
               <span className="font-bold whitespace-nowrap">Buscar</span>
             </button>
           </div>
-          {searchTerm && (
+          {searchTerm && !loading && (
             <div className="flex items-center gap-2">
               {filteredAgencies.length > 0 ? (
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">

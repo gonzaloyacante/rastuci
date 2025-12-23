@@ -1,10 +1,57 @@
-"use client";
-
 import { Button } from "@/components/ui/Button";
 import { ColorChip } from "@/components/ui/ColorChip";
 import { Input } from "@/components/ui/Input";
-import { Check, HelpCircle, ImageIcon, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import {
+  Check,
+  HelpCircle,
+  ImageIcon,
+  Trash2,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Image as LucideImage,
+  Plus,
+  AlertCircle,
+} from "lucide-react";
+import ImageUploadZone from "./ImageUploadZone";
+import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
+
+// ==============================================================================
+// Shared Toggle Button
+// ==============================================================================
+interface ToggleButtonProps {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
+}
+
+function ToggleButton({
+  label,
+  selected,
+  onClick,
+  icon,
+  children,
+}: ToggleButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-medium",
+        selected
+          ? "bg-primary text-white border-primary shadow-sm"
+          : "bg-surface border-muted hover:border-primary/50 hover:bg-surface-secondary text-primary"
+      )}
+    >
+      {icon}
+      {children || label}
+      {selected && <Check className="w-3.5 h-3.5 ml-1.5" />}
+    </button>
+  );
+}
 
 // ==============================================================================
 // HelpTooltip - Componente de ayuda reutilizable con tooltip
@@ -55,7 +102,9 @@ export function PlaceholderImage({ className }: { className?: string }) {
 // ==============================================================================
 interface ColorPickerProps {
   colors: string[];
+  colorImages?: Record<string, string[]>;
   onColorsChange: (colors: string[]) => void;
+  onColorImagesChange?: (color: string, images: string[]) => void;
 }
 
 // Tipo para cada color
@@ -220,203 +269,258 @@ const COMMON_COLORS = Object.values(COLOR_CATEGORIES).flatMap(
   (cat) => cat.colors
 );
 
-export function ColorPicker({ colors, onColorsChange }: ColorPickerProps) {
+export function ColorPicker({
+  colors,
+  onColorsChange,
+  colorImages = {},
+  onColorImagesChange,
+}: ColorPickerProps) {
   const [newColor, setNewColor] = useState("");
   const [colorInput, setColorInput] = useState("#000000");
   const [colorName, setColorName] = useState("");
   const [activeCategory, setActiveCategory] = useState("basicos");
+  const [expandedColor, setExpandedColor] = useState<string | null>(null);
+
+  const toggleColorExpand = (color: string) => {
+    if (expandedColor === color) {
+      setExpandedColor(null);
+    } else {
+      setExpandedColor(color);
+    }
+  };
 
   // Colores de la categoría activa
   const activeCategoryColors = COLOR_CATEGORIES[activeCategory]?.colors || [];
 
-  const addColor = () => {
+  const toggleColor = (colorName: string) => {
+    if (colors.includes(colorName)) {
+      // Deselect
+      onColorsChange(colors.filter((c) => c !== colorName));
+      if (expandedColor === colorName) setExpandedColor(null);
+    } else {
+      // Select
+      onColorsChange([...colors, colorName]);
+    }
+  };
+
+  const addCustomColor = () => {
     if (newColor.trim() && !colors.includes(newColor.trim())) {
-      onColorsChange([...colors, newColor.trim()]);
+      toggleColor(newColor.trim());
       setNewColor("");
     }
   };
 
-  const addColorFromPicker = () => {
-    if (!colorName.trim()) {
-      return; // Nombre obligatorio
+  const addFromPicker = () => {
+    if (colorName.trim()) {
+      const fullColor = `${colorName.trim()} (${colorInput})`;
+      if (!colors.includes(fullColor)) {
+        toggleColor(fullColor);
+        setColorName("");
+      }
     }
-    const fullColor = `${colorName.trim()} (${colorInput})`;
-    if (
-      !colors.some((c) => c.toLowerCase().includes(colorName.toLowerCase()))
-    ) {
-      onColorsChange([...colors, fullColor]);
-      setColorName("");
-    }
-  };
-
-  const addPredefinedColor = (name: string, hex: string) => {
-    const fullColor = `${name} (${hex})`;
-    if (!colors.some((c) => c.toLowerCase().includes(name.toLowerCase()))) {
-      onColorsChange([...colors, fullColor]);
-    }
-  };
-
-  const removeColor = (colorToRemove: string) => {
-    onColorsChange(colors.filter((color) => color !== colorToRemove));
   };
 
   return (
-    <div className="space-y-4">
-      {/* Categorías de colores */}
+    <div className="space-y-6">
+      {/* 1. Paleta de Selección Rápida */}
       <div>
-        <p className="text-sm font-medium mb-2">Paleta de Colores</p>
-
-        {/* Tabs de categorías */}
-        <div className="flex flex-wrap gap-1 mb-3 pb-2 border-b border-muted">
-          {Object.entries(COLOR_CATEGORIES).map(([key, category]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveCategory(key)}
-              className={`px-3 py-1 text-xs rounded-full transition-all ${
-                activeCategory === key
-                  ? "bg-primary text-white"
-                  : "bg-surface-secondary hover:bg-surface-tertiary text-muted"
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium">Seleccionar Colores</h3>
+          <div className="flex gap-1">
+            {Object.keys(COLOR_CATEGORIES).map((catKey) => (
+              <button
+                key={catKey}
+                type="button"
+                onClick={() => setActiveCategory(catKey)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all",
+                  activeCategory === catKey
+                    ? "bg-primary scale-125"
+                    : "bg-muted hover:bg-primary/50"
+                )}
+                title={COLOR_CATEGORIES[catKey].label}
+              />
+            ))}
+            <span className="text-xs text-muted-foreground ml-2">
+              {COLOR_CATEGORIES[activeCategory].label}
+            </span>
+          </div>
         </div>
 
-        {/* Colores de la categoría activa */}
-        <div className="flex flex-wrap gap-2 min-h-[60px]">
-          {activeCategoryColors.map((c) => (
-            <button
-              key={c.name}
-              type="button"
-              onClick={() => addPredefinedColor(c.name, c.hex)}
-              disabled={colors.some((col) =>
-                col.toLowerCase().includes(c.name.toLowerCase())
-              )}
-              className="group relative"
-              title={`Agregar ${c.name} (${c.hex})`}
-            >
-              <div
-                className={`w-9 h-9 rounded-lg border-2 transition-all ${
-                  colors.some((col) =>
-                    col.toLowerCase().includes(c.name.toLowerCase())
-                  )
-                    ? "border-success opacity-50 scale-90"
-                    : "border-muted hover:border-primary hover:scale-110"
-                }`}
-                style={{
-                  backgroundColor: c.hex,
-                  boxShadow:
-                    c.hex === "#FFFFFF"
-                      ? "inset 0 0 0 1px rgba(0,0,0,0.1)"
-                      : undefined,
-                }}
+        <div className="flex flex-wrap gap-2 p-4 bg-surface-secondary/30 rounded-xl border border-dashed border-muted">
+          {activeCategoryColors.map((c) => {
+            const isSelected = colors.some((col) => col.includes(c.name)); // Loose match for custom formats
+            // Exact match preferred for toggle logic
+            const exactMatch = colors.includes(c.name);
+
+            return (
+              <button
+                key={c.name}
+                type="button"
+                onClick={() =>
+                  exactMatch ? toggleColor(c.name) : toggleColor(c.name)
+                } // Simplified, handles both
+                className={cn(
+                  "group relative w-10 h-10 rounded-full border-2 transition-all shadow-sm",
+                  exactMatch
+                    ? "border-primary ring-2 ring-primary/20 scale-110 z-10"
+                    : "border-transparent hover:border-primary/50 hover:scale-105"
+                )}
+                style={{ backgroundColor: c.hex }}
+                title={c.name}
               >
-                {colors.some((col) =>
-                  col.toLowerCase().includes(c.name.toLowerCase())
-                ) && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Check className="h-4 w-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+                {exactMatch && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                    <Check className="w-5 h-5 text-white drop-shadow-md" />
                   </div>
                 )}
-              </div>
-              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 bg-surface px-1 rounded shadow">
-                {c.name}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Contador de colores disponibles */}
-        <p className="text-xs muted mt-2">
-          {activeCategoryColors.length} colores en esta categoría •
-          {COMMON_COLORS.length} colores totales disponibles
-        </p>
-      </div>
-
-      {/* Color picker HTML5 */}
-      <div>
-        <p className="text-sm font-medium mb-2">Color Personalizado</p>
-        <div className="flex gap-2 items-center flex-wrap">
-          <input
-            type="color"
-            value={colorInput}
-            onChange={(e) => setColorInput(e.target.value)}
-            className="w-12 h-10 rounded border-2 border-muted cursor-pointer"
-          />
-          <Input
-            value={colorName}
-            onChange={(e) => setColorName(e.target.value)}
-            placeholder="Nombre del color (obligatorio)"
-            className="w-40"
-            onKeyPress={(e) =>
-              e.key === "Enter" && (e.preventDefault(), addColorFromPicker())
-            }
-          />
-          <span className="text-xs muted font-mono">{colorInput}</span>
-          <Button
-            type="button"
-            onClick={addColorFromPicker}
-            variant="outline"
-            size="sm"
-            disabled={!colorName.trim()}
-          >
-            Agregar
-          </Button>
-        </div>
-        {!colorName.trim() && (
-          <p className="text-xs text-muted mt-1">
-            * El nombre del color es obligatorio
-          </p>
-        )}
-      </div>
-
-      {/* Input manual para nombres o hex */}
-      <div>
-        <p className="text-sm font-medium mb-2">
-          Color Manual (nombre o código hex)
-        </p>
-        <div className="flex gap-2">
-          <Input
-            value={newColor}
-            onChange={(e) => setNewColor(e.target.value)}
-            placeholder="Ej: Rojo, #FF0000, rgba(255,0,0,1)"
-            className="flex-1"
-            onKeyPress={(e) =>
-              e.key === "Enter" && (e.preventDefault(), addColor())
-            }
-          />
-          <Button type="button" onClick={addColor} variant="outline" size="sm">
-            <Check className="h-4 w-4" />
-          </Button>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Colores seleccionados */}
+      {/* 2. Color Personalizado */}
+      <div className="flex flex-wrap gap-4 items-end">
+        <div className="flex-1 min-w-[200px]">
+          <label className="text-xs font-medium mb-1.5 block">
+            Color Hexadecimal/Picker
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="color"
+              value={colorInput}
+              onChange={(e) => setColorInput(e.target.value)}
+              className="h-10 w-12 rounded cursor-pointer border-muted p-0.5 bg-surface"
+            />
+            <Input
+              value={colorName}
+              onChange={(e) => setColorName(e.target.value)}
+              placeholder="Nombre (ej. Azul Francia)"
+              onKeyDown={(e) =>
+                e.key === "Enter" && (e.preventDefault(), addFromPicker())
+              }
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addFromPicker}
+              disabled={!colorName}
+              className="h-10 w-10 p-2"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <label className="text-xs font-medium mb-1.5 block">
+            Color Manual (Texto)
+          </label>
+          <div className="flex gap-2">
+            <Input
+              value={newColor}
+              onChange={(e) => setNewColor(e.target.value)}
+              placeholder="Ej. Multicolor"
+              onKeyDown={(e) =>
+                e.key === "Enter" && (e.preventDefault(), addCustomColor())
+              }
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addCustomColor}
+              disabled={!newColor}
+              className="h-10 w-10 p-2"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Lista de Colores Seleccionados & Imágenes */}
       {colors.length > 0 && (
-        <div>
-          <p className="text-sm font-medium mb-2">
-            Colores Seleccionados ({colors.length})
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {colors.map((color) => (
-              <div
-                key={color}
-                className="flex items-center gap-1 bg-surface px-3 py-1.5 rounded-full text-sm border border-muted"
-              >
-                <ColorChip color={color} size="sm" />
-                <span className="font-medium">{color}</span>
-                <button
-                  type="button"
-                  onClick={() => removeColor(color)}
-                  className="text-error hover:bg-error hover:text-white rounded-full p-1 transition-colors ml-1"
-                  title={`Eliminar ${color}`}
+        <div className="space-y-3 pt-4 border-t">
+          <h3 className="text-sm font-medium flex items-center gap-2">
+            Colores Seleccionados
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
+              {colors.length}
+            </span>
+          </h3>
+          <div className="grid grid-cols-1 gap-3">
+            {colors.map((color) => {
+              const isExpanded = expandedColor === color;
+              const imgCount = colorImages[color]?.length || 0;
+
+              return (
+                <div
+                  key={color}
+                  className={cn(
+                    "rounded-lg border transition-all overflow-hidden",
+                    isExpanded
+                      ? "border-primary shadow-md bg-surface"
+                      : "border-muted bg-surface/50"
+                  )}
                 >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
+                  <div
+                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-surface-secondary/50 transition-colors"
+                    onClick={() => toggleColorExpand(color)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ColorChip color={color} />
+                      <span className="font-medium">{color}</span>
+                      {imgCount > 0 && (
+                        <span className="flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-0.5 rounded-full font-medium">
+                          <LucideImage className="w-3 h-3" /> {imgCount} fotos
+                        </span>
+                      )}
+                      {imgCount === 0 && (
+                        <span className="text-xs text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> Sin fotos
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-error hover:bg-error/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleColor(color);
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {isExpanded && onColorImagesChange && (
+                    <div className="p-4 border-t bg-surface-secondary/10">
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Sube las fotos correspondientes al color{" "}
+                        <strong>{color}</strong>.
+                      </p>
+                      <ImageUploadZone
+                        existingImages={colorImages[color] || []}
+                        onImagesChange={(imgs) =>
+                          onColorImagesChange(color, imgs)
+                        }
+                        maxImages={5}
+                        maxSizeMB={2}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -451,73 +555,76 @@ const COMMON_SIZES = [
 export function SizeManager({ sizes, onSizesChange }: SizeManagerProps) {
   const [newSize, setNewSize] = useState("");
 
-  const addSize = () => {
-    if (newSize.trim() && !sizes.includes(newSize.trim())) {
-      onSizesChange([...sizes, newSize.trim()]);
+  const toggleSize = (size: string) => {
+    if (sizes.includes(size)) {
+      onSizesChange(sizes.filter((s) => s !== size));
+    } else {
+      onSizesChange([...sizes, size]);
+    }
+  };
+
+  const addCustomSize = () => {
+    if (newSize.trim()) {
+      const s = newSize.trim();
+      if (!sizes.includes(s)) toggleSize(s);
       setNewSize("");
     }
   };
 
-  const removeSize = (sizeToRemove: string) => {
-    onSizesChange(sizes.filter((size) => size !== sizeToRemove));
-  };
-
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {COMMON_SIZES.map((size) => (
+          <ToggleButton
+            key={size}
+            label={size}
+            selected={sizes.includes(size)}
+            onClick={() => toggleSize(size)}
+          />
+        ))}
+      </div>
+
+      {/* Custom Size Input */}
+      <div className="flex gap-2 max-w-xs">
         <Input
           value={newSize}
           onChange={(e) => setNewSize(e.target.value)}
-          placeholder="Talle personalizado"
-          className="flex-1"
-          onKeyPress={(e) =>
-            e.key === "Enter" && (e.preventDefault(), addSize())
+          placeholder="Otro talle..."
+          onKeyDown={(e) =>
+            e.key === "Enter" && (e.preventDefault(), addCustomSize())
           }
+          className="h-10"
         />
-        <Button type="button" onClick={addSize} variant="outline" size="sm">
-          <Check className="h-4 w-4" />
+        <Button
+          type="button"
+          onClick={addCustomSize}
+          variant="outline"
+          className="shrink-0 h-10 w-10 p-2"
+        >
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">Talles comunes:</p>
-        <div className="flex flex-wrap gap-2">
-          {COMMON_SIZES.map((size) => (
-            <button
-              key={size}
-              type="button"
-              onClick={() =>
-                !sizes.includes(size) && onSizesChange([...sizes, size])
-              }
-              className={`px-3 py-1 text-sm rounded-md border transition-colors ${
-                sizes.includes(size)
-                  ? "bg-primary text-white border-primary"
-                  : "border-muted hover:border-primary hover:bg-primary/10"
-              }`}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {sizes.map((size, index) => (
-          <div
-            key={`item-${index}`}
-            className="flex items-center gap-1 bg-primary text-white px-2 py-1 rounded-full text-sm"
-          >
-            <span>{size}</span>
-            <button
-              type="button"
-              onClick={() => removeSize(size)}
-              className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-            >
-              <X className="h-3 w-3" />
-            </button>
+      {/* Display additional custom sizes not in common list */}
+      {sizes.some((s) => !COMMON_SIZES.includes(s as any)) && (
+        <div className="pt-2 border-t border-dashed mt-2">
+          <p className="text-xs text-muted-foreground mb-2">
+            Talles personalizados seleccionados:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {sizes
+              .filter((s) => !COMMON_SIZES.includes(s as any))
+              .map((s) => (
+                <ToggleButton
+                  key={s}
+                  label={s}
+                  selected={true}
+                  onClick={() => toggleSize(s)}
+                />
+              ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -594,159 +701,113 @@ export function FeatureManager({
   const [newFeature, setNewFeature] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("todos");
 
-  const addFeature = () => {
-    if (newFeature.trim() && !features.includes(newFeature.trim())) {
-      onFeaturesChange([...features, newFeature.trim()]);
-      setNewFeature("");
-    }
-  };
-
-  const addPredefinedFeature = (feature: string) => {
-    if (!features.includes(feature)) {
+  const toggleFeature = (feature: string) => {
+    if (features.includes(feature)) {
+      onFeaturesChange(features.filter((f) => f !== feature));
+    } else {
       onFeaturesChange([...features, feature]);
     }
   };
 
-  const removeFeature = (featureToRemove: string) => {
-    onFeaturesChange(features.filter((feature) => feature !== featureToRemove));
+  const addCustomFeature = () => {
+    if (newFeature.trim()) {
+      const f = newFeature.trim();
+      if (!features.includes(f)) toggleFeature(f);
+      setNewFeature("");
+    }
   };
 
   const allFeatures = Object.values(FEATURE_CATEGORIES).flatMap(
     (cat) => cat.items
   );
-  const displayFeatures =
-    selectedCategory === "todos"
-      ? allFeatures
-      : FEATURE_CATEGORIES[selectedCategory as FeatureCategoryKey]?.items || [];
+
+  const displayFeatures = useMemo(() => {
+    if (selectedCategory === "todos") return allFeatures.slice(0, 30); // Limit full display
+    return (
+      FEATURE_CATEGORIES[selectedCategory as FeatureCategoryKey]?.items || []
+    );
+  }, [selectedCategory, allFeatures]);
 
   return (
-    <div className="space-y-4">
-      {/* Categorías de características */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <p className="text-sm font-medium">Categorías de Características</p>
-          <HelpTooltip text="Selecciona una categoría para ver sugerencias predefinidas o agrega características personalizadas" />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setSelectedCategory("todos")}
-            className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-              selectedCategory === "todos"
-                ? "bg-primary text-white border-primary"
-                : "border-muted hover:border-primary"
-            }`}
-          >
-            Todos
-          </button>
-          {Object.entries(FEATURE_CATEGORIES).map(([key, cat]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setSelectedCategory(key)}
-              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                selectedCategory === key
-                  ? "bg-primary text-white border-primary"
-                  : "border-muted hover:border-primary"
-              }`}
-              title={cat.help}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Características sugeridas */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <p className="text-sm font-medium">Características Sugeridas</p>
-          {selectedCategory !== "todos" && (
-            <HelpTooltip
-              text={
-                FEATURE_CATEGORIES[selectedCategory as FeatureCategoryKey]
-                  ?.help || ""
-              }
-            />
+    <div className="space-y-5">
+      {/* Configuración Tabs */}
+      <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
+        <button
+          type="button"
+          onClick={() => setSelectedCategory("todos")}
+          className={cn(
+            "px-3 py-1.5 text-xs font-medium rounded-full border transition-all whitespace-nowrap",
+            selectedCategory === "todos"
+              ? "bg-primary text-white border-primary"
+              : "bg-surface border-muted hover:border-primary"
           )}
-        </div>
-        <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-surface/50 rounded-lg">
-          {displayFeatures.map((feature) => (
-            <button
-              key={feature}
-              type="button"
-              onClick={() => addPredefinedFeature(feature)}
-              disabled={features.includes(feature)}
-              className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
-                features.includes(feature)
-                  ? "bg-success/10 border-success text-success cursor-not-allowed"
-                  : "border-muted hover:border-primary hover:bg-primary/5"
-              }`}
-              title={
-                features.includes(feature)
-                  ? "Ya agregada"
-                  : `Agregar ${feature}`
-              }
-            >
-              {feature}
-              {features.includes(feature) && (
-                <Check className="inline h-3 w-3 ml-1" />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Input personalizado */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <p className="text-sm font-medium">Característica Personalizada</p>
-          <HelpTooltip text="Agrega cualquier característica específica que no esté en las sugerencias" />
-        </div>
-        <div className="flex gap-2">
-          <Input
-            value={newFeature}
-            onChange={(e) => setNewFeature(e.target.value)}
-            placeholder="Ej: Resistente a manchas"
-            className="flex-1"
-            onKeyPress={(e) =>
-              e.key === "Enter" && (e.preventDefault(), addFeature())
-            }
-          />
-          <Button
+        >
+          Todos
+        </button>
+        {Object.entries(FEATURE_CATEGORIES).map(([key, cat]) => (
+          <button
+            key={key}
             type="button"
-            onClick={addFeature}
-            variant="outline"
-            size="sm"
+            onClick={() => setSelectedCategory(key)}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-full border transition-all whitespace-nowrap",
+              selectedCategory === key
+                ? "bg-primary text-white border-primary"
+                : "bg-surface border-muted hover:border-primary"
+            )}
           >
-            <Check className="h-4 w-4" />
-          </Button>
-        </div>
+            {cat.label}
+          </button>
+        ))}
       </div>
 
-      {/* Características seleccionadas */}
-      {features.length > 0 && (
-        <div>
-          <p className="text-sm font-medium mb-2">
-            Características Agregadas ({features.length})
-          </p>
-          <div className="space-y-2">
-            {features.map((feature, index) => (
-              <div
-                key={`feature-${index}-${feature.slice(0, 10)}`}
-                className="flex items-center justify-between p-3 bg-surface rounded-lg border border-muted hover:border-primary transition-colors group"
-              >
-                <span className="flex-1 text-sm">{feature}</span>
-                <button
-                  type="button"
-                  onClick={() => removeFeature(feature)}
-                  className="text-error hover:bg-error hover:text-white rounded-full p-1.5 transition-colors opacity-70 group-hover:opacity-100"
-                  title={`Eliminar ${feature}`}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        {displayFeatures.map((feature) => (
+          <ToggleButton
+            key={feature}
+            label={feature}
+            selected={features.includes(feature)}
+            onClick={() => toggleFeature(feature)}
+          />
+        ))}
+      </div>
+
+      {/* Manual Add */}
+      <div className="flex gap-2">
+        <Input
+          value={newFeature}
+          onChange={(e) => setNewFeature(e.target.value)}
+          placeholder="Otra característica..."
+          className="flex-1"
+          onKeyDown={(e) =>
+            e.key === "Enter" && (e.preventDefault(), addCustomFeature())
+          }
+        />
+        <Button
+          type="button"
+          onClick={addCustomFeature}
+          variant="outline"
+          className="h-10 w-10 p-2"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Custom Features Display */}
+      {features.some((f) => !allFeatures.includes(f as any)) && (
+        <div className="pt-2 border-t border-dashed mt-2">
+          <p className="text-xs text-muted-foreground mb-2">Personalizadas:</p>
+          <div className="flex flex-wrap gap-2">
+            {features
+              .filter((f) => !allFeatures.includes(f as any))
+              .map((f) => (
+                <ToggleButton
+                  key={f}
+                  label={f}
+                  selected={true}
+                  onClick={() => toggleFeature(f)}
+                />
+              ))}
           </div>
         </div>
       )}

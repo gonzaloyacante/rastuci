@@ -1,54 +1,285 @@
-import { PrismaClient } from '@prisma/client';
-import { createId } from '@paralleldrive/cuid2';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('🌱 Iniciando seed...');
+// =========================================================================
+// CONFIGURATION
+// =========================================================================
+const CATEGORIES = [
+  {
+    name: "Remeras",
+    description: "Remeras y camisetas infantiles",
+    icon: "Shirt",
+  },
+  { name: "Pantalones", description: "Pantalones y joggers", icon: "Scissors" },
+  { name: "Vestidos", description: "Vestidos para niñas", icon: "Sparkles" },
+  {
+    name: "Abrigos",
+    description: "Camperas y buzos",
+    icon: "ThermometerSnowflake",
+  },
+  { name: "Accesorios", description: "Gorros, bufandas y más", icon: "Gift" },
+];
 
+// Realistic images from Unsplash with stable URLs
+const PRODUCT_IMAGES: Record<string, Record<string, string[]>> = {
+  // Remeras
+  "Remera Básica Algodón": {
+    Blanco: [
+      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1622445275576-721325763afe?w=600&h=800&fit=crop",
+    ],
+    Negro: [
+      "https://images.unsplash.com/photo-1503341338985-c0477be52513?w=600&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600&h=800&fit=crop",
+    ],
+    Celeste: [
+      "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600&h=800&fit=crop",
+    ],
+  },
+  "Remera Estampada Dino": {
+    Verde: [
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=600&h=800&fit=crop",
+    ],
+    Gris: [
+      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=800&fit=crop",
+    ],
+  },
+  // Pantalones
+  "Jogger Deportivo": {
+    "Azul Marino": [
+      "https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&h=800&fit=crop",
+    ],
+    Negro: [
+      "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&h=800&fit=crop",
+    ],
+    Gris: [
+      "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&h=800&fit=crop",
+    ],
+  },
+  "Jean Clásico": {
+    Azul: [
+      "https://images.unsplash.com/photo-1604176354204-9268737828e4?w=600&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&h=800&fit=crop",
+    ],
+    Negro: [
+      "https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=600&h=800&fit=crop",
+    ],
+  },
+  // Vestidos
+  "Vestido Floral Primavera": {
+    Rosa: [
+      "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=600&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1596993100471-c3905dafa78e?w=600&h=800&fit=crop",
+    ],
+    Blanco: [
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=800&fit=crop",
+    ],
+  },
+  "Vestido Casual Rayas": {
+    Azul: [
+      "https://images.unsplash.com/photo-1494578379344-d6c710782a3d?w=600&h=800&fit=crop",
+    ],
+    Rojo: [
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&h=800&fit=crop",
+    ],
+  },
+  // Abrigos
+  "Campera Puffer": {
+    Rojo: [
+      "https://images.unsplash.com/photo-1544923246-77307dd628b5?w=600&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=800&fit=crop",
+    ],
+    Negro: [
+      "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&h=800&fit=crop",
+    ],
+  },
+  "Buzo Canguro": {
+    Gris: [
+      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=600&h=800&fit=crop",
+    ],
+    Azul: [
+      "https://images.unsplash.com/photo-1620799139507-2a76f2a8b7b2?w=600&h=800&fit=crop",
+    ],
+  },
+  // Accesorios
+  "Gorro Lana Pompón": {
+    Blanco: [
+      "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=600&h=800&fit=crop",
+    ],
+    Rosa: [
+      "https://images.unsplash.com/photo-1510598969022-c4c6c5d05769?w=600&h=800&fit=crop",
+    ],
+  },
+};
+
+const SIZES = ["2-3", "4-5", "6-7", "8-10", "12-14"];
+
+const PRODUCTS_DATA = [
+  {
+    name: "Remera Básica Algodón",
+    category: "Remeras",
+    price: 8500,
+    features: ["100% Algodón", "Lavable en máquina"],
+  },
+  {
+    name: "Remera Estampada Dino",
+    category: "Remeras",
+    price: 9800,
+    features: ["Estampado exclusivo", "Algodón premium"],
+  },
+  {
+    name: "Jogger Deportivo",
+    category: "Pantalones",
+    price: 14500,
+    features: ["Elástico en cintura", "Puños ajustables"],
+  },
+  {
+    name: "Jean Clásico",
+    category: "Pantalones",
+    price: 18900,
+    features: ["Denim suave", "Botón y cierre"],
+  },
+  {
+    name: "Vestido Floral Primavera",
+    category: "Vestidos",
+    price: 22000,
+    features: ["Estampado floral", "Forro interior"],
+    onSale: true,
+    discount: 15,
+  },
+  {
+    name: "Vestido Casual Rayas",
+    category: "Vestidos",
+    price: 19500,
+    features: ["Diseño a rayas", "Algodón liviano"],
+  },
+  {
+    name: "Campera Puffer",
+    category: "Abrigos",
+    price: 35000,
+    features: ["Relleno térmico", "Capucha desmontable"],
+    onSale: true,
+    discount: 20,
+  },
+  {
+    name: "Buzo Canguro",
+    category: "Abrigos",
+    price: 16800,
+    features: ["Bolsillo canguro", "Capucha con cordón"],
+  },
+  {
+    name: "Gorro Lana Pompón",
+    category: "Accesorios",
+    price: 6500,
+    features: ["Lana suave", "Pompón decorativo"],
+  },
+];
+
+// =========================================================================
+// MAIN SEED FUNCTION
+// =========================================================================
+async function main() {
+  console.log("🌱 Starting COMPREHENSIVE seed...\n");
+
+  // 1. Clean Database
+  console.log("🧹 Cleaning database...");
+  await prisma.stock_reservations.deleteMany();
+  await prisma.product_reviews.deleteMany();
   await prisma.order_items.deleteMany();
   await prisma.orders.deleteMany();
-  await prisma.product_reviews.deleteMany();
+  await prisma.product_variants.deleteMany();
   await prisma.products.deleteMany();
   await prisma.categories.deleteMany();
-  await prisma.user.deleteMany();
 
-  const [ninas, ninos, bebes] = await Promise.all([
-    prisma.categories.create({ data: { id: createId(), name: 'Ropa de Niñas', description: 'Vestidos, conjuntos y accesorios para niñas de 2 a 12 años', imageUrl: 'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=800', icon: '👗', updatedAt: new Date() }}),
-    prisma.categories.create({ data: { id: createId(), name: 'Ropa de Niños', description: 'Remeras, pantalones y buzos para niños de 2 a 12 años', imageUrl: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800', icon: '👕', updatedAt: new Date() }}),
-    prisma.categories.create({ data: { id: createId(), name: 'Ropa de Bebés', description: 'Bodies, enteritos y conjuntos para bebés de 0 a 24 meses', imageUrl: 'https://images.unsplash.com/photo-1519689373023-dd07c7988603?w=800', icon: '👶', updatedAt: new Date() }})
-  ]);
+  // 2. Create Categories
+  console.log("📁 Creating categories...");
+  const categoryMap: Record<string, string> = {};
+  for (const cat of CATEGORIES) {
+    const created = await prisma.categories.create({
+      data: {
+        id: crypto.randomUUID(),
+        name: cat.name,
+        description: cat.description,
+        icon: cat.icon,
+        updatedAt: new Date(),
+      },
+    });
+    categoryMap[cat.name] = created.id;
+  }
 
-  const products = [
-    // NIÑAS
-    { id: createId(), name: 'Vestido Floral Rosa', description: 'Hermoso vestido con estampado de flores, confeccionado en algodón 100%. Ideal para eventos especiales o uso diario. Incluye lazo ajustable en la cintura.', price: 8500, salePrice: 6800, stock: 25, onSale: true, categoryId: ninas.id, images: '["https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=800","https://images.unsplash.com/photo-1621452773781-0f992fd1f5cb?w=800","https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=800"]', colors: ['Rosa','Celeste','Blanco'], sizes: ['4','6','8','10','12'], features: ['100% algodón premium','Estampado floral resistente','Lavable en lavarropas','Lazo ajustable en cintura','Forro interior suave'], rating: 4.8, reviewCount: 42, weight: 180, height: 2, width: 25, length: 35, updatedAt: new Date() },
-    { id: createId(), name: 'Conjunto Deportivo Rosa', description: 'Conjunto deportivo de 2 piezas: buzo con capucha y pantalón jogger. Confeccionado en tela francesa de primera calidad, ideal para el día a día.', price: 7200, stock: 18, categoryId: ninas.id, images: '["https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=800","https://images.unsplash.com/photo-1582552938357-32b906d8788f?w=800"]', colors: ['Rosa','Gris','Negro'], sizes: ['4','6','8','10'], features: ['Tela deportiva respirable','Capucha con cordón','Bolsillos laterales','Puños y ruedo con elastano'], rating: 4.6, reviewCount: 28, weight: 320, height: 3, width: 28, length: 38, updatedAt: new Date() },
-    { id: createId(), name: 'Remera Unicornio con Lentejuelas', description: 'Remera mágica con diseño de unicornio en lentejuelas reversibles. Al pasar la mano cambia de color. Confeccionada en algodón suave.', price: 4800, salePrice: 3600, stock: 35, onSale: true, categoryId: ninas.id, images: '["https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=800"]', colors: ['Blanco','Rosa','Celeste'], sizes: ['2','4','6','8','10'], features: ['Lentejuelas reversibles mágicas','100% algodón','Diseño de unicornio','Cuello redondo reforzado'], rating: 4.9, reviewCount: 67, weight: 120, height: 1, width: 22, length: 28, updatedAt: new Date() },
-    { id: createId(), name: 'Jean Skinny Celeste', description: 'Jean elastizado de corte skinny, cómodo y moderno. Tela denim con elastano para mayor movilidad. Cinco bolsillos y cierre con botón.', price: 6900, stock: 22, categoryId: ninas.id, images: '["https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800"]', colors: ['Celeste','Azul','Negro'], sizes: ['6','8','10','12','14'], features: ['Denim stretch premium','Corte skinny moderno','5 bolsillos funcionales','Cierre con botón metálico'], rating: 4.7, reviewCount: 31, weight: 280, height: 2, width: 26, length: 32, updatedAt: new Date() },
-    { id: createId(), name: 'Campera Acolchada con Capucha', description: 'Campera ultraliviana con relleno sintético de alta calidad. Repelente al agua, con capucha desmontable y bolsillos con cierre. Ideal para entretiempo.', price: 12500, stock: 15, categoryId: ninas.id, images: '["https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800","https://images.unsplash.com/photo-1544923408-75c5cef46f14?w=800"]', colors: ['Rosa','Azul marino','Negro'], sizes: ['6','8','10','12'], features: ['Ultraliviana y abrigada','Capucha desmontable','Repelente al agua','Bolsillos con cierre','Relleno sintético hipoalergénico'], rating: 4.8, reviewCount: 19, weight: 380, height: 5, width: 32, length: 42, updatedAt: new Date() },
-    // NIÑOS
-    { id: createId(), name: 'Remera Selección Argentina', description: 'Remera deportiva con los colores de la Selección Argentina. Tela deportiva de secado rápido, perfecta para jugar al fútbol o uso diario.', price: 4500, stock: 38, categoryId: ninos.id, images: '["https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800"]', colors: ['Celeste y blanco','Azul marino'], sizes: ['4','6','8','10','12','14'], features: ['Tela deportiva respirable','Secado rápido','Colores selección argentina','Cuello reforzado'], rating: 4.8, reviewCount: 94, weight: 130, height: 1, width: 24, length: 30, updatedAt: new Date() },
-    { id: createId(), name: 'Conjunto Deportivo Nike Style', description: 'Conjunto deportivo inspirado en las grandes marcas: buzo canguro con capucha y pantalón jogger. Tela francesa de primera calidad con interior afelpado.', price: 8900, salePrice: 7120, stock: 16, onSale: true, categoryId: ninos.id, images: '["https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=800"]', colors: ['Negro','Azul marino','Gris'], sizes: ['6','8','10','12','14'], features: ['Tela francesa afelpada','Buzo tipo canguro','Pantalón con bolsillos','Puños y ruedo elastizados'], rating: 4.7, reviewCount: 45, weight: 420, height: 4, width: 30, length: 38, updatedAt: new Date() },
-    { id: createId(), name: 'Jean Recto Clásico Azul', description: 'Jean clásico de corte recto, cinco bolsillos funcionales. Denim de alta resistencia, ideal para el uso diario y el colegio.', price: 7200, stock: 25, categoryId: ninos.id, images: '["https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800"]', colors: ['Azul','Negro','Gris'], sizes: ['6','8','10','12','14','16'], features: ['Denim resistente','Corte recto clásico','5 bolsillos','Cierre con botón'], rating: 4.6, reviewCount: 38, weight: 320, height: 2, width: 28, length: 34, updatedAt: new Date() },
-    { id: createId(), name: 'Buzo Canguro Gamer', description: 'Buzo con capucha y diseño gamer, perfecto para los fanáticos de los videojuegos. Tela francesa afelpada súper cómoda, con bolsillo tipo canguro.', price: 6800, stock: 22, categoryId: ninos.id, images: '["https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800"]', colors: ['Negro','Gris oscuro','Azul'], sizes: ['8','10','12','14'], features: ['Diseño gamer exclusivo','Tela francesa afelpada','Capucha con cordón','Bolsillo canguro grande'], rating: 4.9, reviewCount: 67, weight: 380, height: 3, width: 30, length: 36, updatedAt: new Date() },
-    { id: createId(), name: 'Bermuda Cargo con Bolsillos', description: 'Bermuda de gabardina con múltiples bolsillos cargo. Ideal para el verano y actividades al aire libre. Cintura regulable con elástico interno.', price: 5400, stock: 30, categoryId: ninos.id, images: '["https://images.unsplash.com/photo-1598032895397-d5abbd161a07?w=800"]', colors: ['Beige','Verde militar','Azul'], sizes: ['6','8','10','12','14'], features: ['Gabardina resistente','Múltiples bolsillos cargo','Cintura regulable','Ideal para verano'], rating: 4.5, reviewCount: 29, weight: 240, height: 2, width: 26, length: 30, updatedAt: new Date() },
-    // BEBÉS
-    { id: createId(), name: 'Pack 3 Bodies de Algodón', description: 'Set de 3 bodies de algodón peinado extra suave. Broches en la entrepierna para facilitar el cambio de pañal. Perfectos para uso diario.', price: 6900, stock: 35, categoryId: bebes.id, images: '["https://images.unsplash.com/photo-1519689373023-dd07c7988603?w=800"]', colors: ['Blanco','Beige','Gris'], sizes: ['0-3 meses','3-6 meses','6-9 meses','9-12 meses'], features: ['Pack de 3 unidades','Algodón peinado 100%','Broches en entrepierna','Cuello elástico reforzado','Lavable a máquina'], rating: 4.9, reviewCount: 127, weight: 150, height: 1, width: 20, length: 25, updatedAt: new Date() },
-    { id: createId(), name: 'Enterito Osito Polar', description: 'Enterito de polar súper suave con capucha de osito. Incluye piecitos cerrados y cierre frontal completo. Ideal para los días fríos.', price: 8500, salePrice: 6800, stock: 18, onSale: true, categoryId: bebes.id, images: '["https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800"]', colors: ['Beige','Gris','Celeste'], sizes: ['0-3 meses','3-6 meses','6-9 meses'], features: ['Polar suave y abrigado','Capucha con orejas de osito','Piecitos cerrados','Cierre frontal completo'], rating: 5.0, reviewCount: 89, weight: 200, height: 2, width: 22, length: 28, updatedAt: new Date() },
-    { id: createId(), name: 'Conjunto 3 Piezas Algodón', description: 'Set completo: body, pantalón y gorrito a juego. Confeccionado en algodón orgánico certificado, ideal para pieles sensibles.', price: 7800, stock: 24, categoryId: bebes.id, images: '["https://images.unsplash.com/photo-1522771930-78848d9293e8?w=800"]', colors: ['Blanco','Menta','Rosa suave'], sizes: ['0-3 meses','3-6 meses','6-9 meses'], features: ['Set de 3 piezas','Algodón orgánico certificado','Sin irritantes','Body con broches','Gorrito elástico'], rating: 4.8, reviewCount: 64, weight: 180, height: 2, width: 22, length: 26, updatedAt: new Date() },
-    { id: createId(), name: 'Pijama 2 Piezas Estrellas', description: 'Pijama de dos piezas con estampado de estrellas. Remera de manga larga y pantalón con piecitos antideslizantes. Perfecto para dormir seguro.', price: 5600, stock: 28, categoryId: bebes.id, images: '["https://images.unsplash.com/photo-1519689373023-dd07c7988603?w=800"]', colors: ['Azul','Rosa','Gris'], sizes: ['6-9 meses','9-12 meses','12-18 meses'], features: ['Estampado de estrellas','Piecitos antideslizantes','Algodón suave','Elástico en cintura'], rating: 4.7, reviewCount: 43, weight: 170, height: 2, width: 22, length: 28, updatedAt: new Date() },
-    { id: createId(), name: 'Manta Polar con Capucha', description: 'Manta de polar premium con capucha bordada. Tamaño 75x75cm, perfecta para abrigar al bebé en el cochecito o en casa. Súper suave y calientita.', price: 6400, salePrice: 5120, stock: 15, onSale: true, categoryId: bebes.id, images: '["https://images.unsplash.com/photo-1522771930-78848d9293e8?w=800"]', colors: ['Celeste','Rosa','Gris'], sizes: ['75x75 cm'], features: ['Polar premium súper suave','Capucha bordada','Tamaño 75x75cm','Ideal para cochecito','Lavable a máquina'], rating: 4.9, reviewCount: 52, weight: 320, height: 5, width: 25, length: 30, updatedAt: new Date() },
-  ];
+  // 3. Create Products
+  console.log("👕 Creating products with realistic images...\n");
 
-  await prisma.products.createMany({ data: products });
-  await prisma.user.create({ data: { id: createId(), email: 'admin@rastuci.com', name: 'Admin', password: '$2b$10$L0ecUp38mrEEEw9LKISmDOHLWDjTYjMu7z2myubPVDYMhtkFUs8jO', isAdmin: true }});
+  for (const p of PRODUCTS_DATA) {
+    const categoryId = categoryMap[p.category];
+    const productColorImages = PRODUCT_IMAGES[p.name] || {};
+    const colors = Object.keys(productColorImages);
 
-  console.log('✅ Seed completado: 3 categorías, 15 productos, 1 admin (admin@rastuci.com / admin123)');
+    // Flatten all images for the 'images' field
+    const allImages: string[] = [];
+    for (const imgs of Object.values(productColorImages)) {
+      allImages.push(...imgs);
+    }
+
+    // Calculate sale price if on sale
+    const salePrice =
+      p.onSale && p.discount ? p.price * (1 - p.discount / 100) : null;
+
+    console.log(
+      `  ✓ ${p.name} (${colors.length} colors, ${allImages.length} images)`
+    );
+
+    const product = await prisma.products.create({
+      data: {
+        id: crypto.randomUUID(),
+        name: p.name,
+        description: `${p.name} de alta calidad para niños. Perfecto para el uso diario. ${p.features.join(". ")}.`,
+        price: p.price,
+        salePrice: salePrice,
+        categoryId: categoryId,
+        stock: colors.length * SIZES.length * 10, // Will be calculated from variants
+        images: JSON.stringify(allImages),
+        colorImages: productColorImages,
+        features: p.features,
+        sizes: SIZES,
+        colors: colors,
+        onSale: p.onSale || false,
+        weight: 300,
+        height: 5,
+        width: 25,
+        length: 35,
+        updatedAt: new Date(),
+      },
+    });
+
+    // Create Variants
+    for (const color of colors) {
+      for (const size of SIZES) {
+        await prisma.product_variants.create({
+          data: {
+            productId: product.id,
+            color: color,
+            size: size,
+            stock: Math.floor(Math.random() * 15) + 3, // 3-17 per variant
+            sku: `${product.id.slice(-4)}-${color.slice(0, 3).toUpperCase()}-${size}`,
+          },
+        });
+      }
+    }
+  }
+
+  console.log("\n✅ COMPREHENSIVE Seed completed successfully!");
+  console.log(`   📦 ${PRODUCTS_DATA.length} products created`);
+  console.log(`   📁 ${CATEGORIES.length} categories created`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error:', e);
+    console.error("❌ Seed Error:", e);
     process.exit(1);
   })
   .finally(async () => {

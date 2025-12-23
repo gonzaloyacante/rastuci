@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -18,6 +18,22 @@ export default function ProductImageGallery({
   const [slideDirection, setSlideDirection] = useState<"left" | "right">(
     "right"
   );
+
+  // Reset selected image when the image list changes
+  // We use a deep comparison or length check to avoid unnecessary resets if the array reference changes but content is same
+  // But for simple URL arrays, checking the first item or length usually suffices, or just stringifying
+  const imagesKey = JSON.stringify(images);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We want to trigger when the unified key changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We want to trigger when the unified key changes
+  useEffect(() => {
+    setSelectedImage(0);
+  }, [imagesKey]);
+
+  // Using useEffect or a key pattern. Since we are inside the component:
+  if (images.length > 0 && selectedImage >= images.length) {
+    setSelectedImage(0);
+  }
 
   const changeImage = useCallback(
     (newIndex: number, direction: "left" | "right") => {

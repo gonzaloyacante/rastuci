@@ -58,6 +58,19 @@ export async function GET(
       description: product.description ?? undefined,
       salePrice: product.salePrice ?? undefined,
       images: safelyParseImages(product.images),
+      // DEBUG LOG
+      // console.log(`[API] Product ID: ${product.id}`);
+      // console.log(`[API] Raw colorImages type:`, typeof product.colorImages);
+      // console.log(`[API] Raw colorImages value:`, JSON.stringify(product.colorImages));
+
+      colorImages:
+        product.colorImages &&
+        typeof product.colorImages === "object" &&
+        !Array.isArray(product.colorImages)
+          ? (product.colorImages as unknown as Record<string, string[]>)
+          : typeof product.colorImages === "string"
+            ? JSON.parse(product.colorImages)
+            : null,
       categories: {
         ...product.categories,
         description: product.categories.description ?? undefined,
@@ -135,6 +148,7 @@ export const PUT = withAdminAuth(
         width,
         length,
         variants: inputVariants, // Rename to avoid conflict if necessary or just variants
+        colorImages,
       } = parsed.data;
 
       // Verificar que la categoría existe
@@ -219,6 +233,7 @@ export const PUT = withAdminAuth(
           width: width ?? null,
           length: length ?? null,
           updatedAt: new Date(),
+          colorImages: colorImages ?? undefined,
         },
         include: {
           categories: true,
@@ -234,6 +249,11 @@ export const PUT = withAdminAuth(
           typeof updatedPrismaProduct.images === "string"
             ? JSON.parse(updatedPrismaProduct.images)
             : updatedPrismaProduct.images,
+        colorImages:
+          (updatedPrismaProduct.colorImages as unknown as Record<
+            string,
+            string[]
+          >) ?? null,
         categories: {
           ...updatedPrismaProduct.categories,
           description: updatedPrismaProduct.categories.description ?? undefined,

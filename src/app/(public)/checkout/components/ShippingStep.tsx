@@ -426,22 +426,14 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
               Ubicación del local
             </h3>
             <div className="rounded-lg border border-muted overflow-hidden">
-              {/* Google Maps Embed - using simple embed format */}
-              <iframe
-                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13106.15!2d-58.63!3d-34.48!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcb0a5c!2s${encodeURIComponent(shippingSettings?.storeCity || "Don Torcuato, Buenos Aires, Argentina")}!5e0!3m2!1ses!2sar!4v1703000000000!5m2!1ses!2sar`}
-                width="100%"
-                height="280"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Ubicación aproximada del local"
-              />
-              <div className="p-4 surface-muted border-t border-muted">
-                <p className="text-sm font-medium text-primary">
+              <div className="p-6 bg-muted/20 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                  <MapPin className="h-6 w-6 text-primary" />
+                </div>
+                <h4 className="font-medium text-lg mb-1">
                   {shippingSettings?.storeCity || "Don Torcuato, Buenos Aires"}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                </h4>
+                <p className="text-sm text-muted-foreground mb-4 max-w-sm">
                   Coordinaremos la dirección exacta por WhatsApp después de
                   confirmar tu pedido
                 </p>
@@ -449,10 +441,10 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shippingSettings?.storeCity || "Don Torcuato, Buenos Aires, Argentina")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-2 text-xs text-primary hover:underline"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-muted hover:border-primary/50 text-sm font-medium rounded-full transition-all shadow-sm hover:shadow-md"
                 >
-                  <MapPin className="h-3 w-3" />
-                  Abrir en Google Maps
+                  <MapPin className="h-4 w-4 text-primary" />
+                  Ver ubicación en Google Maps
                 </a>
               </div>
             </div>
