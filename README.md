@@ -31,7 +31,8 @@ en línea.
 - **🛍️ Experiencia de Compra Superior**: Navegación intuitiva, búsqueda avanzada y proceso de
   checkout optimizado
 - **📱 100% Responsive**: Diseñado para funcionar perfectamente en móviles, tablets y desktop
-- **⚡ Rendimiento Extremo**: Carga rápida con optimizaciones avanzadas y cache inteligente
+- **⚡ Rendimiento Extremo**: Carga rápida con Lazy Loading, optimizaciones avanzadas y cache inteligente
+- **♿ Accesibilidad**: Cumplimiento de estándares WCAG con navegación por teclado y lectores de pantalla
 - **🔒 Seguridad Total**: Autenticación robusta, pagos seguros con MercadoPago y protección de datos
 - **🎨 Diseño Moderno**: Interface elegante con modo oscuro/claro y componentes reutilizables
 - **📊 Panel Admin Completo**: Gestión total de productos, categorías, pedidos y usuarios
@@ -72,8 +73,10 @@ momento, ya que el objetivo es demostrar habilidades individuales.
 - **TypeScript Completo**: Tipado estricto en todo el proyecto
 - **Base de Datos Robusta**: PostgreSQL + Prisma ORM
 - **Cache Inteligente**: Sistema optimizado para máximo rendimiento
-- **Testing Incluido**: Vitest + Testing Library configurado
+- **Cache Inteligente**: Sistema optimizado para máximo rendimiento
+- **Testing Robusto**: Vitest (Unit) + Playwright (E2E) + Testing Library
 - **CI/CD Ready**: Despliegue automático con Vercel
+- **Linting Riguroso**: ESLint con reglas de accesibilidad y performance
 - **Documentación Completa**: Código bien documentado y mantenible
 
 ---
