@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { AdminCard, StatCard, StatsGrid, SectionHeader, AdminColor } from "../../../components/admin/AdminCards";
-import { DollarSign, Users, ShoppingBag, TrendingUp, Package } from "lucide-react";
+import { AdminCard, StatCard, AdminColor } from "../../../components/admin/AdminCards";
+import { DollarSign, Users } from "lucide-react";
 
 // AdminCard stories
 const metaAdminCard: Meta<typeof AdminCard> = {
@@ -26,7 +26,7 @@ export const WithHoverGradient: StoryAdminCard = {
 };
 
 // StatCard stories
-const metaStatCard: Meta<typeof StatCard> = {
+const _metaStatCard: Meta<typeof StatCard> = {
   title: "Admin/StatCard",
   component: StatCard,
   tags: ["autodocs"],

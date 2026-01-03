@@ -29,6 +29,6 @@ export const CustomContent: Story = {
       ctaPrimaryLabel: "Shop Summer",
       ctaSecondaryLabel: "New Arrivals",
       // other required fields mocked with defaults or partials if type allows
-    } as any,
+    } as unknown as Parameters<typeof HeroSection>[0]["home"],
   },
 };

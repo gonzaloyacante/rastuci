@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { SortPopover } from "../../../components/products/SortPopover";
-import { Button } from "../../../components/ui/Button";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 const meta: Meta<typeof SortPopover> = {
   title: "Public/Products/SortPopover",
@@ -18,7 +17,7 @@ const options = [
   { value: "newest", label: "Más Recientes" },
 ];
 
-const PopoverWrapper = (args: any) => {
+const PopoverWrapper = (args: Record<string, unknown>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState("newest");
@@ -36,7 +35,7 @@ const PopoverWrapper = (args: any) => {
         {...args}
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        triggerRef={triggerRef}
+        triggerRef={triggerRef as React.RefObject<HTMLElement>}
         selectedValue={selected}
         onSelect={setSelected}
         options={options}

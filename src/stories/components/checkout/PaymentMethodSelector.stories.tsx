@@ -38,7 +38,7 @@ const mockMethods = [
 
 // Decorator to mock fetch
 // Note: In a real app, use MSW. Here we monkey-patch fetch for the story context.
-const FetchDecorator = (Story: any) => {
+const FetchDecorator = (Story: React.ComponentType) => {
   React.useEffect(() => {
     const originalFetch = global.fetch;
     global.fetch = async (url: RequestInfo | URL, init?: RequestInit) => {

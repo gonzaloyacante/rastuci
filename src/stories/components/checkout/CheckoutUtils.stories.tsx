@@ -9,7 +9,7 @@ import {
 import { Button } from "../../../components/ui/Button";
 
 // ProgressBar Story
-const metaProgress: Meta<typeof ProgressBar> = {
+const _metaProgress: Meta<typeof ProgressBar> = {
   title: "Checkout/Utils/ProgressBar",
   component: ProgressBar,
   tags: ["autodocs"],
@@ -24,7 +24,7 @@ export const ProgressDefault: StoryObj<typeof ProgressBar> = {
 };
 
 // FloatingNotification Story
-const metaNotification: Meta<typeof FloatingNotification> = {
+const _metaNotification: Meta<typeof FloatingNotification> = {
   title: "Checkout/Utils/FloatingNotification",
   component: FloatingNotification,
   tags: ["autodocs"],
@@ -37,7 +37,7 @@ export const NotificationError: StoryObj<typeof FloatingNotification> = {
 };
 
 // PulseHighlight Story
-const metaPulse: Meta<typeof PulseHighlight> = {
+const _metaPulse: Meta<typeof PulseHighlight> = {
   title: "Checkout/Utils/PulseHighlight",
   component: PulseHighlight,
   tags: ["autodocs"],
@@ -47,7 +47,7 @@ export const PulseDefault: StoryObj<typeof PulseHighlight> = {
 };
 
 // AnimatedCounter Story
-const metaCounter: Meta<typeof AnimatedCounter> = {
+const _metaCounter: Meta<typeof AnimatedCounter> = {
   title: "Checkout/Utils/AnimatedCounter",
   component: AnimatedCounter,
   tags: ["autodocs"],
@@ -57,7 +57,7 @@ export const CounterDefault: StoryObj<typeof AnimatedCounter> = {
 };
 
 // SkeletonLoader Story
-const metaSkeleton: Meta<typeof SkeletonLoader> = {
+const _metaSkeleton: Meta<typeof SkeletonLoader> = {
   title: "Checkout/Utils/SkeletonLoader",
   component: SkeletonLoader,
   tags: ["autodocs"],

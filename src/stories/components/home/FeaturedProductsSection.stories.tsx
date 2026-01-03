@@ -60,7 +60,7 @@ const mockProducts = [
 
 export const Default: Story = {
   args: {
-    products: mockProducts as any,
+    products: mockProducts as unknown as Parameters<typeof FeaturedProductsSection>[0]["products"],
   },
 };
 

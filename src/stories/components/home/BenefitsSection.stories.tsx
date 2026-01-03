@@ -36,6 +36,6 @@ export const CustomBenefits: Story = {
           description: "100% secure checkout",
         },
       ],
-    } as any,
+    } as unknown as Parameters<typeof BenefitsSection>[0]["home"],
   },
 };

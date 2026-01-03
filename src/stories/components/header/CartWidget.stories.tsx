@@ -1,9 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import CartWidget from "../../../components/header/CartWidget.client";
 import React from "react";
-
-// Mock minimal Context needed for CartWidget
-const MockCartContext = React.createContext<any>(undefined);
+import type { Product } from "@/types";
 
 // We need to match the module import that CartWidget uses.
 // Since we can't easily module-mock in generic storybook without setup,
@@ -39,15 +37,24 @@ const MockCartContext = React.createContext<any>(undefined);
 
 import { CartProvider, useCart } from "../../../context/CartContext";
 
-const AddItemsDecorator = (Story: any) => {
+const AddItemsDecorator = (Story: React.ComponentType) => {
   const { addToCart, clearCart } = useCart();
   React.useEffect(() => {
     clearCart();
-    // Add dummy item
-    // Product structure mock
-    const p = { id: "1", name: "Mock Product", price: 100, images: [] } as any;
+    // Product structure mock - minimal fields for cart functionality
+    const p = {
+      id: "1",
+      name: "Mock Product",
+      price: 100,
+      images: [],
+      stock: 10,
+      categoryId: "cat1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Product;
     addToCart(p, 5, "M", "Red");
-  }, []); // Run once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return <Story />;
 };
 

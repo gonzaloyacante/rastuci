@@ -13,10 +13,25 @@ export default meta;
 type Story = StoryObj<typeof VariantManager>;
 
 // Wrapper to handle state
-const StatefulVariantManager = ({ initialVariants = [], ...args }: any) => {
+const StatefulVariantManager = ({
+  initialVariants = [],
+  availableColors = [],
+  availableSizes = [],
+  ...args
+}: Record<string, unknown> & {
+  initialVariants?: ProductVariant[];
+  availableColors?: string[];
+  availableSizes?: string[];
+}) => {
   const [variants, setVariants] = useState<ProductVariant[]>(initialVariants);
   return (
-    <VariantManager {...args} variants={variants} onChange={setVariants} />
+    <VariantManager
+      {...args}
+      variants={variants}
+      onChange={setVariants}
+      availableColors={availableColors}
+      availableSizes={availableSizes}
+    />
   );
 };
 
@@ -35,8 +50,8 @@ export const WithVariants: Story = {
       availableColors={["Rojo", "Azul"]}
       availableSizes={["S", "M"]}
       initialVariants={[
-        { id: "1", color: "Rojo", size: "S", stock: 10, sku: "RED-S-1" },
-        { id: "2", color: "Rojo", size: "M", stock: 5, sku: "RED-M-1" },
+        { id: "1", productId: "p1", color: "Rojo", size: "S", stock: 10, sku: "RED-S-1" },
+        { id: "2", productId: "p1", color: "Rojo", size: "M", stock: 5, sku: "RED-M-1" },
       ]}
     />
   ),

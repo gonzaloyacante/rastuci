@@ -3,7 +3,7 @@ import ProductList from "../../../components/products/ProductList";
 import React from "react";
 
 // Mock fetch for all ProductList dependencies
-const FetchDecorator = (Story: any) => {
+const FetchDecorator = (Story: React.ComponentType) => {
   React.useEffect(() => {
     const originalFetch = global.fetch;
     global.fetch = async (url: RequestInfo | URL, init?: RequestInit) => {

@@ -3,7 +3,7 @@ import { TrackingValidator } from "../../../components/tracking/TrackingValidato
 import React from "react";
 
 // Mock fetch for Tracking
-const FetchDecorator = (Story: any) => {
+const FetchDecorator = (Story: React.ComponentType) => {
   React.useEffect(() => {
     const originalFetch = global.fetch;
     global.fetch = async (url: RequestInfo | URL, init?: RequestInit) => {

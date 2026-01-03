@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { Chip } from "../../../components/ui/Chip";
-import { X } from "lucide-react";
 
 const meta: Meta<typeof Chip> = {
   title: "UI/Chip",

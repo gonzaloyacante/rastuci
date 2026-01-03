@@ -31,6 +31,6 @@ export const CustomFooter: Story = {
           twitter: "https://twitter.com",
         },
       },
-    } as any,
+    } as unknown as Parameters<typeof Footer>[0]["home"],
   },
 };

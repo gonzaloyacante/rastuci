@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { OrderSummaryCard } from "../../../components/checkout/OrderSummaryCard";
+import type { ProvinceCode } from "@/lib/constants";
 
 const meta: Meta<typeof OrderSummaryCard> = {
   title: "Checkout/OrderSummaryCard",
@@ -65,16 +66,21 @@ const mockAgency = {
       city: "CABA",
       postalCode: "1043",
       province: "Buenos Aires",
+      provinceCode: "B" as ProvinceCode,
       country: "Argentina",
     },
-    latitude: -34.6037,
-    longitude: -58.3816,
+    latitude: "-34.6037",
+    longitude: "-58.3816",
   },
   hours: {
     weekdays: { start: "0900", end: "1800" },
   },
-  services: [],
+  services: { packageReception: true, pickupAvailability: true },
   type: "agency" as const,
+  manager: "Juan Pérez",
+  email: "centro@correoargentino.com.ar",
+  phone: "+54 11 4000-0000",
+  status: "active" as const,
 };
 
 export const Default: Story = {
@@ -91,7 +97,7 @@ export const Default: Story = {
     shippingCost: 4500,
     discount: 25000,
     total: 124500,
-    agency: mockAgency as any, // Type cast for mock
+    agency: mockAgency as unknown as Parameters<typeof OrderSummaryCard>[0]["agency"],
   },
 };
 

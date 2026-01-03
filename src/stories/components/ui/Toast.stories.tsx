@@ -4,7 +4,7 @@ import { Button } from "../../../components/ui/Button";
 
 // Mock component to test hook
 const ToastDemo = () => {
-  const { show, dismiss } = useToast();
+  const { show, dismiss: _dismiss } = useToast();
 
   return (
     <div className="flex flex-col gap-2 p-4 border rounded">

@@ -4,7 +4,6 @@ import {
   NotificationProvider,
   useNotifications,
 } from "../../../context/NotificationContext";
-import { Button } from "../../../components/ui/Button";
 import { useEffect } from "react";
 
 const NotificationTrigger = () => {
@@ -28,6 +27,7 @@ const NotificationTrigger = () => {
         message: "Tienes un mensaje nuevo.",
       });
     }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
