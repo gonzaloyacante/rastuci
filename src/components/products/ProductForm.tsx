@@ -965,7 +965,20 @@ export default function ProductForm({
           {/* Botones de Acción */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button
-              type="submit"
+              type="button"
+              onClick={(e) => {
+                logger.info("Submit button clicked manually");
+                handleSubmit(onSubmit, (errors) => {
+                  logger.error("Validation errors (manual trigger):", errors);
+                  toast.error("Hay errores en el formulario.");
+                  const firstError = Object.keys(errors)[0];
+                  const element = document.getElementById(firstError);
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "center" });
+                    element.focus();
+                  }
+                })(e);
+              }}
               disabled={loading}
               variant="hero"
               className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold shadow-lg"
