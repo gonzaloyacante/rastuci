@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["dom", "dom.iterable", "es2020"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2020"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -21,15 +25,33 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/app/*": ["./src/app/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/checkout/components/*": ["./src/app/checkout/components/*"],
-      "@/types": ["./src/types/index.ts"],
-      "@/utils/*": ["./src/utils/*"],
-      "@/hooks/*": ["./src/hooks/*"],
-      "@/lib/*": ["./src/lib/*"],
-      "@/context/*": ["./src/context/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/app/*": [
+        "./src/app/*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/checkout/components/*": [
+        "./src/app/checkout/components/*"
+      ],
+      "@/types": [
+        "./src/types/index.ts"
+      ],
+      "@/utils/*": [
+        "./src/utils/*"
+      ],
+      "@/hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@/lib/*": [
+        "./src/lib/*"
+      ],
+      "@/context/*": [
+        "./src/context/*"
+      ]
     },
     // Enhanced strict mode settings
     "noImplicitReturns": true,
@@ -73,7 +95,9 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.config.js",
-    "**/*.config.ts"
+    "**/*.config.ts",
+    "**/*.stories.tsx",
+    "src/stories"
   ],
   "ts-node": {
     "esm": true,
