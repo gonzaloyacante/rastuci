@@ -4,11 +4,9 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 
 // Mock Next.js Image component
-vi.mock("next/image", () => {
-  return function MockImage({ src, alt, ...props }: any) {
-    return <img src={src} alt={alt} {...props} />;
-  };
-});
+vi.mock("next/image", () => ({
+  default: ({ src, alt, ...props }: any) => <img src={src} alt={alt} {...props} />,
+}));
 
 describe("ProductImageGallery Component", () => {
   const mockImages = ["/image1.jpg", "/image2.jpg", "/image3.jpg"];
