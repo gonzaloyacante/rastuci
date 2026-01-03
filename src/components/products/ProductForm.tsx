@@ -525,7 +525,19 @@ export default function ProductForm({
         </div>
 
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit(onSubmit, (errors) => {
+            logger.error("Form validation errors:", errors);
+            toast.error(
+              "Hay errores en el formulario. Por favor revisa los campos en rojo."
+            );
+            // Optional: scroll to first error
+            const firstError = Object.keys(errors)[0];
+            const element = document.getElementById(firstError);
+            if (element) {
+              element.scrollIntoView({ behavior: "smooth", block: "center" });
+              element.focus();
+            }
+          })}
           className="space-y-4 sm:space-y-6 lg:space-y-8"
         >
           {/* Información Básica */}
