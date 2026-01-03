@@ -65,13 +65,21 @@ export async function GET(request: NextRequest): Promise<
       orderBy: { name: "asc" },
       skip: offset,
       take: limit,
-      include: includeProductCount
-        ? {
+      select: {
+        id: true,
+        name: true,
+        // Exclude description unless it's a detail view (which this is list)
+        description: false,
+        imageUrl: true,
+        icon: true,
+        createdAt: true,
+        updatedAt: true,
+        ...(includeProductCount ? {
           _count: {
-            select: { products: true },
-          },
-        }
-        : undefined,
+            select: { products: true }
+          }
+        } : {})
+      }
     });
 
     const total = await prisma.categories.count({ where });
@@ -80,7 +88,6 @@ export async function GET(request: NextRequest): Promise<
     const transformedCategories = categoriesWithCount.map(
       (category: CategoryType) => ({
         ...category,
-        description: category.description ?? undefined,
         ...(includeProductCount
           ? {
             productCount:

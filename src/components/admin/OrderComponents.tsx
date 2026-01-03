@@ -102,6 +102,7 @@ export interface OrderCardData {
   itemsCount: number;
   shippingMethod?: string;
   caTrackingNumber?: string;
+  relativeTime?: string;
 }
 
 interface OrderCardProps {
@@ -193,8 +194,14 @@ export function OrderCard({
           </h3>
           <OrderStatusBadge status={order.status} />
         </div>
-        <p className="text-xs text-content-secondary">
-          {formatDate(order.createdAt)}
+        <p className="text-xs text-content-secondary flex items-center gap-1">
+          <span>{formatDate(order.createdAt)}</span>
+          {order.relativeTime && (
+            <>
+              <span className="text-content-secondary/50">•</span>
+              <span className="italic">{order.relativeTime}</span>
+            </>
+          )}
         </p>
       </div>
 

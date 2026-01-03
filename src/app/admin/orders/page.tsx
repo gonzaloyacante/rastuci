@@ -63,6 +63,18 @@ const formatDate = (dateString: string) =>
     minute: "2-digit",
   });
 
+const timeAgo = (dateString: string) => {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `hace ${days} día${days > 1 ? "s" : ""}`;
+  if (hours > 0) return `hace ${hours} hora${hours > 1 ? "s" : ""}`;
+  if (minutes > 0) return `hace ${minutes} min`;
+  return "recién";
+};
+
 const formatCurrency = (value: number) => `$${value.toLocaleString("es-AR")}`;
 
 const getStatusLabel = (status: string) => {
@@ -314,10 +326,10 @@ export default function OrdersPage() {
           action={
             searchTerm || statusFilter !== "ALL"
               ? {
-                  label: "Ver todos los pedidos",
-                  onClick: handleReset,
-                  variant: "outline",
-                }
+                label: "Ver todos los pedidos",
+                onClick: handleReset,
+                variant: "outline",
+              }
               : undefined
           }
         />
@@ -327,7 +339,10 @@ export default function OrdersPage() {
             {orders.map((order) => (
               <OrderCard
                 key={order.id}
-                order={toOrderCardData(order)}
+                order={{
+                  ...toOrderCardData(order),
+                  relativeTime: timeAgo(order.createdAt as any),
+                }}
                 formatDate={formatDate}
                 formatCurrency={formatCurrency}
                 onStatusChange={() => setCurrentPage(1)} // Recargar datos

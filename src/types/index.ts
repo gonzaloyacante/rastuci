@@ -43,6 +43,8 @@ export interface Product {
   updatedAt: Date;
   variants?: ProductVariant[];
   colorImages?: Record<string, string[]> | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sizeGuide?: any;
 }
 
 export interface ProductVariant {

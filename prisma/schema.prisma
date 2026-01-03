@@ -371,6 +371,9 @@ model products {
 
   @@index([categoryId])
   @@index([categoryId, onSale])
+  @@index([categoryId, price])
+  @@index([categoryId, name])
+  @@index([onSale, price])
   @@index([createdAt])
   @@index([name])
   @@index([onSale])

@@ -13,12 +13,6 @@ export const prisma =
         url: process.env.DATABASE_URL || process.env.DIRECT_URL,
       },
     },
-    // Prevent huge number of connections in dev
-    ...(process.env.NODE_ENV === "development"
-      ? {
-          errorFormat: "pretty",
-        }
-      : {}),
   });
 
 if (process.env.NODE_ENV !== "production") {

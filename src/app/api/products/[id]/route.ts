@@ -58,15 +58,12 @@ export async function GET(
       description: product.description ?? undefined,
       salePrice: product.salePrice ?? undefined,
       images: safelyParseImages(product.images),
-      // DEBUG LOG
-      // console.log(`[API] Product ID: ${product.id}`);
-      // console.log(`[API] Raw colorImages type:`, typeof product.colorImages);
-      // console.log(`[API] Raw colorImages value:`, JSON.stringify(product.colorImages));
+      // DEBUG LOG REMOVED
 
       colorImages:
         product.colorImages &&
-        typeof product.colorImages === "object" &&
-        !Array.isArray(product.colorImages)
+          typeof product.colorImages === "object" &&
+          !Array.isArray(product.colorImages)
           ? (product.colorImages as unknown as Record<string, string[]>)
           : typeof product.colorImages === "string"
             ? JSON.parse(product.colorImages)
@@ -260,9 +257,9 @@ export const PUT = withAdminAuth(
         },
         variants: updatedPrismaProduct.variants
           ? updatedPrismaProduct.variants.map((v) => ({
-              ...v,
-              sku: v.sku ?? undefined,
-            }))
+            ...v,
+            sku: v.sku ?? undefined,
+          }))
           : [],
       };
 

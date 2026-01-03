@@ -137,6 +137,7 @@ interface CartContextType {
     redirectUrl?: string;
     paymentMethod?: string;
   }>;
+  loadCheckoutSettings: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -144,36 +145,36 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Fallback seguro para usar los hooks fuera de un provider (no lanzar)
 const _defaultCart: CartContextType = {
   cartItems: [],
-  addToCart: (() => {}) as unknown as CartContextType["addToCart"],
-  removeFromCart: () => {},
-  updateQuantity: () => {},
-  clearCart: () => {},
+  addToCart: (() => { }) as unknown as CartContextType["addToCart"],
+  removeFromCart: () => { },
+  updateQuantity: () => { },
+  clearCart: () => { },
   getCartTotal: () => 0,
   getItemCount: () => 0,
 
   availableShippingOptions: [],
   selectedShippingOption: null,
-  setSelectedShippingOption: () => {},
+  setSelectedShippingOption: () => { },
   calculateShippingCost: async () => [],
 
   selectedAgency: null,
-  setSelectedAgency: () => {},
+  setSelectedAgency: () => { },
   getAgencies: async () => [],
 
   availablePaymentMethods: [],
   selectedPaymentMethod: null,
-  setSelectedPaymentMethod: () => {},
+  setSelectedPaymentMethod: () => { },
 
   availableBillingOptions: [],
   selectedBillingOption: null,
-  setSelectedBillingOption: () => {},
+  setSelectedBillingOption: () => { },
 
   appliedCoupon: null,
   applyCoupon: async () => false,
-  removeCoupon: () => {},
+  removeCoupon: () => { },
 
   customerInfo: null,
-  updateCustomerInfo: () => {},
+  updateCustomerInfo: () => { },
 
   getOrderSummary: () => ({
     items: [],
@@ -188,6 +189,7 @@ const _defaultCart: CartContextType = {
   }),
 
   placeOrder: async () => ({ success: false, error: "CartProvider missing" }),
+  loadCheckoutSettings: async () => { },
 };
 
 export const useCart = () => {
@@ -242,11 +244,11 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     PaymentMethod[]
   >([]);
 
-  // Cargar opciones desde la API al montar el componente
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        // Cargar opciones de envío
+  // Cargar opciones desde la API bajo demanda
+  const loadCheckoutSettings = useCallback(async () => {
+    try {
+      // Cargar opciones de envío si no están cargadas
+      if (availableShippingOptions.length === 0) {
         const shippingRes = await fetch("/api/settings/shipping-options");
         if (shippingRes.ok) {
           const shippingData = await shippingRes.json();
@@ -254,8 +256,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
             setAvailableShippingOptions(shippingData.data);
           }
         }
+      }
 
-        // Cargar métodos de pago
+      // Cargar métodos de pago si no están cargados
+      if (availablePaymentMethods.length === 0) {
         const paymentRes = await fetch("/api/settings/payment-methods");
         if (paymentRes.ok) {
           const paymentData = await paymentRes.json();
@@ -263,12 +267,14 @@ export const CartProvider = ({ children }: CartProviderProps) => {
             setAvailablePaymentMethods(paymentData.data);
           }
         }
-      } catch (error) {
-        console.error("Error loading settings:", error);
       }
-    };
+    } catch (error) {
+      logger.error("Error loading checkout settings:", { error });
+    }
+  }, [availableShippingOptions.length, availablePaymentMethods.length]);
 
-    loadSettings();
+  useEffect(() => {
+    // No operation - removed auto load
   }, []);
 
   const availableBillingOptions: BillingOption[] = [
@@ -371,8 +377,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       setCartItems((prevItems) =>
         prevItems.map((item) =>
           item.product.id === productId &&
-          item.size === size &&
-          item.color === color
+            item.size === size &&
+            item.color === color
             ? { ...item, quantity: newQuantity }
             : item
         )
@@ -740,6 +746,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       // Checkout - Finalización
       getOrderSummary,
       placeOrder,
+      loadCheckoutSettings,
     }),
     [
       cartItems,
@@ -765,6 +772,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       updateCustomerInfo,
       getOrderSummary,
       placeOrder,
+      loadCheckoutSettings,
     ]
   );
 

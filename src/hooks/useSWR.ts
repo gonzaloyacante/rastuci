@@ -112,7 +112,9 @@ export function useSearch(
   },
 ) {
   const searchParams = new URLSearchParams();
-  searchParams.append('q', query);
+  // Map 'q' to 'search' which is what the products API expects
+  searchParams.append('search', query);
+
   if (options) {
     Object.entries(options).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -121,8 +123,10 @@ export function useSearch(
     });
   }
 
+  // Optimize: use /api/products directly instead of non-existent /api/search
+  // This allows reusing the same optimized endpoint
   return useAPI(
-    query.trim() ? `/api/search?${searchParams.toString()}` : null,
+    query.trim() ? `/api/products?${searchParams.toString()}` : null,
     {
       dedupingInterval: 2000,
       revalidateOnFocus: false,

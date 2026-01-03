@@ -152,8 +152,8 @@ export default function ProductDetailClient({
   const currentVariant =
     hasVariants && selectedColor && selectedSize && product
       ? product.variants!.find(
-          (v) => v.color === selectedColor && v.size === selectedSize
-        )
+        (v) => v.color === selectedColor && v.size === selectedSize
+      )
       : null;
 
   const currentStock = product
@@ -419,7 +419,7 @@ export default function ProductDetailClient({
                     -
                     {Math.round(
                       ((product.price - product.salePrice) / product.price) *
-                        100
+                      100
                     )}
                     %
                   </span>
@@ -450,11 +450,10 @@ export default function ProductDetailClient({
                       <button
                         key={`color-${color}-${idx}`}
                         onClick={() => setSelectedColor(color)}
-                        className={`group relative rounded-md border-2 transition-all overflow-hidden ${
-                          isSelected
+                        className={`group relative rounded-md border-2 transition-all overflow-hidden ${isSelected
                             ? "border-primary ring-2 ring-offset-2 ring-primary ring-offset-surface"
                             : "border-transparent hover:border-primary/50"
-                        }`}
+                          }`}
                         title={`Seleccionar color ${color}`}
                       >
                         {colorImg ? (
@@ -489,7 +488,6 @@ export default function ProductDetailClient({
                       {selectedSize || "Elegí uno"}
                     </span>
                   </h2>
-                  {/* @ts-expect-error - El tipado de sizeGuide es dinámico */}
                   <SizeGuide data={product.sizeGuide} />
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -522,12 +520,11 @@ export default function ProductDetailClient({
                         disabled={isDisabled}
                         className={`
                           min-w-[3rem] px-3 py-2 border rounded-lg text-sm font-medium transition-all
-                          ${
-                            selectedSize === size
-                              ? "border-primary bg-primary text-white shadow-md"
-                              : isDisabled
-                                ? "border-muted bg-muted/10 text-muted-foreground cursor-not-allowed opacity-50 decoration-slice"
-                                : "border-muted hover:border-primary text-primary bg-surface hover:bg-muted/10"
+                          ${selectedSize === size
+                            ? "border-primary bg-primary text-white shadow-md"
+                            : isDisabled
+                              ? "border-muted bg-muted/10 text-muted-foreground cursor-not-allowed opacity-50 decoration-slice"
+                              : "border-muted hover:border-primary text-primary bg-surface hover:bg-muted/10"
                           }
                           ${isOOS && !isDisabled ? "border-dashed" : ""} 
                         `}
@@ -577,11 +574,10 @@ export default function ProductDetailClient({
                     setQuantity(Math.min(currentStock, quantity + 1))
                   }
                   disabled={quantity >= currentStock}
-                  className={`w-8 h-8 border border-muted rounded flex items-center justify-center ${
-                    quantity >= currentStock
+                  className={`w-8 h-8 border border-muted rounded flex items-center justify-center ${quantity >= currentStock
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:surface-secondary"
-                  }`}
+                    }`}
                 >
                   +
                 </button>
@@ -620,9 +616,8 @@ export default function ProductDetailClient({
                 }
               >
                 <Heart
-                  className={`w-4 h-4 ${
-                    isProductFavorite ? "fill-current text-primary" : ""
-                  }`}
+                  className={`w-4 h-4 ${isProductFavorite ? "fill-current text-primary" : ""
+                    }`}
                 />
               </Button>
               <Button

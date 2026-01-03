@@ -142,6 +142,12 @@ export const PAYMENT_METHODS = {
   TRANSFER: "transfer",
 } as const;
 
+export const SHIPPING_COSTS = {
+  standard: 1500,
+  express: 2500,
+  pickup: 0,
+} as const;
+
 export const USER_ROLES = {
   ADMIN: "admin",
   USER: "user",

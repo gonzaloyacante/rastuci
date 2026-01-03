@@ -254,29 +254,30 @@ export function AgencySelector({
               (por nombre, ciudad o CP)
             </span>
           </label>
-          <div className="flex items-stretch gap-0">
+          <div className="relative flex-1">
             <Input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ej: Monte Grande, 1842, B0107..."
+              placeholder="Ej: Monte Grande, 1842..."
               disabled={loading || !province}
               leftIcon={<Search className="h-4 w-4" />}
               onClear={query ? clearSearch : undefined}
               inputSize="lg"
-              className="rounded-r-none border-r-0"
-              containerClassName="flex-1"
+              className="rounded-r-none border-r-0 focus:z-10 focus:ring-0 focus:border-primary"
+              containerClassName="w-full"
             />
-            <button
-              type="button"
-              onClick={handleSearchTrigger}
-              disabled={loading || !province || !query.trim()}
-              className="px-6 bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shrink-0 h-12 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-lg border-2 border-primary"
-            >
-              <span className="font-bold whitespace-nowrap">Buscar</span>
-            </button>
           </div>
+          <Button
+            type="button"
+            onClick={handleSearchTrigger}
+            disabled={loading || !province || !query.trim()}
+            className="rounded-l-none border-l-0 px-6 h-12"
+            variant="primary"
+          >
+            Buscar
+          </Button>
           {searchTerm && !loading && (
             <div className="flex items-center gap-2">
               {filteredAgencies.length > 0 ? (

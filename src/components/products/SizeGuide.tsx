@@ -36,20 +36,20 @@ export function SizeGuide({ data }: SizeGuideProps) {
                     )}
 
                     {typeof data === "object" && data.columns && data.rows && (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto border rounded-lg">
                             <table className="w-full text-sm border-collapse">
                                 <thead>
                                     <tr className="bg-muted/50">
                                         {data.columns.map((col: string, idx: number) => (
-                                            <th key={idx} className="border border-muted p-2 text-left font-medium">{col}</th>
+                                            <th key={idx} className="p-3 text-left font-semibold text-muted-foreground border-b border-muted min-w-[100px]">{col}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {data.rows.map((row: string[], idx: number) => (
-                                        <tr key={idx} className="even:bg-muted/20">
+                                        <tr key={idx} className="border-b border-muted/50 last:border-0 hover:bg-muted/10 transition-colors">
                                             {row.map((cell: string, cellIdx: number) => (
-                                                <td key={cellIdx} className="border border-muted p-2">{cell}</td>
+                                                <td key={cellIdx} className={`p-3 text-foreground ${cellIdx === 0 ? "font-semibold" : ""}`}>{cell}</td>
                                             ))}
                                         </tr>
                                     ))}

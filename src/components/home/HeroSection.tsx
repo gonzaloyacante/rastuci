@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
 import Link from "next/link";
+import Image from "next/image";
 
 interface HeroSectionProps {
   home?: HomeSettings;
@@ -30,16 +31,22 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
+
+  const heroImageSrc = home?.heroImage;
+  const logoSrc = home?.heroLogoUrl || defaultHomeSettings.heroLogoUrl || "/rastuci-full-logo.svg";
+
   return (
     <section className="w-full" aria-labelledby="hero-title">
       <div className="relative h-[calc(100svh-4rem)] overflow-hidden surface flex items-center justify-center">
-        {home?.heroImage && (
+        {heroImageSrc && (
           <div className="absolute inset-0 z-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={home.heroImage}
+            <Image
+              src={heroImageSrc}
               alt="Hero Background"
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
           </div>
@@ -50,20 +57,19 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
           </span>
 
           {/* Logo Principal */}
-          <div className="mb-8">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={
-                home?.heroLogoUrl ||
-                defaultHomeSettings.heroLogoUrl ||
-                "/rastuci-full-logo.svg"
-              }
+          <div className="mb-8 relative w-auto h-24 md:h-32 lg:h-40">
+            {/* Using width/height auto style requires strict width/height ratio or a wrapper. 
+                 Since the logo is central and vital, usage of simple width/height with 'w-auto' in Next/Image can be tricky.
+                 Simpler approach: Use specific width/height but keep CSS classes for responsive height.
+                 Or better: Use standard img for logo if SVG to avoid complexity OR use Next/Image with 'style={{ width: 'auto', height: '100%' }}' inside the relative responsive wrapper.
+              */}
+            <Image
+              src={logoSrc}
               alt="Rastući"
-              width={160}
-              height={96}
-              className="h-24 md:h-32 lg:h-40 w-auto mx-auto"
-              fetchPriority="high"
-              decoding="sync"
+              width={300}
+              height={180}
+              className="h-full w-auto mx-auto" // h-full of the wrapper which is responsive
+              priority
             />
           </div>
 

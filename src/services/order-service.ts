@@ -91,11 +91,14 @@ export class OrderService {
     // Handle CA Shipment Creation logic availability
     // Note: Actual shipment creation calls should be done by the controller/webhook using ShipmentService
     // We return a flag indicating if it should be attempted.
-    if (shouldDecrement && data.mappedStatus === ORDER_STATUS.PENDING_PAYMENT) {
-      return { order, shouldShip: true };
-    }
+    // FIX: Do NOT ship if it's a pickup order
+    const isPickup = order.shippingMethod === "pickup";
+    const shouldShip =
+      shouldDecrement &&
+      data.mappedStatus === ORDER_STATUS.PENDING_PAYMENT &&
+      !isPickup;
 
-    return { order, shouldShip: false };
+    return { order, shouldShip };
   }
 
   async createFromMetadata(
@@ -303,7 +306,8 @@ export class OrderService {
       }
     }
 
-    return { order: newOrder, shouldShip: shouldDecrement };
+    const isPickup = shippingMethodId === "pickup" || shippingId === "pickup";
+    return { order: newOrder, shouldShip: shouldDecrement && !isPickup };
   }
 
   async createCashOrder(

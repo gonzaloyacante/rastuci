@@ -48,6 +48,7 @@ import {
   StockIndicator,
 } from "./ProductFormComponents";
 import VariantManager from "./VariantManager";
+import SizeGuideEditor from "./SizeGuideEditor";
 
 // ==============================================================================
 // TYPES & SCHEMA
@@ -87,6 +88,7 @@ const productSchema = z.object({
   sizesInput: z.string().optional(),
   colorsInput: z.string().optional(),
   featuresInput: z.string().optional(),
+  sizeGuide: z.any().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -194,10 +196,10 @@ export default function ProductForm({
       const discountPercentage =
         initialData.salePrice && initialData.price
           ? Math.round(
-              ((initialData.price - initialData.salePrice) /
-                initialData.price) *
-                100
-            )
+            ((initialData.price - initialData.salePrice) /
+              initialData.price) *
+            100
+          )
           : null;
 
       reset({
@@ -212,6 +214,7 @@ export default function ProductForm({
         height: initialData.height || null,
         width: initialData.width || null,
         length: initialData.length || null,
+        sizeGuide: initialData.sizeGuide,
       });
     }
   }, [initialData, reset]);
@@ -398,6 +401,7 @@ export default function ProductForm({
         width: data.width || null,
         length: data.length || null,
         variants: variants && variants.length > 0 ? variants : undefined,
+        sizeGuide: data.sizeGuide,
       };
 
       // DEBUG: Log completo de lo que se está enviando
@@ -697,7 +701,7 @@ export default function ProductForm({
                           El descuento será de{" "}
                           {formatPriceARS(
                             Number(watchPrice || 0) -
-                              Number(calculatedSalePrice)
+                            Number(calculatedSalePrice)
                           )}
                         </p>
                       </>
@@ -819,19 +823,44 @@ export default function ProductForm({
                 ))}
               </div>
 
-              <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+
+              <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg mb-6">
                 <p className="text-sm text-orange-800 flex items-start gap-2">
                   <Info className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
                   <span>
-                    <strong>Importante:</strong> Las dimensiones correctas son
+                    <strong>Importante:</strong> Las dimensiones correctas (Peso, Alto, Ancho, Largo) son
                     esenciales para calcular el costo de envío. Si no se
-                    especifican, se usarán valores por defecto (1000g,
-                    10x20x30cm).
+                    especifican, se usarán valores por defecto.
                   </span>
                 </p>
               </div>
             </CardContent>
           </Card>
+
+          {/* Guía de Talles (Smart Table) */}
+          <Card className="shadow-xl border-0">
+            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
+                <Ruler className="h-4 w-4 sm:h-5 sm:w-5" />
+                Guía de Talles
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 lg:p-8">
+              <label className="block text-sm text-muted-foreground mb-4">
+                Define las medidas específicas para cada talle seleccionado. Esta tabla se mostrará a los clientes en el botón "Ver guía de talles".
+              </label>
+              <SizeGuideEditor
+                sizes={sizes}
+                value={watch("sizeGuide")}
+                onChange={(data) => {
+                  // We manually update the form value for sizeGuide
+                  // Using setValue from react-hook-form
+                  setValue("sizeGuide", data, { shouldDirty: true });
+                }}
+              />
+            </CardContent>
+          </Card>
+
 
           {/* Variantes del Producto */}
           <Card className="shadow-xl border-0">

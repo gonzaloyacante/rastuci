@@ -62,7 +62,7 @@ export function csrfProtection(request: NextRequest) {
     "/api/categories", // Categorías (público)
     "/api/orders", // Creación de pedidos
     "/api/coupons", // Validación de cupones
-    "/api/search", // Búsqueda de productos
+    // "/api/search", // Removed: useSearch now calls /api/products directly
     "/api/auth", // Autenticación (NextAuth maneja su propio CSRF)
     "/api/ai-faq", // FAQ con IA
     "/api/live-chat", // Chat en vivo
@@ -71,6 +71,7 @@ export function csrfProtection(request: NextRequest) {
     "/api/health", // Health check
     "/api/ready", // Ready check
     "/api/analytics", // Analytics (tracking anónimo)
+    "/api/upload", // Subida de imágenes por admin (protegido por AdminAuth)
   ];
 
   // Verificar si la ruta actual es una ruta pública

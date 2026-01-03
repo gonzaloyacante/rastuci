@@ -33,7 +33,7 @@ const stepLabels = [
 
 export default function CheckoutPageClient() {
   const router = useRouter();
-  const { cartItems, placeOrder, getCartTotal } = useCart();
+  const { cartItems, placeOrder, getCartTotal, loadCheckoutSettings } = useCart();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(
     CheckoutStep.CUSTOMER_INFO
   );
@@ -49,8 +49,10 @@ export default function CheckoutPageClient() {
     [subtotal, shippingCost]
   );
 
-  // Check if cart is empty and redirect
+  // Check if cart is empty and redirect, and load settings
   useEffect(() => {
+    loadCheckoutSettings(); // Cargar configuraciones (envío/pagos) al entrar al checkout
+
     const checkCartTimer = setTimeout(() => {
       if (cartItems.length === 0 && currentStep !== CheckoutStep.CONFIRMATION) {
         toast.error("Tu carrito está vacío");
@@ -58,7 +60,7 @@ export default function CheckoutPageClient() {
       }
     }, 300);
     return () => clearTimeout(checkCartTimer);
-  }, [cartItems, router, currentStep]);
+  }, [cartItems, router, currentStep, loadCheckoutSettings]);
 
   const goToNextStep = useCallback(() => {
     if (currentStep < CheckoutStep.CONFIRMATION) {

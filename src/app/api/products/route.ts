@@ -90,13 +90,43 @@ export async function GET(
       } as Prisma.productsOrderByWithRelationInput;
     }
 
-    // Preparar argumentos para Prisma
+    // Preparar argumentos para Prisma con SELECT optimizado
     const prismaArgs: Parameters<typeof prisma.products.findMany>[0] = {
       where,
-      include: {
-        categories: {
-          select: { id: true, name: true, description: true },
+      select: {
+        id: true,
+        name: true,
+        description: true, // Needed for list view card
+        price: true,
+        salePrice: true,
+        stock: true,
+        onSale: true,
+        images: true,
+        colorImages: true,
+        sizes: true, // Needed for available sizes badges
+        colors: true, // Needed for color badges
+        rating: true, // Needed for star rating
+        reviewCount: true, // Needed for star rating
+        variants: {
+          select: {
+            id: true,
+            color: true,
+            size: true,
+            stock: true
+          }
         },
+        categories: {
+          select: { id: true, name: true },
+        },
+        // Exclude content only needed for detail view
+        features: false,
+        sizeGuide: false,
+        weight: false,
+        height: false,
+        width: false,
+        length: false,
+        createdAt: false,
+        updatedAt: false,
       },
       skip: offset,
       take: limit,
@@ -255,13 +285,13 @@ export const POST = withAdminAuth(
           variants:
             productData.variants && productData.variants.length > 0
               ? {
-                  create: productData.variants.map((v) => ({
-                    color: v.color,
-                    size: v.size,
-                    stock: v.stock,
-                    sku: v.sku,
-                  })),
-                }
+                create: productData.variants.map((v) => ({
+                  color: v.color,
+                  size: v.size,
+                  stock: v.stock,
+                  sku: v.sku,
+                })),
+              }
               : undefined,
           colorImages: productData.colorImages ?? undefined,
         },

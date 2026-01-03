@@ -67,16 +67,47 @@ export const GET = withAdminAuth(
       const [prismaOrders, total] = await Promise.all([
         prisma.orders.findMany({
           where,
-          include: {
+          select: {
+            id: true,
+            customerName: true,
+            customerEmail: true,
+            customerPhone: true,
+            customerAddress: true,
+            total: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            mpPaymentId: true,
+            mpStatus: true,
             order_items: {
-              include: {
+              select: {
+                id: true,
+                orderId: true, // Required by mapOrderToDTO
+                quantity: true,
+                price: true,
+                productId: true,
+                color: true,
+                size: true,
                 products: {
-                  include: {
-                    categories: true,
-                  },
-                },
-              },
-            },
+                  select: {
+                    id: true,
+                    name: true,
+                    images: true,
+                    categories: {
+                      select: {
+                        id: true,
+                        name: true,
+                        description: true, // Required by type
+                        imageUrl: true, // Required by type
+                        icon: true, // Required by type
+                        createdAt: true, // Required by type
+                        updatedAt: true // Required by type
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           orderBy: { createdAt: "desc" },
           skip: limit ? offset : undefined,
@@ -86,8 +117,10 @@ export const GET = withAdminAuth(
       ]);
 
       type OrderType = (typeof prismaOrders)[0];
+      // Cast to any because we are purposefully selecting a subset of fields 
+      // that satisfies the public Order DTO but not the full strict Prisma type
       const orders: Order[] = prismaOrders.map((order: OrderType) =>
-        mapOrderToDTO(order)
+        mapOrderToDTO(order as unknown as any)
       );
 
       const totalPages = Math.ceil(total / limit);
