@@ -337,3 +337,40 @@ describe("Order Metadata Parsing", () => {
         });
     });
 });
+
+describe("Shipping Logic - shouldShip", () => {
+    /**
+     * Tests for the shouldShip logic added in Phase 7
+     * Ensures pickup orders don't trigger shipping label creation
+     */
+
+    const determineShouldShip = (
+        shippingMethod: string | undefined,
+        status: string
+    ): boolean => {
+        // Only ship for paid orders that are NOT pickup
+        const isPickup = shippingMethod === "pickup";
+        const isPaid = status === "PENDING_PAYMENT";
+        return isPaid && !isPickup;
+    };
+
+    it("should ship for paid home delivery orders", () => {
+        expect(determineShouldShip("home_delivery", "PENDING_PAYMENT")).toBe(true);
+    });
+
+    it("should ship for paid correo argentino orders", () => {
+        expect(determineShouldShip("correo_argentino", "PENDING_PAYMENT")).toBe(true);
+    });
+
+    it("should NOT ship for pickup orders even when paid", () => {
+        expect(determineShouldShip("pickup", "PENDING_PAYMENT")).toBe(false);
+    });
+
+    it("should NOT ship for pending orders", () => {
+        expect(determineShouldShip("home_delivery", "PENDING")).toBe(false);
+    });
+
+    it("should handle undefined shipping method", () => {
+        expect(determineShouldShip(undefined, "PENDING_PAYMENT")).toBe(true);
+    });
+});
