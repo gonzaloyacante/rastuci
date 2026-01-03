@@ -5,14 +5,14 @@ import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    ChevronRight,
-    Clock,
-    Loader2,
-    Search,
-    Star,
-    Tag,
-    TrendingUp,
-    X,
+  ChevronRight,
+  Clock,
+  Loader2,
+  Search,
+  Star,
+  Tag,
+  TrendingUp,
+  X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -321,6 +321,7 @@ export default function SmartSearch({
         {query && (
           <button
             onClick={clearSearch}
+            aria-label="Limpiar búsqueda"
             className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-primary transition-colors"
           >
             <X className={`${sizes[size].icon} muted hover:text-primary`} />
@@ -431,6 +432,7 @@ export default function SmartSearch({
                           removeRecentSearch(recentSearch);
                         }}
                         className="p-1 hover:bg-surface rounded"
+                        aria-label={`Eliminar búsqueda: ${recentSearch}`}
                       >
                         <X className="w-3 h-3 muted" />
                       </button>
@@ -495,7 +497,15 @@ export default function SmartSearch({
       {isOpen && (
         <div
           className="fixed inset-0 z-40 lg:hidden"
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar búsqueda"
           onClick={() => setIsOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              setIsOpen(false);
+            }
+          }}
         />
       )}
     </div>

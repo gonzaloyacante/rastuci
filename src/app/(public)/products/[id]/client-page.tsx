@@ -24,6 +24,7 @@ import {
   Truck,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { Suspense, useState } from "react";
 import useSWR from "swr";
@@ -451,18 +452,19 @@ export default function ProductDetailClient({
                         key={`color-${color}-${idx}`}
                         onClick={() => setSelectedColor(color)}
                         className={`group relative rounded-md border-2 transition-all overflow-hidden ${isSelected
-                            ? "border-primary ring-2 ring-offset-2 ring-primary ring-offset-surface"
-                            : "border-transparent hover:border-primary/50"
+                          ? "border-primary ring-2 ring-offset-2 ring-primary ring-offset-surface"
+                          : "border-transparent hover:border-primary/50"
                           }`}
                         title={`Seleccionar color ${color}`}
                       >
                         {colorImg ? (
                           <div className="w-16 h-16 relative bg-neutral-100 dark:bg-neutral-800 rounded-sm">
-                            <img
+                            <Image
                               src={colorImg}
                               alt={color}
-                              className="w-full h-full object-contain"
-                              loading="lazy"
+                              fill
+                              className="object-contain p-1"
+                              sizes="64px"
                             />
                           </div>
                         ) : (
@@ -575,8 +577,8 @@ export default function ProductDetailClient({
                   }
                   disabled={quantity >= currentStock}
                   className={`w-8 h-8 border border-muted rounded flex items-center justify-center ${quantity >= currentStock
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:surface-secondary"
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:surface-secondary"
                     }`}
                 >
                   +

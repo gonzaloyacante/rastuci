@@ -148,10 +148,10 @@ export function NotificationManager({
                 <Badge
                   variant={
                     status.color as
-                      | "default"
-                      | "secondary"
-                      | "destructive"
-                      | "outline"
+                    | "default"
+                    | "secondary"
+                    | "destructive"
+                    | "outline"
                   }
                 >
                   {status.text}
@@ -219,7 +219,18 @@ export function NotificationManager({
 
       {/* Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+        <div
+          className="fixed inset-0 z-40"
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar notificaciones"
+          onClick={() => setIsOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              setIsOpen(false);
+            }
+          }}
+        />
       )}
     </div>
   );
