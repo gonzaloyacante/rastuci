@@ -8,7 +8,7 @@ import {
   StatsGrid,
 } from "@/components/admin/AdminCards";
 import ModernDashboardCharts from "@/components/admin/dashboard/ModernDashboardCharts";
-import AdvancedCharts from "@/components/admin/dashboard/AdvancedCharts";
+import LazyAdvancedCharts from "@/components/admin/dashboard/LazyAdvancedCharts";
 import {
   QuickAction,
   QuickActionsGrid,
@@ -143,13 +143,13 @@ export default function AdminDashboard() {
           monthlySales={monthlySales || []}
           loading={loading}
         />
-        
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.6 }}
         >
-          <AdvancedCharts loading={loading} />
+          <LazyAdvancedCharts loading={loading} />
         </motion.div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { MetricsSkeleton } from "@/components/admin/skeletons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import AdvancedCharts from "@/components/admin/dashboard/AdvancedCharts";
+import LazyAdvancedCharts from "@/components/admin/dashboard/LazyAdvancedCharts";
 import React, { useCallback, useEffect, useState } from "react";
 
 // ============================================================================
@@ -495,7 +495,7 @@ export default function MetricasPage() {
       {/* Gráficas Avanzadas */}
       <div className="mt-8">
         <h2 className="text-2xl font-bold mb-6">Análisis Detallado</h2>
-        <AdvancedCharts
+        <LazyAdvancedCharts
           ordersPerDay={dashboard.ordersPerDay}
           topCustomers={dashboard.topCustomers}
           orderStatus={dashboard.orderStatus}
