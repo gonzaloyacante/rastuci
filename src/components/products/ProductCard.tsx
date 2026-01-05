@@ -89,13 +89,12 @@ const StarRating = ({
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`w-3.5 h-3.5 ${
-              i < fullStars
+            className={`w-3.5 h-3.5 ${i < fullStars
                 ? "fill-amber-400 text-amber-400"
                 : i === fullStars && hasHalfStar
                   ? "fill-amber-400/50 text-amber-400"
                   : "fill-zinc-200 text-zinc-200"
-            }`}
+              }`}
           />
         ))}
       </div>
@@ -141,7 +140,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
   const layout: "grid" | "list" = !isAdmin
     ? (props as PublicProductCardProps).layout ||
-      (props.variant === "list" ? "list" : "grid")
+    (props.variant === "list" ? "list" : "grid")
     : "grid";
 
   const [imageError, setImageError] = useState(false);
@@ -259,9 +258,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   src={mainImage}
                   alt={product.name}
                   fill
-                  className={`object-cover transition-opacity duration-300 ${
-                    imageLoading ? "opacity-0" : "opacity-100"
-                  }`}
+                  className={`object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"
+                    }`}
                   onLoad={handleImageLoad}
                   onError={handleImageError}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -453,7 +451,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             href={`/productos/${product.id}`}
             className="block mb-1.5 sm:mb-2.5"
           >
-            <h3 className="text-[15px] sm:text-[18px] font-bold text-base-primary tracking-[-0.5px] m-0 line-clamp-2 min-h-[2.4em] sm:min-h-[2.7em] hover:text-pink-600 transition-colors">
+            <h3 className="text-[15px] sm:text-[18px] font-bold text-base-primary tracking-[-0.5px] m-0 line-clamp-2 hover:text-pink-600 transition-colors">
               {product.name}
             </h3>
           </Link>
@@ -489,8 +487,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               {/* Precio */}
               <div className="flex flex-col">
                 {product.onSale &&
-                formattedSalePrice &&
-                product.salePrice! < product.price ? (
+                  formattedSalePrice &&
+                  product.salePrice! < product.price ? (
                   <>
                     <span className="text-[13px] line-through muted mb-0.5">
                       {formattedPrice}
@@ -558,18 +556,16 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               ? `Quitar ${product.name} de favoritos`
               : `Agregar ${product.name} a favoritos`
           }
-          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${
-            isProductFavorite
+          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${isProductFavorite
               ? "opacity-100"
               : "opacity-0 group-hover:opacity-100"
-          }`}
+            }`}
         >
           <Heart
-            className={`w-4 h-4 transition-colors ${
-              isProductFavorite
+            className={`w-4 h-4 transition-colors ${isProductFavorite
                 ? "text-rose-500 fill-rose-500"
                 : "text-zinc-400 hover:text-rose-500"
-            }`}
+              }`}
             aria-hidden="true"
           />
         </button>
@@ -674,8 +670,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             <div className="flex flex-col gap-0.5">
               <div className="flex items-baseline gap-2">
                 {product.onSale &&
-                formattedSalePrice &&
-                product.salePrice! < product.price ? (
+                  formattedSalePrice &&
+                  product.salePrice! < product.price ? (
                   <>
                     <span className="text-base sm:text-lg font-bold text-base-primary">
                       {formattedSalePrice}
@@ -721,9 +717,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               <Link
                 href={`/productos/${product.id}`}
                 aria-label="Ver opciones"
-                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${
-                  product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 <ShoppingCart className="w-4 h-4" />
               </Link>

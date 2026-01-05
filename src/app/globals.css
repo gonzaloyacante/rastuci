@@ -19,12 +19,13 @@
     0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-primary: 0 4px 14px 0 rgba(233, 30, 99, 0.39);
 
-  --background: #ffffff;
+  --background: #fafafa;
   --foreground: #171717;
   /* Light mode surface/text/border (used by .surface, .surface-secondary, etc.) */
-  --color-background: #ffffff;
+  --color-background: #fafafa;
   /* general app background */
   --color-surface: #ffffff;
+
   /* cards/sections base */
   --color-surface-secondary: #f3f4f6;
   /* gray-100-ish for skeletons */

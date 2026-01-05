@@ -26,24 +26,28 @@ export const CategoryCard = memo(function CategoryCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className={`group relative flex flex-col ${displayMode === "image" && category.image ? "justify-end aspect-[3/4]" : "justify-center h-48"
-        } overflow-hidden rounded-xl w-full text-white transition-transform duration-200 hover:scale-[1.02] text-center bg-surface-secondary`}
+      className={`group relative flex flex-col overflow-hidden rounded-xl w-full transition-all duration-300 hover:scale-[1.02] shadow-md hover:shadow-xl
+        ${displayMode === "image" && category.image
+          ? "aspect-[3/4] justify-end text-white bg-surface-secondary"
+          : "h-48 justify-center text-foreground bg-surface"
+        }`}
       aria-label={
         href === null
           ? undefined
           : `Ver productos de la categoría ${category.name}`
       }
     >
-      {/* Background image (only if available) */}
+      {/* Background image and overlay (only if available) */}
       {displayMode === "image" && img ? (
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('${img}')` }}
-        />
+        <>
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+            style={{ backgroundImage: `url('${img}')` }}
+          />
+          {/* Shadow overlay ONLY for image cards */}
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+        </>
       ) : null}
-
-      {/* overlay para mejorar legibilidad del texto (única capa) */}
-      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
       <div className="relative z-10 p-3 sm:p-3 flex flex-col min-h-[110px] items-center">
         {showIcon ? (
@@ -59,27 +63,11 @@ export const CategoryCard = memo(function CategoryCard({
         </h3>
 
         {category.description && (
-          <p className="hidden lg:block text-[10px] text-muted line-clamp-2 mb-3">
+          <p className="text-xs text-muted line-clamp-2">
             {category.description}
           </p>
         )}
 
-        <div className="mt-auto flex items-center gap-2 text-primary/80 group-hover:text-primary transition-colors duration-300">
-          <span className="text-xs font-medium">Ver</span>
-          <svg
-            className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform duration-300"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </div>
       </div>
     </Wrapper>
   );
