@@ -26,7 +26,7 @@ export function CategoriesSection({
   return (
     <section
       id="categorias"
-      className="surface py-16 px-6"
+      className="bg-surface-secondary py-16 px-6"
       aria-labelledby="categories-title"
     >
       <div className="max-w-[1400px] mx-auto">
@@ -44,21 +44,21 @@ export function CategoriesSection({
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">
           {loading
             ? Array.from({ length: 8 }, (_, i) => (
-                <div
-                  key={i}
-                  className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
-                >
-                  <CategorySkeleton />
-                </div>
-              ))
+              <div
+                key={i}
+                className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
+              >
+                <CategorySkeleton />
+              </div>
+            ))
             : categories.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
-                >
-                  <CategoryCard category={category} displayMode={display} />
-                </div>
-              ))}
+              <div
+                key={category.id}
+                className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
+              >
+                <CategoryCard category={category} displayMode={display} />
+              </div>
+            ))}
         </div>
       </div>
     </section>

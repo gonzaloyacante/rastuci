@@ -26,8 +26,8 @@ export const CategoryCard = memo(function CategoryCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className={`group relative flex flex-col justify-end overflow-hidden rounded-xl w-full ${displayMode === "image" && category.image ? "aspect-[3/4]" : "h-48"
-        } text-white transition-transform duration-200 hover:scale-[1.02] text-center bg-surface-secondary`}
+      className={`group relative flex flex-col ${displayMode === "image" && category.image ? "justify-end aspect-[3/4]" : "justify-center h-48"
+        } overflow-hidden rounded-xl w-full text-white transition-transform duration-200 hover:scale-[1.02] text-center bg-surface-secondary`}
       aria-label={
         href === null
           ? undefined

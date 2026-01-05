@@ -9,7 +9,7 @@ export function BenefitsSection({ home }: BenefitsSectionProps) {
   const benefits = home?.benefits || defaultHomeSettings.benefits;
 
   return (
-    <section className="py-12 px-6" aria-labelledby="benefits-title">
+    <section className="bg-surface-secondary py-12 px-6" aria-labelledby="benefits-title">
       <div className="max-w-[1200px] mx-auto">
         <h2 id="benefits-title" className="sr-only">
           Beneficios de compra
