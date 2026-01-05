@@ -14,9 +14,9 @@ export default function Footer({ home }: FooterProps) {
 
   return (
     <footer className="surface pt-10 pb-6 px-4 border-t border-muted overflow-hidden">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
-        {/* Marca */}
-        <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:justify-between gap-8 lg:gap-12">
+        {/* Marca - Takes more space on desktop if needed, otherwise distinct */}
+        <div className="lg:w-1/4">
           {logoUrl ? (
             <Link href="/" className="block mb-3">
               <Image
