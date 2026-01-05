@@ -25,23 +25,38 @@ function redactPhone(val: string): string {
   return val.replace(PHONE_RE, (m) => `${m.slice(0, 2)}***${m.slice(-2)}`);
 }
 
-function maskValue(v: unknown): unknown {
+// Max depth to prevent stack overflow on deep objects
+const MAX_DEPTH = 5;
+
+function maskValue(v: unknown, depth = 0, seen = new WeakSet()): unknown {
+  if (depth > MAX_DEPTH) return "[Max Depth Reached]";
+
   if (typeof v === "string") {
     let s = v;
     s = redactEmail(s);
     s = redactPhone(s);
     return s;
   }
+
+  if (v && typeof v === "object") {
+    if (seen.has(v)) {
+      return "[Circular]";
+    }
+    seen.add(v);
+  }
+
   if (Array.isArray(v)) {
-    return v.map(maskValue);
+    return v.map(item => maskValue(item, depth + 1, seen));
   }
   if (v && typeof v === "object") {
-    return maskObject(v as Record<string, unknown>);
+    return maskObject(v as Record<string, unknown>, depth + 1, seen);
   }
   return v;
 }
 
-function maskObject(obj: Record<string, unknown>): Record<string, unknown> {
+function maskObject(obj: Record<string, unknown>, depth = 0, seen = new WeakSet()): Record<string, unknown> {
+  if (depth > MAX_DEPTH) return { _truncated: "[Max Depth Reached]" };
+
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
     // If explicit sensitive keys, always redact fully
@@ -62,7 +77,7 @@ function maskObject(obj: Record<string, unknown>): Record<string, unknown> {
     ) {
       out[k] = typeof v === "string" ? "***redacted***" : null;
     } else {
-      out[k] = maskValue(v);
+      out[k] = maskValue(v, depth, seen);
     }
   }
   return out;

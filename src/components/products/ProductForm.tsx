@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import * as z from "zod";
@@ -48,7 +48,7 @@ import {
   StockIndicator,
 } from "./ProductFormComponents";
 import VariantManager from "./VariantManager";
-import SizeGuideEditor from "./SizeGuideEditor";
+import SizeGuideEditor, { SizeGuideData } from "./SizeGuideEditor";
 
 // ==============================================================================
 // TYPES & SCHEMA
@@ -68,23 +68,42 @@ const productSchema = z.object({
     .string()
     .max(1000, "La descripción no puede exceder 1000 caracteres")
     .optional(),
-  price: z.coerce.number().min(0.01, "El precio debe ser mayor a 0"),
-  discountPercentage: z.coerce
-    .number()
-    .min(0, "El descuento no puede ser negativo")
-    .max(100, "El descuento no puede ser mayor a 100%")
-    .optional()
-    .nullable(),
-  stock: z.coerce
-    .number()
-    .int("El stock debe ser un número entero")
-    .min(0, "El stock no puede ser negativo"),
+  price: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Ingresa un precio válido" }).min(0.01, "El precio debe ser mayor a 0")
+  ),
+  discountPercentage: z.preprocess(
+    (val) => (val === "" ? null : Number(val)),
+    z.number({ invalid_type_error: "Ingresa un porcentaje válido" })
+      .min(0, "El descuento no puede ser negativo")
+      .max(100, "El descuento no puede ser mayor a 100%")
+      .optional()
+      .nullable()
+  ),
+  stock: z.preprocess(
+    (val) => (val === "" ? 0 : Number(val)),
+    z.number({ invalid_type_error: "Ingresa un stock válido" })
+      .int("El stock debe ser un número entero")
+      .min(0, "El stock no puede ser negativo")
+  ),
   categoryId: z.string().nonempty("Debes seleccionar una categoría"),
   onSale: z.coerce.boolean().optional(),
-  weight: z.coerce.number().int().min(1).max(30000).optional().nullable(),
-  height: z.coerce.number().int().min(1).max(150).optional().nullable(),
-  width: z.coerce.number().int().min(1).max(150).optional().nullable(),
-  length: z.coerce.number().int().min(1).max(150).optional().nullable(),
+  weight: z.preprocess(
+    (val) => (val === "" ? null : Number(val)),
+    z.number({ invalid_type_error: "Ingresa un peso válido" }).int().min(1).max(30000).optional().nullable()
+  ),
+  height: z.preprocess(
+    (val) => (val === "" ? null : Number(val)),
+    z.number({ invalid_type_error: "Ingresa una altura válida" }).int().min(1).max(150).optional().nullable()
+  ),
+  width: z.preprocess(
+    (val) => (val === "" ? null : Number(val)),
+    z.number({ invalid_type_error: "Ingresa un ancho válido" }).int().min(1).max(150).optional().nullable()
+  ),
+  length: z.preprocess(
+    (val) => (val === "" ? null : Number(val)),
+    z.number({ invalid_type_error: "Ingresa un largo válido" }).int().min(1).max(150).optional().nullable()
+  ),
   sizesInput: z.string().optional(),
   colorsInput: z.string().optional(),
   featuresInput: z.string().optional(),
@@ -128,6 +147,11 @@ export default function ProductForm({
   categories,
 }: ProductFormProps) {
   const router = useRouter();
+
+  // Mount logger to verifying hydration
+  useEffect(() => {
+    logger.info("ProductForm mounted and interactive");
+  }, []);
   const [loading, setLoading] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     initialData?.categoryId || ""
@@ -506,8 +530,15 @@ export default function ProductForm({
     }
   };
 
+  const handleSizeGuideChange = useCallback(
+    (data: SizeGuideData | null) => {
+      setValue("sizeGuide", data, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
   return (
-    <div className="min-h-screen surface py-8 px-4">
+    <div className="min-h-screen surface py-8 px-4 relative">
       <div className="max-w-6xl mx-auto">
         {/* Header - responsive */}
         <div className="text-center mb-6 sm:mb-8">
@@ -526,17 +557,29 @@ export default function ProductForm({
 
         <form
           onSubmit={handleSubmit(onSubmit, (errors) => {
-            logger.error("Form validation errors:", errors);
+            // Sanitize errors for logging (avoid circular refs from DOM nodes)
+            const sanitizedErrors = Object.keys(errors).reduce(
+              (acc, key) => ({
+                ...acc,
+                [key]: errors[key as keyof typeof errors]?.message,
+              }),
+              {}
+            );
+            logger.warn("Form validation errors:", sanitizedErrors);
+
             toast.error(
               "Hay errores en el formulario. Por favor revisa los campos en rojo."
             );
-            // Optional: scroll to first error
-            const firstError = Object.keys(errors)[0];
-            const element = document.getElementById(firstError);
-            if (element) {
-              element.scrollIntoView({ behavior: "smooth", block: "center" });
-              element.focus();
-            }
+
+            // Slight delay to allow UI to expand with error messages before scrolling
+            setTimeout(() => {
+              const firstError = Object.keys(errors)[0];
+              const element = document.getElementById(firstError);
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
+              }
+            }, 100);
           })}
           className="space-y-4 sm:space-y-6 lg:space-y-8"
         >
@@ -864,11 +907,7 @@ export default function ProductForm({
               <SizeGuideEditor
                 sizes={sizes}
                 value={watch("sizeGuide")}
-                onChange={(data) => {
-                  // We manually update the form value for sizeGuide
-                  // Using setValue from react-hook-form
-                  setValue("sizeGuide", data, { shouldDirty: true });
-                }}
+                onChange={handleSizeGuideChange}
               />
             </CardContent>
           </Card>
@@ -963,25 +1002,37 @@ export default function ProductForm({
           </Card>
 
           {/* Botones de Acción */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+          <div className="flex flex-col sm:flex-row gap-4 pt-4 pb-4 sticky bottom-0 z-[100] bg-surface/90 backdrop-blur-md border-t border-muted rounded-t-xl shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
             <Button
               type="button"
               onClick={(e) => {
                 logger.info("Submit button clicked manually");
                 handleSubmit(onSubmit, (errors) => {
-                  logger.error("Validation errors (manual trigger):", errors);
+                  // Sanitize errors for logging
+                  const sanitizedErrors = Object.keys(errors).reduce(
+                    (acc, key) => ({
+                      ...acc,
+                      [key]: errors[key as keyof typeof errors]?.message,
+                    }),
+                    {}
+                  );
+                  logger.warn("Validation errors (manual trigger):", sanitizedErrors);
+
                   toast.error("Hay errores en el formulario.");
-                  const firstError = Object.keys(errors)[0];
-                  const element = document.getElementById(firstError);
-                  if (element) {
-                    element.scrollIntoView({ behavior: "smooth", block: "center" });
-                    element.focus();
-                  }
+
+                  setTimeout(() => {
+                    const firstError = Object.keys(errors)[0];
+                    const element = document.getElementById(firstError);
+                    if (element) {
+                      element.scrollIntoView({ behavior: "smooth", block: "center" });
+                      element.focus();
+                    }
+                  }, 100);
                 })(e);
               }}
               disabled={loading}
               variant="hero"
-              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold shadow-lg"
+              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold shadow-lg relative z-[101]"
             >
               {loading ? (
                 <>
@@ -998,8 +1049,11 @@ export default function ProductForm({
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/admin/productos")}
-              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold border-2"
+              onClick={() => {
+                logger.info("Back button clicked");
+                router.push("/admin/productos");
+              }}
+              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold border-2 relative z-[101]"
               disabled={loading}
             >
               <ArrowLeft className="h-5 w-5 mr-3" />
