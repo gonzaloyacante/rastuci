@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Pagination as UIPagination } from "@/components/ui/Pagination";
-import Select from "@/components/ui/Select";
 import { ProductCardSkeleton } from "@/components/ui/Skeleton";
 import { Grid, List, ShoppingCart } from "lucide-react";
 import { ReactNode } from "react";
@@ -198,10 +197,10 @@ export function CategoryButtons({
         <button
           key={category.value}
           onClick={() => onSelect(category.value)}
-          className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
+          className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
             selected === category.value
               ? "bg-primary text-white shadow-sm"
-              : "text-gray-900 dark:text-gray-300 hover:bg-pink-50 dark:hover:bg-pink-900/20 hover:text-primary"
+              : "hover:bg-pink-100 hover:text-pink-600"
           }`}
         >
           {category.label}
@@ -278,11 +277,10 @@ export function FilterSidebar({
         <label className="block text-sm font-medium text-primary mb-2">
           Ordenar por
         </label>
-        <Select
+        <CategoryButtons
           options={sortOptions}
-          value={sortValue}
-          onChange={onSortChange}
-          placeholder="Ordenar por"
+          selected={sortValue}
+          onSelect={onSortChange}
         />
       </div>
 

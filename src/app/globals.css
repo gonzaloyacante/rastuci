@@ -914,3 +914,81 @@ h6 {
 .text-base-secondary {
   color: var(--color-text-muted);
 }
+
+/* Bordes que cambian con el tema */
+.border-theme {
+  border-color: var(--color-border);
+}
+
+.border-theme-muted {
+  border-color: var(--color-border-muted);
+}
+
+.border-base-primary {
+  border-color: var(--color-text);
+}
+
+/* Fondos que cambian con el tema */
+.bg-theme {
+  background-color: var(--color-background);
+}
+
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+.bg-surface-secondary {
+  background-color: var(--color-surface-secondary);
+}
+
+/* Button semantics using CSS variables */
+.btn-hero,
+.btn-product {
+  background-color: var(--color-primary);
+  color: #fff;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  box-shadow:
+    0 10px 15px -3px rgba(233, 30, 99, 0.25),
+    0 4px 6px -4px rgba(233, 30, 99, 0.2);
+  transition: all 300ms ease;
+  cursor: pointer;
+}
+
+.btn-hero:hover,
+.btn-product:hover {
+  filter: brightness(0.92);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow:
+    0 12px 20px -3px rgba(233, 30, 99, 0.35),
+    0 6px 8px -4px rgba(233, 30, 99, 0.25);
+}
+
+.btn-hero:focus,
+.btn-product:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.25);
+}
+
+.btn-hero:active,
+.btn-product:active {
+  transform: translateY(0) scale(1);
+}
+
+/* Asegurar que todos los elementos interactivos tengan cursor pointer */
+button,
+[role="button"],
+a[href],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+select,
+label {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled {
+  cursor: not-allowed;
+}

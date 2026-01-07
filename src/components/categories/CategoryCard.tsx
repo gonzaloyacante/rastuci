@@ -27,9 +27,10 @@ export const CategoryCard = memo(function CategoryCard({
     <Wrapper
       {...wrapperProps}
       className={`group relative flex flex-col overflow-hidden rounded-xl w-full transition-all duration-300 hover:scale-[1.02] shadow-md hover:shadow-xl
-        ${displayMode === "image" && category.image
-          ? "aspect-[3/4] justify-end text-white bg-surface-secondary"
-          : "h-48 justify-center text-foreground bg-surface"
+        ${
+          displayMode === "image" && category.image
+            ? "aspect-[3/4] justify-end text-white bg-surface-secondary"
+            : "h-48 justify-center text-foreground bg-surface"
         }`}
       aria-label={
         href === null
@@ -52,7 +53,7 @@ export const CategoryCard = memo(function CategoryCard({
       <div className="relative z-10 p-3 sm:p-3 flex flex-col min-h-[110px] items-center">
         {showIcon ? (
           <div className="flex items-center justify-center mb-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center shadow-sm text-white dark:text-black">
               <CategoryIcon categoryName={category.name} />
             </div>
           </div>
@@ -67,7 +68,6 @@ export const CategoryCard = memo(function CategoryCard({
             {category.description}
           </p>
         )}
-
       </div>
     </Wrapper>
   );
