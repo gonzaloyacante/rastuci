@@ -2,8 +2,8 @@
 import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/products/route";
 
-// Mock Prisma client
-const mockPrisma = {
+// Mock Prisma client - using hoisted to avoid initialization issues
+const mockPrisma = vi.hoisted(() => ({
   product: {
     findMany: vi.fn(),
     create: vi.fn(),
@@ -14,9 +14,10 @@ const mockPrisma = {
   category: {
     findMany: vi.fn(),
   },
-};
+}));
 
 vi.mock("@/lib/prisma", () => ({
+  default: mockPrisma,
   prisma: mockPrisma,
 }));
 
