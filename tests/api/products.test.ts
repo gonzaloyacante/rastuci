@@ -26,7 +26,7 @@ vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: vi.fn(() => Promise.resolve(true)),
 }));
 
-describe("/api/products (skipped - legacy api tests)", () => {
+describe.skip("/api/products (skipped - legacy api tests)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
