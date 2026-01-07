@@ -490,7 +490,7 @@ export function ActiveFiltersBadges({
           return (
             <span
               key={groupId}
-              className="inline-flex items-center space-x-2 px-3 py-1 bg-pink-100 text-pink-800 text-sm rounded-full"
+              className="inline-flex items-center space-x-2 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
             >
               <span>
                 {group.label}: {displayValue}
@@ -595,7 +595,7 @@ export function MobileFiltersModal({
                 </button>
                 <button
                   onClick={onClose}
-                  className="flex-1 px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700"
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
                 >
                   Aplicar
                 </button>

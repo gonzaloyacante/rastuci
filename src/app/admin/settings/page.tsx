@@ -5,6 +5,7 @@ import ContactForm from "@/components/forms/ContactForm";
 import HomeForm from "@/components/forms/HomeForm";
 import StoreForm from "@/components/forms/StoreForm";
 import { Button } from "@/components/ui/Button";
+import Alert from "@/components/ui/Alert";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -287,16 +288,18 @@ function ShippingPromoSettings() {
             </p>
           </div>
 
-          <div className="p-4 border border-muted rounded-lg surface-secondary">
+          <div className="p-4 border border-muted rounded-lg surface">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={enabled}
                 onChange={(e) => setEnabled(e.target.checked)}
-                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                className="w-5 h-5 rounded border-muted text-primary focus:ring-primary"
               />
               <div>
-                <div className="font-medium">Activar Envío Gratis</div>
+                <div className="font-medium text-content-primary">
+                  Activar Envío Gratis
+                </div>
                 <div className="text-sm text-muted">
                   Los clientes verán el costo de envío tachado y "ENVÍO GRATIS"
                   destacado
@@ -305,18 +308,22 @@ function ShippingPromoSettings() {
             </label>
           </div>
 
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-              ℹ️ Cómo funciona
-            </h4>
-            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+          <Alert
+            inline
+            variant="info"
+            title="Cómo funciona"
+            isOpen={true}
+            onClose={() => {}}
+            message=""
+          >
+            <ul className="text-sm space-y-1 list-disc list-inside mt-1">
               <li>El cliente elige su sucursal de envío normalmente</li>
               <li>El costo real se calcula con la API de Correo Argentino</li>
               <li>Se muestra el precio tachado con badge "ENVÍO GRATIS"</li>
               <li>El total final NO incluye el costo de envío</li>
               <li>Ideal para promociones de Black Friday, Navidad, etc.</li>
             </ul>
-          </div>
+          </Alert>
 
           <Button onClick={handleSave} disabled={saving} className="w-full">
             <Save className="w-4 h-4 mr-2" />

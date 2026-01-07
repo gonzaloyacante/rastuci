@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 import {
   Trash2,
   Plus,
@@ -15,6 +16,8 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { getColorHex } from "@/utils/colors"; // Assuming this utility exists, otherwise we'll handle it
 import { ProductVariant } from "@/types";
+import { sortVariantsBySize } from "@/utils/sizes";
+import { HelpTooltip } from "./ProductFormComponents";
 
 interface VariantManagerProps {
   variants: ProductVariant[];
@@ -32,7 +35,7 @@ export default function VariantManager({
   // Batch Add State - now driven by selection of existing lists to avoid typos
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
-  const [stockInput, setStockInput] = useState(0);
+  const [stockInput, setStockInput] = useState<number | "">("");
 
   const [error, setError] = useState<string | null>(null);
 
@@ -70,7 +73,7 @@ export default function VariantManager({
     });
 
     if (addedCount > 0) {
-      onChange(newVariants);
+      onChange(sortVariantsBySize(newVariants));
       setError(null);
     } else {
       setError("Todas las combinaciones posibles ya existen.");
@@ -102,12 +105,12 @@ export default function VariantManager({
       productId: "",
       color: selectedColor,
       size: selectedSize,
-      stock: stockInput,
+      stock: stockInput === "" ? 0 : stockInput,
       sku: `${selectedColor.substring(0, 3).toUpperCase()}-${selectedSize}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
     };
 
-    onChange([...variants, newVariant]);
-    setStockInput(0);
+    onChange(sortVariantsBySize([...variants, newVariant]));
+    setStockInput("");
   };
 
   const handleRemove = (index: number) => {
@@ -156,12 +159,12 @@ export default function VariantManager({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-primary/5 p-4 rounded-lg border border-primary/20">
         <div>
-          <h4 className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-primary mb-1 flex items-center gap-2">
             <Calculator className="w-4 h-4" /> Generador de Combinaciones
           </h4>
-          <p className="text-xs text-blue-700">
+          <p className="text-xs text-muted-foreground">
             Crea automáticamente todas las combinaciones posibles basadas en los
             colores ({availableColors.length}) y talles ({availableSizes.length}
             ) definidos arriba.
@@ -189,34 +192,22 @@ export default function VariantManager({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div>
             <label className="block text-xs font-medium mb-1">Color</label>
-            <select
+            <Select
               value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="">Seleccionar...</option>
-              {availableColors.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedColor}
+              placeholder="Seleccionar..."
+              options={availableColors.map((c) => ({ value: c, label: c }))}
+            />
           </div>
 
           <div>
             <label className="block text-xs font-medium mb-1">Talle</label>
-            <select
+            <Select
               value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="">Seleccionar...</option>
-              {availableSizes.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedSize}
+              placeholder="Seleccionar..."
+              options={availableSizes.map((s) => ({ value: s, label: s }))}
+            />
           </div>
 
           <div>
@@ -224,8 +215,13 @@ export default function VariantManager({
             <Input
               type="number"
               min="0"
+              placeholder="0"
               value={stockInput}
-              onChange={(e) => setStockInput(parseInt(e.target.value) || 0)}
+              onChange={(e) =>
+                setStockInput(
+                  e.target.value === "" ? "" : parseInt(e.target.value)
+                )
+              }
             />
           </div>
 
@@ -243,14 +239,14 @@ export default function VariantManager({
 
       {/* Warnings */}
       {syncWarnings.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+        <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
-            <AlertCircle className="w-4 h-4 text-orange-600" />
-            <span className="text-sm font-medium text-orange-800">
+            <AlertCircle className="w-4 h-4 text-warning" />
+            <span className="text-sm font-medium text-warning">
               Advertencias de Sincronización
             </span>
           </div>
-          <ul className="list-disc list-inside text-xs text-orange-700 space-y-1">
+          <ul className="list-disc list-inside text-xs text-warning/80 space-y-1">
             {syncWarnings.map((w, i) => (
               <li key={i}>{w}</li>
             ))}
@@ -258,31 +254,29 @@ export default function VariantManager({
         </div>
       )}
 
+      {/* Helper component for tooltips if not imported */}
+      {/* Ensure HelpTooltip is imported or used correctly */}
+
       {/* List */}
-      <div className="border rounded-lg overflow-hidden shadow-sm">
+      {/* List */}
+      <div className="border rounded-lg overflow-hidden shadow-sm bg-surface">
         <div className="max-h-[500px] overflow-y-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-neutral-100 dark:bg-neutral-800 sticky top-0 z-10">
+          <table className="w-full text-sm table-fixed">
+            <thead className="bg-muted sticky top-0 z-10">
               <tr className="border-b">
-                <th className="p-3 text-left font-medium text-sm text-foreground">
-                  Variante (Color / Talle)
+                <th className="p-3 text-left font-medium text-sm text-foreground w-[40%]">
+                  Variante
                 </th>
-                <th className="p-3 text-left font-medium text-sm text-foreground w-32">
+                <th className="p-3 text-left font-medium text-sm text-foreground w-[20%]">
                   Stock
                 </th>
-                <th className="p-3 text-left font-medium text-sm text-foreground w-48">
+                <th className="p-3 text-left font-medium text-sm text-foreground w-[30%]">
                   <div className="flex items-center gap-1">
                     Código Interno
-                    <span className="relative group">
-                      <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
-                        Código único para identificar esta variante en
-                        inventario
-                      </span>
-                    </span>
+                    <HelpTooltip text="Código único para identificar esta variante en inventario" />
                   </div>
                 </th>
-                <th className="p-3 text-right font-medium w-16"></th>
+                <th className="p-3 text-right font-medium w-[10%]"></th>
               </tr>
             </thead>
             <tbody className="divide-y bg-surface">
@@ -302,25 +296,26 @@ export default function VariantManager({
                     key={index}
                     className="hover:bg-surface-secondary/50 transition-colors group"
                   >
-                    <td className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 min-w-[120px]">
-                          <div
-                            className="w-4 h-4 rounded-full border shadow-sm"
-                            style={{
-                              backgroundColor:
-                                getColorHex(variant.color) || "#ccc",
-                            }}
-                          />
-                          <span className="font-medium">{variant.color}</span>
+                    <td className="p-3 align-middle">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-5 h-5 rounded-full border shadow-sm shrink-0"
+                          style={{
+                            backgroundColor:
+                              getColorHex(variant.color) || "#ccc",
+                          }}
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground leading-tight">
+                            {variant.color}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Talle: {variant.size}
+                          </span>
                         </div>
-                        <span className="text-muted-foreground">/</span>
-                        <span className="font-mono bg-muted/30 px-2 py-0.5 rounded text-xs">
-                          {variant.size}
-                        </span>
                       </div>
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 align-middle">
                       <Input
                         type="number"
                         min="0"
@@ -328,23 +323,23 @@ export default function VariantManager({
                         onChange={(e) =>
                           handleUpdateStock(index, e.target.value)
                         }
-                        className="h-8 w-24 text-right pr-2"
+                        className="h-8 w-full text-right"
                       />
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 align-middle">
                       <Input
                         type="text"
                         value={variant.sku || ""}
                         onChange={(e) => handleUpdateSku(index, e.target.value)}
                         className="h-8 w-full text-xs font-mono"
-                        placeholder="Código automático"
+                        placeholder="Automático"
                       />
                     </td>
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-right align-middle">
                       <button
                         type="button"
                         onClick={() => handleRemove(index)}
-                        className="text-muted-foreground hover:text-error transition-colors p-1 rounded hover:bg-surface-secondary"
+                        className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10"
                         title="Eliminar variante"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -358,16 +353,16 @@ export default function VariantManager({
         </div>
       </div>
 
-      <div className="flex justify-between items-center bg-green-50 p-4 rounded-md border border-green-100">
-        <div className="flex items-center gap-2 text-green-800">
+      <div className="flex justify-between items-center bg-success/10 p-4 rounded-md border border-success/20">
+        <div className="flex items-center gap-2 text-success">
           <Check className="w-5 h-5" />
           <span className="text-sm font-medium">Resumen de Inventario</span>
         </div>
         <div className="text-right">
-          <span className="block text-2xl font-bold text-green-900">
+          <span className="block text-2xl font-bold text-success">
             {variants.reduce((acc, v) => acc + v.stock, 0)}
           </span>
-          <span className="text-xs text-green-700">
+          <span className="text-xs text-success/80">
             Unidades totales (Suma de variantes)
           </span>
         </div>

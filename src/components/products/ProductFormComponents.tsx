@@ -16,6 +16,7 @@ import {
 import ImageUploadZone from "./ImageUploadZone";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { sortSizes } from "@/utils/sizes";
 
 // ==============================================================================
 // Shared Toggle Button
@@ -87,14 +88,14 @@ export function HelpTooltip({ text }: { text: string }) {
 export function PlaceholderImage({ className }: { className?: string }) {
   return (
     <div
-      className={`bg-neutral-100 dark:bg-neutral-800 rounded-lg flex items-center justify-center border border-neutral-200 dark:border-neutral-700 ${className || "w-full h-48"}`}
+      className={`bg-muted rounded-lg flex items-center justify-center border border-muted ${className || "w-full h-48"}`}
     >
       <div className="text-center p-4">
-        <ImageIcon className="h-10 w-10 text-neutral-400 mx-auto mb-2" />
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">
+        <ImageIcon className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
+        <p className="text-sm text-muted-foreground font-medium">
           Imagen no disponible
         </p>
-        <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
+        <p className="text-xs text-muted-foreground/70 mt-1">
           No se pudo cargar la imagen
         </p>
       </div>
@@ -125,7 +126,7 @@ interface ColorCategory {
 }
 
 // Paleta de colores expandida y organizada por categorías
-const COLOR_CATEGORIES: Record<string, ColorCategory> = {
+export const COLOR_CATEGORIES: Record<string, ColorCategory> = {
   basicos: {
     label: "Básicos",
     colors: [
@@ -270,7 +271,7 @@ const COLOR_CATEGORIES: Record<string, ColorCategory> = {
 };
 
 // Lista plana para compatibilidad con código existente
-const COMMON_COLORS = Object.values(COLOR_CATEGORIES).flatMap(
+export const COMMON_COLORS = Object.values(COLOR_CATEGORIES).flatMap(
   (cat) => cat.colors
 );
 
@@ -478,7 +479,7 @@ export function ColorPicker({
                         </span>
                       )}
                       {imgCount === 0 && (
-                        <span className="text-xs text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="text-xs text-warning bg-warning/10 px-2 py-0.5 rounded-full flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" /> Sin fotos
                         </span>
                       )}
@@ -560,9 +561,9 @@ export function SizeManager({ sizes, onSizesChange }: SizeManagerProps) {
 
   const toggleSize = (size: string) => {
     if (sizes.includes(size)) {
-      onSizesChange(sizes.filter((s) => s !== size));
+      onSizesChange(sortSizes(sizes.filter((s) => s !== size)));
     } else {
-      onSizesChange([...sizes, size]);
+      onSizesChange(sortSizes([...sizes, size]));
     }
   };
 

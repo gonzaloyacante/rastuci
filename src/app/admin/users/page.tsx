@@ -7,10 +7,12 @@ import {
   AdminPageHeader,
 } from "@/components/admin";
 import { UsersSkeleton } from "@/components/admin/skeletons";
+import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pagination } from "@/components/ui/Pagination";
 import { useDocumentTitle } from "@/hooks";
 import { User, useUsers } from "@/hooks/useUsers";
+import { Edit3, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export default function UsuariosPage() {
@@ -170,14 +172,6 @@ export default function UsuariosPage() {
                         >
                           {getRoleBadge(user.role).label}
                         </span>
-                        {user.activeSessions !== undefined &&
-                          user.activeSessions > 0 && (
-                            <span className="text-xs px-2 py-1 bg-green-500/10 text-green-600 rounded-full">
-                              {user.activeSessions} sesión
-                              {user.activeSessions > 1 ? "es" : ""} activa
-                              {user.activeSessions > 1 ? "s" : ""}
-                            </span>
-                          )}
                       </div>
                       <div className="text-xs text-content-tertiary space-y-1">
                         <div>Creado: {formatDate(user.createdAt)}</div>
@@ -231,9 +225,6 @@ export default function UsuariosPage() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
                     Actividad
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
-                    Sesiones
                   </th>
                   <th className="relative px-6 py-3">
                     <span className="sr-only">Acciones</span>
@@ -290,35 +281,30 @@ export default function UsuariosPage() {
                           )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.activeSessions !== undefined &&
-                      user.activeSessions > 0 ? (
-                        <span className="text-xs px-2 py-1 bg-green-500/10 text-green-600 rounded-full font-medium">
-                          {user.activeSessions} activa
-                          {user.activeSessions > 1 ? "s" : ""}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-content-tertiary">
-                          Sin sesiones
-                        </span>
-                      )}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          window.location.href = `/admin/usuarios/${user.id}/editar`;
-                        }}
-                        className="text-primary hover:text-primary/80 mr-4 cursor-pointer"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        disabled={user.role === "ADMIN"}
-                        className="text-error hover:text-error/80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        Eliminar
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs flex items-center gap-1"
+                          onClick={() => {
+                            window.location.href = `/admin/usuarios/${user.id}/editar`;
+                          }}
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Editar</span>
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="text-xs flex items-center gap-1"
+                          onClick={() => handleDelete(user.id)}
+                          disabled={user.role === "ADMIN"}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Eliminar</span>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

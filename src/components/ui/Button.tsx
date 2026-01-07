@@ -43,7 +43,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variants = {
       primary: "btn-primary hover:bg-primary/90 hover:shadow-primary/30", // uses var(--color-primary)
       secondary:
-        "surface text-primary hover-surface hover:shadow-md hover:border-primary/50",
+        "surface border border-primary/20 text-primary hover-surface hover:shadow-md hover:border-primary/50",
       // Include btn-* aliases to satisfy tests expecting utility classes
       outline:
         "surface border border-primary text-primary hover-surface btn-outline hover:bg-primary/5 hover:shadow-md",

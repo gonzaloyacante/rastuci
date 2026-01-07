@@ -5,14 +5,11 @@ import { Button } from "@/components/ui/Button";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Product } from "@/types";
 import { formatPriceARS } from "@/utils/formatters";
+import { sortSizes } from "@/utils/sizes";
 import {
-  AlertTriangle,
-  CheckCircle,
   Edit,
   Eye,
   Heart,
-  ImageIcon,
-  Package,
   ShoppingCart,
   Star,
   Trash2,
@@ -29,6 +26,7 @@ import { useHotToast } from "@/hooks/use-hot-toast";
 
 import { StockBadge } from "@/components/ui/StockBadge";
 import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
+import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 
 /** Badge de precio con descuento */
 export const PriceBadge = ({
@@ -46,22 +44,20 @@ export const PriceBadge = ({
     : 0;
 
   return (
-    <div className="min-h-12 flex flex-col justify-center">
+    <div className="flex flex-col justify-center">
       {hasDiscount ? (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-              {formatPriceARS(salePrice!)}
-            </span>
-            {discountPercentage > 0 && (
-              <Badge variant="error" className="text-xs">
-                -{discountPercentage}%
-              </Badge>
-            )}
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-success">
+            {formatPriceARS(salePrice!)}
+          </span>
           <span className="text-sm muted line-through">
             {formatPriceARS(price)}
           </span>
+          {discountPercentage > 0 && (
+            <Badge variant="error" className="text-xs">
+              -{discountPercentage}%
+            </Badge>
+          )}
         </div>
       ) : (
         <span className="text-lg font-bold text-base-primary">
@@ -89,12 +85,13 @@ const StarRating = ({
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`w-3.5 h-3.5 ${i < fullStars
+            className={`w-3.5 h-3.5 ${
+              i < fullStars
                 ? "fill-amber-400 text-amber-400"
                 : i === fullStars && hasHalfStar
                   ? "fill-amber-400/50 text-amber-400"
                   : "fill-zinc-200 text-zinc-200"
-              }`}
+            }`}
           />
         ))}
       </div>
@@ -140,7 +137,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
   const layout: "grid" | "list" = !isAdmin
     ? (props as PublicProductCardProps).layout ||
-    (props.variant === "list" ? "list" : "grid")
+      (props.variant === "list" ? "list" : "grid")
     : "grid";
 
   const [imageError, setImageError] = useState(false);
@@ -160,27 +157,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   }, [product.images]);
 
   const sortedSizes = useMemo(() => {
-    const SIZE_ORDER: Record<string, number> = {
-      XS: 1,
-      S: 2,
-      M: 3,
-      L: 4,
-      XL: 5,
-      XXL: 6,
-      "0": 10,
-      "1": 11,
-      "2": 12,
-      "3": 13,
-      "4": 14,
-      "5": 15,
-    };
     if (!product.sizes) return [];
-    return [...product.sizes].sort((a, b) => {
-      const valA = SIZE_ORDER[a] || 99;
-      const valB = SIZE_ORDER[b] || 99;
-      if (valA === valB) return a.localeCompare(b);
-      return valA - valB;
-    });
+    return sortSizes(product.sizes);
   }, [product.sizes]);
 
   const mainImage = useMemo(
@@ -243,9 +221,9 @@ const ProductCard = React.memo((props: ProductCardProps) => {
     const { onEdit, onDelete, onView } = props as AdminProductCardProps;
 
     return (
-      <div className="group surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden">
+      <div className="group surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden h-full flex flex-col">
         {/* Image Section */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <div className="aspect-square surface-secondary rounded-t-xl overflow-hidden">
             {imageError || !mainImage ? (
               <ProductImagePlaceholder className="w-full h-full" />
@@ -258,8 +236,9 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   src={mainImage}
                   alt={product.name}
                   fill
-                  className={`object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"
-                    }`}
+                  className={`object-cover transition-opacity duration-300 ${
+                    imageLoading ? "opacity-0" : "opacity-100"
+                  }`}
                   onLoad={handleImageLoad}
                   onError={handleImageError}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -270,21 +249,25 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
           {/* Badges Overlay */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.onSale && (
-              <div className="badge-discount px-2.5 py-1 rounded-lg shadow-lg flex items-center gap-1 text-xs font-semibold">
-                <TrendingUp className="h-3 w-3" />
-                OFERTA
-              </div>
-            )}
             {productImages.length > 1 && (
-              <Badge variant="info" className="shadow-lg">
+              <Badge className="bg-black/70 text-white hover:bg-black/80 backdrop-blur-sm shadow-sm border-0">
                 +{productImages.length - 1} fotos
               </Badge>
             )}
           </div>
 
+          {/* Sale Badge - Top Right */}
+          {product.onSale && (
+            <div className="absolute top-3 right-3 z-10">
+              <Badge className="bg-rose-600 text-white border-0 shadow-md font-bold hover:bg-rose-700">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                OFERTA
+              </Badge>
+            </div>
+          )}
+
           {/* Quick Actions */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="absolute top-12 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
             {onView && (
               <Button
                 size="sm"
@@ -299,14 +282,14 @@ const ProductCard = React.memo((props: ProductCardProps) => {
         </div>
 
         {/* Content Section */}
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 flex flex-col flex-1">
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-base leading-tight line-clamp-2 flex-1 text-base-primary group-hover:text-pink-600 transition-colors">
                 {product.name}
               </h3>
-              {product.rating &&
-                product.reviewCount &&
+              {!!product.rating &&
+                !!product.reviewCount &&
                 product.reviewCount > 0 && (
                   <StarRating
                     rating={product.rating}
@@ -344,22 +327,42 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               <div className="flex items-center gap-2">
                 <span className="text-xs muted">Colores:</span>
                 <div className="flex gap-1">
-                  {product.colors.map((color, index) => (
-                    <div
-                      key={`color-${index}`}
-                      className="w-4 h-4 rounded-full border border-theme"
-                      style={{ backgroundColor: color.toLowerCase() }}
-                      title={color}
-                    />
-                  ))}
+                  {product.colors.map((color, index) => {
+                    // Try to find the color in our common colors list
+                    const matchedColor = COMMON_COLORS.find(
+                      (c) =>
+                        c.name.toLowerCase() === color.toLowerCase() ||
+                        color.toLowerCase().includes(c.name.toLowerCase())
+                    );
+
+                    // Use mapped hex, or fallback to the name (for standard CSS colors or custom hexes)
+                    const bgStyle = matchedColor ? matchedColor.hex : color;
+
+                    return (
+                      <div
+                        key={`color-${index}`}
+                        className="w-4 h-4 rounded-full border border-theme shadow-sm relative"
+                        style={{ backgroundColor: bgStyle }}
+                        title={color}
+                      >
+                        {/* Border for white/light colors */}
+                        {(bgStyle.toLowerCase() === "#ffffff" ||
+                          bgStyle.toLowerCase() === "white") && (
+                          <div className="absolute inset-0 rounded-full border border-neutral-200" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            <StockBadge stock={product.stock} />
+            <div className="pt-2">
+              <StockBadge stock={product.stock} />
+            </div>
           </div>
 
-          <div className="pt-2 border-t border-theme">
+          <div className="pt-2 border-t border-theme mt-auto">
             <PriceBadge
               price={product.price}
               salePrice={product.salePrice}
@@ -367,7 +370,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             />
           </div>
 
-          <div className="flex gap-2 pt-3">
+          <div className="flex gap-2">
             <Button
               size="sm"
               variant="outline"
@@ -487,8 +490,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               {/* Precio */}
               <div className="flex flex-col">
                 {product.onSale &&
-                  formattedSalePrice &&
-                  product.salePrice! < product.price ? (
+                formattedSalePrice &&
+                product.salePrice! < product.price ? (
                   <>
                     <span className="text-[13px] line-through muted mb-0.5">
                       {formattedPrice}
@@ -556,16 +559,18 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               ? `Quitar ${product.name} de favoritos`
               : `Agregar ${product.name} a favoritos`
           }
-          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${isProductFavorite
+          className={`absolute top-2.5 left-2.5 z-10 p-2 rounded-full surface-muted backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 ${
+            isProductFavorite
               ? "opacity-100"
               : "opacity-0 group-hover:opacity-100"
-            }`}
+          }`}
         >
           <Heart
-            className={`w-4 h-4 transition-colors ${isProductFavorite
+            className={`w-4 h-4 transition-colors ${
+              isProductFavorite
                 ? "text-rose-500 fill-rose-500"
                 : "text-zinc-400 hover:text-rose-500"
-              }`}
+            }`}
             aria-hidden="true"
           />
         </button>
@@ -670,8 +675,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             <div className="flex flex-col gap-0.5">
               <div className="flex items-baseline gap-2">
                 {product.onSale &&
-                  formattedSalePrice &&
-                  product.salePrice! < product.price ? (
+                formattedSalePrice &&
+                product.salePrice! < product.price ? (
                   <>
                     <span className="text-base sm:text-lg font-bold text-base-primary">
                       {formattedSalePrice}
@@ -717,8 +722,9 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               <Link
                 href={`/productos/${product.id}`}
                 aria-label="Ver opciones"
-                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${
+                  product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <ShoppingCart className="w-4 h-4" />
               </Link>

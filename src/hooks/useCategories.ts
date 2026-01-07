@@ -8,11 +8,11 @@ export function useCategories() {
     data: categories,
     isLoading,
     error,
-    mutate
+    mutate,
   } = useGlobalCache<Category[]>(
-    'categories',
+    "categories",
     async () => {
-      const response = await fetch("/api/categories");
+      const response = await fetch("/api/categories?includeProductCount=true");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -22,7 +22,7 @@ export function useCategories() {
     {
       ttl: 10 * 60 * 1000, // 10 minutos para categorías
       revalidateOnMount: false, // No revalidar en cada mount
-      revalidateOnFocus: false // No revalidar en focus para mejor UX
+      revalidateOnFocus: false, // No revalidar en focus para mejor UX
     }
   );
 
@@ -47,7 +47,7 @@ export function useCategory(id: string) {
 
   // Primero intentar obtener de categorías cacheadas
   const { data: cachedCategories } = useGlobalCache<Category[]>(
-    'categories',
+    "categories",
     async () => [],
     { ttl: 10 * 60 * 1000 }
   );
@@ -60,7 +60,7 @@ export function useCategory(id: string) {
       try {
         // Primero buscar en cache de categorías
         if (cachedCategories) {
-          const cachedCategory = cachedCategories.find(cat => cat.id === id);
+          const cachedCategory = cachedCategories.find((cat) => cat.id === id);
           if (cachedCategory) {
             setCategory(cachedCategory);
             setIsLoading(false);

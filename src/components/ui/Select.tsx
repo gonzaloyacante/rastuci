@@ -60,7 +60,7 @@ export const Select = ({
   const filteredOptions = options.filter((option) =>
     !searchable
       ? true
-      : option.label.toLowerCase().includes(searchTerm.toLowerCase()),
+      : option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const selectedOption = options.find((option) => option.value === value);
@@ -92,7 +92,7 @@ export const Select = ({
     <div className={`relative w-full ${className}`}>
       <button
         type="button"
-        className={`form-input text-left text-sm transition-all duration-200 flex items-center justify-between ${
+        className={`form-input h-10 py-2 text-left text-sm transition-all duration-200 flex items-center justify-between ${
           disabled ? "opacity-60 cursor-not-allowed" : ""
         } ${error ? "border-error" : ""}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -170,7 +170,7 @@ export const Select = ({
               className={`px-4 py-2 cursor-pointer transition-colors rounded mx-1 ${
                 option.value === value
                   ? "bg-primary text-white font-semibold"
-                  : "hover:bg-surface-secondary hover:text-primary"
+                  : "hover:bg-pink-100 hover:text-pink-600"
               }`}
               onClick={() => handleOptionClick(option.value)}
               role="option"

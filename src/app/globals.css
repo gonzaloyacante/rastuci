@@ -5,6 +5,17 @@
    RASTUCI - SISTEMA DE DISEÑO GLOBAL
    ========================================================================== */
 
+/* Hide number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 /* Variables CSS personalizadas para compatibilidad */
 :root {
   --color-primary: #e91e63;
@@ -57,6 +68,33 @@
   --chart-grid: rgba(209, 213, 219, 0.3);
   --chart-tooltip-bg: rgba(255, 255, 255, 0.95);
   --chart-tooltip-border: rgb(209, 213, 219);
+
+  /* Alert Colors - Light Mode (Default) */
+  /* Info: Primary inspired */
+  --alert-info-bg: #eff6ff;
+  --alert-info-border: #bfdbfe;
+  --alert-info-text: var(--color-primary);
+  --alert-info-icon: var(--color-primary);
+
+  /* Success: Green */
+  --alert-success-bg: #f0fdf4;
+  --alert-success-border: #bbf7d0;
+  --alert-success-text: #111827;
+  --alert-success-icon: #16a34a;
+
+  /* Warning: Yellow */
+  --alert-warning-bg: #fefce8;
+  --alert-warning-border: #fef08a;
+  /* yellow-200 was fde047 but tailwind is fef08a usually? Using user pref equivalent */
+  --alert-warning-border-exact: #fde047;
+  --alert-warning-text: #111827;
+  --alert-warning-icon: #ca8a04;
+
+  /* Error: Red */
+  --alert-error-bg: #fef2f2;
+  --alert-error-border: #fecaca;
+  --alert-error-text: #111827;
+  --alert-error-icon: #dc2626;
 }
 
 .dark {
@@ -94,6 +132,82 @@
   --chart-grid: rgba(55, 65, 81, 0.4);
   --chart-tooltip-bg: rgba(31, 41, 55, 0.95);
   --chart-tooltip-border: rgb(55, 65, 81);
+
+  /* Alert Colors - Dark Mode */
+  /* Info */
+  --alert-info-bg: rgba(30, 58, 138, 0.2);
+  --alert-info-border: #1e40af;
+  --alert-info-text: #dbeafe;
+  --alert-info-icon: #60a5fa;
+
+  /* Success */
+  --alert-success-bg: rgba(20, 83, 45, 0.2);
+  --alert-success-border: #166534;
+  --alert-success-text: #dcfce7;
+  --alert-success-icon: #4ade80;
+
+  /* Warning */
+  --alert-warning-bg: rgba(113, 63, 18, 0.2);
+  --alert-warning-border: #854d0e;
+  --alert-warning-text: #fef9c3;
+  --alert-warning-icon: #facc15;
+
+  /* Error */
+  --alert-error-bg: rgba(127, 29, 29, 0.2);
+  --alert-error-border: #991b1b;
+  --alert-error-text: #fee2e2;
+  --alert-error-icon: #f87171;
+}
+
+@layer components {
+  /* Base Alert Styles */
+  .alert-base {
+    @apply rounded-lg shadow-sm w-full border;
+  }
+
+  /* Info Alert */
+  .alert-info {
+    background-color: var(--alert-info-bg);
+    border-color: var(--alert-info-border);
+    color: var(--alert-info-text);
+  }
+
+  .alert-info .alert-icon {
+    color: var(--alert-info-icon);
+  }
+
+  /* Success Alert */
+  .alert-success {
+    background-color: var(--alert-success-bg);
+    border-color: var(--alert-success-border);
+    color: var(--alert-success-text);
+  }
+
+  .alert-success .alert-icon {
+    color: var(--alert-success-icon);
+  }
+
+  /* Warning Alert */
+  .alert-warning {
+    background-color: var(--alert-warning-bg);
+    border-color: var(--alert-warning-border-exact, #fde047);
+    color: var(--alert-warning-text);
+  }
+
+  .alert-warning .alert-icon {
+    color: var(--alert-warning-icon);
+  }
+
+  /* Error Alert */
+  .alert-error {
+    background-color: var(--alert-error-bg);
+    border-color: var(--alert-error-border);
+    color: var(--alert-error-text);
+  }
+
+  .alert-error .alert-icon {
+    color: var(--alert-error-icon);
+  }
 }
 
 /* Enhanced form styling for dark mode */
@@ -799,82 +913,4 @@ h6 {
 
 .text-base-secondary {
   color: var(--color-text-muted);
-}
-
-/* Bordes que cambian con el tema */
-.border-theme {
-  border-color: var(--color-border);
-}
-
-.border-theme-muted {
-  border-color: var(--color-border-muted);
-}
-
-.border-base-primary {
-  border-color: var(--color-text);
-}
-
-/* Fondos que cambian con el tema */
-.bg-theme {
-  background-color: var(--color-background);
-}
-
-.bg-surface {
-  background-color: var(--color-surface);
-}
-
-.bg-surface-secondary {
-  background-color: var(--color-surface-secondary);
-}
-
-/* Button semantics using CSS variables */
-.btn-hero,
-.btn-product {
-  background-color: var(--color-primary);
-  color: #fff;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  box-shadow:
-    0 10px 15px -3px rgba(233, 30, 99, 0.25),
-    0 4px 6px -4px rgba(233, 30, 99, 0.2);
-  transition: all 300ms ease;
-  cursor: pointer;
-}
-
-.btn-hero:hover,
-.btn-product:hover {
-  filter: brightness(0.92);
-  transform: translateY(-1px) scale(1.02);
-  box-shadow:
-    0 12px 20px -3px rgba(233, 30, 99, 0.35),
-    0 6px 8px -4px rgba(233, 30, 99, 0.25);
-}
-
-.btn-hero:focus,
-.btn-product:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.25);
-}
-
-.btn-hero:active,
-.btn-product:active {
-  transform: translateY(0) scale(1);
-}
-
-/* Asegurar que todos los elementos interactivos tengan cursor pointer */
-button,
-[role="button"],
-a[href],
-input[type="submit"],
-input[type="button"],
-input[type="reset"],
-select,
-label {
-  cursor: pointer;
-}
-
-button:disabled,
-[role="button"][aria-disabled="true"],
-input:disabled {
-  cursor: not-allowed;
 }

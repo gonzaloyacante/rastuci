@@ -18,9 +18,15 @@ interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: BadgeSize;
 }
 
-function Badge({ className = "", variant = "default", size = "sm", ...props }: BadgeProps) {
+function Badge({
+  className = "",
+  variant = "default",
+  size = "sm",
+  ...props
+}: BadgeProps) {
   // Estilos base para todas las variantes
-  const baseStyles = "inline-flex items-center rounded-full font-semibold transition-colors";
+  const baseStyles =
+    "inline-flex items-center rounded-full font-semibold transition-colors";
 
   // Estilos específicos para cada tamaño
   const sizeStyles: Record<BadgeSize, string> = {
@@ -34,14 +40,15 @@ function Badge({ className = "", variant = "default", size = "sm", ...props }: B
   const variantStyles: Record<BadgeVariant, string> = {
     default: "bg-primary text-white hover:brightness-90",
     primary: "bg-primary text-white hover:brightness-90",
-    secondary: "surface muted hover:brightness-95",
-    success: "bg-success text-white hover:brightness-90",
-    warning: "bg-warning text-white hover:brightness-90",
-    info: "bg-info text-white hover:brightness-90",
-    error: "bg-error text-white hover:brightness-90",
+    secondary:
+      "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 hover:brightness-95",
+    success: "bg-emerald-500 text-white hover:brightness-90",
+    warning: "bg-amber-500 text-white hover:brightness-90",
+    info: "bg-blue-500 text-white hover:brightness-90",
+    error: "bg-red-500 text-white hover:brightness-90",
     // Mantener 'destructive' por compatibilidad; alias a 'error'
-    destructive: "bg-error text-white hover:brightness-90",
-    outline: "border border-muted text-primary",
+    destructive: "bg-red-500 text-white hover:brightness-90",
+    outline: "border border-muted text-primary bg-transparent",
   };
 
   const combinedClassName = `${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${
@@ -56,13 +63,14 @@ const badgeVariants = {
   variants: {
     default: "bg-primary text-white hover:brightness-90",
     primary: "bg-primary text-white hover:brightness-90",
-    secondary: "surface muted hover:brightness-95",
-    success: "bg-success text-white hover:brightness-90",
-    warning: "bg-warning text-white hover:brightness-90",
-    info: "bg-info text-white hover:brightness-90",
-    error: "bg-error text-white hover:brightness-90",
-    destructive: "bg-error text-white hover:brightness-90",
-    outline: "border border-muted text-primary",
+    secondary:
+      "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 hover:brightness-95",
+    success: "bg-emerald-500 text-white hover:brightness-90",
+    warning: "bg-amber-500 text-white hover:brightness-90",
+    info: "bg-blue-500 text-white hover:brightness-90",
+    error: "bg-red-500 text-white hover:brightness-90",
+    destructive: "bg-red-500 text-white hover:brightness-90",
+    outline: "border border-muted text-primary bg-transparent",
   },
 };
 

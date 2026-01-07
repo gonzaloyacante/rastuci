@@ -1,12 +1,7 @@
 import { z } from "zod";
 
 export const ProductsQuerySchema = z.object({
-  categoryId: z
-    .string()
-    .min(20)
-    .max(32)
-    .regex(/^[a-z0-9]+$/)
-    .optional(),
+  categoryId: z.string().min(1).max(64).optional(),
   search: z.string().trim().max(100).optional(),
   minPrice: z.coerce.number().finite().nonnegative().optional(),
   maxPrice: z.coerce.number().finite().nonnegative().optional(),
@@ -47,11 +42,7 @@ export const ProductCreateSchema = z.object({
   width: z.number().int().min(1).max(150).optional().nullable(),
   length: z.number().int().min(1).max(150).optional().nullable(),
   // CUID2 tiene formato diferente a CUID v1, validar longitud y caracteres
-  categoryId: z
-    .string()
-    .min(20)
-    .max(32)
-    .regex(/^[a-z0-9]+$/, "ID de categoría inválido"),
+  categoryId: z.string().min(1).max(64),
   variants: z
     .array(
       z.object({

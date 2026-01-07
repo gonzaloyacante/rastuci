@@ -23,6 +23,7 @@ import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const NAV_LINKS = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutGrid },
@@ -189,6 +190,15 @@ export default function AdminLayout({
                   isOpen ? "" : "flex flex-col items-center"
                 }`}
               >
+                <div
+                  className={`mb-3 w-full ${isOpen ? "" : "flex justify-center"}`}
+                >
+                  <ThemeToggle
+                    variant={isOpen ? "full" : "toggle"}
+                    orientation="horizontal"
+                    showSystem={false}
+                  />
+                </div>
                 <button
                   onClick={handleLogout}
                   className={`flex items-center ${

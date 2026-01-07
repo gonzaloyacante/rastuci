@@ -12,35 +12,40 @@ interface AlertProps {
   icon?: ReactNode;
   autoClose?: number; // milliseconds
   showCloseButton?: boolean;
+  inline?: boolean;
+  children?: ReactNode;
 }
 
 const variantStyles = {
   info: {
-    bgColor: "bg-blue-50 border-blue-200",
-    textColor: "text-blue-900",
-    iconColor: "text-blue-600",
+    bgColor: "bg-[var(--alert-info-bg)] border-[var(--alert-info-border)]",
+    textColor: "text-[var(--alert-info-text)]",
+    iconColor: "text-[var(--alert-info-icon)]",
     defaultIcon: Info,
   },
   success: {
-    bgColor: "bg-green-50 border-green-200",
-    textColor: "text-green-900",
-    iconColor: "text-green-600",
+    bgColor:
+      "bg-[var(--alert-success-bg)] border-[var(--alert-success-border)]",
+    textColor: "text-[var(--alert-success-text)]",
+    iconColor: "text-[var(--alert-success-icon)]",
     defaultIcon: CheckCircle,
   },
   warning: {
-    bgColor: "bg-yellow-50 border-yellow-200",
-    textColor: "text-yellow-900",
-    iconColor: "text-yellow-600",
+    bgColor:
+      "bg-[var(--alert-warning-bg)] border-[var(--alert-warning-border-exact)]",
+    textColor: "text-[var(--alert-warning-text)]",
+    iconColor: "text-[var(--alert-warning-icon)]",
     defaultIcon: AlertTriangle,
   },
   error: {
-    bgColor: "bg-red-50 border-red-200",
-    textColor: "text-red-900",
-    iconColor: "text-red-600",
+    bgColor: "bg-[var(--alert-error-bg)] border-[var(--alert-error-border)]",
+    textColor: "text-[var(--alert-error-text)]",
+    iconColor: "text-[var(--alert-error-icon)]",
     defaultIcon: AlertCircle,
   },
 };
 
+// Refactored Alert to support inline mode and children
 export default function Alert({
   isOpen,
   onClose,
@@ -50,12 +55,14 @@ export default function Alert({
   icon,
   autoClose,
   showCloseButton = true,
-}: AlertProps) {
+  inline = false,
+  children,
+}: AlertProps & { inline?: boolean; children?: React.ReactNode }) {
   const variantConfig = variantStyles[variant];
   const IconComponent = icon || variantConfig.defaultIcon;
 
   useEffect(() => {
-    if (isOpen && autoClose) {
+    if (!inline && isOpen && autoClose && onClose) {
       const timer = setTimeout(() => {
         onClose();
       }, autoClose);
@@ -63,58 +70,60 @@ export default function Alert({
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [isOpen, autoClose, onClose]);
+  }, [isOpen, autoClose, onClose, inline]);
 
-  if (!isOpen) {
+  if (!inline && !isOpen) {
     return null;
+  }
+
+  const Content = (
+    <div
+      className={`
+          ${variantConfig.bgColor} ${variantConfig.textColor}
+          rounded-lg shadow-sm w-full border
+          ${inline ? "" : "shadow-2xl max-w-md mx-auto border-2 animate-in zoom-in-95 slide-in-from-bottom-2 duration-300"}
+        `}
+      role="alert"
+    >
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3 w-full">
+            <div className={`shrink-0 ${variantConfig.iconColor} mt-0.5`}>
+              {React.isValidElement(IconComponent)
+                ? IconComponent
+                : IconComponent &&
+                  React.createElement(IconComponent as React.ElementType, {
+                    size: 20,
+                  })}
+            </div>
+            <div className="flex-1">
+              {title && (
+                <h3 className="text-sm font-medium leading-5 mb-1">{title}</h3>
+              )}
+              {message && <p className="text-sm opacity-90">{message}</p>}
+              {children && <div className="text-sm opacity-90">{children}</div>}
+            </div>
+          </div>
+          {!inline && showCloseButton && onClose && (
+            <button
+              onClick={onClose}
+              className={`${variantConfig.iconColor} hover:opacity-80 transition-opacity ml-4`}
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (inline) {
+    return Content;
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-      <div
-        className={`
-          ${variantConfig.bgColor} ${variantConfig.textColor}
-          rounded-lg shadow-2xl max-w-md w-full mx-auto border-2
-          animate-in zoom-in-95 slide-in-from-bottom-2 duration-300
-        `}
-        role="alert"
-        aria-labelledby="alert-title"
-        aria-describedby="alert-message"
-      >
-        <div className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`shrink-0 ${variantConfig.iconColor}`}>
-                {React.isValidElement(IconComponent)
-                  ? IconComponent
-                  : IconComponent &&
-                    React.createElement(IconComponent as React.ElementType, {
-                      size: 24,
-                    })}
-              </div>
-              <div>
-                <h3
-                  id="alert-title"
-                  className="text-lg font-semibold leading-6"
-                >
-                  {title}
-                </h3>
-                <p id="alert-message" className="text-sm mt-2 opacity-90">
-                  {message}
-                </p>
-              </div>
-            </div>
-            {showCloseButton && (
-              <button
-                onClick={onClose}
-                className={`${variantConfig.iconColor} hover:opacity-80 transition-opacity ml-4`}
-              >
-                <X size={20} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      {Content}
     </div>
   );
 }

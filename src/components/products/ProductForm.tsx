@@ -21,18 +21,21 @@ import { formatPriceARS } from "@/utils/formatters";
 import {
   AlertCircle,
   ArrowLeft,
+  CheckCircle,
   DollarSign,
   Eye,
   FileText,
   Hash,
   Info,
   List,
+  LucideImage,
   Package,
   Palette,
   Percent,
   Ruler,
   Save,
   Tag,
+  TrendingUp,
   Upload,
 } from "lucide-react";
 
@@ -70,11 +73,14 @@ const productSchema = z.object({
     .optional(),
   price: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un precio válido" }).min(0.01, "El precio debe ser mayor a 0")
+    z
+      .number({ invalid_type_error: "Ingresa un precio válido" })
+      .min(0.01, "El precio debe ser mayor a 0")
   ),
   discountPercentage: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un porcentaje válido" })
+    z
+      .number({ invalid_type_error: "Ingresa un porcentaje válido" })
       .min(0, "El descuento no puede ser negativo")
       .max(100, "El descuento no puede ser mayor a 100%")
       .optional()
@@ -82,7 +88,8 @@ const productSchema = z.object({
   ),
   stock: z.preprocess(
     (val) => (val === "" ? 0 : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un stock válido" })
+    z
+      .number({ invalid_type_error: "Ingresa un stock válido" })
       .int("El stock debe ser un número entero")
       .min(0, "El stock no puede ser negativo")
   ),
@@ -90,19 +97,43 @@ const productSchema = z.object({
   onSale: z.coerce.boolean().optional(),
   weight: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un peso válido" }).int().min(1).max(30000).optional().nullable()
+    z
+      .number({ invalid_type_error: "Ingresa un peso válido" })
+      .int()
+      .min(1)
+      .max(30000)
+      .optional()
+      .nullable()
   ),
   height: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa una altura válida" }).int().min(1).max(150).optional().nullable()
+    z
+      .number({ invalid_type_error: "Ingresa una altura válida" })
+      .int()
+      .min(1)
+      .max(150)
+      .optional()
+      .nullable()
   ),
   width: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un ancho válido" }).int().min(1).max(150).optional().nullable()
+    z
+      .number({ invalid_type_error: "Ingresa un ancho válido" })
+      .int()
+      .min(1)
+      .max(150)
+      .optional()
+      .nullable()
   ),
   length: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un largo válido" }).int().min(1).max(150).optional().nullable()
+    z
+      .number({ invalid_type_error: "Ingresa un largo válido" })
+      .int()
+      .min(1)
+      .max(150)
+      .optional()
+      .nullable()
   ),
   sizesInput: z.string().optional(),
   colorsInput: z.string().optional(),
@@ -220,10 +251,10 @@ export default function ProductForm({
       const discountPercentage =
         initialData.salePrice && initialData.price
           ? Math.round(
-            ((initialData.price - initialData.salePrice) /
-              initialData.price) *
-            100
-          )
+              ((initialData.price - initialData.salePrice) /
+                initialData.price) *
+                100
+            )
           : null;
 
       reset({
@@ -257,14 +288,8 @@ export default function ProductForm({
         (acc, v) => acc + (v.stock || 0),
         0
       );
-      // Only update if it differs significantly or logic requires it.
-      // User can still manually override if they really want, but let's suggest it.
-      // setValue("stock", totalVariantStock);
-      // Actually, let's NOT auto-update to avoid fighting with user input,
-      // but we could show a warning or helper.
-      // Given the previous instructions, let's keep it simple. The VariantManager shows the total.
-      // The user can manually update the top stock field or we'll handle it in backend sync.
-      // Better: Backend `syncVariants` handles sum update. Frontend just sends data.
+      // Auto-update main stock field when variants change
+      setValue("stock", totalVariantStock, { shouldValidate: true });
     }
   }, [variants, setValue]);
 
@@ -301,11 +326,7 @@ export default function ProductForm({
       }
 
       // 3. Validar que haya variantes con stock (stock se calcula automáticamente)
-      if (totalVariantStock <= 0 && variants.length === 0) {
-        toast.error("Debes agregar variantes con stock disponible");
-        setLoading(false);
-        return;
-      }
+      // 3. (VALIDACIÓN DE STOCK ELIMINADA POR FEEDBACK: PERMITIR STOCK 0)
 
       // 4. Validar categoría
       if (!data.categoryId || data.categoryId.trim() === "") {
@@ -413,7 +434,10 @@ export default function ProductForm({
         salePrice: salePrice ? Number(salePrice) : null,
         stock: totalVariantStock,
         categoryId: data.categoryId.trim(),
-        images: productImages,
+        images:
+          productImages.length > 0
+            ? productImages
+            : Object.values(colorImages).flat(), // Backfill with all color images if no globals
         colorImages:
           Object.keys(colorImages).length > 0 ? colorImages : undefined,
         onSale: (data.discountPercentage ?? 0) > 0,
@@ -542,10 +566,10 @@ export default function ProductForm({
       <div className="max-w-6xl mx-auto">
         {/* Header - responsive */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br from-primary to-primary/80 rounded-full mb-3 sm:mb-4 shadow-lg">
-            <Package className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full mb-3 sm:mb-4 shadow-lg">
+            <Package className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent px-4">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent px-4">
             {title}
           </h1>
           <p className="muted mt-2 text-sm sm:text-base lg:text-lg px-4">
@@ -585,7 +609,7 @@ export default function ProductForm({
         >
           {/* Información Básica */}
           <Card className="shadow-xl border-0 overflow-hidden">
-            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+            <CardHeader className="border-b bg-surface-secondary p-4 sm:p-6">
               <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <Info className="h-4 w-4 sm:h-5 sm:w-5" />
                 Información Básica
@@ -677,14 +701,14 @@ export default function ProductForm({
 
           {/* Precios y Stock */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+            <CardHeader className="border-b bg-surface-secondary p-4 sm:p-6">
               <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
-                Precios y Stock
+                Precios
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 lg:p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label
                     htmlFor="price"
@@ -745,10 +769,10 @@ export default function ProductForm({
                     watchDiscountPercentage > 0 &&
                     calculatedSalePrice && (
                       <>
-                        <p className="text-xs text-orange-600 mt-1 font-medium">
+                        <p className="text-xs text-warning mt-1 font-medium">
                           Precio en oferta:{" "}
                           {formatPriceARS(Number(calculatedSalePrice))}
-                          <span className="ml-1 text-error">
+                          <span className="ml-1 text-destructive">
                             (-{watchDiscountPercentage}%)
                           </span>
                         </p>
@@ -756,65 +780,100 @@ export default function ProductForm({
                           El descuento será de{" "}
                           {formatPriceARS(
                             Number(watchPrice || 0) -
-                            Number(calculatedSalePrice)
+                              Number(calculatedSalePrice)
                           )}
                         </p>
                       </>
                     )}
                 </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium mb-2">
-                    <Hash className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
-                    Stock Total (calculado)
-                  </label>
-                  <div className="flex items-center gap-3 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg border">
-                    <span className="text-xl font-bold text-foreground">
-                      {totalVariantStock}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      unidades
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Se calcula automáticamente de las variantes
-                  </p>
-                  <StockIndicator stock={totalVariantStock} />
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium mb-2">
-                    Estado de Oferta
-                  </label>
-                  <div
-                    className={`flex items-center gap-2 p-3 rounded-lg border ${isOnSale ? "bg-orange-50 dark:bg-orange-900/20 border-orange-300" : "bg-neutral-100 dark:bg-neutral-800"}`}
-                  >
-                    {isOnSale ? (
-                      <>
-                        <span className="text-orange-600 font-medium">
-                          ✓ En Oferta
-                        </span>
-                        <span className="text-xs text-orange-500">
-                          (-{watchDiscountPercentage}%)
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Sin descuento
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Automático: si hay descuento, está en oferta
-                  </p>
-                </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Variantes del Producto - REORDERED: Moved UP */}
+          <Card className="shadow-xl border-0">
+            <CardHeader className="border-b bg-surface-secondary p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
+                <Palette className="h-4 w-4 sm:h-5 sm:w-5" />
+                Variantes del Producto
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium mb-3">
+                  <Ruler className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
+                  Talles Disponibles
+                </label>
+                <SizeManager sizes={sizes} onSizesChange={setSizes} />
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-medium mb-3">
+                  <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
+                  Colores Disponibles
+                </label>
+                <ColorPicker
+                  colors={colors}
+                  onColorsChange={setColors}
+                  colorImages={colorImages}
+                  onColorImagesChange={(color, imgs) =>
+                    setColorImages((prev) => ({ ...prev, [color]: imgs }))
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-medium mb-3">
+                  <List className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
+                  Características Especiales
+                </label>
+                <FeatureManager
+                  features={features}
+                  onFeaturesChange={setFeatures}
+                />
+              </div>
+
+              {/* Variant Manager */}
+              <div className="pt-4 border-t">
+                <label className="block text-xs sm:text-sm font-medium mb-3">
+                  <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
+                  Gestión de Stock por Variante
+                </label>
+                <VariantManager
+                  variants={variants}
+                  onChange={setVariants}
+                  availableColors={colors}
+                  availableSizes={sizes}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Guía de Talles (Smart Table) */}
+          <Card className="shadow-xl border-0">
+            <CardHeader className="border-b bg-surface-secondary p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
+                <Ruler className="h-4 w-4 sm:h-5 sm:w-5" />
+                Guía de Talles
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 lg:p-8">
+              <label className="block text-sm text-muted-foreground mb-4">
+                Define las medidas específicas para cada talle seleccionado.
+                Esta tabla se mostrará a los clientes en el botón "Ver guía de
+                talles".
+              </label>
+              <SizeGuideEditor
+                sizes={sizes}
+                value={watch("sizeGuide")}
+                onChange={handleSizeGuideChange}
+              />
             </CardContent>
           </Card>
 
           {/* Dimensiones para Envío */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+            <CardHeader className="border-b bg-surface-secondary p-4 sm:p-6">
               <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                 Dimensiones para Envío
@@ -878,103 +937,23 @@ export default function ProductForm({
                 ))}
               </div>
 
-
-              <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg mb-6">
-                <p className="text-sm text-orange-800 flex items-start gap-2">
-                  <Info className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
+              <div className="mt-6 p-4 bg-warning/10 border border-warning/20 rounded-lg mb-6">
+                <p className="text-sm text-warning flex items-start gap-2">
+                  <Info className="h-4 w-4 text-warning mt-0.5 shrink-0" />
                   <span>
-                    <strong>Importante:</strong> Las dimensiones correctas (Peso, Alto, Ancho, Largo) son
-                    esenciales para calcular el costo de envío. Si no se
-                    especifican, se usarán valores por defecto.
+                    <strong>Importante:</strong> Las dimensiones correctas
+                    (Peso, Alto, Ancho, Largo) son esenciales para calcular el
+                    costo de envío. Si no se especifican, se usarán valores por
+                    defecto.
                   </span>
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Guía de Talles (Smart Table) */}
-          <Card className="shadow-xl border-0">
-            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
-                <Ruler className="h-4 w-4 sm:h-5 sm:w-5" />
-                Guía de Talles
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 lg:p-8">
-              <label className="block text-sm text-muted-foreground mb-4">
-                Define las medidas específicas para cada talle seleccionado. Esta tabla se mostrará a los clientes en el botón "Ver guía de talles".
-              </label>
-              <SizeGuideEditor
-                sizes={sizes}
-                value={watch("sizeGuide")}
-                onChange={handleSizeGuideChange}
-              />
-            </CardContent>
-          </Card>
-
-
-          {/* Variantes del Producto */}
-          <Card className="shadow-xl border-0">
-            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
-                <Palette className="h-4 w-4 sm:h-5 sm:w-5" />
-                Variantes del Producto
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium mb-3">
-                  <Ruler className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
-                  Talles Disponibles
-                </label>
-                <SizeManager sizes={sizes} onSizesChange={setSizes} />
-              </div>
-
-              <div>
-                <label className="block text-xs sm:text-sm font-medium mb-3">
-                  <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
-                  Colores Disponibles
-                </label>
-                <ColorPicker
-                  colors={colors}
-                  onColorsChange={setColors}
-                  colorImages={colorImages}
-                  onColorImagesChange={(color, imgs) =>
-                    setColorImages((prev) => ({ ...prev, [color]: imgs }))
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs sm:text-sm font-medium mb-3">
-                  <List className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
-                  Características Especiales
-                </label>
-                <FeatureManager
-                  features={features}
-                  onFeaturesChange={setFeatures}
-                />
-              </div>
-
-              {/* Variant Manager */}
-              <div className="pt-4 border-t">
-                <label className="block text-xs sm:text-sm font-medium mb-3">
-                  <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
-                  Gestión de Stock por Variante
-                </label>
-                <VariantManager
-                  variants={variants}
-                  onChange={setVariants}
-                  availableColors={colors}
-                  availableSizes={sizes}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Vista Previa */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="border-b bg-neutral-50 dark:bg-neutral-900 p-4 sm:p-6">
+            <CardHeader className="border-b bg-surface-secondary p-4 sm:p-6">
               <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
                 <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                 Vista Previa del Producto
@@ -1002,37 +981,12 @@ export default function ProductForm({
           </Card>
 
           {/* Botones de Acción */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4 pb-4 sticky bottom-0 z-[100] bg-surface/90 backdrop-blur-md border-t border-muted rounded-t-xl shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
+          {/* Botones de Acción - Ahora al final del flujo, sin sticky */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-6 mt-8 border-t border-muted">
             <Button
-              type="button"
-              onClick={(e) => {
-                logger.info("Submit button clicked manually");
-                handleSubmit(onSubmit, (errors) => {
-                  // Sanitize errors for logging
-                  const sanitizedErrors = Object.keys(errors).reduce(
-                    (acc, key) => ({
-                      ...acc,
-                      [key]: errors[key as keyof typeof errors]?.message,
-                    }),
-                    {}
-                  );
-                  logger.warn("Validation errors (manual trigger):", sanitizedErrors);
-
-                  toast.error("Hay errores en el formulario.");
-
-                  setTimeout(() => {
-                    const firstError = Object.keys(errors)[0];
-                    const element = document.getElementById(firstError);
-                    if (element) {
-                      element.scrollIntoView({ behavior: "smooth", block: "center" });
-                      element.focus();
-                    }
-                  }, 100);
-                })(e);
-              }}
+              type="submit"
               disabled={loading}
-              variant="hero"
-              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold shadow-lg relative z-[101]"
+              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold shadow-lg relative z-[101] bg-primary hover:bg-primary/90 text-white"
             >
               {loading ? (
                 <>
@@ -1100,28 +1054,56 @@ function ProductPreview({
   colors,
   colorImages,
 }: ProductPreviewProps) {
+  const [selectedPreviewColor, setSelectedPreviewColor] = useState<
+    string | null
+  >(null);
+
+  // Imagen principal:
+  // 1. Si hay color seleccionado y tiene imagen, mostrar esa.
+  // 2. Si no, combinar todas las imágenes de colores y mostrar la primera.
+  const allColorImages = useMemo(() => {
+    return Object.values(colorImages || {}).flat();
+  }, [colorImages]);
+
+  const displayImages = useMemo(() => {
+    // Si hay un color seleccionado, priorizar sus imagenes
+    if (selectedPreviewColor && colorImages?.[selectedPreviewColor]?.length) {
+      return colorImages[selectedPreviewColor];
+    }
+    // Si hay imagenes globales (prop images), usarlas (fallback legado)
+    if (images && images.length > 0) return images;
+
+    // Si no, usar todas las imagenes de colores acumuladas
+    if (allColorImages.length > 0) return allColorImages;
+
+    return [];
+  }, [selectedPreviewColor, colorImages, images, allColorImages]);
+
+  const mainImageSrc = displayImages.length > 0 ? displayImages[0] : null;
+
   return (
     <div className="bg-surface rounded-lg p-4 sm:p-6 border">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         {/* Galería de Imágenes */}
         <div className="space-y-4">
-          {images.length > 0 ? (
+          {displayImages.length > 0 ? (
             <>
               <div className="aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden border-2 border-muted">
                 <Image
-                  src={images[0]}
+                  key={mainImageSrc || "main"}
+                  src={mainImageSrc!}
                   alt="Vista previa"
                   width={500}
                   height={500}
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-full object-contain rounded-lg"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}
                 />
               </div>
-              {images.length > 1 && (
+              {displayImages.length > 1 && (
                 <div className="grid grid-cols-4 gap-2">
-                  {images.slice(0, 4).map((img, idx) => (
+                  {displayImages.slice(0, 4).map((img, idx) => (
                     <div
                       key={`thumb-${idx}`}
                       className="aspect-square bg-muted rounded overflow-hidden border border-muted hover:border-primary transition-colors"
@@ -1154,7 +1136,26 @@ function ProductPreview({
             </h3>
           </div>
 
-          <ProductPreviewBadges onSale={onSale} stock={stock} />
+          {/* Stock - Simplificado sin validación subjetiva */}
+          <div className="flex items-center gap-2">
+            {stock > 0 ? (
+              <span className="text-sm font-semibold text-success flex items-center gap-1">
+                <CheckCircle className="h-4 w-4" />
+                En Stock ({stock})
+              </span>
+            ) : (
+              <span className="text-sm font-semibold muted flex items-center gap-1">
+                Sin Stock
+              </span>
+            )}
+
+            {onSale && (
+              <span className="text-sm font-bold text-error flex items-center gap-1">
+                <TrendingUp className="h-4 w-4" />
+                OFERTA
+              </span>
+            )}
+          </div>
 
           {/* Precio */}
           <div className="space-y-2 py-4 border-y border-muted">
@@ -1237,14 +1238,16 @@ function ProductPreview({
                   return (
                     <div
                       key={`color-${index}`}
-                      className="relative group w-10 h-10 rounded-lg border-2 border-muted overflow-hidden"
-                      title={color}
+                      className={`relative group w-10 h-10 rounded-lg border-2 overflow-hidden cursor-pointer transition-all ${selectedPreviewColor === color ? "border-primary ring-2 ring-primary/30" : "border-muted hover:border-primary"}`}
+                      title={`${color} (Click para ver)`}
+                      onClick={() => setSelectedPreviewColor(color)}
                     >
                       {colorImg ? (
                         <Image
                           src={colorImg}
                           alt={color}
                           fill
+                          sizes="40px"
                           className="object-cover"
                         />
                       ) : (

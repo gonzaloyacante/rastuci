@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { logger } from "@/lib/logger";
 import { AlertCircle, Check, Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 interface ImageUploadZoneProps {
@@ -34,13 +34,20 @@ export default function ImageUploadZone({
   );
   const [isDragging, setIsDragging] = useState(false);
 
+  // Use ref to avoid infinite loop when onImagesChange reference changes on every render
+  const onImagesChangeRef = useRef(onImagesChange);
+
+  useEffect(() => {
+    onImagesChangeRef.current = onImagesChange;
+  }, [onImagesChange]);
+
   // Notificar cambios de imágenes cuando el estado cambia
   useEffect(() => {
     const updatedUrls = images
       .map((img) => img.url)
       .filter(Boolean) as string[];
-    onImagesChange(updatedUrls);
-  }, [images, onImagesChange]);
+    onImagesChangeRef.current(updatedUrls);
+  }, [images]);
 
   const uploadToCloudinary = async (file: File): Promise<string> => {
     const formData = new FormData();
@@ -57,7 +64,8 @@ export default function ImageUploadZone({
       throw new Error(`Error ${response.status}: ${errorText}`);
     }
 
-    const data: { success: boolean; url?: string; error?: string } = await response.json();
+    const data: { success: boolean; url?: string; error?: string } =
+      await response.json();
 
     if (!data.success || !data.url) {
       throw new Error(data.error || "Error al subir imagen");
@@ -252,12 +260,13 @@ export default function ImageUploadZone({
               className="relative group aspect-square rounded-lg overflow-hidden border-2 border-muted hover:border-primary transition-colors"
             >
               {/* Imagen */}
-              <div className="w-full h-full bg-surface">
+              <div className="w-full h-full bg-surface relative">
                 {(image.url || image.preview) && (
                   <Image
                     src={image.url || image.preview!}
                     alt={`Producto ${index + 1}`}
                     fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     className="object-cover"
                   />
                 )}
@@ -348,7 +357,7 @@ export default function ImageUploadZone({
                 id="image-upload"
                 type="file"
                 multiple
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                 className="sr-only"
                 onChange={handleFileSelect}
               />

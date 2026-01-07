@@ -41,7 +41,7 @@ const sizeClasses = {
 
 const variantClasses = {
   default:
-    "border-2 border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20",
+    "border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20",
   filled:
     "border-0 bg-[var(--color-surface-secondary)] focus:bg-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]/20",
   ghost:

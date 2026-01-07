@@ -332,14 +332,18 @@ export default function ProductList() {
           <div
             className={
               viewMode === "grid"
-                ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
+                ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
                 : "space-y-4"
             }
           >
             {products.map((product: Product, index: number) => {
               const isLast = index === products.length - 1;
               return (
-                <div key={product.id} ref={isLast ? lastElementRef : undefined}>
+                <div
+                  key={product.id}
+                  ref={isLast ? lastElementRef : undefined}
+                  className="h-full"
+                >
                   <ProductCard
                     product={product}
                     variant="admin"
