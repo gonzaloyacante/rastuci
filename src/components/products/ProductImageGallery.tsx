@@ -237,7 +237,7 @@ export default function ProductImageGallery({
                     src={image}
                     alt={`${productName} - Miniatura ${index + 1}`}
                     fill
-                    className="object-contain"
+                    className="object-cover"
                     sizes="80px"
                     quality={75}
                   />
