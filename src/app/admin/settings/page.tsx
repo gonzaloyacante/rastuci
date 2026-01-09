@@ -1,80 +1,11 @@
-"use client";
-
-import { PageHeaderWithActions, TabLayout, TabPanel } from "@/components/admin";
-import ContactForm from "@/components/forms/ContactForm";
-import HomeForm from "@/components/forms/HomeForm";
-import StoreForm from "@/components/forms/StoreForm";
-import { Button } from "@/components/ui/Button";
-import Alert from "@/components/ui/Alert";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { useDocumentTitle } from "@/hooks";
-import { Plus, Save, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
-
-type TabType = "tienda" | "home" | "contacto" | "faqs" | "envios";
-
-interface FAQ {
-  question: string;
-  answer: string;
-}
-
+import ShippingSettings from "@/components/forms/ShippingSettings";
+// ...
 export default function ConfiguracionPage() {
   useDocumentTitle({ title: "Configuración del Sitio" });
   const [activeTab, setActiveTab] = useState<TabType>("tienda");
   const [loading, setLoading] = useState(false);
 
-  // FAQs state
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [loadingFaqs, setLoadingFaqs] = useState(true);
-
-  // Cargar FAQs
-  useEffect(() => {
-    if (activeTab === "faqs") {
-      loadFaqs();
-    }
-  }, [activeTab]);
-
-  const loadFaqs = async () => {
-    try {
-      setLoadingFaqs(true);
-      const res = await fetch("/api/settings/faqs");
-      const data = await res.json();
-      if (data.success) {
-        setFaqs(data.data || []);
-      }
-    } catch (error) {
-      console.error("Error loading FAQs:", error);
-      toast.error("Error al cargar las FAQs");
-    } finally {
-      setLoadingFaqs(false);
-    }
-  };
-
-  const saveFaqs = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/settings/faqs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(faqs),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        toast.success("FAQs guardadas exitosamente");
-      } else {
-        toast.error(data.error || "Error al guardar");
-      }
-    } catch (error) {
-      console.error("Error saving FAQs:", error);
-      toast.error("Error al guardar");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // FAQs state ...
 
   return (
     <div className="space-y-6">
@@ -85,11 +16,11 @@ export default function ConfiguracionPage() {
 
       <TabLayout
         tabs={[
-          { id: "tienda", label: "Tienda y Envíos" },
-          { id: "home", label: "Inicio" },
+          { id: "tienda", label: "Tienda (Identidad)" },
+          { id: "envios", label: "Envíos y Logística" },
           { id: "contacto", label: "Contacto" },
+          { id: "home", label: "Inicio" },
           { id: "faqs", label: "FAQs" },
-          { id: "envios", label: "Envío Gratis (Promo)" },
         ]}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as TabType)}
@@ -102,10 +33,10 @@ export default function ConfiguracionPage() {
           </Card>
         </TabPanel>
 
-        <TabPanel id="home" activeTab={activeTab}>
+        <TabPanel id="envios" activeTab={activeTab}>
           <Card>
             <CardContent className="p-6">
-              <HomeForm />
+              <ShippingSettings />
             </CardContent>
           </Card>
         </TabPanel>
@@ -118,100 +49,102 @@ export default function ConfiguracionPage() {
           </Card>
         </TabPanel>
 
-        <TabPanel id="faqs" activeTab={activeTab}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">
-                    Preguntas Frecuentes
-                  </h3>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      setFaqs([...faqs, { question: "", answer: "" }])
-                    }
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Agregar FAQ
-                  </Button>
-                </div>
+        <TabPanel id="home" activeTab={activeTab}>
 
-                {loadingFaqs ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-32" />
-                    ))}
+          <TabPanel id="faqs" activeTab={activeTab}>
+            <Card>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">
+                      Preguntas Frecuentes
+                    </h3>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        setFaqs([...faqs, { question: "", answer: "" }])
+                      }
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar FAQ
+                    </Button>
                   </div>
-                ) : faqs.length === 0 ? (
-                  <p className="text-muted text-center py-8">
-                    No hay FAQs. Agrega la primera pregunta frecuente.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {faqs.map((faq, index) => (
-                      <div
-                        key={index}
-                        className="p-4 border border-muted rounded-lg space-y-3"
-                      >
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-medium">FAQ #{index + 1}</h4>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              setFaqs(faqs.filter((_, i) => i !== index))
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <Input
-                          label="Pregunta"
-                          value={faq.question}
-                          onChange={(e) => {
-                            const newFaqs = [...faqs];
-                            newFaqs[index].question = e.target.value;
-                            setFaqs(newFaqs);
-                          }}
-                          placeholder="¿Cuál es el tiempo de entrega?"
-                        />
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Respuesta
-                          </label>
-                          <textarea
-                            value={faq.answer}
+
+                  {loadingFaqs ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-32" />
+                      ))}
+                    </div>
+                  ) : faqs.length === 0 ? (
+                    <p className="text-muted text-center py-8">
+                      No hay FAQs. Agrega la primera pregunta frecuente.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {faqs.map((faq, index) => (
+                        <div
+                          key={index}
+                          className="p-4 border border-muted rounded-lg space-y-3"
+                        >
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-medium">FAQ #{index + 1}</h4>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setFaqs(faqs.filter((_, i) => i !== index))
+                              }
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <Input
+                            label="Pregunta"
+                            value={faq.question}
                             onChange={(e) => {
                               const newFaqs = [...faqs];
-                              newFaqs[index].answer = e.target.value;
+                              newFaqs[index].question = e.target.value;
                               setFaqs(newFaqs);
                             }}
-                            placeholder="Los envíos tardan entre 3 a 7 días hábiles..."
-                            className="w-full min-h-[100px] p-3 surface border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            placeholder="¿Cuál es el tiempo de entrega?"
                           />
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Respuesta
+                            </label>
+                            <textarea
+                              value={faq.answer}
+                              onChange={(e) => {
+                                const newFaqs = [...faqs];
+                                newFaqs[index].answer = e.target.value;
+                                setFaqs(newFaqs);
+                              }}
+                              placeholder="Los envíos tardan entre 3 a 7 días hábiles..."
+                              className="w-full min-h-[100px] p-3 surface border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
 
-                <Button
-                  onClick={saveFaqs}
-                  disabled={loading}
-                  className="w-full"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {loading ? "Guardando..." : "Guardar FAQs"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabPanel>
+                  <Button
+                    onClick={saveFaqs}
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? "Guardando..." : "Guardar FAQs"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabPanel>
 
-        <TabPanel id="envios" activeTab={activeTab}>
-          <ShippingPromoSettings />
-        </TabPanel>
+          <TabPanel id="envios" activeTab={activeTab}>
+            <ShippingPromoSettings />
+          </TabPanel>
       </TabLayout>
     </div>
   );
@@ -313,7 +246,7 @@ function ShippingPromoSettings() {
             variant="info"
             title="Cómo funciona"
             isOpen={true}
-            onClose={() => {}}
+            onClose={() => { }}
             message=""
           >
             <ul className="text-sm space-y-1 list-disc list-inside mt-1">

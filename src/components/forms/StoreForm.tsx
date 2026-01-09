@@ -25,10 +25,18 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
     useEffect(() => {
         if (!initial) {
             fetch("/api/settings/store")
-                .then((res) => res.json())
+                .then(async (res) => {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = "/admin"; // Redirect on auth fail
+                        return { success: false, error: "Sesión expirada" };
+                    }
+                    return res.json();
+                })
                 .then((json) => {
                     if (json.success) {
                         setData(json.data);
+                    } else if (json.error) {
+                        toast.error(json.error);
                     }
                 })
                 .catch((e) => console.error(e))
@@ -42,16 +50,6 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
         setData((prev) => ({ ...prev, [field]: value }));
     };
 
-    const handleAddressChange = (
-        field: keyof StoreSettings["address"],
-        value: string
-    ) => {
-        setData((prev) => ({
-            ...prev,
-            address: { ...prev.address, [field]: value },
-        }));
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -62,6 +60,11 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
+
+            if (res.status === 401 || res.status === 403) {
+                toast.error("Sesión expirada. Por favor recarga o inicia sesión nuevamente.");
+                return;
+            }
 
             const json = await res.json();
 
@@ -86,6 +89,13 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
             <div className="surface-secondary rounded-lg p-4 space-y-4">
                 <h3 className="font-semibold text-lg">Identidad del Negocio</h3>
 
+                <div className="bg-muted/50 p-4 rounded-lg text-sm border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/10">
+                    <p className="flex items-center gap-2">
+                        <span className="text-blue-600 font-semibold">ℹ️ Nota:</span>
+                        El nombre de la tienda y el email administrativo se usan para notificaciones internas y branding.
+                    </p>
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                         <Label htmlFor="name">Nombre de la Tienda</Label>
@@ -97,132 +107,16 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
                         />
                     </div>
                     <div>
-                        <Label htmlFor="adminEmail">Email Admin (notificaciones)</Label>
+                        <Label htmlFor="adminEmail">Email para Notificaciones (Admin)</Label>
                         <Input
                             id="adminEmail"
                             type="email"
                             value={data.adminEmail}
                             onChange={(e) => handleChange("adminEmail", e.target.value)}
-                            placeholder="admin@example.com"
+                            placeholder="admin@rastuci.com"
                         />
                         <p className="text-xs muted mt-1">
-                            Recibe notificaciones de nuevos pedidos
-                        </p>
-                    </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                        <Label htmlFor="phone">Teléfono</Label>
-                        <Input
-                            id="phone"
-                            value={data.phone}
-                            onChange={(e) => handleChange("phone", e.target.value)}
-                            placeholder="+54 11 1234-5678"
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="email">Email de Ventas</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={data.email}
-                            onChange={(e) => handleChange("email", e.target.value)}
-                            placeholder="ventas@example.com"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Dirección de origen (para envíos) */}
-            <div className="surface-secondary rounded-lg p-4 space-y-4">
-                <h3 className="font-semibold text-lg">Dirección de Origen (Envíos)</h3>
-                <p className="text-sm muted">
-                    Esta dirección se usa como remitente en Correo Argentino
-                </p>
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="sm:col-span-2">
-                        <Label htmlFor="streetName">Calle</Label>
-                        <Input
-                            id="streetName"
-                            value={data.address.streetName}
-                            onChange={(e) => handleAddressChange("streetName", e.target.value)}
-                            placeholder="Av. San Martín"
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="streetNumber">Número</Label>
-                        <Input
-                            id="streetNumber"
-                            value={data.address.streetNumber}
-                            onChange={(e) =>
-                                handleAddressChange("streetNumber", e.target.value)
-                            }
-                            placeholder="1234"
-                        />
-                    </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                        <Label htmlFor="floor">Piso (opcional)</Label>
-                        <Input
-                            id="floor"
-                            value={data.address.floor || ""}
-                            onChange={(e) => handleAddressChange("floor", e.target.value)}
-                            placeholder="1"
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="apartment">Depto (opcional)</Label>
-                        <Input
-                            id="apartment"
-                            value={data.address.apartment || ""}
-                            onChange={(e) => handleAddressChange("apartment", e.target.value)}
-                            placeholder="A"
-                        />
-                    </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <div>
-                        <Label htmlFor="city">Ciudad</Label>
-                        <Input
-                            id="city"
-                            value={data.address.city}
-                            onChange={(e) => handleAddressChange("city", e.target.value)}
-                            placeholder="Buenos Aires"
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="provinceCode">Provincia</Label>
-                        <select
-                            id="provinceCode"
-                            value={data.address.provinceCode}
-                            onChange={(e) =>
-                                handleAddressChange("provinceCode", e.target.value)
-                            }
-                            className="w-full h-10 px-3 rounded-md border border-theme surface text-base-primary"
-                        >
-                            {Object.entries(provinceCodeMap).map(([code, name]) => (
-                                <option key={code} value={code}>
-                                    {name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <Label htmlFor="postalCode">Código Postal</Label>
-                        <Input
-                            id="postalCode"
-                            value={data.address.postalCode}
-                            onChange={(e) => handleAddressChange("postalCode", e.target.value)}
-                            placeholder="1611"
-                            maxLength={4}
-                        />
-                        <p className="text-xs muted mt-1">
-                            Usado para cotizar envíos
+                            Recibe alertas de stock y pedidos.
                         </p>
                     </div>
                 </div>
@@ -231,7 +125,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
             <div className="flex justify-end">
                 <Button type="submit" disabled={saving}>
                     <Save className="w-4 h-4 mr-2" />
-                    {saving ? "Guardando..." : "Guardar Configuración"}
+                    {saving ? "Guardando..." : "Guardar Identidad"}
                 </Button>
             </div>
         </form>
