@@ -113,90 +113,93 @@ export default function ProductImageGallery({
       role="region"
       aria-label={`Galería de imágenes de ${productName}`}
     >
-      {/* Main image with zoom container */}
-      <div className="relative flex gap-4">
-        {/* Main image container */}
+      {/* Main image container */}
+      <div
+        ref={imageContainerRef}
+        className="relative aspect-square bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         <div
-          ref={imageContainerRef}
-          className="relative flex-1 aspect-square bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
-          onMouseMove={handleMouseMove}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          <div
-            className={`absolute inset-0 transition-all duration-300 ease-out ${
-              isTransitioning
-                ? slideDirection === "right"
-                  ? "opacity-0 translate-x-4"
-                  : "opacity-0 -translate-x-4"
-                : "opacity-100 translate-x-0"
-            }`}
-          >
-            <Image
-              src={images[selectedImage]}
-              alt={`${productName} - Imagen ${selectedImage + 1} de ${images.length}`}
-              fill
-              className="object-contain"
-              priority={selectedImage === 0}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              quality={90}
-            />
-          </div>
-
-          {/* Zoom lens indicator - desktop only */}
-          {isZooming && (
-            <div
-              className="hidden lg:block absolute pointer-events-none border-2 border-primary/50 bg-white/10 rounded"
-              style={{
-                width: `${100 / zoomFactor}%`,
-                height: `${100 / zoomFactor}%`,
-                left: `${Math.min(Math.max(zoomPosition.x - 100 / zoomFactor / 2, 0), 100 - 100 / zoomFactor)}%`,
-                top: `${Math.min(Math.max(zoomPosition.y - 100 / zoomFactor / 2, 0), 100 - 100 / zoomFactor)}%`,
-              }}
-            />
-          )}
-
-          {/* Navigation controls */}
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={prevImage}
-                onKeyDown={(e) => handleKeyDown(e, prevImage)}
-                aria-label={`Imagen anterior de ${productName}`}
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
-              >
-                <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-              </button>
-              <button
-                onClick={nextImage}
-                onKeyDown={(e) => handleKeyDown(e, nextImage)}
-                aria-label={`Imagen siguiente de ${productName}`}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
-              >
-                <ChevronRight className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </>
-          )}
-
-          {/* Current image indicator */}
-          {images.length > 1 && (
-            <div
-              className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-10"
-              aria-live="polite"
-            >
-              {selectedImage + 1} / {images.length}
-            </div>
-          )}
-        </div>
-
-        {/* Zoom preview container - desktop only, appears on hover */}
-        <div
-          className={`hidden lg:block w-[400px] h-[400px] bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden transition-opacity duration-200 ${
-            isZooming ? "opacity-100" : "opacity-0 pointer-events-none"
+          className={`absolute inset-0 transition-all duration-300 ease-out ${
+            isTransitioning
+              ? slideDirection === "right"
+                ? "opacity-0 translate-x-4"
+                : "opacity-0 -translate-x-4"
+              : "opacity-100 translate-x-0"
           }`}
         >
+          <Image
+            src={images[selectedImage]}
+            alt={`${productName} - Imagen ${selectedImage + 1} de ${images.length}`}
+            fill
+            className="object-contain"
+            priority={selectedImage === 0}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            quality={90}
+          />
+        </div>
+
+        {/* Zoom lens indicator - desktop only */}
+        {isZooming && (
           <div
-            className="relative w-full h-full"
+            className="hidden lg:block absolute pointer-events-none border-2 border-primary/50 bg-white/10 rounded"
+            style={{
+              width: `${100 / zoomFactor}%`,
+              height: `${100 / zoomFactor}%`,
+              left: `${Math.min(Math.max(zoomPosition.x - 100 / zoomFactor / 2, 0), 100 - 100 / zoomFactor)}%`,
+              top: `${Math.min(Math.max(zoomPosition.y - 100 / zoomFactor / 2, 0), 100 - 100 / zoomFactor)}%`,
+            }}
+          />
+        )}
+
+        {/* Navigation controls */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              onKeyDown={(e) => handleKeyDown(e, prevImage)}
+              aria-label={`Imagen anterior de ${productName}`}
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
+            >
+              <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+            </button>
+            <button
+              onClick={nextImage}
+              onKeyDown={(e) => handleKeyDown(e, nextImage)}
+              aria-label={`Imagen siguiente de ${productName}`}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
+            >
+              <ChevronRight className="w-5 h-5" aria-hidden="true" />
+            </button>
+          </>
+        )}
+
+        {/* Current image indicator */}
+        {images.length > 1 && (
+          <div
+            className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-10"
+            aria-live="polite"
+          >
+            {selectedImage + 1} / {images.length}
+          </div>
+        )}
+      </div>
+
+      {/* Zoom preview - fixed overlay on right side (MercadoLibre style) */}
+      {isZooming && (
+        <div
+          className="hidden lg:block fixed z-50 w-[500px] h-[500px] bg-white dark:bg-neutral-900 border border-muted rounded-lg shadow-2xl overflow-hidden pointer-events-none"
+          style={{
+            top: imageContainerRef.current?.getBoundingClientRect().top ?? 100,
+            left:
+              (imageContainerRef.current?.getBoundingClientRect().right ?? 0) +
+              24,
+          }}
+        >
+          <div
+            className="w-full h-full"
             style={{
               backgroundImage: `url(${images[selectedImage]})`,
               backgroundSize: `${zoomFactor * 100}%`,
@@ -205,7 +208,7 @@ export default function ProductImageGallery({
             }}
           />
         </div>
-      </div>
+      )}
 
       {/* Thumbnails */}
       {images.length > 1 && (
