@@ -1,16 +1,28 @@
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
-import { Facebook, Instagram, Twitter } from "lucide-react";
+import { type ContactSettings } from "@/lib/validation/contact";
+import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 interface FooterProps {
   home?: HomeSettings;
+  contact?: ContactSettings;
 }
 
-export default function Footer({ home }: FooterProps) {
+export default function Footer({ home, contact }: FooterProps) {
   const footer = home?.footer || defaultHomeSettings.footer!;
   const logoUrl = footer.logoUrl;
+
+  // Prioritize global contact settings if available
+  const email = contact?.emails?.[0] || footer.email;
+  const phone = contact?.phones?.[0] || footer.phone;
+
+  // Merge social links logic
+  const instagram = contact?.social?.instagram?.url || footer.socialLinks?.instagram;
+  const facebook = contact?.social?.facebook?.url || footer.socialLinks?.facebook;
+  const twitter = footer.socialLinks?.twitter;
+  const youtube = contact?.social?.youtube?.url;
 
   return (
     <footer className="surface pt-10 pb-6 px-4 border-t border-muted overflow-hidden">
@@ -102,45 +114,54 @@ export default function Footer({ home }: FooterProps) {
         {/* Contacto + Redes */}
         <div>
           <h4 className="font-semibold text-sm mb-3 font-heading">Contacto</h4>
-          <p className="text-sm muted mb-1">{footer.email}</p>
-          <p className="text-sm muted mb-4">{footer.phone}</p>
-          {(footer.socialLinks.instagram || footer.socialLinks.facebook || footer.socialLinks.twitter) && (
-            <div className="flex space-x-3">
-              {footer.socialLinks.instagram && footer.socialLinks.instagram !== "#" && (
-                <Link
-                  href={footer.socialLinks.instagram}
-                  className="muted hover:text-primary transition-colors"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Síguenos en Instagram"
-                >
-                  <Instagram size={18} aria-hidden="true" />
-                </Link>
-              )}
-              {footer.socialLinks.facebook && footer.socialLinks.facebook !== "#" && (
-                <Link
-                  href={footer.socialLinks.facebook}
-                  className="muted hover:text-primary transition-colors"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Síguenos en Facebook"
-                >
-                  <Facebook size={18} aria-hidden="true" />
-                </Link>
-              )}
-              {footer.socialLinks.twitter && footer.socialLinks.twitter !== "#" && (
-                <Link
-                  href={footer.socialLinks.twitter}
-                  className="muted hover:text-primary transition-colors"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Síguenos en Twitter"
-                >
-                  <Twitter size={18} aria-hidden="true" />
-                </Link>
-              )}
-            </div>
-          )}
+          <p className="text-sm muted mb-1">{email}</p>
+          <p className="text-sm muted mb-4">{phone}</p>
+          <div className="flex space-x-3">
+            {instagram && instagram !== "#" && (
+              <Link
+                href={instagram}
+                className="muted hover:text-primary transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Síguenos en Instagram"
+              >
+                <Instagram size={18} aria-hidden="true" />
+              </Link>
+            )}
+            {facebook && facebook !== "#" && (
+              <Link
+                href={facebook}
+                className="muted hover:text-primary transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Síguenos en Facebook"
+              >
+                <Facebook size={18} aria-hidden="true" />
+              </Link>
+            )}
+            {twitter && twitter !== "#" && (
+              <Link
+                href={twitter}
+                className="muted hover:text-primary transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Síguenos en Twitter"
+              >
+                <Twitter size={18} aria-hidden="true" />
+              </Link>
+            )}
+            {youtube && youtube !== "#" && (
+              <Link
+                href={youtube}
+                className="muted hover:text-primary transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Síguenos en Youtube"
+              >
+                <Youtube size={18} aria-hidden="true" />
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Tema */}

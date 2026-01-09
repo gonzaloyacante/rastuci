@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { toast } from "react-hot-toast";
 import { Input } from "@/components/ui/Input";
 import {
   ContactSettings,
@@ -35,35 +36,38 @@ export default function ContactForm({ initial }: Props) {
   useEffect(() => {
     if (initial) {
       setValues(initial);
-      // Convertir arrays a objetos con ID
-      setEmailItems(
-        initial.emails.map((email, idx) => ({
-          id: `email-${Date.now()}-${idx}-${Math.random()}`,
-          value: email,
-        }))
-      );
-      setPhoneItems(
-        initial.phones.map((phone, idx) => ({
-          id: `phone-${Date.now()}-${idx}-${Math.random()}`,
-          value: phone,
-        }))
-      );
+      initializeArrays(initial);
     } else {
-      // Inicializar con arrays vacíos o por defecto
-      setEmailItems(
-        defaultContactSettings.emails.map((email, idx) => ({
-          id: `email-default-${idx}-${Math.random()}`,
-          value: email,
-        }))
-      );
-      setPhoneItems(
-        defaultContactSettings.phones.map((phone, idx) => ({
-          id: `phone-default-${idx}-${Math.random()}`,
-          value: phone,
-        }))
-      );
+      // Fetch initial data if not provided
+      fetch("/api/contact")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data) {
+            setValues(data);
+            initializeArrays(data);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching contact settings:", err);
+          toast.error("Error al cargar configuración");
+        });
     }
   }, [initial]);
+
+  const initializeArrays = (data: ContactSettings) => {
+    setEmailItems(
+      data.emails.map((email, idx) => ({
+        id: `email-${Date.now()}-${idx}-${Math.random()}`,
+        value: email,
+      }))
+    );
+    setPhoneItems(
+      data.phones.map((phone, idx) => ({
+        id: `phone-${Date.now()}-${idx}-${Math.random()}`,
+        value: phone,
+      }))
+    );
+  };
 
   // Sincronizar los arrays con IDs con el estado principal
   useEffect(() => {
@@ -121,10 +125,9 @@ export default function ContactForm({ initial }: Props) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage(null);
     const parsed = ContactSettingsSchema.safeParse(values);
     if (!parsed.success) {
-      setMessage(parsed.error.issues.map((er) => er.message).join("; "));
+      toast.error("Por favor revisa los campos inválidos");
       return;
     }
     setSaving(true);
@@ -135,12 +138,13 @@ export default function ContactForm({ initial }: Props) {
         body: JSON.stringify(parsed.data),
       });
       const json = await res.json();
-      if (!json.success) {
-        throw new Error(json.error || "Error al guardar");
+      if (!json) { // PUT returns the object directly based on route implementation, check if it exists
+        throw new Error("Error al guardar");
       }
-      setMessage("Guardado correctamente");
+      toast.success("Configuración de contacto guardada");
     } catch (err: unknown) {
-      setMessage(err instanceof Error ? err.message : "Error inesperado");
+      console.error(err);
+      toast.error("Error al guardar configuración");
     } finally {
       setSaving(false);
     }
