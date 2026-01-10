@@ -38,9 +38,10 @@ export function FeaturedProductsSection({
     );
   }
 
-  if (!products || products.length === 0) {
-    return null;
-  }
+  // if (!products || products.length === 0) {
+  //   return null;
+  // }
+  // Comentado para mostrar la sección siempre, incluso sin ofertas (petición de diseño)
 
   return (
     <section
@@ -58,18 +59,39 @@ export function FeaturedProductsSection({
           {home?.featuredSubtitle || defaultHomeSettings.featuredSubtitle}
         </p>
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-          {products.map((product, index) => (
-            <div
-              key={product.id}
-              className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
-            >
-              <ProductCard
-                product={product}
-                variant="grid"
-                priority={index < 2}
-              />
+          {!products || products.length === 0 ? (
+            <div className="w-full text-center py-10">
+              <div className="bg-neutral-50 dark:bg-neutral-900 rounded-xl p-8 max-w-lg mx-auto border border-dashed border-gray-300 dark:border-gray-700">
+                <p className="text-lg font-medium text-base-primary mb-2">
+                  ¡Vaya! No hay ofertas activas en este momento.
+                </p>
+                <p className="text-sm muted mb-6">
+                  Pero no te preocupes, tenemos precios increíbles en todo
+                  nuestro catálogo.
+                </p>
+                <Link
+                  href="/productos"
+                  className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold"
+                >
+                  Explorar todos los productos
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
-          ))}
+          ) : (
+            products.map((product, index) => (
+              <div
+                key={product.id}
+                className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
+              >
+                <ProductCard
+                  product={product}
+                  variant="grid"
+                  priority={index < 2}
+                />
+              </div>
+            ))
+          )}
         </div>
 
         <div className="flex justify-center mt-10">

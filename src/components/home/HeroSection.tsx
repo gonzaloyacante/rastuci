@@ -33,7 +33,10 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
   };
 
   const heroImageSrc = home?.heroImage;
-  const logoSrc = home?.heroLogoUrl || defaultHomeSettings.heroLogoUrl || "/rastuci-full-logo.svg";
+  const logoSrc =
+    home?.heroLogoUrl ||
+    defaultHomeSettings.heroLogoUrl ||
+    "/rastuci-full-logo.svg";
 
   return (
     <section className="w-full" aria-labelledby="hero-title">
@@ -52,7 +55,7 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
           </div>
         )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center p-6 max-w-4xl mx-auto">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full surface-muted backdrop-blur border border-theme text-base-primary text-sm font-medium mb-6 shadow-sm">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-white text-sm font-bold tracking-wide mb-6 shadow-lg shadow-pink-500/20 transform hover:scale-105 transition-transform duration-300">
             ✨ Nueva temporada
           </span>
 
@@ -84,7 +87,7 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
                 {loading
                   ? "Ver Productos"
                   : home?.ctaPrimaryLabel ||
-                  defaultHomeSettings.ctaPrimaryLabel}
+                    defaultHomeSettings.ctaPrimaryLabel}
               </Button>
             </Link>
             <a
@@ -96,7 +99,7 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
                 {loading
                   ? "Explorar Categorías"
                   : home?.ctaSecondaryLabel ||
-                  defaultHomeSettings.ctaSecondaryLabel}
+                    defaultHomeSettings.ctaSecondaryLabel}
               </Button>
             </a>
           </div>

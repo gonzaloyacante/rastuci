@@ -27,6 +27,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
 import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
+import { DynamicTags } from "@/components/products/DynamicTags";
 
 /** Badge de precio con descuento */
 export const PriceBadge = ({
@@ -465,19 +466,15 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           </p>
 
           {/* Features/Talles - altura fija */}
-          <div className="flex gap-1 sm:gap-1.5 mb-2 sm:mb-[15px] flex-wrap min-h-5 sm:min-h-6">
+          {/* Features/Talles - Una sola línea siempre (Máx 2 tags + badge) */}
+          {/* Features/Talles - Dinámico con componente reutilizable para mejor performance y limpieza */}
+          <div className="mb-2 sm:mb-[15px] min-h-5 sm:min-h-6 flex items-center">
             {sortedSizes && sortedSizes.length > 0 ? (
-              <>
-                {sortedSizes.slice(0, 4).map((size, idx) => (
-                  <span key={idx} className="chip">
-                    {size}
-                  </span>
-                ))}
-                {sortedSizes.length > 4 && (
-                  <span className="chip">+{sortedSizes.length - 4}</span>
-                )}
-              </>
-            ) : null}
+              <DynamicTags items={sortedSizes} />
+            ) : (
+              // Espaciador si no hay talles
+              <div className="h-5 sm:h-6" />
+            )}
           </div>
 
           {/* Spacer - empuja todo lo de abajo al fondo */}
@@ -649,20 +646,12 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
           {/* Talles (si existen) */}
           {sortedSizes && sortedSizes.length > 0 && (
-            <div className="flex gap-1 flex-wrap mb-2">
-              {sortedSizes.slice(0, 5).map((size, idx) => (
-                <span
-                  key={idx}
-                  className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded surface-secondary muted font-medium"
-                >
-                  {size}
-                </span>
-              ))}
-              {sortedSizes.length > 5 && (
-                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded surface-secondary muted font-medium">
-                  +{sortedSizes.length - 5}
-                </span>
-              )}
+            <div className="mb-2 w-full max-w-[200px]">
+              <DynamicTags
+                items={sortedSizes}
+                itemClassName="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded surface-secondary muted font-medium whitespace-nowrap shrink-0"
+                badgeClassName="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded surface-secondary muted font-medium whitespace-nowrap shrink-0"
+              />
             </div>
           )}
 
