@@ -3,18 +3,14 @@
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ORDER_STATUS } from "@/lib/constants";
+import { Order, OrderStatus } from "@/types";
 import { CheckCircle, Clock, CreditCard, Package, Truck } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-type OrderStatusType = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
-
 interface OrderActionsCardProps {
-  order: {
-    id: string;
-    status: string;
-  };
-  onOrderUpdate: (updates: Partial<{ status: OrderStatusType }>) => void;
+  order: Pick<Order, "id" | "status">;
+  onOrderUpdate: (updates: Partial<{ status: OrderStatus }>) => void;
 }
 
 export function OrderActionsCard({
@@ -23,7 +19,7 @@ export function OrderActionsCard({
 }: OrderActionsCardProps) {
   const [updating, setUpdating] = useState(false);
 
-  const updateOrderStatus = async (newStatus: OrderStatusType) => {
+  const updateOrderStatus = async (newStatus: OrderStatus) => {
     try {
       setUpdating(true);
       const response = await fetch(`/api/orders/${order.id}`, {
@@ -61,10 +57,10 @@ export function OrderActionsCard({
       <CardContent className="pt-4">
         <div className="space-y-3">
           {/* PENDING -> PENDING_PAYMENT (Cliente pagó) */}
-          {order.status === ORDER_STATUS.PENDING && (
+          {order.status === OrderStatus.PENDING && (
             <Button
-              className="w-full btn-hero flex items-center justify-center gap-2"
-              onClick={() => updateOrderStatus(ORDER_STATUS.PENDING_PAYMENT)}
+              className="w-full flex items-center justify-center space-x-2"
+              onClick={() => updateOrderStatus(OrderStatus.PENDING_PAYMENT)}
               disabled={updating}
             >
               {updating ? (
@@ -77,10 +73,10 @@ export function OrderActionsCard({
           )}
 
           {/* PENDING_PAYMENT -> PROCESSED (Admin pagó envío) */}
-          {order.status === ORDER_STATUS.PENDING_PAYMENT && (
+          {order.status === OrderStatus.PENDING_PAYMENT && (
             <Button
-              className="w-full btn-hero flex items-center justify-center gap-2"
-              onClick={() => updateOrderStatus(ORDER_STATUS.PROCESSED)}
+              className="w-full flex items-center justify-center space-x-2"
+              onClick={() => updateOrderStatus(OrderStatus.PROCESSED)}
               disabled={updating}
             >
               {updating ? (
@@ -93,10 +89,10 @@ export function OrderActionsCard({
           )}
 
           {/* PROCESSED -> DELIVERED */}
-          {order.status === ORDER_STATUS.PROCESSED && (
+          {order.status === OrderStatus.PROCESSED && (
             <Button
-              className="w-full btn-hero flex items-center justify-center gap-2"
-              onClick={() => updateOrderStatus(ORDER_STATUS.DELIVERED)}
+              className="w-full flex items-center justify-center space-x-2"
+              onClick={() => updateOrderStatus(OrderStatus.DELIVERED)}
               disabled={updating}
             >
               {updating ? (
@@ -122,7 +118,7 @@ export function OrderActionsCard({
               <Button
                 variant="outline"
                 className="w-full mt-3 flex items-center justify-center gap-2"
-                onClick={() => updateOrderStatus(ORDER_STATUS.PENDING)}
+                onClick={() => updateOrderStatus(OrderStatus.PENDING)}
                 disabled={updating}
               >
                 <Clock size={16} />

@@ -1,5 +1,5 @@
-import { POST } from "@/app/api/checkout/route";
-import prisma from "@/lib/prisma";
+import { POST } from "../../src/app/api/checkout/route";
+import prisma from "../../src/lib/prisma";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

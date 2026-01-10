@@ -6,57 +6,13 @@ import { CustomerInfoCard } from "@/components/admin/orders/CustomerInfoCard";
 import { OrderActionsCard } from "@/components/admin/orders/OrderActionsCard";
 import { OrderSummaryCard } from "@/components/admin/orders/OrderSummaryCard";
 import { ShipmentControlCard } from "@/components/admin/orders/ShipmentControlCard";
+import { Order, OrderItem } from "@/types";
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-// Types (should ideally be shared)
-interface OrderItem {
-  id: string;
-  quantity: number;
-  price: number;
-  product: {
-    id: string;
-    name: string;
-    images?: string | string[];
-    description?: string;
-    categories: {
-      id: string;
-      name: string;
-    };
-  };
-}
-
-interface Order {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  customerAddress?: string;
-  customerEmail?: string;
-  total: number;
-  status: "PENDING" | "PENDING_PAYMENT" | "PROCESSED" | "DELIVERED";
-  paymentStatus?: string;
-  paymentMethod: string;
-  createdAt: string;
-  updatedAt: string;
-  items: OrderItem[];
-  // Campos Correo Argentino
-  caTrackingNumber?: string;
-  caShipmentId?: string;
-  caExtOrderId?: string;
-  shippingMethod?: string;
-  shippingStreet?: string;
-  shippingNumber?: string;
-  shippingFloor?: string;
-  shippingApartment?: string;
-  shippingCity?: string;
-  shippingProvince?: string;
-  shippingPostalCode?: string;
-  shippingAgency?: string;
-  caImportStatus?: string | null;
-  caImportError?: string | null;
-}
+// Use generic Order from types since it now includes all admin fields
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -86,18 +42,22 @@ export default function OrderDetailPage() {
           // Formatear imágenes de productos si es necesario
           const formattedOrder = {
             ...data.data,
-            items: data.data.items.map((item: OrderItem) => ({
+            items: (data.data.items || []).map((item: OrderItem) => ({
               ...item,
               product: {
-                ...item.product,
+                ...item.product!,
                 images:
-                  typeof item.product.images === "string"
-                    ? JSON.parse(item.product.images)
-                    : item.product.images,
+                  typeof item.product!.images === "string"
+                    ? JSON.parse(item.product!.images)
+                    : item.product!.images,
               },
             })),
           };
-          setOrder(formattedOrder);
+          // Ensure required fields like paymentMethod have defaults if missing in API
+          if (!formattedOrder.paymentMethod)
+            formattedOrder.paymentMethod = "N/A";
+
+          setOrder(formattedOrder as Order);
         } else {
           setError(data.error || "No se pudo cargar el pedido");
         }

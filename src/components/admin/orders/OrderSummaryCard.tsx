@@ -1,58 +1,33 @@
-// import { ShippingOption } from "@/context/CartContext";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Image from "next/image";
-import Link from "next/link";
 
-// Inline type matching actual data shape from admin/orders/[id]/page.tsx
-interface OrderItemForSummary {
-  id: string;
-  quantity: number;
-  price: number;
-  product: {
-    id: string;
-    name: string;
-    images?: string | string[];
-    categories?: {
-      id: string;
-      name: string;
-    };
-  };
-}
+import { Order, OrderStatus } from "@/types";
 
 interface OrderSummaryCardProps {
-  order: {
-    id: string;
-    status: string;
-    paymentStatus?: string;
-    paymentMethod: string;
-    createdAt: string;
-    updatedAt: string;
-    total: number;
-    items: OrderItemForSummary[];
-    shippingMethod?: string | { id: string; name?: string };
-    caTrackingNumber?: string;
-    caImportStatus?: string | null;
-  };
+  order: Order;
 }
 
 const getDetailedStatus = (order: OrderSummaryCardProps["order"]) => {
   // 1. Payment Status
   const isPaid =
-    order.paymentStatus === "approved" || order.status === "PROCESSED";
+    order.paymentStatus === "approved" ||
+    order.status === OrderStatus.PROCESSED;
 
   // 2. Shipping Status (only if shipping is required)
   const shippingId =
-    typeof order.shippingMethod === "object"
-      ? order.shippingMethod?.id
+    typeof order.shippingMethod === "object" &&
+    order.shippingMethod &&
+    "id" in order.shippingMethod
+      ? (order.shippingMethod as { id: string }).id
       : order.shippingMethod;
   const requiresShipping = order.shippingMethod && shippingId !== "pickup";
   const isShipped = !!order.caTrackingNumber;
   const isImported =
     order.caImportStatus === "processed" || !!order.caTrackingNumber;
 
-  if (order.status === "DELIVERED") {
+  if (order.status === OrderStatus.DELIVERED) {
     return {
       label: "Entregado",
       color: "bg-green-100 text-green-800 border-green-200",
@@ -90,30 +65,10 @@ const getDetailedStatus = (order: OrderSummaryCardProps["order"]) => {
   };
 };
 
-const getProductImage = (item: OrderItemForSummary) => {
-  const images = item.product.images;
-  if (!images) {
-    return "https://placehold.co/800x800.png";
-  }
-  if (Array.isArray(images) && images.length > 0) {
-    return images[0];
-  }
-  if (typeof images === "string") {
-    // Handle case where images is a JSON string
-    try {
-      const parsed = JSON.parse(images);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed[0];
-      }
-    } catch {
-      return images; // Return as-is if not valid JSON
-    }
-  }
-  return "https://placehold.co/800x800.png";
-};
-
 export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
   const status = getDetailedStatus(order);
+
+  const items = order.items || [];
 
   return (
     <div className="space-y-6">
@@ -160,41 +115,67 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
       {/* Productos */}
       <Card>
         <CardHeader className="surface border-b border-muted">
-          <CardTitle className="text-lg">
-            Productos ({order.items.length})
-          </CardTitle>
+          <CardTitle className="text-lg">Productos ({items.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y">
-            {order.items.map((item) => (
-              <div key={item.id} className="p-4 flex items-center gap-4">
-                <div className="relative w-16 h-16 surface rounded overflow-hidden">
-                  <Image
-                    src={getProductImage(item)}
-                    alt={item.product.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="grow">
-                  <Link
-                    href={`/admin/productos/editar/${item.product.id}`}
-                    className="font-medium text-primary hover:underline"
-                  >
-                    {item.product.name}
-                  </Link>
-                  <div className="text-sm muted">
-                    Categoría: {item.product.categories?.name}
-                  </div>
-                  <div className="text-sm muted">
-                    {item.quantity} x {formatCurrency(item.price)}
-                  </div>
-                </div>
-                <div className="text-right font-medium">
-                  {formatCurrency(item.price * item.quantity)}
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b">
+                  <th className="py-2 px-4 text-sm font-medium text-muted-foreground">
+                    Producto
+                  </th>
+                  <th className="py-2 px-4 text-sm font-medium text-muted-foreground text-right">
+                    Cantidad
+                  </th>
+                  <th className="py-2 px-4 text-sm font-medium text-muted-foreground text-right">
+                    Precio Unitario
+                  </th>
+                  <th className="py-2 px-4 text-sm font-medium text-muted-foreground text-right">
+                    Subtotal
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => {
+                  const productImages = item.product?.images;
+                  const firstImage = Array.isArray(productImages)
+                    ? productImages[0]
+                    : typeof productImages === "string"
+                      ? productImages
+                      : null;
+
+                  return (
+                    <tr key={item.id} className="border-b last:border-b-0">
+                      <td className="py-2 px-4 flex items-center gap-3">
+                        {firstImage && (
+                          <div className="relative w-10 h-10 rounded overflow-hidden bg-muted">
+                            <Image
+                              src={firstImage}
+                              alt={item.product?.name || "Producto"}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                        <span className="text-sm font-medium">
+                          {item.product?.name || "Producto desconocido"}
+                        </span>
+                      </td>
+                      <td className="py-2 px-4 text-right text-sm">
+                        {item.quantity}
+                      </td>
+                      <td className="py-2 px-4 text-right text-sm">
+                        {formatCurrency(item.price)}
+                      </td>
+                      <td className="py-2 px-4 text-right text-sm font-medium">
+                        {formatCurrency(item.price * item.quantity)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
           <div className="p-4 surface flex justify-between items-center border-t border-muted">
             <span className="font-medium">Total:</span>

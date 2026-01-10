@@ -13,31 +13,11 @@ import { MapPin, RefreshCw, Send, Truck } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+import { Order } from "@/types";
+
 interface ShipmentControlCardProps {
-  order: {
-    id: string;
-    customerName: string;
-    customerPhone: string;
-    customerEmail?: string;
-    total: number;
-    shippingMethod?: string;
-    shippingStreet?: string;
-    shippingNumber?: string;
-    shippingFloor?: string;
-    shippingApartment?: string;
-    shippingCity?: string;
-    shippingProvince?: string;
-    shippingPostalCode?: string;
-    shippingAgency?: string;
-    caTrackingNumber?: string;
-    caShipmentId?: string;
-    caExtOrderId?: string;
-    caImportStatus?: string | null;
-    caImportError?: string | null;
-    items: { quantity: number }[];
-  };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onOrderUpdate: (updates: Partial<any>) => void; // Pass partial order updates
+  order: Order;
+  onOrderUpdate: (updates: Partial<Order>) => void; // Pass partial order updates
 }
 
 export function ShipmentControlCard({
@@ -131,7 +111,7 @@ export function ShipmentControlCard({
     if (!confirm("¿Confirmar creación de envío en Correo Argentino?")) return;
 
     try {
-      const totalWeight = order.items.reduce(
+      const totalWeight = (order.items || []).reduce(
         (sum, item) => sum + item.quantity * 1000,
         0
       );
@@ -150,13 +130,13 @@ export function ShipmentControlCard({
           productType: "CP",
           agency: order.shippingAgency,
           address: {
-            streetName: order.shippingStreet,
+            streetName: order.shippingStreet ?? undefined,
             streetNumber: order.shippingNumber || "SN",
-            floor: order.shippingFloor,
-            apartment: order.shippingApartment,
-            city: order.shippingCity,
-            provinceCode: order.shippingProvince as ProvinceCode,
-            postalCode: order.shippingPostalCode,
+            floor: order.shippingFloor ?? undefined,
+            apartment: order.shippingApartment ?? undefined,
+            city: order.shippingCity ?? undefined,
+            provinceCode: (order.shippingProvince as ProvinceCode) ?? undefined,
+            postalCode: order.shippingPostalCode ?? undefined,
           },
           weight: totalWeight,
           height: 10,
@@ -169,10 +149,8 @@ export function ShipmentControlCard({
       const result = await importShipment(shipmentData);
 
       if (result) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const resultAny = result as any;
         const shipmentId =
-          resultAny.shipmentId || resultAny.id || result.trackingNumber;
+          result.shipmentId || result.id || result.trackingNumber;
 
         await fetch(`/api/orders/${order.id}`, {
           method: "PUT",

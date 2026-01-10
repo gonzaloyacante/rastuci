@@ -3,9 +3,12 @@ export interface Category {
   id: string;
   name: string;
   description?: string | null;
-  image?: string;
+  image?: string | null; // Allow null for compatibility
   createdAt: Date;
   updatedAt: Date;
+  _count?: {
+    products: number;
+  };
 }
 
 // Tipos serializados para el frontend
@@ -38,7 +41,7 @@ export interface Product {
   width?: number | null; // Ancho en cm
   length?: number | null; // Largo en cm
   categoryId: string;
-  categories?: Category;
+  categories?: Category | null;
   createdAt: Date;
   updatedAt: Date;
   variants?: ProductVariant[];
@@ -68,17 +71,49 @@ export interface User {
   updatedAt?: Date;
 }
 
+// Core Order Fields
 export interface Order {
   id: string;
   customerName: string;
   customerPhone: string;
-  customerAddress?: string;
-  customerEmail?: string;
+  customerAddress?: string | null;
+  customerEmail?: string | null;
   total: number;
   status: OrderStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
   items?: OrderItem[];
+  // Payment
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
+  mpPaymentId?: string | null;
+  mpPreferenceId?: string | null;
+  mpStatus?: string | null;
+  // Shipping
+  shippingMethod?: string | null;
+  shippingCost?: number | null;
+  shippingStreet?: string | null;
+  shippingNumber?: string | null;
+  shippingFloor?: string | null;
+  shippingApartment?: string | null;
+  shippingCity?: string | null;
+  shippingProvince?: string | null;
+  shippingPostalCode?: string | null;
+  shippingLocality?: string | null;
+  shippingProvinceCode?: string | null;
+  shippingAgency?: string | null;
+  estimatedDelivery?: Date | string | null;
+  estimatedDeliveryMin?: string | null;
+  estimatedDeliveryMax?: string | null;
+  trackingNumber?: string | null;
+  // Correo Argentino
+  caTrackingNumber?: string | null;
+  caShipmentId?: string | null;
+  caExtOrderId?: string | null;
+  caCustomerId?: string | null;
+  caOrderNumber?: string | null;
+  caImportStatus?: string | null;
+  caImportError?: string | null;
 }
 
 // Tipos serializados para el frontend

@@ -182,6 +182,8 @@ export interface ImportShipmentResponse {
   customerId?: string; // A veces devuelven customerId
   createdAt: string; // Timestamp de creación
   trackingNumber?: string; // A veces devuelven tracking directo
+  shipmentId?: string; // ID interno del envío
+  id?: string; // Alias común para ID
 }
 
 // Tracking

@@ -4,32 +4,12 @@ import { OrdersSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { logger } from "@/lib/logger";
+import { Order } from "@/types";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-interface OrderItem {
-  id: string;
-  quantity: number;
-  price: number;
-  product: {
-    id: string;
-    name: string;
-  };
-}
-
-interface Order {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string | null;
-  total: number;
-  status: "PENDING" | "PROCESSED" | "DELIVERED";
-  createdAt: string;
-  updatedAt: string;
-  items: OrderItem[];
-}
-
 export default function PendingOrdersPage() {
+  // Use Order directly, ensuring compatibility or casting if API response differs slightly locally
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -80,8 +60,9 @@ export default function PendingOrdersPage() {
     return `$${value.toLocaleString("es-CO")}`;
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | Date) => {
+    const date =
+      typeof dateString === "string" ? new Date(dateString) : dateString;
     return date.toLocaleDateString("es-CO", {
       year: "numeric",
       month: "short",
@@ -132,13 +113,13 @@ export default function PendingOrdersPage() {
                   <div>
                     <h3 className="text-sm font-medium muted">Productos</h3>
                     <ul className="mt-2 space-y-2">
-                      {order.items.map((item) => (
+                      {(order.items || []).map((item) => (
                         <li
                           key={item.id}
                           className="flex justify-between text-sm"
                         >
                           <span>
-                            {item.quantity} x {item.product.name}
+                            {item.quantity} x {item.product?.name || "Producto"}
                           </span>
                           <span className="font-medium">
                             {formatCurrency(item.price * item.quantity)}
