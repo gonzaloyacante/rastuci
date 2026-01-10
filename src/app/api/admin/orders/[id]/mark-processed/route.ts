@@ -76,8 +76,9 @@ export const PATCH = withAdminAuth(
       // Enviar email de envío si hay tracking number
       if (updatedOrder.caTrackingNumber) {
         try {
-          const { sendEmail, getOrderShippedEmail } =
-            await import("@/lib/resend");
+          const { sendEmail } = await import("@/lib/resend");
+          const { getOrderShippedEmail } =
+            await import("@/lib/email-templates");
 
           if (order.customerEmail) {
             const emailHtml = getOrderShippedEmail({

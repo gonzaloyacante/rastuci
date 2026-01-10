@@ -18,7 +18,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
-import { useHotToast } from "@/hooks/use-hot-toast";
+// import { useHotToast } from "@/hooks/use-hot-toast";
 
 // ============================================================================
 // Sub-componentes reutilizables
@@ -131,7 +131,7 @@ export type ProductCardProps = PublicProductCardProps | AdminProductCardProps;
 
 const ProductCard = React.memo((props: ProductCardProps) => {
   const { product, priority = false } = props;
-  const { success: toastSuccess, error: toastError } = useHotToast();
+  // const { success: toastSuccess, error: toastError } = useHotToast();
 
   const isAdmin = props.variant === "admin";
 

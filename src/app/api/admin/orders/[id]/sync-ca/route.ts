@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
-import { sendTrackingUpdateEmail } from "@/lib/email";
+import { emailService } from "@/lib/resend";
 import { logger } from "@/lib/logger";
 
 export const POST = withAdminAuth(
@@ -71,6 +71,7 @@ export const POST = withAdminAuth(
       }
 
       // 4. Check for updates
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updates: any = {};
       let emailSent = false;
 
@@ -103,7 +104,7 @@ export const POST = withAdminAuth(
         // 6. Send Email if NEW tracking number found
         if (updates.caTrackingNumber) {
           if (order.customerEmail) {
-            await sendTrackingUpdateEmail({
+            await emailService.sendTrackingUpdate({
               to: order.customerEmail,
               customerName: order.customerName,
               orderId: order.id,

@@ -40,9 +40,30 @@ export type WeekdayKey = keyof typeof WEEKDAY_NAMES_SHORT;
  * Basado en la documentación oficial de MiCorreo API
  */
 export type ProvinceCode =
-  | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "J" | "K"
-  | "L" | "M" | "N" | "P" | "Q" | "R" | "S" | "T" | "U" | "V"
-  | "W" | "X" | "Y" | "Z";
+  | "A"
+  | "B"
+  | "C"
+  | "D"
+  | "E"
+  | "F"
+  | "G"
+  | "H"
+  | "J"
+  | "K"
+  | "L"
+  | "M"
+  | "N"
+  | "P"
+  | "Q"
+  | "R"
+  | "S"
+  | "T"
+  | "U"
+  | "V"
+  | "W"
+  | "X"
+  | "Y"
+  | "Z";
 
 /**
  * Array de provincias con código y nombre
@@ -174,3 +195,37 @@ export const CACHE_DURATIONS = {
   SETTINGS: 30 * 60, // 30 minutos
 } as const;
 
+// ============================================================================
+// OPCIONES DE ORDENAMIENTO (Productos)
+// ============================================================================
+
+/**
+ * Opciones de ordenamiento para listados de productos
+ * Iconos: usar lucide-react al renderizar
+ * - relevance: Sparkles
+ * - price-asc: ArrowUpNarrowWide
+ * - price-desc: ArrowDownWideNarrow
+ * - createdAt-desc: Clock
+ * - rating-desc: Star
+ * - name-asc: ArrowDownAZ
+ * - name-desc: ArrowUpZA
+ */
+export const SORT_OPTIONS = [
+  { id: "relevance", label: "Relevancia", icon: "Sparkles" },
+  {
+    id: "price-asc",
+    label: "Precio: menor a mayor",
+    icon: "ArrowUpNarrowWide",
+  },
+  {
+    id: "price-desc",
+    label: "Precio: mayor a menor",
+    icon: "ArrowDownWideNarrow",
+  },
+  { id: "createdAt-desc", label: "Más recientes", icon: "Clock" },
+  { id: "rating-desc", label: "Mejor calificados", icon: "Star" },
+  { id: "name-asc", label: "A-Z", icon: "ArrowDownAZ" },
+  { id: "name-desc", label: "Z-A", icon: "ArrowUpZA" },
+] as const;
+
+export type SortOptionId = (typeof SORT_OPTIONS)[number]["id"];

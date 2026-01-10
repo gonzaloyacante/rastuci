@@ -32,15 +32,8 @@ export interface ActiveFilters {
 // ==============================================================================
 // CONSTANTS
 // ==============================================================================
-export const SORT_OPTIONS = [
-  { id: "relevance", label: "Relevancia" },
-  { id: "price-asc", label: "Precio: menor a mayor" },
-  { id: "price-desc", label: "Precio: mayor a menor" },
-  { id: "createdAt-desc", label: "Más recientes" },
-  { id: "rating-desc", label: "Mejor calificados" },
-  { id: "name-asc", label: "A-Z" },
-  { id: "name-desc", label: "Z-A" },
-] as const;
+// SORT_OPTIONS moved to @/lib/constants - import from there
+export { SORT_OPTIONS } from "@/lib/constants";
 
 export const COLOR_MAP: Record<string, string> = {
   rosa: "#ec4899",

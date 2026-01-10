@@ -89,6 +89,7 @@ export class CorreoArgentinoAuth {
 
       logger.info("[CorreoArgentino] Authentication successful");
       return { success: true, data: this.token };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       logger.error("[CorreoArgentino] Authentication failed", {
         message: error.message,
@@ -118,6 +119,7 @@ export class CorreoArgentinoAuth {
         params
       );
       return { success: true, data: response.data };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       return {
         success: false,
@@ -142,6 +144,7 @@ export class CorreoArgentinoAuth {
         params
       );
       return { success: true, data: response.data };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       return {
         success: false,

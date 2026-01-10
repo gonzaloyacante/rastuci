@@ -59,11 +59,12 @@ export function DialogTrigger({
   asChild?: boolean;
 }) {
   const { setOpen } = useDialog();
-  const Child = asChild ? React.Children.only(children) : "button";
+  // const Child = asChild ? React.Children.only(children) : "button"; // Dead code
 
   // Handling asChild is tricky without Slot, simplified here:
   // If asChild, clone element and add onClick.
   if (asChild && React.isValidElement(children)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return React.cloneElement(children as React.ReactElement<any>, {
       onClick: (e: React.MouseEvent) => {
         // @ts-expect-error - Evento onClick de children

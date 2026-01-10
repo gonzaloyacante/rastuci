@@ -8,7 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { useShippingSettings } from "@/hooks/useShippingSettings";
 import { logger } from "@/lib/logger";
 import { formatPriceARS } from "@/utils/formatters";
-import { AlertCircle, Check, ShoppingCart, Trash2, X } from "lucide-react";
+import { AlertCircle, Check, ShoppingCart, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

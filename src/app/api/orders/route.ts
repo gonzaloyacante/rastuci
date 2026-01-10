@@ -101,13 +101,13 @@ export const GET = withAdminAuth(
                         imageUrl: true, // Required by type
                         icon: true, // Required by type
                         createdAt: true, // Required by type
-                        updatedAt: true // Required by type
-                      }
-                    }
-                  }
-                }
-              }
-            }
+                        updatedAt: true, // Required by type
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
           skip: limit ? offset : undefined,
@@ -117,9 +117,10 @@ export const GET = withAdminAuth(
       ]);
 
       type OrderType = (typeof prismaOrders)[0];
-      // Cast to any because we are purposefully selecting a subset of fields 
+      // Cast to any because we are purposefully selecting a subset of fields
       // that satisfies the public Order DTO but not the full strict Prisma type
       const orders: Order[] = prismaOrders.map((order: OrderType) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mapOrderToDTO(order as unknown as any)
       );
 

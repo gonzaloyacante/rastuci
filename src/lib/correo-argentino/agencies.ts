@@ -44,6 +44,7 @@ export class CorreoArgentinoAgencies {
       });
 
       return { success: true, data: response.data };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       logger.error("[CorreoArgentino] Fetching agencies failed", {
         status: error.response?.status,

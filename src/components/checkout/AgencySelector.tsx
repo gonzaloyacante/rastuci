@@ -65,7 +65,7 @@ export function AgencySelector({
       setQuery(initialPostalCode);
       setSearchTerm(initialPostalCode); // Trigger search immediately
     }
-  }, [initialPostalCode]); // Run once when initialPostalCode changes
+  }, [initialPostalCode, query, searchTerm]); // Run safely when initialPostalCode changes
 
   const { getAgencies } = useCart();
 

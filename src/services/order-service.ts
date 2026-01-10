@@ -2,6 +2,9 @@ import prisma from "@/lib/prisma";
 import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { OrderStatus } from "@prisma/client";
+import { getStoreSettings } from "@/lib/store-settings";
+import { emailService } from "@/lib/resend";
+import { OrderItemInput, MercadoPagoPayer } from "@/types";
 
 export interface OrderMetadata {
   tempOrderId?: string;
@@ -14,7 +17,7 @@ export interface OrderMetadata {
   customerPostalCode?: string;
   shippingAgencyCode?: string;
   shippingMethodId?: string;
-  items: string | any[]; // Kept loose for parsing but stricter than 'any'
+  items: string | OrderItemInput[];
   discountPercent?: string | number;
   shipping?: string;
 }
@@ -107,7 +110,7 @@ export class OrderService {
     mappedStatus: OrderStatus,
     preferenceId: string | undefined,
     metadata: OrderMetadata,
-    paymentPayer: any
+    paymentPayer: MercadoPagoPayer
   ) {
     // Idempotency check
     const existing = await prisma.orders.findFirst({
@@ -163,7 +166,7 @@ export class OrderService {
         : undefined;
 
     // Items parsing
-    let metaItems: any[] = [];
+    let metaItems: OrderItemInput[] = [];
     if (Array.isArray(metadata.items)) {
       metaItems = metadata.items;
     } else if (typeof metadata.items === "string") {
@@ -427,6 +430,46 @@ export class OrderService {
       },
     });
     return order;
+  }
+
+  /**
+   * Check if any item in the order has triggered a low stock alert
+   */
+  private async checkStockAlerts(
+    items: Array<{ productId: string; products?: { id: string } }>
+  ) {
+    try {
+      const settings = await getStoreSettings();
+      if (!settings.stock.enableStockAlerts) return;
+
+      const threshold = settings.stock.lowStockThreshold;
+
+      // Get distinct product IDs
+      const productIds = [
+        ...new Set(items.map((i) => i.productId || i.products?.id)),
+      ].filter(Boolean);
+
+      const products = await prisma.products.findMany({
+        where: { id: { in: productIds as string[] } },
+        select: { id: true, name: true, stock: true },
+      });
+
+      for (const p of products) {
+        if (p.stock <= threshold) {
+          await emailService.sendLowStockAlert(
+            p.name,
+            p.stock,
+            p.id,
+            settings.adminEmail
+          );
+          logger.info(
+            `[StockAlert] Sent alert for ${p.name} (Stock: ${p.stock})`
+          );
+        }
+      }
+    } catch (error) {
+      logger.error("[StockAlert] Error processing alerts", { error });
+    }
   }
 }
 

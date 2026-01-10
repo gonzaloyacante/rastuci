@@ -16,7 +16,7 @@ const SETTINGS_KEY = "store";
  *
  * Returns store settings from database, or defaults if not set.
  */
-export const GET = withAdminAuth(async (request: NextRequest) => {
+export const GET = withAdminAuth(async (_request: NextRequest) => {
   try {
     const record = await prisma.settings.findUnique({
       where: { key: SETTINGS_KEY },

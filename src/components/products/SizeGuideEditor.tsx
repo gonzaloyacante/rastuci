@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { cn } from "@/lib/utils";
-import { Plus, Ruler, Trash2, GripVertical } from "lucide-react";
+// import { cn } from "@/lib/utils";
+import { Plus, Ruler } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export interface SizeGuideData {
@@ -44,7 +44,7 @@ export default function SizeGuideEditor({
       });
       setRowValues(newRowValues);
     }
-  }, []); // Run once on mount if value exists (or we could depend on value with deep compare checkout)
+  }, [value]);
 
   // Sync effect: When sizes or columns or measurements change, propagate to parent
   useEffect(() => {

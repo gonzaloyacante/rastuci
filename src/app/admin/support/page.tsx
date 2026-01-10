@@ -20,7 +20,6 @@ import { useDocumentTitle } from "@/hooks";
 import {
   CheckCircle,
   Clock,
-  HelpCircle,
   MessageSquare,
   Plus,
   RefreshCw,

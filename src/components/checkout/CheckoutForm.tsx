@@ -15,12 +15,12 @@ import { OrderSummaryCard } from "./OrderSummaryCard";
 //   type ShippingOption,
 // } from "./ShippingCostCalculator";
 
-type ShippingOption = {
-  name: string;
-  cost: number;
-  provider?: string;
-  description?: string;
-};
+// type ShippingOption = {
+//   name: string;
+//   cost: number;
+//   provider?: string;
+//   description?: string;
+// };
 
 interface CheckoutFormProps {
   onPaymentSuccess?: (paymentId: string) => void;
@@ -45,9 +45,10 @@ export function CheckoutForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("");
-  const [shippingOption, _setShippingOption] = useState<ShippingOption | null>(
-    null
-  );
+  // const [shippingOption, _setShippingOption] = useState<ShippingOption | null>(
+  //   null
+  // );
+  // Redundant state currently unused in simplified flow
   const [customerData, setCustomerData] = useState({
     email: "",
     firstName: "",

@@ -83,6 +83,7 @@ export async function GET(request: Request) {
       agencies,
       isFallback: false,
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     logger.error("[Agencies] Unexpected error", {
       message: error.message,

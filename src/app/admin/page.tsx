@@ -74,6 +74,7 @@ export default function AdminLoginPage() {
     handleSubmit: handleLoginSubmit,
     formState: { errors: loginErrors },
   } = useForm<LoginFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(loginSchema) as any,
   });
 
@@ -84,6 +85,7 @@ export default function AdminLoginPage() {
     formState: { errors: forgotPasswordErrors },
     reset: resetForgotPasswordForm,
   } = useForm<ForgotPasswordFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(forgotPasswordSchema) as any,
   });
 
@@ -105,15 +107,21 @@ export default function AdminLoginPage() {
         // Mensajes de error detallados según el tipo
         if (result.error === "CredentialsSignin") {
           setAuthError("Credenciales incorrectas");
-          toast.error("Email o contraseña incorrectos. Por favor, verifica tus datos.", {
-            duration: 4000,
-          });
+          toast.error(
+            "Email o contraseña incorrectos. Por favor, verifica tus datos.",
+            {
+              duration: 4000,
+            }
+          );
         } else if (result.error.includes("password")) {
           setAuthError("Contraseña incorrecta");
           toast.error("La contraseña ingresada es incorrecta", {
             duration: 3000,
           });
-        } else if (result.error.includes("email") || result.error.includes("user")) {
+        } else if (
+          result.error.includes("email") ||
+          result.error.includes("user")
+        ) {
           setAuthError("Usuario no encontrado");
           toast.error("No existe una cuenta con este email", {
             duration: 3000,
@@ -133,7 +141,7 @@ export default function AdminLoginPage() {
           duration: 2000,
         });
         // Pequeña demora para que se vea el toast de éxito
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
         router.push("/admin/dashboard");
       } else {
         toast.error("Error desconocido al iniciar sesión");

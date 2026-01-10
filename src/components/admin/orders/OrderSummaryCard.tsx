@@ -1,4 +1,4 @@
-import { ShippingOption } from "@/context/CartContext";
+// import { ShippingOption } from "@/context/CartContext";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatCurrency, formatDate } from "@/lib/utils";

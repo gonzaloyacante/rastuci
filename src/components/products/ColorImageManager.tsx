@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
 import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
@@ -63,7 +62,7 @@ export default function ColorImageManager({
           if (data.success && data.url) {
             newUrls.push(data.url);
           }
-        } catch (error) {
+        } catch (_error) {
           toast.error(`Error subiendo ${file.name}`);
         }
       }

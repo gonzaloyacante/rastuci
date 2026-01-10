@@ -1,23 +1,22 @@
-import {
-  CorreoArgentinoService,
-  type ProvinceCode,
-} from "@/lib/correo-argentino-service";
-import { PAYMENT_METHODS, PROVINCE_CODE_MAP } from "@/lib/constants";
+import {} from // CorreoArgentinoService,
+// type ProvinceCode,
+"@/lib/correo-argentino-service";
+import { PAYMENT_METHODS } from "@/lib/constants"; // Removed PROVINCE_CODE_MAP
 import { logger } from "@/lib/logger";
 import { createPreference } from "@/lib/mercadopago"; // Leaving this here or move to checkout-service too? It's fine here or via service.
 import { NextRequest, NextResponse } from "next/server";
 import { checkoutService } from "@/services/checkout-service";
 import { orderService } from "@/services/order-service";
-import { apiHandler } from "@/lib/api-handler";
+// import { apiHandler } from "@/lib/api-handler";
 
-interface OrderItem {
-  productId: string;
-  quantity: number;
-  price: number;
-  size?: string;
-  color?: string;
-  name?: string;
-}
+// interface OrderItem {
+//   productId: string;
+//   quantity: number;
+//   price: number;
+//   size?: string;
+//   color?: string;
+//   name?: string;
+// }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // Using apiHandler would be nice but we need specific response shapes for Checkout success
@@ -84,9 +83,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // 2. Validate Stock via Service
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let validatedProducts: any[] = [];
     try {
       validatedProducts = await checkoutService.validateStock(items);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       return NextResponse.json(
         { success: false, error: e.message },
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     if (paymentMethod === PAYMENT_METHODS.MERCADOPAGO) {
-      const origin =
+      const _origin =
         request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
       const tempOrderId = `tmp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         orderData.discount,
         validatedProducts
       );
-      const customerForMP = { ...customer, phone: customer.phone || "" };
+      const _customerForMP = { ...customer, phone: customer.phone || "" };
 
       // Preference Creation
       // We still need local logic for Payer and Metadata construction because it depends on specific body fields

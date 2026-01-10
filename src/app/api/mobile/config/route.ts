@@ -162,7 +162,7 @@ function parseVersion(version: string): number[] {
 }
 
 // Obtener estadísticas para la app móvil
-async function getMobileAppStats() {
+async function _getMobileAppStats() {
   try {
     const [totalOrders, pendingOrders, deliveredOrders, activeTracking] =
       await Promise.all([

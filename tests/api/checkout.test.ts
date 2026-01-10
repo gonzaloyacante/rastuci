@@ -35,6 +35,18 @@ vi.mock("@/lib/rateLimiter", () => ({
   checkRateLimit: vi.fn(() => Promise.resolve({ ok: true })),
 }));
 
+// Mock resend (email service)
+vi.mock("@/lib/resend", () => ({
+  sendEmail: vi.fn(() => Promise.resolve(true)),
+  emailService: {
+    sendWelcome: vi.fn(() => Promise.resolve(true)),
+    sendOrderConfirmation: vi.fn(() => Promise.resolve(true)),
+    sendAdminNewOrderAlert: vi.fn(() => Promise.resolve(true)),
+    sendLowStockAlert: vi.fn(() => Promise.resolve(true)),
+    sendTrackingUpdate: vi.fn(() => Promise.resolve(true)),
+  },
+}));
+
 const mockPrisma = prisma as unknown as {
   orders: {
     create: ReturnType<typeof vi.fn>;

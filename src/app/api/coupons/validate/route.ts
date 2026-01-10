@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit: 5 attempts per minute (Brute-force protection)
     // Cast strict Request to NextRequest-like if needed by checkRateLimit or update usage
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rl = await checkRateLimit(request as any, {
       key: "coupon:validate",
       limit: 5,

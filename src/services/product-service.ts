@@ -7,8 +7,8 @@ import { unstable_cache } from "next/cache";
  */
 
 // Cache key generators
-const getProductsKey = (category?: string, featured?: boolean) =>
-  `products:${category || "all"}:${featured ? "featured" : "standard"}`;
+// const getProductsKey = (category?: string, featured?: boolean) =>
+//   `products:${category || "all"}:${featured ? "featured" : "standard"}`;
 
 export const getCachedProducts = unstable_cache(
   async (category?: string, featured?: boolean) => {

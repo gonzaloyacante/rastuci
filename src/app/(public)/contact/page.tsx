@@ -39,7 +39,7 @@ async function getContactSettings() {
       }
     }
     return defaultContactSettings;
-  } catch (error) {
+  } catch (_error) {
     return defaultContactSettings;
   }
 }

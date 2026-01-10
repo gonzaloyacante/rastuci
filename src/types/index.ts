@@ -207,3 +207,33 @@ export interface SerializedProductReview {
   createdAt: string;
   productId: string;
 }
+
+// Interfaces utilitarias para Servicios (OrderService, Resend)
+export interface OrderItemInput {
+  productId: string;
+  quantity: number | string;
+  size?: string;
+  color?: string;
+}
+
+export interface MercadoPagoPayer {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: {
+    number?: string;
+  };
+}
+
+export interface OrderEmailSummary {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  total: number;
+}
+
+export interface OrderEmailItem {
+  name: string;
+  quantity: number;
+  price: number;
+}

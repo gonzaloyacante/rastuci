@@ -70,8 +70,9 @@ export const PATCH = withAdminAuth(
       // Enviar email de confirmación de entrega
       if (order.customerEmail) {
         try {
-          const { sendEmail, getOrderDeliveredEmail } =
-            await import("@/lib/resend");
+          const { sendEmail } = await import("@/lib/resend");
+          const { getOrderDeliveredEmail } =
+            await import("@/lib/email-templates");
 
           const emailHtml = getOrderDeliveredEmail({
             customerName: order.customerName,

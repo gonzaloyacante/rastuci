@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
+import { SORT_OPTIONS as SORT_OPTIONS_BASE } from "@/lib/constants";
 
 // ==============================================================================
 // TYPES & CONSTANTS
@@ -34,14 +35,11 @@ interface ProductsPageClientProps {
   };
 }
 
-const SORT_OPTIONS = [
-  { value: "createdAt-desc", label: "🆕 Más recientes" },
-  { value: "price-asc", label: "💰 Precio: menor a mayor" },
-  { value: "price-desc", label: "💎 Precio: mayor a menor" },
-  { value: "rating-desc", label: "⭐ Mejor valorados" },
-  { value: "name-asc", label: "🔤 Nombre: A-Z" },
-  { value: "name-desc", label: "🔤 Nombre: Z-A" },
-];
+// SORT_OPTIONS imported from constants - adapting format for this component
+const SORT_OPTIONS = SORT_OPTIONS_BASE.map((opt) => ({
+  value: opt.id,
+  label: opt.label,
+}));
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -189,12 +187,6 @@ export default function ProductsPageClient({
   const sortValue = `${sortBy}-${sortOrder}`;
 
   // Count active filters
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (debouncedSearch) count++;
-    if (selectedCategory) count++;
-    return count;
-  }, [debouncedSearch, selectedCategory]);
 
   // Filter chips for mobile
   const filterChips = useMemo(() => {

@@ -1,19 +1,20 @@
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
+// import { Badge } from "@/components/ui/Badge";
+// import { Button } from "@/components/ui/Button";
+// import { Card, CardContent } from "@/components/ui/Card";
 // Removed unused Select imports
 import { ORDER_STATUS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import { formatCurrency, formatDate } from "@/utils/formatters";
+// import { cn } from "@/lib/utils";
+// import { formatCurrency, formatDate } from "@/utils/formatters";
 import {
-  Calendar,
-  CreditCard,
-  MapPin,
+  // Calendar,
+  // CreditCard,
+  // MapPin,
   Package,
-  Printer,
-  Search,
+  // Printer,
+  // Search,
   Truck as TruckIcon, // Alias Truck to TruckIcon to match usage
   LucideIcon,
+  // User,
 } from "lucide-react";
 import Link from "next/link";
 import React, { ReactNode } from "react";
@@ -27,7 +28,10 @@ import { Pagination as UIPagination } from "@/components/ui/Pagination";
 // Configuración de visualización por estado
 export const STATUS_CONFIG = {
   [ORDER_STATUS.PENDING]: { label: "Sin pagar", variant: "warning" },
-  [ORDER_STATUS.PENDING_PAYMENT]: { label: "⚠️ Esperando pago de envío", variant: "warning" },
+  [ORDER_STATUS.PENDING_PAYMENT]: {
+    label: "⚠️ Esperando pago de envío",
+    variant: "warning",
+  },
   [ORDER_STATUS.PROCESSED]: { label: "Empaquetado / Listo", variant: "info" },
   [ORDER_STATUS.DELIVERED]: { label: "Entregado", variant: "success" },
 } as const;
@@ -72,7 +76,9 @@ export function ShippingMethodLabel({ method }: { method?: string }) {
   return (
     <div className="flex items-center gap-2 text-xs sm:text-sm text-content-secondary">
       <Package size={14} className="shrink-0" />
-      <span className="wrap-break-word">{shippingMethodLabels[method] || method}</span>
+      <span className="wrap-break-word">
+        {shippingMethodLabels[method] || method}
+      </span>
     </div>
   );
 }
@@ -139,9 +145,12 @@ export function OrderCard({
 
     setIsUpdating(true);
     try {
-      const response = await fetch(`/api/admin/orders/${order.id}/mark-processed`, {
-        method: "PATCH",
-      });
+      const response = await fetch(
+        `/api/admin/orders/${order.id}/mark-processed`,
+        {
+          method: "PATCH",
+        }
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -151,20 +160,26 @@ export function OrderCard({
       // Éxito
       if (onStatusChange) onStatusChange();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Error al actualizar el pedido");
+      alert(
+        error instanceof Error ? error.message : "Error al actualizar el pedido"
+      );
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleMarkDelivered = async () => {
-    if (!confirm("¿Confirmas que este pedido fue entregado al cliente?")) return;
+    if (!confirm("¿Confirmas que este pedido fue entregado al cliente?"))
+      return;
 
     setIsUpdating(true);
     try {
-      const response = await fetch(`/api/admin/orders/${order.id}/mark-delivered`, {
-        method: "PATCH",
-      });
+      const response = await fetch(
+        `/api/admin/orders/${order.id}/mark-delivered`,
+        {
+          method: "PATCH",
+        }
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -174,7 +189,9 @@ export function OrderCard({
       // Éxito
       if (onStatusChange) onStatusChange();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Error al actualizar el pedido");
+      alert(
+        error instanceof Error ? error.message : "Error al actualizar el pedido"
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -207,10 +224,8 @@ export function OrderCard({
 
       {/* Content - Stack en móvil, grid en tablet */}
       <div className="p-4 space-y-4">
-
         {/* Info principal en 2 columnas tablet */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
           {/* Contacto */}
           <div className="space-y-2">
             <h4 className="text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">
@@ -218,7 +233,10 @@ export function OrderCard({
             </h4>
             <div className="flex items-center gap-2">
               <span className="text-lg">📞</span>
-              <a href={`tel:${order.customerPhone}`} className="text-sm text-primary hover:underline font-medium">
+              <a
+                href={`tel:${order.customerPhone}`}
+                className="text-sm text-primary hover:underline font-medium"
+              >
                 {order.customerPhone}
               </a>
             </div>
@@ -240,7 +258,8 @@ export function OrderCard({
             <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-content-secondary">
-                  {order.itemsCount} {order.itemsCount === 1 ? 'producto' : 'productos'}
+                  {order.itemsCount}{" "}
+                  {order.itemsCount === 1 ? "producto" : "productos"}
                 </span>
                 <span className="text-lg font-bold text-primary">
                   {formatCurrency(order.total)}
@@ -255,7 +274,10 @@ export function OrderCard({
               {order.shippingMethod && (
                 <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
                   <Package size={12} className="shrink-0" />
-                  <span>{shippingMethodLabels[order.shippingMethod] || order.shippingMethod}</span>
+                  <span>
+                    {shippingMethodLabels[order.shippingMethod] ||
+                      order.shippingMethod}
+                  </span>
                 </div>
               )}
             </div>

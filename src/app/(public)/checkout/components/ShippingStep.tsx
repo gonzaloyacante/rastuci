@@ -20,7 +20,7 @@ import {
   Store,
   Truck,
 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 // ============================================================================
 // HELPER FUNCTIONS (fuera del componente)

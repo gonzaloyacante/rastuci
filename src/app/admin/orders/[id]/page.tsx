@@ -35,7 +35,7 @@ interface Order {
   customerAddress?: string;
   customerEmail?: string;
   total: number;
-  status: "PENDING" | "PROCESSED" | "DELIVERED";
+  status: "PENDING" | "PENDING_PAYMENT" | "PROCESSED" | "DELIVERED";
   paymentStatus?: string;
   paymentMethod: string;
   createdAt: string;

@@ -23,6 +23,7 @@ export const useHotToast = () => {
   };
 
   const custom = (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderer: (t: any) => JSX.Element,
     options?: ToastOptions
   ) => {

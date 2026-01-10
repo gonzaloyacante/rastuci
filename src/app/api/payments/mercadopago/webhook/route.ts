@@ -3,7 +3,9 @@ import { getRequestId, logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { NextRequest, NextResponse } from "next/server";
-import { ORDER_STATUS } from "@/lib/constants";
+// import { ORDER_STATUS } from "@/lib/constants";
+// ...
+
 import { mpWebhookService } from "@/services/notification-service";
 import { orderService } from "@/services/order-service";
 import { shipmentService } from "@/services/shipment-service";
@@ -18,11 +20,16 @@ type OrderWithItems = orders & {
   })[];
 };
 
-async function notifyParties(order: OrderWithItems, orderId: string, mpPaymentId: string) {
+async function notifyParties(
+  order: OrderWithItems,
+  orderId: string,
+  _mpPaymentId: string
+) {
   try {
     if (!order?.customerEmail) return;
 
-    const { sendEmail, getOrderConfirmationEmail, getNewOrderNotificationEmail } = await import("@/lib/resend");
+    // Dynamic import to avoid circular dep issues if any, keeping it safe
+    const { emailService } = await import("@/lib/resend");
     const { getAdminEmail } = await import("@/lib/store-settings");
 
     const items = order.order_items.map((item) => ({
@@ -32,38 +39,27 @@ async function notifyParties(order: OrderWithItems, orderId: string, mpPaymentId
     }));
 
     // Customer Email
-    await sendEmail({
-      to: order.customerEmail,
-      subject: "✅ Confirmación de tu pedido en Rastuci",
-      html: getOrderConfirmationEmail({
-        customerName: order.customerName,
-        orderId,
-        total: order.total,
-        items,
-      }),
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await emailService.sendOrderConfirmation(order as any, items);
 
     // Admin Email
     const adminEmail = await getAdminEmail();
-    await sendEmail({
-      to: adminEmail,
-      subject: `🔔 Nuevo Pedido #${orderId.slice(0, 8)} - ${order.customerName}`,
-      html: getNewOrderNotificationEmail({
-        orderId,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail,
-        total: order.total,
-        items,
-      }),
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await emailService.sendAdminNewOrderAlert(order as any, items, adminEmail);
 
     logger.info("[Webhook] Notifications sent", { orderId });
   } catch (e) {
-    logger.error("[Webhook] Failed to send notifications", { orderId, error: e });
+    logger.error("[Webhook] Failed to send notifications", {
+      orderId,
+      error: e,
+    });
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest,
+  { params: _params }: { params: { mpPaymentId: string } }
+) {
   const requestId = getRequestId(req.headers);
 
   try {
@@ -79,10 +75,15 @@ export async function POST(req: NextRequest) {
 
     // 2. Parse basic data
     const data = await req.json().catch(() => ({}));
-    const topic = req.nextUrl.searchParams.get("type") || req.nextUrl.searchParams.get("topic");
-    const id = req.nextUrl.searchParams.get("data.id") || (data && (data.data?.id || data.id));
+    const topic =
+      req.nextUrl.searchParams.get("type") ||
+      req.nextUrl.searchParams.get("topic");
+    const id =
+      req.nextUrl.searchParams.get("data.id") ||
+      (data && (data.data?.id || data.id));
 
-    if (!id) { // Ping or invalid
+    if (!id) {
+      // Ping or invalid
       return ok({ ok: true });
     }
 
@@ -97,13 +98,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (topic && topic !== "payment") { // Only payments
+    if (topic && topic !== "payment") {
+      // Only payments
       return ok({ ok: true });
     }
 
     // 4. Fetch Payment Details
     // Using simple retry loop here or inside service? Service has simple get.
-    // Let's implement retry here as it was before, or move it to service. 
+    // Let's implement retry here as it was before, or move it to service.
     // Moving retry logic to service would be cleaner but let's keep it robust here for now or assume service handles it.
     // The service I wrote `getPayment` just does `this.payment.get`. I should have added retries there.
     // I will add a simple retry loop here.
@@ -116,10 +118,13 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         retries--;
         if (retries === 0) {
-          logger.error("[MP webhook] Failed to fetch payment", { id, error: e });
+          logger.error("[MP webhook] Failed to fetch payment", {
+            id,
+            error: e,
+          });
           return ok({ ok: true });
         }
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 1000));
       }
     }
 
@@ -139,18 +144,20 @@ export async function POST(req: NextRequest) {
       result = await orderService.updateOrder(payment.external_reference, {
         mpPaymentId,
         mpStatus: mpStatus || "unknown",
-        mappedStatus
+        mappedStatus,
       });
     }
 
     // B. Try by Preference ID
     if (!result && preferenceId) {
-      const existing = await prisma.orders.findFirst({ where: { mpPreferenceId: preferenceId } });
+      const existing = await prisma.orders.findFirst({
+        where: { mpPreferenceId: preferenceId },
+      });
       if (existing) {
         result = await orderService.updateOrder(existing.id, {
           mpPaymentId,
           mpStatus: mpStatus || "unknown",
-          mappedStatus
+          mappedStatus,
         });
       }
     }
@@ -174,19 +181,25 @@ export async function POST(req: NextRequest) {
 
       if (shouldShip) {
         // Create CA Shipment (async, don't block response)
-        shipmentService.createCAShipment(order.id).catch(err => {
-          logger.error("[Webhook] Async shipment creation failed", { orderId: order.id, error: err });
+        shipmentService.createCAShipment(order.id).catch((err) => {
+          logger.error("[Webhook] Async shipment creation failed", {
+            orderId: order.id,
+            error: err,
+          });
         });
 
         // Notify
-        notifyParties(order, order.id, mpPaymentId).catch(err => {
-          logger.error("[Webhook] Async notification failed", { orderId: order.id, error: err });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        notifyParties(order as any, order.id, mpPaymentId).catch((err) => {
+          logger.error("[Webhook] Async notification failed", {
+            orderId: order.id,
+            error: err,
+          });
         });
       }
     }
 
     return ok({ ok: true });
-
   } catch (error) {
     logger.error("[MP webhook] Global error", { error });
     return ok({ ok: true }); // Always return 200 to MP to avoid retries on logic errors

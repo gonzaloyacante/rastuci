@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import Link from "next/link";
+// import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -131,10 +131,11 @@ export default function AdminLayout({
             >
               {/* Header */}
               <div
-                className={`p-4 border-b border-muted flex ${isOpen
-                  ? "items-center justify-between"
-                  : "flex-col items-center justify-center gap-4"
-                  }`}
+                className={`p-4 border-b border-muted flex ${
+                  isOpen
+                    ? "items-center justify-between"
+                    : "flex-col items-center justify-center gap-4"
+                }`}
               >
                 <div
                   className={
@@ -152,8 +153,9 @@ export default function AdminLayout({
                 </div>
                 <button
                   onClick={toggle}
-                  className={`p-2 rounded-full hover-surface focus:outline-none cursor-pointer ${isOpen ? "" : "mt-2"
-                    }`}
+                  className={`p-2 rounded-full hover-surface focus:outline-none cursor-pointer ${
+                    isOpen ? "" : "mt-2"
+                  }`}
                 >
                   {isOpen ? (
                     <X className="h-6 w-6" />
@@ -165,8 +167,9 @@ export default function AdminLayout({
 
               {/* Navigation */}
               <nav
-                className={`flex-1 overflow-y-auto mt-4 ${isOpen ? "" : "flex flex-col items-center"
-                  }`}
+                className={`flex-1 overflow-y-auto mt-4 ${
+                  isOpen ? "" : "flex flex-col items-center"
+                }`}
               >
                 <ul className={`${isOpen ? "px-2" : "px-0"} space-y-1 w-full`}>
                   {NAV_LINKS.map((link) => (
@@ -183,8 +186,9 @@ export default function AdminLayout({
 
               {/* Logout */}
               <div
-                className={`p-4 border-t border-muted mt-2 ${isOpen ? "" : "flex flex-col items-center"
-                  }`}
+                className={`p-4 border-t border-muted mt-2 ${
+                  isOpen ? "" : "flex flex-col items-center"
+                }`}
               >
                 <div
                   className={`mb-3 w-full ${isOpen ? "" : "flex justify-center"}`}
@@ -197,8 +201,9 @@ export default function AdminLayout({
                 </div>
                 <button
                   onClick={handleLogout}
-                  className={`flex items-center ${isOpen ? "w-full px-4 py-3" : "justify-center p-3"
-                    }
+                  className={`flex items-center ${
+                    isOpen ? "w-full px-4 py-3" : "justify-center p-3"
+                  }
                       rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary`}
                 >
                   <LogOut className="h-5 w-5 shrink-0" />

@@ -128,6 +128,7 @@ export const validateReview = (data: unknown) => {
 
 // Función helper para extraer errores de validación
 export const getValidationErrors = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: z.SafeParseReturnType<any, any>
 ) => {
   if (result.success) {

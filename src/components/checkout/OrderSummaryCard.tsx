@@ -1,8 +1,17 @@
-import { Agency } from '@/lib/correo-argentino-service';
-import { Button } from '@/components/ui/Button';
-import { formatPriceARS } from '@/utils/formatters';
-import { CreditCard, Edit2, FileText, Mail, MapPin, Phone, Truck, Store, Clock } from 'lucide-react';
-import Image from 'next/image';
+import { Agency } from "@/lib/correo-argentino-service";
+import { Button } from "@/components/ui/Button";
+import { formatPriceARS } from "@/utils/formatters";
+import {
+  CreditCard,
+  Edit2,
+  FileText,
+  Mail,
+  MapPin,
+  Phone,
+  Truck,
+  Store,
+} from "lucide-react";
+import Image from "next/image";
 import { WEEKDAY_NAMES_SHORT, type WeekdayKey } from "@/lib/constants";
 
 interface OrderItem {
@@ -50,7 +59,7 @@ interface OrderSummaryCardProps {
   shippingCost: number;
   discount: number;
   total: number;
-  onEditStep: (step: 'customer' | 'shipping' | 'payment') => void;
+  onEditStep: (step: "customer" | "shipping" | "payment") => void;
   agency?: Agency | null;
 }
 
@@ -66,9 +75,8 @@ export function OrderSummaryCard({
   onEditStep,
   agency,
 }: OrderSummaryCardProps) {
-
   const grossSubtotal = items.reduce((acc, item) => {
-    return acc + (item.price * item.quantity);
+    return acc + item.price * item.quantity;
   }, 0);
 
   return (
@@ -78,8 +86,10 @@ export function OrderSummaryCard({
 
       <div className="space-y-4">
         {items.map((item) => {
-          const hasDiscount = item.onSale && item.salePrice && item.salePrice < item.price;
-          const itemTotal = (hasDiscount ? item.salePrice! : item.price) * item.quantity;
+          const hasDiscount =
+            item.onSale && item.salePrice && item.salePrice < item.price;
+          const itemTotal =
+            (hasDiscount ? item.salePrice! : item.price) * item.quantity;
 
           return (
             <div
@@ -106,8 +116,12 @@ export function OrderSummaryCard({
               <div className="text-right">
                 {hasDiscount ? (
                   <>
-                    <p className="text-xs line-through muted">{formatPriceARS(item.price * item.quantity)}</p>
-                    <p className="font-medium text-success">{formatPriceARS(itemTotal)}</p>
+                    <p className="text-xs line-through muted">
+                      {formatPriceARS(item.price * item.quantity)}
+                    </p>
+                    <p className="font-medium text-success">
+                      {formatPriceARS(itemTotal)}
+                    </p>
                   </>
                 ) : (
                   <p className="font-medium">{formatPriceARS(itemTotal)}</p>
@@ -127,7 +141,9 @@ export function OrderSummaryCard({
             placeholder="Código de cupón"
             className="flex-1 bg-muted/50 border border-muted rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
-          <Button size="sm" variant="outline">Aplicar</Button>
+          <Button size="sm" variant="outline">
+            Aplicar
+          </Button>
         </div>
       </div>
 
@@ -171,7 +187,8 @@ export function OrderSummaryCard({
           <div className="pl-11">
             <p className="text-sm">{customerInfo.address}</p>
             <p className="text-xs muted">
-              {customerInfo.city}, {customerInfo.province} - CP: {customerInfo.postalCode}
+              {customerInfo.city}, {customerInfo.province} - CP:{" "}
+              {customerInfo.postalCode}
             </p>
           </div>
         </div>
@@ -199,7 +216,9 @@ export function OrderSummaryCard({
           <div>
             <p className="font-medium">{shippingOption.name}</p>
             <p className="text-sm muted">{shippingOption.description}</p>
-            <p className="text-xs muted mt-1">Estimado: {shippingOption.estimatedDays}</p>
+            <p className="text-xs muted mt-1">
+              Estimado: {shippingOption.estimatedDays}
+            </p>
           </div>
           <div className="text-right">
             <p className="font-semibold text-success">
@@ -220,26 +239,36 @@ export function OrderSummaryCard({
                   {agency.name}
                 </p>
                 <p className="text-gray-600 mt-1 font-medium">
-                  {agency.location.address.streetName} {agency.location.address.streetNumber}
+                  {agency.location.address.streetName}{" "}
+                  {agency.location.address.streetNumber}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {agency.location.address.city}, CP {agency.location.address.postalCode}
+                  {agency.location.address.city}, CP{" "}
+                  {agency.location.address.postalCode}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-pink-100 pt-4 mb-4">
               <div>
-                <p className="text-[11px] font-bold text-pink-600 mb-2 uppercase tracking-tight">Horarios de atención:</p>
+                <p className="text-[11px] font-bold text-pink-600 mb-2 uppercase tracking-tight">
+                  Horarios de atención:
+                </p>
                 <div className="space-y-1">
                   {Object.entries(agency.hours || {}).map(([day, hours]) => {
                     if (!hours || day === "holidays") return null;
                     const dayName = WEEKDAY_NAMES_SHORT[day as WeekdayKey];
                     if (!dayName) return null;
                     return (
-                      <div key={day} className="flex justify-between text-[11px] text-gray-600">
+                      <div
+                        key={day}
+                        className="flex justify-between text-[11px] text-gray-600"
+                      >
                         <span className="font-medium">{dayName}:</span>
-                        <span>{hours.start.slice(0, 2)}:{hours.start.slice(2)} - {hours.end.slice(0, 2)}:{hours.end.slice(2)}</span>
+                        <span>
+                          {hours.start.slice(0, 2)}:{hours.start.slice(2)} -{" "}
+                          {hours.end.slice(0, 2)}:{hours.end.slice(2)}
+                        </span>
                       </div>
                     );
                   })}
@@ -305,12 +334,17 @@ export function OrderSummaryCard({
         </h3>
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <span>Subtotal ({items.length} {items.length === 1 ? "producto" : "productos"})</span>
+            <span>
+              Subtotal ({items.length}{" "}
+              {items.length === 1 ? "producto" : "productos"})
+            </span>
             <span>{formatPriceARS(grossSubtotal)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span>Envío</span>
-            <span className={shippingCost === 0 ? "text-success font-medium" : ""}>
+            <span
+              className={shippingCost === 0 ? "text-success font-medium" : ""}
+            >
               {shippingCost === 0 ? "Sin cargo" : formatPriceARS(shippingCost)}
             </span>
           </div>
@@ -323,7 +357,9 @@ export function OrderSummaryCard({
           <div className="border-t border-muted pt-3">
             <div className="flex justify-between items-center">
               <span className="text-lg font-bold">Total</span>
-              <span className="text-2xl font-bold text-primary">{formatPriceARS(total)}</span>
+              <span className="text-2xl font-bold text-primary">
+                {formatPriceARS(total)}
+              </span>
             </div>
           </div>
         </div>

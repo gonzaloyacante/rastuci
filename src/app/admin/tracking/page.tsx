@@ -4,7 +4,6 @@ import {
   AnalyticsPageHeader,
   BulkActionsBar,
   MetricCard,
-  MetricsGrid,
 } from "@/components/admin";
 import { TrackingSkeleton } from "@/components/admin/skeletons";
 import { Badge } from "@/components/ui/Badge";
@@ -161,10 +160,14 @@ function TrackingTable({
                       <div className="font-mono text-xs sm:text-sm font-medium break-all">
                         {item.trackingCode}
                       </div>
-                      <div className="text-xs text-muted">Pedido: {item.orderId}</div>
+                      <div className="text-xs text-muted">
+                        Pedido: {item.orderId}
+                      </div>
                     </div>
                   </div>
-                  <Badge className={statusColors[item.status] || "surface-secondary"}>
+                  <Badge
+                    className={statusColors[item.status] || "surface-secondary"}
+                  >
                     <StatusIcon className="h-3 w-3 mr-1" />
                     <span className="text-xs">{item.status}</span>
                   </Badge>
@@ -172,16 +175,26 @@ function TrackingTable({
 
                 <div className="space-y-1">
                   <div className="font-medium text-sm">{item.customerName}</div>
-                  <div className="text-xs text-muted break-all">{item.customerEmail}</div>
+                  <div className="text-xs text-muted break-all">
+                    {item.customerEmail}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted">CA: {item.ocaStatus || "N/A"}</span>
-                  <span className="text-muted">{new Date(item.lastUpdated).toLocaleDateString()}</span>
+                  <span className="text-muted">
+                    CA: {item.ocaStatus || "N/A"}
+                  </span>
+                  <span className="text-muted">
+                    {new Date(item.lastUpdated).toLocaleDateString()}
+                  </span>
                 </div>
 
                 {item.alertLevel !== "none" && (
-                  <Badge variant={item.alertLevel === "error" ? "destructive" : "secondary"}>
+                  <Badge
+                    variant={
+                      item.alertLevel === "error" ? "destructive" : "secondary"
+                    }
+                  >
                     <AlertTriangle className="h-3 w-3 mr-1" />
                     <span className="text-xs">{item.alertLevel}</span>
                   </Badge>

@@ -5,29 +5,6 @@ import { getToken } from "next-auth/jwt";
 // Tipos para OrderStatus (directos desde schema)
 type OrderStatus = "PENDING" | "PROCESSED" | "DELIVERED";
 
-// Tipos para la consulta optimizada móvil
-type OrderWithItems = {
-  id: string;
-  status: OrderStatus;
-  total: number;
-  createdAt: Date;
-  updatedAt: Date;
-  trackingNumber: string | null;
-  customerAddress: string | null;
-  customerPhone: string | null;
-  order_items: {
-    id: string;
-    quantity: number;
-    price: number;
-    products: {
-      id: string;
-      name: string;
-      images: string;
-      price: number;
-    };
-  }[];
-};
-
 interface ApiResponse<T> {
   success: boolean;
   message: string;

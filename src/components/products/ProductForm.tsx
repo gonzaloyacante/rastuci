@@ -11,7 +11,7 @@ import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { ColorChip } from "@/components/ui/ColorChip";
+// import { ColorChip } from "@/components/ui/ColorChip";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Product, ProductVariant } from "@/types";
@@ -25,10 +25,8 @@ import {
   DollarSign,
   Eye,
   FileText,
-  Hash,
   Info,
   List,
-  LucideImage,
   Package,
   Palette,
   Percent,
@@ -36,19 +34,16 @@ import {
   Save,
   Tag,
   TrendingUp,
-  Upload,
 } from "lucide-react";
 
-import ImageUploadZone from "./ImageUploadZone";
-import ColorImageManager from "./ColorImageManager";
 import {
   ColorPicker,
   FeatureManager,
   HelpTooltip,
   PlaceholderImage,
-  ProductPreviewBadges,
+  // ProductPreviewBadges,
   SizeManager,
-  StockIndicator,
+  // StockIndicator,
 } from "./ProductFormComponents";
 import VariantManager from "./VariantManager";
 import SizeGuideEditor, { SizeGuideData } from "./SizeGuideEditor";
@@ -208,7 +203,7 @@ export default function ProductForm({
     watch,
     reset,
   } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema) as any,
+    resolver: zodResolver(productSchema),
   });
 
   const watchPrice = watch("price");
@@ -251,10 +246,10 @@ export default function ProductForm({
       const discountPercentage =
         initialData.salePrice && initialData.price
           ? Math.round(
-            ((initialData.price - initialData.salePrice) /
-              initialData.price) *
-            100
-          )
+              ((initialData.price - initialData.salePrice) /
+                initialData.price) *
+                100
+            )
           : null;
 
       reset({
@@ -780,7 +775,7 @@ export default function ProductForm({
                           El descuento será de{" "}
                           {formatPriceARS(
                             Number(watchPrice || 0) -
-                            Number(calculatedSalePrice)
+                              Number(calculatedSalePrice)
                           )}
                         </p>
                       </>

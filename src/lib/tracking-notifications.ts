@@ -12,7 +12,7 @@
  */
 
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
-import { sendTrackingUpdateEmail } from "@/lib/email";
+import { emailService } from "@/lib/resend";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import type { OrderStatus } from "@/types";
@@ -286,7 +286,7 @@ export class TrackingNotificationService {
   private async sendNotifications(event: TrackingChangeEvent): Promise<void> {
     if (this.config.enableEmail && event.customerEmail) {
       try {
-        await sendTrackingUpdateEmail({
+        await emailService.sendTrackingUpdate({
           to: event.customerEmail,
           customerName: event.customerName,
           orderId: event.orderId,

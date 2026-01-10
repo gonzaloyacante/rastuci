@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { fail } from "@/lib/apiResponse";
+// import { fail } from "@/lib/apiResponse";
 
 interface LoginRequest {
   email: string;

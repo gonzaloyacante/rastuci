@@ -2,7 +2,7 @@ import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+// import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -55,7 +55,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, phone, message, responsePreference } = parsed.data;
+    const {
+      name,
+      email,
+      phone: _phone,
+      message: _message,
+      responsePreference,
+    } = parsed.data;
 
     // TODO: Crear modelo contact_messages en Prisma schema
     // const contactMessage = await prisma.contactMessage.create({
@@ -112,7 +118,7 @@ export const GET = withAdminAuth(async (req: NextRequest) => {
     const isRead = searchParams.get("isRead");
     const isArchived = searchParams.get("isArchived") === "true";
 
-    const where = {
+    const _where = {
       isArchived,
       ...(isRead !== null &&
         isRead !== undefined && { isRead: isRead === "true" }),

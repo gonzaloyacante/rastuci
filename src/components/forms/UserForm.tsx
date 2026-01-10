@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+// import { Select } from "@/components/ui/Select";
 import { Eye, EyeOff } from "lucide-react";
 
 interface AdminUser {
@@ -89,7 +89,11 @@ export const UserForm: React.FC<UserFormProps> = ({
 
     if (!isEdit && formData.password && !formData.confirmPassword) {
       newErrors.confirmPassword = "Debes confirmar la contraseña";
-    } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+    } else if (
+      formData.password &&
+      formData.confirmPassword &&
+      formData.password !== formData.confirmPassword
+    ) {
       newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
 
@@ -120,7 +124,8 @@ export const UserForm: React.FC<UserFormProps> = ({
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-content-primary mb-2">
+            className="block text-sm font-medium text-content-primary mb-2"
+          >
             Nombre completo *
           </label>
           <Input
@@ -136,7 +141,8 @@ export const UserForm: React.FC<UserFormProps> = ({
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-content-primary mb-2">
+            className="block text-sm font-medium text-content-primary mb-2"
+          >
             Email *
           </label>
           <Input
@@ -158,7 +164,8 @@ export const UserForm: React.FC<UserFormProps> = ({
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-content-primary mb-2">
+            className="block text-sm font-medium text-content-primary mb-2"
+          >
             Contraseña {!isEdit && "*"}
           </label>
           <div className="relative">
@@ -198,7 +205,8 @@ export const UserForm: React.FC<UserFormProps> = ({
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-content-primary mb-2">
+              className="block text-sm font-medium text-content-primary mb-2"
+            >
               Confirmar Contraseña *
             </label>
             <div className="relative">
@@ -206,7 +214,9 @@ export const UserForm: React.FC<UserFormProps> = ({
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirmPassword || ""}
-                onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                onChange={(e) =>
+                  handleChange("confirmPassword", e.target.value)
+                }
                 placeholder="Repite la contraseña"
                 error={errors.confirmPassword}
                 disabled={loading}
@@ -234,7 +244,8 @@ export const UserForm: React.FC<UserFormProps> = ({
           type="button"
           variant="outline"
           onClick={onCancel}
-          disabled={loading}>
+          disabled={loading}
+        >
           Cancelar
         </Button>
         <Button type="submit" disabled={loading}>

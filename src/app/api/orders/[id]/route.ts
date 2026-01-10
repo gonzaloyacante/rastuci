@@ -7,7 +7,7 @@ import prisma from "@/lib/prisma";
 import { ApiResponse, Order, OrderStatus } from "@/types";
 import { Prisma } from "@prisma/client";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { sendOrderStatusEmail } from "@/lib/email";
+import { emailService } from "@/lib/resend";
 import { mapOrderToDTO, updateOrderStatus } from "@/lib/orders";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { OrderStatusUpdateSchema } from "@/lib/validation/order";
@@ -155,13 +155,15 @@ export const PATCH = withAdminAuth(
       const order = await updateOrderStatus(id, status as OrderStatus);
 
       // Fire-and-forget email notification (do not block response)
-      void sendOrderStatusEmail({
+      void emailService.sendTrackingUpdate({
         to:
           ((order as unknown as Record<string, unknown>)
-            .customerEmail as string) ?? null,
+            .customerEmail as string) ?? "",
         orderId: order.id,
+        trackingCode: order.trackingNumber || "N/A",
         status: order.status,
         customerName: order.customerName ?? null,
+        statusMessage: `El estado de tu pedido ha cambiado a ${order.status}`,
       });
 
       const responseOrder: Order = mapOrderToDTO(order);
@@ -218,13 +220,15 @@ export const PUT = withAdminAuth(
       const order = await updateOrderStatus(id, status as OrderStatus);
 
       // Fire-and-forget email notification (do not block response)
-      void sendOrderStatusEmail({
+      void emailService.sendTrackingUpdate({
         to:
           ((order as unknown as Record<string, unknown>)
-            .customerEmail as string) ?? null,
+            .customerEmail as string) ?? "",
         orderId: order.id,
+        trackingCode: order.trackingNumber || "N/A",
         status: order.status,
         customerName: order.customerName ?? null,
+        statusMessage: `El estado de tu pedido ha cambiado a ${order.status}`,
       });
 
       const responseOrder: Order = mapOrderToDTO(order);

@@ -259,6 +259,16 @@ export const POST = withAdminAuth(
         isAdmin: user.isAdmin,
       };
 
+      // Enviar Email de Bienvenida (Async, no bloqueante)
+      import("@/lib/resend").then(({ emailService }) => {
+        emailService.sendWelcome(email, name).catch((err) => {
+          logger.error("Failed to send welcome email", {
+            userId: user.id,
+            error: err,
+          });
+        });
+      });
+
       return ok(safeUser);
     } catch (error) {
       const requestId = getRequestId(request.headers);

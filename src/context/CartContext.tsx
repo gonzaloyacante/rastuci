@@ -145,36 +145,36 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Fallback seguro para usar los hooks fuera de un provider (no lanzar)
 const _defaultCart: CartContextType = {
   cartItems: [],
-  addToCart: (() => { }) as unknown as CartContextType["addToCart"],
-  removeFromCart: () => { },
-  updateQuantity: () => { },
-  clearCart: () => { },
+  addToCart: (() => {}) as unknown as CartContextType["addToCart"],
+  removeFromCart: () => {},
+  updateQuantity: () => {},
+  clearCart: () => {},
   getCartTotal: () => 0,
   getItemCount: () => 0,
 
   availableShippingOptions: [],
   selectedShippingOption: null,
-  setSelectedShippingOption: () => { },
+  setSelectedShippingOption: () => {},
   calculateShippingCost: async () => [],
 
   selectedAgency: null,
-  setSelectedAgency: () => { },
+  setSelectedAgency: () => {},
   getAgencies: async () => [],
 
   availablePaymentMethods: [],
   selectedPaymentMethod: null,
-  setSelectedPaymentMethod: () => { },
+  setSelectedPaymentMethod: () => {},
 
   availableBillingOptions: [],
   selectedBillingOption: null,
-  setSelectedBillingOption: () => { },
+  setSelectedBillingOption: () => {},
 
   appliedCoupon: null,
   applyCoupon: async () => false,
-  removeCoupon: () => { },
+  removeCoupon: () => {},
 
   customerInfo: null,
-  updateCustomerInfo: () => { },
+  updateCustomerInfo: () => {},
 
   getOrderSummary: () => ({
     items: [],
@@ -189,8 +189,26 @@ const _defaultCart: CartContextType = {
   }),
 
   placeOrder: async () => ({ success: false, error: "CartProvider missing" }),
-  loadCheckoutSettings: async () => { },
+  loadCheckoutSettings: async () => {},
 };
+
+const AVAILABLE_BILLING_OPTIONS: BillingOption[] = [
+  {
+    id: "consumer",
+    name: "Consumidor Final",
+    requiresDocument: false,
+  },
+  {
+    id: "invoiceA",
+    name: "Factura A",
+    requiresDocument: true,
+  },
+  {
+    id: "invoiceB",
+    name: "Factura B",
+    requiresDocument: true,
+  },
+];
 
 export const useCart = () => {
   const context = useContext(CartContext);
@@ -277,23 +295,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     // No operation - removed auto load
   }, []);
 
-  const availableBillingOptions: BillingOption[] = [
-    {
-      id: "consumer",
-      name: "Consumidor Final",
-      requiresDocument: false,
-    },
-    {
-      id: "invoiceA",
-      name: "Factura A",
-      requiresDocument: true,
-    },
-    {
-      id: "invoiceB",
-      name: "Factura B",
-      requiresDocument: true,
-    },
-  ];
+  const availableBillingOptions = AVAILABLE_BILLING_OPTIONS;
 
   // Funciones del carrito memoizadas
   const addToCart = useCallback(
@@ -377,8 +379,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       setCartItems((prevItems) =>
         prevItems.map((item) =>
           item.product.id === productId &&
-            item.size === size &&
-            item.color === color
+          item.size === size &&
+          item.color === color
             ? { ...item, quantity: newQuantity }
             : item
         )

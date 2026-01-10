@@ -1,5 +1,8 @@
 import prisma from "@/lib/prisma";
-import { defaultStoreSettings, type StoreSettings } from "@/lib/validation/store";
+import {
+  defaultStoreSettings,
+  type StoreSettings,
+} from "@/lib/validation/store";
 import { logger } from "@/lib/logger";
 
 const SETTINGS_KEY = "store";
@@ -10,44 +13,60 @@ const SETTINGS_KEY = "store";
  * Use this in server-side code (API routes, webhooks) instead of process.env.STORE_*
  */
 export async function getStoreSettings(): Promise<StoreSettings> {
-    try {
-        const record = await prisma.settings.findUnique({
-            where: { key: SETTINGS_KEY },
-        });
+  try {
+    const record = await prisma.settings.findUnique({
+      where: { key: SETTINGS_KEY },
+    });
 
-        if (!record) {
-            return defaultStoreSettings;
-        }
-
-        // Merge with defaults to ensure all fields exist
-        const settings = {
-            ...defaultStoreSettings,
-            ...(record.value as Partial<StoreSettings>),
-            address: {
-                ...defaultStoreSettings.address,
-                ...((record.value as Partial<StoreSettings>)?.address || {}),
-            },
-        };
-
-        return settings as StoreSettings;
-    } catch (error) {
-        logger.error("[getStoreSettings] Error fetching settings, using defaults", { error });
-        return defaultStoreSettings;
+    if (!record) {
+      return defaultStoreSettings;
     }
+
+    // Merge with defaults to ensure all fields exist
+    const settings = {
+      ...defaultStoreSettings, // Base defaults
+      ...(record.value as Partial<StoreSettings>), // Top level overrides
+
+      // Nested Merges (Crucial for schema updates on existing data)
+      address: {
+        ...defaultStoreSettings.address,
+        ...((record.value as Partial<StoreSettings>)?.address || {}),
+      },
+      emails: {
+        ...defaultStoreSettings.emails,
+        ...((record.value as Partial<StoreSettings>)?.emails || {}),
+      },
+      stock: {
+        ...defaultStoreSettings.stock,
+        ...((record.value as Partial<StoreSettings>)?.stock || {}),
+      },
+      shipping: {
+        ...defaultStoreSettings.shipping,
+        ...((record.value as Partial<StoreSettings>)?.shipping || {}),
+      },
+    };
+
+    return settings as StoreSettings;
+  } catch (error) {
+    logger.error("[getStoreSettings] Error fetching settings, using defaults", {
+      error,
+    });
+    return defaultStoreSettings;
+  }
 }
 
 /**
  * Get admin email for notifications
  */
 export async function getAdminEmail(): Promise<string> {
-    const settings = await getStoreSettings();
-    return settings.adminEmail;
+  const settings = await getStoreSettings();
+  return settings.adminEmail;
 }
 
 /**
  * Get store postal code for shipping calculations
  */
 export async function getStorePostalCode(): Promise<string> {
-    const settings = await getStoreSettings();
-    return settings.address.postalCode;
+  const settings = await getStoreSettings();
+  return settings.address.postalCode;
 }

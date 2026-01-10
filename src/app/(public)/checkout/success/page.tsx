@@ -49,8 +49,8 @@ function CheckoutSuccessContent() {
     // - merchant_order_id: ID de la orden en MP
     const method = searchParams.get("method") || "mercadopago";
     const externalRef = searchParams.get("external_reference") || "";
-    const paymentId = searchParams.get("payment_id") || "";
-    const mpStatus =
+    const _paymentId = searchParams.get("payment_id") || "";
+    const _mpStatus =
       searchParams.get("status") || searchParams.get("payment_status") || "";
 
     // Priorizar external_reference que tiene nuestro ID
@@ -69,7 +69,7 @@ function CheckoutSuccessContent() {
   useEffect(() => {
     const paymentId = searchParams.get("payment_id");
 
-    const loadOrderInfo = async (retryCount = 0): Promise<boolean> => {
+    const loadOrderInfo = async (_retryCount = 0): Promise<boolean> => {
       // Intentar buscar por orderId o por payment_id
       const searchId = orderId || paymentId;
 

@@ -1,4 +1,4 @@
-import { sendTrackingUpdateEmail } from "@/lib/email";
+import { emailService } from "@/lib/resend";
 import { prisma } from "@/lib/prisma";
 
 export interface OrderStatusChangeInput {
@@ -28,11 +28,11 @@ export async function handleOrderStatusChange(
     // Enviar email solo si hay email del cliente
     if (order.customerEmail) {
       // Usar el nuevo servicio de email mejorado
-      await sendTrackingUpdateEmail({
+      await emailService.sendTrackingUpdate({
         to: order.customerEmail,
         customerName: order.customerName || "Cliente",
         orderId: input.orderId,
-        trackingCode: order.trackingNumber || undefined,
+        trackingCode: order.trackingNumber || "N/A",
         status: input.newStatus,
       });
     }

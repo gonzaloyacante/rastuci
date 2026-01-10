@@ -326,10 +326,10 @@ export default function OrdersPage() {
           action={
             searchTerm || statusFilter !== "ALL"
               ? {
-                label: "Ver todos los pedidos",
-                onClick: handleReset,
-                variant: "outline",
-              }
+                  label: "Ver todos los pedidos",
+                  onClick: handleReset,
+                  variant: "outline",
+                }
               : undefined
           }
         />
@@ -341,6 +341,7 @@ export default function OrdersPage() {
                 key={order.id}
                 order={{
                   ...toOrderCardData(order),
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   relativeTime: timeAgo(order.createdAt as any),
                 }}
                 formatDate={formatDate}
