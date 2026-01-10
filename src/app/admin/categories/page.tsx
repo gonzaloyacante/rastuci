@@ -24,6 +24,7 @@ import { logger } from "@/lib/logger";
 import { Edit3, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { Product } from "@/types"; // Import Product type
 
 type CategoryRow = {
   id: string;
@@ -40,7 +41,7 @@ export default function AdminCategoriasPage() {
     new Set()
   );
   const [categoryProducts, setCategoryProducts] = useState<
-    Record<string, any[]>
+    Record<string, Product[]>
   >({});
   const [loadingProducts, setLoadingProducts] = useState<Set<string>>(
     new Set()
@@ -399,13 +400,13 @@ export default function AdminCategoriasPage() {
                                       No hay productos en esta categoría
                                     </div>
                                   ) : (
-                                    <AdminTable
+                                    <AdminTable<Product & Record<string, unknown>>
                                       columns={[
                                         {
                                           key: "image",
                                           label: "Imagen",
                                           align: "center",
-                                          render: (_: unknown, row: any) => (
+                                          render: (_: unknown, row: Product) => ( // Fix type from any to Product
                                             <div className="flex justify-center">
                                               <div className="relative w-10 h-10 rounded overflow-hidden bg-muted/5 border border-border shrink-0">
                                                 {row.images && row.images[0] ? (
@@ -448,7 +449,7 @@ export default function AdminCategoriasPage() {
                                         {
                                           key: "name",
                                           label: "Producto",
-                                          render: (_: unknown, row: any) => (
+                                          render: (_: unknown, row: Product) => (
                                             <div className="flex flex-col min-w-[200px]">
                                               <div className="text-sm font-medium text-base-primary truncate">
                                                 {row.name}
@@ -465,7 +466,7 @@ export default function AdminCategoriasPage() {
                                           key: "colors",
                                           label: "Colores",
                                           align: "center",
-                                          render: (_: unknown, row: any) => (
+                                          render: (_: unknown, row: Product) => (
                                             <div className="flex justify-center gap-1">
                                               {row.colors &&
                                                 row.colors.length > 0 ? (
@@ -523,7 +524,7 @@ export default function AdminCategoriasPage() {
                                           key: "sizes",
                                           label: "Talles",
                                           align: "center",
-                                          render: (_: unknown, row: any) => (
+                                          render: (_: unknown, row: Product) => ( // Fix type from any to Product
                                             <span className="text-xs text-base-secondary">
                                               {row.sizes && row.sizes.length > 0
                                                 ? `${row.sizes.length} ${row.sizes.length === 1 ? "talle" : "talles"}`
@@ -535,7 +536,7 @@ export default function AdminCategoriasPage() {
                                           key: "stock",
                                           label: "Stock",
                                           align: "center",
-                                          render: (_: unknown, row: any) => (
+                                          render: (_: unknown, row: Product) => ( // Fix type from any to Product
                                             <span
                                               className={`inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium bg-surface/60 border border-border`}
                                             >
@@ -549,7 +550,7 @@ export default function AdminCategoriasPage() {
                                           key: "price",
                                           label: "Precio",
                                           align: "right",
-                                          render: (_: unknown, row: any) => (
+                                          render: (_: unknown, row: Product) => ( // Fix type from any to Product
                                             <span className="text-sm font-bold text-base-primary">
                                               $
                                               {row.price.toLocaleString(
@@ -559,7 +560,10 @@ export default function AdminCategoriasPage() {
                                           ),
                                         },
                                       ]}
-                                      data={products}
+                                      data={
+                                        products as unknown as (Product &
+                                          Record<string, unknown>)[]
+                                      }
                                     />
                                   )}
                                 </div>
