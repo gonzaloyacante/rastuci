@@ -56,7 +56,7 @@ export default async function PublicLayout({
     <div className="min-h-screen flex flex-col pt-16">
       <SkipLink href="#main-content">Saltar al contenido principal</SkipLink>
       <SkipLink href="#navigation">Saltar a la navegación</SkipLink>
-      <HeaderShell />
+      <HeaderShell home={home} />
       <SiteChrome home={home} contact={contact}>
         <main id="main-content" role="main" tabIndex={-1}>
           {children}

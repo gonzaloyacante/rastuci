@@ -4,21 +4,43 @@ import React from "react";
 import CartWidget from "@/components/header/CartWidget.client";
 import MobileMenuClient from "@/components/header/MobileMenu.client";
 import WishlistWidget from "@/components/header/WishlistWidget.client";
+import { type HomeSettings } from "@/lib/validation/home";
+import Image from "next/image";
 
 export default function HeaderShell({
   children: _children,
+  home,
 }: {
   children?: React.ReactNode;
+  home?: HomeSettings;
 }) {
+  const brand = home?.footer?.brand || "Rastuci";
+  const logoUrl = home?.footer?.logoUrl;
+
   return (
     <header className="fixed top-0 left-0 right-0 w-full z-50 surface">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="pill-icon">
-              <span className="font-bold text-sm">R</span>
-            </div>
-            <span className="text-xl font-bold text-primary">Rastuci</span>
+            {logoUrl ? (
+              <Image
+                src={logoUrl}
+                alt={brand}
+                width={120}
+                height={32}
+                className="h-8 w-auto dark:invert"
+                priority
+              />
+            ) : (
+              <>
+                <div className="pill-icon">
+                  <span className="font-bold text-sm">
+                    {brand.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-xl font-bold text-primary">{brand}</span>
+              </>
+            )}
           </Link>
 
           {/* Desktop nav */}
