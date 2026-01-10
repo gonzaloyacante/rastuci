@@ -4,10 +4,10 @@ export const ContactSettingsSchema = z.object({
   headerTitle: z.string().min(1).max(100),
   headerSubtitle: z.string().min(1).max(240),
   emails: z.array(z.string().email()).min(1).max(5),
-  phones: z.array(z.string().min(6).max(30)).min(0).max(5),
+  phones: z.array(z.string().max(30)).min(0).max(5),
   address: z.object({
-    lines: z.array(z.string().min(1).max(100)).min(1).max(3),
-    cityCountry: z.string().min(1).max(80),
+    lines: z.array(z.string().max(100)).min(1).max(3),
+    cityCountry: z.string().max(80),
   }),
   hours: z.object({
     title: z.string().min(1).max(80),
@@ -36,11 +36,11 @@ export const ContactSettingsSchema = z.object({
     .min(0)
     .max(20),
   social: z.object({
-    instagram: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
-    facebook: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
-    whatsapp: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
-    tiktok: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
-    youtube: z.object({ username: z.string().max(50), url: z.string().url() }).optional().or(z.object({ username: z.literal(""), url: z.literal("") })),
+    instagram: z.object({ username: z.string().max(50), url: z.string().max(200) }),
+    facebook: z.object({ username: z.string().max(50), url: z.string().max(200) }),
+    whatsapp: z.object({ username: z.string().max(50), url: z.string().max(200) }),
+    tiktok: z.object({ username: z.string().max(50), url: z.string().max(200) }),
+    youtube: z.object({ username: z.string().max(50), url: z.string().max(200) }),
   }),
 });
 
