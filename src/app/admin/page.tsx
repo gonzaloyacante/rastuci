@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
 
         // Si hay usuario válido, redirigir al dashboard
         if (data?.user) {
-          router.push("/admin/dashboard");
+          router.push("/admin/panel");
           return;
         }
 

@@ -57,6 +57,9 @@ export function getAdminTitle(key: AdminPageKey): string {
 export const ADMIN_ROUTE_TITLES: Record<string, string> = {
   "/admin": ADMIN_PAGE_TITLES.dashboard,
   "/admin/dashboard": ADMIN_PAGE_TITLES.dashboard,
+  "/admin/panel": ADMIN_PAGE_TITLES.dashboard,
+  "/admin/tracking": ADMIN_PAGE_TITLES.tracking,
+  "/admin/seguimiento": ADMIN_PAGE_TITLES.tracking,
   "/admin/productos": ADMIN_PAGE_TITLES.products,
   "/admin/productos/nuevo": ADMIN_PAGE_TITLES["products-new"],
   "/admin/pedidos": ADMIN_PAGE_TITLES.orders,
@@ -68,7 +71,6 @@ export const ADMIN_ROUTE_TITLES: Record<string, string> = {
   "/admin/cms": ADMIN_PAGE_TITLES.cms,
   "/admin/home": ADMIN_PAGE_TITLES.home,
   "/admin/logistica": ADMIN_PAGE_TITLES.logistics,
-  "/admin/tracking": ADMIN_PAGE_TITLES.tracking,
   "/admin/shipping-analytics": ADMIN_PAGE_TITLES["shipping-analytics"],
   "/admin/sucursales-ca": ADMIN_PAGE_TITLES["sucursales-ca"],
   "/admin/soporte": ADMIN_PAGE_TITLES.support,

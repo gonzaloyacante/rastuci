@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: "/checkout",
+    canonical: "/finalizar-compra",
   },
   robots: {
     index: false, // No indexar página de checkout por privacidad

@@ -2,8 +2,11 @@ import { useDocumentTitle } from "@/hooks";
 
 // Map of admin pages and their titles
 const pageTitles = {
-  "/admin": "Iniciar Sesi\u00f3n",
+  "/admin": "Iniciar Sesión",
   "/admin/dashboard": "Dashboard",
+  "/admin/panel": "Dashboard",
+  "/admin/tracking": "Seguimiento de Envíos",
+  "/admin/seguimiento": "Seguimiento de Envíos",
   "/admin/productos": "Productos",
   "/admin/productos/nuevo": "Nuevo Producto",
   "/admin/productos/edit": "Editar Producto",
@@ -21,7 +24,6 @@ const pageTitles = {
   "/admin/cms": "Gestión de Contenido",
   "/admin/home": "Página de Inicio",
   "/admin/logistica": "Logística",
-  "/admin/tracking": "Seguimiento de Envíos",
   "/admin/shipping-analytics": "Analíticas de Envío",
   "/admin/sucursales-ca": "Sucursales Correo Argentino",
   "/admin/soporte": "Soporte",

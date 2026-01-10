@@ -82,7 +82,7 @@ export async function proxy(request: NextRequest) {
 
   // Si la ruta es /admin y el usuario ya está autenticado, redirigir al dashboard
   if (session && pathname === "/admin") {
-    const res = NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    const res = NextResponse.redirect(new URL("/admin/panel", request.url));
     res.headers.set("x-request-id", reqId);
     res.headers.set("x-auth-debug", debugAuthHeader);
     return res;

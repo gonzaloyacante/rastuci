@@ -17,7 +17,7 @@ export function useAdminAuth() {
 
     // Si estamos en la página de login y hay sesión, redirigir al dashboard
     if (pathname === "/admin" && session?.user?.isAdmin) {
-      router.push("/admin/dashboard");
+      router.push("/admin/panel");
       return;
     }
 

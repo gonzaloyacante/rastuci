@@ -57,6 +57,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       // Rutas Admin (Español -> Inglés)
+      { source: "/admin/panel", destination: "/admin/dashboard" },
+      { source: "/admin/seguimiento", destination: "/admin/tracking" },
       { source: "/admin/categorias", destination: "/admin/categories" },
       {
         source: "/admin/categorias/nueva",
@@ -114,6 +116,9 @@ const nextConfig: NextConfig = {
 
       { source: "/productos", destination: "/products" },
       { source: "/productos/:path*", destination: "/products/:path*" },
+
+      { source: "/finalizar-compra", destination: "/checkout" },
+      { source: "/finalizar-compra/:path*", destination: "/checkout/:path*" },
     ];
   },
   poweredByHeader: false,

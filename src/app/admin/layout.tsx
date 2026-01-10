@@ -26,7 +26,7 @@ import React, { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const NAV_LINKS = [
-  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutGrid },
+  { name: "Dashboard", href: "/admin/panel", icon: LayoutGrid },
   { name: "Productos", href: "/admin/productos", icon: ShoppingBag },
   { name: "Categorías", href: "/admin/categorias", icon: Tag },
   { name: "Pedidos", href: "/admin/pedidos", icon: ClipboardList },
@@ -35,7 +35,7 @@ const NAV_LINKS = [
     href: "/admin/pedidos/pendientes",
     icon: Clock,
   },
-  { name: "Tracking", href: "/admin/tracking", icon: MapPin },
+  { name: "Tracking", href: "/admin/seguimiento", icon: MapPin },
   { name: "Logística", href: "/admin/logistica", icon: Terminal },
   { name: "Métricas", href: "/admin/metricas", icon: BarChart3 },
   { name: "Usuarios", href: "/admin/usuarios", icon: User },

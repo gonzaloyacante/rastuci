@@ -185,22 +185,22 @@ export async function POST(req: NextRequest) {
       items: validatedItems,
       payer: customer
         ? {
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone ? { number: customer.phone } : undefined,
-            address: customer.address
-              ? {
-                  street_name: customer.address,
-                  zip_code: customer.postalCode,
-                  city: customer.city,
-                }
-              : undefined,
-          }
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone ? { number: customer.phone } : undefined,
+          address: customer.address
+            ? {
+              street_name: customer.address,
+              zip_code: customer.postalCode,
+              city: customer.city,
+            }
+            : undefined,
+        }
         : undefined,
       back_urls: {
-        success: `${origin}/checkout/success`,
-        failure: `${origin}/checkout/failure`,
-        pending: `${origin}/checkout/pending`,
+        success: `${origin}/finalizar-compra/success`,
+        failure: `${origin}/finalizar-compra/failure`,
+        pending: `${origin}/finalizar-compra/pending`,
       },
       // "all" = redirige automáticamente en TODOS los casos (approved, pending, rejected)
       auto_return: "all",

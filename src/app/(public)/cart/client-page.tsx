@@ -402,7 +402,7 @@ export default function CartPageClient() {
         return;
       }
 
-      router.push("/checkout");
+      router.push("/finalizar-compra");
     } catch (error) {
       logger.error("Error during checkout:", { error: error });
       toast.error("Error al proceder al checkout");
