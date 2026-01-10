@@ -63,7 +63,10 @@ export default function ContactForm({ initial }: Props) {
     update("emails", newEmails);
   };
   const removeEmail = (index: number) => {
-    update("emails", (values.emails || []).filter((_, i) => i !== index));
+    update(
+      "emails",
+      (values.emails || []).filter((_, i) => i !== index)
+    );
     toast.success("Email eliminado de la lista");
   };
 
@@ -77,7 +80,10 @@ export default function ContactForm({ initial }: Props) {
     update("phones", newPhones);
   };
   const removePhone = (index: number) => {
-    update("phones", (values.phones || []).filter((_, i) => i !== index));
+    update(
+      "phones",
+      (values.phones || []).filter((_, i) => i !== index)
+    );
     toast.success("Teléfono eliminado de la lista");
   };
 
@@ -87,7 +93,10 @@ export default function ContactForm({ initial }: Props) {
     const parsed = ContactSettingsSchema.safeParse(values);
     if (!parsed.success) {
       console.error("Validation errors:", parsed.error.flatten());
-      toast.error("Por favor revisa los campos inválidos: " + parsed.error.issues.map(i => i.message).join(", "));
+      toast.error(
+        "Por favor revisa los campos inválidos: " +
+          parsed.error.issues.map((i) => i.message).join(", ")
+      );
       return;
     }
     setSaving(true);
@@ -104,7 +113,9 @@ export default function ContactForm({ initial }: Props) {
       toast.success("Configuración de contacto guardada");
     } catch (err: unknown) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : "Error al guardar configuración");
+      toast.error(
+        err instanceof Error ? err.message : "Error al guardar configuración"
+      );
     } finally {
       setSaving(false);
     }
@@ -233,8 +244,8 @@ export default function ContactForm({ initial }: Props) {
               }
             />
             <Input
-              label="Ciudad, País"
-              placeholder="Buenos Aires, Argentina"
+              label="Ciudad y Provincia (Visible público)"
+              placeholder="Ej: La Plata, Buenos Aires"
               value={values.address?.cityCountry || ""}
               onChange={(e) =>
                 update("address", {
@@ -260,7 +271,7 @@ export default function ContactForm({ initial }: Props) {
                   title: e.target.value,
                   weekdays: values.hours?.weekdays || "",
                   saturday: values.hours?.saturday || "",
-                  sunday: values.hours?.sunday || ""
+                  sunday: values.hours?.sunday || "",
                 })
               }
             />
@@ -273,7 +284,7 @@ export default function ContactForm({ initial }: Props) {
                   title: values.hours?.title || "",
                   weekdays: e.target.value,
                   saturday: values.hours?.saturday || "",
-                  sunday: values.hours?.sunday || ""
+                  sunday: values.hours?.sunday || "",
                 })
               }
             />
@@ -286,7 +297,7 @@ export default function ContactForm({ initial }: Props) {
                   title: values.hours?.title || "",
                   weekdays: values.hours?.weekdays || "",
                   saturday: e.target.value,
-                  sunday: values.hours?.sunday || ""
+                  sunday: values.hours?.sunday || "",
                 })
               }
             />
@@ -299,7 +310,7 @@ export default function ContactForm({ initial }: Props) {
                   title: values.hours?.title || "",
                   weekdays: values.hours?.weekdays || "",
                   saturday: values.hours?.saturday || "",
-                  sunday: e.target.value
+                  sunday: e.target.value,
                 })
               }
             />
@@ -367,14 +378,20 @@ export default function ContactForm({ initial }: Props) {
             label="Mensaje de éxito"
             value={values.form?.successMessage || ""}
             onChange={(e) =>
-              update("form", { ...values.form!, successMessage: e.target.value })
+              update("form", {
+                ...values.form!,
+                successMessage: e.target.value,
+              })
             }
           />
           <Input
             label="Enviar otro mensaje"
             value={values.form?.sendAnotherLabel || ""}
             onChange={(e) =>
-              update("form", { ...values.form!, sendAnotherLabel: e.target.value })
+              update("form", {
+                ...values.form!,
+                sendAnotherLabel: e.target.value,
+              })
             }
           />
         </div>
