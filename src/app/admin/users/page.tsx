@@ -89,7 +89,7 @@ export default function UsuariosPage() {
           {
             label: "Crear Usuario",
             onClick: () => {
-              window.location.href = "/admin/usuarios/nuevo";
+              window.location.href = "/admin/users/new";
             },
             variant: "primary",
           },
@@ -131,7 +131,7 @@ export default function UsuariosPage() {
           action={{
             label: "Crear Primer Usuario",
             onClick: () => {
-              window.location.href = "/admin/usuarios/nuevo";
+              window.location.href = "/admin/users/new";
             },
             variant: "primary",
           }}
@@ -166,9 +166,8 @@ export default function UsuariosPage() {
                     <div className="mt-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <span
-                          className={`badge-${
-                            getRoleBadge(user.role).variant
-                          } text-xs`}
+                          className={`badge-${getRoleBadge(user.role).variant
+                            } text-xs`}
                         >
                           {getRoleBadge(user.role).label}
                         </span>
@@ -191,7 +190,7 @@ export default function UsuariosPage() {
                 <div className="flex space-x-2 pt-2">
                   <button
                     onClick={() => {
-                      window.location.href = `/admin/usuarios/${user.id}/editar`;
+                      window.location.href = `/admin/users/${user.id}/edit`;
                     }}
                     className="btn-secondary flex-1 text-sm cursor-pointer"
                   >
@@ -255,9 +254,8 @@ export default function UsuariosPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`badge-${
-                          getRoleBadge(user.role).variant
-                        } text-xs`}
+                        className={`badge-${getRoleBadge(user.role).variant
+                          } text-xs`}
                       >
                         {getRoleBadge(user.role).label}
                       </span>
@@ -288,7 +286,7 @@ export default function UsuariosPage() {
                           size="sm"
                           className="text-xs flex items-center gap-1"
                           onClick={() => {
-                            window.location.href = `/admin/usuarios/${user.id}/editar`;
+                            window.location.href = `/admin/users/${user.id}/edit`;
                           }}
                         >
                           <Edit3 className="w-3.5 h-3.5" />

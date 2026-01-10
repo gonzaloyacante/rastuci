@@ -32,7 +32,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
       try {
         setLoading(true);
         const response = await fetch(`/api/users/${user.id}`, {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
@@ -45,7 +45,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
         }
 
         toast.success("Usuario actualizado correctamente");
-        router.push("/admin/usuarios");
+        router.push("/admin/users");
         router.refresh();
       } catch (error) {
         logger.error("Error updating user:", { error });
@@ -63,7 +63,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
   );
 
   const handleCancel = useCallback(() => {
-    router.push("/admin/usuarios");
+    router.push("/admin/users");
   }, [router]);
 
   return (

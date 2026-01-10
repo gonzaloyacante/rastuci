@@ -85,7 +85,12 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       const data = await response.json();
 
       if (data.success) {
-        setUsers(data.data.data);
+        // Map isAdmin to role since API returns isAdmin but we use role in UI
+        const mappedUsers = data.data.data.map((user: { isAdmin: boolean; role?: string } & Record<string, unknown>) => ({
+          ...user,
+          role: user.role || (user.isAdmin ? "ADMIN" : "USER"),
+        }));
+        setUsers(mappedUsers);
         setTotalPages(data.data.totalPages);
         setCurrentPage(data.data.page);
       } else {
@@ -145,7 +150,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
   ): Promise<boolean> => {
     try {
       const response = await fetch(`/api/users/${userId}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
@@ -161,10 +166,10 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
           prevUsers.map((user) =>
             user.id === userId
               ? {
-                  ...user,
-                  ...userData,
-                  updatedAt: new Date().toISOString(),
-                }
+                ...user,
+                ...userData,
+                updatedAt: new Date().toISOString(),
+              }
               : user
           )
         );

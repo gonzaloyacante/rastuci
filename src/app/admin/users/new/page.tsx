@@ -33,7 +33,7 @@ export default function CreateUserPage() {
       const result = await response.json();
       if (result.success) {
         // Redirigir a la lista de usuarios
-        window.location.href = "/admin/usuarios";
+        window.location.href = "/admin/users";
       } else {
         throw new Error(result.error || "Error desconocido");
       }
@@ -44,7 +44,7 @@ export default function CreateUserPage() {
   };
 
   const handleCancel = () => {
-    window.location.href = "/admin/usuarios";
+    window.location.href = "/admin/users";
   };
 
   return (
