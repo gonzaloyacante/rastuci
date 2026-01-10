@@ -379,6 +379,9 @@ model products {
   @@index([onSale])
   @@index([price])
   @@index([stock])
+  @@index([colors], type: Gin)
+  @@index([sizes], type: Gin)
+  @@index([features], type: Gin)
 }
 
 model product_variants {
