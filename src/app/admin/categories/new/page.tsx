@@ -3,6 +3,7 @@
 import { AdminPageHeader } from "@/components/admin";
 import { CategoryForm } from "@/components/forms";
 import { logger } from "@/lib/logger";
+import { toast } from "react-hot-toast";
 
 export default function CreateCategoryPage() {
   const handleSubmit = async (data: {
@@ -32,8 +33,10 @@ export default function CreateCategoryPage() {
       }
 
       window.location.href = "/admin/categorias";
+      toast.success("Categoría creada exitosamente");
     } catch (error) {
       logger.error("Error:", { error: error });
+      toast.error("Error al crear categoría");
       throw error;
     }
   };

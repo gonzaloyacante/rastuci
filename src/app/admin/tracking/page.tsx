@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { useDocumentTitle } from "@/hooks";
-import { useToast } from "@/hooks/use-toast";
+// import { useToast } from "@/hooks/use-toast"; // Replaced by react-hot-toast
+import toast from "react-hot-toast";
 import {
   AlertTriangle,
   CheckCircle,
@@ -429,7 +430,7 @@ export default function AdminTrackingDashboard() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [alertFilter, setAlertFilter] = useState("all");
-  const { toast } = useToast();
+  // const { toast } = useToast();
 
   const loadTrackingData = useCallback(async () => {
     try {
@@ -440,15 +441,11 @@ export default function AdminTrackingDashboard() {
       setTrackingData(data.trackings || []);
       setStats(data.stats || null);
     } catch {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los datos",
-        variant: "destructive",
-      });
+      toast.error("No se pudieron cargar los datos");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     loadTrackingData();
@@ -459,16 +456,9 @@ export default function AdminTrackingDashboard() {
     try {
       await fetch("/api/admin/tracking/refresh", { method: "POST" });
       await loadTrackingData();
-      toast({
-        title: "Actualizado",
-        description: "Datos actualizados correctamente",
-      });
+      toast.success("Datos actualizados correctamente");
     } catch {
-      toast({
-        title: "Error",
-        description: "Error al actualizar",
-        variant: "destructive",
-      });
+      toast.error("Error al actualizar");
     } finally {
       setRefreshing(false);
     }
@@ -485,16 +475,11 @@ export default function AdminTrackingDashboard() {
       a.download = `tracking-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
-      toast({
-        title: "Exportado",
-        description: "Datos exportados correctamente",
-      });
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Datos exportados correctamente");
     } catch {
-      toast({
-        title: "Error",
-        description: "Error al exportar",
-        variant: "destructive",
-      });
+      toast.error("Error al exportar");
     }
   };
 
@@ -508,16 +493,11 @@ export default function AdminTrackingDashboard() {
       });
       await loadTrackingData();
       setSelectedItems([]);
-      toast({
-        title: "Actualizado",
-        description: `${selectedItems.length} envíos actualizados`,
-      });
+      await loadTrackingData();
+      setSelectedItems([]);
+      toast.success(`${selectedItems.length} envíos actualizados`);
     } catch {
-      toast({
-        title: "Error",
-        description: "Error al actualizar",
-        variant: "destructive",
-      });
+      toast.error("Error al actualizar");
     }
   };
 

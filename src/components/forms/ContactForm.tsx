@@ -64,6 +64,7 @@ export default function ContactForm({ initial }: Props) {
   };
   const removeEmail = (index: number) => {
     update("emails", (values.emails || []).filter((_, i) => i !== index));
+    toast.success("Email eliminado de la lista");
   };
 
   // Phone handlers
@@ -77,6 +78,7 @@ export default function ContactForm({ initial }: Props) {
   };
   const removePhone = (index: number) => {
     update("phones", (values.phones || []).filter((_, i) => i !== index));
+    toast.success("Teléfono eliminado de la lista");
   };
 
   // Form submit handler

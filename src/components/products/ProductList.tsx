@@ -9,7 +9,6 @@ import {
 import { StatCardData, StatsGrid } from "@/components/admin/AdminCards";
 import { ProductsAdminSkeleton } from "@/components/admin/skeletons";
 import ProductCard from "@/components/products/ProductCard";
-import { useAlert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
@@ -38,6 +37,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { toast } from "react-hot-toast";
 
 type ViewMode = "grid" | "list";
 type SortField = "name" | "price" | "stock" | "createdAt";
@@ -71,7 +71,6 @@ export default function ProductList() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   // UI helpers
-  const { showAlert, Alert: AlertComponent } = useAlert();
   const { confirm: confirmDialog, ConfirmDialog } = useConfirmDialog();
 
   // Datos con scroll infinito
@@ -125,21 +124,15 @@ export default function ProductList() {
       if (response.ok) {
         mutate();
         mutateStats();
+        toast.success("Producto eliminado correctamente");
       } else {
         const errorData = await response.json();
-        showAlert({
-          title: "Error",
-          message: errorData.message || "Error al eliminar el producto",
-          variant: "error",
-        });
+        const msg = errorData.message || "Error al eliminar el producto";
+        toast.error(msg);
       }
     } catch (err) {
       logger.error("Error deleting product", { error: err });
-      showAlert({
-        title: "Error de conexión",
-        message: "No se pudo conectar al servidor",
-        variant: "error",
-      });
+      toast.error("No se pudo conectar al servidor");
     }
   };
 
@@ -373,7 +366,7 @@ export default function ProductList() {
         </>
       )}
 
-      {AlertComponent}
+
       {ConfirmDialog}
     </div>
   );

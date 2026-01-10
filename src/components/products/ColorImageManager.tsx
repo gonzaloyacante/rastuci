@@ -89,6 +89,7 @@ export default function ColorImageManager({
         ...colorImages,
         [color]: updated,
       });
+      toast.success("Imagen de color eliminada");
     },
     [colorImages, onColorImagesChange]
   );

@@ -204,6 +204,7 @@ export default function ImageUploadZone({
       .map((img) => img.url)
       .filter(Boolean) as string[];
     onImagesChange(updatedUrls);
+    toast.success("Imagen eliminada");
   };
 
   const retryUpload = async (index: number) => {
@@ -333,16 +334,14 @@ export default function ImageUploadZone({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
-            isDragging
+          className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${isDragging
               ? "border-primary bg-primary/5 scale-105"
               : "border-muted hover:border-primary"
-          }`}
+            }`}
         >
           <Upload
-            className={`mx-auto h-12 w-12 mb-4 transition-colors ${
-              isDragging ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`mx-auto h-12 w-12 mb-4 transition-colors ${isDragging ? "text-primary" : "text-muted-foreground"
+              }`}
           />
           <div className="text-lg font-medium mb-2">
             {isDragging ? "Suelta las imágenes aquí" : "Subir Imágenes"}

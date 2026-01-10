@@ -6,6 +6,7 @@ import { ImageUploader } from "@/components/ui/ImageUploader";
 import { Button } from "@/components/ui/Button";
 import { IconPicker } from "@/components/ui/IconPicker";
 import * as Icons from "lucide-react";
+import { toast } from "react-hot-toast";
 
 type Props = {
   initial?: HomeSettings;
@@ -91,6 +92,7 @@ export default function HomeForm({ initial }: Props) {
 
   const removeBenefitItem = (id: string) => {
     setBenefitItems(items => items.filter(item => item.id !== id));
+    toast.success("Beneficio eliminado");
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -111,8 +113,11 @@ export default function HomeForm({ initial }: Props) {
       const json = await res.json();
       if (!json.success) { throw new Error(json.error?.message || "Error al guardar"); }
       setMessage("Guardado correctamente");
+      toast.success("Configuración del Home guardada");
     } catch (err: unknown) {
-      setMessage(err instanceof Error ? err.message : "Error inesperado");
+      const msg = err instanceof Error ? err.message : "Error inesperado";
+      setMessage(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }

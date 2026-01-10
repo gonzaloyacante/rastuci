@@ -21,6 +21,7 @@ import {
   Search,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 // PROVINCIAS imported from @/lib/constants
 
@@ -113,12 +114,16 @@ export default function SucursalesCAPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Sincronización exitosa
+        toast.success("Sucursales sincronizadas correctamente");
       } else {
-        setError(data.error || "Error al sincronizar");
+        const msg = data.error || "Error al sincronizar";
+        setError(msg);
+        toast.error(msg);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
+      const msg = err instanceof Error ? err.message : "Error desconocido";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSyncing(false);
     }
@@ -164,7 +169,9 @@ export default function SucursalesCAPage() {
     link.href = url;
     link.download = `sucursales-ca-${selectedProvince || "todas"}-${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
+    link.click();
     URL.revokeObjectURL(url);
+    toast.success("Exportación completada");
   };
 
   return (

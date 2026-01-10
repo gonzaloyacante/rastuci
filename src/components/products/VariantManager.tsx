@@ -7,23 +7,22 @@ import {
   Trash2,
   Plus,
   AlertCircle,
-  Info,
   Calculator,
   Download,
   Check,
-  HelpCircle,
 } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
-import { getColorHex } from "@/utils/colors"; // Assuming this utility exists, otherwise we'll handle it
+import { useState, useMemo } from "react";
+import { getColorHex } from "@/utils/colors";
 import { ProductVariant } from "@/types";
 import { sortVariantsBySize } from "@/utils/sizes";
 import { HelpTooltip } from "./ProductFormComponents";
+import { toast } from "react-hot-toast";
 
 interface VariantManagerProps {
   variants: ProductVariant[];
   onChange: (variants: ProductVariant[]) => void;
-  availableColors: string[]; // Colors defined in the parent form
-  availableSizes: string[]; // Sizes defined in the parent form
+  availableColors: string[];
+  availableSizes: string[];
 }
 
 export default function VariantManager({
@@ -32,19 +31,17 @@ export default function VariantManager({
   availableColors,
   availableSizes,
 }: VariantManagerProps) {
-  // Batch Add State - now driven by selection of existing lists to avoid typos
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [stockInput, setStockInput] = useState<number | "">("");
-
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-generate variants from available colors/sizes
   const generateCombinations = () => {
     if (availableColors.length === 0 || availableSizes.length === 0) {
       setError(
         "Debes definir colores y talles primero en las secciones anteriores."
       );
+      toast.error("Debes definir colores y talles primero");
       return;
     }
 
@@ -53,18 +50,17 @@ export default function VariantManager({
 
     availableColors.forEach((color) => {
       availableSizes.forEach((size) => {
-        // Check if exists
         const exists = newVariants.some(
           (v) => v.color === color && v.size === size
         );
 
         if (!exists) {
           newVariants.push({
-            id: `temp-${Date.now()}-${Math.random()}`, // Temp ID
-            productId: "", // Placeholder
+            id: `temp-${Date.now()}-${Math.random()}`,
+            productId: "",
             color,
             size,
-            stock: 0, // Default stock 0
+            stock: 0,
             sku: `${color.substring(0, 3).toUpperCase()}-${size}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
           });
           addedCount++;
@@ -75,8 +71,10 @@ export default function VariantManager({
     if (addedCount > 0) {
       onChange(sortVariantsBySize(newVariants));
       setError(null);
+      toast.success(`${addedCount} combinaciones generadas`);
     } else {
       setError("Todas las combinaciones posibles ya existen.");
+      toast.error("Todas las combinaciones posibles ya existen");
     }
   };
 
@@ -97,6 +95,7 @@ export default function VariantManager({
 
     if (exists) {
       setError(`La variante ${selectedColor} - ${selectedSize} ya existe`);
+      toast.error("Esta variante ya existe");
       return;
     }
 
@@ -111,12 +110,14 @@ export default function VariantManager({
 
     onChange(sortVariantsBySize([...variants, newVariant]));
     setStockInput("");
+    toast.success("Variante agregada");
   };
 
   const handleRemove = (index: number) => {
     const updated = [...variants];
     updated.splice(index, 1);
     onChange(updated);
+    toast.success("Variante eliminada");
   };
 
   const handleUpdateStock = (index: number, val: string) => {
@@ -134,13 +135,9 @@ export default function VariantManager({
     onChange(updated);
   };
 
-  // Sync Check: Warnings if variants use colors/sizes not in the main lists
   const syncWarnings = useMemo(() => {
     const warnings: string[] = [];
-    const usedColors = new Set(variants.map((v) => v.color));
-    const usedSizes = new Set(variants.map((v) => v.size));
 
-    // Check for variants with deleted colors/sizes
     variants.forEach((v) => {
       if (!availableColors.includes(v.color)) {
         warnings.push(
@@ -183,7 +180,6 @@ export default function VariantManager({
         </Button>
       </div>
 
-      {/* Manual Add */}
       <div className="p-4 border rounded-lg bg-surface-secondary/20">
         <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
           <Plus className="w-4 h-4" /> Agregar Variante Manual
@@ -237,7 +233,6 @@ export default function VariantManager({
         )}
       </div>
 
-      {/* Warnings */}
       {syncWarnings.length > 0 && (
         <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
@@ -254,11 +249,6 @@ export default function VariantManager({
         </div>
       )}
 
-      {/* Helper component for tooltips if not imported */}
-      {/* Ensure HelpTooltip is imported or used correctly */}
-
-      {/* List */}
-      {/* List */}
       <div className="border rounded-lg overflow-hidden shadow-sm bg-surface">
         <div className="max-h-[500px] overflow-y-auto">
           <table className="w-full text-sm table-fixed">
@@ -360,7 +350,7 @@ export default function VariantManager({
         </div>
         <div className="text-right">
           <span className="block text-2xl font-bold text-success">
-            {variants.reduce((acc, v) => acc + v.stock, 0)}
+            {variants.reduce((acc, v) => acc + (v.stock || 0), 0)}
           </span>
           <span className="text-xs text-success/80">
             Unidades totales (Suma de variantes)

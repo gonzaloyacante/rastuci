@@ -16,7 +16,8 @@ import CategoryIcon from "@/components/ui/CategoryIcon";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
-import { useToast } from "@/components/ui/Toast";
+// import { useToast } from "@/components/ui/Toast";
+import toast from "react-hot-toast";
 import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 import { useCategories, useDocumentTitle } from "@/hooks";
 import { logger } from "@/lib/logger";
@@ -45,7 +46,7 @@ export default function AdminCategoriasPage() {
     new Set()
   );
   const router = useRouter();
-  const { show } = useToast();
+  // const { show } = useToast();
   const { confirm: confirmDialog, ConfirmDialog } = useConfirmDialog();
 
   const filteredCategories = (categories || []).filter(
@@ -109,11 +110,7 @@ export default function AdminCategoriasPage() {
         method: "DELETE",
       });
       if (response.ok) {
-        show({
-          type: "success",
-          title: "Categorías",
-          message: "Categoría eliminada",
-        });
+        toast.success("Categoría eliminada");
         mutate?.();
       } else {
         const errorData = await response.json().catch(() => ({}) as unknown);
@@ -128,15 +125,11 @@ export default function AdminCategoriasPage() {
             errorMessage = possible;
           }
         }
-        show({ type: "error", title: "Categorías", message: errorMessage });
+        toast.error(errorMessage);
       }
     } catch (err) {
       logger.error("Error deleting category", { error: err });
-      show({
-        type: "error",
-        title: "Categorías",
-        message: "Error al eliminar la categoría",
-      });
+      toast.error("Error al eliminar la categoría");
     }
   };
 
@@ -475,7 +468,7 @@ export default function AdminCategoriasPage() {
                                           render: (_: unknown, row: any) => (
                                             <div className="flex justify-center gap-1">
                                               {row.colors &&
-                                              row.colors.length > 0 ? (
+                                                row.colors.length > 0 ? (
                                                 row.colors
                                                   .slice(0, 3)
                                                   .map(
@@ -487,7 +480,7 @@ export default function AdminCategoriasPage() {
                                                         COMMON_COLORS.find(
                                                           (c) =>
                                                             c.name.toLowerCase() ===
-                                                              color.toLowerCase() ||
+                                                            color.toLowerCase() ||
                                                             color
                                                               .toLowerCase()
                                                               .includes(

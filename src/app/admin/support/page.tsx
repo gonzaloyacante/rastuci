@@ -29,6 +29,7 @@ import {
   User,
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 // ============================================================================
 // Types
@@ -422,8 +423,9 @@ export default function SupportPage() {
       });
       setNewMessage("");
       fetchData();
+      toast.success("Mensaje enviado");
     } catch {
-      /* ignore */
+      toast.error("Error al enviar mensaje");
     }
   };
 

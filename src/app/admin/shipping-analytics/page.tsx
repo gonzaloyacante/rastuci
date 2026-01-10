@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Download, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 // ============================================================================
 // Types
@@ -396,7 +397,7 @@ export default function ShippingAnalytics() {
       const result = await response.json();
       if (result.success) setData(result.data);
     } catch {
-      /* silent */
+      toast.error("Error al cargar analíticas");
     } finally {
       setLoading(false);
     }
@@ -426,6 +427,7 @@ export default function ShippingAnalytics() {
       );
     }
     downloadCSV(csvData, `shipping-analytics-${startDate}-${endDate}.csv`);
+    toast.success("Exportación completada");
   };
 
   if (loading)

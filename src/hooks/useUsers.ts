@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-// import { useNotifications } from "@/context/NotificationContext";
+import { toast } from "react-hot-toast";
 
 export interface User {
   id: string;
@@ -43,7 +43,6 @@ interface UseUsersReturn {
 }
 
 export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
-  // const { success, error: notifyError } = useNotifications();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +99,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
       setError(_errorMessage);
-      // notifyError(_errorMessage);
+      toast.error(_errorMessage);
     } finally {
       setLoading(false);
     }
@@ -131,7 +130,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       if (data.success) {
         const newUser = data.data;
         setUsers((prevUsers) => [newUser, ...prevUsers]);
-        // success("Usuario creado correctamente");
+        toast.success("Usuario creado correctamente");
         return newUser;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -139,7 +138,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (error) {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
-      // notifyError(_errorMessage);
+      toast.error(_errorMessage);
       return null;
     }
   };
@@ -173,7 +172,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
               : user
           )
         );
-        // success("Usuario actualizado correctamente");
+        toast.success("Usuario actualizado correctamente");
         return true;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -181,7 +180,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (error) {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
-      // notifyError(_errorMessage);
+      toast.error(_errorMessage);
       return false;
     }
   };
@@ -200,7 +199,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
 
       if (data.success) {
         setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
-        // success("Usuario eliminado correctamente");
+        toast.success("Usuario eliminado correctamente");
         return true;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -208,7 +207,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (error) {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
-      // notifyError(_errorMessage);
+      toast.error(_errorMessage);
       return false;
     }
   };
@@ -231,7 +230,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (error) {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
-      // notifyError(_errorMessage);
+      toast.error(_errorMessage);
       return null;
     }
   };

@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import { SerializedCategory } from "@/types";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 export default function CategoryEditPage() {
   const params = useParams();
@@ -63,8 +64,10 @@ export default function CategoryEditPage() {
       }
 
       router.push("/admin/categorias");
+      toast.success("Categoría actualizada correctamente");
     } catch (error) {
       logger.error("Error:", { error });
+      toast.error("Error al actualizar la categoría");
       throw error;
     }
   };

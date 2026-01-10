@@ -61,6 +61,10 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         nuevo: "Nuevo",
         editar: "Editar",
         ver: "Ver",
+        seguimiento: "Seguimiento",
+        panel: "Dashboard",
+        "finalizar-compra": "Finalizar Compra",
+        carrito: "Carrito",
       };
 
       if (specialLabels[segment.toLowerCase()]) {
@@ -140,9 +144,8 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
               </Link>
             ) : (
               <span
-                className={`text-sm font-medium ${
-                  item.isActive ? "text-primary" : "text-primary"
-                }`}
+                className={`text-sm font-medium ${item.isActive ? "text-primary" : "text-primary"
+                  }`}
                 aria-current={item.isActive ? "page" : undefined}
               >
                 {item.icon && <span className="mr-1">{item.icon}</span>}
@@ -222,11 +225,11 @@ export const breadcrumbPatterns = {
     createBreadcrumbItem("Productos", "/productos"),
     ...(categoryName
       ? [
-          createBreadcrumbItem(
-            categoryName,
-            `/productos?categoria=${categoryName}`
-          ),
-        ]
+        createBreadcrumbItem(
+          categoryName,
+          `/productos?categoria=${categoryName}`
+        ),
+      ]
       : []),
     createBreadcrumbItem(productName),
   ],
@@ -284,7 +287,7 @@ export const BreadcrumbsWithSchema: React.FC<BreadcrumbsProps> = (props) => {
       <Breadcrumbs {...props} />
       <script
         type="application/ld+json"
-         
+
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData),
         }}
