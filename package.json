@@ -42,6 +42,7 @@
     "prisma:generate": "npx prisma generate",
     "test:shipping": "tsx scripts/test-shipping-options.ts",
     "prepare": "husky",
+    "fix-hooks": "chmod +x .husky/* && chmod +x .husky/_/*",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
