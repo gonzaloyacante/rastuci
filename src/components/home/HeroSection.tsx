@@ -58,11 +58,11 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
 
           {/* Logo Principal */}
           <div className="mb-8 relative w-auto h-24 md:h-32 lg:h-40">
-            {/* Using width/height auto style requires strict width/height ratio or a wrapper. 
-                 Since the logo is central and vital, usage of simple width/height with 'w-auto' in Next/Image can be tricky.
-                 Simpler approach: Use specific width/height but keep CSS classes for responsive height.
-                 Or better: Use standard img for logo if SVG to avoid complexity OR use Next/Image with 'style={{ width: 'auto', height: '100%' }}' inside the relative responsive wrapper.
-              */}
+            <h1 className="sr-only">
+              {home?.heroTitle ||
+                defaultHomeSettings.heroTitle ||
+                "Rastuci - Ropa Infantil de Calidad"}
+            </h1>
             <Image
               src={logoSrc}
               alt="Rastući"

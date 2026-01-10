@@ -1,11 +1,34 @@
+import { prisma } from "@/lib/prisma";
+import { defaultHomeSettings, HomeSettingsSchema } from "@/lib/validation/home";
 import { MetadataRoute } from "next";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+    // Fetch dynamic settings
+    let brandName = "Rastuci";
+    let description =
+        "Discover premium fashion and lifestyle products at Rastuci. Shop the latest trends with fast shipping and excellent customer service.";
+
+    try {
+        const settings = await prisma.settings.findUnique({
+            where: { key: "home" },
+        });
+
+        if (settings?.value) {
+            const parsed = HomeSettingsSchema.safeParse(settings.value);
+            if (parsed.success) {
+                brandName = parsed.data.footer?.brand || brandName;
+                description = parsed.data.heroSubtitle || description;
+            }
+        }
+    } catch (error) {
+        // Fallback to defaults
+        console.error("Failed to fetch manifest settings", error);
+    }
+
     return {
-        name: "Rastuci - Premium Fashion & Lifestyle",
-        short_name: "Rastuci",
-        description:
-            "Discover premium fashion and lifestyle products at Rastuci. Shop the latest trends with fast shipping and excellent customer service.",
+        name: `${brandName} - Premium Fashion & Lifestyle`,
+        short_name: brandName,
+        description,
         start_url: "/",
         display: "standalone",
         background_color: "#ffffff",
