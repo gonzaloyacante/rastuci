@@ -89,7 +89,7 @@ export default function UsuariosPage() {
           {
             label: "Crear Usuario",
             onClick: () => {
-              window.location.href = "/admin/users/new";
+              window.location.href = "/admin/usuarios/nuevo";
             },
             variant: "primary",
           },
@@ -131,7 +131,7 @@ export default function UsuariosPage() {
           action={{
             label: "Crear Primer Usuario",
             onClick: () => {
-              window.location.href = "/admin/users/new";
+              window.location.href = "/admin/usuarios/nuevo";
             },
             variant: "primary",
           }}
@@ -286,7 +286,7 @@ export default function UsuariosPage() {
                           size="sm"
                           className="text-xs flex items-center gap-1"
                           onClick={() => {
-                            window.location.href = `/admin/users/${user.id}/edit`;
+                            window.location.href = `/admin/usuarios/${user.id}/editar`;
                           }}
                         >
                           <Edit3 className="w-3.5 h-3.5" />

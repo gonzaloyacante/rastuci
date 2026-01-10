@@ -45,7 +45,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
         }
 
         toast.success("Usuario actualizado correctamente");
-        router.push("/admin/users");
+        router.push("/admin/usuarios");
         router.refresh();
       } catch (error) {
         logger.error("Error updating user:", { error });
@@ -63,7 +63,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
   );
 
   const handleCancel = useCallback(() => {
-    router.push("/admin/users");
+    router.push("/admin/usuarios");
   }, [router]);
 
   return (

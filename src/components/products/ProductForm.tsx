@@ -251,10 +251,10 @@ export default function ProductForm({
       const discountPercentage =
         initialData.salePrice && initialData.price
           ? Math.round(
-              ((initialData.price - initialData.salePrice) /
-                initialData.price) *
-                100
-            )
+            ((initialData.price - initialData.salePrice) /
+              initialData.price) *
+            100
+          )
           : null;
 
       reset({
@@ -780,7 +780,7 @@ export default function ProductForm({
                           El descuento será de{" "}
                           {formatPriceARS(
                             Number(watchPrice || 0) -
-                              Number(calculatedSalePrice)
+                            Number(calculatedSalePrice)
                           )}
                         </p>
                       </>
