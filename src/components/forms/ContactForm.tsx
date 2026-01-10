@@ -12,59 +12,92 @@ import {
 
 type Props = { initial?: ContactSettings };
 
-interface EmailItem {
-  id: string;
-  value: string;
-}
-
-interface PhoneItem {
-  id: string;
-  value: string;
-}
-
 export default function ContactForm({ initial }: Props) {
   const [values, setValues] = useState<ContactSettings>(
     initial ?? defaultContactSettings
   );
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
-  // Removed secondary state arrays to prevent sync issues
-  // Direct manipulation of values state allows for single source of truth
+  // Fetch initial data if not provided
+  useEffect(() => {
+    if (initial) {
+      setValues(initial);
+    } else {
+      fetch("/api/contact")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data) setValues(data);
+        })
+        .catch((err) => {
+          console.error("Error fetching contact settings:", err);
+          toast.error("Error al cargar configuración");
+        });
+    }
+  }, [initial]);
 
+  // Generic update function for any field
+  const update = <K extends keyof ContactSettings>(
+    key: K,
+    val: ContactSettings[K]
+  ) => setValues((v) => ({ ...v, [key]: val }));
+
+  // Email handlers
   const addEmail = () => {
-    update("emails", [...values.emails, ""]);
+    update("emails", [...(values.emails || []), ""]);
   };
-
   const updateEmail = (index: number, val: string) => {
-    const newEmails = [...values.emails];
+    const newEmails = [...(values.emails || [])];
     newEmails[index] = val;
     update("emails", newEmails);
   };
-
   const removeEmail = (index: number) => {
-    update("emails", values.emails.filter((_, i) => i !== index));
+    update("emails", (values.emails || []).filter((_, i) => i !== index));
   };
 
+  // Phone handlers
   const addPhone = () => {
-    update("phones", [...values.phones, ""]);
+    update("phones", [...(values.phones || []), ""]);
   };
-
   const updatePhone = (index: number, val: string) => {
-    const newPhones = [...values.phones];
+    const newPhones = [...(values.phones || [])];
     newPhones[index] = val;
     update("phones", newPhones);
   };
-
   const removePhone = (index: number) => {
-    update("phones", values.phones.filter((_, i) => i !== index));
+    update("phones", (values.phones || []).filter((_, i) => i !== index));
   };
 
-  // ... onSubmit ...
+  // Form submit handler
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = ContactSettingsSchema.safeParse(values);
+    if (!parsed.success) {
+      toast.error("Por favor revisa los campos inválidos");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data),
+      });
+      const json = await res.json();
+      if (!json) {
+        throw new Error("Error al guardar");
+      }
+      toast.success("Configuración de contacto guardada");
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error("Error al guardar configuración");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <form onSubmit={onSubmit} className="space-y-8">
-      {/* ... Header Section ... */}
+      {/* Header Section */}
       <section className="grid md:grid-cols-2 gap-6">
         <Input
           label="Título"
@@ -78,6 +111,7 @@ export default function ContactForm({ initial }: Props) {
         />
       </section>
 
+      {/* Emails & Phones Section */}
       <section className="grid md:grid-cols-2 gap-6">
         <div>
           <h3 className="font-semibold mb-2">Emails</h3>
@@ -131,9 +165,10 @@ export default function ContactForm({ initial }: Props) {
         </div>
       </section>
 
+      {/* Address & Hours Section */}
       <section className="grid md:grid-cols-2 gap-6">
         <div>
-          <h3 className="font-semibold mb-2">Dirección</h3>
+          <h3 className="font-semibold mb-2">Dirección (Pública)</h3>
           <div className="space-y-2">
             <Input
               placeholder="Línea 1"
@@ -202,8 +237,9 @@ export default function ContactForm({ initial }: Props) {
         </div>
       </section>
 
+      {/* Form Labels Section */}
       <section>
-        <h3 className="font-semibold mb-2">Formulario</h3>
+        <h3 className="font-semibold mb-2">Formulario de Contacto</h3>
         <div className="grid md:grid-cols-2 gap-4">
           <Input
             label="Título del formulario"
@@ -274,6 +310,7 @@ export default function ContactForm({ initial }: Props) {
         </div>
       </section>
 
+      {/* Social Media Section */}
       <section>
         <h3 className="font-semibold mb-3">Redes Sociales</h3>
         <div className="space-y-4">
@@ -317,9 +354,6 @@ export default function ContactForm({ initial }: Props) {
         </div>
       </section>
 
-      {message && (
-        <p className="text-sm text-[var(--color-text-muted)]">{message}</p>
-      )}
       <Button type="submit" disabled={saving}>
         {saving ? "Guardando..." : "Guardar"}
       </Button>
