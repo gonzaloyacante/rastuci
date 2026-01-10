@@ -158,6 +158,7 @@ export async function createPreference(
     },
     // "all" = redirige en TODOS los casos (approved, pending, rejected)
     auto_return: "all",
+    statement_descriptor: "RASTUCI",
   };
 
   // Log para debugging

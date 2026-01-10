@@ -17,6 +17,8 @@ export interface OrderMetadata {
   customerPostalCode?: string;
   shippingAgencyCode?: string;
   shippingMethodId?: string;
+  shippingMethodName?: string;
+  shippingCost?: string | number;
   items: string | OrderItemInput[];
   discountPercent?: string | number;
   shipping?: string;
@@ -139,6 +141,10 @@ export class OrderService {
     const customerEmail: string | undefined =
       (metadata.customerEmail as string) || paymentPayer?.email;
 
+    // ... (rest of imports/methods until createFromMetadata)
+
+    // In createFromMetadata:
+
     // Shipping fields
     const shippingStreet =
       typeof metadata.customerAddress === "string"
@@ -160,10 +166,14 @@ export class OrderService {
       typeof metadata.shippingAgencyCode === "string"
         ? metadata.shippingAgencyCode
         : undefined;
+
+    // Fix: Prioritize shippingMethodName if available for clear display, fallback to ID
     const shippingMethodId =
-      typeof metadata.shippingMethodId === "string"
-        ? metadata.shippingMethodId
-        : undefined;
+      typeof metadata.shippingMethodName === "string"
+        ? metadata.shippingMethodName
+        : typeof metadata.shippingMethodId === "string"
+          ? metadata.shippingMethodId
+          : undefined;
 
     // Items parsing
     let metaItems: OrderItemInput[] = [];
@@ -219,15 +229,23 @@ export class OrderService {
     );
 
     // Shipping Cost Logic
-    const shippingId = metadata.shipping as string | undefined;
     let shippingCost = 0;
-    if (shippingId) {
-      const shippingMap: Record<string, { name: string; price: number }> = {
-        pickup: { name: "Retiro en tienda", price: 0 },
-        standard: { name: "Envío estándar", price: 1500 },
-        express: { name: "Envío express", price: 2500 },
-      };
-      shippingCost = shippingMap[shippingId]?.price ?? 0;
+    const shippingId = metadata.shipping as string | undefined;
+
+    // 1. Try to get explicit shipping cost from metadata (passed from checkout)
+    if (metadata.shippingCost !== undefined && metadata.shippingCost !== null) {
+      shippingCost = Number(metadata.shippingCost);
+    } else {
+      // 2. Fallback to old ID-based lookup if cost not provided
+      const shippingId = metadata.shipping as string | undefined;
+      if (shippingId) {
+        const shippingMap: Record<string, { name: string; price: number }> = {
+          pickup: { name: "Retiro en tienda", price: 0 },
+          standard: { name: "Envío estándar", price: 1500 },
+          express: { name: "Envío express", price: 2500 },
+        };
+        shippingCost = shippingMap[shippingId]?.price ?? 0;
+      }
     }
 
     const itemsTotal = orderItemsData.reduce(
@@ -246,6 +264,7 @@ export class OrderService {
         customerAddress,
         customerEmail,
         total,
+        shippingCost, // Persist shipping cost
         status: mappedStatus,
         mpPaymentId,
         mpPreferenceId: preferenceId,
@@ -255,7 +274,7 @@ export class OrderService {
         shippingProvince,
         shippingPostalCode,
         shippingAgency: shippingAgencyCode,
-        shippingMethod: shippingMethodId,
+        shippingMethod: shippingMethodId, // Saved correctly now
         updatedAt: new Date(),
         order_items: {
           create: orderItemsData.map((it) => ({

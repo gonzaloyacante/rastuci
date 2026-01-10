@@ -25,10 +25,7 @@ export const StoreSettingsSchema = z.object({
     apartment: z.string().max(10).optional(),
     city: z.string().min(1).max(100).default("Buenos Aires"),
     provinceCode: z.string().length(1).default("B"), // CA province code
-    postalCode: z
-      .string()
-      .regex(/^\d{4}$/)
-      .default("1611"),
+    postalCode: z.string().min(1).max(10).default("1611"),
   }),
   // Shipping global settings
   shipping: z

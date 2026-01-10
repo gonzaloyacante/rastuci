@@ -17,7 +17,7 @@ type OrderWithItems = Prisma.ordersGetPayload<{
   };
 }>;
 
-type OrderItem = OrderWithItems['order_items'][0];
+type OrderItem = OrderWithItems["order_items"][0];
 
 // Map a Prisma order (with nested items->product->category) to the API Order DTO
 export function mapOrderToDTO(order: OrderWithItems): Order {
@@ -26,6 +26,7 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
     customerAddress: order.customerAddress ?? undefined,
     customerEmail: order.customerEmail ?? undefined,
     status: order.status as OrderStatus,
+    paymentMethod: order.mpPaymentId ? "mercadopago" : "cash",
     items: order.order_items.map((item: OrderItem) => ({
       id: item.id,
       quantity: item.quantity,
@@ -58,10 +59,7 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
 }
 
 // Update order status and return fully-hydrated order including items->product->category
-export async function updateOrderStatus(
-  id: string,
-  status: OrderStatus
-) {
+export async function updateOrderStatus(id: string, status: OrderStatus) {
   const order = await prisma.orders.update({
     where: { id },
     data: { status },

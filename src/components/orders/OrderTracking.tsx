@@ -66,7 +66,7 @@ interface Order {
   };
   trackingNumber?: string;
   estimatedDelivery?: Date;
-  statusHistory: OrderStatus[];
+  statusHistory?: OrderStatus[];
   createdAt: Date;
   mpPaymentId?: string;
   shippingMethod?: "domicilio" | "sucursal";
@@ -205,10 +205,10 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     if (!order) {
       return;
     }
-    
+
     try {
       logger.info("Downloading invoice", { orderId: order.id });
-      
+
       // Generar contenido HTML de la factura
       const invoiceHTML = `
         <!DOCTYPE html>
@@ -232,9 +232,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
           </div>
           <div class="info">
             <p><strong>Factura #:</strong> ${order.id}</p>
-            <p><strong>Fecha:</strong> ${new Date(order.createdAt).toLocaleDateString('es-AR')}</p>
+            <p><strong>Fecha:</strong> ${new Date(order.createdAt).toLocaleDateString("es-AR")}</p>
             <p><strong>Cliente:</strong> ${order.customerName}</p>
-            <p><strong>Dirección:</strong> ${order.customerAddress || 'N/A'}</p>
+            <p><strong>Dirección:</strong> ${order.customerAddress || "N/A"}</p>
           </div>
           <table>
             <thead>
@@ -246,14 +246,22 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
               </tr>
             </thead>
             <tbody>
-              ${order.items.map((item: { product?: { name?: string }; quantity: number; price: number }) => `
+              ${order.items
+                .map(
+                  (item: {
+                    product?: { name?: string };
+                    quantity: number;
+                    price: number;
+                  }) => `
                 <tr>
-                  <td>${item.product?.name || 'Producto'}</td>
+                  <td>${item.product?.name || "Producto"}</td>
                   <td>${item.quantity}</td>
                   <td>$${item.price.toFixed(2)}</td>
                   <td>$${(item.quantity * item.price).toFixed(2)}</td>
                 </tr>
-              `).join('')}
+              `
+                )
+                .join("")}
             </tbody>
           </table>
           <div class="total">
@@ -262,18 +270,18 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
         </body>
         </html>
       `;
-      
+
       // Crear blob y descargar
-      const blob = new Blob([invoiceHTML], { type: 'text/html' });
+      const blob = new Blob([invoiceHTML], { type: "text/html" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `factura_${order.id}.html`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       logger.info("Invoice downloaded successfully", { orderId: order.id });
     } catch (error) {
       logger.error("Error downloading invoice", { orderId: order.id, error });
@@ -488,7 +496,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       <div className="bg-card rounded-lg border p-6 mb-6">
         <h3 className="font-semibold mb-4">Estado del Pedido</h3>
         <div className="space-y-4">
-          {order.statusHistory.map((status, index) => (
+          {order.statusHistory?.map((status, index) => (
             <div
               key={status.id}
               className="flex gap-4 pb-4 border-b last:border-b-0"

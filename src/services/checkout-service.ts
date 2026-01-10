@@ -92,14 +92,14 @@ export class CheckoutService {
       onSale: boolean;
     }[] // Better typing than any[]
   ) {
-    const mpItems = items.map((item) => {
-      let unitPrice = item.price;
+    // Calculate total amount for a single summary item (requested by user to hide individual names)
+    let totalAmount = 0;
 
-      // If we have validated products from DB, prefer DB price logic
+    items.forEach((item) => {
+      let unitPrice = item.price;
       if (validatedProducts) {
         const product = validatedProducts.find((p) => p.id === item.productId);
         if (product) {
-          // Check for sale price
           if (product.onSale && product.salePrice) {
             unitPrice = Number(product.salePrice);
           } else {
@@ -107,37 +107,29 @@ export class CheckoutService {
           }
         }
       }
-
-      return {
-        id: item.productId,
-        title: item.name || "Producto",
-        quantity: item.quantity,
-        unit_price: unitPrice,
-        currency_id: "ARS",
-      };
+      totalAmount += unitPrice * item.quantity;
     });
 
     if (shippingMethod && shippingMethod.price > 0) {
-      mpItems.push({
-        id: "shipping",
-        title: `Envío - ${shippingMethod.name}`,
-        quantity: 1,
-        unit_price: shippingMethod.price,
-        currency_id: "ARS",
-      });
+      totalAmount += shippingMethod.price;
     }
 
     if (discountAmount > 0) {
-      mpItems.push({
-        id: "discount",
-        title: "Descuento",
-        quantity: 1,
-        unit_price: -discountAmount,
-        currency_id: "ARS",
-      });
+      totalAmount -= discountAmount;
     }
 
-    return mpItems;
+    // Ensure strictly positive total (sanity check)
+    if (totalAmount < 0) totalAmount = 0;
+
+    return [
+      {
+        id: "purchase_summary",
+        title: "Compra en Rastuci",
+        quantity: 1,
+        unit_price: Number(totalAmount.toFixed(2)),
+        currency_id: "ARS",
+      },
+    ];
   }
 }
 

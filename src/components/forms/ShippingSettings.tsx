@@ -62,10 +62,22 @@ export default function ShippingSettings() {
       if (json.success) {
         toast.success("Configuración de envíos guardada");
       } else {
+        // Show validation errors if available
+        if (json.details?.fieldErrors) {
+          const messages = Object.values(json.details.fieldErrors)
+            .flat()
+            .join(", ");
+          throw new Error(messages || json.error);
+        }
         throw new Error(json.error || "Error al guardar");
       }
-    } catch (_error) {
-      toast.error("Error al guardar configuración");
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Error al guardar configuración"
+      );
     } finally {
       setSaving(false);
     }
