@@ -282,15 +282,17 @@ export const getOrderDeliveredEmail = (params: {
   orderId: string;
 }): string => {
   const { customerName, orderId } = params;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com";
 
   return generateEmailHtml({
     customerName,
     orderId,
     title: STATUS_MESSAGES.DELIVERED.title,
     color: STATUS_COLORS.delivered,
-    message: STATUS_MESSAGES.DELIVERED.message,
-    orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/orders/${orderId}`,
-    customButtonText: "Ver mi Pedido",
+    message: `${STATUS_MESSAGES.DELIVERED.message}<br><br>
+    Tu opinión es muy importante para nosotros. ¿Podrías tomarte un momento para calificar tu compra?`,
+    orderUrl: `${baseUrl}/reviews/rate/${orderId}`,
+    customButtonText: "★ Calificar Compra",
   });
 };
 
