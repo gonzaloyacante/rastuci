@@ -41,11 +41,12 @@ function ToggleButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-medium",
+        "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         selected
           ? "bg-primary text-white border-primary shadow-sm"
           : "bg-surface border-muted hover:border-primary/50 hover:bg-surface-secondary text-primary"
       )}
+      aria-pressed={selected}
     >
       {icon}
       {children || label}
@@ -365,13 +366,15 @@ export function ColorPicker({
                   exactMatch ? toggleColor(c.name) : toggleColor(c.name)
                 } // Simplified, handles both
                 className={cn(
-                  "group relative w-10 h-10 rounded-full border-2 transition-all shadow-sm",
+                  "group relative w-10 h-10 rounded-full border-2 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                   exactMatch
                     ? "border-primary ring-2 ring-primary/20 scale-110 z-10"
                     : "border-transparent hover:border-primary/50 hover:scale-105"
                 )}
                 style={{ backgroundColor: c.hex }}
                 title={c.name}
+                aria-label={`Seleccionar color ${c.name}`}
+                aria-pressed={exactMatch || isSelected}
               >
                 {exactMatch && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">

@@ -25,6 +25,7 @@ import { Edit3, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Product } from "@/types"; // Import Product type
+import Image from "next/image";
 
 type CategoryRow = {
   id: string;
@@ -410,10 +411,12 @@ export default function AdminCategoriasPage() {
                                             <div className="flex justify-center">
                                               <div className="relative w-10 h-10 rounded overflow-hidden bg-muted/5 border border-border shrink-0">
                                                 {row.images && row.images[0] ? (
-                                                  <img
+                                                  <Image
                                                     src={row.images[0]}
                                                     alt={row.name}
-                                                    className="w-full h-full object-cover"
+                                                    fill
+                                                    className="object-cover"
+                                                    sizes="40px"
                                                   />
                                                 ) : (
                                                   <div className="flex items-center justify-center w-full h-full text-muted">
