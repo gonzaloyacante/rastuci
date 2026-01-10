@@ -8,7 +8,6 @@ import {
     type StoreSettings,
     defaultStoreSettings,
 } from "@/lib/validation/store";
-import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
 import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
 

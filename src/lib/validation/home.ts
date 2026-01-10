@@ -3,8 +3,8 @@ import { z } from "zod";
 export const HomeSettingsSchema = z.object({
   heroTitle: z.string().min(1).max(120),
   heroSubtitle: z.string().min(1).max(220),
-  heroLogoUrl: z.string().url().optional(),
-  heroImage: z.string().url().optional(),
+  heroLogoUrl: z.string().max(500).optional(),
+  heroImage: z.string().max(500).optional(),
   ctaPrimaryLabel: z.string().min(1).max(40),
   ctaSecondaryLabel: z.string().min(1).max(40),
   categoriesTitle: z.string().min(1).max(80),
@@ -26,13 +26,13 @@ export const HomeSettingsSchema = z.object({
     .object({
       brand: z.string().min(1).max(80),
       tagline: z.string().min(1).max(120),
-      logoUrl: z.string().url().optional(),
+      logoUrl: z.string().max(200).optional(),
       email: z.string().email().max(100),
-      phone: z.string().min(1).max(30),
+      phone: z.string().max(30),
       socialLinks: z.object({
-        instagram: z.string().url().optional(),
-        facebook: z.string().url().optional(),
-        twitter: z.string().url().optional(),
+        instagram: z.string().max(200).optional(),
+        facebook: z.string().max(200).optional(),
+        twitter: z.string().max(200).optional(),
       }),
     })
     .optional(),

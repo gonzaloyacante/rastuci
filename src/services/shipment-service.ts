@@ -92,10 +92,15 @@ export class ShipmentService {
         where: { key: "store" },
       });
 
+      // Fetch Contact Settings for Phone/Email (Unified Source)
+      const contactSettings = await prisma.settings.findUnique({
+        where: { key: "contact" },
+      });
+
       interface StoreSettingsValue {
         name?: string;
         adminEmail?: string;
-        phone?: string;
+        // phone and email removed from store settings
         address?: {
           street?: string;
           number?: string;
@@ -105,6 +110,11 @@ export class ShipmentService {
           postalCode?: string;
           province?: string;
         };
+      }
+
+      interface ContactSettingsValue {
+        emails?: string[];
+        phones?: string[];
       }
 
       let senderAddress = {
@@ -120,16 +130,29 @@ export class ShipmentService {
         phone: "1123456789",
       };
 
+      // Override with Contact Settings (Phone/Email)
+      if (contactSettings && contactSettings.value) {
+        const cSettings = contactSettings.value as unknown as ContactSettingsValue;
+        if (cSettings.emails && cSettings.emails.length > 0) {
+          senderAddress.email = cSettings.emails[0];
+        }
+        if (cSettings.phones && cSettings.phones.length > 0) {
+          senderAddress.phone = cSettings.phones[0];
+        }
+      }
+
+      // Override with Store Settings (Address & Name)
       if (storeSettings && storeSettings.value) {
         const settings = storeSettings.value as unknown as StoreSettingsValue;
         if (settings.address) {
           const pCode =
             settings.address.province?.toLowerCase().includes("capital") ||
-            settings.address.province?.toLowerCase().includes("caba")
+              settings.address.province?.toLowerCase().includes("caba")
               ? ("C" as const)
               : ("B" as const);
 
           senderAddress = {
+            ...senderAddress, // Keep email/phone from contact settings
             streetName: settings.address.street || senderAddress.streetName,
             streetNumber: settings.address.number || senderAddress.streetNumber,
             floor: settings.address.floor || null,
@@ -138,9 +161,14 @@ export class ShipmentService {
             provinceCode: pCode,
             postalCode: settings.address.postalCode || senderAddress.postalCode,
             name: settings.name || senderAddress.name,
-            email: settings.adminEmail || senderAddress.email,
-            phone: settings.phone || senderAddress.phone,
+            // Only override email/phone if they were somehow in store settings (legacy) or explicitly passed? 
+            // We decided StoreSettings won't have them anymore, so we don't map them here.
           };
+        }
+
+        // Ensure name is updated even if address object is missing but value exists
+        if (settings.name) {
+          senderAddress.name = settings.name;
         }
       }
 

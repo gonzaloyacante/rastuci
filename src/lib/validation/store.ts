@@ -13,9 +13,9 @@ export const StoreSettingsSchema = z.object({
     // Admin notifications
     adminEmail: z.string().email().default("gyacante9@gmail.com"),
 
-    // Contact for shipping (remitente)
-    phone: z.string().min(6).max(30).default("+54 11 1234-5678"),
-    email: z.string().email().default("ventas@rastuci.com"),
+    // Contact for shipping (remitente) - Now fetched from Global Contact Settings
+    // phone: removed
+    // email: removed (sales email)
 
     // Origin address for shipping calculations and CA imports
     address: z.object({
@@ -38,8 +38,6 @@ export type StoreSettings = z.infer<typeof StoreSettingsSchema>;
 export const defaultStoreSettings: StoreSettings = {
     name: "Rastuci",
     adminEmail: "gyacante9@gmail.com",
-    phone: "+54 11 1234-5678",
-    email: "ventas@rastuci.com",
     address: {
         streetName: "Av. San Martín",
         streetNumber: "1234",
