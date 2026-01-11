@@ -2,6 +2,7 @@
 
 import HomeForm from "@/components/forms/HomeForm";
 import { HomeSettings } from "@/lib/validation/home";
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { useEffect, useState } from "react";
 
 export default function AdminHomePage() {
@@ -29,7 +30,12 @@ export default function AdminHomePage() {
   }, []);
 
   if (loading) {
-    return <div className="p-6">Cargando…</div>;
+    return (
+      <div className="max-w-5xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Inicio (Home)</h1>
+        <FormSkeleton rows={4} />
+      </div>
+    );
   }
   if (error) {
     return <div className="p-6 text-error">{error}</div>;

@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -130,7 +130,7 @@ export default function ProductImageGallery({
               : "opacity-100 translate-x-0"
           }`}
         >
-          <Image
+          <OptimizedImage
             src={images[selectedImage]}
             alt={`${productName} - Imagen ${selectedImage + 1} de ${images.length}`}
             fill
@@ -138,6 +138,7 @@ export default function ProductImageGallery({
             priority={selectedImage === 0}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             quality={90}
+            showTextFallback={true}
           />
         </div>
 
@@ -233,7 +234,7 @@ export default function ProductImageGallery({
                 }`}
               >
                 <div className="w-full h-full rounded-lg overflow-hidden">
-                  <Image
+                  <OptimizedImage
                     src={image}
                     alt={`${productName} - Miniatura ${index + 1}`}
                     fill

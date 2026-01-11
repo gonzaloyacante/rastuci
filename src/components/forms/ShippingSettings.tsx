@@ -9,6 +9,7 @@ import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
 import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
 import Alert from "@/components/ui/Alert";
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 
 export default function ShippingSettings() {
   const [data, setData] = useState<StoreSettings>(defaultStoreSettings);
@@ -83,8 +84,7 @@ export default function ShippingSettings() {
     }
   };
 
-  if (loading)
-    return <div className="p-4">Cargando configuración de envíos...</div>;
+  if (loading) return <FormSkeleton rows={2} />;
 
   const { freeShipping } = data.shipping || {};
 

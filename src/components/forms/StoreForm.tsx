@@ -10,6 +10,7 @@ import {
 } from "@/lib/validation/store";
 import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 
 interface StoreFormProps {
   initial?: StoreSettings;
@@ -45,7 +46,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
     }
   }, [initial]);
 
-  if (loading) return <div className="p-4">Cargando configuración...</div>;
+  if (loading) return <FormSkeleton rows={3} />;
 
   const handleChange = (field: keyof StoreSettings, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -184,50 +185,6 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
               }
               placeholder="Rastuci Tienda"
             />
-          </div>
-        </div>
-      </div>
-
-      {/* Configuración de Stock */}
-      <div className="surface-secondary rounded-lg p-4 space-y-4">
-        <h3 className="font-semibold text-lg">Alertas de Stock</h3>
-
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
-            <Label htmlFor="lowStockThreshold">Umbral de Stock Bajo</Label>
-            <Input
-              id="lowStockThreshold"
-              type="number"
-              min="0"
-              value={data.stock?.lowStockThreshold ?? 5}
-              onChange={(e) =>
-                setData({
-                  ...data,
-                  stock: {
-                    ...data.stock,
-                    lowStockThreshold: Number(e.target.value),
-                  },
-                })
-              }
-            />
-            <p className="text-xs muted mt-1">
-              Se enviará una alerta cuando un producto baje de esta cantidad.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 pt-6">
-            <input
-              type="checkbox"
-              id="enableStockAlerts"
-              className="w-4 h-4"
-              checked={data.stock?.enableStockAlerts ?? true}
-              onChange={(e) =>
-                setData({
-                  ...data,
-                  stock: { ...data.stock, enableStockAlerts: e.target.checked },
-                })
-              }
-            />
-            <Label htmlFor="enableStockAlerts">Activar Alertas por Email</Label>
           </div>
         </div>
       </div>

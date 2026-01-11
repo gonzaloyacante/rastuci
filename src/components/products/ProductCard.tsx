@@ -28,7 +28,7 @@ import { StockBadge } from "@/components/ui/StockBadge";
 import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
 import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 import { DynamicTags } from "@/components/products/DynamicTags";
-import { PLACEHOLDER_IMAGE } from "@/lib/constants";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 /** Badge de precio con descuento */
 export const PriceBadge = ({
@@ -134,6 +134,8 @@ export type ProductCardProps = PublicProductCardProps | AdminProductCardProps;
 const ProductCard = React.memo((props: ProductCardProps) => {
   const { product, priority = false } = props;
   // const { success: toastSuccess, error: toastError } = useHotToast();
+
+  const [imageIndex, setImageIndex] = useState(0);
 
   const isAdmin = props.variant === "admin";
 
@@ -301,7 +303,10 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             </div>
 
             {product.categories && (
-              <Badge variant="outline" className="text-xs">
+              <Badge
+                variant="outline"
+                className="text-xs max-w-[140px] truncate"
+              >
                 {product.categories.name}
               </Badge>
             )}
@@ -309,19 +314,13 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
           <div className="space-y-2">
             {sortedSizes && sortedSizes.length > 0 && (
-              <div>
+              <div className="w-full">
                 <span className="text-xs muted mb-1 block">Talles:</span>
-                <div className="flex flex-wrap gap-1">
-                  {sortedSizes.map((size, index) => (
-                    <Badge
-                      key={`size-${index}`}
-                      variant="outline"
-                      className="text-xs px-2 py-0.5"
-                    >
-                      {size}
-                    </Badge>
-                  ))}
-                </div>
+                <DynamicTags
+                  items={sortedSizes}
+                  className="h-auto"
+                  itemClassName="text-[10px] px-1.5 py-0.5 border rounded-sm whitespace-nowrap bg-surface"
+                />
               </div>
             )}
 
@@ -372,23 +371,24 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap mt-auto">
             <Button
               size="sm"
               variant="outline"
-              className="flex-1"
+              className="flex-1 min-w-[3rem]"
               onClick={() => onEdit(product.id)}
               leftIcon={<Edit className="h-4 w-4" />}
             >
-              Editar
+              <span className="hidden sm:inline">Editar</span>
             </Button>
             <Button
               size="sm"
               variant="destructive"
+              className="flex-1 min-w-[3rem]"
               onClick={() => onDelete(product.id)}
               leftIcon={<Trash2 className="h-4 w-4" />}
             >
-              Eliminar
+              <span className="hidden sm:inline">Eliminar</span>
             </Button>
           </div>
         </div>
@@ -416,17 +416,21 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             aria-label={`Ver detalles de ${product.name}`}
             className="block h-[160px] sm:h-[200px] overflow-hidden bg-neutral-100 dark:bg-neutral-800"
           >
-            <Image
-              src={imageError || !mainImage ? PLACEHOLDER_IMAGE : mainImage}
+            <OptimizedImage
+              src={product.images?.[imageIndex] || ""}
               alt={`${product.name} - ${product.categories?.name || "Producto"}`}
               width={400}
               height={200}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={handleImageError}
-              onLoad={handleImageLoad}
               priority={priority}
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
               quality={85}
+              showTextFallback={true}
+              onError={() => {
+                if (product.images && imageIndex < product.images.length - 1) {
+                  setImageIndex((prev) => prev + 1);
+                }
+              }}
             />
           </Link>
         </div>
@@ -585,15 +589,15 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             aria-label={`Ver detalles de ${product.name}`}
           >
             <div className="relative h-full min-h-28 sm:min-h-32">
-              <Image
-                src={imageError || !mainImage ? PLACEHOLDER_IMAGE : mainImage}
+              <OptimizedImage
+                src={mainImage || ""}
                 alt={`${product.name} - ${product.categories?.name || "Producto"}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
-                onError={handleImageError}
                 priority={priority}
                 sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 160px"
                 quality={80}
+                showTextFallback={false}
               />
             </div>
           </Link>

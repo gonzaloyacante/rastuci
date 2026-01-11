@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HomeSettings, HomeSettingsSchema, defaultHomeSettings } from "@/lib/validation/home";
+import {
+  HomeSettings,
+  HomeSettingsSchema,
+  defaultHomeSettings,
+} from "@/lib/validation/home";
 import { ImageUploader } from "@/components/ui/ImageUploader";
 import { Button } from "@/components/ui/Button";
 import { IconPicker } from "@/components/ui/IconPicker";
 import * as Icons from "lucide-react";
 import { toast } from "react-hot-toast";
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 
 type Props = {
   initial?: HomeSettings;
@@ -20,7 +25,9 @@ interface BenefitItem {
 }
 
 export default function HomeForm({ initial }: Props) {
-  const [values, setValues] = useState<HomeSettings>(initial ?? defaultHomeSettings);
+  const [values, setValues] = useState<HomeSettings>(
+    initial ?? defaultHomeSettings
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -29,6 +36,7 @@ export default function HomeForm({ initial }: Props) {
 
   // Estado para manejar beneficios con IDs únicos
   const [benefitItems, setBenefitItems] = useState<BenefitItem[]>([]);
+  const [loading, setLoading] = useState(!initial);
 
   useEffect(() => {
     if (initial) {
@@ -47,51 +55,61 @@ export default function HomeForm({ initial }: Props) {
             initBenefits(defaultHomeSettings.benefits);
           }
         })
-        .catch(() => initBenefits(defaultHomeSettings.benefits));
+        .catch(() => initBenefits(defaultHomeSettings.benefits))
+        .finally(() => setLoading(false));
     }
   }, [initial]);
 
   const initBenefits = (benefits: HomeSettings["benefits"]) => {
-    setBenefitItems(benefits.map((benefit, idx) => ({
-      id: `benefit-${Date.now()}-${idx}-${Math.random()}`,
-      icon: benefit.icon,
-      title: benefit.title,
-      description: benefit.description
-    })));
+    setBenefitItems(
+      benefits.map((benefit, idx) => ({
+        id: `benefit-${Date.now()}-${idx}-${Math.random()}`,
+        icon: benefit.icon,
+        title: benefit.title,
+        description: benefit.description,
+      }))
+    );
   };
 
   // Sincronizar los beneficios con IDs con el estado principal
   useEffect(() => {
-    setValues(v => ({
+    setValues((v) => ({
       ...v,
-      benefits: benefitItems.map(item => ({
+      benefits: benefitItems.map((item) => ({
         icon: item.icon,
         title: item.title,
-        description: item.description
-      }))
+        description: item.description,
+      })),
     }));
   }, [benefitItems]);
 
   const update = <K extends keyof HomeSettings>(key: K, val: HomeSettings[K]) =>
     setValues((v) => ({ ...v, [key]: val }));
 
-  const updateBenefitItem = (id: string, key: "icon" | "title" | "description", value: string) => {
-    setBenefitItems(items => items.map(item =>
-      item.id === id ? { ...item, [key]: value } : item
-    ));
+  const updateBenefitItem = (
+    id: string,
+    key: "icon" | "title" | "description",
+    value: string
+  ) => {
+    setBenefitItems((items) =>
+      items.map((item) => (item.id === id ? { ...item, [key]: value } : item))
+    );
   };
 
   const addBenefitItem = () => {
-    setBenefitItems(items => [...items, {
-      id: `benefit-new-${Date.now()}-${Math.random()}`,
-      icon: "Truck",
-      title: "Nuevo",
-      description: "Descripción"
-    }]);
+    setBenefitItems((items) => [
+      ...items,
+      {
+        id: `benefit-new-${Date.now()}-${Math.random()}`,
+        icon: "Truck",
+        title: "Nuevo",
+        description: "Descripción",
+      },
+    ]);
   };
 
   const removeBenefitItem = (id: string) => {
-    setBenefitItems(items => items.filter(item => item.id !== id));
+    setBenefitItems((items) => items.filter((item) => item.id !== id));
     toast.success("Beneficio eliminado");
   };
 
@@ -111,7 +129,9 @@ export default function HomeForm({ initial }: Props) {
         body: JSON.stringify(parsed.data),
       });
       const json = await res.json();
-      if (!json.success) { throw new Error(json.error?.message || "Error al guardar"); }
+      if (!json.success) {
+        throw new Error(json.error?.message || "Error al guardar");
+      }
       setMessage("Guardado correctamente");
       toast.success("Configuración del Home guardada");
     } catch (err: unknown) {
@@ -122,6 +142,8 @@ export default function HomeForm({ initial }: Props) {
       setSaving(false);
     }
   };
+
+  if (loading) return <FormSkeleton rows={4} />;
 
   return (
     <form onSubmit={onSubmit} className="space-y-8">
@@ -137,7 +159,9 @@ export default function HomeForm({ initial }: Props) {
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Título del Hero</label>
+          <label className="block text-sm font-medium mb-1">
+            Título del Hero
+          </label>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.heroTitle}
@@ -145,7 +169,9 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Subtítulo del Hero</label>
+          <label className="block text-sm font-medium mb-1">
+            Subtítulo del Hero
+          </label>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.heroSubtitle}
@@ -153,7 +179,9 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">CTA principal</label>
+          <label className="block text-sm font-medium mb-1">
+            CTA principal
+          </label>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.ctaPrimaryLabel}
@@ -161,7 +189,9 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">CTA secundaria</label>
+          <label className="block text-sm font-medium mb-1">
+            CTA secundaria
+          </label>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.ctaSecondaryLabel}
@@ -169,7 +199,9 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Título de Categorías</label>
+          <label className="block text-sm font-medium mb-1">
+            Título de Categorías
+          </label>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.categoriesTitle}
@@ -177,7 +209,9 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Título de Ofertas</label>
+          <label className="block text-sm font-medium mb-1">
+            Título de Ofertas
+          </label>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.featuredTitle}
@@ -185,7 +219,9 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">Subtítulo de Ofertas</label>
+          <label className="block text-sm font-medium mb-1">
+            Subtítulo de Ofertas
+          </label>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.featuredSubtitle}
@@ -198,12 +234,19 @@ export default function HomeForm({ initial }: Props) {
         <h3 className="text-lg font-semibold mb-3">Beneficios</h3>
         <div className="space-y-4">
           {benefitItems.map((benefitItem) => {
-            const IconComponent = (Icons as unknown as Record<string, React.ElementType>)[benefitItem.icon];
+            const IconComponent = (
+              Icons as unknown as Record<string, React.ElementType>
+            )[benefitItem.icon];
 
             return (
-              <div key={benefitItem.id} className="grid md:grid-cols-12 gap-3 items-end">
+              <div
+                key={benefitItem.id}
+                className="grid md:grid-cols-12 gap-3 items-end"
+              >
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Ícono</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Ícono
+                  </label>
                   <button
                     type="button"
                     onClick={() => setIconPickerOpen(benefitItem.id)}
@@ -214,23 +257,39 @@ export default function HomeForm({ initial }: Props) {
                   </button>
                 </div>
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium mb-1">Título</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Título
+                  </label>
                   <input
                     className="w-full border rounded-md px-3 py-2"
                     value={benefitItem.title}
-                    onChange={(e) => updateBenefitItem(benefitItem.id, "title", e.target.value)}
+                    onChange={(e) =>
+                      updateBenefitItem(benefitItem.id, "title", e.target.value)
+                    }
                   />
                 </div>
                 <div className="md:col-span-5">
-                  <label className="block text-sm font-medium mb-1">Descripción</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Descripción
+                  </label>
                   <input
                     className="w-full border rounded-md px-3 py-2"
                     value={benefitItem.description}
-                    onChange={(e) => updateBenefitItem(benefitItem.id, "description", e.target.value)}
+                    onChange={(e) =>
+                      updateBenefitItem(
+                        benefitItem.id,
+                        "description",
+                        e.target.value
+                      )
+                    }
                   />
                 </div>
                 <div className="md:col-span-1">
-                  <Button type="button" variant="destructive" onClick={() => removeBenefitItem(benefitItem.id)}>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => removeBenefitItem(benefitItem.id)}
+                  >
                     Quitar
                   </Button>
                 </div>
@@ -239,14 +298,16 @@ export default function HomeForm({ initial }: Props) {
           })}
         </div>
         <div className="mt-3">
-          <Button type="button" onClick={addBenefitItem}>Agregar beneficio</Button>
+          <Button type="button" onClick={addBenefitItem}>
+            Agregar beneficio
+          </Button>
         </div>
       </section>
 
       {/* Icon Picker Modal */}
       {iconPickerOpen && (
         <IconPicker
-          value={benefitItems.find(b => b.id === iconPickerOpen)?.icon}
+          value={benefitItems.find((b) => b.id === iconPickerOpen)?.icon}
           onChange={(iconName) => {
             updateBenefitItem(iconPickerOpen, "icon", iconName);
             setIconPickerOpen(null);
@@ -256,7 +317,9 @@ export default function HomeForm({ initial }: Props) {
       )}
 
       {message && <p className="text-sm muted">{message}</p>}
-      <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar"}</Button>
+      <Button type="submit" disabled={saving}>
+        {saving ? "Guardando..." : "Guardar"}
+      </Button>
     </form>
   );
 }

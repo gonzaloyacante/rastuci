@@ -25,9 +25,9 @@ import {
   Truck,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { useRouter } from "next/navigation";
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import useSWR from "swr";
 
 // Dynamic imports para componentes no críticos
@@ -39,6 +39,7 @@ const RelatedProducts = React.lazy(
   () => import("@/components/products/RelatedProducts")
 );
 import { SizeGuide } from "@/components/products/SizeGuide";
+import { ColorSwatch } from "@/components/products/ProductHelpers";
 
 interface ProductDetailClientProps {
   productId: string;
@@ -458,37 +459,19 @@ export default function ProductDetailClient({
                 <div className="flex items-center gap-3 flex-wrap">
                   {availableColors.map((color: string, idx: number) => {
                     const isSelected = selectedColor === color;
-                    const colorImg = colorImagesMap?.[color]?.[0];
+                    // Obtenemos TODAS las imágenes para este color
+                    const colorImages = colorImagesMap?.[color] || [];
                     const colorHex = getColorHex(color);
 
                     return (
-                      <button
+                      <ColorSwatch
                         key={`color-${color}-${idx}`}
+                        color={color}
+                        images={colorImages}
+                        isSelected={isSelected}
                         onClick={() => setSelectedColor(color)}
-                        className={`group relative rounded-md border-2 transition-all overflow-hidden ${
-                          isSelected
-                            ? "border-primary ring-2 ring-offset-2 ring-primary ring-offset-surface"
-                            : "border-transparent hover:border-primary/50"
-                        }`}
-                        title={`Seleccionar color ${color}`}
-                      >
-                        {colorImg ? (
-                          <div className="w-16 h-16 relative bg-neutral-100 dark:bg-neutral-800 rounded-sm">
-                            <Image
-                              src={colorImg}
-                              alt={color}
-                              fill
-                              className="object-cover"
-                              sizes="64px"
-                            />
-                          </div>
-                        ) : (
-                          <div
-                            className="w-12 h-12"
-                            style={{ backgroundColor: colorHex || "#ccc" }}
-                          />
-                        )}
-                      </button>
+                        colorHex={colorHex}
+                      />
                     );
                   })}
                 </div>

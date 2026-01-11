@@ -258,37 +258,36 @@ export default function AdminCategoriasPage() {
                             <td className="text-center p-2 sm:p-4 align-middle text-xs sm:text-sm">
                               <div className="flex items-center justify-center">
                                 {category.image ? (
-                                  <div className="relative w-12 h-12 rounded-md overflow-hidden bg-muted/5 ring-2 ring-emerald-500/30">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
+                                  <div className="relative w-12 h-12 rounded-md overflow-hidden bg-muted/5 ring-2 ring-primary/30">
+                                    <Image
                                       src={category.image}
                                       alt={category.name}
-                                      className="w-full h-full object-cover"
+                                      fill
+                                      className="object-cover"
+                                      sizes="48px"
+                                      onError={(e) => {
+                                        // Hide the broken image and show fallback
+                                        const parent =
+                                          e.currentTarget.parentElement;
+                                        if (parent) {
+                                          e.currentTarget.style.display =
+                                            "none";
+                                          parent.classList.add(
+                                            "fallback-active"
+                                          );
+                                        }
+                                      }}
                                     />
-                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
-                                      <svg
-                                        className="w-2.5 h-2.5 text-white"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                      >
-                                        <path
-                                          fillRule="evenodd"
-                                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                          clipRule="evenodd"
-                                        />
-                                      </svg>
-                                    </div>
                                   </div>
                                 ) : (
-                                  <div className="relative w-12 h-12 flex items-center justify-center surface-secondary rounded-md ring-2 ring-amber-500/30">
+                                  <div className="relative w-12 h-12 flex items-center justify-center surface-secondary rounded-md ring-2 ring-muted/30">
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
-                                      className="w-5 h-5 muted"
+                                      className="w-5 h-5 text-muted"
                                       viewBox="0 0 24 24"
                                       fill="none"
                                       stroke="currentColor"
                                       strokeWidth={2}
-                                      aria-hidden="true"
                                     >
                                       <rect
                                         x="3"
@@ -305,11 +304,6 @@ export default function AdminCategoriasPage() {
                                         strokeLinejoin="round"
                                       />
                                     </svg>
-                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
-                                      <span className="text-[8px] font-bold text-white">
-                                        !
-                                      </span>
-                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -411,7 +405,7 @@ export default function AdminCategoriasPage() {
                                           align: "center",
                                           render: (
                                             _: unknown,
-                                            row: Product // Fix type from any to Product
+                                            row: Product
                                           ) => (
                                             <div className="flex justify-center">
                                               <div className="relative w-10 h-10 rounded overflow-hidden bg-muted/5 border border-border shrink-0">
@@ -422,6 +416,10 @@ export default function AdminCategoriasPage() {
                                                     fill
                                                     className="object-cover"
                                                     sizes="40px"
+                                                    onError={(e) => {
+                                                      e.currentTarget.style.display =
+                                                        "none";
+                                                    }}
                                                   />
                                                 ) : (
                                                   <div className="flex items-center justify-center w-full h-full text-muted">

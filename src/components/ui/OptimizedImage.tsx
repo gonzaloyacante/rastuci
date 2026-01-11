@@ -2,25 +2,15 @@
 
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { PLACEHOLDER_IMAGE } from "@/lib/constants";
 
 const PRODUCT_IMAGE_SIZES =
   "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
 
-// Simple lazy image hook
-function useLazyImage(
-  _src: string,
-  _options: { quality?: number; priority?: boolean }
-) {
-  const [isInView, setIsInView] = useState(false);
-  return { isInView, setIsInView };
-}
-
 interface OptimizedImageProps {
   src: string;
   alt: string;
-  width?: number; // Optional if fill is true
-  height?: number; // Optional if fill is true
+  width?: number;
+  height?: number;
   className?: string;
   priority?: boolean;
   quality?: number;
@@ -28,9 +18,11 @@ interface OptimizedImageProps {
   placeholder?: "blur" | "empty";
   blurDataURL?: string;
   lazy?: boolean;
-  fill?: boolean; // New prop
+  fill?: boolean;
   onLoad?: () => void;
   onError?: () => void;
+  /** If true, show "Imagen no disponible" text on error. Default: false (icon only) */
+  showTextFallback?: boolean;
 }
 
 export function OptimizedImage({
@@ -42,23 +34,28 @@ export function OptimizedImage({
   priority = false,
   quality = 75,
   sizes = PRODUCT_IMAGE_SIZES,
-  placeholder = "blur",
+  placeholder = "empty",
   blurDataURL,
   lazy = true,
   fill = false,
   onLoad,
   onError,
+  showTextFallback = false,
 }: OptimizedImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(priority || !lazy);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  const { isInView, setIsInView } = useLazyImage(src, { quality, priority });
+  // Reset error state when src changes
+  useEffect(() => {
+    setImageError(false);
+    setIsLoaded(false);
+  }, [src]);
 
   // Intersection Observer for lazy loading
   useEffect(() => {
-    if (!lazy || priority) {
-      setIsInView(true);
+    if (!lazy || priority || isInView) {
       return;
     }
 
@@ -77,7 +74,7 @@ export function OptimizedImage({
     }
 
     return () => observer.disconnect();
-  }, [lazy, priority, setIsInView]);
+  }, [lazy, priority, isInView]);
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -89,41 +86,47 @@ export function OptimizedImage({
     onError?.();
   };
 
-  // Generate blur placeholder if not provided
-  const defaultBlurDataURL = `data:image/svg+xml;base64,${Buffer.from(
-    `<svg width="${width || 100}" height="${height || 100}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100%" height="100%" fill="#f3f4f6"/>
-    </svg>`
-  ).toString("base64")}`;
-
+  // Error state - show icon (and optionally text)
   if (imageError) {
     return (
       <div
         ref={imgRef}
-        className={`relative overflow-hidden ${className}`}
-        style={fill ? undefined : { width, height }}
+        className={`relative overflow-hidden flex flex-col items-center justify-center bg-muted/10 ${className}`}
+        style={
+          fill
+            ? { position: "absolute", inset: 0 }
+            : { width: "100%", height: "100%" }
+        }
       >
-        <Image
-          src={PLACEHOLDER_IMAGE}
-          alt={alt || "Imagen no disponible"}
-          width={fill ? undefined : width}
-          height={fill ? undefined : height}
-          fill={fill}
-          quality={60}
-          className="object-cover opacity-80 grayscale"
-          unoptimized // Placehold.co might not work well with Next.js optimization sometimes
-        />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className={`text-muted/50 ${showTextFallback ? "w-12 h-12" : "w-1/3 h-1/3 max-w-8 max-h-8 min-w-4 min-h-4"}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <polyline points="21 15 16 10 5 21" />
+        </svg>
+        {showTextFallback && (
+          <span className="text-muted/50 text-sm mt-2">
+            Imagen no disponible
+          </span>
+        )}
       </div>
     );
   }
 
+  // Normal state
   return (
     <div
       ref={imgRef}
       className={`relative overflow-hidden ${className}`}
       style={fill ? { width: "100%", height: "100%" } : undefined}
     >
-      {(isInView || priority) && (
+      {isInView && (
         <>
           <Image
             src={src}
@@ -135,28 +138,23 @@ export function OptimizedImage({
             sizes={sizes}
             priority={priority}
             placeholder={placeholder}
-            blurDataURL={blurDataURL || defaultBlurDataURL}
-            className={`transition-opacity duration-300 ${
-              isLoaded ? "opacity-100" : "opacity-0"
-            }`}
+            blurDataURL={blurDataURL}
+            className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
             onLoad={handleLoad}
             onError={handleError}
           />
 
           {/* Loading skeleton */}
           {!isLoaded && (
-            <div
-              className="absolute inset-0 animate-pulse surface"
-              style={fill ? undefined : { width, height }}
-            />
+            <div className="absolute inset-0 animate-pulse bg-muted/20" />
           )}
         </>
       )}
 
       {/* Lazy loading placeholder */}
-      {!isInView && !priority && (
+      {!isInView && (
         <div
-          className="surface animate-pulse"
+          className="bg-muted/20 animate-pulse"
           style={fill ? { position: "absolute", inset: 0 } : { width, height }}
         />
       )}
@@ -185,6 +183,7 @@ export function ProductImage({
       className={className}
       priority={priority}
       sizes={PRODUCT_IMAGE_SIZES}
+      showTextFallback={true}
     />
   );
 }
@@ -207,6 +206,7 @@ export function ProductThumbnail({
       className={className}
       sizes="120px"
       lazy={false}
+      showTextFallback={false}
     />
   );
 }
@@ -229,6 +229,7 @@ export function HeroImage({
       className={className}
       priority={true}
       sizes="100vw"
+      showTextFallback={true}
     />
   );
 }

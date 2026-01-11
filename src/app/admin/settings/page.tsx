@@ -4,17 +4,20 @@ import { PageHeaderWithActions, TabLayout, TabPanel } from "@/components/admin";
 import ContactForm from "@/components/forms/ContactForm";
 import HomeForm from "@/components/forms/HomeForm";
 import StoreForm from "@/components/forms/StoreForm";
+import StockSettings from "@/components/forms/StockSettings";
 import ShippingSettings from "@/components/forms/ShippingSettings";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDocumentTitle } from "@/hooks";
+import { useTabWithUrl } from "@/hooks/useTabWithUrl";
 import { Plus, Save, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 
-type TabType = "tienda" | "envios" | "contacto" | "home" | "faqs";
+type TabType = "tienda" | "stock" | "envios" | "contacto" | "home" | "faqs";
 
 interface FAQ {
   question: string;
@@ -23,7 +26,7 @@ interface FAQ {
 
 export default function ConfiguracionPage() {
   useDocumentTitle({ title: "Configuración del Sitio" });
-  const [activeTab, setActiveTab] = useState<TabType>("tienda");
+  const [activeTab, setActiveTab] = useTabWithUrl("tienda");
   const [loading, setLoading] = useState(false);
 
   // FAQs state
@@ -86,6 +89,7 @@ export default function ConfiguracionPage() {
       <TabLayout
         tabs={[
           { id: "tienda", label: "Tienda (Identidad)" },
+          { id: "stock", label: "Inventario & Stock" },
           { id: "envios", label: "Envíos y Logística" },
           { id: "contacto", label: "Contacto" },
           { id: "home", label: "Inicio" },
@@ -98,6 +102,14 @@ export default function ConfiguracionPage() {
           <Card>
             <CardContent className="p-6">
               <StoreForm />
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        <TabPanel id="stock" activeTab={activeTab}>
+          <Card>
+            <CardContent className="p-6">
+              <StockSettings />
             </CardContent>
           </Card>
         </TabPanel>

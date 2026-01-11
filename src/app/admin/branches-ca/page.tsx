@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { CardGridSkeleton } from "@/components/admin/SettingsSkeletons";
 
 // PROVINCIAS imported from @/lib/constants
 
@@ -305,10 +306,7 @@ export default function SucursalesCAPage() {
 
       {/* Listado de sucursales */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="ml-3 text-muted">Cargando sucursales...</span>
-        </div>
+        <CardGridSkeleton count={6} />
       ) : filteredAgencies.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted">

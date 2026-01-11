@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 // import { cn } from "@/lib/utils";
 import { Plus, Ruler } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 export interface SizeGuideData {
   columns: string[];
@@ -22,88 +22,91 @@ export default function SizeGuideEditor({
   value,
   onChange,
 }: SizeGuideEditorProps) {
-  // Columns state: always start with "Talle" as read-only first column
-  const [columns, setColumns] = useState<string[]>(
-    value?.columns && value.columns.length > 0
-      ? value.columns.slice(1) // Exclude "Talle" from editable state, we prepend it
-      : ["Ancho (cm)", "Largo (cm)"]
-  );
+  // Derive columns from value, or default
+  const columns = useMemo(() => {
+    if (value?.columns && value.columns.length > 0) {
+      return value.columns.slice(1);
+    }
+    return ["Ancho (cm)", "Largo (cm)"];
+  }, [value?.columns]);
 
-  // Measurements state: Map<Size, Map<ColumnIndex, Value>>
-  // We store simply as valid rows keyed by size for persistence during size toggling
-  const [rowValues, setRowValues] = useState<Record<string, string[]>>({});
-
-  // Init from value
-  useEffect(() => {
+  // Derive row values map from value
+  const rowValues = useMemo(() => {
+    const map: Record<string, string[]> = {};
     if (value?.rows) {
-      const newRowValues: Record<string, string[]> = {};
       value.rows.forEach((row) => {
-        const sizeName = row[0]; // First col is always size
+        const sizeName = row[0];
         const measures = row.slice(1);
-        newRowValues[sizeName] = measures;
+        map[sizeName] = measures;
       });
-      setRowValues(newRowValues);
     }
-  }, [value]);
+    return map;
+  }, [value?.rows]);
 
-  // Sync effect: When sizes or columns or measurements change, propagate to parent
-  useEffect(() => {
-    if (sizes.length === 0) {
-      // If no sizes, maybe nullify or keep empty
-      // onChange(null);
-      return;
-    }
+  // Helper to trigger change with generated structure
+  const triggerChange = (
+    newCols: string[],
+    newRowValues: Record<string, string[]>
+  ) => {
+    const fullColumns = ["Talle", ...newCols];
 
-    const fullColumns = ["Talle", ...columns];
+    // Generate rows ensuring consistency with current sizes and columns
     const generatedRows = sizes.map((size) => {
-      const existingMeasures = rowValues[size] || [];
-      // Ensure measures array length matches columns length
-      const safeMeasures = columns.map((_, i) => existingMeasures[i] || "");
-      return [size, ...safeMeasures];
+      const existingMeasures = newRowValues[size] || [];
+      const safeMeasures = [...existingMeasures];
+
+      // Pad or slice to match columns length
+      while (safeMeasures.length < newCols.length) {
+        safeMeasures.push("");
+      }
+      return [size, ...safeMeasures.slice(0, newCols.length)];
     });
 
     onChange({
       columns: fullColumns,
       rows: generatedRows,
     });
-  }, [sizes, columns, rowValues, onChange]); // Be careful with onChange dependency loop, usually fine if stable
+  };
 
   const addColumn = () => {
-    setColumns([...columns, "Nueva Medida"]);
+    triggerChange([...columns, "Nueva Medida"], rowValues);
   };
 
   const removeColumn = (index: number) => {
     const newCols = [...columns];
     newCols.splice(index, 1);
-    setColumns(newCols);
 
-    // Also remove that index from all saved rowValues
-    const newRowValues = { ...rowValues };
-    Object.keys(newRowValues).forEach((key) => {
-      const vals = [...newRowValues[key]];
-      vals.splice(index, 1);
-      newRowValues[key] = vals;
+    // Also remove data for that column from all rows
+    const newRowValues: Record<string, string[]> = {};
+    Object.keys(rowValues).forEach((size) => {
+      const measures = [...rowValues[size]];
+      measures.splice(index, 1);
+      newRowValues[size] = measures;
     });
-    setRowValues(newRowValues);
+
+    triggerChange(newCols, newRowValues);
   };
 
   const updateColumnName = (index: number, name: string) => {
     const newCols = [...columns];
     newCols[index] = name;
-    setColumns(newCols);
+    triggerChange(newCols, rowValues);
   };
 
   const updateMeasurement = (size: string, colIndex: number, val: string) => {
     const existing = rowValues[size] || new Array(columns.length).fill("");
-    const newVals = [...existing];
-    // Expand if needed
-    while (newVals.length < columns.length) newVals.push("");
+    const newMeasures = [...existing];
+    // Expand if needed (though render ensures display, logic needs safety)
+    while (newMeasures.length <= colIndex) newMeasures.push("");
 
-    newVals[colIndex] = val;
-    setRowValues({
+    newMeasures[colIndex] = val;
+
+    const newRowValues = {
       ...rowValues,
-      [size]: newVals,
-    });
+      [size]: newMeasures,
+    };
+
+    triggerChange(columns, newRowValues);
   };
 
   if (sizes.length === 0) {

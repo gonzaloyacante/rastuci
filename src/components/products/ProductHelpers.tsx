@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Check, HelpCircle } from "lucide-react";
-import { useState } from "react";
-import { PLACEHOLDER_IMAGE } from "@/lib/constants";
-import Image from "next/image";
+import { useState, useEffect } from "react";
+import { StockBadge } from "@/components/ui/StockBadge";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 // ==============================================================================
 // Shared Toggle Button
@@ -75,16 +75,99 @@ export function HelpTooltip({ text }: { text: string }) {
 export function PlaceholderImage({ className }: { className?: string }) {
   return (
     <div
-      className={`relative overflow-hidden bg-muted rounded-lg border border-muted ${className || "w-full h-48"}`}
+      className={`relative overflow-hidden bg-muted rounded-lg border border-muted flex flex-col items-center justify-center ${className || "w-full h-48"}`}
     >
-      <Image
-        src={PLACEHOLDER_IMAGE}
-        alt="Imagen no disponible"
-        fill
-        className="object-cover opacity-80 mix-blend-multiply"
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-      />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-12 h-12 text-muted/50"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+      <span className="text-muted/50 text-sm mt-2">Imagen no disponible</span>
     </div>
+  );
+}
+
+// ==============================================================================
+// ColorSwatch - Selector de color con fallback de imágenes
+// ==============================================================================
+interface ColorSwatchProps {
+  color: string;
+  images: string[];
+  isSelected: boolean;
+  onClick: () => void;
+  colorHex?: string;
+  className?: string;
+}
+
+export function ColorSwatch({
+  color,
+  images,
+  isSelected,
+  onClick,
+  colorHex,
+  className,
+}: ColorSwatchProps) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [hasValidImage, setHasValidImage] = useState(true);
+
+  // Cada vez que cambian las imágenes o el color, reseteamos el índice
+  useEffect(() => {
+    setCurrentImageIndex(0);
+    setHasValidImage(Boolean(images && images.length > 0));
+  }, [images, color]);
+
+  const handleImageError = () => {
+    // Si tenemos más imágenes para probar, avanzamos al siguiente índice
+    if (images && currentImageIndex < images.length - 1) {
+      setCurrentImageIndex((prev) => prev + 1);
+    } else {
+      // Si ya probamos todas, marcamos como inválido para mostrar fallback de color
+      setHasValidImage(false);
+    }
+  };
+
+  const showImage = hasValidImage && images && images.length > 0;
+  const currentSrc = showImage ? images[currentImageIndex] : null;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "group relative rounded-md border-2 transition-all overflow-hidden",
+        isSelected
+          ? "border-primary ring-2 ring-offset-2 ring-primary ring-offset-surface"
+          : "border-transparent hover:border-primary/50",
+        className
+      )}
+      title={`Seleccionar color ${color}`}
+    >
+      {currentSrc ? (
+        <div className="w-16 h-16 relative bg-neutral-100 dark:bg-neutral-800 rounded-sm overflow-hidden">
+          <OptimizedImage
+            src={currentSrc}
+            alt={color}
+            fill
+            className="object-cover"
+            sizes="64px"
+            onError={handleImageError}
+            showTextFallback={false}
+          />
+        </div>
+      ) : (
+        <div
+          className="w-12 h-12"
+          style={{ backgroundColor: colorHex || "#ccc" }}
+        />
+      )}
+    </button>
   );
 }
 
@@ -107,21 +190,7 @@ export function ProductPreviewBadges({
           ⚡ En Oferta
         </span>
       )}
-      {stock !== undefined && stock > 0 && (
-        <span className="bg-success/10 text-success px-3 py-1 rounded-full text-sm font-medium">
-          ✓ {stock} en stock
-        </span>
-      )}
-      {stock !== undefined && stock <= 5 && stock > 0 && (
-        <span className="bg-warning/10 text-warning px-3 py-1 rounded-full text-sm font-medium">
-          ⚠️ Stock limitado
-        </span>
-      )}
-      {stock === 0 && (
-        <span className="bg-error/10 text-error px-3 py-1 rounded-full text-sm font-medium">
-          ✗ Sin stock
-        </span>
-      )}
+      {stock !== undefined && <StockBadge stock={stock} />}
     </div>
   );
 }
@@ -130,17 +199,9 @@ export function ProductPreviewBadges({
 // StockIndicator
 // ==============================================================================
 export function StockIndicator({ stock }: { stock: number }) {
-  const getStockInfo = () => {
-    if (stock === 0) return { text: "Sin stock", className: "text-red-600" };
-    if (stock <= 5) return { text: "Stock bajo", className: "text-red-600" };
-    if (stock <= 10)
-      return { text: "Stock medio", className: "text-yellow-600" };
-    return { text: "Stock bueno", className: "text-green-600" };
-  };
-
-  const info = getStockInfo();
-
   return (
-    <p className={`text-xs mt-1 font-medium ${info.className}`}>{info.text}</p>
+    <div className="mt-1">
+      <StockBadge stock={stock} className="text-xs px-2 py-0.5" />
+    </div>
   );
 }

@@ -488,7 +488,9 @@ export class OrderService {
       const settings = await getStoreSettings();
       if (!settings.stock.enableStockAlerts) return;
 
-      const threshold = settings.stock.lowStockThreshold;
+      // Dynamic Stock Alerts Logic
+      // We check if the product falls into a status configured as 'error' or 'warning'
+      const { stockStatuses } = settings;
 
       // Get distinct product IDs
       const productIds = [
@@ -501,7 +503,19 @@ export class OrderService {
       });
 
       for (const p of products) {
-        if (p.stock <= threshold) {
+        // Find matching rule
+        const status = stockStatuses.find(
+          (s) =>
+            p.stock >= s.min &&
+            (s.max === null || s.max === undefined || p.stock <= s.max)
+        );
+
+        // If status exists and indicates a warning/error (low stock), send alert
+        if (
+          status &&
+          (status.color === "error" || status.color === "warning")
+        ) {
+          // Prevent spamming if already alerted? (Currently system doesn't track alert state per product, relies on trigger event)
           await emailService.sendLowStockAlert(
             p.name,
             p.stock,
@@ -509,7 +523,7 @@ export class OrderService {
             settings.adminEmail
           );
           logger.info(
-            `[StockAlert] Sent alert for ${p.name} (Stock: ${p.stock})`
+            `[StockAlert] Sent alert for ${p.name} (Stock: ${p.stock}, Status: ${status.label})`
           );
         }
       }

@@ -37,7 +37,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     scope: "/",
     lang: "es",
     categories: ["shopping", "lifestyle"],
-    icons: [
+    /* icons: [
       {
         src: "/icons/icon-72x72.png",
         sizes: "72x72",
@@ -94,7 +94,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         purpose: "maskable any" as any,
       },
-    ],
+    ], */
     shortcuts: [
       {
         name: "Productos",

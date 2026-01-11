@@ -48,14 +48,57 @@ export const StoreSettingsSchema = z.object({
       senderName: "Rastuci",
     }),
 
-  // Stock Alerts
+  // Dynamic Stock Settings
+  stockStatuses: z
+    .array(
+      z.object({
+        id: z.string(),
+        min: z.number().min(0),
+        max: z.number().nullable().optional(), // null or undefined means "Up to Infinity"
+        label: z.string().min(1),
+        color: z.enum([
+          "success",
+          "warning",
+          "error",
+          "info",
+          "muted",
+          "primary",
+          "secondary",
+          "accent",
+        ]),
+      })
+    )
+    .default([
+      {
+        id: "default-no-stock",
+        min: 0,
+        max: 0,
+        label: "Sin Stock",
+        color: "error",
+      },
+      {
+        id: "default-low-stock",
+        min: 1,
+        max: 5,
+        label: "Stock Bajo",
+        color: "warning",
+      },
+      {
+        id: "default-good-stock",
+        min: 6,
+        max: null,
+        label: "En Stock",
+        color: "success",
+      },
+    ]),
+
+  // Deprecated stock settings (kept for backward compatibility logic if needed, but we should migrate)
+  // We will keep 'enableStockAlerts' as a general toggle if the user wants to hide stock indicators entirely.
   stock: z
     .object({
-      lowStockThreshold: z.number().min(0).default(5),
       enableStockAlerts: z.boolean().default(true),
     })
     .default({
-      lowStockThreshold: 5,
       enableStockAlerts: true,
     }),
 });
@@ -83,8 +126,30 @@ export const defaultStoreSettings: StoreSettings = {
     senderName: "Rastuci",
     footerText: "",
   },
+  stockStatuses: [
+    {
+      id: "default-no-stock",
+      min: 0,
+      max: 0,
+      label: "Sin Stock",
+      color: "error",
+    },
+    {
+      id: "default-low-stock",
+      min: 1,
+      max: 5,
+      label: "Stock Bajo",
+      color: "warning",
+    },
+    {
+      id: "default-good-stock",
+      min: 6,
+      max: null,
+      label: "En Stock",
+      color: "success",
+    },
+  ],
   stock: {
-    lowStockThreshold: 5,
     enableStockAlerts: true,
   },
 };
