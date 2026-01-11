@@ -37,11 +37,18 @@ export function useShippingSettings() {
       const res = await fetch(url);
       if (!res.ok) return defaultShippingSettings;
       const json = await res.json();
-      if (json?.success && json.data?.shipping) {
-        return json.data.shipping;
-      }
-      // If no shipping settings found in store, use defaults
-      return defaultShippingSettings;
+
+      // Merge: El admin controla freeShipping, los labels vienen de defaults
+      // StoreSettings.shipping solo tiene { freeShipping: boolean }
+      // ShippingSettings tiene labels, descriptions, etc.
+      const adminShipping = json.data?.shipping;
+
+      return {
+        ...defaultShippingSettings,
+        // Override con el valor del admin si existe
+        freeShipping:
+          adminShipping?.freeShipping ?? defaultShippingSettings.freeShipping,
+      };
     },
     {
       fallbackData: defaultShippingSettings,

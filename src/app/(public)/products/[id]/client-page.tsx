@@ -641,7 +641,13 @@ export default function ProductDetailClient({
               <div className="flex items-center space-x-2">
                 <Truck className="w-5 h-5 text-primary" />
                 <span className="text-sm">
-                  {shipping.estimatedDelivery || "Envío a todo el país"}
+                  {shipping.freeShipping ? (
+                    <span className="text-success font-semibold">
+                      {shipping.freeShippingLabel || "Envío Gratis"}
+                    </span>
+                  ) : (
+                    shipping.estimatedDelivery || "Envío a todo el país"
+                  )}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
