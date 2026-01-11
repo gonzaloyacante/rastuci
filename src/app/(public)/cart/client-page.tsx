@@ -9,7 +9,7 @@ import { useShippingSettings } from "@/hooks/useShippingSettings";
 import { logger } from "@/lib/logger";
 import { formatPriceARS } from "@/utils/formatters";
 import { AlertCircle, Check, ShoppingCart, Trash2 } from "lucide-react";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -116,7 +116,7 @@ const CartItemComponent = ({
         {/* Imagen - más grande */}
         <div className="relative w-24 h-24 sm:w-32 sm:h-32 shrink-0">
           <Link href={`/productos/${item.product.id}`}>
-            <Image
+            <OptimizedImage
               src={imageUrl}
               alt={item.product.name}
               fill

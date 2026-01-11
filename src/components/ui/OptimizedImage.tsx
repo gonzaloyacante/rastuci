@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 
+import { cloudinaryLoader } from "@/lib/cloudinaryLoader";
+
 const PRODUCT_IMAGE_SIZES =
   "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
 
@@ -23,6 +25,8 @@ interface OptimizedImageProps {
   onError?: () => void;
   /** If true, show "Imagen no disponible" text on error. Default: false (icon only) */
   showTextFallback?: boolean;
+  showSkeleton?: boolean;
+  enableFade?: boolean;
 }
 
 export function OptimizedImage({
@@ -41,6 +45,8 @@ export function OptimizedImage({
   onLoad,
   onError,
   showTextFallback = false,
+  showSkeleton = true,
+  enableFade = true,
 }: OptimizedImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -139,13 +145,14 @@ export function OptimizedImage({
             priority={priority}
             placeholder={placeholder}
             blurDataURL={blurDataURL}
-            className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+            loader={cloudinaryLoader}
+            className={`${enableFade ? `transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}` : ""} ${className}`}
             onLoad={handleLoad}
             onError={handleError}
           />
 
           {/* Loading skeleton */}
-          {!isLoaded && (
+          {!isLoaded && showSkeleton && (
             <div className="absolute inset-0 animate-pulse bg-muted/20" />
           )}
         </>

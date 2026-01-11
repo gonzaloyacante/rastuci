@@ -157,6 +157,7 @@ export function ColorSwatch({
             fill
             className="object-cover"
             sizes="64px"
+            quality={60}
             onError={handleImageError}
             showTextFallback={false}
           />

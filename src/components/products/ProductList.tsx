@@ -340,6 +340,7 @@ export default function ProductList() {
                   <ProductCard
                     product={product}
                     variant="admin"
+                    priority={index < 6}
                     onEdit={() =>
                       router.push(`/admin/productos/${product.id}/editar`)
                     }
@@ -365,7 +366,6 @@ export default function ProductList() {
           )}
         </>
       )}
-
 
       {ConfirmDialog}
     </div>

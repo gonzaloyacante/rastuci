@@ -3,19 +3,19 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidad",
-  description: "Política de privacidad y protección de datos de Rastuci",
+  title: "Defensa al Consumidor",
+  description: "Derechos del consumidor y normativa aplicable en Rastuci",
 };
 
-async function getPrivacy() {
+async function getDefense() {
   const policy = await prisma.legalPolicy.findUnique({
-    where: { slug: "politica-de-privacidad" },
+    where: { slug: "defensa-al-consumidor" },
   });
   return policy;
 }
 
-export default async function PrivacidadPage() {
-  const policy = await getPrivacy();
+export default async function DefensaConsumidorPage() {
+  const policy = await getDefense();
 
   if (!policy || !policy.isActive) {
     notFound();

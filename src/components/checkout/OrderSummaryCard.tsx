@@ -11,7 +11,7 @@ import {
   Truck,
   Store,
 } from "lucide-react";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { WEEKDAY_NAMES_SHORT, type WeekdayKey } from "@/lib/constants";
 
 interface OrderItem {
@@ -97,13 +97,12 @@ export function OrderSummaryCard({
               className="flex items-center gap-4 p-3 surface-secondary rounded-lg"
             >
               {item.image && (
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
-                  <Image
+                <div className="w-16 h-16 relative rounded-lg overflow-hidden bg-muted shrink-0">
+                  <OptimizedImage
                     src={item.image}
                     alt={item.name}
-                    width={64}
-                    height={64}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 </div>
               )}

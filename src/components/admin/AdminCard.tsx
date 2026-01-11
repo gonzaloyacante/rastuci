@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import React from "react";
 
 interface AdminCardAction {
@@ -67,13 +67,12 @@ export const AdminCard: React.FC<AdminCardProps> = ({
       <CardContent className="p-6 flex flex-col gap-3">
         {/* Header con imagen opcional */}
         {image && (
-          <div className="mb-3">
-            <Image
+          <div className="mb-3 relative w-full h-32">
+            <OptimizedImage
               src={image}
               alt={title}
-              width={400}
-              height={128}
-              className="w-full h-32 object-cover rounded-xl shadow-sm border-2 border-muted"
+              fill
+              className="object-cover rounded-xl shadow-sm border-2 border-muted"
             />
           </div>
         )}

@@ -24,18 +24,38 @@ export default function ProductImageGallery({
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
   // Reset selected image when the image list changes
   const imagesKey = JSON.stringify(images);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We want to trigger when the unified key changes
   useEffect(() => {
     setSelectedImage(0);
+    setFailedImages(new Set());
   }, [imagesKey]);
 
+  // Sort images: valid first, failed last
+  const sortedImages = [...images].sort((a, b) => {
+    const isAFailed = failedImages.has(a);
+    const isBFailed = failedImages.has(b);
+    if (isAFailed && !isBFailed) return 1;
+    if (!isAFailed && isBFailed) return -1;
+    return images.indexOf(a) - images.indexOf(b);
+  });
+
   // Prevent index out of bounds
-  if (images.length > 0 && selectedImage >= images.length) {
+  if (sortedImages.length > 0 && selectedImage >= sortedImages.length) {
     setSelectedImage(0);
   }
+
+  const handleImageError = useCallback((src: string) => {
+    setFailedImages((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(src);
+      return newSet;
+    });
+  }, []);
 
   const changeImage = useCallback(
     (newIndex: number, direction: "left" | "right") => {
@@ -73,7 +93,7 @@ export default function ProductImageGallery({
     setIsZooming(false);
   }, []);
 
-  if (!images || images.length === 0) {
+  if (!sortedImages || sortedImages.length === 0) {
     return (
       <div className="w-full h-96 surface border border-muted rounded-lg flex items-center justify-center">
         <p className="muted">No hay imágenes disponibles</p>
@@ -82,12 +102,13 @@ export default function ProductImageGallery({
   }
 
   const nextImage = () => {
-    const newIndex = (selectedImage + 1) % images.length;
+    const newIndex = (selectedImage + 1) % sortedImages.length;
     changeImage(newIndex, "right");
   };
 
   const prevImage = () => {
-    const newIndex = (selectedImage - 1 + images.length) % images.length;
+    const newIndex =
+      (selectedImage - 1 + sortedImages.length) % sortedImages.length;
     changeImage(newIndex, "left");
   };
 
@@ -116,7 +137,7 @@ export default function ProductImageGallery({
       {/* Main image container */}
       <div
         ref={imageContainerRef}
-        className="relative aspect-square bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
+        className="relative aspect-square md:aspect-[4/3] lg:aspect-square w-full max-h-[500px] md:max-h-[60vh] lg:max-h-none mx-auto bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -131,14 +152,17 @@ export default function ProductImageGallery({
           }`}
         >
           <OptimizedImage
-            src={images[selectedImage]}
-            alt={`${productName} - Imagen ${selectedImage + 1} de ${images.length}`}
+            src={sortedImages[selectedImage]}
+            alt={`${productName} - Imagen ${selectedImage + 1} de ${sortedImages.length}`}
             fill
             className="object-contain"
             priority={selectedImage === 0}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             quality={90}
             showTextFallback={true}
+            showSkeleton={false}
+            enableFade={false}
+            onError={() => handleImageError(sortedImages[selectedImage])}
           />
         </div>
 
@@ -156,7 +180,7 @@ export default function ProductImageGallery({
         )}
 
         {/* Navigation controls */}
-        {images.length > 1 && (
+        {sortedImages.length > 1 && (
           <>
             <button
               onClick={prevImage}
@@ -178,12 +202,12 @@ export default function ProductImageGallery({
         )}
 
         {/* Current image indicator */}
-        {images.length > 1 && (
+        {sortedImages.length > 1 && (
           <div
             className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-10"
             aria-live="polite"
           >
-            {selectedImage + 1} / {images.length}
+            {selectedImage + 1} / {sortedImages.length}
           </div>
         )}
       </div>
@@ -202,7 +226,7 @@ export default function ProductImageGallery({
           <div
             className="w-full h-full"
             style={{
-              backgroundImage: `url(${images[selectedImage]})`,
+              backgroundImage: `url(${sortedImages[selectedImage]})`,
               backgroundSize: `${zoomFactor * 100}%`,
               backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
               backgroundRepeat: "no-repeat",
@@ -212,7 +236,7 @@ export default function ProductImageGallery({
       )}
 
       {/* Thumbnails */}
-      {images.length > 1 && (
+      {sortedImages.length > 1 && (
         <div className="pt-2">
           {/* Thumbnail list for accessibility: tests expect a list role with this label */}
           <div
@@ -220,7 +244,7 @@ export default function ProductImageGallery({
             role="list"
             aria-label="Miniaturas de imágenes"
           >
-            {images.map((image, index) => (
+            {sortedImages.map((image, index) => (
               <button
                 key={`item-${index}`}
                 onClick={() => selectImage(index)}
@@ -240,7 +264,8 @@ export default function ProductImageGallery({
                     fill
                     className="object-cover"
                     sizes="80px"
-                    quality={75}
+                    quality={60}
+                    onError={() => handleImageError(image)}
                   />
                 </div>
               </button>

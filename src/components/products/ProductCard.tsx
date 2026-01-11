@@ -236,10 +236,11 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                 {imageLoading && (
                   <div className="absolute inset-0 surface-secondary animate-pulse" />
                 )}
-                <Image
+                <OptimizedImage
                   src={mainImage}
                   alt={product.name}
                   fill
+                  priority={priority}
                   className={`object-cover transition-opacity duration-300 ${
                     imageLoading ? "opacity-0" : "opacity-100"
                   }`}
@@ -414,14 +415,13 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           <Link
             href={`/productos/${product.id}`}
             aria-label={`Ver detalles de ${product.name}`}
-            className="block h-[160px] sm:h-[200px] overflow-hidden bg-neutral-100 dark:bg-neutral-800"
+            className="block relative h-[160px] sm:h-[200px] overflow-hidden bg-neutral-100 dark:bg-neutral-800"
           >
             <OptimizedImage
               src={product.images?.[imageIndex] || ""}
               alt={`${product.name} - ${product.categories?.name || "Producto"}`}
-              width={400}
-              height={200}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
               priority={priority}
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
               quality={85}

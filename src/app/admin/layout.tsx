@@ -13,6 +13,7 @@ import {
   Menu,
   MessageCircle,
   Settings,
+  Shield,
   ShoppingBag,
   Tag,
   Terminal,
@@ -39,6 +40,7 @@ const NAV_LINKS = [
   { name: "Logística", href: "/admin/logistica", icon: Terminal },
   { name: "Métricas", href: "/admin/metricas", icon: BarChart3 },
   { name: "Usuarios", href: "/admin/usuarios", icon: User },
+  { name: "Legales", href: "/admin/legales", icon: Shield },
   { name: "Soporte", href: "/admin/soporte", icon: MessageCircle },
   { name: "Configuración", href: "/admin/configuracion", icon: Settings },
 ] as const;

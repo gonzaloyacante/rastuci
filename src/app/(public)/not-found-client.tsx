@@ -59,10 +59,7 @@ export default function NotFoundClient() {
         {/* 404 Hero Section */}
         <div className="text-center mb-16">
           <div className="mb-8">
-            <div className="text-primary text-9xl md:text-[12rem] font-bold font-montserrat opacity-20">
-              404
-            </div>
-            <div className="relative -mt-16 md:-mt-20">
+            <div className="relative">
               <h1 className="text-4xl md:text-6xl font-bold text-primary font-montserrat mb-4">
                 ¡Oops!
               </h1>
