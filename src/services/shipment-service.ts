@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
-import { ORDER_STATUS } from "@/lib/constants";
+import { ORDER_STATUS, PROVINCIAS, ProvinceCode } from "@/lib/constants";
 
 export class ShipmentService {
   /**
@@ -29,6 +29,19 @@ export class ShipmentService {
         throw new Error(`Order not found: ${orderId}`);
       }
 
+      // CRITICAL CHECK: Do NOT create CA shipment for Local Store Pickups
+      // "pickup" is our internal ID for Tienda.
+      if (
+        order.shippingMethod === "pickup" ||
+        order.shippingAgency === "pickup"
+      ) {
+        logger.info(
+          "[ShipmentService] Skipping CA shipment for Local Store Pickup",
+          { orderId }
+        );
+        return true; // Return true as "success" since no shipment is needed
+      }
+
       if (
         !order.customerAddress ||
         !order.customerEmail ||
@@ -54,8 +67,38 @@ export class ShipmentService {
       let streetNumber = order.shippingNumber || "S/N";
       let city = order.shippingCity || "";
       let postalCode = order.shippingPostalCode || "1611";
-      let provinceCode: "B" | "C" =
-        (order.shippingProvinceCode as "B" | "C") || "B";
+
+      // Determine Province Code dynamically
+      // 1. Try existing code from DB
+      let provinceCode = order.shippingProvinceCode as ProvinceCode | null;
+
+      // 2. Try mapping from Name
+      if (!provinceCode && order.shippingProvince) {
+        const normalizedName = order.shippingProvince
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+        const match = PROVINCIAS.find(
+          (p) =>
+            p.name
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") === normalizedName
+        );
+        if (match) provinceCode = match.code;
+      }
+
+      // 3. Fallback: Parse CP (Naive but handle major cases better)
+      if (!provinceCode) {
+        const cpNum = parseInt(postalCode.replace(/\D/g, ""));
+        if (cpNum >= 1000 && cpNum <= 1499)
+          provinceCode = "C"; // CABA
+        else if (cpNum >= 5000 && cpNum <= 5999)
+          provinceCode = "X"; // Córdoba
+        else if (cpNum >= 2000 && cpNum <= 2999)
+          provinceCode = "S"; // Santa Fe
+        else provinceCode = "B"; // Default to Buenos Aires (covers GBA and most users)
+      }
 
       // Fallback: parsear customerAddress
       if (!streetName && order.customerAddress) {
@@ -69,10 +112,7 @@ export class ShipmentService {
         city = addressParts[3] || addressParts[1] || "Buenos Aires";
 
         const postalCodeMatch = order.customerAddress.match(/\b(\d{4})\b/);
-        postalCode = postalCodeMatch ? postalCodeMatch[1] : "1611";
-
-        const cpNum = parseInt(postalCode);
-        provinceCode = cpNum >= 1000 && cpNum <= 1439 ? "C" : "B";
+        postalCode = postalCodeMatch ? postalCodeMatch[1] : postalCode;
       }
 
       const totalItems = order.order_items.reduce(
@@ -123,7 +163,7 @@ export class ShipmentService {
         floor: null as string | null,
         apartment: null as string | null,
         city: "Don Torcuato",
-        provinceCode: "B" as "B" | "C",
+        provinceCode: "B" as ProvinceCode,
         postalCode: "1611",
         name: "Rastuci E-commerce",
         email: "ventas@rastuci.com",
@@ -132,7 +172,8 @@ export class ShipmentService {
 
       // Override with Contact Settings (Phone/Email)
       if (contactSettings && contactSettings.value) {
-        const cSettings = contactSettings.value as unknown as ContactSettingsValue;
+        const cSettings =
+          contactSettings.value as unknown as ContactSettingsValue;
         if (cSettings.emails && cSettings.emails.length > 0) {
           senderAddress.email = cSettings.emails[0];
         }
@@ -145,11 +186,29 @@ export class ShipmentService {
       if (storeSettings && storeSettings.value) {
         const settings = storeSettings.value as unknown as StoreSettingsValue;
         if (settings.address) {
-          const pCode =
-            settings.address.province?.toLowerCase().includes("capital") ||
-              settings.address.province?.toLowerCase().includes("caba")
-              ? ("C" as const)
-              : ("B" as const);
+          let pCode: ProvinceCode = "B";
+          const pName = settings.address.province || "";
+
+          const normalizedPName = pName
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+          const match = PROVINCIAS.find(
+            (p) =>
+              p.name
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") === normalizedPName
+          );
+
+          if (match) {
+            pCode = match.code;
+          } else if (
+            normalizedPName.includes("capital") ||
+            normalizedPName.includes("caba")
+          ) {
+            pCode = "C";
+          }
 
           senderAddress = {
             ...senderAddress, // Keep email/phone from contact settings
@@ -161,8 +220,7 @@ export class ShipmentService {
             provinceCode: pCode,
             postalCode: settings.address.postalCode || senderAddress.postalCode,
             name: settings.name || senderAddress.name,
-            // Only override email/phone if they were somehow in store settings (legacy) or explicitly passed? 
-            // We decided StoreSettings won't have them anymore, so we don't map them here.
+            // Only override email/phone if they were somehow in store settings
           };
         }
 
@@ -195,7 +253,7 @@ export class ShipmentService {
           name: order.customerName,
           phone: order.customerPhone || "",
           cellPhone: order.customerPhone || "",
-          email: order.customerEmail,
+          email: order.customerEmail as string, // Validated above
         },
         shipping: {
           deliveryType: (order.shippingAgency ? "S" : "D") as "D" | "S",

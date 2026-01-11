@@ -1,9 +1,11 @@
-import { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosError } from "axios";
 import {
   ImportShipmentParams,
   ImportShipmentResponse,
   ApiResponse,
   GetTrackingParams,
+  TrackingInfo,
+  TrackingErrorResponse,
 } from "./types";
 import { logger } from "@/lib/logger";
 
@@ -20,6 +22,9 @@ export class CorreoArgentinoShipping {
   public async importShipment(
     params: ImportShipmentParams
   ): Promise<ApiResponse<ImportShipmentResponse>> {
+    // Payload container for error logging scope in case of failure
+    let requestBody = {} as ImportShipmentParams;
+
     try {
       logger.info("[CorreoArgentino] Importing shipment", {
         extOrderId: params.extOrderId,
@@ -59,8 +64,7 @@ export class CorreoArgentinoShipping {
 
       // Preparar body limpiando campos innecesarios
       // NOTA: Para "Ventanilla", el sender debe ir con campos NULL explícitos según doc oficial
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const requestBody: any = {
+      requestBody = {
         customerId: params.customerId,
         extOrderId: params.extOrderId,
         orderNumber: params.orderNumber,
@@ -106,17 +110,30 @@ export class CorreoArgentinoShipping {
       }
 
       return { success: true, data: response.data };
+    } catch (error: unknown) {
+      let errorText = "Unknown error";
+      let status: number | undefined;
+      let details: unknown;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      // Manejo robusto de errores de parsing JSON (error común en esta API)
-      const errorText = error.response?.data
-        ? JSON.stringify(error.response.data)
-        : error.message;
+      if (axios.isAxiosError(error)) {
+        status = error.response?.status;
+        details = error.response?.data;
+        errorText = error.message;
+        if (details && typeof details === "object") {
+          try {
+            errorText = JSON.stringify(details);
+          } catch {
+            /* ignore circular */
+          }
+        }
+      } else if (error instanceof Error) {
+        errorText = error.message;
+      }
 
       logger.error("[CorreoArgentino] Import shipment failed", {
-        status: error.response?.status,
+        status: status,
         error: errorText.substring(0, 200),
+        payload: JSON.stringify(requestBody),
       });
 
       return {
@@ -124,7 +141,7 @@ export class CorreoArgentinoShipping {
         error: {
           code: "IMPORT_ERROR",
           message: "Error importando envío",
-          details: error.response?.data,
+          details: details,
         },
       };
     }
@@ -133,24 +150,28 @@ export class CorreoArgentinoShipping {
   /**
    * Obtiene el tracking de un envío (si estuviera disponible en REST)
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async getTracking(
     params: GetTrackingParams
-  ): Promise<ApiResponse<any>> {
+  ): Promise<
+    ApiResponse<TrackingInfo | TrackingInfo[] | TrackingErrorResponse>
+  > {
     try {
       // Implementación base según doc, aunque endpoint suele ser inestable
-      const response = await this.api.get(
+      const response = await this.api.get<TrackingInfo | TrackingInfo[]>(
         `/shipping/tracking?shippingId=${params.shippingId}`
       );
       return { success: true, data: response.data };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let details: unknown;
+      if (axios.isAxiosError(error)) {
+        details = error.response?.data;
+      }
       return {
         success: false,
         error: {
           code: "TRACKING_ERROR",
           message: "Error obteniendo tracking",
-          details: error.response?.data,
+          details,
         },
       };
     }

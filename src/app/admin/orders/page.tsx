@@ -182,6 +182,7 @@ export default function OrdersPage() {
         "Estado",
         "Estado Pago MP",
         "Método de Envío",
+        "Agencia / Sucursal",
         "Tracking",
         "Fecha Creación",
         "Productos",
@@ -224,6 +225,7 @@ export default function OrdersPage() {
             getStatusLabel(order.status),
             order.mpStatus || "N/A",
             order.shippingMethod || "No especificado",
+            (order as any).shippingAgency || "-", // Cast to any if type is strict, or add to Order type
             order.caTrackingNumber || "Sin tracking",
             formatDate(order.createdAt),
             products,

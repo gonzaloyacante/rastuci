@@ -74,11 +74,20 @@ export const GET = withAdminAuth(
             customerPhone: true,
             customerAddress: true,
             total: true,
+            shippingCost: true, // Needed for breakdown
             status: true,
             createdAt: true,
             updatedAt: true,
             mpPaymentId: true,
             mpStatus: true,
+            // Critical Shipping Data
+            shippingMethod: true,
+            shippingAgency: true,
+            shippingStreet: true,
+            shippingCity: true,
+            shippingProvince: true,
+            shippingPostalCode: true,
+            caTrackingNumber: true,
             order_items: {
               select: {
                 id: true,

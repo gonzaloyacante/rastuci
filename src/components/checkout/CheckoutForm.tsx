@@ -113,10 +113,17 @@ export function CheckoutForm({
         email: customerData.email,
       };
 
-      // Metadata para el webhook
+      // Metadata para el webhook y createFullOrder
+      // CRITICAL: Must include detailed address info for the Order First pattern
       const metadata = {
         customerName: customer.name,
         customerEmail: customer.email,
+        customerPhone: customerInfo?.phone || "",
+        customerAddress: customerInfo?.address || "",
+        customerCity: customerInfo?.city || "",
+        customerProvince: customerInfo?.province || "",
+        customerPostalCode: customerInfo?.postalCode || "",
+        shippingAgencyCode: selectedAgency || "", // Store the agency (Puntopick/Andreani/CA ID)
         paymentMethod: selectedPaymentMethod,
         discount: discount,
         shippingCost: shippingCost,
@@ -126,6 +133,7 @@ export function CheckoutForm({
           size: item.size,
           color: item.color,
         })),
+        shippingMethodName: selectedShippingOption?.name, // Pass the explicit name (e.g., "Sucursal Correo Argentino")
       };
 
       // Crear preferencia en MercadoPago
@@ -140,6 +148,7 @@ export function CheckoutForm({
           metadata,
           discount: discount, // Send explicit discount to API
           shippingCost: shippingCost, // Send explicit shipping cost
+          shippingMethodName: selectedShippingOption?.name,
         }),
       });
 

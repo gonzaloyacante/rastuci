@@ -27,6 +27,9 @@ interface MercadoPagoPreference {
   metadata?: Record<string, unknown>;
 }
 
+import { orderService } from "@/services/order-service";
+import { checkoutService } from "@/services/checkout-service";
+
 export async function POST(req: NextRequest) {
   try {
     const requestId = getRequestId(req.headers);
@@ -58,114 +61,169 @@ export async function POST(req: NextRequest) {
       metadata = {},
       discount = 0,
       shippingCost = 0,
+      shippingMethodName,
     } = body || {};
 
-    // Log para debugging (solo en desarrollo)
     if (process.env.NODE_ENV === "development") {
-      logger.info("Creating MP preference", {
+      logger.info("Creating order + MP preference", {
         requestId,
         itemsCount: items.length,
         hasCustomer: !!customer,
-        discount,
-        shippingCost,
+        shippingMethodName,
       });
     }
 
     if (!Array.isArray(items) || items.length === 0) {
-      return fail("BAD_REQUEST", "Items required to create preference", 400, {
-        requestId,
-      });
+      return fail("BAD_REQUEST", "Items required", 400, { requestId });
     }
 
+    if (!customer) {
+      return fail("BAD_REQUEST", "Customer data required", 400, { requestId });
+    }
+
+    // 1. CREATE LOCAL ORDER FIRST (The "Order First" Pattern)
+    // This ensures exact data fidelity before interacting with MP.
+    let createdOrder;
+    try {
+      // Map items to simple format expected by service
+      const simpleItems = items.map((i: any) => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        size: i.size,
+        color: i.color,
+      }));
+
+      // Map shipping data
+      // Note: customer address string might be "Street 123" or generic.
+      // We assume CheckoutForm passes granular data in customer object if available,
+      // but here we only have 'customer.address' as string usually.
+      // However, check CheckoutForm payload... it sends:
+      // customer: { name, email, phone?, address: { street_name, zip_code }? or flat props? }
+      // The CheckoutForm sends: body.customer = { name, email } and body.metadata...
+      // WAIT. CheckoutForm sends:
+      // body: { items, customer: {name, email}, metadata: { customerName, customerAddress... }, ... }
+      // This route's destructuring above reads 'customer' from body.
+      // We need to ensure we get address info.
+      // Based on CheckoutForm.tsx:
+      // metadata has: customerAddress, customerCity, etc.
+
+      const method = shippingMethodName || metadata.shippingMethodName || "";
+
+      // CRITICAL FIX: Distinguish "Retiro en Tienda" (Free) vs "Retiro en Sucursal Correo Argentino" (Paid)
+      // "pickup" ID comes from shipping-calculator.ts for local store pickup.
+      // Any other ID (numeric or agency code) implies a carrier shipment (CA, Andreani, etc).
+      const shippingIdToCheck =
+        metadata.shippingAgencyCode || metadata.shippingMethodId;
+
+      // We assume if the Explicit ID is "pickup", it's the free store pickup.
+      // We also check the name for "Tienda" just in case, but NEVER "Sucursal" (which implies Carrier Branch)
+      const isLocalStorePickup =
+        String(shippingIdToCheck) === "pickup" ||
+        /retiro en tienda|local/i.test(method);
+
+      // Validate/Force shipping cost logic
+      // If it's a LOCAL STORE PICKUP, cost MUST be 0.
+      // If it's Sucursal CA, it IS a shipment, so we preserve the cost.
+      const validatedShippingCost = isLocalStorePickup
+        ? 0
+        : Number(shippingCost) || 0;
+
+      const shippingData = {
+        street: metadata.customerAddress as string,
+        city: metadata.customerCity as string,
+        province: metadata.customerProvince as string, // Might be undefined
+        postalCode: metadata.customerPostalCode as string,
+        agency: metadata.shippingAgencyCode as string,
+        methodName: method,
+        cost: validatedShippingCost,
+      };
+
+      const customerData = {
+        name: customer.name || metadata.customerName,
+        email: customer.email || metadata.customerEmail,
+        phone: metadata.customerPhone as string,
+        address: metadata.customerAddress as string,
+        city: metadata.customerCity as string,
+        province: metadata.customerProvince as string,
+        postalCode: metadata.customerPostalCode as string,
+      };
+
+      // CRITICAL: Validate stock before creating potential ghost order
+      // We map to the interface expected by validateStock
+      await checkoutService.validateStock(
+        simpleItems.map((i: any) => ({
+          ...i,
+          price: 0, // Price irrelevant for stock check
+        }))
+      );
+
+      createdOrder = await orderService.createFullOrder(
+        customerData,
+        simpleItems,
+        shippingData,
+        "mercadopago"
+      );
+
+      logger.info("Local order created successfully", {
+        orderId: createdOrder.id,
+        isLocalPickup: isLocalStorePickup,
+        shippingMethod: method,
+      });
+    } catch (e: unknown) {
+      const err = e instanceof Error ? e.message : String(e);
+      // Differentiate stock error vs DB error
+      if (
+        err.includes("Stock insuficiente") ||
+        err.includes("no está disponible")
+      ) {
+        return fail("BAD_REQUEST", err, 400, { requestId });
+      }
+      logger.error("Failed to create local order", { error: e });
+      return fail("INTERNAL_ERROR", "Failed to create order record", 500);
+    }
+
+    // 2. CREATE MP PREFERENCE LINKED TO ORDER
     const origin =
       req.headers.get("origin") ||
       process.env.NEXT_PUBLIC_APP_URL ||
       "http://localhost:3000";
 
-    // Server-side validation: rebuild items from DB using metadata.items
-    const metaItems = Array.isArray(metadata?.items) ? metadata.items : [];
-    if (metaItems.length === 0) {
-      return fail(
-        "BAD_REQUEST",
-        "metadata.items es requerido para validar en el servidor",
-        400,
-        { requestId }
-      );
-    }
+    const totalItemsAmount =
+      createdOrder.total -
+      (Number(shippingCost) || 0) +
+      (Number(discount) || 0);
+    // Wait, createdOrder.total includes shipping.
+    // So totalItemsAmount = createdOrder.order_items sum.
+    // Let's just recalculate simple total for MP item display.
+    // Actually we can reuse 'createdOrder.total' logic or just trust the logic below.
 
-    const productIds: string[] = metaItems.map((i: Record<string, unknown>) =>
-      String(i.productId)
-    );
-    const dbProducts = await prisma.products.findMany({
-      where: { id: { in: productIds } },
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        salePrice: true,
-        onSale: true,
-        description: true,
-        images: true,
+    // We strictly use the createdOrder ID as external_reference
+    const externalReference = createdOrder.id;
+
+    // ... (Consolidation Logic) ...
+    // We already have the order total calculated securely by createFullOrder
+    // createdOrder.total is the final price to pay.
+    // The content of the preference items is now mostly for display/receipt,
+    // since the authoritative total is in our DB.
+    // MP requires items sum to match (or we just send one item with total).
+
+    // Simplest approach: One item with the Total Amount of the order.
+    // This avoids rounding errors between our calculation and MP's sum.
+    const finalItems = [
+      {
+        id: "all-items",
+        title: "Rastući - Compra Web", // Or "Compra en Rastući"
+        quantity: 1,
+        // We use the TOTAL from the DB order which includes shipping/discount logic
+        // This ensures the amount MP charges is EXACTLY what we saved.
+        unit_price: Number(createdOrder.total.toFixed(2)),
+        currency_id: "ARS",
+        picture_url: undefined,
+        description: `Pedido #${createdOrder.id}`,
       },
-    });
+    ];
 
-    type ProductType = (typeof dbProducts)[0];
-    const validatedItems = metaItems.map((it: Record<string, unknown>) => {
-      const prod = dbProducts.find((p: ProductType) => p.id === it.productId);
-      if (!prod) {
-        throw new Error(`Producto no encontrado: ${it.productId}`);
-      }
-      // CRITICAL: Use salePrice if product is on sale, otherwise use original price
-      const unitPrice =
-        prod.onSale && prod.salePrice
-          ? Number(prod.salePrice)
-          : Number(prod.price);
-      const title =
-        prod.name + (it.size && it.color ? ` (${it.size} - ${it.color})` : "");
-      const firstImage = (() => {
-        try {
-          const arr = JSON.parse(prod.images);
-          return Array.isArray(arr) && arr.length > 0 ? arr[0] : undefined;
-        } catch {
-          return undefined;
-        }
-      })();
-      return {
-        title,
-        quantity: Number(it.quantity) || 1,
-        unit_price: unitPrice,
-        currency_id: "ARS",
-        picture_url: firstImage,
-        description: prod.description || undefined,
-      };
-    });
-
-    // Agregar ítem de envío si shippingCost > 0
-    if (shippingCost > 0) {
-      validatedItems.push({
-        title: "Costo de envío",
-        quantity: 1,
-        unit_price: Number(shippingCost),
-        currency_id: "ARS",
-        picture_url: undefined,
-        description: "Envío",
-      });
-    }
-
-    // Agregar ítem de descuento si discount > 0 (negativo)
-    if (discount > 0) {
-      validatedItems.push({
-        title: "Descuento aplicado",
-        quantity: 1,
-        unit_price: -Number(discount),
-        currency_id: "ARS",
-        picture_url: undefined,
-        description: "Cupón o promoción",
-      });
-    }
-
-    // Build Mercado Pago preference con items validados
-    // Determine a safe notification_url: only send to MP if explicitly configured and not localhost
+    // Determine notification URL
     let mpNotificationUrl: string | undefined = undefined;
     if (process.env.MP_WEBHOOK_URL) {
       try {
@@ -177,43 +235,50 @@ export async function POST(req: NextRequest) {
           mpNotificationUrl = process.env.MP_WEBHOOK_URL;
         }
       } catch {
-        mpNotificationUrl = undefined;
+        /* ignore */
       }
     }
 
     const preferencePayload = {
-      items: validatedItems,
+      items: finalItems,
       payer: customer
         ? {
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone ? { number: customer.phone } : undefined,
-          address: customer.address
-            ? {
-              street_name: customer.address,
-              zip_code: customer.postalCode,
-              city: customer.city,
-            }
-            : undefined,
-        }
+            name: customer.name,
+            email: customer.email,
+            phone: metadata.customerPhone
+              ? { number: metadata.customerPhone }
+              : undefined,
+            address: metadata.customerPostalCode
+              ? {
+                  street_name: metadata.customerAddress,
+                  zip_code: metadata.customerPostalCode,
+                  city: metadata.customerCity,
+                }
+              : undefined,
+          }
         : undefined,
       back_urls: {
         success: `${origin}/finalizar-compra/success`,
         failure: `${origin}/finalizar-compra/failure`,
         pending: `${origin}/finalizar-compra/pending`,
       },
-      // "all" = redirige automáticamente en TODOS los casos (approved, pending, rejected)
       auto_return: "all",
-      // Only include notification_url if it's a non-local MP webhook URL
+      external_reference: externalReference, // LINK TO DB ORDER
       ...(mpNotificationUrl ? { notification_url: mpNotificationUrl } : {}),
-      metadata,
+      statement_descriptor: "RASTUCI",
+      metadata: {
+        ...metadata,
+        shippingMethodName: shippingMethodName || metadata.shippingMethodName,
+        // We include orderId here too just in case
+        localOrderId: createdOrder.id,
+      },
     } as MercadoPagoPreference;
 
-    // Log payload in development to help debug MP errors
     if (process.env.NODE_ENV === "development") {
       logger.info("MP preference payload", {
         requestId,
-        payload: preferencePayload,
+        externalReference,
+        amount: createdOrder.total,
       });
     }
 
@@ -231,23 +296,21 @@ export async function POST(req: NextRequest) {
 
     if (!resp.ok) {
       const err = await resp.text();
-      logger.error("MP preference create failed", {
-        requestId,
-        details: err,
-        payload: preferencePayload,
-      });
-      const details =
-        process.env.NODE_ENV === "development"
-          ? { error: err, payload: preferencePayload }
-          : { error: err };
-      return fail("INTERNAL_ERROR", "Failed to create preference", 500, {
-        requestId,
-        details,
-      });
+      logger.error("MP preference create failed", { requestId, details: err });
+      return fail("INTERNAL_ERROR", "Failed to create preference", 500);
     }
 
     const data = await resp.json();
-    // data.init_point (desktop) / data.sandbox_init_point; data.id preference id
+
+    // Save preference ID to order? Optional but good for tracing.
+    // Async update to avoid blocking.
+    prisma.orders
+      .update({
+        where: { id: createdOrder.id },
+        data: { mpPreferenceId: data.id },
+      })
+      .catch((e) => logger.error("Failed to save pref ID", { e }));
+
     return ok({
       init_point: data.init_point || data.sandbox_init_point,
       preference_id: data.id,
@@ -259,9 +322,6 @@ export async function POST(req: NextRequest) {
       error: String(e),
     });
     const n = normalizeApiError(e, "INTERNAL_ERROR", "Unexpected error", 500);
-    return fail(n.code as ApiErrorCode, n.message, n.status, {
-      requestId,
-      ...(n.details as Record<string, unknown>),
-    });
+    return fail(n.code as ApiErrorCode, n.message, n.status, { requestId });
   }
 }

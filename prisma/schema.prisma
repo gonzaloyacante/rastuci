@@ -325,6 +325,8 @@ model orders {
   @@index([shippingProvinceCode])
   @@index([status])
   @@index([trackingNumber])
+  @@index([mpPaymentId])
+  @@index([mpPreferenceId])
 }
 
 model product_reviews {

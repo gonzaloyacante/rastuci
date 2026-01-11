@@ -109,6 +109,44 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
               </p>
             </div>
           </div>
+
+          {/* Detalles de Envío / Sucursal */}
+          {(order.shippingMethod === "correo-argentino" ||
+            order.shippingAgency) && (
+            <div className="mt-4 pt-4 border-t border-muted">
+              <h3 className="text-sm font-medium muted mb-2">
+                Detalles de Envío
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm font-semibold">Método:</span>{" "}
+                  <span className="text-sm">{order.shippingMethod}</span>
+                </div>
+                {order.shippingAgency && (
+                  <div>
+                    <span className="text-sm font-semibold">
+                      Agencia/Sucursal:
+                    </span>{" "}
+                    <span className="text-sm text-primary font-medium">
+                      {order.shippingAgency}
+                    </span>
+                  </div>
+                )}
+                {(order.shippingStreet || order.shippingCity) && (
+                  <div className="md:col-span-2">
+                    <span className="text-sm font-semibold">
+                      Dirección de Entrega:
+                    </span>{" "}
+                    <span className="text-sm">
+                      {order.shippingStreet} {order.shippingNumber},{" "}
+                      {order.shippingCity}, {order.shippingProvince} (
+                      {order.shippingPostalCode})
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

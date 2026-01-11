@@ -75,16 +75,10 @@ export async function sendEmail({
     const { data, error } = await resend.emails.send({
       from: sender,
       to: Array.isArray(to) ? to : [to],
-      reply_to: replyTo, // NOTE: Resend Node SDK v2+ properties might differ.
-      // Usage: 'reply_to' is often used in API, 'replyTo' in SDK types.
-      // Validating correct property for this version.
-      // Update: Types suggest 'reply_to' might be deprecated or mapped.
-      // Using specific type casting or just 'replyTo' as per recent feedback.
-      // SDK v3 uses `replyTo`? Let's try `replyTo` which is standard.
+      replyTo: replyTo,
       subject,
       html,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any); // Casting as any to allow flexible property passing if SDK types are outdated locally
+    });
 
     if (error) {
       logger.error("[Email] Failed to send email", { error, to, subject });

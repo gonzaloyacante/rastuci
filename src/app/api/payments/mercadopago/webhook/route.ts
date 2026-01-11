@@ -139,8 +139,14 @@ export async function POST(
     // 5. Update or Create Order
     let result;
 
-    // A. Try by External Reference (ID)
+    // A. Try by External Reference (ID) - Preferred for Order First pattern
     if (payment.external_reference) {
+      // Logic for Idempotency check:
+      // If we find the order, checks if we really need to update it.
+      // This is a "read-before-write" optimization but the real lock is in updateOrder transaction.
+      // However, we can skip the DB call if mappedStatus is equal to current status?
+      // Safest is to just call updateOrder which handles logic.
+
       result = await orderService.updateOrder(payment.external_reference, {
         mpPaymentId,
         mpStatus: mpStatus || "unknown",
@@ -180,22 +186,35 @@ export async function POST(
       const { order, shouldShip } = result;
 
       if (shouldShip) {
-        // Create CA Shipment (async, don't block response)
-        shipmentService.createCAShipment(order.id).catch((err) => {
-          logger.error("[Webhook] Async shipment creation failed", {
+        try {
+          // CRITICAL: Await this to ensure execution in Serverless environment (Vercel)
+          // Do NOT fire-and-forget, or the lambda might terminate before completion.
+          const shipmentCreated = await shipmentService.createCAShipment(
+            order.id
+          );
+          if (!shipmentCreated) {
+            logger.warn(
+              "[Webhook] CA Shipment creation returned false (check logs)",
+              { orderId: order.id }
+            );
+          }
+        } catch (err) {
+          logger.error("[Webhook] Shipment creation failed", {
             orderId: order.id,
             error: err,
           });
-        });
+        }
 
-        // Notify
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        notifyParties(order as any, order.id, mpPaymentId).catch((err) => {
-          logger.error("[Webhook] Async notification failed", {
+        try {
+          // Await notifications too
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await notifyParties(order as any, order.id, mpPaymentId);
+        } catch (err) {
+          logger.error("[Webhook] Notification failed", {
             orderId: order.id,
             error: err,
           });
-        });
+        }
       }
     }
 

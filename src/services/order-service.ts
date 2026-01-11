@@ -5,6 +5,7 @@ import { OrderStatus } from "@prisma/client";
 import { getStoreSettings } from "@/lib/store-settings";
 import { emailService } from "@/lib/resend";
 import { OrderItemInput, MercadoPagoPayer } from "@/types";
+import { PROVINCIAS, ProvinceCode } from "@/lib/constants";
 
 export interface OrderMetadata {
   tempOrderId?: string;
@@ -40,70 +41,75 @@ export class OrderService {
   }
 
   async updateOrder(orderId: string, data: OrderUpdateData) {
-    const order = await prisma.orders.findUnique({
-      where: { id: orderId },
-      include: {
-        order_items: {
-          include: {
-            products: true,
+    // Transactional consistency: Fetch and update to prevent race conditions (double decrement)
+    return await prisma.$transaction(async (tx) => {
+      // 1. Lock/Fetch current order state
+      const order = await tx.orders.findUnique({
+        where: { id: orderId },
+        include: {
+          order_items: {
+            include: {
+              products: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!order) return null;
+      if (!order) return null;
 
-    // Update status
-    await prisma.orders.update({
-      where: { id: orderId },
-      data: {
-        mpPaymentId: data.mpPaymentId,
-        mpStatus: data.mpStatus,
-        status: data.mappedStatus,
-        updatedAt: new Date(),
-      },
-    });
+      // 2. Determine if stock decrement is needed based on CURRENT db state
+      // We only decrement if moving to PENDING_PAYMENT (Approved) from a non-approved state
+      const isAlreadyPaid =
+        order.status === ORDER_STATUS.PENDING_PAYMENT ||
+        order.status === ORDER_STATUS.PROCESSED ||
+        order.status === ORDER_STATUS.DELIVERED;
 
-    // Handle Stock Decrement
-    const shouldDecrement =
-      data.mappedStatus === ORDER_STATUS.PENDING_PAYMENT &&
-      order.status !== ORDER_STATUS.PENDING_PAYMENT &&
-      order.status !== ORDER_STATUS.PROCESSED &&
-      order.status !== ORDER_STATUS.DELIVERED;
+      const shouldDecrement =
+        data.mappedStatus === ORDER_STATUS.PENDING_PAYMENT && !isAlreadyPaid;
 
-    if (shouldDecrement) {
-      // Use transaction to ensure partial failures don't leave inconsistent state
-      await prisma.$transaction(async (tx) => {
+      // 3. Update Order Status
+      const updatedOrder = await tx.orders.update({
+        where: { id: orderId },
+        data: {
+          mpPaymentId: data.mpPaymentId,
+          mpStatus: data.mpStatus,
+          status: data.mappedStatus,
+          updatedAt: new Date(),
+        },
+      });
+
+      // 4. Handle Stock Decrement (Atomic within transaction)
+      if (shouldDecrement) {
         for (const item of order.order_items) {
-          try {
-            await tx.products.update({
-              where: {
-                id: item.productId,
-                stock: { gte: item.quantity }, // Atomic check: prevent negative stock
-              },
-              data: { stock: { decrement: item.quantity } },
-            });
-          } catch {
-            // If update fails (e.g. stock too low), we throw to abort the whole transaction
+          // Check stock before decrementing to avoid negative stock errors
+          // Note: We use updateMany or standard update.
+          // Since we are inside a transaction, if this fails, the whole order update rolls back.
+          // This is desired: we don't want to mark an order as PAID if we can't fulfill it.
+          const product = await tx.products.findUnique({
+            where: { id: item.productId },
+            select: { stock: true, name: true },
+          });
+
+          if (!product || product.stock < item.quantity) {
             throw new Error(
-              `Stock insuficiente para el producto ${item.productId} (Orden ${orderId})`
+              `Stock insuficiente para ${product?.name ?? "producto"}`
             );
           }
+
+          await tx.products.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } },
+          });
         }
-      });
-    }
+      }
 
-    // Handle CA Shipment Creation logic availability
-    // Note: Actual shipment creation calls should be done by the controller/webhook using ShipmentService
-    // We return a flag indicating if it should be attempted.
-    // FIX: Do NOT ship if it's a pickup order
-    const isPickup = order.shippingMethod === "pickup";
-    const shouldShip =
-      shouldDecrement &&
-      data.mappedStatus === ORDER_STATUS.PENDING_PAYMENT &&
-      !isPickup;
+      // 5. Return context for shipment/notifications
+      // Use logic similar to before but with updated order object
+      const isPickup = order.shippingMethod === "pickup";
+      const shouldShip = shouldDecrement && !isPickup;
 
-    return { order, shouldShip };
+      return { order: updatedOrder, shouldShip };
+    });
   }
 
   async createFromMetadata(
@@ -271,8 +277,29 @@ export class OrderService {
         mpStatus,
         shippingStreet,
         shippingCity,
-        shippingProvince,
-        shippingPostalCode,
+        shippingProvince: shippingProvince,
+        shippingProvinceCode: (() => {
+          if (!shippingProvince) return null;
+          const normalized = shippingProvince
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+          // Check strict match first
+          const match = PROVINCIAS.find(
+            (p) =>
+              p.name
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") === normalized
+          );
+          if (match) return match.code;
+          // Heuristic for CABA
+          if (normalized.includes("capital") || normalized.includes("caba"))
+            return "C";
+          // If no match, return null and let ShipmentService guess by CP
+          return null;
+        })(),
+        shippingPostalCode: shippingPostalCode,
         shippingAgency: shippingAgencyCode,
         shippingMethod: shippingMethodId, // Saved correctly now
         updatedAt: new Date(),
@@ -489,6 +516,148 @@ export class OrderService {
     } catch (error) {
       logger.error("[StockAlert] Error processing alerts", { error });
     }
+  }
+  /**
+   * Creates a full order record in the database before payment processing.
+   * This ensures faithful data persistence (customer details, shipping name, etc.)
+   * independently of the payment gateway's metadata limitations.
+   */
+  async createFullOrder(
+    customer: {
+      name: string;
+      phone: string;
+      email: string;
+      address: string;
+      city: string;
+      province?: string;
+      postalCode?: string;
+    },
+    items: Array<{
+      productId: string;
+      quantity: number;
+      size?: string;
+      color?: string;
+    }>,
+    shippingData: {
+      street?: string;
+      city?: string;
+      province?: string;
+      postalCode?: string;
+      agency?: string;
+      methodName?: string;
+      cost: number;
+    },
+    paymentMethod: string = "mercadopago"
+  ) {
+    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+    // SECURITY: Fetch product prices from database to prevent price manipulation
+    const productIds = items.map((i) => i.productId);
+    const dbProducts = await prisma.products.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, price: true, salePrice: true, onSale: true },
+    });
+
+    // Build validated order items with DB prices
+    const validatedItems = items.map((item) => {
+      const dbProduct = dbProducts.find((p) => p.id === item.productId);
+      if (!dbProduct) {
+        throw new Error(`Product not found: ${item.productId}`);
+      }
+      // Use sale price if product is on sale, otherwise regular price
+      const unitPrice =
+        dbProduct.onSale && dbProduct.salePrice
+          ? dbProduct.salePrice
+          : dbProduct.price;
+
+      return {
+        productId: item.productId,
+        quantity: item.quantity,
+        price: unitPrice,
+        size: item.size,
+        color: item.color,
+      };
+    });
+
+    // Calculate total server-side
+    const itemsTotal = validatedItems.reduce(
+      (sum, i) => sum + i.price * i.quantity,
+      0
+    );
+    const shippingCost = shippingData.cost ?? 0;
+    const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
+
+    logger.info("[OrderService] Creating full order (pre-payment)", {
+      orderId,
+      itemsTotal,
+      shippingCost,
+      calculatedTotal,
+      paymentMethod,
+    });
+
+    const order = await prisma.orders.create({
+      data: {
+        id: orderId,
+        customerName: customer.name,
+        customerPhone: customer.phone,
+        customerEmail: customer.email,
+        customerAddress: customer.address
+          ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
+          : "",
+        total: calculatedTotal,
+        shippingCost: shippingCost,
+        status: ORDER_STATUS.PENDING as OrderStatus,
+        mpPaymentId: null, // Will be filled by webhook
+        mpPreferenceId: null, // Will be filled by preference route response if needed, or webhook
+        mpStatus: "pending",
+        shippingStreet: shippingData.street,
+        shippingCity: shippingData.city,
+        shippingProvince: shippingData.province,
+        shippingProvinceCode: (() => {
+          if (!shippingData.province) return null;
+          const normalized = shippingData.province
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+          const match = PROVINCIAS.find(
+            (p) =>
+              p.name
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") === normalized
+          );
+          if (match) return match.code;
+          if (normalized.includes("capital") || normalized.includes("caba"))
+            return "C";
+          return null;
+        })(),
+        shippingPostalCode: shippingData.postalCode,
+        shippingAgency: shippingData.agency,
+        shippingMethod: shippingData.methodName, // The critical fix
+        updatedAt: new Date(),
+        order_items: {
+          create: validatedItems.map((item) => ({
+            id: `${orderId}_${item.productId}_${Date.now()}`,
+            quantity: item.quantity,
+            price: item.price,
+            size: item.size || null,
+            color: item.color || null,
+            products: {
+              connect: { id: item.productId },
+            },
+          })),
+        },
+      },
+      include: {
+        order_items: {
+          include: {
+            products: true,
+          },
+        },
+      },
+    });
+
+    return order;
   }
 }
 
