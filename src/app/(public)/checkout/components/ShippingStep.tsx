@@ -150,8 +150,15 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
       try {
         const type = deliveryMode === "agency" ? "S" : "D";
+        // Use agency postal code for agency mode, customer postal code for home delivery
+        const destinationPostalCode =
+          deliveryMode === "agency" &&
+          selectedAgency?.location?.address?.postalCode
+            ? selectedAgency.location.address.postalCode
+            : customerInfo.postalCode;
+
         const options = await calculateShippingCost(
-          customerInfo.postalCode,
+          destinationPostalCode,
           type
         );
 

@@ -9,7 +9,7 @@ import {
 import { Agency } from "@/lib/correo-argentino-service";
 import { Loader2, MapPin, Search, Store } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface AgencySelectorProps {
   selectedAgency: Agency | null;
@@ -30,6 +30,7 @@ export function AgencySelector({
   const [query, setQuery] = useState(""); // Valor inmediato del input
   const [searchTerm, setSearchTerm] = useState(""); // Valor que dispara el filtrado
   const [error, setError] = useState<string | null>(null);
+  const userClearedRef = useRef(false); // Prevent auto-fill after manual clear
 
   // Cargar provincias
   const provinceOptions = useMemo(
@@ -58,14 +59,14 @@ export function AgencySelector({
     }
   }, [initialProvince, province, provinceOptions]);
 
-  // Pre-filtrar por código postal si viene
+  // Pre-filtrar por código postal si viene (solo una vez, no después de clear)
   useEffect(() => {
-    // Si tenemos un CP inicial y aún no hay búsqueda activa
-    if (initialPostalCode && !query && !searchTerm) {
+    // Si tenemos un CP inicial y aún no hay búsqueda activa Y user no limpió manualmente
+    if (initialPostalCode && !query && !searchTerm && !userClearedRef.current) {
       setQuery(initialPostalCode);
       setSearchTerm(initialPostalCode); // Trigger search immediately
     }
-  }, [initialPostalCode, query, searchTerm]); // Run safely when initialPostalCode changes
+  }, [initialPostalCode, query, searchTerm]);
 
   const { getAgencies } = useCart();
 
@@ -222,7 +223,8 @@ export function AgencySelector({
     }
   };
 
-  const clearSearch = useCallback(() => {
+  const handleClearSearch = useCallback(() => {
+    userClearedRef.current = true; // Mark as user-cleared to prevent auto-refill
     setQuery("");
     setSearchTerm("");
   }, []);
@@ -254,30 +256,33 @@ export function AgencySelector({
               (por nombre, ciudad o CP)
             </span>
           </label>
-          <div className="relative flex-1">
-            <Input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ej: Monte Grande, 1842..."
-              disabled={loading || !province}
-              leftIcon={<Search className="h-4 w-4" />}
-              onClear={query ? clearSearch : undefined}
-              inputSize="lg"
-              className="rounded-r-none border-r-0 focus:z-10 focus:ring-0 focus:border-primary"
-              containerClassName="w-full"
-            />
+          {/* Input + Button in same flex row */}
+          <div className="flex gap-0">
+            <div className="relative flex-1">
+              <Input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ej: Monte Grande, 1842..."
+                disabled={loading || !province}
+                leftIcon={<Search className="h-4 w-4" />}
+                onClear={query ? handleClearSearch : undefined}
+                inputSize="lg"
+                className="rounded-r-none border-r-0 focus:z-10 focus:ring-0 focus:border-primary"
+                containerClassName="w-full"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleSearchTrigger}
+              disabled={loading || !province || !query.trim()}
+              className="rounded-l-none px-6 h-12 shrink-0"
+              variant="primary"
+            >
+              Buscar
+            </Button>
           </div>
-          <Button
-            type="button"
-            onClick={handleSearchTrigger}
-            disabled={loading || !province || !query.trim()}
-            className="rounded-l-none border-l-0 px-6 h-12"
-            variant="primary"
-          >
-            Buscar
-          </Button>
           {searchTerm && !loading && (
             <div className="flex items-center gap-2">
               {filteredAgencies.length > 0 ? (
