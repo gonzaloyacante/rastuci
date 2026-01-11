@@ -1,7 +1,7 @@
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
 import { type ContactSettings } from "@/lib/validation/contact";
-import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import { Facebook, Instagram, Youtube } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,14 +14,14 @@ export default function Footer({ home, contact }: FooterProps) {
   const footer = home?.footer || defaultHomeSettings.footer!;
   const logoUrl = footer.logoUrl;
 
-  // Prioritize global contact settings if available
-  const email = contact?.emails?.[0] || footer.email;
-  const phone = contact?.phones?.[0] || footer.phone;
+  // OBLIGATORIO: Solo usar datos de contact settings (configurados por admin)
+  // Sin fallbacks hardcodeados - si no hay datos, no se muestran
+  const email = contact?.emails?.[0];
+  const phone = contact?.phones?.[0];
 
-  // Merge social links logic
-  const instagram = contact?.social?.instagram?.url || footer.socialLinks?.instagram;
-  const facebook = contact?.social?.facebook?.url || footer.socialLinks?.facebook;
-  const twitter = footer.socialLinks?.twitter;
+  // Redes sociales SOLO desde contact settings
+  const instagram = contact?.social?.instagram?.url;
+  const facebook = contact?.social?.facebook?.url;
   const youtube = contact?.social?.youtube?.url;
 
   return (
@@ -114,8 +114,8 @@ export default function Footer({ home, contact }: FooterProps) {
         {/* Contacto + Redes */}
         <div>
           <h4 className="font-semibold text-sm mb-3 font-heading">Contacto</h4>
-          <p className="text-sm muted mb-1">{email}</p>
-          <p className="text-sm muted mb-4">{phone}</p>
+          {email && <p className="text-sm muted mb-1">{email}</p>}
+          {phone && <p className="text-sm muted mb-4">{phone}</p>}
           <div className="flex space-x-3">
             {instagram && instagram !== "#" && (
               <Link
@@ -137,17 +137,6 @@ export default function Footer({ home, contact }: FooterProps) {
                 aria-label="Síguenos en Facebook"
               >
                 <Facebook size={18} aria-hidden="true" />
-              </Link>
-            )}
-            {twitter && twitter !== "#" && (
-              <Link
-                href={twitter}
-                className="muted hover:text-primary transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Síguenos en Twitter"
-              >
-                <Twitter size={18} aria-hidden="true" />
               </Link>
             )}
             {youtube && youtube !== "#" && (

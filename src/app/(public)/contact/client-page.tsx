@@ -108,8 +108,8 @@ export default function ContactPageClient({
 }: {
   contact: ContactSettings;
 }) {
-  // Ya no necesitamos SWR aquí porque los datos vienen del servidor
-  const contactData = contact || defaultContactSettings;
+  // Los datos vienen del servidor, son obligatorios desde la DB
+  const contactData = contact;
 
   return (
     <div className="min-h-screen surface">
