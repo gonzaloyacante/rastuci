@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Schema de validación para configuración de envío
 export const ShippingSettingsSchema = z.object({
-  freeShipping: z.boolean().default(true),
+  freeShipping: z.boolean().default(false),
   freeShippingMinAmount: z.number().min(0).default(0),
   freeShippingLabel: z.string().default("Envío gratis"),
   freeShippingDescription: z.string().default("Envío gratis a todo el país"),
@@ -20,7 +20,7 @@ export const ShippingSettingsSchema = z.object({
 export type ShippingSettings = z.infer<typeof ShippingSettingsSchema>;
 
 export const defaultShippingSettings: ShippingSettings = {
-  freeShipping: true,
+  freeShipping: false,
   freeShippingMinAmount: 0,
   freeShippingLabel: "Envío gratis",
   freeShippingDescription: "Envío gratis a todo el país",

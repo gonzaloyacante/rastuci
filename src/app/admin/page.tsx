@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { logger } from "@/lib/logger";
+import { Mail, Lock } from "lucide-react";
 
 // Esquema para validación del formulario de login
 const loginSchema = z.object({
@@ -214,7 +215,7 @@ export default function AdminLoginPage() {
               {...registerLogin("email")}
               error={loginErrors.email?.message}
               disabled={loading}
-              icon="mail"
+              leftIcon={<Mail className="w-5 h-5" />}
               autoComplete="username"
               autoFocus
               aria-invalid={!!loginErrors.email}
@@ -227,7 +228,7 @@ export default function AdminLoginPage() {
               {...registerLogin("password")}
               error={loginErrors.password?.message}
               disabled={loading}
-              icon="lock"
+              leftIcon={<Lock className="w-5 h-5" />}
               autoComplete="current-password"
               allowPasswordToggle
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -363,7 +364,7 @@ export default function AdminLoginPage() {
                   {...registerForgotPassword("email")}
                   error={forgotPasswordErrors.email?.message}
                   disabled={loading}
-                  icon="mail"
+                  leftIcon={<Mail className="w-5 h-5" />}
                   autoComplete="email"
                 />
                 <div className="flex space-x-3">

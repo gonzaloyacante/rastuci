@@ -72,6 +72,7 @@ export function csrfProtection(request: NextRequest) {
     "/api/ready", // Ready check
     "/api/analytics", // Analytics (tracking anónimo)
     "/api/upload", // Subida de imágenes por admin (protegido por AdminAuth)
+    "/api/settings", // Admin settings (protegido por withAdminAuth, no necesita CSRF adicional)
   ];
 
   // Verificar si la ruta actual es una ruta pública
