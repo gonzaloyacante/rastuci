@@ -2,15 +2,22 @@
 
 import { Button } from "@/components/ui/Button";
 import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
+import { type ShippingSettings } from "@/lib/validation/shipping";
+import { Truck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 interface HeroSectionProps {
   home?: HomeSettings;
+  shipping?: ShippingSettings;
   loading?: boolean;
 }
 
-export function HeroSection({ home, loading = false }: HeroSectionProps) {
+export function HeroSection({
+  home,
+  shipping,
+  loading = false,
+}: HeroSectionProps) {
   const handleExploreCategories = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
@@ -55,9 +62,24 @@ export function HeroSection({ home, loading = false }: HeroSectionProps) {
           </div>
         )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center p-6 max-w-4xl mx-auto">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-white text-sm font-bold tracking-wide mb-6 shadow-lg shadow-pink-500/20 transform hover:scale-105 transition-transform duration-300">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-white text-sm font-bold tracking-wide mb-3 shadow-lg shadow-pink-500/20 transform hover:scale-105 transition-transform duration-300">
             ✨ Nueva temporada
           </span>
+
+          {/* Free Shipping Banner - Solo si está activado */}
+          {shipping?.freeShipping && (
+            <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm md:text-base shadow-2xl shadow-green-500/40 border-2 border-white/20 backdrop-blur-sm">
+                <Truck className="w-5 h-5 animate-bounce" />
+                <span className="tracking-wide">
+                  {shipping.freeShippingLabel || "ENVÍO GRATIS"}
+                </span>
+                <span className="hidden sm:inline text-white/90 font-normal">
+                  a todo el país
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Logo Principal */}
           <div className="mb-8 relative w-auto h-24 md:h-32 lg:h-40">

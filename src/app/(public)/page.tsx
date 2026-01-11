@@ -6,6 +6,10 @@ import { logger } from "@/lib/logger";
 import { generateStoreJsonLd } from "@/lib/metadata";
 import { prisma } from "@/lib/prisma";
 import { defaultHomeSettings, HomeSettingsSchema } from "@/lib/validation/home";
+import {
+  defaultShippingSettings,
+  ShippingSettingsSchema,
+} from "@/lib/validation/shipping";
 import { Metadata } from "next";
 
 export const revalidate = 60; // Revalidar cada minuto
@@ -18,9 +22,10 @@ export const metadata: Metadata = {
 
 async function getHomeData() {
   try {
-    const [settingsData, rawCategories, rawFeaturedProducts] =
+    const [settingsData, storeData, rawCategories, rawFeaturedProducts] =
       await Promise.all([
         prisma.settings.findUnique({ where: { key: "home" } }),
+        prisma.settings.findUnique({ where: { key: "store" } }),
         prisma.categories.findMany({
           orderBy: { name: "asc" },
           take: 12,
@@ -74,11 +79,25 @@ async function getHomeData() {
       }
     }
 
-    return { settings, categories, featuredProducts };
+    // Parsear shipping settings
+    let shipping = defaultShippingSettings;
+    if (storeData?.value) {
+      const storeSettings = storeData.value as any;
+      if (storeSettings.shipping) {
+        // Merge admin toggle con defaults
+        shipping = {
+          ...defaultShippingSettings,
+          freeShipping: storeSettings.shipping.freeShipping ?? false,
+        };
+      }
+    }
+
+    return { settings, shipping, categories, featuredProducts };
   } catch (error) {
     logger.error("Error fetching home data:", { error });
     return {
       settings: defaultHomeSettings,
+      shipping: defaultShippingSettings,
       categories: [],
       featuredProducts: [],
     };
@@ -86,7 +105,8 @@ async function getHomeData() {
 }
 
 export default async function HomePage() {
-  const { settings, categories, featuredProducts } = await getHomeData();
+  const { settings, shipping, categories, featuredProducts } =
+    await getHomeData();
 
   const jsonLd = generateStoreJsonLd();
 
@@ -99,7 +119,7 @@ export default async function HomePage() {
         }}
       />
 
-      <HeroSection home={settings} />
+      <HeroSection home={settings} shipping={shipping} />
 
       <CategoriesSection
         categories={categories}

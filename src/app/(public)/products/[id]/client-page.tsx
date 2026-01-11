@@ -432,6 +432,19 @@ export default function ProductDetailClient({
               )}
             </div>
 
+            {/* Free Shipping Badge Prominente */}
+            {shipping.freeShipping && (
+              <div className="mt-2 animate-in fade-in slide-in-from-left-4 duration-500">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-semibold">
+                  <Truck className="w-4 h-4" />
+                  <span>{shipping.freeShippingLabel || "Envío Gratis"}</span>
+                  <span className="text-xs font-normal opacity-90">
+                    a todo el país
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Selector de Colores (Thumbnail Style) */}
             {availableColors.length > 0 && (
               <div>
