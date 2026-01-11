@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { ShippingSettings } from "@/lib/validation/shipping";
+import { PLACEHOLDER_IMAGE } from "@/lib/constants";
 
 interface CartItem {
   product: {
@@ -89,7 +90,7 @@ const CartItemComponent = ({
   const imageUrl = useMemo(() => {
     return Array.isArray(item.product.images) && item.product.images.length > 0
       ? item.product.images[0]
-      : "/placeholder.png";
+      : PLACEHOLDER_IMAGE;
   }, [item.product.images]);
 
   const isLowStock = item.product.stock < 5;

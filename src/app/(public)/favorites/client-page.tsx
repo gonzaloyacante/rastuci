@@ -15,7 +15,7 @@ import {
   ShoppingCart,
   Trash2,
 } from "lucide-react";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -237,11 +237,12 @@ export default function FavoritosPageClient() {
                 className="surface rounded-lg border border-muted overflow-hidden group hover:shadow-md transition-all duration-200"
               >
                 <div className="relative aspect-square">
-                  <Image
+                  <OptimizedImage
                     src={item.image}
                     alt={item.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    width={500}
+                    height={500}
+                    className="object-cover group-hover:scale-105 transition-transform duration-300 w-full h-full"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                   />
 
@@ -315,11 +316,12 @@ export default function FavoritosPageClient() {
               >
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="relative w-full md:w-48 aspect-square md:aspect-square shrink-0">
-                    <Image
+                    <OptimizedImage
                       src={item.image}
                       alt={item.name}
-                      fill
-                      className="object-cover rounded-lg"
+                      width={200}
+                      height={200}
+                      className="object-cover rounded-lg w-full h-full"
                       sizes="(max-width: 768px) 100vw, 192px"
                     />
                   </div>

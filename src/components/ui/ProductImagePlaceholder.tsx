@@ -1,18 +1,24 @@
-import { ImageIcon } from "lucide-react";
+import { PLACEHOLDER_IMAGE } from "@/lib/constants";
+import Image from "next/image";
 
 interface ProductImagePlaceholderProps {
-    className?: string;
+  className?: string;
+  text?: string;
 }
 
 export const ProductImagePlaceholder = ({
-    className,
+  className,
+  text = "Sin imagen",
 }: ProductImagePlaceholderProps) => (
-    <div
-        className={`surface-secondary rounded-lg flex items-center justify-center ${className || "w-full h-48"}`}
-    >
-        <div className="text-center opacity-60">
-            <ImageIcon className="h-12 w-12 muted mx-auto mb-2" />
-            <p className="text-sm muted font-medium">Sin imagen</p>
-        </div>
-    </div>
+  <div
+    className={`relative overflow-hidden surface-secondary rounded-lg ${className || "w-full h-48"}`}
+  >
+    <Image
+      src={PLACEHOLDER_IMAGE}
+      alt={text}
+      fill
+      className="object-cover opacity-80"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+    />
+  </div>
 );

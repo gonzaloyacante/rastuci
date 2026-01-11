@@ -229,3 +229,6 @@ export const SORT_OPTIONS = [
 ] as const;
 
 export type SortOptionId = (typeof SORT_OPTIONS)[number]["id"];
+
+export const PLACEHOLDER_IMAGE =
+  "https://placehold.co/600x600/f3f4f6/9ca3af?text=Imagen+No+Disponible";

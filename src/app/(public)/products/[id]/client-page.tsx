@@ -14,6 +14,7 @@ import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 import { getColorHex } from "@/utils/colors";
 import { formatPriceARS } from "@/utils/formatters";
+import { PLACEHOLDER_IMAGE } from "@/lib/constants";
 import {
   ArrowLeft,
   CreditCard,
@@ -268,7 +269,7 @@ export default function ProductDetailClient({
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0] || "https://placehold.co/800x800.png",
+        image: product.images[0] || PLACEHOLDER_IMAGE,
       });
       show({
         type: "success",

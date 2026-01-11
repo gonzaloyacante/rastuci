@@ -1,4 +1,5 @@
 import CategoryIcon from "@/components/ui/CategoryIcon";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { type Category } from "@/types";
 import Link from "next/link";
 import { memo } from "react";
@@ -41,12 +42,17 @@ export const CategoryCard = memo(function CategoryCard({
       {/* Background image and overlay (only if available) */}
       {displayMode === "image" && img ? (
         <>
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-            style={{ backgroundImage: `url('${img}')` }}
-          />
+          <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
+            <OptimizedImage
+              src={img}
+              alt={category.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
           {/* Shadow overlay ONLY for image cards */}
-          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
         </>
       ) : null}
 

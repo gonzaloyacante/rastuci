@@ -1,12 +1,17 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { useState, useRef, useEffect } from 'react';
+import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
+import { PLACEHOLDER_IMAGE } from "@/lib/constants";
 
-const PRODUCT_IMAGE_SIZES = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
+const PRODUCT_IMAGE_SIZES =
+  "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
 
 // Simple lazy image hook
-function useLazyImage(_src: string, _options: { quality?: number; priority?: boolean }) {
+function useLazyImage(
+  _src: string,
+  _options: { quality?: number; priority?: boolean }
+) {
   const [isInView, setIsInView] = useState(false);
   return { isInView, setIsInView };
 }
@@ -14,15 +19,16 @@ function useLazyImage(_src: string, _options: { quality?: number; priority?: boo
 interface OptimizedImageProps {
   src: string;
   alt: string;
-  width: number;
-  height: number;
+  width?: number; // Optional if fill is true
+  height?: number; // Optional if fill is true
   className?: string;
   priority?: boolean;
   quality?: number;
   sizes?: string;
-  placeholder?: 'blur' | 'empty';
+  placeholder?: "blur" | "empty";
   blurDataURL?: string;
   lazy?: boolean;
+  fill?: boolean; // New prop
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -32,20 +38,21 @@ export function OptimizedImage({
   alt,
   width,
   height,
-  className = '',
+  className = "",
   priority = false,
   quality = 75,
   sizes = PRODUCT_IMAGE_SIZES,
-  placeholder = 'blur',
+  placeholder = "blur",
   blurDataURL,
   lazy = true,
+  fill = false,
   onLoad,
   onError,
 }: OptimizedImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
-  
+
   const { isInView, setIsInView } = useLazyImage(src, { quality, priority });
 
   // Intersection Observer for lazy loading
@@ -62,7 +69,7 @@ export function OptimizedImage({
           observer.disconnect();
         }
       },
-      { threshold: 0.1, rootMargin: '50px' }
+      { threshold: 0.1, rootMargin: "50px" }
     );
 
     if (imgRef.current) {
@@ -84,66 +91,73 @@ export function OptimizedImage({
 
   // Generate blur placeholder if not provided
   const defaultBlurDataURL = `data:image/svg+xml;base64,${Buffer.from(
-    `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    `<svg width="${width || 100}" height="${height || 100}" xmlns="http://www.w3.org/2000/svg">
       <rect width="100%" height="100%" fill="#f3f4f6"/>
     </svg>`
-  ).toString('base64')}`;
+  ).toString("base64")}`;
 
   if (imageError) {
     return (
       <div
         ref={imgRef}
-        className={`flex items-center justify-center surface border border-muted ${className}`}
-        style={{ width, height }}
+        className={`relative overflow-hidden ${className}`}
+        style={fill ? undefined : { width, height }}
       >
-        <div className="text-center p-4">
-          <div className="w-8 h-8 mx-auto mb-2 text-muted">
-            <svg fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <p className="text-xs muted">Image not available</p>
-        </div>
+        <Image
+          src={PLACEHOLDER_IMAGE}
+          alt={alt || "Imagen no disponible"}
+          width={fill ? undefined : width}
+          height={fill ? undefined : height}
+          fill={fill}
+          quality={60}
+          className="object-cover opacity-80 grayscale"
+          unoptimized // Placehold.co might not work well with Next.js optimization sometimes
+        />
       </div>
     );
   }
 
   return (
-    <div ref={imgRef} className={`relative overflow-hidden ${className}`}>
+    <div
+      ref={imgRef}
+      className={`relative overflow-hidden ${className}`}
+      style={fill ? { width: "100%", height: "100%" } : undefined}
+    >
       {(isInView || priority) && (
         <>
           <Image
             src={src}
             alt={alt}
-            width={width}
-            height={height}
+            width={fill ? undefined : width}
+            height={fill ? undefined : height}
+            fill={fill}
             quality={quality}
             sizes={sizes}
             priority={priority}
             placeholder={placeholder}
             blurDataURL={blurDataURL || defaultBlurDataURL}
             className={`transition-opacity duration-300 ${
-              isLoaded ? 'opacity-100' : 'opacity-0'
+              isLoaded ? "opacity-100" : "opacity-0"
             }`}
             onLoad={handleLoad}
             onError={handleError}
           />
-          
+
           {/* Loading skeleton */}
           {!isLoaded && (
-            <div 
+            <div
               className="absolute inset-0 animate-pulse surface"
-              style={{ width, height }}
+              style={fill ? undefined : { width, height }}
             />
           )}
         </>
       )}
-      
+
       {/* Lazy loading placeholder */}
       {!isInView && !priority && (
-        <div 
+        <div
           className="surface animate-pulse"
-          style={{ width, height }}
+          style={fill ? { position: "absolute", inset: 0 } : { width, height }}
         />
       )}
     </div>
@@ -154,7 +168,7 @@ export function OptimizedImage({
 export function ProductImage({
   src,
   alt,
-  className = '',
+  className = "",
   priority = false,
 }: {
   src: string;
@@ -178,7 +192,7 @@ export function ProductImage({
 export function ProductThumbnail({
   src,
   alt,
-  className = '',
+  className = "",
 }: {
   src: string;
   alt: string;
@@ -200,7 +214,7 @@ export function ProductThumbnail({
 export function HeroImage({
   src,
   alt,
-  className = '',
+  className = "",
 }: {
   src: string;
   alt: string;

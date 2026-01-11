@@ -28,6 +28,7 @@ import { StockBadge } from "@/components/ui/StockBadge";
 import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
 import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 import { DynamicTags } from "@/components/products/DynamicTags";
+import { PLACEHOLDER_IMAGE } from "@/lib/constants";
 
 /** Badge de precio con descuento */
 export const PriceBadge = ({
@@ -416,11 +417,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             className="block h-[160px] sm:h-[200px] overflow-hidden bg-neutral-100 dark:bg-neutral-800"
           >
             <Image
-              src={
-                imageError || !mainImage
-                  ? "https://placehold.co/400x500.png"
-                  : mainImage
-              }
+              src={imageError || !mainImage ? PLACEHOLDER_IMAGE : mainImage}
               alt={`${product.name} - ${product.categories?.name || "Producto"}`}
               width={400}
               height={200}
@@ -589,11 +586,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           >
             <div className="relative h-full min-h-28 sm:min-h-32">
               <Image
-                src={
-                  imageError || !mainImage
-                    ? "https://placehold.co/400x400.png"
-                    : mainImage
-                }
+                src={imageError || !mainImage ? PLACEHOLDER_IMAGE : mainImage}
                 alt={`${product.name} - ${product.categories?.name || "Producto"}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
