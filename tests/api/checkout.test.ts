@@ -4,14 +4,16 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock Prisma
-vi.mock("@/lib/prisma", () => ({
-  default: {
+// Mock Prisma
+vi.mock("@/lib/prisma", () => {
+  const mockClient = {
     orders: {
       create: vi.fn(),
     },
     products: {
       findUnique: vi.fn(),
-      findMany: vi.fn(), // Checkout might use findMany now
+      findMany: vi.fn(),
+      update: vi.fn(),
     },
     product_variants: {
       findMany: vi.fn(),
@@ -25,8 +27,16 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       createMany: vi.fn(),
     },
-  },
-}));
+    $transaction: vi.fn(),
+  };
+
+  // Assign transaction to call callback with mockClient
+  mockClient.$transaction.mockImplementation((callback) =>
+    callback(mockClient)
+  );
+
+  return { default: mockClient };
+});
 
 // Mock MercadoPago
 vi.mock("@/lib/mercadopago", () => ({
@@ -175,7 +185,15 @@ describe("Checkout API - POST /api/checkout", () => {
 
       mockPrisma.orders.create.mockResolvedValue(mockOrder);
       mockPrisma.products.findMany.mockResolvedValue([
-        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+        {
+          id: "prod-1",
+          name: "Producto Test",
+          stock: 100,
+          price: 100,
+          product_variants: [],
+          onSale: false,
+          salePrice: null,
+        },
       ]);
 
       const request = new NextRequest("http://localhost:3000/api/checkout", {
@@ -204,7 +222,15 @@ describe("Checkout API - POST /api/checkout", () => {
 
     it("debe crear order items correctamente", async () => {
       mockPrisma.products.findMany.mockResolvedValue([
-        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+        {
+          id: "prod-1",
+          name: "Producto Test",
+          stock: 100,
+          price: 100,
+          product_variants: [],
+          onSale: false,
+          salePrice: null,
+        },
       ]);
       mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
@@ -261,7 +287,15 @@ describe("Checkout API - POST /api/checkout", () => {
   describe("Información del cliente", () => {
     it("debe guardar nombre del cliente", async () => {
       mockPrisma.products.findMany.mockResolvedValue([
-        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+        {
+          id: "prod-1",
+          name: "Producto Test",
+          stock: 100,
+          price: 100,
+          product_variants: [],
+          onSale: false,
+          salePrice: null,
+        },
       ]);
       mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
@@ -296,7 +330,15 @@ describe("Checkout API - POST /api/checkout", () => {
 
     it("debe guardar email del cliente", async () => {
       mockPrisma.products.findMany.mockResolvedValue([
-        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+        {
+          id: "prod-1",
+          name: "Producto Test",
+          stock: 100,
+          price: 100,
+          product_variants: [],
+          onSale: false,
+          salePrice: null,
+        },
       ]);
       mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
@@ -331,7 +373,15 @@ describe("Checkout API - POST /api/checkout", () => {
 
     it("debe combinar dirección completa", async () => {
       mockPrisma.products.findMany.mockResolvedValue([
-        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+        {
+          id: "prod-1",
+          name: "Producto Test",
+          stock: 100,
+          price: 100,
+          product_variants: [],
+          onSale: false,
+          salePrice: null,
+        },
       ]);
       mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
@@ -367,7 +417,13 @@ describe("Checkout API - POST /api/checkout", () => {
   describe("Cálculo de totales", () => {
     it("debe usar el total proporcionado", async () => {
       mockPrisma.products.findMany.mockResolvedValue([
-        { id: "prod-1", name: "Producto Test", stock: 100, price: 100 },
+        {
+          id: "prod-1",
+          name: "Producto Test",
+          stock: 100,
+          price: 100,
+          product_variants: [],
+        },
       ]);
       mockPrisma.orders.create.mockResolvedValue({
         id: "order-1",
