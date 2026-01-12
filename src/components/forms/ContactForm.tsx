@@ -459,7 +459,12 @@ export default function ContactForm({ initial }: Props) {
       </section>
 
       <div className="flex justify-end pt-4 border-t">
-        <Button type="submit" disabled={saving} size="lg">
+        <Button
+          type="submit"
+          disabled={saving}
+          size="lg"
+          className="w-full sm:w-auto"
+        >
           {saving ? "Guardando..." : "Guardar Configuración de Contacto"}
         </Button>
       </div>

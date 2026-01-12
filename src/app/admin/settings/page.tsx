@@ -100,7 +100,7 @@ export default function ConfiguracionPage() {
       >
         <TabPanel id="tienda" activeTab={activeTab}>
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <StoreForm />
             </CardContent>
           </Card>
@@ -108,7 +108,7 @@ export default function ConfiguracionPage() {
 
         <TabPanel id="stock" activeTab={activeTab}>
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <StockSettings />
             </CardContent>
           </Card>
@@ -116,7 +116,7 @@ export default function ConfiguracionPage() {
 
         <TabPanel id="envios" activeTab={activeTab}>
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <ShippingSettings />
             </CardContent>
           </Card>
@@ -124,7 +124,7 @@ export default function ConfiguracionPage() {
 
         <TabPanel id="contacto" activeTab={activeTab}>
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <ContactForm />
             </CardContent>
           </Card>
@@ -132,7 +132,7 @@ export default function ConfiguracionPage() {
 
         <TabPanel id="home" activeTab={activeTab}>
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <HomeForm />
             </CardContent>
           </Card>
@@ -140,7 +140,7 @@ export default function ConfiguracionPage() {
 
         <TabPanel id="faqs" activeTab={activeTab}>
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold">

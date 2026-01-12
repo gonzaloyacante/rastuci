@@ -405,9 +405,11 @@ export default function HomeForm({ initial }: Props) {
       )}
 
       {message && <p className="text-sm muted">{message}</p>}
-      <Button type="submit" disabled={saving}>
-        {saving ? "Guardando..." : "Guardar"}
-      </Button>
+      <div className="flex justify-end pt-4 border-t">
+        <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+          {saving ? "Guardando..." : "Guardar"}
+        </Button>
+      </div>
     </form>
   );
 }

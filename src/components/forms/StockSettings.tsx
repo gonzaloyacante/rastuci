@@ -160,7 +160,7 @@ export default function StockSettings() {
                 key={status.id}
                 className="surface p-4 rounded-lg border border-muted shadow-sm hover:shadow-md transition-shadow relative group"
               >
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <div className="grid grid-cols-2 md:grid-cols-12 gap-4 items-end">
                   {/* Min */}
                   <div className="md:col-span-2">
                     <Label className="text-xs">Desde (Mín)</Label>
@@ -203,7 +203,7 @@ export default function StockSettings() {
                   </div>
 
                   {/* Label */}
-                  <div className="md:col-span-4">
+                  <div className="col-span-2 md:col-span-4">
                     <Label className="text-xs">Etiqueta</Label>
                     <Input
                       value={status.label}
@@ -215,7 +215,7 @@ export default function StockSettings() {
                   </div>
 
                   {/* Color Selector */}
-                  <div className="md:col-span-3">
+                  <div className="col-span-2 md:col-span-3">
                     <Label className="text-xs">Color</Label>
                     <select
                       value={status.color}
@@ -233,7 +233,7 @@ export default function StockSettings() {
                   </div>
 
                   {/* Remove Button */}
-                  <div className="md:col-span-1 flex justify-end">
+                  <div className="col-span-2 md:col-span-1 flex justify-end">
                     <Button
                       type="button"
                       variant="ghost"
@@ -280,7 +280,12 @@ export default function StockSettings() {
       </div>
 
       <div className="flex justify-end pt-4 sticky bottom-4">
-        <Button type="submit" disabled={saving} size="lg" className="shadow-lg">
+        <Button
+          type="submit"
+          disabled={saving}
+          size="lg"
+          className="w-full sm:w-auto shadow-lg"
+        >
           <Save className="w-5 h-5 mr-2" />
           {saving ? "Guardando..." : "Guardar Cambios"}
         </Button>

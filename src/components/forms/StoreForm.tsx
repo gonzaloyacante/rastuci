@@ -190,7 +190,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={saving}>
+        <Button type="submit" disabled={saving} className="w-full sm:w-auto">
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Guardando..." : "Guardar Identidad"}
         </Button>
