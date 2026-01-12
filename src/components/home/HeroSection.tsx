@@ -81,7 +81,10 @@ export function HeroSection({
           )}
 
           {/* Título Principal - Independiente del Logo */}
-          <h1 className="sr-only">
+          <h1
+            suppressHydrationWarning
+            className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 text-primary font-heading"
+          >
             {home?.heroTitle ||
               defaultHomeSettings.heroTitle ||
               "Rastuci - Ropa Infantil de Calidad"}
