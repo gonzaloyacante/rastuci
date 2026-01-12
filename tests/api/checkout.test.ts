@@ -13,6 +13,18 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       findMany: vi.fn(), // Checkout might use findMany now
     },
+    product_variants: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    settings: {
+      findUnique: vi.fn(),
+    },
+    order_items: {
+      create: vi.fn(),
+      createMany: vi.fn(),
+    },
   },
 }));
 

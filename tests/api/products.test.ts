@@ -189,7 +189,7 @@ describe("Products API", () => {
         onSale: false,
         images: JSON.stringify(validProductData.images),
         categories: mockCategory,
-        variants: [],
+        product_variants: [],
         colorImages: null,
         createdAt: new Date(),
         updatedAt: new Date(),
