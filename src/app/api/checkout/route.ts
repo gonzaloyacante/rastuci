@@ -95,30 +95,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 3. Process Payment Method
-    if (paymentMethod === PAYMENT_METHODS.CASH) {
-      // Prepare Shipping Data
-      const shippingData = {
-        street: customer.address,
-        city: customer.city,
-        province: customer.province,
-        postalCode: customer.postalCode,
-        agency: body.shippingAgency?.code,
-        methodName: shippingMethod?.name || "Correo Argentino",
-      };
+    // 3. Process Payment Logic (Split by Method)
 
-      // Create Order via Service
+    // Prepare Shipping Data Common for both
+    const shippingData = {
+      street: customer.address,
+      city: customer.city,
+      province: customer.province,
+      postalCode: customer.postalCode,
+      agency: body.shippingAgency?.code,
+      methodName: shippingMethod?.name || "Correo Argentino",
+      cost: orderData.shippingCost,
+    };
+
+    // A) CASH PAYMENT: Use createCashOrder which reserves stock immediately
+    if (paymentMethod === PAYMENT_METHODS.CASH) {
       const order = await orderService.createCashOrder(
         { ...customer, phone: customer.phone || "" },
         items,
-        orderData.total,
+        orderData.total, // Ignored by service but passed
         shippingData
       );
 
       // Handle CA Shipment Immediate Creation if needed
-      // Original logic checked for 'ca-' id. Reuse logic or move to shipment service?
-      // Let's implement CA creation call here if it was done before.
-      // Logic was: if shippingMethod.id.startsWith("ca-") ... create shipment immediately
       if (
         shippingMethod &&
         shippingMethod.id &&
@@ -126,20 +125,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         customer.address &&
         customer.postalCode
       ) {
-        // ... CA Logic (Simplify or keep inline for now, ideally extract to shipmentService.createFromCheckoutData)
-        // For now, let's keep the CA logic inline or move to shipment-service.
-        // shipmentService methods are tailored for "Order exists in DB". We have the order now!
-        // So we can use shipmentService.createCAShipment(order.id) IF the order has all data nicely saved.
-        // orderService.createCashOrder saves shipping fields (street, etc).
-        // So createCAShipment should work!
-
-        // Async call to avoid blocking? Or await? Original awaited.
         try {
-          // However, createCAShipment logic relies on order fields.
-          // We passed them to createCashOrder.
-          // But wait, createCAShipment logic calculates weight from items in DB order_items.
-          // Yes, createCashOrder creates order_items.
-          // So this should work!
           const { shipmentService } =
             await import("@/services/shipment-service");
           await shipmentService.createCAShipment(order.id);
@@ -148,7 +134,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             orderId: order.id,
             error: caError,
           });
-          // Don't fail the request, just log.
         }
       }
 
@@ -161,10 +146,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
     }
 
+    // B) MERCADO PAGO: Use createFullOrder (Order First Pattern) - Stock decremented on payment approval
+
+    // Note: We use createFullOrder here because MP flow is asynchronous.
+    // We want to persist the order PENDING PAYMENT, but NOT decrement stock yet (to avoid holding stock for abandoned carts).
+    // Stock is decremented in the Webhook when status becomes 'approved'.
+    const order = await orderService.createFullOrder(
+      { ...customer, phone: customer.phone || "" },
+      items,
+      shippingData,
+      paymentMethod
+    );
+
     if (paymentMethod === PAYMENT_METHODS.MERCADOPAGO) {
-      const _origin =
-        request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
-      const tempOrderId = `tmp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const tempOrderId = order.id; // Use real DB ID as external_reference
 
       const mpItems = checkoutService.prepareMPItems(
         items,
@@ -172,10 +167,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         orderData.discount,
         validatedProducts
       );
-      const _customerForMP = { ...customer, phone: customer.phone || "" };
 
-      // Preference Creation
-      // We still need local logic for Payer and Metadata construction because it depends on specific body fields
       const payer = {
         name: customer.name,
         email: customer.email,
@@ -186,49 +178,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
       };
 
+      // Metadata: Minimal needed, as main data is already in DB.
+      // We keep it for redundancy just in case.
       const metadata = {
         tempOrderId,
-        customerName: customer.name,
+        // ... (legacy metadata for redundancy/debugging)
         customerEmail: customer.email,
-        customerPhone: customer.phone,
-        customerAddress: customer.address,
-        customerCity: customer.city,
-        customerProvince: customer.province,
-        customerPostalCode: customer.postalCode,
-        total: orderData.total,
-        subtotal: orderData.subtotal,
-        shippingCost: orderData.shippingCost,
-        discount: orderData.discount,
-        shippingMethodId: shippingMethod?.id || null,
-        shippingMethodName: shippingMethod?.name || null,
-        shippingMethodPrice: shippingMethod?.price || null,
-        shippingAgencyCode: body.shippingAgency?.code || null,
-        items: JSON.stringify(
-          items.map((item: CheckoutItem) => ({
-            productId: item.productId,
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-            size: item.size || null,
-            color: item.color || null,
-            products: { connect: { id: item.productId } },
-          }))
-        ),
       };
-
-      logger.info("[Checkout] Creating MP Preference", {
-        itemsCount: mpItems.length,
-        hasDiscount: mpItems.some((i) => i.id === "discount"),
-        rawItems: JSON.stringify(mpItems),
-      });
 
       const preference = await createPreference(mpItems, payer, {
         external_reference: tempOrderId,
         metadata: metadata,
       });
 
+      // Update order with preference ID logic
+      const prisma = (await import("@/lib/prisma")).default;
+      await prisma.orders.update({
+        where: { id: order.id },
+        data: { mpPreferenceId: preference.id },
+      });
+
       return NextResponse.json({
         success: true,
+        orderId: order.id, // Return real order ID
         preferenceId: preference.id,
         initPoint: preference.init_point,
         paymentMethod: PAYMENT_METHODS.MERCADOPAGO,

@@ -16,6 +16,24 @@ const PaymentMethodsSchema = z.array(PaymentMethodSchema).min(1);
 // GET /api/settings/payment-methods - Obtener métodos de pago
 export async function GET() {
   try {
+    // Obtener configuración de contacto para la ubicación
+    const contactSetting = await prisma.settings.findUnique({
+      where: { key: "contact" },
+    });
+    let locationString = "Buenos Aires";
+
+    if (contactSetting?.value) {
+      // Intentar parsear ubicación
+      try {
+        const contactData = JSON.parse(JSON.stringify(contactSetting.value));
+        if (contactData?.address?.cityCountry) {
+          locationString = contactData.address.cityCountry;
+        }
+      } catch (e) {
+        // ignore parsing error
+      }
+    }
+
     const setting = await prisma.settings.findUnique({
       where: { key: "payment_methods" },
     });
@@ -37,15 +55,27 @@ export async function GET() {
             id: "cash",
             name: "Efectivo - Retiro en Local",
             icon: "dollar-sign",
-            description:
-              "Retiro en nuestro local de Buenos Aires - Sin costo de envío",
+            description: `Retiro en nuestro local de ${locationString} - Sin costo de envío`,
             requiresShipping: false,
           },
         ],
       });
     }
 
-    return NextResponse.json({ success: true, data: setting.value });
+    // Si existen settings guardados, actualizamos la descripción del efectivo dinámicamente también
+    // por si cambió la dirección pero no el método de pago
+    const methods = setting.value as z.infer<typeof PaymentMethodsSchema>;
+    const updatedMethods = methods.map((m) => {
+      if (m.id === "cash") {
+        return {
+          ...m,
+          description: `Retiro en nuestro local de ${locationString} - Sin costo de envío`,
+        };
+      }
+      return m;
+    });
+
+    return NextResponse.json({ success: true, data: updatedMethods });
   } catch (error) {
     console.error("Error fetching payment methods:", error);
     return NextResponse.json(

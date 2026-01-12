@@ -54,6 +54,7 @@ export const ProductCreateSchema = z.object({
     )
     .optional(),
   colorImages: z.record(z.string(), z.array(z.string())).optional().nullable(),
+  sizeGuide: z.any().optional().nullable(), // JSON structure for size guide data
 });
 
 export type ProductCreate = z.infer<typeof ProductCreateSchema>;

@@ -20,7 +20,7 @@ export const getCachedProducts = unstable_cache(
       include: {
         // categories is a relation, must include.
         categories: true,
-        variants: true,
+        product_variants: true,
       },
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -39,7 +39,7 @@ export const getCachedProductBySlug = unstable_cache(
     return await prisma.products.findUnique({
       where: { id },
       include: {
-        variants: true,
+        product_variants: true,
         categories: true,
         product_reviews: {
           orderBy: { createdAt: "desc" },

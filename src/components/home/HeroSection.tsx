@@ -39,11 +39,10 @@ export function HeroSection({
     }
   };
 
+  // Logo logic: STRICT. Only use what is in the DB.
+  // The user explicitly deleted the fallback file and wants no default.
+  const logoSrc = home?.heroLogoUrl || null;
   const heroImageSrc = home?.heroImage;
-  const logoSrc =
-    home?.heroLogoUrl ||
-    defaultHomeSettings.heroLogoUrl ||
-    "/rastuci-full-logo.svg";
 
   return (
     <section className="w-full" aria-labelledby="hero-title">
@@ -81,22 +80,27 @@ export function HeroSection({
             </div>
           )}
 
-          {/* Logo Principal */}
-          <div className="mb-8 relative w-auto h-24 md:h-32 lg:h-40">
-            <h1 className="sr-only">
-              {home?.heroTitle ||
-                defaultHomeSettings.heroTitle ||
-                "Rastuci - Ropa Infantil de Calidad"}
-            </h1>
-            <Image
-              src={logoSrc}
-              alt="Rastući"
-              width={300}
-              height={180}
-              className="h-full w-auto mx-auto" // h-full of the wrapper which is responsive
-              priority
-            />
-          </div>
+          {/* Título Principal - Independiente del Logo */}
+          <h1 className="sr-only">
+            {home?.heroTitle ||
+              defaultHomeSettings.heroTitle ||
+              "Rastuci - Ropa Infantil de Calidad"}
+          </h1>
+
+          {/* Logo Principal - Rendering Condicional Estricto */}
+          {logoSrc && (
+            <div className="mb-8 relative w-auto h-24 md:h-32 lg:h-40">
+              <Image
+                src={logoSrc}
+                alt="Rastući"
+                width={300}
+                height={180}
+                className="h-full w-auto mx-auto" // h-full of the wrapper which is responsive
+                priority
+                unoptimized={logoSrc.endsWith(".svg")}
+              />
+            </div>
+          )}
 
           <p className="text-base md:text-xl muted mb-8 max-w-2xl">
             {loading

@@ -27,13 +27,6 @@ export const HomeSettingsSchema = z.object({
       brand: z.string().min(1).max(80),
       tagline: z.string().min(1).max(120),
       logoUrl: z.string().max(200).optional(),
-      email: z.string().email().max(100),
-      phone: z.string().max(30),
-      socialLinks: z.object({
-        instagram: z.string().max(200).optional(),
-        facebook: z.string().max(200).optional(),
-        twitter: z.string().max(200).optional(),
-      }),
     })
     .optional(),
 });
@@ -44,7 +37,7 @@ export const defaultHomeSettings: HomeSettings = {
   heroTitle: "Bienvenido a Rastuci",
   heroSubtitle:
     "Ropa infantil de calidad, comodidad y estilo para los más pequeños",
-  heroLogoUrl: "/rastuci-full-logo.svg",
+  heroLogoUrl: "",
   ctaPrimaryLabel: "Ver Productos",
   ctaSecondaryLabel: "Explorar categorías",
   categoriesTitle: "Nuestras Categorías",
@@ -73,12 +66,6 @@ export const defaultHomeSettings: HomeSettings = {
   footer: {
     brand: "Rastući",
     tagline: "Ropa con amor para los más peques.",
-    email: "contacto@rastuci.com",
-    phone: "+54 9 11 1234-5678",
-    socialLinks: {
-      instagram: "",
-      facebook: "",
-      twitter: "",
-    },
+    logoUrl: "",
   },
 };

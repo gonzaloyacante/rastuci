@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
       "http://localhost:3000";
 
     const totalItemsAmount =
-      createdOrder.total -
+      Number(createdOrder.total) -
       (Number(shippingCost) || 0) +
       (Number(discount) || 0);
     // Wait, createdOrder.total includes shipping.
@@ -212,11 +212,10 @@ export async function POST(req: NextRequest) {
     const finalItems = [
       {
         id: "all-items",
-        title: "Rastući - Compra Web", // Or "Compra en Rastući"
+        title: "Rastući - Compra Web",
         quantity: 1,
         // We use the TOTAL from the DB order which includes shipping/discount logic
-        // This ensures the amount MP charges is EXACTLY what we saved.
-        unit_price: Number(createdOrder.total.toFixed(2)),
+        unit_price: Number(createdOrder.total),
         currency_id: "ARS",
         picture_url: undefined,
         description: `Pedido #${createdOrder.id}`,
@@ -278,7 +277,7 @@ export async function POST(req: NextRequest) {
       logger.info("MP preference payload", {
         requestId,
         externalReference,
-        amount: createdOrder.total,
+        amount: Number(createdOrder.total),
       });
     }
 

@@ -35,7 +35,9 @@ async function notifyParties(
     const items = order.order_items.map((item) => ({
       name: item.products.name,
       quantity: item.quantity,
-      price: item.price,
+      price: Number(item.price), // Convert Decimal to number
+      color: item.color ?? undefined,
+      size: item.size ?? undefined,
     }));
 
     // Customer Email

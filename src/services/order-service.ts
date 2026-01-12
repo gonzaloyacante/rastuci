@@ -120,17 +120,56 @@ export class OrderService {
     metadata: OrderMetadata,
     paymentPayer: MercadoPagoPayer
   ) {
-    // Idempotency check
-    const existing = await prisma.orders.findFirst({
+    // Fix: We now use "Order First" pattern, so tempOrderId passed in metadata IS the real order ID.
+    // We should try to find that order first.
+    const orderIdFromMetadata = metadata.tempOrderId as string;
+
+    // 1. Try to find existing order by ID (Order First flow)
+    if (orderIdFromMetadata) {
+      const existingOrder = await prisma.orders.findUnique({
+        where: { id: orderIdFromMetadata },
+        include: { order_items: true },
+      });
+
+      if (existingOrder) {
+        logger.info("[OrderService] Updating existing order from webhook", {
+          orderId: existingOrder.id,
+          mpPaymentId,
+          status: mappedStatus,
+        });
+
+        // Use updateOrder logic but carefully mapping fields
+        const updateData: OrderUpdateData = {
+          mpPaymentId,
+          mpStatus,
+          mappedStatus,
+        };
+
+        // We reuse updateOrder to handle atomic stock decrement if needed
+        return this.updateOrder(existingOrder.id, updateData);
+      }
+    }
+
+    // 2. Fallback: Check if we already processed this payment ID (Idempotency)
+    // (This handles retries of the SAME webhook)
+    const existingPayment = await prisma.orders.findFirst({
       where: { mpPaymentId: mpPaymentId },
     });
-    if (existing) {
-      return this.updateOrder(existing.id, {
+
+    if (existingPayment) {
+      return this.updateOrder(existingPayment.id, {
         mpPaymentId,
         mpStatus,
         mappedStatus,
       });
     }
+
+    // 3. Fallback: Create from metadata (Legacy flow or if Order First failed silently?)
+    // This part remains as failsafe if for some reason "Order First" transaction failed but user still got to MP (unlikely)
+    logger.warn(
+      "[OrderService] Order not found by ID, falling back to metadata creation",
+      { orderId: orderIdFromMetadata }
+    );
 
     // Logic to extract customer data (prioritizing metadata vs payer)
     const customerName: string =
@@ -223,11 +262,14 @@ export class OrderService {
       }) => {
         const prod = dbProducts.find((p) => p.id === it.productId);
         if (!prod) throw new Error(`Product not found: ${it.productId}`);
-        const unitPrice = Number((prod.price * (1 - safeDiscount)).toFixed(2));
+        const unitPrice = Number(
+          (Number(prod.price) * (1 - safeDiscount)).toFixed(2)
+        );
         return {
           productId: prod.id,
           quantity: Number(it.quantity) || 1,
           unitPrice,
+          price: unitPrice,
           size: it.size,
           color: it.color,
         };
@@ -387,94 +429,178 @@ export class OrderService {
     }
   ) {
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-    // SECURITY: Fetch product prices from database to prevent price manipulation
-    const productIds = items.map((i) => i.productId);
-    const dbProducts = await prisma.products.findMany({
-      where: { id: { in: productIds } },
-      select: { id: true, price: true, salePrice: true, onSale: true },
-    });
-
-    // Build validated order items with DB prices
-    const validatedItems = items.map((item) => {
-      const dbProduct = dbProducts.find((p) => p.id === item.productId);
-      if (!dbProduct) {
-        throw new Error(`Product not found: ${item.productId}`);
-      }
-      // Use sale price if product is on sale, otherwise regular price
-      const unitPrice =
-        dbProduct.onSale && dbProduct.salePrice
-          ? dbProduct.salePrice
-          : dbProduct.price;
-
-      return {
-        productId: item.productId,
-        quantity: item.quantity,
-        price: unitPrice,
-        size: item.size,
-        color: item.color,
-      };
-    });
-
-    // Calculate total server-side
-    const itemsTotal = validatedItems.reduce(
-      (sum, i) => sum + i.price * i.quantity,
-      0
-    );
     const shippingCost = shippingData?.cost ?? 0;
-    const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
 
-    logger.info("[OrderService] Creating cash order with validated prices", {
-      orderId,
-      itemsTotal,
-      shippingCost,
-      calculatedTotal,
-    });
+    // Context for emails
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let emailContext: any = null;
 
-    const order = await prisma.orders.create({
-      data: {
-        id: orderId,
-        customerName: customer.name,
-        customerPhone: customer.phone,
-        customerEmail: customer.email,
-        customerAddress: customer.address
-          ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
-          : "",
-        total: calculatedTotal,
-        shippingCost: shippingCost,
-        // Using strict enum types
-        status: ORDER_STATUS.PENDING as OrderStatus,
-        mpPaymentId: null,
-        mpPreferenceId: null,
-        mpStatus: "cash_payment",
-        updatedAt: new Date(),
-        order_items: {
-          create: validatedItems.map((item) => ({
-            id: `${orderId}_${item.productId}_${Date.now()}`,
-            quantity: item.quantity,
-            price: item.price,
-            size: item.size || null,
-            color: item.color || null,
-            products: {
-              connect: { id: item.productId },
-            },
-          })),
+    // Use transaction to ensure stock is reserved/checked atomically
+    const order = await prisma.$transaction(async (tx) => {
+      // 1. Fetch products to validate prices and STOCK
+      const productIds = items.map((i) => i.productId);
+      const dbProducts = await tx.products.findMany({
+        where: { id: { in: productIds } },
+        select: {
+          id: true,
+          price: true,
+          salePrice: true,
+          onSale: true,
+          name: true,
+          stock: true,
         },
-        shippingStreet: shippingData?.street,
-        shippingCity: shippingData?.city,
-        shippingProvince: shippingData?.province,
-        shippingPostalCode: shippingData?.postalCode,
-        shippingAgency: shippingData?.agency,
-        shippingMethod: shippingData?.methodName,
-      },
-      include: {
-        order_items: {
-          include: {
-            products: true,
+      });
+
+      // 2. Validate Items & Stock
+      const validatedItems = items.map((item) => {
+        const dbProduct = dbProducts.find((p) => p.id === item.productId);
+        if (!dbProduct) {
+          throw new Error(`Producto no encontrado: ${item.productId}`);
+        }
+
+        // Stock Check
+        if (dbProduct.stock < item.quantity) {
+          throw new Error(
+            `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
+          );
+        }
+
+        // Price Logic
+        const unitPrice =
+          dbProduct.onSale && dbProduct.salePrice
+            ? dbProduct.salePrice
+            : dbProduct.price;
+
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          price: unitPrice,
+          size: item.size,
+          color: item.color,
+        };
+      });
+
+      // Save context
+      emailContext = { validatedItems, dbProducts };
+
+      // 3. Calculate Total
+      const itemsTotal = validatedItems.reduce(
+        (sum, i) => sum + Number(i.price) * i.quantity,
+        0
+      );
+      const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
+
+      logger.info("[OrderService] Creating cash order with stock reservation", {
+        orderId,
+        itemsTotal,
+        calculatedTotal,
+      });
+
+      // 4. Create Order
+      const order = await tx.orders.create({
+        data: {
+          id: orderId,
+          customerName: customer.name,
+          customerPhone: customer.phone,
+          customerEmail: customer.email,
+          customerAddress: customer.address
+            ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
+            : "",
+          total: calculatedTotal,
+          shippingCost: shippingCost,
+          // Status: PENDING (but stock reserved effectively)
+          // Ideally PENDING_PAYMENT or PROCESSING?
+          // Cash usually means "Pending Payment until Pickup".
+          status: ORDER_STATUS.PENDING as OrderStatus,
+          mpPaymentId: null,
+          mpPreferenceId: null,
+          mpStatus: "cash_payment",
+          updatedAt: new Date(),
+          order_items: {
+            create: validatedItems.map((item) => ({
+              id: `${orderId}_${item.productId}_${Date.now()}`,
+              quantity: item.quantity,
+              price: item.price,
+              size: item.size || null,
+              color: item.color || null,
+              products: {
+                connect: { id: item.productId },
+              },
+            })),
+          },
+          shippingStreet: shippingData?.street,
+          shippingCity: shippingData?.city,
+          shippingProvince: shippingData?.province,
+          shippingPostalCode: shippingData?.postalCode,
+          shippingAgency: shippingData?.agency,
+          shippingMethod: shippingData?.methodName,
+        },
+        include: {
+          order_items: {
+            include: {
+              products: true,
+            },
           },
         },
-      },
+      });
+
+      // 5. Decrement Stock
+      for (const item of validatedItems) {
+        await tx.products.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+
+      return order;
     });
+
+    // 6. Send Emails (Fire and forget, don't block response)
+    if (emailContext) {
+      const { validatedItems, dbProducts } = emailContext;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const emailItems = validatedItems.map((i: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const prod = dbProducts.find((p: any) => p.id === i.productId);
+        return {
+          name: prod?.name || "Producto",
+          quantity: i.quantity,
+          price: i.price,
+          color: i.color,
+          size: i.size,
+        };
+      });
+
+      // Send Customer Email
+      emailService.sendOrderConfirmation(
+        {
+          id: order.id,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail || "",
+          total: Number(order.total),
+        },
+        emailItems
+      );
+
+      // Send Admin Alert with full customer details
+      getStoreSettings().then((settings) => {
+        if (settings.adminEmail) {
+          emailService.sendAdminNewOrderAlert(
+            {
+              id: order.id,
+              customerName: order.customerName,
+              customerEmail: order.customerEmail || "",
+              customerPhone: order.customerPhone || "",
+              customerAddress: order.customerAddress || "",
+              total: Number(order.total),
+            },
+            emailItems,
+            settings.adminEmail
+          );
+        }
+      });
+    }
+
     return order;
   }
 
@@ -581,8 +707,8 @@ export class OrderService {
       // Use sale price if product is on sale, otherwise regular price
       const unitPrice =
         dbProduct.onSale && dbProduct.salePrice
-          ? dbProduct.salePrice
-          : dbProduct.price;
+          ? Number(dbProduct.salePrice)
+          : Number(dbProduct.price);
 
       return {
         productId: item.productId,

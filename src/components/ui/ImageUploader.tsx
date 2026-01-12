@@ -2,8 +2,11 @@
 
 import { logger } from "@/lib/logger";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { ProductImagePlaceholder } from "./ProductImagePlaceholder";
 import { Button } from "./Button";
+import { toast } from "react-hot-toast";
+import { X } from "lucide-react";
 
 interface ImageUploaderProps {
   value?: string | null;
@@ -24,7 +27,13 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset error state when value changes (new image uploaded)
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [value]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,7 +42,7 @@ export function ImageUploader({
     }
 
     // Validar tipo de archivo
-    if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith("image/") && file.type !== "image/svg+xml") {
       setUploadError("Por favor selecciona una imagen válida");
       return;
     }
@@ -46,6 +55,7 @@ export function ImageUploader({
 
     setUploading(true);
     setUploadError(null);
+    setImageLoadError(false);
 
     try {
       const formData = new FormData();
@@ -63,11 +73,13 @@ export function ImageUploader({
       }
 
       onChange(data.url);
+      toast.success("Imagen subida correctamente");
     } catch (err) {
       logger.error("Error uploading image:", { error: err });
-      setUploadError(
-        err instanceof Error ? err.message : "Error al subir la imagen"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al subir la imagen";
+      setUploadError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -98,12 +110,31 @@ export function ImageUploader({
       <div className="flex items-start gap-4">
         {value && (
           <div className="relative group w-32 h-32">
-            <Image
-              src={value}
-              alt="Preview"
-              fill
-              className="object-cover rounded-lg border border-border"
-            />
+            {!imageLoadError ? (
+              // Use native img for SVG/Blob to ensure it displays correctly without optimization issues
+              value?.includes(".svg") || value?.includes("blob:") ? (
+                <img
+                  src={value}
+                  alt="Preview"
+                  className="w-full h-full object-cover rounded-lg border border-border"
+                  onError={(e) => {
+                    console.error("ImageUploader <img/> Error:", e);
+                    setImageLoadError(true);
+                  }}
+                />
+              ) : (
+                <Image
+                  src={value}
+                  alt="Preview"
+                  fill
+                  className="object-cover rounded-lg border border-border"
+                  onError={() => setImageLoadError(true)}
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                />
+              )
+            ) : (
+              <ProductImagePlaceholder className="w-full h-full rounded-lg border border-border" />
+            )}
             <button
               type="button"
               onClick={handleRemove}
@@ -111,19 +142,7 @@ export function ImageUploader({
               className="absolute top-1 right-1 bg-error text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
               aria-label="Eliminar imagen"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -144,7 +163,11 @@ export function ImageUploader({
             onClick={handleButtonClick}
             disabled={disabled || uploading}
           >
-            {uploading ? "Subiendo..." : value ? "Cambiar imagen" : "Subir imagen"}
+            {uploading
+              ? "Subiendo..."
+              : value
+                ? "Cambiar imagen"
+                : "Subir imagen"}
           </Button>
 
           {(error || uploadError) && (

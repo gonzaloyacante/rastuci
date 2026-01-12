@@ -23,21 +23,31 @@ type OrderItem = OrderWithItems["order_items"][0];
 export function mapOrderToDTO(order: OrderWithItems): Order {
   return {
     ...order,
+    // Convert Decimal to number for API compatibility
+    total: Number(order.total),
+    shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
     customerAddress: order.customerAddress ?? undefined,
     customerEmail: order.customerEmail ?? undefined,
+    // Map shipping location to customer fields for Admin UI display
+    customerCity: order.shippingCity ?? undefined,
+    customerProvince: order.shippingProvince ?? undefined,
+    customerPostalCode: order.shippingPostalCode ?? undefined,
     status: order.status as OrderStatus,
     paymentMethod: order.mpPaymentId ? "mercadopago" : "cash",
     items: order.order_items.map((item: OrderItem) => ({
       id: item.id,
       quantity: item.quantity,
-      price: item.price,
+      price: Number(item.price), // Convert Decimal to number
       orderId: item.orderId,
       productId: item.productId,
+      // CRITICAL: Include color and size from order_items
+      color: item.color ?? undefined,
+      size: item.size ?? undefined,
       product: {
         id: item.products.id,
         name: item.products.name,
         description: item.products.description ?? undefined,
-        price: item.products.price,
+        price: Number(item.products.price), // Convert Decimal to number
         stock: item.products.stock,
         images:
           typeof item.products.images === "string"

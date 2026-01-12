@@ -149,6 +149,8 @@ export const emailService = {
       html: getNewOrderAdminEmail({
         customerName: order.customerName,
         customerEmail: order.customerEmail,
+        customerPhone: order.customerPhone,
+        customerAddress: order.customerAddress,
         orderId: order.id,
         total: order.total,
         items,

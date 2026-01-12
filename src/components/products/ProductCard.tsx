@@ -418,7 +418,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             className="block relative h-[160px] sm:h-[200px] overflow-hidden bg-neutral-100 dark:bg-neutral-800"
           >
             <OptimizedImage
-              src={product.images?.[imageIndex] || ""}
+              src={product.images?.[imageIndex]}
               alt={`${product.name} - ${product.categories?.name || "Producto"}`}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"

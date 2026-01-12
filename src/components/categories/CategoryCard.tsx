@@ -22,7 +22,7 @@ export const CategoryCard = memo(function CategoryCard({
   const wrapperProps: Record<string, string> =
     href === null
       ? {}
-      : { href: href ?? `/productos?categoryId=${category.id}` };
+      : { href: href ?? `/productos?categoria=${category.id}` };
 
   return (
     <Wrapper

@@ -4,6 +4,8 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import Image from "next/image";
 
 import { Order, OrderStatus } from "@/types";
+import { Agency } from "@/lib/correo-argentino-service";
+import { useEffect, useState } from "react";
 
 interface OrderSummaryCardProps {
   order: Order;
@@ -68,6 +70,41 @@ const getDetailedStatus = (order: OrderSummaryCardProps["order"]) => {
 export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
   const status = getDetailedStatus(order);
 
+  // Agency Detail Fetching State
+  const [agencyDetails, setAgencyDetails] = useState<Agency | null>(null);
+
+  useEffect(() => {
+    // Only fetch if we have an Agency Code and a Province Code
+    // We assume shippingAgency is the code (e.g. "B1234")
+    if (order.shippingAgency && order.shippingProvinceCode && !agencyDetails) {
+      const fetchAgency = async () => {
+        try {
+          // Use the public API endpoint - ensure clean postal code usage if needed
+          const customerId =
+            process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID ||
+            "0001718183";
+          const res = await fetch(
+            `/api/shipping/agencies?provinceCode=${order.shippingProvinceCode}&customerId=${customerId}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.agencies)) {
+              const found = data.agencies.find(
+                (a: Agency) => a.code === order.shippingAgency
+              );
+              if (found) {
+                setAgencyDetails(found);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch agency details", err);
+        }
+      };
+      fetchAgency();
+    }
+  }, [order.shippingAgency, order.shippingProvinceCode, agencyDetails]);
+
   const items = order.items || [];
 
   return (
@@ -123,13 +160,33 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
                   <span className="text-sm">{order.shippingMethod}</span>
                 </div>
                 {order.shippingAgency && (
-                  <div>
-                    <span className="text-sm font-semibold">
+                  <div className="md:col-span-2">
+                    <span className="text-sm font-semibold block mb-1">
                       Agencia/Sucursal:
-                    </span>{" "}
-                    <span className="text-sm text-primary font-medium">
-                      {order.shippingAgency}
                     </span>
+                    {agencyDetails ? (
+                      <div className="p-3 bg-muted/50 rounded-md border border-muted text-sm">
+                        <p className="font-medium text-primary flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                          {agencyDetails.name}{" "}
+                          <span className="text-muted-foreground font-normal">
+                            ({agencyDetails.code})
+                          </span>
+                        </p>
+                        <p className="text-muted-foreground mt-1 ml-4 pl-0.5">
+                          {agencyDetails.location.address.streetName}{" "}
+                          {agencyDetails.location.address.streetNumber},{" "}
+                          {agencyDetails.location.address.city}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-primary font-medium">
+                        {order.shippingAgency}{" "}
+                        <span className="text-muted-foreground text-xs font-normal">
+                          (Cargando o ID puro)
+                        </span>
+                      </span>
+                    )}
                   </div>
                 )}
                 {(order.shippingStreet || order.shippingCity) && (
@@ -196,9 +253,18 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
                             />
                           </div>
                         )}
-                        <span className="text-sm font-medium">
-                          {item.product?.name || "Producto desconocido"}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {item.product?.name || "Producto desconocido"}
+                          </span>
+                          {(item.color || item.size) && (
+                            <span className="text-xs text-muted-foreground">
+                              {item.color && `Color: ${item.color}`}
+                              {item.color && item.size && " | "}
+                              {item.size && `Talle: ${item.size}`}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-2 px-4 text-right text-sm">
                         {item.quantity}

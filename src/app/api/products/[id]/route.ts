@@ -36,7 +36,7 @@ export async function GET(
       where: { id },
       include: {
         categories: true,
-        variants: true,
+        product_variants: true,
       },
     });
 
@@ -55,15 +55,14 @@ export async function GET(
 
     const responseProduct: Product = {
       ...product,
+      price: Number(product.price), // Convert Decimal
+      salePrice: product.salePrice ? Number(product.salePrice) : undefined,
       description: product.description ?? undefined,
-      salePrice: product.salePrice ?? undefined,
       images: safelyParseImages(product.images),
-      // DEBUG LOG REMOVED
-
       colorImages:
         product.colorImages &&
-          typeof product.colorImages === "object" &&
-          !Array.isArray(product.colorImages)
+        typeof product.colorImages === "object" &&
+        !Array.isArray(product.colorImages)
           ? (product.colorImages as unknown as Record<string, string[]>)
           : typeof product.colorImages === "string"
             ? JSON.parse(product.colorImages)
@@ -72,7 +71,7 @@ export async function GET(
         ...product.categories,
         description: product.categories.description ?? undefined,
       },
-      variants: product.variants.map((v) => ({
+      variants: product.product_variants.map((v) => ({
         ...v,
         sku: v.sku ?? undefined,
       })),
@@ -234,14 +233,17 @@ export const PUT = withAdminAuth(
         },
         include: {
           categories: true,
-          variants: true,
+          product_variants: true,
         },
       });
 
       const updatedProduct: Product = {
         ...updatedPrismaProduct,
+        price: Number(updatedPrismaProduct.price), // Convert Decimal
+        salePrice: updatedPrismaProduct.salePrice
+          ? Number(updatedPrismaProduct.salePrice)
+          : undefined,
         description: updatedPrismaProduct.description ?? undefined,
-        salePrice: updatedPrismaProduct.salePrice ?? undefined,
         images:
           typeof updatedPrismaProduct.images === "string"
             ? JSON.parse(updatedPrismaProduct.images)
@@ -255,11 +257,11 @@ export const PUT = withAdminAuth(
           ...updatedPrismaProduct.categories,
           description: updatedPrismaProduct.categories.description ?? undefined,
         },
-        variants: updatedPrismaProduct.variants
-          ? updatedPrismaProduct.variants.map((v) => ({
-            ...v,
-            sku: v.sku ?? undefined,
-          }))
+        variants: updatedPrismaProduct.product_variants
+          ? updatedPrismaProduct.product_variants.map((v) => ({
+              ...v,
+              sku: v.sku ?? undefined,
+            }))
           : [],
       };
 

@@ -27,6 +27,8 @@ export async function GET(req: NextRequest) {
     const setting = await prisma.settings.findUnique({
       where: { key: SETTINGS_KEY },
     });
+    console.log("GET /api/home setting found:", setting ? "YES" : "NO");
+
     const value = setting?.value ?? defaultHomeSettings;
 
     const parsed = HomeSettingsSchema.safeParse(value);
@@ -65,23 +67,34 @@ export const PUT = withAdminAuth(async (req: NextRequest) => {
     }
 
     const body = await req.json();
+    console.log("PUT /api/home body:", JSON.stringify(body).slice(0, 100)); // Debug log
+
     const parsed = HomeSettingsSchema.safeParse(body);
     if (!parsed.success) {
+      console.log("PUT /api/home validation failed:", parsed.error.issues); // Debug log
       return NextResponse.json(fail("BAD_REQUEST", parsed.error.message, 400));
     }
 
+    console.log("PUT /api/home upserting key:", SETTINGS_KEY); // Debug log
     const saved = await prisma.settings.upsert({
       where: { key: SETTINGS_KEY },
       update: { value: parsed.data, updatedAt: new Date() },
       create: { key: SETTINGS_KEY, value: parsed.data, updatedAt: new Date() },
     });
+    console.log("PUT /api/home upsert result:", JSON.stringify(saved, null, 2)); // Debug log deep
 
-    return NextResponse.json(ok(saved.value));
+    // Explicitly construct response to avoid helper issues
+    return NextResponse.json({
+      success: true,
+      data: saved.value,
+    });
   } catch (err) {
     const e = normalizeApiError(err);
     logger.error("PUT /api/home failed", e);
-    const code: ApiErrorCode =
-      e.code === "INTERNAL" ? "INTERNAL_ERROR" : (e.code as ApiErrorCode);
-    return NextResponse.json(fail(code, e.message, e.status ?? 500));
+    // Explicit fail response
+    return NextResponse.json(
+      { success: false, error: e.message, code: e.code || "INTERNAL_ERROR" },
+      { status: e.status ?? 500 }
+    );
   }
 });

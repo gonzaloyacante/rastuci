@@ -43,7 +43,7 @@ export async function generateMetadata({
         id: product.id,
         name: product.name,
         description: product.description || undefined,
-        price: product.price,
+        price: Number(product.price),
         images,
         category: product.categories?.name || "General",
         inStock: product.stock > 0,

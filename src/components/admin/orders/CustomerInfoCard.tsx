@@ -27,6 +27,22 @@ export function CustomerInfoCard({ order }: CustomerInfoCardProps) {
               <p className="text-sm">{order.customerAddress}</p>
             </div>
           )}
+          {order.customerCity && (
+            <div>
+              <h3 className="text-sm font-medium muted">Ciudad / Provincia</h3>
+              <p className="text-sm">
+                {order.customerCity}
+                {order.customerProvince && `, ${order.customerProvince}`}
+                {order.customerPostalCode && ` (${order.customerPostalCode})`}
+              </p>
+            </div>
+          )}
+          {order.customerEmail && (
+            <div>
+              <h3 className="text-sm font-medium muted">Email</h3>
+              <p className="text-sm break-all">{order.customerEmail}</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -90,43 +90,35 @@ export async function GET(
       } as Prisma.productsOrderByWithRelationInput;
     }
 
-    // Preparar argumentos para Prisma con SELECT optimizado
-    const prismaArgs: Parameters<typeof prisma.products.findMany>[0] = {
+    // Preparar argumentos para Prisma
+    const prismaArgs = {
       where,
       select: {
         id: true,
         name: true,
-        description: true, // Needed for list view card
+        description: true,
         price: true,
         salePrice: true,
         stock: true,
         onSale: true,
         images: true,
         colorImages: true,
-        sizes: true, // Needed for available sizes badges
-        colors: true, // Needed for color badges
-        rating: true, // Needed for star rating
-        reviewCount: true, // Needed for star rating
-        variants: {
+        sizes: true,
+        colors: true,
+        rating: true,
+        reviewCount: true,
+        categoryId: true,
+        product_variants: {
           select: {
             id: true,
             color: true,
             size: true,
-            stock: true
-          }
+            stock: true,
+          },
         },
         categories: {
           select: { id: true, name: true },
         },
-        // Exclude content only needed for detail view
-        features: false,
-        sizeGuide: false,
-        weight: false,
-        height: false,
-        width: false,
-        length: false,
-        createdAt: false,
-        updatedAt: false,
       },
       skip: offset,
       take: limit,
@@ -153,15 +145,16 @@ export async function GET(
       prismaArgs as unknown as Parameters<typeof prisma.products.findMany>[0]
     );
 
-    // Mapear imágenes si vienen como JSON string
+    // Mapear imágenes si vienen como JSON string y convertir Decimals
     const products: Product[] = (
       prismaProducts as unknown as PartialProduct[]
     ).map(
       (p) =>
         ({
           ...(p as unknown as Product),
+          price: Number(p.price), // Convert Decimal to number
+          salePrice: p.salePrice ? Number(p.salePrice) : undefined,
           description: p.description ?? undefined,
-          salePrice: p.salePrice ?? undefined,
           images:
             typeof p.images === "string"
               ? JSON.parse(p.images as string)
@@ -170,6 +163,9 @@ export async function GET(
             ...(p.category ?? {}),
             description: p.category?.description ?? undefined,
           },
+          // Map product_variants to variants for API compatibility
+          variants: (p as unknown as { product_variants?: unknown[] })
+            .product_variants,
         }) as Product
     );
 
@@ -278,33 +274,37 @@ export const POST = withAdminAuth(
           height: productData.height ?? null,
           width: productData.width ?? null,
           length: productData.length ?? null,
+          sizeGuide: productData.sizeGuide ?? undefined,
           updatedAt: new Date(),
           images: Array.isArray(productData.images)
             ? JSON.stringify(productData.images)
             : productData.images,
-          variants:
+          product_variants:
             productData.variants && productData.variants.length > 0
               ? {
-                create: productData.variants.map((v) => ({
-                  color: v.color,
-                  size: v.size,
-                  stock: v.stock,
-                  sku: v.sku,
-                })),
-              }
+                  create: productData.variants.map((v) => ({
+                    color: v.color,
+                    size: v.size,
+                    stock: v.stock,
+                    sku: v.sku,
+                  })),
+                }
               : undefined,
           colorImages: productData.colorImages ?? undefined,
         },
         include: {
           categories: true,
-          variants: true,
+          product_variants: true,
         },
       });
 
       const product: Product = {
         ...newProduct,
+        price: Number(newProduct.price), // Convert Decimal to number
+        salePrice: newProduct.salePrice
+          ? Number(newProduct.salePrice)
+          : undefined,
         description: newProduct.description ?? undefined,
-        salePrice: newProduct.salePrice ?? undefined,
         images:
           typeof newProduct.images === "string"
             ? JSON.parse(newProduct.images)
@@ -313,7 +313,7 @@ export const POST = withAdminAuth(
           ...newProduct.categories,
           description: newProduct.categories.description ?? undefined,
         },
-        variants: newProduct.variants.map((v) => ({
+        variants: newProduct.product_variants.map((v) => ({
           ...v,
           sku: v.sku ?? undefined,
         })),

@@ -269,7 +269,7 @@ export class ShipmentService {
             postalCode: postalCode,
           },
           weight: estimatedDimensions.weight,
-          declaredValue: order.total,
+          declaredValue: Number(order.total),
           height: estimatedDimensions.height,
           length: estimatedDimensions.length,
           width: estimatedDimensions.width,

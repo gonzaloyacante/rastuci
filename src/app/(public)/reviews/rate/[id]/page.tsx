@@ -41,7 +41,7 @@ export default async function RateOrderPage({ params }: RateOrderPageProps) {
   order.order_items.forEach((item) => {
     if (!uniqueProductsMap.has(item.productId)) {
       // Parsear imágenes (pueden venir como string JSON o simple)
-      let image = "/placeholder.jpg";
+      let image = "";
       try {
         const rawImages = item.products.images;
         if (rawImages) {

@@ -217,14 +217,14 @@ export async function POST(
         );
       }
 
-      const itemTotal = product.price * item.quantity;
+      const itemTotal = Number(product.price) * item.quantity;
       total += itemTotal;
 
       validatedItems.push({
         id: `item-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         productId: item.productId,
         quantity: item.quantity,
-        price: product.price, // Precio al momento de la compra
+        price: Number(product.price), // Precio al momento de la compra
       });
     }
 

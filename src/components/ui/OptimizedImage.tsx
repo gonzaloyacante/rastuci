@@ -9,7 +9,7 @@ const PRODUCT_IMAGE_SIZES =
   "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
 
 interface OptimizedImageProps {
-  src: string;
+  src: string | null | undefined;
   alt: string;
   width?: number;
   height?: number;
@@ -48,14 +48,16 @@ export function OptimizedImage({
   showSkeleton = true,
   enableFade = true,
 }: OptimizedImageProps) {
-  const [imageError, setImageError] = useState(false);
+  const isValidSrc = !!src && src.trim().length > 0;
+  const [imageError, setImageError] = useState(!isValidSrc);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority || !lazy);
   const imgRef = useRef<HTMLDivElement>(null);
 
   // Reset error state when src changes
   useEffect(() => {
-    setImageError(false);
+    const valid = !!src && src.trim().length > 0;
+    setImageError(!valid);
     setIsLoaded(false);
   }, [src]);
 
@@ -93,7 +95,8 @@ export function OptimizedImage({
   };
 
   // Error state - show icon (and optionally text)
-  if (imageError) {
+  // Also handle !src here to satisfy TypeScript and prevent empty string errors
+  if (imageError || !src) {
     return (
       <div
         ref={imgRef}

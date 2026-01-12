@@ -2,12 +2,13 @@ import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { Decimal } from "@prisma/client/runtime/library";
 
 // Interfaces para tipado
 interface OrderWithItems {
   id: string;
   customerName: string;
-  total: number;
+  total: Decimal;
   createdAt: Date;
   status: string;
   order_items: Array<{
@@ -158,7 +159,7 @@ export const GET = withAdminAuth(async () => {
     const formattedRecentOrders = recentOrders.map((order: OrderWithItems) => ({
       id: order.id,
       customerName: order.customerName,
-      total: order.total,
+      total: Number(order.total), // Convert Decimal to number
       date: order.createdAt,
       status: order.status,
       items: order.order_items.length,

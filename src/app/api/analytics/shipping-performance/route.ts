@@ -146,7 +146,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Costos
     const totalShippingRevenue = orders.reduce(
-      (sum: number, order: OrderType) => sum + (order.shippingCost || 0),
+      (sum: number, order: OrderType) => sum + Number(order.shippingCost || 0),
       0
     );
     const averageShippingCost =
@@ -157,7 +157,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       calculateDeliveryTimeDistribution(deliveredOrders);
 
     // Performance por región
-    const performanceByRegion = calculateRegionPerformance(orders);
+    const performanceByRegion = calculateRegionPerformance(
+      orders.map((o) => ({
+        ...o,
+        shippingCost: o.shippingCost ? Number(o.shippingCost) : null,
+      }))
+    );
 
     // Calcular tendencia comparando con período anterior
     const previousPeriodDays = Math.ceil(
@@ -371,8 +376,10 @@ function calculateRegionPerformance(
 
       const avgCost =
         data.orders.length > 0
-          ? data.orders.reduce((sum, o) => sum + (o.shippingCost || 0), 0) /
-            data.orders.length
+          ? data.orders.reduce(
+              (sum, o) => sum + Number(o.shippingCost || 0),
+              0
+            ) / data.orders.length
           : 0;
 
       return {

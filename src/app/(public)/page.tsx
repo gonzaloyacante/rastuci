@@ -62,8 +62,9 @@ async function getHomeData() {
 
       return {
         ...p,
+        price: Number(p.price),
         description: p.description || undefined,
-        salePrice: p.salePrice || undefined,
+        salePrice: p.salePrice ? Number(p.salePrice) : undefined,
         rating: p.rating || null,
         images,
         colorImages: p.colorImages as Record<string, string[]> | null,

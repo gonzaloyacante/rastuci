@@ -142,7 +142,7 @@ export const POST = withAdminAuth(
             postalCode: postalCode,
           },
           weight: estimatedWeight,
-          declaredValue: order.total,
+          declaredValue: Number(order.total),
           height: 10,
           length: 30,
           width: 20,

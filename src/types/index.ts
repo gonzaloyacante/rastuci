@@ -77,6 +77,9 @@ export interface Order {
   customerName: string;
   customerPhone: string;
   customerAddress?: string | null;
+  customerCity?: string | null;
+  customerProvince?: string | null;
+  customerPostalCode?: string | null;
   customerEmail?: string | null;
   total: number;
   status: OrderStatus;
@@ -264,6 +267,8 @@ export interface OrderEmailSummary {
   id: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
+  customerAddress?: string;
   total: number;
 }
 
@@ -271,4 +276,6 @@ export interface OrderEmailItem {
   name: string;
   quantity: number;
   price: number;
+  color?: string;
+  size?: string;
 }

@@ -168,19 +168,32 @@ export const getOrderConfirmationEmail = (params: {
   customerName: string;
   orderId: string;
   total: number;
-  items: Array<{ name: string; quantity: number; price: number }>;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    color?: string;
+    size?: string;
+  }>;
 }): string => {
   const { customerName, orderId, total, items } = params;
 
   const itemsHtml = items
-    .map(
-      (item) => `
+    .map((item) => {
+      const variantInfo = [
+        item.color && `Color: ${item.color}`,
+        item.size && `Talle: ${item.size}`,
+      ]
+        .filter(Boolean)
+        .join(" | ");
+
+      return `
     <div style="${EMAIL_STYLES.detailItem}; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-      <strong>${item.name}</strong><br>
+      <strong>${item.name}</strong>${variantInfo ? `<br><span style="color: #666; font-size: 12px;">${variantInfo}</span>` : ""}<br>
       Cantidad: ${item.quantity} × $${item.price.toFixed(2)}
     </div>
-  `
-    )
+  `;
+    })
     .join("");
 
   return generateEmailHtml({
@@ -200,28 +213,59 @@ export const getNewOrderAdminEmail = (params: {
   orderId: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
+  customerAddress?: string;
   total: number;
-  items: Array<{ name: string; quantity: number; price: number }>;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    color?: string;
+    size?: string;
+  }>;
 }): string => {
-  const { customerName, customerEmail, orderId, total, items } = params;
+  const {
+    customerName,
+    customerEmail,
+    customerPhone,
+    customerAddress,
+    orderId,
+    total,
+    items,
+  } = params;
 
   const itemsHtml = items
-    .map(
-      (item) => `
+    .map((item) => {
+      const variantInfo = [
+        item.color && `Color: ${item.color}`,
+        item.size && `Talle: ${item.size}`,
+      ]
+        .filter(Boolean)
+        .join(" | ");
+
+      return `
     <div style="${EMAIL_STYLES.detailItem}; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-      <strong>${item.name}</strong><br>
+      <strong>${item.name}</strong>${variantInfo ? `<br><span style="color: #666; font-size: 12px;">${variantInfo}</span>` : ""}<br>
       Cantidad: ${item.quantity} × $${item.price.toFixed(2)}
     </div>
-  `
-    )
+  `;
+    })
     .join("");
+
+  const customerDetails = [
+    customerPhone && `📞 ${customerPhone}`,
+    customerAddress && `📍 ${customerAddress}`,
+  ]
+    .filter(Boolean)
+    .join("<br>");
 
   return generateEmailHtml({
     customerName: "Admin",
     orderId,
     title: "🔔 Nueva Venta",
     color: "#f59e0b", // Yellow/Orange
-    message: `¡Nueva venta realizada por <strong>${customerName}</strong> (${customerEmail})!<br><br>
+    message: `¡Nueva venta realizada por <strong>${customerName}</strong> (${customerEmail})!<br>
+    ${customerDetails ? `${customerDetails}<br><br>` : ""}
     <strong>Total: $${total.toFixed(2)}</strong><br><br>
     ${itemsHtml}`,
     orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/admin/pedidos`,

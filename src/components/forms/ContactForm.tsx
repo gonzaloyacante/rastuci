@@ -222,7 +222,7 @@ export default function ContactForm({ initial }: Props) {
           </p>
           <div className="space-y-2">
             <Input
-              label="Línea 1"
+              label="Línea 1 (Dirección exacta - Privado)"
               placeholder="Av. Corrientes 1234"
               value={values.address?.lines?.[0] || ""}
               onChange={(e) =>
@@ -233,7 +233,7 @@ export default function ContactForm({ initial }: Props) {
               }
             />
             <Input
-              label="Línea 2 (opcional)"
+              label="Línea 2 (Piso/Depto - Privado)"
               placeholder="Piso 2, Oficina B"
               value={values.address?.lines?.[1] || ""}
               onChange={(e) =>
@@ -244,7 +244,7 @@ export default function ContactForm({ initial }: Props) {
               }
             />
             <Input
-              label="Ciudad y Provincia (Visible público)"
+              label="Ciudad y Provincia (Visible en Web y Checkout)"
               placeholder="Ej: La Plata, Buenos Aires"
               value={values.address?.cityCountry || ""}
               onChange={(e) =>

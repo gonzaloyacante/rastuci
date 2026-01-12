@@ -128,13 +128,37 @@ export default function HomeForm({ initial }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),
       });
-      const json = await res.json();
-      if (!json.success) {
-        throw new Error(json.error?.message || "Error al guardar");
+
+      console.log("HomeForm PUT Status:", res.status, res.statusText);
+      const text = await res.text();
+      console.log("HomeForm PUT Raw Response:", text);
+
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        throw new Error(
+          `Error de servidor: No se pudo procesar la respuesta (${res.status})`
+        );
       }
+
+      if (!res.ok) {
+        throw new Error(
+          data.error ||
+            data.message ||
+            "Error al guardar (Server returned Error)"
+        );
+      }
+
+      if (!data.success) {
+        // Fallback if status is 200 but success is false
+        throw new Error(data.error || "Error al guardar (Success false)");
+      }
+
       setMessage("Guardado correctamente");
       toast.success("Configuración del Home guardada");
     } catch (err: unknown) {
+      console.error("HomeForm Submit Error:", err);
       const msg = err instanceof Error ? err.message : "Error inesperado";
       setMessage(msg);
       toast.error(msg);
@@ -148,15 +172,23 @@ export default function HomeForm({ initial }: Props) {
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       <section className="grid md:grid-cols-2 gap-6">
-        <div className="md:col-span-2">
-          <ImageUploader
-            label="Imagen de Fondo del Hero"
-            value={values.heroImage}
-            onChange={(url) => update("heroImage", url ?? undefined)}
-          />
-          <p className="text-xs text-muted mt-1">
-            Recomendado: 1920x1080px o superior. Formatos: JPG, WEBP.
-          </p>
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <ImageUploader
+              label="Logo del Hero"
+              value={values.heroLogoUrl}
+              onChange={(url) => update("heroLogoUrl", url ?? undefined)}
+              helpText="Logo principal que se muestra sobre el hero. Formato recomendado: SVG o PNG transparente."
+            />
+          </div>
+          <div>
+            <ImageUploader
+              label="Imagen de Fondo del Hero"
+              value={values.heroImage}
+              onChange={(url) => update("heroImage", url ?? undefined)}
+              helpText="Recomendado: 1920x1080px o superior. Formatos: JPG, WEBP."
+            />
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">
@@ -301,6 +333,62 @@ export default function HomeForm({ initial }: Props) {
           <Button type="button" onClick={addBenefitItem}>
             Agregar beneficio
           </Button>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold mb-3">Pie de Página (Footer)</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Configura la identidad de marca en el pie de página.
+          <span className="block text-xs mt-1 text-amber-500">
+            Nota: La información de contacto y redes sociales se administra en
+            la sección "Contacto".
+          </span>
+        </p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <ImageUploader
+              label="Logo del Footer"
+              value={values.footer?.logoUrl}
+              onChange={(url) =>
+                setValues((v) => ({
+                  ...v,
+                  footer: { ...v.footer!, logoUrl: url ?? undefined },
+                }))
+              }
+              helpText="Logo monocromático o simple para el pie de página."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Nombre de Marca
+            </label>
+            <input
+              className="w-full border rounded-md px-3 py-2"
+              value={values.footer?.brand}
+              onChange={(e) =>
+                setValues((v) => ({
+                  ...v,
+                  footer: { ...v.footer!, brand: e.target.value },
+                }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Slogan / Tagline
+            </label>
+            <input
+              className="w-full border rounded-md px-3 py-2"
+              value={values.footer?.tagline}
+              onChange={(e) =>
+                setValues((v) => ({
+                  ...v,
+                  footer: { ...v.footer!, tagline: e.target.value },
+                }))
+              }
+            />
+          </div>
         </div>
       </section>
 

@@ -31,7 +31,7 @@ export class CheckoutService {
         price: true,
         salePrice: true,
         onSale: true,
-        variants: true, // Incluimos variantes en la consulta
+        product_variants: true,
       },
     });
 
@@ -46,15 +46,15 @@ export class CheckoutService {
       // 1. Si el producto tiene variantes y el item especifica Color+Size -> Chequear stock de variante
       // 2. Si no tiene variantes (legacy) -> Chequear stock global
 
-      const hasVariants = product.variants && product.variants.length > 0;
+      const hasVariants =
+        product.product_variants && product.product_variants.length > 0;
 
       if (hasVariants && item.color && item.size) {
-        const variant = product.variants.find(
+        const variant = product.product_variants.find(
           (v) => v.color === item.color && v.size === item.size
         );
 
         if (!variant) {
-          // Caso raro: El usuario tiene en carrito una combinación que ya no existe
           throw new Error(
             `La variante ${item.color} - ${item.size} de ${product.name} ya no está disponible.`
           );

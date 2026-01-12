@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     siteName: "Rastuci",
     images: [
       {
-        url: "/rastuci-full-logo.svg",
+        url: "/web-app-manifest-192x192.png",
         width: 1200,
         height: 630,
         alt: "Rastuci - Ropa Infantil",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     title: "Rastuci - Ropa Infantil de Calidad",
     description:
       "Descubre la mejor ropa infantil de calidad, comodidad y estilo para los más pequeños.",
-    images: ["/rastuci-full-logo.svg"],
+    images: ["/web-app-manifest-512x512.png"],
   },
   robots: {
     index: true,

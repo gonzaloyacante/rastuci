@@ -26,15 +26,17 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    const isSvg = file.type === "image/svg+xml";
+
     // Subir a Cloudinary
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
           {
-            resource_type: "auto",
+            resource_type: isSvg ? "image" : "auto",
             folder: "Rastuci",
-            allowed_formats: ["jpg", "jpeg", "png", "webp", "avif"], // Prevent SVG (XSS) or EXE
-            transformation: [{ quality: "auto", fetch_format: "auto" }], // Optimization
+            // Removed strict constraints to allow SVGs and other formats supported by Cloudinary
+            // "auto" resource_type handles most magic, but SVGs need "image" to be transformable/viewable often.
           },
           (error, result) => {
             if (error) {
@@ -55,9 +57,11 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
       public_id: result.public_id,
     });
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     logger.error("Error uploading to Cloudinary:", { error: error });
     return NextResponse.json(
-      { success: false, error: "Error al subir la imagen" },
+      { success: false, error: `Upload Failed: ${errorMessage}` },
       { status: 500 }
     );
   }

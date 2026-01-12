@@ -226,11 +226,11 @@ export const GET = withAdminAuth(
 
       // Calcular métricas de ventas
       const currentTotalSales = currentOrders.reduce(
-        (sum, order) => sum + order.total,
+        (sum, order) => sum + Number(order.total),
         0
       );
       const previousTotalSales = previousOrders.reduce(
-        (sum, order) => sum + order.total,
+        (sum, order) => sum + Number(order.total),
         0
       );
       const currentOrderCount = currentOrders.length;
@@ -317,7 +317,7 @@ export const GET = withAdminAuth(
           };
           existing.sales += item.quantity;
           existing.orders += 1;
-          existing.revenue += item.price * item.quantity;
+          existing.revenue += Number(item.price) * item.quantity;
           productSalesMap.set(item.productId, existing);
         });
       });
@@ -400,22 +400,22 @@ export const GET = withAdminAuth(
 
       // Costo de envío promedio (usando shippingCost si existe, sino estimado)
       const ordersWithShipping = currentOrders.filter(
-        (o) => o.shippingCost && o.shippingCost > 0
+        (o) => o.shippingCost && Number(o.shippingCost) > 0
       );
       const avgShippingCost =
         ordersWithShipping.length > 0
           ? ordersWithShipping.reduce(
-              (sum, o) => sum + (o.shippingCost || 0),
+              (sum, o) => sum + Number(o.shippingCost || 0),
               0
             ) / ordersWithShipping.length
           : 0;
       const previousOrdersWithShipping = previousOrders.filter(
-        (o) => o.shippingCost && o.shippingCost > 0
+        (o) => o.shippingCost && Number(o.shippingCost) > 0
       );
       const previousAvgShipping =
         previousOrdersWithShipping.length > 0
           ? previousOrdersWithShipping.reduce(
-              (sum, o) => sum + (o.shippingCost || 0),
+              (sum, o) => sum + Number(o.shippingCost || 0),
               0
             ) / previousOrdersWithShipping.length
           : 0;
@@ -442,7 +442,8 @@ export const GET = withAdminAuth(
 
       // Generar datos para gráficos basados en órdenes reales
       const salesChartData = generateSalesChartFromOrders(
-        currentOrders,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        currentOrders as any[],
         period
       );
       const ordersChartData = generateOrdersChartFromOrders(
@@ -466,9 +467,9 @@ export const GET = withAdminAuth(
       const recentActivity = recentOrders.map((order) => ({
         id: order.id,
         type: "order" as const,
-        description: `${order.status === "DELIVERED" ? "Orden completada" : "Nueva orden"} #${order.id.slice(0, 8)} por $${order.total.toLocaleString("es-AR")}`,
+        description: `${order.status === "DELIVERED" ? "Orden completada" : "Nueva orden"} #${order.id.slice(0, 8)} por $${Number(order.total).toLocaleString("es-AR")}`,
         timestamp: order.createdAt.toISOString(),
-        value: order.total,
+        value: Number(order.total),
       }));
 
       // Nuevos clientes vs recurrentes
@@ -519,7 +520,10 @@ export const GET = withAdminAuth(
       const customerSpendMap = new Map<string, number>();
       currentOrders.forEach((order) => {
         const existing = customerSpendMap.get(order.customerName) || 0;
-        customerSpendMap.set(order.customerName, existing + order.total);
+        customerSpendMap.set(
+          order.customerName,
+          existing + Number(order.total)
+        );
       });
       const topCustomers = Array.from(customerSpendMap.entries())
         .map(([name, totalSpent]) => ({
@@ -694,7 +698,7 @@ export const GET = withAdminAuth(
 
 // Función auxiliar para generar datos de gráfico de ventas
 function generateSalesChartFromOrders(
-  orders: { createdAt: Date; total: number }[],
+  orders: { createdAt: Date; total: number | any }[], // Permitir Decimal como any para evitar error de tipos
   period: string
 ): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];
@@ -712,7 +716,10 @@ function generateSalesChartFromOrders(
   const salesByDate = new Map<string, number>();
   orders.forEach((order) => {
     const dateKey = order.createdAt.toISOString().split("T")[0];
-    salesByDate.set(dateKey, (salesByDate.get(dateKey) || 0) + order.total);
+    salesByDate.set(
+      dateKey,
+      (salesByDate.get(dateKey) || 0) + Number(order.total)
+    );
   });
 
   // Generar puntos para cada día del período
