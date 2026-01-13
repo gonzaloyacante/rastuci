@@ -52,20 +52,13 @@ export default function HomeForm({ initial }: Props) {
       setValues(settings);
       initBenefits(settings.benefits);
       setLoading(false);
-    }
-  }, [initial, settings]);
-
-  // Handle loading initial state
-  useEffect(() => {
-    // If we have data (either initial or from SWR), stop loading
-    if (initial || settings) {
+    } else if (!loadingSettings) {
+      // SWR finished loading but no data - use defaults
+      setValues(defaultHomeSettings);
+      initBenefits(defaultHomeSettings.benefits);
       setLoading(false);
     }
-    // Only continue loading if we have no data and SWR is loading
-    else if (loadingSettings) {
-      setLoading(true);
-    }
-  }, [loadingSettings, initial, settings]);
+  }, [initial, settings, loadingSettings]);
 
   const initBenefits = (benefits: HomeSettings["benefits"]) => {
     setBenefitItems(

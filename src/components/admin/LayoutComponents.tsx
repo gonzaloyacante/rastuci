@@ -72,14 +72,13 @@ export function TabLayout({
       <div className="relative group">
         {/* Left Arrow (Desktop) */}
         {showLeftArrow && (
-          <Button
+          <button
             onClick={() => scroll("left")}
-            variant="ghost"
-            className="hidden sm:flex absolute left-0 top-0 bottom-0 z-10 items-center justify-center w-8 bg-gradient-to-r from-background to-transparent hover:from-background hover:to-background/50 rounded-none p-0 h-auto"
+            className="hidden sm:flex absolute left-0 top-0 bottom-0 z-10 items-center justify-center w-10 bg-gradient-to-r from-[var(--color-surface)] via-[var(--color-surface)]/80 to-transparent hover:from-[var(--color-surface)] rounded-none p-0"
             aria-label="Scroll Left"
           >
             <ChevronLeft className="w-5 h-5 text-primary" />
-          </Button>
+          </button>
         )}
 
         <div
@@ -112,14 +111,13 @@ export function TabLayout({
 
         {/* Right Arrow (Desktop) */}
         {showRightArrow && (
-          <Button
+          <button
             onClick={() => scroll("right")}
-            variant="ghost"
-            className="hidden sm:flex absolute right-0 top-0 bottom-0 z-10 items-center justify-center w-8 bg-gradient-to-l from-background to-transparent hover:from-background hover:to-background/50 rounded-none p-0 h-auto"
+            className="hidden sm:flex absolute right-0 top-0 bottom-0 z-10 items-center justify-center w-10 bg-gradient-to-l from-[var(--color-surface)] via-[var(--color-surface)]/80 to-transparent hover:from-[var(--color-surface)] rounded-none p-0"
             aria-label="Scroll Right"
           >
             <ChevronRight className="w-5 h-5 text-primary" />
-          </Button>
+          </button>
         )}
       </div>
       {children}
