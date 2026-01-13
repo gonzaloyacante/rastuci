@@ -97,7 +97,74 @@ export const AdminTable = <T extends Record<string, unknown>>({
         </CardHeader>
       )}
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
+        {/* Mobile View (Cards) */}
+        <div className="block sm:hidden p-4 space-y-4">
+          {data.map((row, index) => (
+            <div
+              key={`mobile-row-${index}`}
+              className={`p-4 rounded-lg border border-muted bg-card text-card-foreground shadow-sm ${
+                onRowClick ? "cursor-pointer active:bg-muted/50" : ""
+              }`}
+              onClick={() => onRowClick?.(row)}
+            >
+              {/* Primary Column (Title) */}
+              <div className="font-semibold text-lg mb-3 pb-2 border-b border-muted">
+                {columns[0].render
+                  ? columns[0].render(row[columns[0].key], row)
+                  : (row[columns[0].key] as React.ReactNode)}
+              </div>
+
+              {/* Data Columns */}
+              <div className="space-y-2 text-sm">
+                {columns.slice(1).map((column) => (
+                  <div
+                    key={column.key}
+                    className="flex justify-between items-start gap-4"
+                  >
+                    <span className="text-muted-foreground font-medium min-w-[30%]">
+                      {column.label}:
+                    </span>
+                    <span className="text-right flex-1 break-words">
+                      {column.render
+                        ? column.render(row[column.key], row)
+                        : (row[column.key] as React.ReactNode)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Actions */}
+              {actions && actions.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-muted flex flex-wrap gap-2 justify-end">
+                  {actions
+                    .filter(
+                      (action) => !action.condition || action.condition(row)
+                    )
+                    .map((action, actionIndex) => (
+                      <Button
+                        key={actionIndex}
+                        variant={action.variant || "outline"}
+                        size="sm"
+                        className={`text-xs ${action.className || ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          action.onClick(row);
+                        }}
+                      >
+                        {action.icon && (
+                          <span className="mr-1">{action.icon}</span>
+                        )}
+                        {action.label}
+                      </Button>
+                    ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View (Table) */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="border-b border-muted surface">
@@ -162,7 +229,9 @@ export const AdminTable = <T extends Record<string, unknown>>({
                               }}
                             >
                               {action.icon && <span>{action.icon}</span>}
-                              <span className="hidden sm:inline">{action.label}</span>
+                              <span className="hidden sm:inline">
+                                {action.label}
+                              </span>
                             </Button>
                           ))}
                       </div>

@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     siteName: "Rastuci",
     images: [
       {
-        url: "/web-app-manifest-192x192.png",
-        width: 1200,
-        height: 630,
+        url: "/web-app-manifest-512x512.png", // Larger image for better preview
+        width: 512,
+        height: 512,
         alt: "Rastuci - Ropa Infantil",
       },
     ],

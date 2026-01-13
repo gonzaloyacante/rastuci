@@ -12,6 +12,7 @@ import { IconPicker } from "@/components/ui/IconPicker";
 import * as Icons from "lucide-react";
 import { toast } from "react-hot-toast";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { useSettings } from "@/hooks/useSettings";
 
 type Props = {
   initial?: HomeSettings;
@@ -38,27 +39,33 @@ export default function HomeForm({ initial }: Props) {
   const [benefitItems, setBenefitItems] = useState<BenefitItem[]>([]);
   const [loading, setLoading] = useState(!initial);
 
+  // SWR Hook
+  const { settings, loading: loadingSettings } =
+    useSettings<HomeSettings>("home");
+
   useEffect(() => {
     if (initial) {
       setValues(initial);
       initBenefits(initial.benefits);
-    } else {
-      // Fetch from API
-      fetch("/api/home")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setValues(data.data);
-            initBenefits(data.data.benefits);
-          } else {
-            // If allow defaults on error
-            initBenefits(defaultHomeSettings.benefits);
-          }
-        })
-        .catch(() => initBenefits(defaultHomeSettings.benefits))
-        .finally(() => setLoading(false));
+      setLoading(false);
+    } else if (settings) {
+      setValues(settings);
+      initBenefits(settings.benefits);
+      setLoading(false);
     }
-  }, [initial]);
+  }, [initial, settings]);
+
+  // Handle loading initial state
+  useEffect(() => {
+    // If we have data (either initial or from SWR), stop loading
+    if (initial || settings) {
+      setLoading(false);
+    }
+    // Only continue loading if we have no data and SWR is loading
+    else if (loadingSettings) {
+      setLoading(true);
+    }
+  }, [loadingSettings, initial, settings]);
 
   const initBenefits = (benefits: HomeSettings["benefits"]) => {
     setBenefitItems(

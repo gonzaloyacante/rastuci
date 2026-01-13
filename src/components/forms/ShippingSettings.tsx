@@ -10,28 +10,26 @@ import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
 import Alert from "@/components/ui/Alert";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { useSettings } from "@/hooks/useSettings";
 
 export default function ShippingSettings() {
   const [data, setData] = useState<StoreSettings>(defaultStoreSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const { settings, loading: loadingSettings } =
+    useSettings<StoreSettings>("store");
+
   useEffect(() => {
-    fetch("/api/settings/store")
-      .then(async (res) => {
-        if (res.status === 401 || res.status === 403) {
-          return null; // Auth handshake handled by fetch wrapper usually, or just fail safely
-        }
-        return res.json();
-      })
-      .then((json) => {
-        if (json?.success) {
-          setData(json.data);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    if (settings) {
+      setData(settings);
+      setLoading(false);
+    }
+  }, [settings]);
+
+  useEffect(() => {
+    if (loadingSettings) setLoading(true);
+  }, [loadingSettings]);
 
   const handleAddressChange = (
     field: keyof StoreSettings["address"],

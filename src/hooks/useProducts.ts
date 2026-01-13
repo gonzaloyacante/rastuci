@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import useSWR, { SWRConfiguration } from "swr";
 
 interface UseProductsOptions {
   category?: string;
@@ -22,7 +23,19 @@ interface ProductsResponse {
   };
 }
 
-export function useProducts(options: UseProductsOptions = {}) {
+// Fetcher genérico
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.json();
+};
+
+export function useProducts(
+  options: UseProductsOptions = {},
+  config?: SWRConfiguration
+) {
   const {
     category,
     search,
@@ -32,12 +45,7 @@ export function useProducts(options: UseProductsOptions = {}) {
     sortOrder = "desc",
   } = options;
 
-  const [data, setData] = useState<ProductsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Construir la URL de la API con query parameters
+  // Construir la URL de la API como key para SWR
   const buildApiUrl = useCallback(() => {
     const params = new URLSearchParams();
 
@@ -55,49 +63,14 @@ export function useProducts(options: UseProductsOptions = {}) {
     return `/api/products?${params.toString()}`;
   }, [category, search, page, limit, sortBy, sortOrder]);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) {
-      return;
+  const { data, error, isLoading, mutate } = useSWR<ProductsResponse>(
+    buildApiUrl(),
+    fetcher,
+    {
+      keepPreviousData: true, // Mantiene datos viejos mientras carga nuevos (mejor UX)
+      ...config,
     }
-
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const url = buildApiUrl();
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Error al cargar productos"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [
-    isMounted,
-    category,
-    search,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-    buildApiUrl,
-  ]);
+  );
 
   return {
     products: data?.data?.data || [],
@@ -105,108 +78,40 @@ export function useProducts(options: UseProductsOptions = {}) {
     page: data?.data?.page || 1,
     limit: data?.data?.limit || 12,
     totalPages: data?.data?.totalPages || 0,
-    isLoading: !isMounted || isLoading,
-    error,
-    mutate: () => {
-      // Re-fetch data
-      const fetchProducts = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-          const url = buildApiUrl();
-          const response = await fetch(url);
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const result = await response.json();
-          setData(result);
-        } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "Error al cargar productos"
-          );
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchProducts();
-    },
+    isLoading,
+    error: error ? (error instanceof Error ? error.message : "Error") : null,
+    mutate,
   };
 }
 
-export function useProduct(id: string) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function useProduct(id: string, config?: SWRConfiguration) {
+  const { data, error, isLoading } = useSWR<{
+    success: boolean;
+    data: Product;
+  }>(id ? `/api/products/${id}` : null, fetcher, config);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/products/${id}`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        setProduct(result.data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Error al cargar el producto"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchProduct();
-    }
-  }, [id]);
-
-  return { product, isLoading, error };
+  return {
+    product: data?.data || null,
+    isLoading,
+    error: error ? (error instanceof Error ? error.message : "Error") : null,
+  };
 }
 
-export function useRelatedProducts(productId: string, categoryId?: string) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function useRelatedProducts(
+  productId: string,
+  categoryId?: string,
+  config?: SWRConfiguration
+) {
+  const key =
+    productId && categoryId
+      ? `/api/products?categoryId=${categoryId}&limit=4`
+      : null;
 
-  useEffect(() => {
-    const fetchRelatedProducts = async () => {
-      setIsLoading(true);
+  const { data, isLoading } = useSWR<ProductsResponse>(key, fetcher, config);
 
-      try {
-        const params = new URLSearchParams();
-        if (categoryId) {
-          params.append("categoryId", categoryId);
-        }
-        params.append("limit", "4");
-
-        const response = await fetch(`/api/products?${params.toString()}`);
-
-        if (response.ok) {
-          const result = await response.json();
-          // Filtrar el producto actual
-          const filteredProducts = result.data.data.filter(
-            (p: Product) => p.id !== productId
-          );
-          setProducts(filteredProducts.slice(0, 3));
-        }
-      } catch (err) {
-        logger.error("Error fetching related products", { error: err });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRelatedProducts();
-  }, [productId, categoryId]);
+  // Filtrar el producto actual y limitar a 3
+  const products =
+    data?.data?.data?.filter((p) => p.id !== productId).slice(0, 3) || [];
 
   return { products, isLoading };
 }

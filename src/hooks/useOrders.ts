@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
+import useSWR from "swr";
 
 export interface OrderItem {
   id: string;
@@ -23,18 +24,14 @@ export interface Order {
   status: string;
   createdAt: string;
   updatedAt: string;
-  // Campos de MercadoPago
   mpPaymentId?: string;
   mpPreferenceId?: string;
   mpStatus?: string;
-  // Campos de envío
   shippingMethod?: string;
   shippingCost?: number;
   shippingAgency?: string;
-  // Campos de tracking
   caTrackingNumber?: string;
   trackingNumber?: string;
-  // Items del pedido
   items: OrderItem[];
 }
 
@@ -45,63 +42,58 @@ interface UseOrdersParams {
   search?: string;
 }
 
+interface OrdersResponse {
+  success: boolean;
+  data: {
+    data: Order[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+  error?: string;
+}
+
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Error al cargar pedidos");
+  return res.json();
+};
+
 export const useOrders = (initialParams?: UseOrdersParams) => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(initialParams?.page || 1);
-  // useRef en lugar de useState para evitar re-renders innecesarios
-  const lastParamsRef = useRef<UseOrdersParams>(initialParams || {});
+  // Estado interno para manejar filtros y paginación
+  const [params, setParams] = useState<UseOrdersParams>(initialParams || {});
 
-  const fetchOrders = useCallback(async (params?: UseOrdersParams) => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Combinar con los últimos parámetros sin disparar re-render
-      const finalParams = { ...lastParamsRef.current, ...params };
-      lastParamsRef.current = finalParams;
+  // Construir key dinámicamente
+  const buildKey = useCallback(() => {
+    const urlParams = new URLSearchParams();
+    if (params.page) urlParams.append("page", params.page.toString());
+    if (params.limit) urlParams.append("limit", params.limit.toString());
+    if (params.status) urlParams.append("status", params.status);
+    if (params.search) urlParams.append("search", params.search);
 
-      const urlParams = new URLSearchParams();
-      if (finalParams.page) {
-        urlParams.append("page", finalParams.page.toString());
-      }
-      if (finalParams.limit) {
-        urlParams.append("limit", finalParams.limit.toString());
-      }
-      if (finalParams.status) {
-        urlParams.append("status", finalParams.status);
-      }
-      if (finalParams.search) {
-        urlParams.append("search", finalParams.search);
-      }
+    return `/api/orders?${urlParams.toString()}`;
+  }, [params]);
 
-      const response = await fetch(`/api/orders?${urlParams}`);
-      if (!response.ok) {
-        throw new Error("Error al cargar los pedidos");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setOrders(data.data.data);
-        setTotalPages(data.data.totalPages);
-        setCurrentPage(data.data.page);
-      } else {
-        throw new Error(data.error || "Error desconocido");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setLoading(false);
+  const { data, error, isLoading, mutate } = useSWR<OrdersResponse>(
+    buildKey(),
+    fetcher,
+    {
+      keepPreviousData: true,
     }
-  }, []); // Sin dependencias - fetchOrders es estable
+  );
+
+  const fetchOrders = useCallback((newParams?: UseOrdersParams) => {
+    setParams((prev) => ({ ...prev, ...newParams }));
+  }, []);
 
   return {
-    orders,
-    loading,
-    error,
-    totalPages,
-    currentPage,
-    fetchOrders,
+    orders: data?.data?.data || [],
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error.message : "Error") : null,
+    totalPages: data?.data?.totalPages || 1,
+    currentPage: data?.data?.page || 1,
+    fetchOrders, // Compatibility wrapper
+    mutate, // Expose mutate for direct cache invadlidation
   };
 };

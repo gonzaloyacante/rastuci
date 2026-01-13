@@ -10,6 +10,7 @@ import {
   defaultContactSettings,
 } from "@/lib/validation/contact";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useSettings } from "@/hooks/useSettings";
 
 type Props = { initial?: ContactSettings };
 
@@ -20,7 +21,11 @@ export default function ContactForm({ initial }: Props) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!initial);
 
-  // Fetch initial data if not provided via props
+  // SWR Hook
+  const { settings, loading: loadingSettings } =
+    useSettings<ContactSettings>("contact");
+
+  // Sync SWR data to local state on initial load
   useEffect(() => {
     if (initial) {
       setValues(initial);
@@ -28,24 +33,16 @@ export default function ContactForm({ initial }: Props) {
       return;
     }
 
-    // Fetch from API
-    fetch("/api/contact")
-      .then((res) => res.json())
-      .then((response) => {
-        // API returns { success: true, data: {...} }
-        if (response?.success && response.data) {
-          setValues(response.data);
-        } else if (response && !response.success) {
-          // If success is false, use defaults but log
-          console.warn("API returned error, using defaults");
-        }
-      })
-      .catch((err) => {
-        console.error("Error fetching contact settings:", err);
-        toast.error("Error al cargar configuración");
-      })
-      .finally(() => setLoading(false));
-  }, [initial]);
+    if (settings) {
+      setValues(settings);
+      setLoading(false);
+    }
+  }, [settings, initial]);
+
+  // Handle loading
+  useEffect(() => {
+    if (!initial && loadingSettings) setLoading(true);
+  }, [loadingSettings, initial]);
 
   // Generic update function for any field
   const update = <K extends keyof ContactSettings>(

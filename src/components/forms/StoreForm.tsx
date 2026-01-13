@@ -11,6 +11,7 @@ import {
 import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { useSettings } from "@/hooks/useSettings";
 
 interface StoreFormProps {
   initial?: StoreSettings;
@@ -24,27 +25,22 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!initial);
 
+  // Replace manual fetch with SWR hook
+  const { settings, loading: loadingSettings } =
+    useSettings<StoreSettings>("store");
+
+  // Initialize data when settings loads, but only if not already initialized
   useEffect(() => {
-    if (!initial) {
-      fetch("/api/settings/store")
-        .then(async (res) => {
-          if (res.status === 401 || res.status === 403) {
-            window.location.href = "/admin"; // Redirect on auth fail
-            return { success: false, error: "Sesión expirada" };
-          }
-          return res.json();
-        })
-        .then((json) => {
-          if (json.success) {
-            setData(json.data);
-          } else if (json.error) {
-            toast.error(json.error);
-          }
-        })
-        .catch((e) => console.error(e))
-        .finally(() => setLoading(false));
+    if (settings && !initial) {
+      setData(settings);
+      setLoading(false);
     }
-  }, [initial]);
+  }, [settings, initial]);
+
+  // Handle loading state from SWR
+  useEffect(() => {
+    if (loadingSettings && !initial) setLoading(true);
+  }, [loadingSettings, initial]);
 
   if (loading) return <FormSkeleton rows={3} />;
 

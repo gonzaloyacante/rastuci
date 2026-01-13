@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDocumentTitle } from "@/hooks";
 import { useTabWithUrl } from "@/hooks/useTabWithUrl";
+import { useSettings } from "@/hooks/useSettings";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -33,28 +34,28 @@ export default function ConfiguracionPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loadingFaqs, setLoadingFaqs] = useState(true);
 
-  // Cargar FAQs
-  useEffect(() => {
-    if (activeTab === "faqs") {
-      loadFaqs();
-    }
-  }, [activeTab]);
+  // SWR Hook for FAQs
+  const {
+    settings: faqsData,
+    loading: loadingFaqsData,
+    mutate: mutateFaqs,
+  } = useSettings<FAQ[]>("faqs");
 
-  const loadFaqs = async () => {
-    try {
-      setLoadingFaqs(true);
-      const res = await fetch("/api/settings/faqs");
-      const data = await res.json();
-      if (data.success) {
-        setFaqs(data.data || []);
-      }
-    } catch (error) {
-      console.error("Error loading FAQs:", error);
-      toast.error("Error al cargar las FAQs");
-    } finally {
+  // Sync state with SWR data
+  useEffect(() => {
+    if (faqsData) {
+      setFaqs(faqsData);
       setLoadingFaqs(false);
     }
-  };
+  }, [faqsData]);
+
+  // Handle loading
+  useEffect(() => {
+    setLoadingFaqs(loadingFaqsData);
+  }, [loadingFaqsData]);
+
+  // Remove manual loadFaqs function as it's handled by SWR
+  // const loadFaqs = ... (removed)
 
   const saveFaqs = async () => {
     try {
@@ -68,6 +69,7 @@ export default function ConfiguracionPage() {
       const data = await res.json();
       if (data.success) {
         toast.success("FAQs guardadas exitosamente");
+        mutateFaqs(); // Refresh cache
       } else {
         toast.error(data.error || "Error al guardar");
       }

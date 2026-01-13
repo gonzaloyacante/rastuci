@@ -1,8 +1,20 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Plus, RefreshCw, Search } from "lucide-react";
-import type { ReactNode } from "react";
+import {
+  Plus,
+  RefreshCw,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
+  type ReactNode,
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 
 // ============================================================================
 // Tab Layout
@@ -27,23 +39,85 @@ export function TabLayout({
   onTabChange,
   children,
 }: TabLayoutProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRight] = useState(false);
+
+  // Check scroll position to show/hide arrows
+  const checkScroll = useCallback(() => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scrollContainerRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, [checkScroll, tabs]);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const amount = direction === "left" ? -200 : 200;
+      scrollContainerRef.current.scrollBy({ left: amount, behavior: "smooth" });
+      setTimeout(checkScroll, 300); // Check after scroll animation
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex gap-2 border-b border-muted pb-2">
-        {tabs.map((tab) => (
+      <div className="relative group">
+        {/* Left Arrow (Desktop) */}
+        {showLeftArrow && (
           <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`px-4 py-2 rounded-t-lg flex items-center gap-2 transition-colors ${
-              activeTab === tab.id
-                ? "surface-secondary text-primary font-medium"
-                : "text-muted hover:text-primary"
-            }`}
+            onClick={() => scroll("left")}
+            className="hidden sm:flex absolute left-0 top-0 bottom-0 z-10 items-center justify-center w-8 bg-gradient-to-r from-background to-transparent hover:from-background hover:to-background/50"
+            aria-label="Scroll Left"
           >
-            {tab.icon}
-            {tab.label}
+            <ChevronLeft className="w-5 h-5 text-primary" />
           </button>
-        ))}
+        )}
+
+        <div
+          ref={scrollContainerRef}
+          onScroll={checkScroll}
+          className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-px no-scrollbar scroll-smooth"
+        >
+          <div className="flex gap-2 border-b border-muted min-w-max">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                aria-controls={`tabpanel-${tab.id}`}
+                id={`tab-${tab.id}`}
+                onClick={() => onTabChange(tab.id)}
+                className={`px-4 py-3 sm:py-2 text-sm sm:text-base whitespace-nowrap rounded-t-lg flex items-center gap-2 transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  activeTab === tab.id
+                    ? "surface-secondary text-primary font-medium border-b-2 border-primary -mb-[2px]"
+                    : "text-muted hover:text-primary hover:bg-surface-secondary/50"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Arrow (Desktop) */}
+        {showRightArrow && (
+          <button
+            onClick={() => scroll("right")}
+            className="hidden sm:flex absolute right-0 top-0 bottom-0 z-10 items-center justify-center w-8 bg-gradient-to-l from-background to-transparent hover:from-background hover:to-background/50"
+            aria-label="Scroll Right"
+          >
+            <ChevronRight className="w-5 h-5 text-primary" />
+          </button>
+        )}
       </div>
       {children}
     </div>
@@ -61,8 +135,17 @@ interface TabPanelProps {
 }
 
 export function TabPanel({ id, activeTab, children }: TabPanelProps) {
-  if (id !== activeTab) return null;
-  return <>{children}</>;
+  return (
+    <div
+      role="tabpanel"
+      id={`tabpanel-${id}`}
+      aria-labelledby={`tab-${id}`}
+      hidden={id !== activeTab}
+      className={id === activeTab ? "block" : "hidden"}
+    >
+      {children}
+    </div>
+  );
 }
 
 // ============================================================================

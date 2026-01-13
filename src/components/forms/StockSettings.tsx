@@ -4,8 +4,10 @@ import Alert from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { useStoreSettings } from "@/hooks/useStoreSettings";
+// import { useStoreSettings } from "@/hooks/useStoreSettings"; // Deprecated
+import { useSettings } from "@/hooks/useSettings";
 import { cn } from "@/lib/utils";
+import { defaultStoreSettings, StoreSettings } from "@/lib/validation/store";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -29,17 +31,20 @@ const STATUS_COLORS = [
 ];
 
 export default function StockSettings() {
-  const { settings, isLoading, updateStoreSettings } = useStoreSettings();
-  const [localStatuses, setLocalStatuses] = useState(settings.stockStatuses);
-  const [enableAlerts, setEnableAlerts] = useState(
-    settings.stock.enableStockAlerts
-  );
+  const { settings, loading, mutate } = useSettings<StoreSettings>("store");
+
+  // Initialize with safe defaults to avoid crashes if settings typically load partial data
+  const [localStatuses, setLocalStatuses] = useState<
+    typeof defaultStoreSettings.stockStatuses
+  >([]);
+  const [enableAlerts, setEnableAlerts] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (settings) {
-      setLocalStatuses(settings.stockStatuses);
-      setEnableAlerts(settings.stock.enableStockAlerts);
+      setLocalStatuses(settings.stockStatuses || []);
+      // Safe access
+      setEnableAlerts(settings.stock?.enableStockAlerts ?? false);
     }
   }, [settings]);
 
@@ -70,20 +75,48 @@ export default function StockSettings() {
     setLocalStatuses(localStatuses.filter((_, i) => i !== index));
   };
 
+  // ... (handlers same as before) ...
+
+  // Re-implement update logic manually since we removed the custom hook
+  const updateSettings = async (newSettings: Partial<StoreSettings>) => {
+    try {
+      const res = await fetch("/api/settings/store", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSettings),
+      });
+      const json = await res.json();
+      if (json.success) {
+        await mutate(); // Refresh SWR
+        return { success: true };
+      }
+      return { success: false, error: json.error };
+    } catch (err) {
+      return { success: false, error: "Error de conexión" };
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
-    // Validate rules logic (optional but good idea)
-    // Ensure mins are valid numbers
+    // Validate rules logic
     const validStatuses = localStatuses.map((s) => ({
       ...s,
       min: Number(s.min) || 0,
       max: s.max === null || s.max === undefined ? null : Number(s.max),
     }));
 
-    const result = await updateStoreSettings({
-      stock: { ...settings.stock, enableStockAlerts: enableAlerts },
+    if (!settings) {
+      toast.error("Error: No hay configuración cargada");
+      setSaving(false);
+      return;
+    }
+
+    const currentStock = settings.stock || defaultStoreSettings.stock;
+
+    const result = await updateSettings({
+      stock: { ...currentStock, enableStockAlerts: enableAlerts },
       stockStatuses: validStatuses,
     });
 
@@ -95,7 +128,7 @@ export default function StockSettings() {
     setSaving(false);
   };
 
-  if (isLoading) return <FormSkeleton rows={3} />;
+  if (loading) return <FormSkeleton rows={3} />;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
