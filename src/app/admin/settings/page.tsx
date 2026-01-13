@@ -13,10 +13,10 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useDocumentTitle } from "@/hooks";
 import { useTabWithUrl } from "@/hooks/useTabWithUrl";
 import { useSettings } from "@/hooks/useSettings";
-import { Plus, Save, Trash2 } from "lucide-react";
-import { Suspense, useEffect, useState } from "react";
+import { Plus, Trash2, Save } from "lucide-react";
+
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 
 type TabType = "tienda" | "stock" | "envios" | "contacto" | "home" | "faqs";
 

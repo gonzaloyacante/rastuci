@@ -54,8 +54,9 @@ export default async function RateOrderPage({ params }: RateOrderPageProps) {
             image = rawImages as string;
           }
         }
-      } catch (e) {
-        // Fallback
+      } catch (error) {
+        console.error("Error parsing product images for review:", error);
+        // Fallback to empty image
       }
 
       uniqueProductsMap.set(item.productId, {

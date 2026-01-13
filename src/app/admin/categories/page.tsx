@@ -233,9 +233,10 @@ export default function AdminCategoriasPage() {
                         <React.Fragment key={category.id}>
                           <tr className="border-b border-muted hover:surface transition-colors">
                             <td className="text-center p-2 sm:p-4 align-middle text-xs sm:text-sm">
-                              <button
+                              <Button
                                 onClick={() => toggleCategory(category.id)}
-                                className="p-1 hover:bg-surface-secondary rounded transition-colors"
+                                variant="ghost"
+                                className="p-1 hover:bg-surface-secondary rounded transition-colors h-auto w-auto min-h-0"
                                 aria-label={
                                   isExpanded ? "Contraer" : "Expandir"
                                 }
@@ -253,7 +254,7 @@ export default function AdminCategoriasPage() {
                                     d="M9 5l7 7-7 7"
                                   />
                                 </svg>
-                              </button>
+                              </Button>
                             </td>
                             <td className="text-center p-2 sm:p-4 align-middle text-xs sm:text-sm">
                               <div className="flex items-center justify-center">

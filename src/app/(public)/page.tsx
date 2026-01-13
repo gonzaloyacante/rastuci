@@ -6,10 +6,7 @@ import { logger } from "@/lib/logger";
 import { generateStoreJsonLd } from "@/lib/metadata";
 import { prisma } from "@/lib/prisma";
 import { defaultHomeSettings, HomeSettingsSchema } from "@/lib/validation/home";
-import {
-  defaultShippingSettings,
-  ShippingSettingsSchema,
-} from "@/lib/validation/shipping";
+import { defaultShippingSettings } from "@/lib/validation/shipping";
 import { Metadata } from "next";
 
 export const revalidate = 60; // Revalidar cada minuto
@@ -83,7 +80,10 @@ async function getHomeData() {
     // Parsear shipping settings
     let shipping = defaultShippingSettings;
     if (storeData?.value) {
-      const storeSettings = storeData.value as any;
+      interface StoreSettings {
+        shipping?: { freeShipping?: boolean };
+      }
+      const storeSettings = storeData.value as unknown as StoreSettings;
       if (storeSettings.shipping) {
         // Merge admin toggle con defaults
         shipping = {

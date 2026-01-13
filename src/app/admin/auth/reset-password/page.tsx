@@ -131,17 +131,18 @@ function ResetPasswordForm() {
                 required
                 minLength={8}
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary p-0 h-auto hover:bg-transparent"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
                 ) : (
                   <Eye className="w-4 h-4" />
                 )}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -169,19 +170,15 @@ function ResetPasswordForm() {
             </p>
           )}
 
-          {password &&
-            confirmPassword &&
-            password !== confirmPassword && (
-              <p className="text-sm text-error">Las contraseñas no coinciden</p>
-            )}
+          {password && confirmPassword && password !== confirmPassword && (
+            <p className="text-sm text-error">Las contraseñas no coinciden</p>
+          )}
 
           <Button
             type="submit"
             className="w-full"
             disabled={
-              isLoading ||
-              password.length < 8 ||
-              password !== confirmPassword
+              isLoading || password.length < 8 || password !== confirmPassword
             }
           >
             {isLoading ? (

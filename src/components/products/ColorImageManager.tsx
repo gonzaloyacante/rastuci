@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
+import { Button } from "@/components/ui/Button";
 
 interface ColorImageManagerProps {
   colors: string[];
@@ -119,28 +120,29 @@ export default function ColorImageManager({
             className="border rounded-lg overflow-hidden bg-surface"
           >
             {/* Header */}
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => toggleColor(color)}
-              className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+              className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors h-auto min-h-0 min-w-0 rounded-none bg-transparent hover:bg-muted/50"
             >
               <div className="flex items-center gap-3">
                 <div
                   className="w-6 h-6 rounded-full border-2"
                   style={{ backgroundColor: color.toLowerCase() }}
                 />
-                <span className="font-medium">{color}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{color}</span>
+                <span className="text-xs text-muted-foreground font-normal">
                   ({images.length} {images.length === 1 ? "imagen" : "imágenes"}
                   )
                 </span>
               </div>
               {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-4 w-4 text-foreground" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-foreground" />
               )}
-            </button>
+            </Button>
 
             {/* Content */}
             {isExpanded && (
@@ -159,14 +161,15 @@ export default function ColorImageManager({
                           fill
                           className="object-cover"
                         />
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => removeImage(color, url)}
-                          className="absolute top-1 right-1 p-1 bg-error text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 p-1 bg-error text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity h-auto min-h-0 min-w-0 hover:bg-error/90"
                           title="Eliminar"
                         >
                           <Trash2 className="h-3 w-3" />
-                        </button>
+                        </Button>
                       </div>
                     ))}
                   </div>

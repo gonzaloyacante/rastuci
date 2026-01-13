@@ -29,7 +29,7 @@ export async function GET() {
         if (contactData?.address?.cityCountry) {
           locationString = contactData.address.cityCountry;
         }
-      } catch (e) {
+      } catch (_e) {
         // ignore parsing error
       }
     }

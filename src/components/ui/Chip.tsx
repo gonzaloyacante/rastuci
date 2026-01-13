@@ -1,7 +1,16 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "./Button";
 
-export type ChipVariant = "default" | "primary" | "secondary" | "success" | "warning" | "info" | "error" | "outline";
+export type ChipVariant =
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "info"
+  | "error"
+  | "outline";
 
 export interface ChipProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: ChipVariant;
@@ -11,8 +20,20 @@ export interface ChipProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
-  ({ className = "", variant = "default", selected = false, onRemove, removable = false, children, ...props }, ref) => {
-    const base = "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium border transition-colors";
+  (
+    {
+      className = "",
+      variant = "default",
+      selected = false,
+      onRemove,
+      removable = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const base =
+      "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium border transition-colors";
     const variants: Record<ChipVariant, string> = {
       default: "surface text-primary border-muted",
       primary: "bg-primary text-white border-primary",
@@ -27,19 +48,25 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
     return (
       <div
         ref={ref}
-        className={cn(base, variants[variant], selected && "ring-2 ring-primary/40", className)}
+        className={cn(
+          base,
+          variants[variant],
+          selected && "ring-2 ring-primary/40",
+          className
+        )}
         {...props}
       >
         <span className="truncate">{children}</span>
         {removable && (
-          <button
+          <Button
             type="button"
-            className="ml-1 rounded hover-surface px-1"
+            variant="ghost"
+            className="ml-1 rounded hover-surface px-1 p-0 h-auto min-h-0 min-w-0 hover:bg-transparent"
             aria-label="Quitar"
             onClick={onRemove}
           >
             ✕
-          </button>
+          </Button>
         )}
       </div>
     );

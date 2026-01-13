@@ -157,12 +157,13 @@ export default function AnalyticsDashboardPage() {
         <div className="flex items-center gap-2">
           <div className="flex bg-neutral-100 dark:bg-neutral-800 rounded-lg p-1">
             {(["today", "week", "month"] as const).map((range) => (
-              <button
+              <Button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                variant="ghost"
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors h-auto ${
                   timeRange === range
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-white hover:bg-primary/90 hover:text-white"
                     : "text-muted hover:text-primary"
                 }`}
               >
@@ -171,7 +172,7 @@ export default function AnalyticsDashboardPage() {
                   : range === "week"
                     ? "Semana"
                     : "Mes"}
-              </button>
+              </Button>
             ))}
           </div>
           <Button variant="outline" size="sm" onClick={() => mutate()}>

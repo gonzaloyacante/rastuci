@@ -207,51 +207,54 @@ export const PublicContactForm = ({
                   ¿Cómo preferís que te contactemos? *
                 </label>
                 <div className="grid grid-cols-3 gap-3">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() =>
                       setFormData({ ...formData, responsePreference: "EMAIL" })
                     }
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
                       formData.responsePreference === "EMAIL"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-theme surface hover:border-primary/50"
+                        ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                        : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
                     }`}
                   >
                     <Mail className="w-5 h-5" />
                     <span className="text-sm font-medium">Email</span>
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() =>
                       setFormData({ ...formData, responsePreference: "PHONE" })
                     }
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
                       formData.responsePreference === "PHONE"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-theme surface hover:border-primary/50"
+                        ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                        : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
                     }`}
                   >
                     <Phone className="w-5 h-5" />
                     <span className="text-sm font-medium">Teléfono</span>
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() =>
                       setFormData({
                         ...formData,
                         responsePreference: "WHATSAPP",
                       })
                     }
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
                       formData.responsePreference === "WHATSAPP"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-theme surface hover:border-primary/50"
+                        ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                        : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
                     }`}
                   >
                     <MessageCircle className="w-5 h-5" />
                     <span className="text-sm font-medium">WhatsApp</span>
-                  </button>
+                  </Button>
                 </div>
                 {(formData.responsePreference === "PHONE" ||
                   formData.responsePreference === "WHATSAPP") &&

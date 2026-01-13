@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Circle } from "lucide-react";
 import * as React from "react";
+import { Button } from "@/components/ui/Button";
 
 // Context para pasar valor y handler a los items
 interface RadioGroupContextValue {
@@ -10,8 +11,7 @@ interface RadioGroupContextValue {
 
 const RadioGroupContext = React.createContext<RadioGroupContextValue>({});
 
-interface RadioGroupItemProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface RadioGroupItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
 }
 
@@ -38,14 +38,15 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
     const checked = context.value === value;
 
     return (
-      <button
+      <Button
         type="button"
         role="radio"
         aria-checked={checked}
         data-state={checked ? "checked" : "unchecked"}
         value={value}
+        variant="ghost"
         className={cn(
-          "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 p-0 min-h-0 min-w-0 bg-transparent hover:bg-transparent",
           className
         )}
         onClick={() => context.onValueChange?.(value)}
@@ -60,7 +61,7 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
         >
           <Circle className="h-2.5 w-2.5 fill-current text-current" />
         </span>
-      </button>
+      </Button>
     );
   }
 );

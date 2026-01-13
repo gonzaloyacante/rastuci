@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { Button } from "@/components/ui/Button";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -182,22 +183,24 @@ export default function ProductImageGallery({
         {/* Navigation controls */}
         {sortedImages.length > 1 && (
           <>
-            <button
+            <Button
               onClick={prevImage}
               onKeyDown={(e) => handleKeyDown(e, prevImage)}
+              variant="ghost"
               aria-label={`Imagen anterior de ${productName}`}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10 h-auto min-h-0 min-w-0"
             >
               <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={nextImage}
               onKeyDown={(e) => handleKeyDown(e, nextImage)}
+              variant="ghost"
               aria-label={`Imagen siguiente de ${productName}`}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 surface rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-10 h-auto min-h-0 min-w-0"
             >
               <ChevronRight className="w-5 h-5" aria-hidden="true" />
-            </button>
+            </Button>
           </>
         )}
 
@@ -245,19 +248,20 @@ export default function ProductImageGallery({
             aria-label="Miniaturas de imágenes"
           >
             {sortedImages.map((image, index) => (
-              <button
+              <Button
                 key={`item-${index}`}
                 onClick={() => selectImage(index)}
                 onKeyDown={(e) => handleKeyDown(e, () => selectImage(index))}
+                variant="ghost"
                 aria-label={`Seleccionar imagen ${index + 1} de ${productName}`}
                 aria-current={index === selectedImage ? "true" : "false"}
-                className={`relative w-20 h-20 rounded-lg shrink-0 transition-all duration-200 focus:outline-none bg-neutral-100 dark:bg-neutral-800 ${
+                className={`relative w-20 h-20 rounded-lg shrink-0 transition-all duration-200 focus:outline-none bg-neutral-100 dark:bg-neutral-800 p-0 h-auto min-h-0 min-w-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
                   index === selectedImage
                     ? "ring-2 ring-primary ring-offset-2 ring-offset-surface"
                     : "opacity-70 hover:opacity-100 hover:ring-1 hover:ring-theme"
                 }`}
               >
-                <div className="w-full h-full rounded-lg overflow-hidden">
+                <div className="w-full h-full rounded-lg overflow-hidden pointer-events-none">
                   <OptimizedImage
                     src={image}
                     alt={`${productName} - Miniatura ${index + 1}`}
@@ -268,7 +272,7 @@ export default function ProductImageGallery({
                     onError={() => handleImageError(image)}
                   />
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
         </div>

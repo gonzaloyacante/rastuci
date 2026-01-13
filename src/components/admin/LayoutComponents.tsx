@@ -72,13 +72,14 @@ export function TabLayout({
       <div className="relative group">
         {/* Left Arrow (Desktop) */}
         {showLeftArrow && (
-          <button
+          <Button
             onClick={() => scroll("left")}
-            className="hidden sm:flex absolute left-0 top-0 bottom-0 z-10 items-center justify-center w-8 bg-gradient-to-r from-background to-transparent hover:from-background hover:to-background/50"
+            variant="ghost"
+            className="hidden sm:flex absolute left-0 top-0 bottom-0 z-10 items-center justify-center w-8 bg-gradient-to-r from-background to-transparent hover:from-background hover:to-background/50 rounded-none p-0 h-auto"
             aria-label="Scroll Left"
           >
             <ChevronLeft className="w-5 h-5 text-primary" />
-          </button>
+          </Button>
         )}
 
         <div
@@ -88,14 +89,15 @@ export function TabLayout({
         >
           <div className="flex gap-2 border-b border-muted min-w-max">
             {tabs.map((tab) => (
-              <button
+              <Button
                 key={tab.id}
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 aria-controls={`tabpanel-${tab.id}`}
                 id={`tab-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
-                className={`px-4 py-3 sm:py-2 text-sm sm:text-base whitespace-nowrap rounded-t-lg flex items-center gap-2 transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                variant="ghost"
+                className={`px-4 py-3 sm:py-2 text-sm sm:text-base whitespace-nowrap rounded-t-lg flex items-center gap-2 transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-primary h-auto ${
                   activeTab === tab.id
                     ? "surface-secondary text-primary font-medium border-b-2 border-primary -mb-[2px]"
                     : "text-muted hover:text-primary hover:bg-surface-secondary/50"
@@ -103,20 +105,21 @@ export function TabLayout({
               >
                 {tab.icon}
                 {tab.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         {/* Right Arrow (Desktop) */}
         {showRightArrow && (
-          <button
+          <Button
             onClick={() => scroll("right")}
-            className="hidden sm:flex absolute right-0 top-0 bottom-0 z-10 items-center justify-center w-8 bg-gradient-to-l from-background to-transparent hover:from-background hover:to-background/50"
+            variant="ghost"
+            className="hidden sm:flex absolute right-0 top-0 bottom-0 z-10 items-center justify-center w-8 bg-gradient-to-l from-background to-transparent hover:from-background hover:to-background/50 rounded-none p-0 h-auto"
             aria-label="Scroll Right"
           >
             <ChevronRight className="w-5 h-5 text-primary" />
-          </button>
+          </Button>
         )}
       </div>
       {children}

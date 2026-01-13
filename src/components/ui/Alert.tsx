@@ -2,6 +2,7 @@
 
 import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
 import React, { ReactNode, useCallback, useEffect, useState } from "react";
+import { Button } from "./Button";
 
 interface AlertProps {
   isOpen: boolean;
@@ -105,12 +106,13 @@ export default function Alert({
             </div>
           </div>
           {!inline && showCloseButton && onClose && (
-            <button
+            <Button
               onClick={onClose}
-              className={`${variantConfig.iconColor} hover:opacity-80 transition-opacity ml-4`}
+              variant="ghost"
+              className={`${variantConfig.iconColor} hover:opacity-80 transition-opacity ml-4 p-0 h-auto min-h-0 min-w-0 hover:bg-transparent`}
             >
               <X size={18} />
-            </button>
+            </Button>
           )}
         </div>
       </div>

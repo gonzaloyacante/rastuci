@@ -170,7 +170,7 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
           <Button
             variant="ghost"
             onClick={onClose}
-            className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+            className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 min-h-0 min-w-0"
           >
             <X size={20} />
           </Button>
@@ -206,15 +206,16 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
                 const isSelected = value === iconName;
 
                 return (
-                  <button
+                  <Button
                     key={iconName}
                     onClick={() => {
                       onChange(iconName);
                       onClose();
                     }}
+                    variant="ghost"
                     className={`
                       group flex flex-col items-center justify-center p-3 rounded-xl aspect-square
-                      transition-all duration-200 border
+                      transition-all duration-200 border h-auto min-h-0 min-w-0
                       ${
                         isSelected
                           ? "bg-primary text-white border-primary ring-2 ring-primary ring-offset-2 dark:ring-offset-zinc-900 scale-105 shadow-md"
@@ -233,7 +234,7 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
                     >
                       {ICON_LABELS[iconName]}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>

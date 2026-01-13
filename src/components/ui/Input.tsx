@@ -3,6 +3,7 @@
 import React, { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   /** Label text displayed above the input */
@@ -166,30 +167,32 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           {/* Clear Button */}
           {showClearButton && (
-            <button
+            <Button
               type="button"
               aria-label="Limpiar"
               onClick={onClear}
+              variant="ghost"
               className={cn(
-                "absolute inset-y-0 flex items-center justify-center",
+                "absolute inset-y-0 flex items-center justify-center p-0 h-auto min-h-0 min-w-0 bg-transparent hover:bg-transparent",
                 "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
                 "focus:outline-none transition-colors",
                 showToggle ? "right-10" : "right-3"
               )}
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           )}
 
           {/* Password Toggle */}
           {showToggle && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               aria-label={
                 showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
               }
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-3 flex items-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus:outline-none transition-colors"
+              className="absolute inset-y-0 right-3 flex items-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus:outline-none transition-colors p-0 h-auto min-h-0 min-w-0 bg-transparent hover:bg-transparent"
             >
               {showPassword ? (
                 <svg
@@ -216,7 +219,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                   <circle cx="12" cy="12" r="3" />
                 </svg>
               )}
-            </button>
+            </Button>
           )}
         </div>
 

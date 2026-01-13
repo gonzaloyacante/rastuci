@@ -2,10 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/Card";
 // import { logger } from "@/lib/logger";
-import {
-  type ContactSettings,
-  defaultContactSettings,
-} from "@/lib/validation/contact";
+import { type ContactSettings } from "@/lib/validation/contact";
 // import { Clock, Loader2, Mail, MapPin, Phone } from "lucide-react";
 import { Clock, Mail, MapPin, Phone } from "lucide-react"; // Loader2 unused
 // import useSWR from "swr";

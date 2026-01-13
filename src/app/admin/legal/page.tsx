@@ -61,17 +61,18 @@ export default function LegalAdminPage() {
       {/* TABS */}
       <div className="border-b border-muted flex gap-6">
         {TABS.map((tab) => (
-          <button
+          <Button
             key={tab.id}
+            variant="ghost"
             onClick={() => handleTabChange(tab.id)}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-3 rounded-none hover:bg-transparent text-sm font-medium border-b-2 transition-colors px-0 py-0 h-auto ${
               activeTab === tab.id
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "border-primary text-primary hover:text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
             }`}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -281,7 +282,7 @@ function SectionItem({ index, register, control, remove }: any) {
           variant="ghost"
           size="sm"
           onClick={() => remove(index)}
-          className="text-muted-foreground hover:text-error"
+          className="text-muted-foreground hover:text-error h-8 w-8 p-0"
         >
           <Trash2 size={16} />
         </Button>
@@ -312,13 +313,15 @@ function SectionItem({ index, register, control, remove }: any) {
                 className="flex-1 bg-transparent border-b border-transparent hover:border-muted focus:border-primary focus:outline-none text-sm py-1"
                 placeholder={`Punto ${k + 1}`}
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => removeItem(k)}
-                className="opacity-0 group-hover/item:opacity-100 text-muted-foreground hover:text-error p-1"
+                className="opacity-0 group-hover/item:opacity-100 text-muted-foreground hover:text-error h-6 w-6 p-0"
               >
                 <X size={14} />
-              </button>
+              </Button>
             </div>
           ))}
 

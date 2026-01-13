@@ -242,10 +242,11 @@ const CartItemComponent = ({
 
           <div className="h-6 w-px bg-muted hidden sm:block"></div>
 
-          <button
+          <Button
             onClick={handleRemove}
             disabled={isRemoving}
-            className="text-muted-foreground hover:text-error hover:bg-error/5 transition-all px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium group"
+            variant="ghost"
+            className="text-muted-foreground hover:text-error hover:bg-error/5 transition-all px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium group h-auto"
             title="Eliminar producto"
           >
             <Trash2
@@ -255,7 +256,7 @@ const CartItemComponent = ({
             <span className="group-hover:underline decoration-error/30 underline-offset-2">
               Eliminar
             </span>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

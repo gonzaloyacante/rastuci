@@ -225,7 +225,8 @@ export default function OrdersPage() {
             getStatusLabel(order.status),
             order.mpStatus || "N/A",
             order.shippingMethod || "No especificado",
-            (order as any).shippingAgency || "-", // Cast to any if type is strict, or add to Order type
+            (order as Order & { shippingAgency?: string }).shippingAgency ||
+              "-",
             order.caTrackingNumber || "Sin tracking",
             formatDate(order.createdAt),
             products,
@@ -343,8 +344,7 @@ export default function OrdersPage() {
                 key={order.id}
                 order={{
                   ...toOrderCardData(order),
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  relativeTime: timeAgo(order.createdAt as any),
+                  relativeTime: timeAgo(order.createdAt.toString()),
                 }}
                 formatDate={formatDate}
                 formatCurrency={formatCurrency}

@@ -25,9 +25,9 @@ import {
   Truck,
 } from "lucide-react";
 import Link from "next/link";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
+
 import { useRouter } from "next/navigation";
-import React, { Suspense, useState, useEffect } from "react";
+import React, { Suspense, useState } from "react";
 import useSWR from "swr";
 
 // Dynamic imports para componentes no críticos
@@ -514,15 +514,16 @@ export default function ProductDetailClient({
                     }
 
                     return (
-                      <button
+                      <Button
                         key={size}
                         onClick={() => !isDisabled && setSelectedSize(size)}
                         disabled={isDisabled}
+                        variant="ghost"
                         className={`
-                          min-w-[3rem] px-3 py-2 border rounded-lg text-sm font-medium transition-all
+                          min-w-[3rem] px-3 py-2 border rounded-lg text-sm font-medium transition-all h-auto
                           ${
                             selectedSize === size
-                              ? "border-primary bg-primary text-white shadow-md"
+                              ? "border-primary bg-primary text-white shadow-md hover:bg-primary hover:text-white"
                               : isDisabled
                                 ? "border-muted bg-muted/10 text-muted-foreground cursor-not-allowed opacity-50 decoration-slice"
                                 : "border-muted hover:border-primary text-primary bg-surface hover:bg-muted/10"
@@ -531,7 +532,7 @@ export default function ProductDetailClient({
                         `}
                       >
                         {size}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -544,13 +545,14 @@ export default function ProductDetailClient({
                 Cantidad
               </label>
               <div className="flex items-center space-x-2">
-                <button
+                <Button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={quantity <= 1}
-                  className={`w-8 h-8 border border-muted rounded flex items-center justify-center ${quantity <= 1 ? "opacity-50 cursor-not-allowed" : "hover:surface-secondary"}`}
+                  variant="outline"
+                  className={`w-8 h-8 p-0 border border-muted rounded flex items-center justify-center ${quantity <= 1 ? "opacity-50 cursor-not-allowed" : "hover:surface-secondary"}`}
                 >
                   -
-                </button>
+                </Button>
                 <input
                   type="number"
                   min="1"
@@ -570,19 +572,20 @@ export default function ProductDetailClient({
                   }}
                   className="w-16 h-8 text-center border border-muted rounded bg-surface text-primary"
                 />
-                <button
+                <Button
                   onClick={() =>
                     setQuantity(Math.min(currentStock, quantity + 1))
                   }
                   disabled={quantity >= currentStock}
-                  className={`w-8 h-8 border border-muted rounded flex items-center justify-center ${
+                  variant="outline"
+                  className={`w-8 h-8 p-0 border border-muted rounded flex items-center justify-center ${
                     quantity >= currentStock
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:surface-secondary"
                   }`}
                 >
                   +
-                </button>
+                </Button>
               </div>
             </div>
 

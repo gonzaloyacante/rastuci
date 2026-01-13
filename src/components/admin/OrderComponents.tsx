@@ -1,5 +1,5 @@
 // import { Badge } from "@/components/ui/Badge";
-// import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 // import { Card, CardContent } from "@/components/ui/Card";
 // Removed unused Select imports
 import { ORDER_STATUS } from "@/lib/constants";
@@ -288,40 +288,46 @@ export function OrderCard({
         <div className="pt-3 border-t border-border space-y-2">
           {order.status === "PENDING_PAYMENT" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
+              <Button
                 onClick={openMiCorreo}
-                className="btn-outline text-xs py-2.5 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold"
+                variant="outline"
+                className="text-xs py-2.5 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold h-auto"
                 disabled={isUpdating}
               >
                 <span className="flex items-center justify-center gap-1.5">
                   <span>📦</span>
                   <span>Pagar en MiCorreo</span>
                 </span>
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleMarkProcessed}
-                className="btn-primary text-xs py-2.5 font-semibold"
+                variant="primary"
+                className="text-xs py-2.5 font-semibold h-auto"
                 disabled={isUpdating}
               >
                 {isUpdating ? "⏳ Procesando..." : "✓ Marcar procesado"}
-              </button>
+              </Button>
             </div>
           )}
 
           {order.status === "PROCESSED" && (
-            <button
+            <Button
               onClick={handleMarkDelivered}
-              className="btn-primary w-full text-xs py-2.5 font-semibold"
+              variant="primary"
+              className="w-full text-xs py-2.5 font-semibold h-auto"
               disabled={isUpdating}
             >
               {isUpdating ? "⏳ Procesando..." : "✓ Marcar entregado"}
-            </button>
+            </Button>
           )}
 
           <Link href={`/admin/pedidos/${order.id}`} className="block">
-            <button className="btn-outline w-full text-xs py-2.5 font-semibold hover:bg-primary/5 hover:border-primary/30">
+            <Button
+              variant="outline"
+              className="w-full text-xs py-2.5 font-semibold hover:bg-primary/5 hover:border-primary/30 h-auto"
+            >
               Ver Detalles →
-            </button>
+            </Button>
           </Link>
         </div>
       </div>

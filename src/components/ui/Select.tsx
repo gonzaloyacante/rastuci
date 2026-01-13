@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X, Check } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface SelectOption {
   value: string;
@@ -90,11 +91,12 @@ export const Select = ({
 
   return (
     <div className={`relative w-full ${className}`}>
-      <button
+      <Button
         type="button"
-        className={`form-input h-10 py-2 text-left text-sm transition-all duration-200 flex items-center justify-between ${
+        variant="ghost"
+        className={`form-input h-10 py-2 text-left text-sm transition-all duration-200 flex items-center justify-between min-h-0 ${
           disabled ? "opacity-60 cursor-not-allowed" : ""
-        } ${error ? "border-error" : ""}`}
+        } ${error ? "border-error" : ""} bg-transparent hover:bg-transparent`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         id={id}
@@ -102,13 +104,13 @@ export const Select = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="truncate flex-1 min-w-0 mr-2">
+        <span className="truncate flex-1 min-w-0 mr-2 font-normal">
           <span className={value ? "" : "muted"}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
         </span>
         {clearable && value && (
-          <button
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -120,11 +122,12 @@ export const Select = ({
                 onChange("");
               }
             }}
-            className="p-1 rounded hover-surface mr-1 cursor-pointer inline-flex items-center justify-center"
+            variant="ghost"
+            className="p-1 rounded hover-surface mr-1 cursor-pointer inline-flex items-center justify-center h-auto min-h-0 min-w-0 bg-transparent hover:bg-transparent"
             aria-label="Limpiar selección"
           >
             <X className="w-4 h-4 muted" />
-          </button>
+          </Button>
         )}
         <svg
           className={`w-5 h-5 ml-1 transition-transform duration-200 ${
@@ -141,7 +144,7 @@ export const Select = ({
             d="M19 9l-7 7-7-7"
           />
         </svg>
-      </button>
+      </Button>
       {isOpen && (
         <ul
           ref={containerRef}

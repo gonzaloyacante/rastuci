@@ -26,32 +26,35 @@ export function ThemeToggle({
       <div
         className={`theme-toggle-group ${orientation === "horizontal" ? "!flex-row !w-full" : ""}`}
       >
-        <button
+        <Button
           onClick={() => setTheme("light")}
           aria-label="Modo claro"
-          className={`theme-toggle-btn ${orientation === "horizontal" ? "flex-1 justify-center" : ""} ${theme === "light" ? "active active-light" : ""}`}
+          variant="ghost"
+          className={`theme-toggle-btn ${orientation === "horizontal" ? "flex-1 justify-center" : ""} ${theme === "light" ? "active active-light" : ""} h-auto min-h-0 min-w-0`}
         >
           <Sun className="w-4 h-4" />
           <span>Claro</span>
-        </button>
+        </Button>
         {showSystem && (
-          <button
+          <Button
             onClick={() => setTheme("system")}
             aria-label="Tema del sistema"
-            className={`theme-toggle-btn ${orientation === "horizontal" ? "flex-1 justify-center" : ""} ${theme === "system" ? "active active-system" : ""}`}
+            variant="ghost"
+            className={`theme-toggle-btn ${orientation === "horizontal" ? "flex-1 justify-center" : ""} ${theme === "system" ? "active active-system" : ""} h-auto min-h-0 min-w-0`}
           >
             <Monitor className="w-4 h-4" />
             <span>Sistema</span>
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           onClick={() => setTheme("dark")}
           aria-label="Modo oscuro"
-          className={`theme-toggle-btn ${orientation === "horizontal" ? "flex-1 justify-center" : ""} ${theme === "dark" ? "active active-dark" : ""}`}
+          variant="ghost"
+          className={`theme-toggle-btn ${orientation === "horizontal" ? "flex-1 justify-center" : ""} ${theme === "dark" ? "active active-dark" : ""} h-auto min-h-0 min-w-0`}
         >
           <Moon className="w-4 h-4" />
           <span>Oscuro</span>
-        </button>
+        </Button>
       </div>
     );
   }

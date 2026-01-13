@@ -1,40 +1,40 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Globe, Check, ChevronDown } from 'lucide-react';
-import { useTranslation } from '@/lib/i18n';
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Globe, Check, ChevronDown, X } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface LanguageSelectorProps {
   className?: string;
-  variant?: 'dropdown' | 'modal' | 'inline';
+  variant?: "dropdown" | "modal" | "inline";
   showFlag?: boolean;
   showName?: boolean;
 }
 
 export function LanguageSelector({
-  className = '',
-  variant = 'dropdown',
+  className = "",
+  variant = "dropdown",
   showFlag = true,
   showName = true,
 }: LanguageSelectorProps) {
   const { locale, setLocale, availableLocales, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
-  const currentLocale = availableLocales.find(l => l.code === locale);
+  const currentLocale = availableLocales.find((l) => l.code === locale);
 
   const handleLocaleChange = (newLocale: string) => {
     setLocale(newLocale);
     setIsOpen(false);
   };
 
-  if (variant === 'inline') {
+  if (variant === "inline") {
     return (
       <div className={`flex flex-wrap gap-2 ${className}`}>
         {availableLocales.map((loc) => (
           <Button
             key={loc.code}
-            variant={locale === loc.code ? 'secondary' : 'outline'}
+            variant={locale === loc.code ? "secondary" : "outline"}
             size="sm"
             onClick={() => handleLocaleChange(loc.code)}
             className="flex items-center gap-2"
@@ -47,7 +47,7 @@ export function LanguageSelector({
     );
   }
 
-  if (variant === 'modal') {
+  if (variant === "modal") {
     return (
       <>
         <Button
@@ -64,33 +64,39 @@ export function LanguageSelector({
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="surface rounded-lg max-w-sm w-full p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">{t('account.language')}</h3>
+                <h3 className="text-lg font-semibold">
+                  {t("account.language")}
+                </h3>
                 <Button variant="ghost" onClick={() => setIsOpen(false)}>
-                  ×
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
 
               <div className="space-y-2">
                 {availableLocales.map((loc) => (
-                  <button
+                  <Button
                     key={loc.code}
                     onClick={() => handleLocaleChange(loc.code)}
+                    variant="ghost"
                     className={`
-                      w-full flex items-center justify-between p-3 rounded-lg transition-colors
-                      ${locale === loc.code 
-                        ? 'bg-primary/10 border border-primary' 
-                        : 'hover-surface border border-transparent'
+                      w-full flex items-center justify-between p-3 rounded-lg transition-colors h-auto min-h-0 min-w-0
+                      ${
+                        locale === loc.code
+                          ? "bg-primary/10 border border-primary text-primary hover:bg-primary/20"
+                          : "hover-surface border border-transparent hover:bg-muted/10"
                       }
                     `}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{loc.flag}</span>
-                      <span className="font-medium">{loc.name}</span>
+                      <span className="font-medium text-foreground">
+                        {loc.name}
+                      </span>
                     </div>
                     {locale === loc.code && (
                       <Check className="w-5 h-5 text-primary" />
                     )}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -111,21 +117,25 @@ export function LanguageSelector({
         <Globe className="w-4 h-4" />
         {showFlag && currentLocale && <span>{currentLocale.flag}</span>}
         {showName && currentLocale && <span>{currentLocale.name}</span>}
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
       </Button>
 
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 w-48 surface border border-muted rounded-lg shadow-lg z-50">
           <div className="p-2">
             {availableLocales.map((loc) => (
-              <button
+              <Button
                 key={loc.code}
                 onClick={() => handleLocaleChange(loc.code)}
+                variant="ghost"
                 className={`
-                  w-full flex items-center justify-between p-2 rounded transition-colors
-                  ${locale === loc.code 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'hover-surface'
+                  w-full flex items-center justify-between p-2 rounded transition-colors h-auto min-h-0 min-w-0
+                  ${
+                    locale === loc.code
+                      ? "bg-primary/10 text-primary hover:bg-primary/20"
+                      : "hover-surface hover:bg-muted/10 text-foreground"
                   }
                 `}
               >
@@ -133,10 +143,8 @@ export function LanguageSelector({
                   <span>{loc.flag}</span>
                   <span>{loc.name}</span>
                 </div>
-                {locale === loc.code && (
-                  <Check className="w-4 h-4" />
-                )}
-              </button>
+                {locale === loc.code && <Check className="w-4 h-4" />}
+              </Button>
             ))}
           </div>
         </div>
@@ -144,62 +152,59 @@ export function LanguageSelector({
 
       {/* Overlay to close dropdown */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
       )}
     </div>
   );
 }
 
 // Compact language selector for mobile
-export function CompactLanguageSelector({ className = '' }: { className?: string }) {
+export function CompactLanguageSelector({
+  className = "",
+}: {
+  className?: string;
+}) {
   const { locale, setLocale, availableLocales } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
-  const currentLocale = availableLocales.find(l => l.code === locale);
+  const currentLocale = availableLocales.find((l) => l.code === locale);
 
   return (
     <div className={`relative ${className}`}>
-      <button
+      <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-10 h-10 rounded-full surface border border-muted flex items-center justify-center hover-surface transition-colors"
+        variant="ghost"
+        className="w-10 h-10 rounded-full surface border border-muted flex items-center justify-center hover-surface transition-colors p-0 min-w-0 min-h-0"
       >
-        <span className="text-lg">{currentLocale?.flag || '🌐'}</span>
-      </button>
+        <span className="text-lg">{currentLocale?.flag || "🌐"}</span>
+      </Button>
 
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 surface border border-muted rounded-lg shadow-lg z-50">
           <div className="p-1">
             {availableLocales.map((loc) => (
-              <button
+              <Button
                 key={loc.code}
                 onClick={() => {
                   setLocale(loc.code);
                   setIsOpen(false);
                 }}
+                variant="ghost"
                 className={`
-                  w-10 h-10 rounded flex items-center justify-center transition-colors
-                  ${locale === loc.code 
-                    ? 'bg-primary/10' 
-                    : 'hover-surface'
+                  w-10 h-10 rounded flex items-center justify-center transition-colors p-0 min-w-0 min-h-0
+                  ${
+                    locale === loc.code
+                      ? "bg-primary/10 hover:bg-primary/20"
+                      : "hover-surface hover:bg-muted/10"
                   }
                 `}
                 title={loc.name}
               >
                 <span className="text-lg">{loc.flag}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
-      )}
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
       )}
     </div>
   );

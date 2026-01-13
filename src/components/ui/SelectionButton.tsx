@@ -1,3 +1,5 @@
+import { Button } from "./Button";
+
 interface SelectionButtonProps {
   value: string;
   label: string;
@@ -27,10 +29,12 @@ export default function SelectionButton({
     : "border-muted hover:border-primary";
 
   return (
-    <button
+    <Button
       onClick={onClick}
-      className={`${baseClasses} ${variantClasses[variant]} ${stateClasses} ${className}`}>
+      variant="ghost"
+      className={`${baseClasses} ${variantClasses[variant]} ${stateClasses} ${className} hover:bg-transparent h-auto p-0 min-h-0 min-w-0 flex items-center justify-center`}
+    >
       {label}
-    </button>
+    </Button>
   );
 }

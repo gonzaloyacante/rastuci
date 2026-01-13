@@ -35,8 +35,12 @@ export function SearchFilters({
 }: SearchFiltersProps) {
   const [searchTerm, setSearchTerm] = useState(currentSearch);
   const [showFilters, setShowFilters] = useState(false);
-  const [priceMin, setPriceMin] = useState(currentPriceRange.min?.toString() || "");
-  const [priceMax, setPriceMax] = useState(currentPriceRange.max?.toString() || "");
+  const [priceMin, setPriceMin] = useState(
+    currentPriceRange.min?.toString() || ""
+  );
+  const [priceMax, setPriceMax] = useState(
+    currentPriceRange.max?.toString() || ""
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +63,11 @@ export function SearchFilters({
     onPriceFilter(null, null);
   };
 
-  const hasActiveFilters = currentSearch || currentCategory || 
-    currentPriceRange.min !== null || currentPriceRange.max !== null;
+  const hasActiveFilters =
+    currentSearch ||
+    currentCategory ||
+    currentPriceRange.min !== null ||
+    currentPriceRange.max !== null;
 
   return (
     <div className="space-y-4">
@@ -86,7 +93,9 @@ export function SearchFilters({
         >
           <Filter className="w-4 h-4 mr-2" />
           Filtros
-          <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            className={`w-4 h-4 ml-2 transition-transform ${showFilters ? "rotate-180" : ""}`}
+          />
         </Button>
       </form>
 
@@ -111,7 +120,9 @@ export function SearchFilters({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Filtro por categoría */}
             <div>
-              <label className="block text-sm font-medium mb-2">Categoría</label>
+              <label className="block text-sm font-medium mb-2">
+                Categoría
+              </label>
               <select
                 value={currentCategory || ""}
                 onChange={(e) => onCategoryFilter(e.target.value || null)}
@@ -129,7 +140,9 @@ export function SearchFilters({
 
             {/* Filtro por precio */}
             <div>
-              <label className="block text-sm font-medium mb-2">Rango de precio</label>
+              <label className="block text-sm font-medium mb-2">
+                Rango de precio
+              </label>
               <div className="flex gap-2">
                 <Input
                   type="number"
@@ -156,7 +169,9 @@ export function SearchFilters({
 
             {/* Ordenamiento */}
             <div>
-              <label className="block text-sm font-medium mb-2">Ordenar por</label>
+              <label className="block text-sm font-medium mb-2">
+                Ordenar por
+              </label>
               <select
                 value={currentSort}
                 onChange={(e) => onSortChange(e.target.value)}
@@ -181,37 +196,43 @@ export function SearchFilters({
           {currentSearch && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm surface border border-muted">
               Búsqueda: "{currentSearch}"
-              <button
+              <Button
                 onClick={() => onSearch("")}
-                className="ml-2 text-error hover:text-error"
+                variant="ghost"
+                className="ml-2 text-error hover:text-error p-0 h-auto min-h-0 min-w-0 hover:bg-transparent"
                 aria-label="Quitar filtro de búsqueda"
               >
                 <X className="w-3 h-3" />
-              </button>
+              </Button>
             </span>
           )}
           {currentCategory && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm surface border border-muted">
-              Categoría: {categories.find(c => c.id === currentCategory)?.name}
-              <button
+              Categoría:{" "}
+              {categories.find((c) => c.id === currentCategory)?.name}
+              <Button
                 onClick={() => onCategoryFilter(null)}
-                className="ml-2 text-error hover:text-error"
+                variant="ghost"
+                className="ml-2 text-error hover:text-error p-0 h-auto min-h-0 min-w-0 hover:bg-transparent"
                 aria-label="Quitar filtro de categoría"
               >
                 <X className="w-3 h-3" />
-              </button>
+              </Button>
             </span>
           )}
-          {(currentPriceRange.min !== null || currentPriceRange.max !== null) && (
+          {(currentPriceRange.min !== null ||
+            currentPriceRange.max !== null) && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm surface border border-muted">
-              Precio: {currentPriceRange.min || 0} - {currentPriceRange.max || "∞"}
-              <button
+              Precio: {currentPriceRange.min || 0} -{" "}
+              {currentPriceRange.max || "∞"}
+              <Button
                 onClick={() => onPriceFilter(null, null)}
-                className="ml-2 text-error hover:text-error"
+                variant="ghost"
+                className="ml-2 text-error hover:text-error p-0 h-auto min-h-0 min-w-0 hover:bg-transparent"
                 aria-label="Quitar filtro de precio"
               >
                 <X className="w-3 h-3" />
-              </button>
+              </Button>
             </span>
           )}
         </div>

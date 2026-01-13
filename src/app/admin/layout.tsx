@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+
 import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -153,9 +155,10 @@ export default function AdminLayout({
                     <span className="font-bold text-xl ml-2">Rastuci</span>
                   )}
                 </div>
-                <button
+                <Button
                   onClick={toggle}
-                  className={`p-2 rounded-full hover-surface focus:outline-none cursor-pointer ${
+                  variant="ghost"
+                  className={`p-2 rounded-full hover-surface focus:outline-none cursor-pointer h-auto ${
                     isOpen ? "" : "mt-2"
                   }`}
                 >
@@ -164,7 +167,7 @@ export default function AdminLayout({
                   ) : (
                     <Menu className="h-6 w-6" />
                   )}
-                </button>
+                </Button>
               </div>
 
               {/* Navigation */}
@@ -201,16 +204,17 @@ export default function AdminLayout({
                     showSystem={false}
                   />
                 </div>
-                <button
+                <Button
                   onClick={handleLogout}
+                  variant="ghost"
                   className={`flex items-center ${
                     isOpen ? "w-full px-4 py-3" : "justify-center p-3"
                   }
-                      rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary`}
+                      rounded-lg transition-colors text-error font-semibold gap-3 cursor-pointer hover-surface hover:text-primary h-auto`}
                 >
                   <LogOut className="h-5 w-5 shrink-0" />
                   {isOpen && <span>Cerrar sesión</span>}
-                </button>
+                </Button>
               </div>
             </motion.div>
           )}
@@ -223,9 +227,13 @@ export default function AdminLayout({
               <h1 className="text-lg font-semibold text-content-primary">
                 Panel de Administración
               </h1>
-              <button onClick={toggle} className="btn-ghost">
+              <Button
+                onClick={toggle}
+                variant="ghost"
+                className="btn-ghost p-0 h-auto"
+              >
                 <Menu className="h-6 w-6" />
-              </button>
+              </Button>
             </div>
           )}
           <main className="p-2 sm:p-3 lg:p-4">{children}</main>

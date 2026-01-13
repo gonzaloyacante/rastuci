@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { AlertTriangle, CheckCircle, Info, X, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import React, {
   createContext,
   useCallback,
@@ -137,13 +138,14 @@ function ToastItem({
         )}
         <div className="text-sm muted">{message}</div>
       </div>
-      <button
+      <Button
         aria-label="Cerrar notificación"
         onClick={onDismiss}
-        className="shrink-0 p-1 rounded-full muted hover:text-base-primary hover:bg-surface-secondary transition-colors"
+        variant="ghost"
+        className="shrink-0 p-1 rounded-full muted hover:text-base-primary hover:bg-surface-secondary transition-colors h-auto min-h-0 min-w-0 bg-transparent"
       >
         <X className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   );
 }

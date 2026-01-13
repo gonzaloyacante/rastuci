@@ -143,7 +143,7 @@ export default function HomeForm({ initial }: Props) {
       let data;
       try {
         data = text ? JSON.parse(text) : {};
-      } catch (e) {
+      } catch (_e) {
         throw new Error(
           `Error de servidor: No se pudo procesar la respuesta (${res.status})`
         );
@@ -286,14 +286,17 @@ export default function HomeForm({ initial }: Props) {
                   <label className="block text-sm font-medium mb-1">
                     Ícono
                   </label>
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={() => setIconPickerOpen(benefitItem.id)}
-                    className="w-full border rounded-md px-3 py-2 flex items-center justify-center gap-2 hover:bg-accent transition-colors"
+                    className="w-full justify-center h-auto py-2"
                   >
                     {IconComponent && <IconComponent size={20} />}
-                    <span className="text-sm truncate">{benefitItem.icon}</span>
-                  </button>
+                    <span className="text-sm truncate ml-2">
+                      {benefitItem.icon}
+                    </span>
+                  </Button>
                 </div>
                 <div className="md:col-span-4">
                   <label className="block text-sm font-medium mb-1">

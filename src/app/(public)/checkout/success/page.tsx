@@ -11,6 +11,7 @@ import {
   Phone,
   Truck,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -206,13 +207,14 @@ function CheckoutSuccessContent() {
                     Número de Seguimiento:
                   </span>
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={() => copyTrackingNumber(hasTracking)}
-                      className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
+                      className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 p-0 h-auto hover:bg-transparent"
                     >
                       <Copy className="w-3 h-3" />
                       {copySuccess ? "Copiado!" : "Copiar"}
-                    </button>
+                    </Button>
                     <a
                       href={`https://www.correoargentino.com.ar/seguimiento?codigo=${hasTracking}`}
                       target="_blank"

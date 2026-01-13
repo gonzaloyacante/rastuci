@@ -171,12 +171,13 @@ export default function ReviewStep({
                       -{appliedCoupon.discount}%
                     </span>
                   </div>
-                  <button
+                  <Button
                     onClick={handleRemoveCoupon}
-                    className="text-error hover:text-error"
+                    variant="ghost"
+                    className="text-error hover:text-error p-1 h-auto hover:bg-transparent min-h-0 min-w-0"
                   >
                     <X size={16} />
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">

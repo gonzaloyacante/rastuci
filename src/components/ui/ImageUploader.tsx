@@ -113,12 +113,14 @@ export function ImageUploader({
             {!imageLoadError ? (
               // Use native img for SVG/Blob to ensure it displays correctly without optimization issues
               value?.includes(".svg") || value?.includes("blob:") ? (
-                <img
+                <Image
                   src={value}
                   alt="Preview"
-                  className="w-full h-full object-cover rounded-lg border border-border"
-                  onError={(e) => {
-                    console.error("ImageUploader <img/> Error:", e);
+                  fill
+                  unoptimized
+                  className="object-cover rounded-lg border border-border"
+                  onError={() => {
+                    console.error("ImageUploader Image Error");
                     setImageLoadError(true);
                   }}
                 />
@@ -135,15 +137,16 @@ export function ImageUploader({
             ) : (
               <ProductImagePlaceholder className="w-full h-full rounded-lg border border-border" />
             )}
-            <button
+            <Button
               type="button"
               onClick={handleRemove}
               disabled={disabled || uploading}
-              className="absolute top-1 right-1 bg-error text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+              variant="ghost"
+              className="absolute top-1 right-1 bg-error text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 hover:bg-error/90 h-auto min-h-0 min-w-0"
               aria-label="Eliminar imagen"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         )}
 

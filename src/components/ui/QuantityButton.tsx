@@ -1,4 +1,5 @@
 import { Minus, Plus } from "lucide-react";
+import { Button } from "./Button";
 
 interface QuantityButtonProps {
   onIncrement: () => void;
@@ -15,19 +16,23 @@ export default function QuantityButton({
 }: QuantityButtonProps) {
   return (
     <div className="flex items-center space-x-3">
-      <button
+      <Button
         onClick={onDecrement}
         disabled={quantity <= 1 || disabled}
-        className="p-2 rounded-full surface-secondary hover-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        variant="ghost"
+        className="p-2 rounded-full surface-secondary hover-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-auto min-h-0 min-w-0"
+      >
         <Minus size={16} />
-      </button>
+      </Button>
       <span className="font-semibold w-8 text-center">{quantity}</span>
-      <button
+      <Button
         onClick={onIncrement}
         disabled={disabled}
-        className="p-2 rounded-full surface-secondary hover-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        variant="ghost"
+        className="p-2 rounded-full surface-secondary hover-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-auto min-h-0 min-w-0"
+      >
         <Plus size={16} />
-      </button>
+      </Button>
     </div>
   );
 }

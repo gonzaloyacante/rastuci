@@ -17,7 +17,7 @@ const sectionSchema = z.object({
   bullets: z.array(z.object({ text: z.string() })).optional(),
 });
 
-const policySchema = z.object({
+const _policySchema = z.object({
   title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
   slug: z
     .string()
@@ -28,7 +28,7 @@ const policySchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-type PolicyForm = z.infer<typeof policySchema>;
+type PolicyForm = z.infer<typeof _policySchema>;
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -72,6 +72,7 @@ export default function EditPolicyPage({ params }: { params: { id: string } }) {
       router.push("/admin/policies");
       router.refresh();
     } catch (error) {
+      console.error(error);
       toast.error("Error al guardar la política");
     }
   };
@@ -120,8 +121,6 @@ function PolicyEditor({
     register,
     control,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<PolicyForm>({
     defaultValues: initialData || {
@@ -180,27 +179,33 @@ function PolicyEditor({
               Haz clic para copiar y pegar en el texto:
             </p>
             <div className="flex flex-wrap gap-2">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => insertVariable("{{phone}}")}
-                className="px-2 py-1 bg-surface border border-muted rounded hover:border-primary active:scale-95 transition-all text-xs font-mono"
+                className="px-2 py-1 h-auto text-xs font-mono"
               >
                 {`{{phone}}`}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => insertVariable("{{email}}")}
-                className="px-2 py-1 bg-surface border border-muted rounded hover:border-primary active:scale-95 transition-all text-xs font-mono"
+                className="px-2 py-1 h-auto text-xs font-mono"
               >
                 {`{{email}}`}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => insertVariable("{{address}}")}
-                className="px-2 py-1 bg-surface border border-muted rounded hover:border-primary active:scale-95 transition-all text-xs font-mono"
+                className="px-2 py-1 h-auto text-xs font-mono"
               >
                 {`{{address}}`}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -228,30 +233,36 @@ function PolicyEditor({
             >
               <div className="absolute right-4 top-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 {index > 0 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => move(index, index - 1)}
-                    className="p-1 hover:bg-muted rounded"
+                    className="h-8 w-8 p-0 hover:bg-muted"
                   >
                     ↑
-                  </button>
+                  </Button>
                 )}
                 {index < fields.length - 1 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => move(index, index + 1)}
-                    className="p-1 hover:bg-muted rounded"
+                    className="h-8 w-8 p-0 hover:bg-muted"
                   >
                     ↓
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => remove(index)}
-                  className="p-1 hover:bg-red-100 text-red-500 rounded"
+                  className="h-8 w-8 p-0 hover:bg-red-100 text-red-500 hover:text-red-600"
                 >
                   <Trash2 size={16} />
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-3">

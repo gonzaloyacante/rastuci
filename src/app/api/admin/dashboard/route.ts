@@ -442,8 +442,7 @@ export const GET = withAdminAuth(
 
       // Generar datos para gráficos basados en órdenes reales
       const salesChartData = generateSalesChartFromOrders(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        currentOrders as any[],
+        currentOrders,
         period
       );
       const ordersChartData = generateOrdersChartFromOrders(
@@ -698,7 +697,7 @@ export const GET = withAdminAuth(
 
 // Función auxiliar para generar datos de gráfico de ventas
 function generateSalesChartFromOrders(
-  orders: { createdAt: Date; total: number | any }[], // Permitir Decimal como any para evitar error de tipos
+  orders: { createdAt: Date; total: unknown }[],
   period: string
 ): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];

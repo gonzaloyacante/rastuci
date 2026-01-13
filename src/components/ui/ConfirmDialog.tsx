@@ -104,13 +104,14 @@ export default function ConfirmDialog({
                 {title}
               </h3>
             </div>
-            <button
+            <Button
               onClick={onClose}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground transition-colors p-0 h-auto min-h-0 min-w-0 hover:bg-transparent"
               disabled={loading}
             >
               <X size={20} />
-            </button>
+            </Button>
           </div>
 
           {/* Message */}

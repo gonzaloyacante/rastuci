@@ -110,12 +110,12 @@ export default function UsuariosPage() {
           placeholder="Buscar usuarios por nombre o email..."
           className="w-full sm:w-96 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
-        <button
+        <Button
           onClick={handleSearch}
-          className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors"
+          className="bg-primary text-white hover:bg-primary-dark transition-colors"
         >
           Buscar
-        </button>
+        </Button>
       </div>
 
       {/* Mostrar AdminEmpty si no hay usuarios */}
@@ -166,8 +166,9 @@ export default function UsuariosPage() {
                     <div className="mt-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <span
-                          className={`badge-${getRoleBadge(user.role).variant
-                            } text-xs`}
+                          className={`badge-${
+                            getRoleBadge(user.role).variant
+                          } text-xs`}
                         >
                           {getRoleBadge(user.role).label}
                         </span>
@@ -188,21 +189,23 @@ export default function UsuariosPage() {
                   </div>
                 </div>
                 <div className="flex space-x-2 pt-2">
-                  <button
+                  <Button
                     onClick={() => {
                       window.location.href = `/admin/users/${user.id}/edit`;
                     }}
-                    className="btn-secondary flex-1 text-sm cursor-pointer"
+                    variant="secondary"
+                    className="flex-1 text-sm cursor-pointer bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   >
                     Editar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => handleDelete(user.id)}
                     disabled={user.role === "ADMIN"}
-                    className="btn-destructive flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    variant="destructive"
+                    className="flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     Eliminar
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -254,8 +257,9 @@ export default function UsuariosPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`badge-${getRoleBadge(user.role).variant
-                          } text-xs`}
+                        className={`badge-${
+                          getRoleBadge(user.role).variant
+                        } text-xs`}
                       >
                         {getRoleBadge(user.role).label}
                       </span>

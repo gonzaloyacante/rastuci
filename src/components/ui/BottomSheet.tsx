@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { Button } from "./Button";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -107,13 +108,14 @@ export function BottomSheet({
           >
             {title}
           </h2>
-          <button
+          <Button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            variant="ghost"
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors h-auto min-h-0 min-w-0"
             aria-label="Cerrar"
           >
             <X size={20} className="text-gray-500" />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}

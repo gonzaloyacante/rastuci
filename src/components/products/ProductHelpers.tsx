@@ -3,6 +3,7 @@ import { Check, HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { Button } from "@/components/ui/Button";
 
 // ==============================================================================
 // Shared Toggle Button
@@ -23,13 +24,14 @@ export function ToggleButton({
   children,
 }: ToggleButtonProps) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
+      variant="ghost"
       className={cn(
-        "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none h-auto min-h-0",
         selected
-          ? "bg-primary text-white border-primary shadow-sm"
+          ? "bg-primary text-white border-primary shadow-sm hover:bg-primary/90"
           : "bg-surface border-muted hover:border-primary/50 hover:bg-surface-secondary text-primary"
       )}
       aria-pressed={selected}
@@ -37,7 +39,7 @@ export function ToggleButton({
       {icon}
       {children || label}
       {selected && <Check className="w-3.5 h-3.5 ml-1.5" />}
-    </button>
+    </Button>
   );
 }
 
@@ -49,16 +51,17 @@ export function HelpTooltip({ text }: { text: string }) {
 
   return (
     <div className="relative inline-block">
-      <button
+      <Button
         type="button"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         onClick={() => setShowTooltip(!showTooltip)}
-        className="text-muted hover:text-primary transition-colors"
+        variant="ghost"
+        className="text-muted hover:text-primary transition-colors p-0 h-auto min-h-0 min-w-0 hover:bg-transparent"
         aria-label="Ayuda"
       >
         <HelpCircle className="h-4 w-4" />
-      </button>
+      </Button>
       {showTooltip && (
         <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-primary text-white text-xs rounded-lg shadow-lg max-w-xs whitespace-normal">
           {text}
@@ -137,11 +140,12 @@ export function ColorSwatch({
   const currentSrc = showImage ? images[currentImageIndex] : null;
 
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
+      variant="ghost"
       className={cn(
-        "group relative rounded-md border-2 transition-all overflow-hidden",
+        "group relative rounded-md border-2 transition-all overflow-hidden h-auto p-0 min-h-0 min-w-0 hover:bg-transparent",
         isSelected
           ? "border-primary ring-2 ring-offset-2 ring-primary ring-offset-surface"
           : "border-transparent hover:border-primary/50",
@@ -168,7 +172,7 @@ export function ColorSwatch({
           style={{ backgroundColor: colorHex || "#ccc" }}
         />
       )}
-    </button>
+    </Button>
   );
 }
 

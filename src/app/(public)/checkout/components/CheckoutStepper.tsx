@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { Check } from "lucide-react";
 import { useMemo } from "react";
 
@@ -51,20 +52,21 @@ export default function CheckoutStepper({
             const isClickable = index < currentStep;
 
             return (
-              <button
+              <Button
                 key={step.short}
                 onClick={() => isClickable && onStepClick(index)}
                 disabled={!isClickable}
-                className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium transition-all ${
+                variant="ghost"
+                className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium transition-all p-0 min-w-0 ${
                   isCompleted
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-white hover:bg-primary hover:text-white"
                     : isCurrent
-                      ? "bg-primary/20 text-primary ring-2 ring-primary"
-                      : "surface-secondary muted"
+                      ? "bg-primary/20 text-primary ring-2 ring-primary hover:bg-primary/20 hover:text-primary"
+                      : "surface-secondary muted hover:bg-surface-secondary/80"
                 } ${isClickable ? "cursor-pointer active:scale-95" : ""}`}
               >
                 {isCompleted ? <Check size={14} /> : index + 1}
-              </button>
+              </Button>
             );
           })}
         </div>

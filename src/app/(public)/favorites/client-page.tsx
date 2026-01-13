@@ -194,20 +194,22 @@ export default function FavoritosPageClient() {
           {/* View mode y acciones */}
           <div className="flex items-center gap-2">
             <div className="flex gap-1 mr-4">
-              <button
+              <Button
                 onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-primary text-white" : "surface muted hover:text-primary"}`}
+                variant="ghost"
+                className={`p-2 rounded-lg h-auto ${viewMode === "grid" ? "bg-primary text-white hover:bg-primary/90 hover:text-white" : "surface muted hover:text-primary"}`}
                 title="Vista en cuadrícula"
               >
                 <Grid3X3 className="w-4 h-4" />
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setViewMode("list")}
-                className={`p-2 rounded-lg ${viewMode === "list" ? "bg-primary text-white" : "surface muted hover:text-primary"}`}
+                variant="ghost"
+                className={`p-2 rounded-lg h-auto ${viewMode === "list" ? "bg-primary text-white hover:bg-primary/90 hover:text-white" : "surface muted hover:text-primary"}`}
                 title="Vista en lista"
               >
                 <List className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <Button
