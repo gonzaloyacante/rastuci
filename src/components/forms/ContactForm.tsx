@@ -22,8 +22,11 @@ export default function ContactForm({ initial }: Props) {
   const [loading, setLoading] = useState(!initial);
 
   // SWR Hook
-  const { settings, loading: loadingSettings } =
-    useSettings<ContactSettings>("contact");
+  const {
+    settings,
+    loading: loadingSettings,
+    mutate: mutateSettings,
+  } = useSettings<ContactSettings>("contact");
 
   // Sync SWR data to local state on initial load
   useEffect(() => {
@@ -87,6 +90,13 @@ export default function ContactForm({ initial }: Props) {
   // Form submit handler
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Guard: Don't save if data hasn't loaded yet
+    if (loading || loadingSettings) {
+      toast.error("Espera a que carguen los datos antes de guardar");
+      return;
+    }
+
     const parsed = ContactSettingsSchema.safeParse(values);
     if (!parsed.success) {
       console.error("Validation errors:", parsed.error.flatten());
@@ -108,6 +118,7 @@ export default function ContactForm({ initial }: Props) {
         throw new Error(json.error || "Error al guardar");
       }
       toast.success("Configuración de contacto guardada");
+      mutateSettings(); // Sync SWR cache
     } catch (err: unknown) {
       console.error(err);
       toast.error(

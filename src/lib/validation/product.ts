@@ -34,6 +34,7 @@ export const ProductCreateSchema = z.object({
     { message: "Debe haber al menos una imagen" }
   ),
   onSale: z.boolean().optional(),
+  isActive: z.boolean().optional(),
   sizes: z.array(z.string()).optional(),
   colors: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),

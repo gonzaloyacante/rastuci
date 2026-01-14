@@ -32,7 +32,10 @@ export function useSettings<T>(section: string, config?: SWRConfiguration) {
     data: T;
     error?: string;
   }>(endpoint, fetcher, {
-    revalidateOnFocus: false, // Default to false for forms to prevent overwriting drafts
+    revalidateOnFocus: false, // Prevent overwriting form drafts
+    revalidateOnMount: true, // Always fetch fresh data on mount
+    revalidateIfStale: true, // Re-fetch if stale
+    dedupingInterval: 2000, // Dedupe requests within 2 seconds
     ...config,
   });
 

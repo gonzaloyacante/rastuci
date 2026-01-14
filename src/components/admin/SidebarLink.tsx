@@ -33,7 +33,7 @@ export const SidebarLink = ({
           ${
             isActive
               ? "bg-primary/10 text-primary"
-              : "text-muted hover:bg-surface-secondary hover:text-primary hover:shadow-sm"
+              : "text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-primary"
           }`}
       >
         <Icon

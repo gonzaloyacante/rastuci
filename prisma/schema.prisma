@@ -402,6 +402,7 @@ model products {
   categories         categories           @relation(fields: [categoryId], references: [id])
   stock_reservations stock_reservations[]
 
+  isActive           Boolean              @default(true)
   @@index([categoryId])
   @@index([categoryId, name])
   @@index([categoryId, onSale])
@@ -409,6 +410,7 @@ model products {
   @@index([colors], type: Gin)
   @@index([createdAt])
   @@index([features], type: Gin)
+  @@index([isActive])
   @@index([name])
   @@index([onSale])
   @@index([onSale, price])

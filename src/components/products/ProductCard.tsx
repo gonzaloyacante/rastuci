@@ -10,6 +10,7 @@ import {
   Edit,
   Eye,
   Heart,
+  Power,
   ShoppingCart,
   Star,
   Trash2,
@@ -122,6 +123,7 @@ interface AdminProductCardProps extends ProductCardBaseProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onView?: (id: string) => void;
+  onToggleActive?: (id: string, isActive: boolean) => void;
 }
 
 export type ProductCardProps = PublicProductCardProps | AdminProductCardProps;
@@ -230,7 +232,8 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   // VARIANTE ADMIN
   // =========================================================================
   if (isAdmin) {
-    const { onEdit, onDelete, onView } = props as AdminProductCardProps;
+    const { onEdit, onDelete, onView, onToggleActive } =
+      props as AdminProductCardProps;
 
     return (
       <div className="group surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden h-full flex flex-col">
@@ -381,6 +384,26 @@ const ProductCard = React.memo((props: ProductCardProps) => {
           </div>
 
           <div className="flex gap-2 flex-wrap mt-auto">
+            {onToggleActive && (
+              <Button
+                size="sm"
+                variant={product.isActive !== false ? "outline" : "primary"}
+                className="flex-1 min-w-[3rem]"
+                onClick={() =>
+                  onToggleActive(product.id, !(product.isActive !== false))
+                }
+                leftIcon={<Power className="h-4 w-4" />}
+                title={
+                  product.isActive !== false
+                    ? "Desactivar producto"
+                    : "Activar producto"
+                }
+              >
+                <span className="hidden sm:inline">
+                  {product.isActive !== false ? "Desactivar" : "Activar"}
+                </span>
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
@@ -401,6 +424,15 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             </Button>
           </div>
         </div>
+
+        {/* Overlay para productos inactivos */}
+        {product.isActive === false && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none z-10 rounded-xl">
+            <span className="bg-amber-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+              DESACTIVADO
+            </span>
+          </div>
+        )}
       </div>
     );
   }

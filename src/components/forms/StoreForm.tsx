@@ -26,8 +26,11 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
   const [loading, setLoading] = useState(!initial);
 
   // Replace manual fetch with SWR hook
-  const { settings, loading: loadingSettings } =
-    useSettings<StoreSettings>("store");
+  const {
+    settings,
+    loading: loadingSettings,
+    mutate: mutateSettings,
+  } = useSettings<StoreSettings>("store");
 
   // Initialize data when settings loads, but only if not already initialized
   useEffect(() => {
@@ -50,6 +53,13 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Guard: Don't save if data hasn't loaded yet
+    if (loading || loadingSettings) {
+      toast.error("Espera a que carguen los datos antes de guardar");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -73,6 +83,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
       }
 
       toast.success("Configuración guardada");
+      mutateSettings(); // Sync SWR cache
       onSave?.(data);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al guardar");

@@ -101,6 +101,7 @@ export async function GET(
         salePrice: true,
         stock: true,
         onSale: true,
+        isActive: true,
         images: true,
         colorImages: true,
         sizes: true,

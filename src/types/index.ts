@@ -42,6 +42,7 @@ export interface Product {
   length?: number | null; // Largo en cm
   categoryId: string;
   categories?: Category | null;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
   variants?: ProductVariant[];

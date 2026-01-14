@@ -141,6 +141,82 @@ export default function ProductList() {
     mutateStats();
   }, [mutate, mutateStats]);
 
+  const handleToggleActive = async (id: string, isActive: boolean) => {
+    try {
+      // Fetch current product data
+      const productResponse = await fetch(`/api/products/${id}`);
+      if (!productResponse.ok) {
+        toast.error("Error al obtener el producto");
+        return;
+      }
+      const productData = await productResponse.json();
+      const product = productData.data;
+
+      if (!product) {
+        toast.error("Producto no encontrado");
+        return;
+      }
+
+      // Prepare minimal update payload with only required fields
+      const updatePayload = {
+        name: product.name,
+        description: product.description || "",
+        price: product.price,
+        salePrice: product.salePrice || null,
+        stock: product.stock,
+        categoryId: product.categoryId,
+        images: product.images || [],
+        onSale: product.onSale || false,
+        isActive: isActive,
+        sizes: product.sizes || [],
+        colors: product.colors || [],
+        features: product.features || [],
+        weight: product.weight || null,
+        height: product.height || null,
+        width: product.width || null,
+        length: product.length || null,
+        variants:
+          product.variants?.map(
+            (v: {
+              color: string;
+              size: string;
+              stock: number;
+              sku?: string;
+            }) => ({
+              color: v.color,
+              size: v.size,
+              stock: v.stock,
+              sku: v.sku || undefined,
+            })
+          ) || [],
+        colorImages: product.colorImages || null,
+      };
+
+      const response = await fetch(`/api/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (response.ok) {
+        mutate();
+        mutateStats();
+        toast.success(isActive ? "Producto activado" : "Producto desactivado");
+      } else {
+        const errorData = await response.json();
+        const msg =
+          errorData.message ||
+          errorData.error ||
+          "Error al actualizar el producto";
+        logger.error("Toggle active failed", { errorData });
+        toast.error(msg);
+      }
+    } catch (err) {
+      logger.error("Error toggling product active status", { error: err });
+      toast.error("No se pudo conectar al servidor");
+    }
+  };
+
   const handleExportCSV = useCallback(() => {
     const csvContent = [
       ["Nombre", "Categoría", "Precio", "Stock", "En Oferta"],
@@ -325,7 +401,7 @@ export default function ProductList() {
           <div
             className={
               viewMode === "grid"
-                ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
+                ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-6"
                 : "space-y-4"
             }
           >
@@ -345,6 +421,7 @@ export default function ProductList() {
                       router.push(`/admin/productos/${product.id}/editar`)
                     }
                     onDelete={() => handleDelete(product.id)}
+                    onToggleActive={handleToggleActive}
                   />
                 </div>
               );

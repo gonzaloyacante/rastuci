@@ -41,8 +41,11 @@ export default function HomeForm({ initial }: Props) {
   const [loading, setLoading] = useState(!initial);
 
   // SWR Hook
-  const { settings, loading: loadingSettings } =
-    useSettings<HomeSettings>("home");
+  const {
+    settings,
+    loading: loadingSettings,
+    mutate: mutateSettings,
+  } = useSettings<HomeSettings>("home");
 
   useEffect(() => {
     if (initial) {
@@ -116,6 +119,13 @@ export default function HomeForm({ initial }: Props) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Guard: Don't save if data hasn't loaded yet
+    if (loading || loadingSettings) {
+      toast.error("Espera a que carguen los datos antes de guardar");
+      return;
+    }
+
     setMessage(null);
     const parsed = HomeSettingsSchema.safeParse(values);
     if (!parsed.success) {
@@ -158,6 +168,8 @@ export default function HomeForm({ initial }: Props) {
 
       setMessage("Guardado correctamente");
       toast.success("Configuración del Home guardada");
+      // Sync SWR cache with saved data
+      mutateSettings();
     } catch (err: unknown) {
       console.error("HomeForm Submit Error:", err);
       const msg = err instanceof Error ? err.message : "Error inesperado";
