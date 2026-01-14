@@ -29,7 +29,7 @@ export default function Footer({ home, contact }: FooterProps) {
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:justify-between gap-8 lg:gap-12">
         {/* Marca - Takes more space on desktop if needed, otherwise distinct */}
         <div className="lg:w-1/4">
-          {logoUrl ? (
+          {(footer.showLogo ?? true) && logoUrl ? (
             <Link href="/" className="block mb-3">
               <Image
                 src={logoUrl}
@@ -39,12 +39,14 @@ export default function Footer({ home, contact }: FooterProps) {
                 className="h-8 w-auto dark:invert"
               />
             </Link>
-          ) : (
+          ) : (footer.showBrand ?? true) ? (
             <h3 className="text-xl font-bold text-primary mb-3 font-heading">
               {footer.brand}
             </h3>
+          ) : null}
+          {(footer.showTagline ?? true) && (
+            <p className="text-sm muted leading-relaxed">{footer.tagline}</p>
           )}
-          <p className="text-sm muted leading-relaxed">{footer.tagline}</p>
         </div>
 
         {/* Navegación */}

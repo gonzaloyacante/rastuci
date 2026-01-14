@@ -81,56 +81,64 @@ export function HeroSection({
           )}
 
           {/* Título Principal - Independiente del Logo */}
-          <h1
-            suppressHydrationWarning
-            className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 text-primary font-heading"
-          >
-            {home?.heroTitle ||
-              defaultHomeSettings.heroTitle ||
-              "Rastuci - Ropa Infantil de Calidad"}
-          </h1>
+          {(home?.showHeroTitle ?? true) && (
+            <h1
+              suppressHydrationWarning
+              className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 text-primary font-heading"
+            >
+              {home?.heroTitle ||
+                defaultHomeSettings.heroTitle ||
+                "Rastuci - Ropa Infantil de Calidad"}
+            </h1>
+          )}
 
           {/* Logo Principal - Rendering Condicional Estricto */}
-          {logoSrc && (
-            <div className="mb-8 relative w-auto h-24 md:h-32 lg:h-40">
+          {/* Logo Principal */}
+          {(home?.showHeroLogo ?? true) && logoSrc && (
+            <div className="mb-8 relative w-64 max-w-full h-24 md:h-32 lg:h-40 mx-auto">
               <Image
                 src={logoSrc}
-                alt="Rastući"
-                width={300}
-                height={180}
-                className="h-full w-auto mx-auto" // h-full of the wrapper which is responsive
+                alt="Brand Logo"
+                fill
+                className="object-contain"
                 priority
-                unoptimized={logoSrc.endsWith(".svg")}
+                sizes="(max-width: 768px) 100vw, 300px"
               />
             </div>
           )}
 
-          <p className="text-base md:text-xl muted mb-8 max-w-2xl">
-            {loading
-              ? "Ropa infantil de calidad, comodidad y estilo para los más pequeños"
-              : home?.heroSubtitle || defaultHomeSettings.heroSubtitle}
-          </p>
+          {(home?.showHeroSubtitle ?? true) && (
+            <p className="text-base md:text-xl muted mb-8 max-w-2xl">
+              {loading
+                ? "Ropa infantil de calidad, comodidad y estilo para los más pequeños"
+                : home?.heroSubtitle || defaultHomeSettings.heroSubtitle}
+            </p>
+          )}
           <div className="flex flex-col sm:flex-row items-center gap-3">
-            <Link href="/productos">
-              <Button variant="hero">
-                {loading
-                  ? "Ver Productos"
-                  : home?.ctaPrimaryLabel ||
-                    defaultHomeSettings.ctaPrimaryLabel}
-              </Button>
-            </Link>
-            <a
-              href="#categorias"
-              onClick={handleExploreCategories}
-              className="inline-flex"
-            >
-              <Button variant="product">
-                {loading
-                  ? "Explorar Categorías"
-                  : home?.ctaSecondaryLabel ||
-                    defaultHomeSettings.ctaSecondaryLabel}
-              </Button>
-            </a>
+            {(home?.showCtaPrimary ?? true) && (
+              <Link href="/productos">
+                <Button variant="hero">
+                  {loading
+                    ? "Ver Productos"
+                    : home?.ctaPrimaryLabel ||
+                      defaultHomeSettings.ctaPrimaryLabel}
+                </Button>
+              </Link>
+            )}
+            {(home?.showCtaSecondary ?? true) && (
+              <a
+                href="#categorias"
+                onClick={handleExploreCategories}
+                className="inline-flex"
+              >
+                <Button variant="product">
+                  {loading
+                    ? "Explorar Categorías"
+                    : home?.ctaSecondaryLabel ||
+                      defaultHomeSettings.ctaSecondaryLabel}
+                </Button>
+              </a>
+            )}
           </div>
         </div>
       </div>

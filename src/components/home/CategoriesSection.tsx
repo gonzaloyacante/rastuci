@@ -30,35 +30,39 @@ export function CategoriesSection({
       aria-labelledby="categories-title"
     >
       <div className="max-w-[1400px] mx-auto">
-        <h2
-          id="categories-title"
-          className="text-3xl font-bold text-center mb-3 font-heading"
-        >
-          {home?.categoriesTitle ?? "Nuestras Categorías"}
-        </h2>
-        <p className="text-center text-sm muted mb-10">
-          {home?.categoriesSubtitle ??
-            "Explorá nuestras categorías de productos"}
-        </p>
+        {(home?.showCategoriesTitle ?? true) && (
+          <h2
+            id="categories-title"
+            className="text-3xl font-bold text-center mb-3 font-heading"
+          >
+            {home?.categoriesTitle ?? "Nuestras Categorías"}
+          </h2>
+        )}
+        {(home?.showCategoriesSubtitle ?? true) && (
+          <p className="text-center text-sm muted mb-10">
+            {home?.categoriesSubtitle ??
+              "Explorá nuestras categorías de productos"}
+          </p>
+        )}
 
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">
           {loading
             ? Array.from({ length: 8 }, (_, i) => (
-              <div
-                key={i}
-                className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
-              >
-                <CategorySkeleton />
-              </div>
-            ))
+                <div
+                  key={i}
+                  className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
+                >
+                  <CategorySkeleton />
+                </div>
+              ))
             : categories.map((category) => (
-              <div
-                key={category.id}
-                className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
-              >
-                <CategoryCard category={category} displayMode={display} />
-              </div>
-            ))}
+                <div
+                  key={category.id}
+                  className="flex-none w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)] max-w-[300px]"
+                >
+                  <CategoryCard category={category} displayMode={display} />
+                </div>
+              ))}
         </div>
       </div>
     </section>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 // import { useStoreSettings } from "@/hooks/useStoreSettings"; // Deprecated
 import { useSettings } from "@/hooks/useSettings";
+import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/utils";
 import { defaultStoreSettings, StoreSettings } from "@/lib/validation/store";
 import { Plus, Save, Trash2 } from "lucide-react";
@@ -91,7 +92,7 @@ export default function StockSettings() {
         return { success: true };
       }
       return { success: false, error: json.error };
-    } catch (err) {
+    } catch {
       return { success: false, error: "Error de conexión" };
     }
   };
@@ -144,15 +145,7 @@ export default function StockSettings() {
               la tienda.
             </p>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={enableAlerts}
-              onChange={(e) => setEnableAlerts(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-          </label>
+          <Switch checked={enableAlerts} onCheckedChange={setEnableAlerts} />
         </div>
       </div>
 

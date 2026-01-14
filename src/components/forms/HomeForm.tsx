@@ -13,6 +13,7 @@ import * as Icons from "lucide-react";
 import { toast } from "react-hot-toast";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { useSettings } from "@/hooks/useSettings";
+import { Switch } from "@/components/ui/Switch";
 
 type Props = {
   initial?: HomeSettings;
@@ -171,7 +172,27 @@ export default function HomeForm({ initial }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-8">
+      {/* Header Section */}
+      <section>
+        <h3 className="text-lg font-semibold mb-3">Header (Navegación)</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Configura el logo que aparece en la barra de navegación superior.
+        </p>
+        <div className="max-w-sm">
+          <ImageUploader
+            label="Logo del Header"
+            value={values.headerLogoUrl}
+            onChange={(url) => update("headerLogoUrl", url ?? undefined)}
+            helpText="Logo que aparece en la barra de navegación. Formato recomendado: SVG o PNG transparente."
+          />
+        </div>
+      </section>
+
+      {/* Hero Section */}
       <section className="grid md:grid-cols-2 gap-6">
+        <h3 className="text-lg font-semibold md:col-span-2">
+          Sección Principal (Hero)
+        </h3>
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <ImageUploader
@@ -180,6 +201,13 @@ export default function HomeForm({ initial }: Props) {
               onChange={(url) => update("heroLogoUrl", url ?? undefined)}
               helpText="Logo principal que se muestra sobre el hero. Formato recomendado: SVG o PNG transparente."
             />
+            <div className="flex items-center gap-2 mt-2">
+              <Switch
+                checked={values.showHeroLogo ?? true}
+                onCheckedChange={(c) => update("showHeroLogo", c)}
+              />
+              <span className="text-sm">Mostrar Logo</span>
+            </div>
           </div>
           <div>
             <ImageUploader
@@ -191,9 +219,13 @@ export default function HomeForm({ initial }: Props) {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Título del Hero
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium">Título del Hero</label>
+            <Switch
+              checked={values.showHeroTitle ?? true}
+              onCheckedChange={(c) => update("showHeroTitle", c)}
+            />
+          </div>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.heroTitle}
@@ -201,9 +233,13 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Subtítulo del Hero
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium">Subtítulo del Hero</label>
+            <Switch
+              checked={values.showHeroSubtitle ?? true}
+              onCheckedChange={(c) => update("showHeroSubtitle", c)}
+            />
+          </div>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.heroSubtitle}
@@ -211,9 +247,13 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">
-            CTA principal
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium">CTA principal</label>
+            <Switch
+              checked={values.showCtaPrimary ?? true}
+              onCheckedChange={(c) => update("showCtaPrimary", c)}
+            />
+          </div>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.ctaPrimaryLabel}
@@ -221,9 +261,13 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">
-            CTA secundaria
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium">CTA secundaria</label>
+            <Switch
+              checked={values.showCtaSecondary ?? true}
+              onCheckedChange={(c) => update("showCtaSecondary", c)}
+            />
+          </div>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.ctaSecondaryLabel}
@@ -231,9 +275,13 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Título de Categorías
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium">Título de Categorías</label>
+            <Switch
+              checked={values.showCategoriesTitle ?? true}
+              onCheckedChange={(c) => update("showCategoriesTitle", c)}
+            />
+          </div>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.categoriesTitle}
@@ -241,9 +289,13 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Título de Ofertas
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium">Título de Ofertas</label>
+            <Switch
+              checked={values.showFeaturedTitle ?? true}
+              onCheckedChange={(c) => update("showFeaturedTitle", c)}
+            />
+          </div>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.featuredTitle}
@@ -251,9 +303,13 @@ export default function HomeForm({ initial }: Props) {
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">
-            Subtítulo de Ofertas
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium">Subtítulo de Ofertas</label>
+            <Switch
+              checked={values.showFeaturedSubtitle ?? true}
+              onCheckedChange={(c) => update("showFeaturedSubtitle", c)}
+            />
+          </div>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={values.featuredSubtitle}
@@ -361,11 +417,32 @@ export default function HomeForm({ initial }: Props) {
               }
               helpText="Logo monocromático o simple para el pie de página."
             />
+            <div className="flex items-center gap-2 mt-2">
+              <Switch
+                checked={values.footer?.showLogo ?? true}
+                onCheckedChange={(c) =>
+                  setValues((v) => ({
+                    ...v,
+                    footer: { ...v.footer!, showLogo: c },
+                  }))
+                }
+              />
+              <span className="text-sm">Mostrar Logo Footer</span>
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Nombre de Marca
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium">Nombre de Marca</label>
+              <Switch
+                checked={values.footer?.showBrand ?? true}
+                onCheckedChange={(c) =>
+                  setValues((v) => ({
+                    ...v,
+                    footer: { ...v.footer!, showBrand: c },
+                  }))
+                }
+              />
+            </div>
             <input
               className="w-full border rounded-md px-3 py-2"
               value={values.footer?.brand}
@@ -378,9 +455,18 @@ export default function HomeForm({ initial }: Props) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Slogan / Tagline
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium">Slogan / Tagline</label>
+              <Switch
+                checked={values.footer?.showTagline ?? true}
+                onCheckedChange={(c) =>
+                  setValues((v) => ({
+                    ...v,
+                    footer: { ...v.footer!, showTagline: c },
+                  }))
+                }
+              />
+            </div>
             <input
               className="w-full border rounded-md px-3 py-2"
               value={values.footer?.tagline}

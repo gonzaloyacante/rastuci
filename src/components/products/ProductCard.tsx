@@ -15,7 +15,6 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
 // import { useHotToast } from "@/hooks/use-hot-toast";
@@ -193,6 +192,15 @@ const ProductCard = React.memo((props: ProductCardProps) => {
     return 0;
   }, [product.onSale, product.price, product.salePrice]);
 
+  // Calculate effective stock considering variants
+  // If product has variants, sum their stock; otherwise use product.stock
+  const effectiveStock = useMemo(() => {
+    if (product.variants && product.variants.length > 0) {
+      return product.variants.reduce((sum, v) => sum + v.stock, 0);
+    }
+    return product.stock;
+  }, [product.variants, product.stock]);
+
   const isProductFavorite = useMemo(
     () => (!isAdmin ? isFavorite(product.id) : false),
     [isFavorite, product.id, isAdmin]
@@ -360,7 +368,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             )}
 
             <div className="pt-2">
-              <StockBadge stock={product.stock} />
+              <StockBadge stock={effectiveStock} />
             </div>
           </div>
 
@@ -436,7 +444,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
         </div>
 
         {/* Overlay de sin stock */}
-        {product.stock === 0 && (
+        {effectiveStock === 0 && (
           <div className="absolute inset-0 z-10 bg-black/60 flex items-center justify-center pointer-events-none">
             <span className="surface text-base-primary px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
               Agotado
@@ -509,7 +517,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               <Link
                 href={`/productos/${product.id}`}
                 aria-label="Ver opciones"
-                className={`btn-cart ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                className={`btn-cart ${effectiveStock === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               >
                 {/* Visualmente se ve igual pero funcionalmente lleva al detalle */}
                 <ShoppingCart className="w-5 h-5" />
@@ -536,11 +544,11 @@ const ProductCard = React.memo((props: ProductCardProps) => {
               )}
 
               {/* Stock */}
-              {product.stock > 0 && product.stock <= 10 ? (
+              {effectiveStock > 0 && effectiveStock <= 10 ? (
                 <span className="text-[11px] font-semibold text-amber-500">
-                  ¡Últimas {product.stock}!
+                  ¡Últimas {effectiveStock}!
                 </span>
-              ) : product.stock > 0 ? (
+              ) : effectiveStock > 0 ? (
                 <span className="text-[11px] font-semibold text-green-500">
                   En stock
                 </span>
@@ -608,7 +616,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             </div>
           )}
 
-          {product.stock === 0 && (
+          {effectiveStock === 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="surface text-base-primary px-2 py-0.5 rounded-full text-[10px] font-semibold">
                 Agotado
@@ -678,11 +686,11 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                 )}
               </div>
               {/* Indicador de stock */}
-              {product.stock > 0 && product.stock <= 10 ? (
+              {effectiveStock > 0 && effectiveStock <= 10 ? (
                 <span className="text-[9px] sm:text-[10px] font-semibold text-amber-500">
-                  ¡Últimas {product.stock} unidades!
+                  ¡Últimas {effectiveStock} unidades!
                 </span>
-              ) : product.stock > 0 ? (
+              ) : effectiveStock > 0 ? (
                 <span className="text-[9px] sm:text-[10px] font-medium text-green-600">
                   En stock
                 </span>
@@ -709,7 +717,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                 href={`/productos/${product.id}`}
                 aria-label="Ver opciones"
                 className={`p-1.5 sm:p-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-200 ${
-                  product.stock === 0 ? "opacity-50 cursor-not-allowed" : ""
+                  effectiveStock === 0 ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 <ShoppingCart className="w-4 h-4" />

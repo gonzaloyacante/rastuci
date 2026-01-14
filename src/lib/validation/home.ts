@@ -2,16 +2,26 @@ import { z } from "zod";
 
 export const HomeSettingsSchema = z.object({
   heroTitle: z.string().min(1).max(120),
+  showHeroTitle: z.boolean().default(true).optional(),
   heroSubtitle: z.string().min(1).max(220),
+  showHeroSubtitle: z.boolean().default(true).optional(),
   heroLogoUrl: z.string().max(500).optional(),
+  showHeroLogo: z.boolean().default(true).optional(),
   heroImage: z.string().max(500).optional(),
+  headerLogoUrl: z.string().max(500).optional(),
   ctaPrimaryLabel: z.string().min(1).max(40),
+  showCtaPrimary: z.boolean().default(true).optional(),
   ctaSecondaryLabel: z.string().min(1).max(40),
+  showCtaSecondary: z.boolean().default(true).optional(),
   categoriesTitle: z.string().min(1).max(80),
+  showCategoriesTitle: z.boolean().default(true).optional(),
   categoriesSubtitle: z.string().min(1).max(200),
+  showCategoriesSubtitle: z.boolean().default(true).optional(),
   categoriesDisplay: z.enum(["image", "icon"]).default("image").optional(),
   featuredTitle: z.string().min(1).max(80),
+  showFeaturedTitle: z.boolean().default(true).optional(),
   featuredSubtitle: z.string().min(1).max(200),
+  showFeaturedSubtitle: z.boolean().default(true).optional(),
   benefits: z
     .array(
       z.object({
@@ -25,8 +35,11 @@ export const HomeSettingsSchema = z.object({
   footer: z
     .object({
       brand: z.string().min(1).max(80),
+      showBrand: z.boolean().default(true).optional(),
       tagline: z.string().min(1).max(120),
+      showTagline: z.boolean().default(true).optional(),
       logoUrl: z.string().max(200).optional(),
+      showLogo: z.boolean().default(true).optional(),
     })
     .optional(),
 });
@@ -35,17 +48,27 @@ export type HomeSettings = z.infer<typeof HomeSettingsSchema>;
 
 export const defaultHomeSettings: HomeSettings = {
   heroTitle: "Bienvenido a Rastuci",
+  showHeroTitle: true,
   heroSubtitle:
     "Ropa infantil de calidad, comodidad y estilo para los más pequeños",
+  showHeroSubtitle: true,
   heroLogoUrl: "",
+  showHeroLogo: true,
+  headerLogoUrl: "",
   ctaPrimaryLabel: "Ver Productos",
+  showCtaPrimary: true,
   ctaSecondaryLabel: "Explorar categorías",
+  showCtaSecondary: true,
   categoriesTitle: "Nuestras Categorías",
+  showCategoriesTitle: true,
   categoriesSubtitle: "Explorá nuestras categorías de productos",
+  showCategoriesSubtitle: true,
   categoriesDisplay: "image",
   featuredTitle: "Productos en Oferta",
+  showFeaturedTitle: true,
   featuredSubtitle:
     "Descubrí los favoritos de esta semana con descuentos exclusivos.",
+  showFeaturedSubtitle: true,
   benefits: [
     {
       icon: "Truck",
@@ -65,7 +88,10 @@ export const defaultHomeSettings: HomeSettings = {
   ],
   footer: {
     brand: "Rastući",
+    showBrand: true,
     tagline: "Ropa con amor para los más peques.",
+    showTagline: true,
     logoUrl: "",
+    showLogo: true,
   },
 };

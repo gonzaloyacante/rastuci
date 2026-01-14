@@ -15,7 +15,8 @@ export default function HeaderShell({
   home?: HomeSettings;
 }) {
   const brand = home?.footer?.brand || "Rastuci";
-  const logoUrl = home?.footer?.logoUrl;
+  // Use dedicated headerLogoUrl, fallback to footer.logoUrl for backwards compatibility
+  const logoUrl = home?.headerLogoUrl;
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full z-50 surface">

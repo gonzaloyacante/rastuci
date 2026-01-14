@@ -49,15 +49,19 @@ export function FeaturedProductsSection({
       aria-labelledby="featured-products-title"
     >
       <div className="max-w-[1400px] mx-auto">
-        <h2
-          id="featured-products-title"
-          className="text-3xl font-bold text-center mb-3 font-heading"
-        >
-          {home?.featuredTitle || defaultHomeSettings.featuredTitle}
-        </h2>
-        <p className="text-center text-sm muted mb-10">
-          {home?.featuredSubtitle || defaultHomeSettings.featuredSubtitle}
-        </p>
+        {(home?.showFeaturedTitle ?? true) && (
+          <h2
+            id="featured-products-title"
+            className="text-3xl font-bold text-center mb-3 font-heading"
+          >
+            {home?.featuredTitle || defaultHomeSettings.featuredTitle}
+          </h2>
+        )}
+        {(home?.showFeaturedSubtitle ?? true) && (
+          <p className="text-center text-sm muted mb-10">
+            {home?.featuredSubtitle || defaultHomeSettings.featuredSubtitle}
+          </p>
+        )}
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">
           {!products || products.length === 0 ? (
             <div className="w-full text-center py-10">
