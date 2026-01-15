@@ -35,6 +35,15 @@ vi.mock("@/lib/adminAuth", () => ({
   auth: () => ({ user: { role: "admin" } }), // Ensure auth mock if needed
 }));
 
+// Mock next-auth
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn().mockResolvedValue({ user: { isAdmin: true } }), // Default as admin
+}));
+
+vi.mock("@/app/api/auth/[...nextauth]/route", () => ({
+  authOptions: {},
+}));
+
 const mockPrisma = prisma as unknown as {
   categories: {
     findMany: ReturnType<typeof vi.fn>;
