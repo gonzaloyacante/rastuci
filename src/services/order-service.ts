@@ -31,12 +31,15 @@ export type OrderUpdateData = {
   mappedStatus: OrderStatus;
 };
 
+import { nanoid } from "nanoid";
+
 export class OrderService {
   mapStatus(mpStatus: string): OrderStatus {
-    if (mpStatus === "approved")
-      return ORDER_STATUS.PENDING_PAYMENT as OrderStatus;
+    if (mpStatus === "approved") return ORDER_STATUS.PROCESSED as OrderStatus; // Payment Confirmed -> PROCESSED
     if (mpStatus === "in_process" || mpStatus === "pending")
-      return ORDER_STATUS.PENDING as OrderStatus;
+      return ORDER_STATUS.PENDING_PAYMENT as OrderStatus;
+    if (mpStatus === "rejected" || mpStatus === "cancelled")
+      return ORDER_STATUS.CANCELLED as OrderStatus;
     return ORDER_STATUS.PENDING as OrderStatus;
   }
 
@@ -60,12 +63,13 @@ export class OrderService {
       // 2. Determine if stock decrement is needed based on CURRENT db state
       // We only decrement if moving to PENDING_PAYMENT (Approved) from a non-approved state
       const isAlreadyPaid =
-        order.status === ORDER_STATUS.PENDING_PAYMENT ||
         order.status === ORDER_STATUS.PROCESSED ||
+        order.status === ORDER_STATUS.RESERVED || // Reserved also implies stock held
         order.status === ORDER_STATUS.DELIVERED;
 
+      // We decrement if we are moving to PROCESSED (Paid) and weren't already holding stock
       const shouldDecrement =
-        data.mappedStatus === ORDER_STATUS.PENDING_PAYMENT && !isAlreadyPaid;
+        data.mappedStatus === ORDER_STATUS.PROCESSED && !isAlreadyPaid;
 
       // 3. Update Order Status
       const updatedOrder = await tx.orders.update({
@@ -366,7 +370,7 @@ export class OrderService {
     });
 
     // Stock decrement logic
-    const shouldDecrement = mappedStatus === ORDER_STATUS.PENDING_PAYMENT;
+    const shouldDecrement = mappedStatus === ORDER_STATUS.PROCESSED;
 
     if (shouldDecrement) {
       try {
@@ -428,7 +432,8 @@ export class OrderService {
       cost?: number;
     }
   ) {
-    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    // FIX: Use nanoid for unique, collision-resistant ID (10 chars is sufficient for readable but unique orders)
+    const orderId = `ord_${nanoid(10)}`;
     const shippingCost = shippingData?.cost ?? 0;
 
     // Context for emails
@@ -508,10 +513,8 @@ export class OrderService {
             : "",
           total: calculatedTotal,
           shippingCost: shippingCost,
-          // Status: PENDING (but stock reserved effectively)
-          // Ideally PENDING_PAYMENT or PROCESSING?
-          // Cash usually means "Pending Payment until Pickup".
-          status: ORDER_STATUS.PENDING as OrderStatus,
+          // Status: RESERVED - Explicitly means "Stock Held, Waiting for Pickup/Payment"
+          status: ORDER_STATUS.RESERVED as OrderStatus,
           mpPaymentId: null,
           mpPreferenceId: null,
           mpStatus: "cash_payment",
@@ -689,7 +692,8 @@ export class OrderService {
     },
     paymentMethod: string = "mercadopago"
   ) {
-    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    // FIX: Use nanoid for unique ID
+    const orderId = `ord_${nanoid(10)}`;
 
     // SECURITY: Fetch product prices from database to prevent price manipulation
     const productIds = items.map((i) => i.productId);
@@ -746,7 +750,8 @@ export class OrderService {
           : "",
         total: calculatedTotal,
         shippingCost: shippingCost,
-        status: ORDER_STATUS.PENDING as OrderStatus,
+        // Status: PENDING_PAYMENT (Explicitly waiting for payment, stock NOT reserved)
+        status: ORDER_STATUS.PENDING_PAYMENT as OrderStatus,
         mpPaymentId: null, // Will be filled by webhook
         mpPreferenceId: null, // Will be filled by preference route response if needed, or webhook
         mpStatus: "pending",

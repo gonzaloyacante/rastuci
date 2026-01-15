@@ -26,14 +26,23 @@ import { Pagination as UIPagination } from "@/components/ui/Pagination";
 
 // Configuración de visualización por estado
 // Configuración de visualización por estado
+// Configuración de visualización por estado
 export const STATUS_CONFIG = {
-  [ORDER_STATUS.PENDING]: { label: "Sin pagar", variant: "warning" },
+  [ORDER_STATUS.PENDING]: { label: "⚠️ Incompleto", variant: "warning" },
   [ORDER_STATUS.PENDING_PAYMENT]: {
-    label: "⚠️ Esperando pago de envío",
+    label: "Aguardando Pago",
     variant: "warning",
   },
-  [ORDER_STATUS.PROCESSED]: { label: "Empaquetado / Listo", variant: "info" },
-  [ORDER_STATUS.DELIVERED]: { label: "Entregado", variant: "success" },
+  [ORDER_STATUS.RESERVED]: {
+    label: "Reservado (Efectivo)",
+    variant: "info",
+  },
+  [ORDER_STATUS.PROCESSED]: {
+    label: "Listo para entregar",
+    variant: "success",
+  },
+  [ORDER_STATUS.DELIVERED]: { label: "Entregado", variant: "default" },
+  [ORDER_STATUS.CANCELLED]: { label: "Cancelado", variant: "error" },
 } as const;
 
 export function OrderStatusBadge({ status }: { status: string }) {
@@ -43,18 +52,20 @@ export function OrderStatusBadge({ status }: { status: string }) {
   };
 
   const variantClasses = {
-    warning: "badge-warning",
-    info: "badge-info",
-    success: "badge-success",
-    error: "badge-error",
-    destructive: "badge-error", // map destructive to error style
+    warning: "bg-yellow-100 text-yellow-800 border-yellow-200 border",
+    info: "bg-blue-100 text-blue-800 border-blue-200 border",
+    success: "bg-emerald-100 text-emerald-800 border-emerald-200 border",
+    error: "bg-red-100 text-red-800 border-red-200 border",
+    destructive: "bg-red-100 text-red-800",
     primary: "badge-primary",
     secondary: "badge-secondary",
-    default: "badge-neutral", // fallback
+    default: "bg-gray-100 text-gray-800 border-gray-200 border",
   };
 
   return (
-    <span className={`${variantClasses[config.variant]} text-xs`}>
+    <span
+      className={`px-2 py-1 rounded-full text-xs font-semibold ${variantClasses[config.variant]}`}
+    >
       {config.label}
     </span>
   );
@@ -109,6 +120,7 @@ export interface OrderCardData {
   shippingMethod?: string;
   caTrackingNumber?: string;
   relativeTime?: string;
+  paymentMethod?: string;
 }
 
 interface OrderCardProps {
@@ -271,65 +283,74 @@ export function OrderCard({
                   <span className="font-mono">{order.caTrackingNumber}</span>
                 </div>
               )}
-              {order.shippingMethod && (
-                <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
-                  <Package size={12} className="shrink-0" />
-                  <span>
-                    {shippingMethodLabels[order.shippingMethod] ||
-                      order.shippingMethod}
-                  </span>
-                </div>
-              )}
             </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
+              <span>
+                {order.paymentMethod === "mercadopago" ? "💳" : "💵"}{" "}
+                {order.paymentMethod === "mercadopago"
+                  ? "MercadoPago"
+                  : "Efectivo / Transferencia"}
+              </span>
+            </div>
+            {order.shippingMethod && (
+              <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
+                <Package size={12} className="shrink-0" />
+                <span>
+                  {shippingMethodLabels[order.shippingMethod] ||
+                    order.shippingMethod}
+                </span>
+              </div>
+            )}
           </div>
         </div>
+      </div>
 
-        {/* Acciones */}
-        <div className="pt-3 border-t border-border space-y-2">
-          {order.status === "PENDING_PAYMENT" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <Button
-                onClick={openMiCorreo}
-                variant="outline"
-                className="text-xs py-2.5 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold h-auto"
-                disabled={isUpdating}
-              >
-                <span className="flex items-center justify-center gap-1.5">
-                  <span>📦</span>
-                  <span>Pagar en MiCorreo</span>
-                </span>
-              </Button>
-              <Button
-                onClick={handleMarkProcessed}
-                variant="primary"
-                className="text-xs py-2.5 font-semibold h-auto"
-                disabled={isUpdating}
-              >
-                {isUpdating ? "⏳ Procesando..." : "✓ Marcar procesado"}
-              </Button>
-            </div>
-          )}
-
-          {order.status === "PROCESSED" && (
+      {/* Acciones */}
+      <div className="pt-3 border-t border-border space-y-2">
+        {order.status === "PENDING_PAYMENT" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Button
-              onClick={handleMarkDelivered}
-              variant="primary"
-              className="w-full text-xs py-2.5 font-semibold h-auto"
+              onClick={openMiCorreo}
+              variant="outline"
+              className="text-xs py-2.5 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold h-auto"
               disabled={isUpdating}
             >
-              {isUpdating ? "⏳ Procesando..." : "✓ Marcar entregado"}
+              <span className="flex items-center justify-center gap-1.5">
+                <span>📦</span>
+                <span>Pagar en MiCorreo</span>
+              </span>
             </Button>
-          )}
-
-          <Link href={`/admin/pedidos/${order.id}`} className="block">
             <Button
-              variant="outline"
-              className="w-full text-xs py-2.5 font-semibold hover:bg-primary/5 hover:border-primary/30 h-auto"
+              onClick={handleMarkProcessed}
+              variant="primary"
+              className="text-xs py-2.5 font-semibold h-auto"
+              disabled={isUpdating}
             >
-              Ver Detalles →
+              {isUpdating ? "⏳ Procesando..." : "✓ Marcar procesado"}
             </Button>
-          </Link>
-        </div>
+          </div>
+        )}
+
+        {order.status === "PROCESSED" && (
+          <Button
+            onClick={handleMarkDelivered}
+            variant="primary"
+            className="w-full text-xs py-2.5 font-semibold h-auto"
+            disabled={isUpdating}
+          >
+            {isUpdating ? "⏳ Procesando..." : "✓ Marcar entregado"}
+          </Button>
+        )}
+
+        <Link href={`/admin/pedidos/${order.id}`} className="block">
+          <Button
+            variant="outline"
+            className="w-full text-xs py-2.5 font-semibold hover:bg-primary/5 hover:border-primary/30 h-auto"
+          >
+            Ver Detalles →
+          </Button>
+        </Link>
       </div>
     </div>
   );

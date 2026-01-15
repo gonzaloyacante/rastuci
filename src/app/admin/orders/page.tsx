@@ -22,8 +22,10 @@ type StatusFilter =
   | "ALL"
   | "PENDING"
   | "PENDING_PAYMENT"
+  | "RESERVED"
   | "PROCESSED"
-  | "DELIVERED";
+  | "DELIVERED"
+  | "CANCELLED";
 
 // Configuración de filtros
 const FILTER_FIELDS = [
@@ -33,10 +35,12 @@ const FILTER_FIELDS = [
     type: "select" as const,
     options: [
       { value: "ALL", label: "Todos los estados" },
-      { value: "PENDING", label: "Sin pagar" },
-      { value: "PENDING_PAYMENT", label: "⚠️ Esperando pago de envío" },
+      { value: "PENDING_PAYMENT", label: "Aguardando Pago" },
+      { value: "RESERVED", label: "Reservado (Efectivo)" },
       { value: "PROCESSED", label: "Listo para entregar" },
       { value: "DELIVERED", label: "Entregado" },
+      { value: "CANCELLED", label: "Cancelado" },
+      { value: "PENDING", label: "Incompleto" },
     ],
   },
   {
@@ -79,22 +83,14 @@ const formatCurrency = (value: number) => `$${value.toLocaleString("es-AR")}`;
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    PENDING: "sin pagar",
-    PENDING_PAYMENT: "esperando pago de envío",
+    PENDING: "incompleto",
+    PENDING_PAYMENT: "aguardando pago",
+    RESERVED: "reservado",
     PROCESSED: "listo para entregar",
     DELIVERED: "entregado",
+    CANCELLED: "cancelado",
   };
   return labels[status] || status;
-};
-
-const _getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    PENDING: "bg-gray-100 text-gray-800",
-    PENDING_PAYMENT: "bg-yellow-100 text-yellow-800 border-2 border-yellow-400",
-    PROCESSED: "bg-green-100 text-green-800",
-    DELIVERED: "bg-blue-100 text-blue-800",
-  };
-  return colors[status] || "bg-gray-100 text-gray-800";
 };
 
 // Transform Order to OrderCardData
@@ -109,6 +105,9 @@ const toOrderCardData = (order: Order): OrderCardData => ({
   itemsCount: order.items.length,
   shippingMethod: (order as { shippingMethod?: string }).shippingMethod,
   caTrackingNumber: (order as { caTrackingNumber?: string }).caTrackingNumber,
+  paymentMethod:
+    (order as unknown as { paymentMethod?: string }).paymentMethod ||
+    (order.mpPaymentId ? "mercadopago" : "cash"), // Fallback deduction
 });
 
 export default function OrdersPage() {

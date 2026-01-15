@@ -22,6 +22,7 @@ export interface Order {
   customerAddress?: string;
   total: number;
   status: string;
+  paymentMethod?: string;
   createdAt: string;
   updatedAt: string;
   mpPaymentId?: string;

@@ -826,8 +826,10 @@ enum CADocumentType {
 }
 
 enum OrderStatus {
-  PENDING         // Pedido creado, esperando pago del cliente
-  PENDING_PAYMENT // Cliente pagó, esperando que admin pague envío
-  PROCESSED       // Envío pagado, listo para preparar y entregar
-  DELIVERED       // Entregado al cliente
+  PENDING         // Pedido creado, incompleto (MP sin pagar)
+  PENDING_PAYMENT // Esperando pago (MP) - O esperando pago envío (Legacy context?)
+  RESERVED        // Reservado (Efectivo) - Stock retenido
+  PROCESSED       // Pagado / Listo para preparar
+  DELIVERED       // Entregado
+  CANCELLED       // Cancelado / Rechazado
 }

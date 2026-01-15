@@ -1,4 +1,5 @@
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { nanoid } from "nanoid";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { normalizeApiError } from "@/lib/errors";
 import { getRequestId, logger } from "@/lib/logger";
@@ -221,7 +222,7 @@ export async function POST(
       total += itemTotal;
 
       validatedItems.push({
-        id: `item-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        id: `item-${nanoid()}`,
         productId: item.productId,
         quantity: item.quantity,
         price: Number(product.price), // Precio al momento de la compra
@@ -232,9 +233,10 @@ export async function POST(
     const order = await prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         // Crear el pedido
+        // Crear el pedido
         const newOrder = await tx.orders.create({
           data: {
-            id: `order-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            id: `ord_${nanoid(10)}`,
             customerName,
             customerPhone,
             customerAddress,

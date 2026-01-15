@@ -140,10 +140,12 @@ export type ArgentinaProvince = (typeof ARGENTINA_PROVINCES)[number];
 // ============================================================================
 
 export const ORDER_STATUS = {
-  PENDING: "PENDING",
-  PENDING_PAYMENT: "PENDING_PAYMENT",
-  PROCESSED: "PROCESSED",
+  PENDING: "PENDING", // Initial state for MP (No stock held)
+  PENDING_PAYMENT: "PENDING_PAYMENT", // Waiting for payment confirmation
+  RESERVED: "RESERVED", // Cash orders (Stock HELD)
+  PROCESSED: "PROCESSED", // Payment Approved / Ready to Ship
   DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
 } as const;
 
 export const PAYMENT_STATUS = {
