@@ -7,7 +7,74 @@ import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { HomeSettingsSchema, defaultHomeSettings } from "@/lib/validation/home";
 
-const SETTINGS_KEY = "home";
+// Helper to convert DB model to API format
+function dbToApiFormat(
+  settings: {
+    headerLogoUrl: string | null;
+    heroLogoUrl: string | null;
+    heroImage: string | null;
+    heroTitle: string;
+    heroSubtitle: string;
+    ctaPrimaryLabel: string;
+    ctaSecondaryLabel: string;
+    categoriesTitle: string;
+    featuredTitle: string;
+    featuredSubtitle: string;
+    showHeroLogo: boolean;
+    showHeroTitle: boolean;
+    showHeroSubtitle: boolean;
+    showCtaPrimary: boolean;
+    showCtaSecondary: boolean;
+    showCategoriesTitle: boolean;
+    showFeaturedTitle: boolean;
+    showFeaturedSubtitle: boolean;
+    footerLogoUrl: string | null;
+    footerBrand: string;
+    footerTagline: string;
+    showFooterLogo: boolean;
+    showFooterBrand: boolean;
+    showFooterTagline: boolean;
+  } | null,
+  benefits: { icon: string; title: string; description: string }[]
+) {
+  if (!settings) {
+    return defaultHomeSettings;
+  }
+
+  return {
+    headerLogoUrl: settings.headerLogoUrl ?? undefined,
+    heroLogoUrl: settings.heroLogoUrl ?? undefined,
+    heroImage: settings.heroImage ?? undefined,
+    heroTitle: settings.heroTitle,
+    heroSubtitle: settings.heroSubtitle,
+    ctaPrimaryLabel: settings.ctaPrimaryLabel,
+    ctaSecondaryLabel: settings.ctaSecondaryLabel,
+    categoriesTitle: settings.categoriesTitle,
+    featuredTitle: settings.featuredTitle,
+    featuredSubtitle: settings.featuredSubtitle,
+    showHeroLogo: settings.showHeroLogo,
+    showHeroTitle: settings.showHeroTitle,
+    showHeroSubtitle: settings.showHeroSubtitle,
+    showCtaPrimary: settings.showCtaPrimary,
+    showCtaSecondary: settings.showCtaSecondary,
+    showCategoriesTitle: settings.showCategoriesTitle,
+    showFeaturedTitle: settings.showFeaturedTitle,
+    showFeaturedSubtitle: settings.showFeaturedSubtitle,
+    footer: {
+      logoUrl: settings.footerLogoUrl ?? undefined,
+      brand: settings.footerBrand,
+      tagline: settings.footerTagline,
+      showLogo: settings.showFooterLogo,
+      showBrand: settings.showFooterBrand,
+      showTagline: settings.showFooterTagline,
+    },
+    benefits: benefits.map((b) => ({
+      icon: b.icon,
+      title: b.title,
+      description: b.description,
+    })),
+  };
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,16 +91,21 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const setting = await prisma.settings.findUnique({
-      where: { key: SETTINGS_KEY },
+    // Fetch from new explicit model
+    const settings = await prisma.home_settings.findUnique({
+      where: { id: "default" },
+      include: {
+        benefits: {
+          orderBy: { sortOrder: "asc" },
+        },
+      },
     });
-    console.log("GET /api/home setting found:", setting ? "YES" : "NO");
 
-    const value = setting?.value ?? defaultHomeSettings;
+    const data = dbToApiFormat(settings, settings?.benefits ?? []);
 
-    const parsed = HomeSettingsSchema.safeParse(value);
+    // Validate against schema
+    const parsed = HomeSettingsSchema.safeParse(data);
     if (!parsed.success) {
-      // If stored value is invalid for some reason, return defaults to avoid breaking UI
       logger.warn("Invalid home settings in DB, returning defaults", {
         issues: parsed.error.flatten(),
       });
@@ -67,31 +139,108 @@ export const PUT = withAdminAuth(async (req: NextRequest) => {
     }
 
     const body = await req.json();
-    console.log("PUT /api/home body:", JSON.stringify(body).slice(0, 100)); // Debug log
-
     const parsed = HomeSettingsSchema.safeParse(body);
     if (!parsed.success) {
-      console.log("PUT /api/home validation failed:", parsed.error.issues); // Debug log
       return NextResponse.json(fail("BAD_REQUEST", parsed.error.message, 400));
     }
 
-    console.log("PUT /api/home upserting key:", SETTINGS_KEY); // Debug log
-    const saved = await prisma.settings.upsert({
-      where: { key: SETTINGS_KEY },
-      update: { value: parsed.data, updatedAt: new Date() },
-      create: { key: SETTINGS_KEY, value: parsed.data, updatedAt: new Date() },
-    });
-    console.log("PUT /api/home upsert result:", JSON.stringify(saved, null, 2)); // Debug log deep
+    const data = parsed.data;
 
-    // Explicitly construct response to avoid helper issues
+    // Use transaction to update settings and benefits
+    await prisma.$transaction(async (tx) => {
+      // Upsert main settings
+      await tx.home_settings.upsert({
+        where: { id: "default" },
+        update: {
+          headerLogoUrl: data.headerLogoUrl ?? null,
+          heroLogoUrl: data.heroLogoUrl ?? null,
+          heroImage: data.heroImage ?? null,
+          heroTitle: data.heroTitle,
+          heroSubtitle: data.heroSubtitle,
+          ctaPrimaryLabel: data.ctaPrimaryLabel,
+          ctaSecondaryLabel: data.ctaSecondaryLabel,
+          categoriesTitle: data.categoriesTitle,
+          featuredTitle: data.featuredTitle,
+          featuredSubtitle: data.featuredSubtitle,
+          showHeroLogo: data.showHeroLogo ?? true,
+          showHeroTitle: data.showHeroTitle ?? true,
+          showHeroSubtitle: data.showHeroSubtitle ?? true,
+          showCtaPrimary: data.showCtaPrimary ?? true,
+          showCtaSecondary: data.showCtaSecondary ?? true,
+          showCategoriesTitle: data.showCategoriesTitle ?? true,
+          showFeaturedTitle: data.showFeaturedTitle ?? true,
+          showFeaturedSubtitle: data.showFeaturedSubtitle ?? true,
+          footerLogoUrl: data.footer?.logoUrl ?? null,
+          footerBrand: data.footer?.brand ?? "Rastuci",
+          footerTagline: data.footer?.tagline ?? "Moda infantil con amor",
+          showFooterLogo: data.footer?.showLogo ?? true,
+          showFooterBrand: data.footer?.showBrand ?? true,
+          showFooterTagline: data.footer?.showTagline ?? true,
+          updatedAt: new Date(),
+        },
+        create: {
+          id: "default",
+          headerLogoUrl: data.headerLogoUrl ?? null,
+          heroLogoUrl: data.heroLogoUrl ?? null,
+          heroImage: data.heroImage ?? null,
+          heroTitle: data.heroTitle,
+          heroSubtitle: data.heroSubtitle,
+          ctaPrimaryLabel: data.ctaPrimaryLabel,
+          ctaSecondaryLabel: data.ctaSecondaryLabel,
+          categoriesTitle: data.categoriesTitle,
+          featuredTitle: data.featuredTitle,
+          featuredSubtitle: data.featuredSubtitle,
+          showHeroLogo: data.showHeroLogo ?? true,
+          showHeroTitle: data.showHeroTitle ?? true,
+          showHeroSubtitle: data.showHeroSubtitle ?? true,
+          showCtaPrimary: data.showCtaPrimary ?? true,
+          showCtaSecondary: data.showCtaSecondary ?? true,
+          showCategoriesTitle: data.showCategoriesTitle ?? true,
+          showFeaturedTitle: data.showFeaturedTitle ?? true,
+          showFeaturedSubtitle: data.showFeaturedSubtitle ?? true,
+          footerLogoUrl: data.footer?.logoUrl ?? null,
+          footerBrand: data.footer?.brand ?? "Rastuci",
+          footerTagline: data.footer?.tagline ?? "Moda infantil con amor",
+          showFooterLogo: data.footer?.showLogo ?? true,
+          showFooterBrand: data.footer?.showBrand ?? true,
+          showFooterTagline: data.footer?.showTagline ?? true,
+        },
+      });
+
+      // Delete existing benefits and recreate
+      await tx.home_benefits.deleteMany({
+        where: { homeSettingsId: "default" },
+      });
+
+      // Create new benefits
+      if (data.benefits && data.benefits.length > 0) {
+        await tx.home_benefits.createMany({
+          data: data.benefits.map((b, index) => ({
+            homeSettingsId: "default",
+            icon: b.icon,
+            title: b.title,
+            description: b.description,
+            sortOrder: index,
+          })),
+        });
+      }
+    });
+
+    // Fetch updated data to return
+    const updated = await prisma.home_settings.findUnique({
+      where: { id: "default" },
+      include: { benefits: { orderBy: { sortOrder: "asc" } } },
+    });
+
+    const responseData = dbToApiFormat(updated, updated?.benefits ?? []);
+
     return NextResponse.json({
       success: true,
-      data: saved.value,
+      data: responseData,
     });
   } catch (err) {
     const e = normalizeApiError(err);
     logger.error("PUT /api/home failed", e);
-    // Explicit fail response
     return NextResponse.json(
       { success: false, error: e.message, code: e.code || "INTERNAL_ERROR" },
       { status: e.status ?? 500 }

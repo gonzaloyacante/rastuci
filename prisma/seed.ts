@@ -241,9 +241,33 @@ async function main() {
         price: p.price,
         salePrice: salePrice,
         categoryId: categoryId,
-        stock: colors.length * SIZES.length * 10, // Will be calculated from variants
+        stock: colors.length * SIZES.length * 10,
         images: JSON.stringify(allImages),
+        // Legacy fields (kept for compatibility)
         colorImages: productColorImages,
+        sizeGuide: {
+          sizes: SIZES,
+          chart: SIZES.map((s) => ({ size: s, measurements: "Standard fit" })),
+        },
+        // NEW EXPLICIT RELATIONS
+        product_color_images: {
+          create: colors.flatMap((color) =>
+            productColorImages[color].map((url, idx) => ({
+              color,
+              imageUrl: url,
+              sortOrder: idx,
+            }))
+          ),
+        },
+        // Populate size guides
+        product_size_guides: {
+          create: SIZES.map((size) => ({
+            size,
+            measurements: "Consultar tabla de talles",
+            ageRange: size,
+          })),
+        },
+
         features: p.features,
         sizes: SIZES,
         colors: colors,
@@ -253,6 +277,7 @@ async function main() {
         width: 25,
         length: 35,
         updatedAt: new Date(),
+        isActive: true, // Explicitly set isActive
       },
     });
 

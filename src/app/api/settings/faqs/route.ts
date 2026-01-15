@@ -13,12 +13,17 @@ const FaqsSettingsSchema = z.array(FaqSchema).min(0).max(20);
 // GET /api/settings/faqs - Obtener FAQs
 export async function GET() {
   try {
-    const setting = await prisma.settings.findUnique({
-      where: { key: "faqs" },
+    const faqs = await prisma.faq_items.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: {
+        question: true,
+        answer: true,
+      },
     });
 
-    if (!setting) {
-      // Retornar FAQs por defecto si no existen en DB
+    if (faqs.length === 0) {
+      // Return default FAQs if none exist
       return NextResponse.json({
         success: true,
         data: [
@@ -46,7 +51,7 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({ success: true, data: setting.value });
+    return NextResponse.json({ success: true, data: faqs });
   } catch (error) {
     console.error("Error fetching FAQs:", error);
     return NextResponse.json(
@@ -62,20 +67,35 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
     const body = await req.json();
     const validated = FaqsSettingsSchema.parse(body);
 
-    const setting = await prisma.settings.upsert({
-      where: { key: "faqs" },
-      create: {
-        key: "faqs",
-        value: validated,
-        updatedAt: new Date(),
-      },
-      update: {
-        value: validated,
-        updatedAt: new Date(),
+    // Use transaction to delete all and recreate
+    await prisma.$transaction(async (tx) => {
+      // Delete all existing FAQs
+      await tx.faq_items.deleteMany({});
+
+      // Create new FAQs
+      if (validated.length > 0) {
+        await tx.faq_items.createMany({
+          data: validated.map((faq, index) => ({
+            question: faq.question,
+            answer: faq.answer,
+            sortOrder: index,
+            isActive: true,
+          })),
+        });
+      }
+    });
+
+    // Fetch the updated FAQs
+    const faqs = await prisma.faq_items.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: {
+        question: true,
+        answer: true,
       },
     });
 
-    return NextResponse.json({ success: true, data: setting.value });
+    return NextResponse.json({ success: true, data: faqs });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -85,7 +105,10 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
     }
     console.error("Error updating FAQs:", error);
     return NextResponse.json(
-      { success: false, error: "Error al actualizar las preguntas frecuentes" },
+      {
+        success: false,
+        error: "Error al actualizar las preguntas frecuentes",
+      },
       { status: 500 }
     );
   }

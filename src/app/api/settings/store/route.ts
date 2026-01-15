@@ -2,46 +2,119 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAdminAuth } from "@/lib/adminAuth";
 import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { Prisma } from "@prisma/client";
 import {
   StoreSettingsSchema,
   defaultStoreSettings,
   type StoreSettings,
 } from "@/lib/validation/store";
+import { StockStatusColor } from "@prisma/client";
 
-const SETTINGS_KEY = "store";
+// Helper to convert DB models to API format
+function dbToApiFormat(
+  store: {
+    name: string;
+    adminEmail: string | null;
+    salesEmail: string | null;
+    supportEmail: string | null;
+    senderName: string | null;
+    addressStreet: string | null;
+    addressCity: string | null;
+    addressProvince: string | null;
+    addressPostalCode: string | null;
+  } | null,
+  shipping: {
+    enableFreeShipping: boolean;
+  } | null,
+  stock: {
+    enableLowStockAlerts: boolean;
+    statuses: {
+      id: string;
+      min: number;
+      max: number | null;
+      label: string;
+      color: StockStatusColor;
+    }[];
+  } | null
+): StoreSettings {
+  // Use defaults where data is missing
+  const s = store;
+  const sh = shipping;
+  const st = stock;
+
+  return {
+    name: s?.name ?? defaultStoreSettings.name,
+    adminEmail: s?.adminEmail ?? defaultStoreSettings.adminEmail,
+    address: {
+      streetName: s?.addressStreet ?? defaultStoreSettings.address.streetName,
+      streetNumber: defaultStoreSettings.address.streetNumber,
+      city: s?.addressCity ?? defaultStoreSettings.address.city,
+      provinceCode:
+        s?.addressProvince ?? defaultStoreSettings.address.provinceCode,
+      postalCode:
+        s?.addressPostalCode ?? defaultStoreSettings.address.postalCode,
+    },
+    shipping: {
+      freeShipping:
+        sh?.enableFreeShipping ?? defaultStoreSettings.shipping.freeShipping,
+    },
+    emails: {
+      salesEmail: s?.salesEmail ?? defaultStoreSettings.emails.salesEmail,
+      supportEmail: s?.supportEmail ?? defaultStoreSettings.emails.supportEmail,
+      senderName: s?.senderName ?? defaultStoreSettings.emails.senderName,
+    },
+    stock: {
+      enableStockAlerts:
+        st?.enableLowStockAlerts ??
+        defaultStoreSettings.stock.enableStockAlerts,
+    },
+    stockStatuses:
+      st?.statuses.map((status) => ({
+        id: status.id,
+        min: status.min,
+        max: status.max,
+        label: status.label,
+        color: status.color as string as
+          | "success"
+          | "warning"
+          | "error"
+          | "info"
+          | "muted"
+          | "primary"
+          | "secondary"
+          | "accent",
+      })) ?? defaultStoreSettings.stockStatuses,
+  };
+}
 
 /**
  * GET /api/settings/store
- *
- * Returns store settings from database, or defaults if not set.
  */
 export const GET = withAdminAuth(async (_request: NextRequest) => {
   try {
-    const record = await prisma.settings.findUnique({
-      where: { key: SETTINGS_KEY },
-    });
+    const [store, shipping, stock] = await Promise.all([
+      prisma.store_settings.findUnique({ where: { id: "default" } }),
+      prisma.shipping_settings.findUnique({ where: { id: "default" } }),
+      prisma.stock_settings.findUnique({
+        where: { id: "default" },
+        include: { statuses: { orderBy: { sortOrder: "asc" } } },
+      }),
+    ]);
 
-    if (!record) {
-      return NextResponse.json({
-        success: true,
-        data: defaultStoreSettings,
+    const data = dbToApiFormat(store, shipping, stock);
+
+    // Validate (optional, but good for debugging)
+    const parsed = StoreSettingsSchema.safeParse(data);
+    if (!parsed.success) {
+      logger.warn("Store settings API validation warning", {
+        issues: parsed.error.flatten(),
       });
+      // Return best effort data
+      return NextResponse.json({ success: true, data });
     }
-
-    // Merge with defaults to ensure all fields exist
-    const settings = {
-      ...defaultStoreSettings,
-      ...(record.value as Partial<StoreSettings>),
-      address: {
-        ...defaultStoreSettings.address,
-        ...((record.value as Partial<StoreSettings>)?.address || {}),
-      },
-    };
 
     return NextResponse.json({
       success: true,
-      data: settings,
+      data: parsed.data,
     });
   } catch (error) {
     logger.error("[StoreSettings] Error fetching settings", { error });
@@ -53,9 +126,7 @@ export const GET = withAdminAuth(async (_request: NextRequest) => {
 });
 
 /**
- * PUT /api/settings/store (ADMIN ONLY)
- *
- * Updates store settings in database.
+ * PUT /api/settings/store
  */
 export const PUT = withAdminAuth(async (request: NextRequest) => {
   try {
@@ -73,31 +144,92 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
       );
     }
 
-    const jsonValue = JSON.parse(
-      JSON.stringify(parsed.data)
-    ) as Prisma.InputJsonValue;
+    const data = parsed.data;
 
-    await prisma.settings.upsert({
-      where: { key: SETTINGS_KEY },
-      update: {
-        value: jsonValue,
-        updatedAt: new Date(),
-      },
-      create: {
-        key: SETTINGS_KEY,
-        value: jsonValue,
-        updatedAt: new Date(),
-      },
+    // Transaction to update all tables
+    await prisma.$transaction(async (tx) => {
+      // 1. Store Settings
+      await tx.store_settings.upsert({
+        where: { id: "default" },
+        update: {
+          name: data.name,
+          adminEmail: data.adminEmail || null,
+          salesEmail: data.emails?.salesEmail || null,
+          supportEmail: data.emails?.supportEmail || null,
+          senderName: data.emails?.senderName || null,
+          addressStreet: data.address?.streetName || null,
+          addressCity: data.address?.city || null,
+          addressProvince: data.address?.provinceCode || null,
+          addressPostalCode: data.address?.postalCode || null,
+          updatedAt: new Date(),
+        },
+        create: {
+          id: "default",
+          name: data.name,
+          adminEmail: data.adminEmail || null,
+          salesEmail: data.emails?.salesEmail || null,
+          supportEmail: data.emails?.supportEmail || null,
+          senderName: data.emails?.senderName || null,
+          addressStreet: data.address?.streetName || null,
+          addressCity: data.address?.city || null,
+          addressProvince: data.address?.provinceCode || null,
+          addressPostalCode: data.address?.postalCode || null,
+        },
+      });
+
+      // 2. Shipping Settings
+      await tx.shipping_settings.upsert({
+        where: { id: "default" },
+        update: {
+          enableFreeShipping: data.shipping?.freeShipping ?? false,
+          updatedAt: new Date(),
+        },
+        create: {
+          id: "default",
+          enableFreeShipping: data.shipping?.freeShipping ?? false,
+        },
+      });
+
+      // 3. Stock Settings
+      await tx.stock_settings.upsert({
+        where: { id: "default" },
+        update: {
+          enableLowStockAlerts: data.stock?.enableStockAlerts ?? true,
+          updatedAt: new Date(),
+        },
+        create: {
+          id: "default",
+          enableLowStockAlerts: data.stock?.enableStockAlerts ?? true,
+        },
+      });
+
+      // 4. Stock Statuses (Replace all)
+      await tx.stock_status_levels.deleteMany({
+        where: { stockSettingsId: "default" },
+      });
+
+      if (data.stockStatuses && data.stockStatuses.length > 0) {
+        await tx.stock_status_levels.createMany({
+          data: data.stockStatuses.map((status, index) => ({
+            id: status.id, // Use frontend ID
+            stockSettingsId: "default",
+            min: status.min,
+            max: status.max,
+            label: status.label,
+            color: status.color as StockStatusColor,
+            sortOrder: index,
+          })),
+        });
+      }
     });
 
     logger.info("[StoreSettings] Settings updated", {
-      adminEmail: parsed.data.adminEmail,
-      postalCode: parsed.data.address.postalCode,
+      adminEmail: data.adminEmail,
     });
 
     return NextResponse.json({
       success: true,
-      data: parsed.data,
+      data: data,
     });
   } catch (error) {
     logger.error("[StoreSettings] Error updating settings", { error });
