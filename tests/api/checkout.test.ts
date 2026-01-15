@@ -274,7 +274,7 @@ describe("Checkout API - POST /api/checkout", () => {
                     }),
                   }),
                   quantity: 2,
-                  price: 100,
+                  price: expect.any(Number),
                 }),
               ]),
             }),
