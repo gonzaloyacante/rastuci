@@ -295,40 +295,75 @@ export const PUT = withAdminAuth(
   }
 );
 
-// DELETE /api/products/[id] - Eliminar producto (ADMIN ONLY)
-export const DELETE = withAdminAuth(
+// PATCH /api/products/[id] - Actualización parcial rápida (e.g. Toggle Active)
+export const PATCH = withAdminAuth(
   async (
     request: NextRequest,
     { params }: RouteParams
-  ): Promise<NextResponse<ApiResponse<null>>> => {
+  ): Promise<NextResponse<ApiResponse<Product>>> => {
     try {
       const rl = await checkRateLimit(request, {
-        key: makeKey("DELETE", "/api/products/[id]"),
-        ...getPreset("mutatingLow"),
+        key: makeKey("PATCH", "/api/products/[id]"),
+        ...getPreset("mutatingMedium"),
       });
       if (!rl.ok) {
         return fail("RATE_LIMITED", "Too many requests", 429);
       }
       const { id } = await params;
+      const body = await request.json();
 
-      // Soft Delete: Just mark as inactive
-      // We do NOT check for order_items because we want to allow "deleting" (archiving)
-      // products even if they have been sold, preserving the history.
+      // Solo permitimos actualización de isActive por ahora para este método rápido
+      if (typeof body.isActive !== "boolean") {
+        return fail("BAD_REQUEST", "Solo se permite actualizar isActive", 400);
+      }
 
-      await prisma.products.update({
+      const updatedPrismaProduct = await prisma.products.update({
         where: { id },
-        data: { isActive: false },
+        data: {
+          isActive: body.isActive,
+          updatedAt: new Date(),
+        },
+        include: {
+          categories: true,
+          product_variants: true,
+        },
       });
 
-      // We do NOT delete images for soft-deleted products to preserve history.
+      const updatedProduct: Product = {
+        ...updatedPrismaProduct,
+        price: Number(updatedPrismaProduct.price),
+        salePrice: updatedPrismaProduct.salePrice
+          ? Number(updatedPrismaProduct.salePrice)
+          : undefined,
+        description: updatedPrismaProduct.description ?? undefined,
+        images:
+          typeof updatedPrismaProduct.images === "string"
+            ? JSON.parse(updatedPrismaProduct.images)
+            : updatedPrismaProduct.images,
+        colorImages:
+          (updatedPrismaProduct.colorImages as unknown as Record<
+            string,
+            string[]
+          >) ?? null,
+        categories: {
+          ...updatedPrismaProduct.categories,
+          description: updatedPrismaProduct.categories.description ?? undefined,
+        },
+        variants: updatedPrismaProduct.product_variants
+          ? updatedPrismaProduct.product_variants.map((v) => ({
+              ...v,
+              sku: v.sku ?? undefined,
+            }))
+          : [],
+      };
 
-      return ok(null, "Producto eliminado exitosamente");
+      return ok(updatedProduct, "Estado actualizado correctamente");
     } catch (error) {
-      logger.error("Error deleting product:", { error });
+      logger.error("Error patching product:", { error });
       const e = normalizeApiError(
         error,
         "INTERNAL_ERROR",
-        "Error al eliminar el producto",
+        "Error al actualizar el estado",
         500
       );
       return fail(

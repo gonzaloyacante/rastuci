@@ -194,7 +194,7 @@ export async function GET(
     const apiResponse = ok(paginated);
     apiResponse.headers.set(
       "Cache-Control",
-      "public, max-age=300, s-maxage=300"
+      "public, max-age=0, must-revalidate"
     );
     return apiResponse;
   } catch (error) {

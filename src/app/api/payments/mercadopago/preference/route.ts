@@ -188,10 +188,7 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       "http://localhost:3000";
 
-    const totalItemsAmount =
-      Number(createdOrder.total) -
-      (Number(shippingCost) || 0) +
-      (Number(discount) || 0);
+    // const totalItemsAmount removed
     // Wait, createdOrder.total includes shipping.
     // So totalItemsAmount = createdOrder.order_items sum.
     // Let's just recalculate simple total for MP item display.

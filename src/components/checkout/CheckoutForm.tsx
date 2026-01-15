@@ -117,7 +117,8 @@ export function CheckoutForm({
     setIsProcessing(true);
 
     try {
-      const { items } = getOrderSummary(); // Use items from context
+      // const { items } = getOrderSummary(); // Items not needed here if handled by backend/context
+      // const { items } = getOrderSummary();
 
       // Preparar items para MercadoPago
       // Fix: Don't apply discount here to unit price if we send general discount field?

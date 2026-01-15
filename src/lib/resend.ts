@@ -232,4 +232,54 @@ export const emailService = {
       type: "SALES",
     });
   },
+
+  async sendOrderCancelled(order: {
+    id: string;
+    customerName: string;
+    customerEmail: string;
+  }) {
+    // Dynamically import templates
+    const { getOrderCancelledEmail } = await import("./email-templates");
+
+    return sendEmail({
+      to: order.customerEmail,
+      subject: `Pedido Cancelado #${order.id.slice(0, 8)}`,
+      html: getOrderCancelledEmail({
+        customerName: order.customerName,
+        orderId: order.id,
+      }),
+      type: "SALES",
+    });
+  },
+
+  async sendPaymentReminder(order: {
+    id: string;
+    customerName: string;
+    customerEmail: string;
+    total: number;
+    paymentMethod: string;
+  }) {
+    const { getPaymentReminderEmail } = await import("./email-templates");
+
+    // Determine the payment/resume link
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com";
+    let paymentUrl = `${baseUrl}/orders/${order.id}`;
+
+    // If it's transfer, direct to upload page. If generic/MP, order detail has pay button usually or we redirect
+    if (order.paymentMethod === "transfer") {
+      paymentUrl = `${baseUrl}/orders/${order.id}/pay`;
+    }
+
+    return sendEmail({
+      to: order.customerEmail,
+      subject: `⏳ Recordatorio de Pago - Pedido #${order.id.slice(0, 8)}`,
+      html: getPaymentReminderEmail({
+        customerName: order.customerName,
+        orderId: order.id,
+        total: order.total,
+        paymentUrl,
+      }),
+      type: "SALES",
+    });
+  },
 };

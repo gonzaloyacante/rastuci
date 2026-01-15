@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { ORDER_STATUS } from "@/lib/constants";
 import { emailService } from "@/lib/resend";
+import { getStoreSettings } from "@/lib/store-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,13 @@ export async function GET(request: NextRequest) {
         });
 
         // C. Send Notification (Non-blocking)
-        // emailService.sendOrderCancelled(order); // TODO: Implement if desired
+        if (order.customerEmail) {
+          await emailService.sendOrderCancelled({
+            id: order.id,
+            customerName: order.customerName,
+            customerEmail: order.customerEmail,
+          });
+        }
         logger.info(`[Cron] Cancelled expired order ${order.id}`);
         results.cancelled++;
       } catch (err) {
@@ -76,22 +83,62 @@ export async function GET(request: NextRequest) {
     }
 
     // ========================================================================
-    // JOB 2: MERCADO PAGO RECOVERY EMAILS
+    // JOB 2: RECOVERY EMAILS (Dynamic Logic based on Store Settings)
     // ========================================================================
-    // Find MP orders created > 15 mins ago, < 2 hours ago, unpaid, no reminder sent
-    const recoveryWindowStart = new Date(now.getTime() - 2 * 60 * 60 * 1000); // 2 hours ago
-    const recoveryWindowEnd = new Date(now.getTime() - 15 * 60 * 1000); // 15 mins ago
+    const settings = await getStoreSettings();
+    const mpExpirationMinutes = settings.payments.mpExpirationMinutes; // Default 60
+    const transferExpirationHours = settings.payments.transferExpirationHours; // Default 48
 
+    // LOGIC: Send reminder when 50% of the time has passed.
+    // Example: Expires in 60m -> Remind at 30m
+    // Example: Expires in 48h -> Remind at 24h
+
+    // 1. Mercado Pago Reminders
+    const mpHalfTime = mpExpirationMinutes / 2;
+    // Window: from "expires ago" (oldest) to "half-time ago" (newest)
+    const mpWindowStart = new Date(
+      now.getTime() - mpExpirationMinutes * 60 * 1000
+    );
+    const mpWindowEnd = new Date(now.getTime() - mpHalfTime * 60 * 1000);
+
+    // 2. Transfer Reminders
+    const transferHalfTime = transferExpirationHours / 2;
+    const transferWindowStart = new Date(
+      now.getTime() - transferExpirationHours * 60 * 60 * 1000
+    );
+    const transferWindowEnd = new Date(
+      now.getTime() - transferHalfTime * 60 * 60 * 1000
+    );
+
+    // We fetch two groups to be precise
     const abandonedOrders = await prisma.orders.findMany({
       where: {
-        status: ORDER_STATUS.PENDING_PAYMENT,
-        paymentMethod: "mercadopago",
-        createdAt: {
-          gte: recoveryWindowStart,
-          lte: recoveryWindowEnd,
-        },
-        paymentReminderSent: { equals: false },
-        mpPaymentId: null, // Ensure not actually paid (though status check covers this)
+        AND: [
+          {
+            OR: [
+              // Mercado Pago Logic
+              {
+                status: ORDER_STATUS.PENDING_PAYMENT,
+                paymentMethod: "mercadopago",
+                createdAt: {
+                  gte: mpWindowStart,
+                  lte: mpWindowEnd,
+                },
+              },
+              // Transfer Logic
+              {
+                status: ORDER_STATUS.WAITING_TRANSFER_PROOF,
+                paymentMethod: "transfer",
+                createdAt: {
+                  gte: transferWindowStart,
+                  lte: transferWindowEnd,
+                },
+              },
+            ],
+          },
+          { paymentReminderSent: false },
+          { mpPaymentId: null },
+        ],
       },
       take: 20,
     });
@@ -100,8 +147,13 @@ export async function GET(request: NextRequest) {
       if (order.customerEmail) {
         try {
           // Send Email
-          // TODO: Implement specific method or reuse generic
-          // await emailService.sendPaymentReminder(order);
+          await emailService.sendPaymentReminder({
+            id: order.id,
+            customerName: order.customerName,
+            customerEmail: order.customerEmail,
+            total: Number(order.total),
+            paymentMethod: order.paymentMethod || "unknown",
+          });
 
           await prisma.orders.update({
             where: { id: order.id },

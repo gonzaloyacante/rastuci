@@ -7,21 +7,11 @@ import {
   defaultStoreSettings,
   type StoreSettings,
 } from "@/lib/validation/store";
-import { StockStatusColor } from "@prisma/client";
+import { StockStatusColor, store_settings } from "@prisma/client";
 
 // Helper to convert DB models to API format
 function dbToApiFormat(
-  store: {
-    name: string;
-    adminEmail: string | null;
-    salesEmail: string | null;
-    supportEmail: string | null;
-    senderName: string | null;
-    addressStreet: string | null;
-    addressCity: string | null;
-    addressProvince: string | null;
-    addressPostalCode: string | null;
-  } | null,
+  store: store_settings | null,
   shipping: {
     enableFreeShipping: boolean;
   } | null,
@@ -61,6 +51,7 @@ function dbToApiFormat(
       salesEmail: s?.salesEmail ?? defaultStoreSettings.emails.salesEmail,
       supportEmail: s?.supportEmail ?? defaultStoreSettings.emails.supportEmail,
       senderName: s?.senderName ?? defaultStoreSettings.emails.senderName,
+      footerText: defaultStoreSettings.emails.footerText, // Missing in DB schema yet? Using default.
     },
     stock: {
       enableStockAlerts:

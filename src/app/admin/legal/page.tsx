@@ -2,10 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { apiHandler } from "@/lib/api-handler";
-import { ArrowLeft, Check, List, Plus, Save, Trash2, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Plus, Save, Trash2, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -34,7 +32,7 @@ const TABS = [
   { id: "defensa-al-consumidor", label: "Defensa al Consumidor" },
 ];
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+// fetcher removed
 
 export default function LegalAdminPage() {
   const router = useRouter();
@@ -109,8 +107,6 @@ function PolicyEditor({ slug }: { slug: string }) {
     control,
     handleSubmit,
     reset,
-    setValue,
-    watch,
     formState: { isDirty },
   } = useForm<PolicyForm>({
     defaultValues: {
@@ -122,7 +118,7 @@ function PolicyEditor({ slug }: { slug: string }) {
     },
   });
 
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "sections",
   });

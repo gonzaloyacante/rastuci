@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/Label";
 import { useSettings } from "@/hooks/useSettings";
 import { StoreSettings } from "@/lib/validation/store";
 import { toast } from "react-hot-toast";
-import { Loader2, Upload, CheckCircle, Copy } from "lucide-react";
+import { Loader2, CheckCircle, Copy } from "lucide-react";
 import Link from "next/link";
 
 interface OrderDetails {
@@ -73,7 +73,7 @@ export default function TransferPaymentPage() {
 
       toast.success("Comprobante enviado con éxito");
       router.push(`/checkout/success?orderId=${order.id}&method=transfer`);
-    } catch (error) {
+    } catch {
       toast.error("Error al enviar. Intenta nuevamente.");
     } finally {
       setSubmitting(false);

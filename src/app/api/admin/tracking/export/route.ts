@@ -2,19 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAdminAuth } from "@/lib/adminAuth";
 
-interface OrderForExport {
-  id: string;
-  trackingNumber?: string | null;
-  status: string;
-  customerName?: string | null;
-  customerEmail?: string | null;
-  customerAddress?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  total?: any;
-}
-
 export const GET = withAdminAuth(
   async (_request: NextRequest): Promise<NextResponse> => {
     try {

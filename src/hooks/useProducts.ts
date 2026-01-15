@@ -1,4 +1,3 @@
-import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 import { useCallback } from "react";
 import useSWR, { SWRConfiguration } from "swr";

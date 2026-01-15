@@ -83,10 +83,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // 2. Validate Stock via Service
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let validatedProducts: any[] = [];
     try {
-      validatedProducts = await checkoutService.validateStock(items);
+      await checkoutService.validateStock(items);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       return NextResponse.json(

@@ -5,7 +5,7 @@ import { OrderStatus } from "@prisma/client";
 import { getStoreSettings } from "@/lib/store-settings";
 import { emailService } from "@/lib/resend";
 import { OrderItemInput, MercadoPagoPayer } from "@/types";
-import { PROVINCIAS, ProvinceCode } from "@/lib/constants";
+import { PROVINCIAS } from "@/lib/constants";
 import { add } from "date-fns";
 
 export interface OrderMetadata {

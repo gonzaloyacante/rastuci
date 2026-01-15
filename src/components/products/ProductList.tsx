@@ -71,7 +71,7 @@ export default function ProductList() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   // UI helpers
-  const { confirm: confirmDialog, ConfirmDialog } = useConfirmDialog();
+  const { ConfirmDialog } = useConfirmDialog();
 
   // Datos con scroll infinito
   const {
@@ -106,114 +106,42 @@ export default function ProductList() {
     { enabled: !isLoading && !isLoadingMore }
   );
 
-  // Handlers
-  const handleDelete = async (id: string) => {
-    const confirmed = await confirmDialog({
-      title: "Eliminar producto",
-      message: "¿Estás seguro? Esta acción no se puede deshacer.",
-      confirmText: "Eliminar",
-      cancelText: "Cancelar",
-      variant: "danger",
-    });
-
-    if (!confirmed) return;
-
-    try {
-      const response = await fetch(`/api/products/${id}`, { method: "DELETE" });
-
-      if (response.ok) {
-        mutate();
-        mutateStats();
-        toast.success("Producto eliminado correctamente");
-      } else {
-        const errorData = await response.json();
-        const msg = errorData.message || "Error al eliminar el producto";
-        toast.error(msg);
-      }
-    } catch (err) {
-      logger.error("Error deleting product", { error: err });
-      toast.error("No se pudo conectar al servidor");
-    }
+  const handleRefresh = async () => {
+    mutate();
   };
 
-  const handleRefresh = useCallback(() => {
-    mutate();
-    mutateStats();
-  }, [mutate, mutateStats]);
+  // Handlers
+  const handleToggleActive = async (
+    id: string,
+    currentStatus: boolean | undefined
+  ) => {
+    // Optimistic Update is not supported with current hook structure easily,
+    // and mutate() refreshes the list from server.
+    // For now we just call API and then refresh.
 
-  const handleToggleActive = async (id: string, isActive: boolean) => {
+    // Calculate new status
+    const newStatus = !(currentStatus !== false); // Toggle
+
     try {
-      // Fetch current product data
-      const productResponse = await fetch(`/api/products/${id}`);
-      if (!productResponse.ok) {
-        toast.error("Error al obtener el producto");
-        return;
-      }
-      const productData = await productResponse.json();
-      const product = productData.data;
-
-      if (!product) {
-        toast.error("Producto no encontrado");
-        return;
-      }
-
-      // Prepare minimal update payload with only required fields
-      const updatePayload = {
-        name: product.name,
-        description: product.description || "",
-        price: product.price,
-        salePrice: product.salePrice || null,
-        stock: product.stock,
-        categoryId: product.categoryId,
-        images: product.images || [],
-        onSale: product.onSale || false,
-        isActive: isActive,
-        sizes: product.sizes || [],
-        colors: product.colors || [],
-        features: product.features || [],
-        weight: product.weight || null,
-        height: product.height || null,
-        width: product.width || null,
-        length: product.length || null,
-        variants:
-          product.variants?.map(
-            (v: {
-              color: string;
-              size: string;
-              stock: number;
-              sku?: string;
-            }) => ({
-              color: v.color,
-              size: v.size,
-              stock: v.stock,
-              sku: v.sku || undefined,
-            })
-          ) || [],
-        colorImages: product.colorImages || null,
-      };
-
+      // Use the new fast PATCH endpoint
       const response = await fetch(`/api/products/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify({ isActive: newStatus }),
       });
 
-      if (response.ok) {
-        mutate();
-        mutateStats();
-        toast.success(isActive ? "Producto activado" : "Producto desactivado");
-      } else {
-        const errorData = await response.json();
-        const msg =
-          errorData.message ||
-          errorData.error ||
-          "Error al actualizar el producto";
-        logger.error("Toggle active failed", { errorData });
-        toast.error(msg);
+      if (!response.ok) {
+        throw new Error("Failed to update status");
       }
+
+      // Success
+      toast.success(newStatus ? "Producto activado" : "Producto desactivado");
+
+      mutate();
+      mutateStats();
     } catch (err) {
       logger.error("Error toggling product active status", { error: err });
-      toast.error("No se pudo conectar al servidor");
+      toast.error("No se pudo actualizar el estado.");
     }
   };
 
@@ -420,8 +348,11 @@ export default function ProductList() {
                     onEdit={() =>
                       router.push(`/admin/productos/${product.id}/editar`)
                     }
-                    onDelete={() => handleDelete(product.id)}
-                    onToggleActive={handleToggleActive}
+                    // deleteDisabled={true} // Deprecated
+                    // onDelete={() => {}} // Removed
+                    onToggleActive={() =>
+                      handleToggleActive(product.id, product.isActive)
+                    }
                   />
                 </div>
               );

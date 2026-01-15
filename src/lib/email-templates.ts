@@ -396,3 +396,44 @@ export const getBankTransferEmail = (params: {
     customButtonText: "📤 Subir Comprobante",
   });
 };
+
+export const getOrderCancelledEmail = (params: {
+  customerName: string;
+  orderId: string;
+}): string => {
+  const { customerName, orderId } = params;
+
+  return generateEmailHtml({
+    customerName,
+    orderId,
+    title: "⏳ Tu reserva ha expirado",
+    color: STATUS_COLORS.error,
+    message: `El tiempo de reserva de tu pedido ha finalizado, y los productos han vuelto a estar disponibles para otros clientes.<br><br>
+    ¡No te preocupes! Si todavía los querés, es probable que aun haya stock.<br><br>
+    Te invitamos a visitar la tienda y volver a pedirlos antes de que se agoten definitivamente.`,
+    orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/`,
+    customButtonText: "🛍️ Volver a la Tienda",
+  });
+};
+
+export const getPaymentReminderEmail = (params: {
+  customerName: string;
+  orderId: string;
+  total: number;
+  paymentUrl: string;
+}): string => {
+  const { customerName, orderId, total, paymentUrl } = params;
+
+  return generateEmailHtml({
+    customerName,
+    orderId,
+    title: "👀 ¡No dejes escapar tus favoritos!",
+    color: STATUS_COLORS.pending,
+    message: `Vimos que dejaste tu pedido pendiente y no queremos que te lo ganen de mano.<br><br>
+    Tus productos siguen reservados para vos, pero <strong>el tiempo se está agotando</strong> y el stock es limitado.<br><br>
+    👉 Total a pagar: <strong>$${total.toFixed(2)}</strong><br><br>
+    Hacé clic abajo para completar tu compra seguro y rápido.`,
+    orderUrl: paymentUrl,
+    customButtonText: "⚡ Completar Compra Ahora",
+  });
+};

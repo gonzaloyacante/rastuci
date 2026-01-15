@@ -13,7 +13,6 @@ import {
   Power,
   ShoppingCart,
   Star,
-  Trash2,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
@@ -121,7 +120,6 @@ interface PublicProductCardProps extends ProductCardBaseProps {
 interface AdminProductCardProps extends ProductCardBaseProps {
   variant: "admin";
   onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
   onView?: (id: string) => void;
   onToggleActive?: (id: string, isActive: boolean) => void;
 }
@@ -232,8 +230,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   // VARIANTE ADMIN
   // =========================================================================
   if (isAdmin) {
-    const { onEdit, onDelete, onView, onToggleActive } =
-      props as AdminProductCardProps;
+    const { onEdit, onView, onToggleActive } = props as AdminProductCardProps;
 
     return (
       <div className="group surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden h-full flex flex-col">
@@ -413,15 +410,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             >
               <span className="hidden sm:inline">Editar</span>
             </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              className="flex-1 min-w-[3rem]"
-              onClick={() => onDelete(product.id)}
-              leftIcon={<Trash2 className="h-4 w-4" />}
-            >
-              <span className="hidden sm:inline">Eliminar</span>
-            </Button>
+            {/* Delete button removed in favor of Soft Delete (Deactivate) only */}
           </div>
         </div>
 

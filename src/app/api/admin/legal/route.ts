@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { apiHandler, AppError } from "@/lib/api-handler";
-import { NextRequest, NextResponse } from "next/server";
-import { fail, ok } from "@/lib/apiResponse";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import { generateHtmlContent } from "@/lib/policy-utils";
 
@@ -17,7 +16,7 @@ const createPolicySchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export const GET = withAdminAuth(async (req: NextRequest) => {
+export const GET = withAdminAuth(async () => {
   return apiHandler(async () => {
     const policies = await prisma.legalPolicy.findMany({
       orderBy: { updatedAt: "desc" },
