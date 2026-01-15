@@ -11,6 +11,8 @@ import {
 } from "@/lib/validation/category";
 import { ApiResponse, Category } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // GET /api/categories - Obtener todas las categorías con búsqueda y paginación
 export async function GET(request: NextRequest): Promise<
@@ -50,6 +52,14 @@ export async function GET(request: NextRequest): Promise<
 
     // Filtros de búsqueda
     const where: Record<string, unknown> = {};
+
+    const session = await getServerSession(authOptions);
+    const isAdmin = session?.user?.isAdmin;
+
+    if (!isAdmin) {
+      where.isActive = true;
+    }
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },

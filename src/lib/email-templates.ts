@@ -362,3 +362,37 @@ export const getOrderShippedEmail = (params: {
     customButtonText: "Rastrear Envío",
   });
 };
+
+export const getBankTransferEmail = (params: {
+  customerName: string;
+  orderId: string;
+  total: number;
+  bankDetails: {
+    bankName: string;
+    cbu: string;
+    alias: string;
+    holder: string;
+  };
+  uploadUrl: string;
+}): string => {
+  const { customerName, orderId, total, bankDetails, uploadUrl } = params;
+
+  return generateEmailHtml({
+    customerName,
+    orderId,
+    title: "⏳ Instrucciones de Transferencia",
+    color: STATUS_COLORS.pending,
+    message: `Gracias por tu pedido. Para completarlo, por favor realiza una transferencia de <strong>$${total.toFixed(2)}</strong> a la siguiente cuenta:<br><br>
+    
+    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; text-align: left; font-family: monospace; color: #374151;">
+      <strong>Banco:</strong> ${bankDetails.bankName || "Consultar"}<br>
+      <strong>Titular:</strong> ${bankDetails.holder || "-"}<br>
+      <strong>CBU:</strong> ${bankDetails.cbu || "No configurado"}<br>
+      <strong>Alias:</strong> ${bankDetails.alias || "No configurado"}<br>
+    </div>
+    <br>
+    Una vez realizada la transferencia, es <strong>obligatorio</strong> que subas el comprobante en el siguiente link para que podamos procesar tu pedido.`,
+    orderUrl: uploadUrl,
+    customButtonText: "📤 Subir Comprobante",
+  });
+};

@@ -5,6 +5,7 @@ import {
   getOrderConfirmationEmail,
   getWelcomeEmail,
   getLowStockAlertEmail,
+  getBankTransferEmail,
 } from "./email-templates";
 import { getStoreSettings } from "./store-settings";
 import { OrderEmailSummary, OrderEmailItem } from "@/types";
@@ -198,6 +199,37 @@ export const emailService = {
         message: params.statusMessage,
       }),
       type: "DEFAULT",
+    });
+  },
+
+  async sendBankTransferInstructions(order: {
+    id: string;
+    customerName: string;
+    customerEmail: string;
+    total: number;
+    uploadToken?: string; // If we use a token for security, or just ID
+  }) {
+    const settings = await getStoreSettings();
+    const bankDetails = {
+      bankName: settings.payments?.bankName || "",
+      cbu: settings.payments?.bankCbu || "",
+      alias: settings.payments?.bankAlias || "",
+      holder: settings.payments?.bankHolder || "",
+    };
+
+    const uploadUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/orders/${order.id}/pay`;
+
+    return sendEmail({
+      to: order.customerEmail,
+      subject: `⏳ Instrucciones de Transferencia - Pedido #${order.id.slice(0, 8)}`,
+      html: getBankTransferEmail({
+        customerName: order.customerName,
+        orderId: order.id,
+        total: order.total,
+        bankDetails,
+        uploadUrl,
+      }),
+      type: "SALES",
     });
   },
 };

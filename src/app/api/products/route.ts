@@ -13,6 +13,8 @@ import {
 import { ApiResponse, PaginatedResponse, Product } from "@/types";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // GET /api/products - Obtener productos con filtros y paginación
 export async function GET(
@@ -66,6 +68,13 @@ export async function GET(
       if (filters.maxPrice) {
         (where.price as Record<string, number>).lte = filters.maxPrice;
       }
+    }
+
+    const session = await getServerSession(authOptions);
+    const isAdmin = session?.user?.isAdmin;
+
+    if (!isAdmin) {
+      where.isActive = true;
     }
 
     if (filters.onSale) {

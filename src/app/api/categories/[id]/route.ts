@@ -7,6 +7,8 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ApiResponse, Category } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 interface RouteParams {
   params: Promise<{
@@ -41,6 +43,13 @@ export async function GET(
     });
 
     if (!category) {
+      return fail("NOT_FOUND", "Categoría no encontrada", 404, { requestId });
+    }
+
+    const session = await getServerSession(authOptions);
+    const isAdmin = session?.user?.isAdmin;
+
+    if (!category.isActive && !isAdmin) {
       return fail("NOT_FOUND", "Categoría no encontrada", 404, { requestId });
     }
 
@@ -180,8 +189,9 @@ export const DELETE = withAdminAuth(
         );
       }
 
-      await prisma.categories.delete({
+      await prisma.categories.update({
         where: { id },
+        data: { isActive: false },
       });
 
       return ok(null);

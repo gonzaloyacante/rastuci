@@ -92,14 +92,46 @@ export const StoreSettingsSchema = z.object({
       },
     ]),
 
-  // Deprecated stock settings (kept for backward compatibility logic if needed, but we should migrate)
-  // We will keep 'enableStockAlerts' as a general toggle if the user wants to hide stock indicators entirely.
+  // Deprecated stock settings
   stock: z
     .object({
       enableStockAlerts: z.boolean().default(true),
     })
     .default({
       enableStockAlerts: true,
+    }),
+
+  // Payment & Expiration Settings
+  payments: z
+    .object({
+      // Discounts (Percentages)
+      cashDiscount: z.number().min(0).max(100).default(15),
+      transferDiscount: z.number().min(0).max(100).default(10),
+      mpDiscount: z.number().min(0).max(100).default(0),
+
+      // Expirations (TTL)
+      cashExpirationHours: z.number().min(1).default(72),
+      transferExpirationHours: z.number().min(1).default(48),
+      mpExpirationMinutes: z.number().min(5).default(60), // Abandoned checkout
+
+      // Bank Details
+      bankName: z.string().optional(),
+      bankCbu: z.string().optional(),
+      bankAlias: z.string().optional(),
+      bankHolder: z.string().optional(),
+      bankCuit: z.string().optional(),
+
+      // Global Toggles
+      couponsEnabled: z.boolean().default(true),
+    })
+    .default({
+      cashDiscount: 15,
+      transferDiscount: 10,
+      mpDiscount: 0,
+      cashExpirationHours: 72,
+      transferExpirationHours: 48,
+      mpExpirationMinutes: 60,
+      couponsEnabled: true,
     }),
 });
 
@@ -151,6 +183,20 @@ export const defaultStoreSettings: StoreSettings = {
   ],
   stock: {
     enableStockAlerts: true,
+  },
+  payments: {
+    cashDiscount: 15,
+    transferDiscount: 10,
+    mpDiscount: 0,
+    cashExpirationHours: 72,
+    transferExpirationHours: 48,
+    mpExpirationMinutes: 60,
+    bankName: "",
+    bankCbu: "",
+    bankAlias: "",
+    bankHolder: "",
+    bankCuit: "",
+    couponsEnabled: true,
   },
 };
 

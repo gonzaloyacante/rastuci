@@ -143,6 +143,8 @@ export const ORDER_STATUS = {
   PENDING: "PENDING", // Initial state for MP (No stock held)
   PENDING_PAYMENT: "PENDING_PAYMENT", // Waiting for payment confirmation
   RESERVED: "RESERVED", // Cash orders (Stock HELD)
+  WAITING_TRANSFER_PROOF: "WAITING_TRANSFER_PROOF", // Transfer: waiting for proof upload
+  PAYMENT_REVIEW: "PAYMENT_REVIEW", // Transfer proof uploaded, awaiting admin approval
   PROCESSED: "PROCESSED", // Payment Approved / Ready to Ship
   DELIVERED: "DELIVERED",
   CANCELLED: "CANCELLED",

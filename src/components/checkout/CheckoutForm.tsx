@@ -10,6 +10,8 @@ import { useState } from "react";
 import { CustomerForm } from "./CustomerForm";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import { OrderSummaryCard } from "./OrderSummaryCard";
+import { useSettings } from "@/hooks/useSettings";
+import { StoreSettings } from "@/lib/validation/store";
 // import {
 //   ShippingCostCalculator,
 //   type ShippingOption,
@@ -42,13 +44,11 @@ export function CheckoutForm({
   } = useCart();
   const { show } = useToast();
 
+  const { settings } = useSettings<StoreSettings>("store");
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("");
-  // const [shippingOption, _setShippingOption] = useState<ShippingOption | null>(
-  //   null
-  // );
-  // Redundant state currently unused in simplified flow
+
   const [customerData, setCustomerData] = useState({
     email: "",
     firstName: "",
@@ -57,10 +57,39 @@ export function CheckoutForm({
     identificationNumber: "",
   });
 
-  // Card data state removed: tarjetas no están visibles en el flujo simplificado
+  // Calculate Dynamic Discount from Settings
+  const getDynamicDiscount = () => {
+    if (!settings?.payments) return 0;
+    if (selectedPaymentMethod === PAYMENT_METHODS.CASH)
+      return settings.payments.cashDiscount || 0;
+    if (selectedPaymentMethod === PAYMENT_METHODS.TRANSFER)
+      return settings.payments.transferDiscount || 0;
+    if (selectedPaymentMethod === PAYMENT_METHODS.MERCADOPAGO)
+      return settings.payments.mpDiscount || 0;
+    return 0;
+  };
 
-  const { items: _items, discount, shippingCost, total } = getOrderSummary();
-  const subtotal = getCartTotal(); // Gross subtotal
+  const dynamicDiscountPercent = getDynamicDiscount();
+  const { shippingCost } = getOrderSummary();
+  const subtotal = getCartTotal();
+  // Calculate discount amount
+  const discountAmount = (subtotal * dynamicDiscountPercent) / 100;
+
+  // Recalculate Total
+  // Note: Shipping Cost logic might change if Cash (Pickup Only)
+  // For now we assume shippingCost comes from selectedShippingOption in context.
+  // Ideally, if Cash -> Force Pickup -> ShippingCost = 0.
+  // But context controls shippingCost.
+  // We'll pass the updated values to OrderSummaryCard and API.
+
+  const currentTotal = subtotal + shippingCost - discountAmount;
+
+  // Discounts Map for Badge - always provide values
+  const discountsMap: Record<string, number> = {
+    [PAYMENT_METHODS.CASH]: settings?.payments?.cashDiscount ?? 0,
+    [PAYMENT_METHODS.TRANSFER]: settings?.payments?.transferDiscount ?? 0,
+    [PAYMENT_METHODS.MERCADOPAGO]: settings?.payments?.mpDiscount ?? 0,
+  };
 
   const handlePayment = async () => {
     if (!selectedPaymentMethod) {
@@ -85,88 +114,81 @@ export function CheckoutForm({
       return;
     }
 
-    // En el flujo simplificado sólo se permiten MercadoPago y Efectivo
-
     setIsProcessing(true);
 
     try {
-      const { items, discount, shippingCost } = getOrderSummary();
+      const { items } = getOrderSummary(); // Use items from context
 
-      // Preparar items para MercadoPago - USAR PRECIO CON DESCUENTO (salePrice) SI APLICA
-      const mpItems = items.map((item) => ({
-        title: `${item.product.name} (${item.size} - ${item.color})`,
-        quantity: item.quantity,
-        unit_price:
-          item.product.onSale && item.product.salePrice
-            ? item.product.salePrice
-            : item.product.price,
-        currency_id: "ARS",
-        picture_url: Array.isArray(item.product.images)
-          ? item.product.images[0]
-          : undefined,
-        description: item.product.description || undefined,
-      }));
+      // Preparar items para MercadoPago
+      // Fix: Don't apply discount here to unit price if we send general discount field?
+      // Checkout API handles it. We just send cart items.
 
-      // Preparar datos del cliente
       const customer = {
         name: `${customerData.firstName} ${customerData.lastName}`,
         email: customerData.email,
+        phone: customerData.identificationNumber, // Using ID field as phone proxy if needed, or update form
+        address: customerInfo?.address || customerData.identificationNumber, // Legacy field mapping check?
+        // Note: CustomerForm should ideally have Phone/Address fields if we require them.
+        // Assuming CustomerForm updates customerInfo in context or we specifically ask for them.
+        city: customerInfo?.city || "",
+        province: customerInfo?.province || "",
+        postalCode: customerInfo?.postalCode || "",
       };
 
-      // Metadata para el webhook y createFullOrder
-      // CRITICAL: Must include detailed address info for the Order First pattern
-      const metadata = {
-        customerName: customer.name,
-        customerEmail: customer.email,
-        customerPhone: customerInfo?.phone || "",
-        customerAddress: customerInfo?.address || "",
-        customerCity: customerInfo?.city || "",
-        customerProvince: customerInfo?.province || "",
-        customerPostalCode: customerInfo?.postalCode || "",
-        shippingAgencyCode: selectedAgency || "", // Store the agency (Puntopick/Andreani/CA ID)
-        paymentMethod: selectedPaymentMethod,
-        discount: discount,
-        shippingCost: shippingCost,
-        items: cartItems.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          size: item.size,
-          color: item.color,
-        })),
-        shippingMethodName: selectedShippingOption?.name, // Pass the explicit name (e.g., "Sucursal Correo Argentino")
-      };
-
-      // Crear preferencia en MercadoPago
-      const response = await fetch("/api/payments/mercadopago/preference", {
+      // Call Checkout API
+      const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: mpItems,
+          items: cartItems.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+            price: item.product.price, // API will re-fetch for security, this is informational
+            name: item.product.name,
+            size: item.size,
+            color: item.color,
+          })),
           customer,
-          metadata,
-          discount: discount, // Send explicit discount to API
-          shippingCost: shippingCost, // Send explicit shipping cost
-          shippingMethodName: selectedShippingOption?.name,
+          shippingMethod: selectedShippingOption,
+          paymentMethod: selectedPaymentMethod,
+          shippingAgency: selectedAgency ? { code: selectedAgency } : undefined,
+          orderData: {
+            total: currentTotal,
+            subtotal: subtotal,
+            shippingCost: shippingCost,
+            discount: discountAmount, // Send dynamic discount
+          },
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || "Error creando la preferencia de pago"
+          errorData.error || errorData.message || "Error al procesar el pedido"
         );
       }
 
       const data = await response.json();
 
-      if (!data.data?.init_point) {
-        throw new Error("Respuesta inválida del servidor");
+      if (data.success) {
+        if (
+          data.paymentMethod === PAYMENT_METHODS.MERCADOPAGO &&
+          data.initPoint
+        ) {
+          window.location.href = data.initPoint;
+        } else if (data.orderId) {
+          // Redirect to success page or show success
+          window.location.href = `/checkout/success?orderId=${data.orderId}&method=${data.paymentMethod}`;
+        } else {
+          // Fallback
+          show({
+            type: "success",
+            title: "Pedido Creado",
+            message: data.message,
+          });
+          // Clear cart?
+        }
       }
-
-      // Redirigir a MercadoPago
-      window.location.href = data.data.init_point;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Error procesando el pago";
@@ -211,19 +233,60 @@ export function CheckoutForm({
           <PaymentMethodSelector
             selectedMethod={selectedPaymentMethod}
             onMethodChange={setSelectedPaymentMethod}
-            allowedMethods={[PAYMENT_METHODS.MERCADOPAGO, PAYMENT_METHODS.CASH]}
+            allowedMethods={[
+              PAYMENT_METHODS.MERCADOPAGO,
+              PAYMENT_METHODS.CASH,
+              PAYMENT_METHODS.TRANSFER,
+            ]}
+            discounts={discountsMap}
           />
 
+          {/* Messages based on Selection */}
           {selectedPaymentMethod === PAYMENT_METHODS.CASH && (
+            <div className="p-4 bg-emerald-50 text-emerald-900 rounded-lg border border-emerald-200 mt-4">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                💵 Pago en Efectivo (Solo Retiro)
+              </h4>
+              <p className="text-sm mb-3">
+                Tu pedido quedará reservado por{" "}
+                <strong>
+                  {settings?.payments?.cashExpirationHours || 72} horas
+                </strong>
+                .
+              </p>
+              <p className="text-sm">
+                Te enviaremos los detalles para retirar por el local.
+              </p>
+            </div>
+          )}
+
+          {selectedPaymentMethod === PAYMENT_METHODS.TRANSFER && (
+            <div className="p-4 bg-blue-50 text-blue-900 rounded-lg border border-blue-200 mt-4">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                🏦 Transferencia Bancaria
+              </h4>
+              <p className="text-sm mb-3">
+                Tendrás{" "}
+                <strong>
+                  {settings?.payments?.transferExpirationHours || 48} horas
+                </strong>{" "}
+                para enviar el comprobante.
+              </p>
+              <p className="text-sm">
+                Al confirmar, recibirás los datos bancarios por email.
+              </p>
+            </div>
+          )}
+
+          {selectedPaymentMethod === PAYMENT_METHODS.MERCADOPAGO && (
             <div className="p-4 surface rounded-lg border border-muted mt-4">
-              <h4 className="font-medium mb-2">Pago en efectivo</h4>
-              <p className="text-sm muted mb-3">
-                Podrás pagar en Rapipago, Pago Fácil y otros centros de pago.
-              </p>
-              <p className="text-sm muted">
-                Te enviaremos las instrucciones por email después de confirmar
-                la compra.
-              </p>
+              <div className="flex items-center justify-center gap-2 text-sm muted">
+                <Shield className="w-4 h-4" />
+                <span>
+                  Te redirigiremos a Mercado Pago para completar la compra de
+                  forma segura.
+                </span>
+              </div>
             </div>
           )}
 
@@ -235,20 +298,15 @@ export function CheckoutForm({
             {isProcessing ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Procesando pago...
+                Procesando...
               </>
             ) : (
               <>
                 <Lock className="w-5 h-5 mr-2" />
-                Pagar ${total.toLocaleString("es-AR")}
+                Confirmar ${currentTotal.toLocaleString("es-AR")}
               </>
             )}
           </Button>
-
-          <div className="flex items-center justify-center gap-2 text-sm muted mt-4">
-            <Shield className="w-4 h-4" />
-            <span>Pago seguro con MercadoPago</span>
-          </div>
         </div>
 
         {/* Resumen del pedido */}
@@ -298,8 +356,8 @@ export function CheckoutForm({
             }}
             subtotal={subtotal}
             shippingCost={shippingCost}
-            discount={discount}
-            total={total}
+            discount={discountAmount}
+            total={currentTotal}
             onEditStep={() => {}}
             agency={selectedAgency}
           />

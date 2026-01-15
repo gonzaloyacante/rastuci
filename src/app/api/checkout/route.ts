@@ -97,7 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 3. Process Payment Logic (Split by Method)
 
-    // Prepare Shipping Data Common for both
+    // 3. Process Payment Logic (Split by Method)
     const shippingData = {
       street: customer.address,
       city: customer.city,
@@ -108,19 +108,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       cost: orderData.shippingCost,
     };
 
-    // A) CASH PAYMENT: Use createCashOrder which reserves stock immediately
+    // A) CASH PAYMENT
     if (paymentMethod === PAYMENT_METHODS.CASH) {
       const order = await orderService.createCashOrder(
         { ...customer, phone: customer.phone || "" },
         items,
-        orderData.total, // Ignored by service but passed
+        orderData.total,
         shippingData
       );
 
-      // Handle CA Shipment Immediate Creation if needed
+      // Handle CA Shipment (If applicable)
       if (
-        shippingMethod &&
-        shippingMethod.id &&
+        shippingMethod?.id &&
         shippingMethod.id.startsWith("ca-") &&
         customer.address &&
         customer.postalCode
@@ -141,16 +140,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: true,
         orderId: order.id,
         paymentMethod: PAYMENT_METHODS.CASH,
-        message:
-          "Pedido creado exitosamente. Te confirmaremos por WhatsApp cuando esté listo para retirar.",
+        message: "Pedido creado. Te esperamos en la tienda.",
       });
     }
 
-    // B) MERCADO PAGO: Use createFullOrder (Order First Pattern) - Stock decremented on payment approval
+    // B) TRANSFER PAYMENT (NEW)
+    if (paymentMethod === PAYMENT_METHODS.TRANSFER) {
+      const order = await orderService.createTransferOrder(
+        { ...customer, phone: customer.phone || "" },
+        items,
+        shippingData
+      );
 
-    // Note: We use createFullOrder here because MP flow is asynchronous.
-    // We want to persist the order PENDING PAYMENT, but NOT decrement stock yet (to avoid holding stock for abandoned carts).
-    // Stock is decremented in the Webhook when status becomes 'approved'.
+      return NextResponse.json({
+        success: true,
+        orderId: order.id,
+        paymentMethod: PAYMENT_METHODS.TRANSFER,
+        message:
+          "Pedido creado. Revisa tu email con los datos de transferencia.",
+      });
+    }
+
+    // C) MERCADO PAGO
+    // Note: Stock IS decremented immediately by createFullOrder to reserve items.
+    // If payment fails/cancels, we must ensure it's restored (via Cron or Webhook).
     const order = await orderService.createFullOrder(
       { ...customer, phone: customer.phone || "" },
       items,
@@ -159,14 +172,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
 
     if (paymentMethod === PAYMENT_METHODS.MERCADOPAGO) {
-      const tempOrderId = order.id; // Use real DB ID as external_reference
+      const tempOrderId = order.id;
 
-      const mpItems = checkoutService.prepareMPItems(
-        items,
-        shippingMethod,
-        orderData.discount,
-        validatedProducts
-      );
+      // Use the server-calculated order total for the payment preference
+      // This ensures that the amount to pay matches exactly what is stored in the database,
+      // including all server-side discounts and shipping costs.
+      const mpItems = [
+        {
+          id: "purchase_summary",
+          title: `Compra en Rastuci (Pedido #${tempOrderId.slice(0, 8)})`,
+          quantity: 1,
+          unit_price: Number(order.total),
+          currency_id: "ARS",
+        },
+      ];
 
       const payer = {
         name: customer.name,
@@ -178,17 +197,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
       };
 
-      // Metadata: Minimal needed, as main data is already in DB.
-      // We keep it for redundancy just in case.
       const metadata = {
         tempOrderId,
-        // ... (legacy metadata for redundancy/debugging)
-        customerEmail: customer.email,
+        customerEmail: customer.email, // Backup
       };
 
       const preference = await createPreference(mpItems, payer, {
         external_reference: tempOrderId,
         metadata: metadata,
+        // Ensure auto_return if desired? Not strictly needed if webhook works, but good for UX.
       });
 
       // Update order with preference ID logic
@@ -200,7 +217,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       return NextResponse.json({
         success: true,
-        orderId: order.id, // Return real order ID
+        orderId: order.id,
         preferenceId: preference.id,
         initPoint: preference.init_point,
         paymentMethod: PAYMENT_METHODS.MERCADOPAGO,

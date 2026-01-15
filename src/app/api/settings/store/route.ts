@@ -83,6 +83,34 @@ function dbToApiFormat(
           | "secondary"
           | "accent",
       })) ?? defaultStoreSettings.stockStatuses,
+    payments: {
+      cashDiscount:
+        (s as any)?.cashDiscount ?? defaultStoreSettings.payments.cashDiscount,
+      transferDiscount:
+        (s as any)?.transferDiscount ??
+        defaultStoreSettings.payments.transferDiscount,
+      mpDiscount:
+        (s as any)?.mpDiscount ?? defaultStoreSettings.payments.mpDiscount,
+      cashExpirationHours:
+        (s as any)?.cashExpirationHours ??
+        defaultStoreSettings.payments.cashExpirationHours,
+      transferExpirationHours:
+        (s as any)?.transferExpirationHours ??
+        defaultStoreSettings.payments.transferExpirationHours,
+      mpExpirationMinutes:
+        (s as any)?.mpExpirationMinutes ??
+        defaultStoreSettings.payments.mpExpirationMinutes,
+      bankName: (s as any)?.bankName ?? defaultStoreSettings.payments.bankName,
+      bankCbu: (s as any)?.bankCbu ?? defaultStoreSettings.payments.bankCbu,
+      bankAlias:
+        (s as any)?.bankAlias ?? defaultStoreSettings.payments.bankAlias,
+      bankHolder:
+        (s as any)?.bankHolder ?? defaultStoreSettings.payments.bankHolder,
+      bankCuit: (s as any)?.bankCuit ?? defaultStoreSettings.payments.bankCuit,
+      couponsEnabled:
+        (s as any)?.couponsEnabled ??
+        defaultStoreSettings.payments.couponsEnabled,
+    },
   };
 }
 

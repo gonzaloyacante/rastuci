@@ -4,6 +4,7 @@ import { PageHeaderWithActions, TabLayout, TabPanel } from "@/components/admin";
 import ContactForm from "@/components/forms/ContactForm";
 import HomeForm from "@/components/forms/HomeForm";
 import StoreForm from "@/components/forms/StoreForm";
+import PaymentSettings from "@/components/forms/PaymentSettings";
 import StockSettings from "@/components/forms/StockSettings";
 import ShippingSettings from "@/components/forms/ShippingSettings";
 import { Button } from "@/components/ui/Button";
@@ -18,7 +19,14 @@ import { Plus, Trash2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
-type TabType = "tienda" | "stock" | "envios" | "contacto" | "home" | "faqs";
+type TabType =
+  | "tienda"
+  | "pagos"
+  | "stock"
+  | "envios"
+  | "contacto"
+  | "home"
+  | "faqs";
 
 interface FAQ {
   question: string;
@@ -91,6 +99,7 @@ export default function ConfiguracionPage() {
       <TabLayout
         tabs={[
           { id: "tienda", label: "Tienda (Identidad)" },
+          { id: "pagos", label: "Pagos & Vencimientos" },
           { id: "stock", label: "Inventario & Stock" },
           { id: "envios", label: "Envíos y Logística" },
           { id: "contacto", label: "Contacto" },
@@ -104,6 +113,14 @@ export default function ConfiguracionPage() {
           <Card>
             <CardContent className="p-4 md:p-6">
               <StoreForm />
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        <TabPanel id="pagos" activeTab={activeTab}>
+          <Card>
+            <CardContent className="p-4 md:p-6">
+              <PaymentSettings />
             </CardContent>
           </Card>
         </TabPanel>

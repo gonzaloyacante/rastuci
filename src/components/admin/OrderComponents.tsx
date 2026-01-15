@@ -209,6 +209,57 @@ export function OrderCard({
     }
   };
 
+  const handleApproveTransfer = async () => {
+    if (!confirm("¿Confirmas que recibiste el pago de esta transferencia?"))
+      return;
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch(
+        `/api/admin/orders/${order.id}/approve-transfer`,
+        { method: "POST" }
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Error al aprobar transferencia");
+      }
+
+      if (onStatusChange) onStatusChange();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Error al aprobar");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (
+      !confirm(
+        "¿Seguro que quieres CANCELAR esta orden? Se restaurará el stock."
+      )
+    )
+      return;
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}/cancel`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Error al cancelar orden");
+      }
+
+      if (onStatusChange) onStatusChange();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Error al cancelar");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const openMiCorreo = () => {
     window.open("https://micorreo.correoargentino.com.ar/login", "_blank");
   };
@@ -308,30 +359,46 @@ export function OrderCard({
 
       {/* Acciones */}
       <div className="pt-3 border-t border-border space-y-2">
-        {order.status === "PENDING_PAYMENT" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Button
-              onClick={openMiCorreo}
-              variant="outline"
-              className="text-xs py-2.5 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold h-auto"
-              disabled={isUpdating}
-            >
-              <span className="flex items-center justify-center gap-1.5">
-                <span>📦</span>
-                <span>Pagar en MiCorreo</span>
-              </span>
-            </Button>
-            <Button
-              onClick={handleMarkProcessed}
-              variant="primary"
-              className="text-xs py-2.5 font-semibold h-auto"
-              disabled={isUpdating}
-            >
-              {isUpdating ? "⏳ Procesando..." : "✓ Marcar procesado"}
-            </Button>
-          </div>
+        {/* Legacy / Manual Processing */}
+        {order.status === "PENDING_PAYMENT" &&
+          order.paymentMethod !== "mercadopago" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button
+                onClick={openMiCorreo}
+                variant="outline"
+                className="text-xs py-2.5 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold h-auto"
+                disabled={isUpdating}
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <span>📦</span>
+                  <span>Pagar en MiCorreo</span>
+                </span>
+              </Button>
+              <Button
+                onClick={handleMarkProcessed}
+                variant="primary"
+                className="text-xs py-2.5 font-semibold h-auto"
+                disabled={isUpdating}
+              >
+                {isUpdating ? "⏳ Procesando..." : "✓ Marcar procesado"}
+              </Button>
+            </div>
+          )}
+
+        {/* Transfer Approval */}
+        {(order.status === "WAITING_TRANSFER_PROOF" ||
+          order.status === "PAYMENT_REVIEW") && (
+          <Button
+            onClick={handleApproveTransfer}
+            // variant="success" // Assuming success variant exists or use custom className
+            className="w-full text-xs py-2.5 font-semibold h-auto bg-green-600 hover:bg-green-700 text-white"
+            disabled={isUpdating}
+          >
+            {isUpdating ? "⏳ Procesando..." : "✓ Aprobar Transferencia"}
+          </Button>
         )}
 
+        {/* Mark Delivered */}
         {order.status === "PROCESSED" && (
           <Button
             onClick={handleMarkDelivered}
@@ -340,6 +407,18 @@ export function OrderCard({
             disabled={isUpdating}
           >
             {isUpdating ? "⏳ Procesando..." : "✓ Marcar entregado"}
+          </Button>
+        )}
+
+        {/* Cancel Button (Available for most statuses except Delivered/Cancelled) */}
+        {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
+          <Button
+            onClick={handleCancelOrder}
+            variant="destructive"
+            className="w-full text-xs py-2.5 font-semibold h-auto bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+            disabled={isUpdating}
+          >
+            {isUpdating ? "⏳..." : "✕ Cancelar Orden"}
           </Button>
         )}
 

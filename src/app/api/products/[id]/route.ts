@@ -10,6 +10,8 @@ import { ProductCreateSchema } from "@/lib/validation/product";
 import { variantService } from "@/services/variant-service";
 import { ApiResponse, Product } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 interface RouteParams {
   params: Promise<{
@@ -41,6 +43,13 @@ export async function GET(
     });
 
     if (!product) {
+      return fail("NOT_FOUND", "Producto no encontrado", 404);
+    }
+
+    const session = await getServerSession(authOptions);
+    const isAdmin = session?.user?.isAdmin;
+
+    if (!product.isActive && !isAdmin) {
       return fail("NOT_FOUND", "Producto no encontrado", 404);
     }
 
@@ -302,50 +311,16 @@ export const DELETE = withAdminAuth(
       }
       const { id } = await params;
 
-      // Verificar si hay pedidos asociados a este producto
-      const orderItemsCount = await prisma.order_items.count({
-        where: { productId: id },
-      });
+      // Soft Delete: Just mark as inactive
+      // We do NOT check for order_items because we want to allow "deleting" (archiving)
+      // products even if they have been sold, preserving the history.
 
-      if (orderItemsCount > 0) {
-        return fail(
-          "BAD_REQUEST",
-          "No se puede eliminar el producto porque está incluido en pedidos existentes",
-          400
-        );
-      }
-
-      const productToDelete = await prisma.products.findUnique({
+      await prisma.products.update({
         where: { id },
+        data: { isActive: false },
       });
 
-      await prisma.products.delete({
-        where: { id },
-      });
-
-      // Eliminar imágenes de Cloudinary si existen
-      if (productToDelete && productToDelete.images) {
-        const images: string[] =
-          typeof productToDelete.images === "string"
-            ? JSON.parse(productToDelete.images)
-            : productToDelete.images;
-
-        if (images.length > 0) {
-          logger.info(
-            `Deleting ${images.length} images for deleted product ${id}`
-          );
-          // No esperamos (await) para no demorar la respuesta, o podemos esperar si es crítico.
-          // Dado que el producto ya se borró de la DB, mejor limpiar asíncronamente.
-          Promise.allSettled(
-            images.map(async (url) => {
-              const publicId = extractPublicId(url);
-              if (publicId) {
-                await deleteImage(publicId);
-              }
-            })
-          ).catch((err) => logger.error("Error cleaning up images", { err }));
-        }
-      }
+      // We do NOT delete images for soft-deleted products to preserve history.
 
       return ok(null, "Producto eliminado exitosamente");
     } catch (error) {
