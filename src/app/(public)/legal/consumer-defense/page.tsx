@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { LegalPolicyRenderer } from "@/components/ui/LegalPolicyRenderer";
+import { PolicySection } from "@/lib/policy-utils";
 
 export const metadata: Metadata = {
   title: "Defensa al Consumidor",
@@ -33,33 +35,10 @@ export default async function DefensaConsumidorPage() {
         </h1>
 
         <div className="prose prose-sm sm:prose lg:prose-lg max-w-none space-y-8 text-content-secondary">
-          {content?.sections?.map((section, index) => (
-            <section key={index} className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-content-primary font-heading">
-                {section.title}
-              </h2>
-              {section.content && (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: section.content.replace(/\n/g, "<br/>"),
-                  }}
-                />
-              )}
-
-              {section.items && section.items.length > 0 && (
-                <ul className="list-disc pl-5 space-y-2 mt-2">
-                  {section.items.map((item, i) => (
-                    <li
-                      key={i}
-                      dangerouslySetInnerHTML={{
-                        __html: item,
-                      }}
-                    />
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
+          <LegalPolicyRenderer
+            htmlContent={policy.htmlContent}
+            content={content as { sections?: PolicySection[] } | null}
+          />
 
           <section className="pt-8 border-t border-muted">
             <p className="text-sm text-content-tertiary">

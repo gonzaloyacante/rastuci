@@ -3,6 +3,7 @@ import { withAdminAuth } from "@/lib/adminAuth";
 import { apiHandler, AppError } from "@/lib/api-handler";
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { generateHtmlContent } from "@/lib/policy-utils";
 
 const updatePolicySchema = z.object({
   title: z.string().min(1).optional(),
@@ -60,7 +61,10 @@ export const PUT = withAdminAuth(
           ...(title && { title }),
           ...(slug && { slug }),
           ...(description !== undefined && { description }),
-          ...(sections && { content: { sections } as any }),
+          ...(sections && {
+            content: { sections } as any,
+            htmlContent: generateHtmlContent(sections),
+          }),
           ...(isActive !== undefined && { isActive }),
         },
       });

@@ -4,6 +4,7 @@ import { apiHandler, AppError } from "@/lib/api-handler";
 import { NextRequest, NextResponse } from "next/server";
 import { fail, ok } from "@/lib/apiResponse";
 import { z } from "zod";
+import { generateHtmlContent } from "@/lib/policy-utils";
 
 const createPolicySchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -50,6 +51,7 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
         slug,
         description,
         content: { sections: sections || [] } as any,
+        htmlContent: generateHtmlContent(sections),
         isActive: isActive ?? true,
       },
     });
