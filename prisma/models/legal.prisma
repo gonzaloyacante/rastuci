@@ -1,0 +1,17 @@
+// =============================================================================
+// LEGAL & CONTENT MODELS
+// =============================================================================
+
+model LegalPolicy {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  content     Json? // Legacy JSON content
+  htmlContent String? // New String content
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}

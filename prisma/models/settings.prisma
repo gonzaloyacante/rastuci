@@ -1,0 +1,163 @@
+// =============================================================================
+// SETTINGS MODELS (Explicit - No JSON)
+// =============================================================================
+
+/// Store identity and email configuration
+model store_settings {
+  id                String   @id @default("default")
+  name              String   @default("Rastuci")
+  adminEmail        String?
+  salesEmail        String?
+  supportEmail      String?
+  senderName        String?
+  addressStreet     String?
+  addressCity       String?
+  addressProvince   String?
+  addressPostalCode String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+/// Homepage visual configuration
+model home_settings {
+  id                   String          @id @default("default")
+  headerLogoUrl        String?
+  heroLogoUrl          String?
+  heroImage            String?
+  heroTitle            String          @default("Bienvenidos a Rastuci")
+  heroSubtitle         String          @default("Ropa para niños con estilo")
+  ctaPrimaryLabel      String          @default("Ver Productos")
+  ctaSecondaryLabel    String          @default("Conocer Más")
+  categoriesTitle      String          @default("Categorías")
+  featuredTitle        String          @default("Ofertas Destacadas")
+  featuredSubtitle     String          @default("Los mejores productos con descuento")
+  showHeroLogo         Boolean         @default(true)
+  showHeroTitle        Boolean         @default(true)
+  showHeroSubtitle     Boolean         @default(true)
+  showCtaPrimary       Boolean         @default(true)
+  showCtaSecondary     Boolean         @default(true)
+  showCategoriesTitle  Boolean         @default(true)
+  showFeaturedTitle    Boolean         @default(true)
+  showFeaturedSubtitle Boolean         @default(true)
+  footerLogoUrl        String?
+  footerBrand          String          @default("Rastuci")
+  footerTagline        String          @default("Moda infantil con amor")
+  showFooterLogo       Boolean         @default(true)
+  showFooterBrand      Boolean         @default(true)
+  showFooterTagline    Boolean         @default(true)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  benefits             home_benefits[]
+}
+
+/// Homepage benefit items
+model home_benefits {
+  id             String        @id @default(cuid())
+  homeSettingsId String        @default("default")
+  icon           String        @default("Truck")
+  title          String
+  description    String
+  sortOrder      Int           @default(0)
+  home_settings  home_settings @relation(fields: [homeSettingsId], references: [id], onDelete: Cascade)
+
+  @@index([homeSettingsId])
+  @@index([sortOrder])
+}
+
+/// Contact page configuration
+model contact_settings {
+  id                 String   @id @default("default")
+  headerTitle        String   @default("Contacto")
+  headerSubtitle     String   @default("Estamos aquí para ayudarte")
+  emails             String[] @default([])
+  phones             String[] @default([])
+  addressLine1       String?
+  addressLine2       String?
+  addressCityCountry String?
+  hoursTitle         String   @default("Horarios de Atención")
+  hoursWeekdays      String   @default("Lunes a Viernes: 9:00 - 18:00")
+  hoursSaturday      String   @default("Sábados: 9:00 - 14:00")
+  hoursSunday        String   @default("Domingos: Cerrado")
+  formTitle          String   @default("Envíanos un mensaje")
+  formNameLabel      String   @default("Nombre")
+  formEmailLabel     String   @default("Email")
+  formPhoneLabel     String   @default("Teléfono")
+  formMessageLabel   String   @default("Mensaje")
+  formSubmitLabel    String   @default("Enviar")
+  formSuccessTitle   String   @default("¡Mensaje enviado!")
+  formSuccessMessage String   @default("Te responderemos pronto")
+  formSendAnother    String   @default("Enviar otro mensaje")
+  instagramUrl       String?
+  instagramUsername  String?
+  facebookUrl        String?
+  facebookUsername   String?
+  whatsappUrl        String?
+  whatsappUsername   String?
+  tiktokUrl          String?
+  tiktokUsername     String?
+  youtubeUrl         String?
+  youtubeUsername    String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+/// Stock/Inventory alert thresholds
+model stock_settings {
+  id                     String                @id @default("default")
+  lowStockThreshold      Int                   @default(5)
+  criticalStockThreshold Int                   @default(2)
+  enableLowStockAlerts   Boolean               @default(true)
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  statuses               stock_status_levels[]
+}
+
+model stock_status_levels {
+  id              String           @id
+  stockSettingsId String           @default("default")
+  min             Int              @default(0)
+  max             Int?
+  label           String
+  color           StockStatusColor @default(muted)
+  sortOrder       Int              @default(0)
+  stock_settings  stock_settings   @relation(fields: [stockSettingsId], references: [id], onDelete: Cascade)
+
+  @@index([stockSettingsId])
+}
+
+/// Shipping configuration defaults
+model shipping_settings {
+  id                 String   @id @default("default")
+  enableFreeShipping Boolean  @default(false)
+  freeShippingMin    Decimal? @db.Decimal(10, 2)
+  defaultCarrier     String   @default("correo_argentino")
+  originPostalCode   String?
+  originCity         String?
+  originProvince     String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+/// FAQ items (replaces JSON array in settings)
+model faq_items {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// Legacy settings table - DEPRECATED, will be removed after migration
+/// @deprecated Use specific settings models instead
+model settings {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}

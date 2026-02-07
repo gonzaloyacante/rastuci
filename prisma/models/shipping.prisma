@@ -1,0 +1,170 @@
+// =============================================================================
+// CORREO ARGENTINO MODELS
+// =============================================================================
+
+model ca_agencies {
+  code               String         @id
+  name               String
+  manager            String?
+  email              String?
+  phone              String?
+  packageReception   Boolean        @default(false)
+  pickupAvailability Boolean        @default(false)
+  streetName         String?
+  streetNumber       String?
+  floor              String?
+  apartment          String?
+  locality           String?
+  city               String?
+  province           String?
+  provinceCode       String         @db.Char(1)
+  postalCode         String?
+  latitude           Float?
+  longitude          Float?
+  hours              Json?
+  // hours     Json? // Deprecated, replaced by relation
+  agency_hours       agency_hours[]
+  status             String         @default("ACTIVE")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([city])
+  @@index([provinceCode])
+  @@index([status])
+  @@index([postalCode])
+}
+
+model agency_hours {
+  id         String      @id @default(cuid())
+  agencyCode String
+  day        String // Lunes, Martes, etc.
+  open       String // HH:mm
+  close      String // HH:mm
+  agency     ca_agencies @relation(fields: [agencyCode], references: [code], onDelete: Cascade)
+
+  @@index([agencyCode])
+}
+
+model ca_customers {
+  customerId        String              @id
+  firstName         String
+  lastName          String
+  email             String              @unique
+  documentType      CADocumentType
+  documentId        String              @unique
+  phone             String?
+  cellPhone         String?
+  streetName        String?
+  streetNumber      String?
+  floor             String?
+  apartment         String?
+  locality          String?
+  city              String?
+  provinceCode      String?             @db.Char(1)
+  postalCode        String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  ca_shipments      ca_shipments[]
+  ca_shipping_rates ca_shipping_rates[]
+  orders            orders[]
+
+  @@index([documentId])
+  @@index([email])
+}
+
+model ca_shipments {
+  id                 String               @id @default(cuid())
+  customerId         String
+  extOrderId         String               @unique
+  orderNumber        String?
+  trackingNumber     String?              @unique
+  productId          String?
+  senderName         String?
+  senderPhone        String?
+  senderCellPhone    String?
+  senderEmail        String?
+  senderStreetName   String?
+  senderStreetNumber String?
+  senderFloor        String?
+  senderApartment    String?
+  senderLocality     String?
+  senderCity         String?
+  senderProvinceCode String?              @db.Char(1)
+  senderPostalCode   String?
+  recipientName      String
+  recipientPhone     String?
+  recipientCellPhone String?
+  recipientEmail     String
+  deliveryType       CADeliveryType
+  productType        String
+  agencyCode         String?
+  destStreetName     String?
+  destStreetNumber   String?
+  destFloor          String?
+  destApartment      String?
+  destLocality       String?
+  destCity           String?
+  destProvinceCode   String?              @db.Char(1)
+  destPostalCode     String?
+  weight             Int
+  height             Int
+  width              Int
+  length             Int
+  declaredValue      Decimal              @db.Decimal(10, 2)
+  status             String?
+  importedAt         DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  ca_customers       ca_customers         @relation(fields: [customerId], references: [customerId])
+  ca_tracking_events ca_tracking_events[]
+  orders             orders[]
+
+  @@index([customerId])
+  @@index([extOrderId])
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([createdAt])
+}
+
+model ca_shipping_rates {
+  id                    String         @id @default(cuid())
+  customerId            String
+  postalCodeOrigin      String
+  postalCodeDestination String
+  deliveryType          CADeliveryType
+  productType           String
+  productName           String
+  weight                Int
+  height                Int
+  width                 Int
+  length                Int
+  price                 Decimal        @db.Decimal(10, 2)
+  deliveryTimeMin       String
+  deliveryTimeMax       String
+  validTo               DateTime
+  createdAt             DateTime       @default(now())
+  ca_customers          ca_customers   @relation(fields: [customerId], references: [customerId])
+
+  @@index([customerId])
+  @@index([postalCodeDestination])
+  @@index([postalCodeOrigin])
+  @@index([validTo])
+  @@index([postalCodeOrigin, postalCodeDestination])
+}
+
+model ca_tracking_events {
+  id           String       @id @default(cuid())
+  shipmentId   String
+  event        String
+  eventDate    DateTime
+  branch       String
+  status       String?
+  sign         String?
+  createdAt    DateTime     @default(now())
+  ca_shipments ca_shipments @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@index([eventDate])
+  @@index([event])
+  @@index([shipmentId])
+  @@index([shipmentId, eventDate])
+}

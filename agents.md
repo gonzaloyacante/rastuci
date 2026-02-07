@@ -1,61 +1,128 @@
-## Convenciones
+# AGENTS.md - E-commerce Rastuci
 
-- Usa pnpm para todo. No usar npm ni yarn bajo ningún concepto
-- TypeScript es obligatorio
-- Usa siempre Tailwind CSS para estilos
-- Iconos de tabler-icons. Importación explícita, nunca barrels
-- Preferir ESM y sintaxis moderna del navegador
-- **CRÍTICO**: El proyecto usa `src/proxy.ts`. NO existe `middleware.ts`. NO buscarlo ni crearlo.
+> **CONTEXTO**: Plataforma de E-commerce real para venta de ropa infantil. Maneja pagos, envíos
+> (Correo Argentino), stock y facturación. **OBJETIVO**: **Estabilidad Financiera y de Datos**. Un
+> error aquí significa pérdida de dinero o pedidos. Prioridad absoluta a la integridad de datos y UX
+> de checkout.
 
-## Organización
+---
 
-- Componentes pequeños, con una sola responsabilidad
-- Preferir composición frente a configuraciones complejas
-- Evita abstracciones prematuras
-- El código compartido debe vivir en carpetas claras como `components`, `layouts`, `lib` o `utils`
+## 1. 🛠 Stack & Herramientas (Estricto)
 
-## Reglas de TypeScript
+| Herramienta         | Versión/Detalle         | Restricción                                                            |
+| :------------------ | :---------------------- | :--------------------------------------------------------------------- |
+| **Package Manager** | `yarn`                  | **PROHIBIDO** usar npm o pnpm.                                         |
+| **Framework**       | Next.js 16 (App Router) | Migración gradual de Pages a App Router (Verificar directorio actual). |
+| **Lenguaje**        | TypeScript              | **Strict Mode**. Tipos para API Responses son obligatorios.            |
+| **Base de Datos**   | PostgreSQL (Neon Tech)  | Neon Branching activo.                                                 |
+| **ORM**             | Prisma                  | Schema complejo con Relaciones JSON migradas a tablas.                 |
+| **Estilos**         | Tailwind CSS 4          | Configuración extensa en `tailwind.config.ts`. Animaciones custom.     |
+| **Estado Global**   | Zustand / Context       | Carrito de compras (`CartContext` o store).                            |
+| **Auth**            | NextAuth.js v4          | Providers: Google y Credentials.                                       |
+| **Pagos**           | MercadoPago             | SDK oficial. Webhooks críticos en `/api/webhooks/mercadopago`.         |
+| **Testing**         | Vitest + Playwright     | Cobertura obligatoria para Checkout y Cálculo de Envíos.               |
 
-- Evita `any` y `unknown`
-- Preferir siempre que se pueda inferencia
-- Si los tipos no están claros, parar y aclarar antes de continuar
+---
 
-## UI y estilos
+## 2. 📂 Arquitectura & Estructura
 
-- Tailwind es la única solución de estilos
-- No duplicar clases si se puede extraer un componente
-- Priorizar legibilidad frente a micro-optimizaciones visuales
-- Accesibilidad no es opcional: HTML semántico, roles ARIA cuando aplique y foco gestionado
+- **`/src/app`**: Rutas principales (Checkout, Productos, Admin).
+  - `checkout/`: Flujo crítico. Validar cada paso (Envío -> Pago -> Confirmación).
+  - `admin/`: Panel de gestión de productos y órdenes.
+- **`/src/components`**:
+  - `ui/`: Design System propio (Botones, Inputs, Badges de estado).
+  - `products/`: Cards de producto, selectores de variantes (Color/Talle).
+- **`/src/lib`**: Lógica core.
+  - `utils.ts`: Formateo de moneda (`formatCurrency`). **Siempre usar esta función**.
+  - `prisma.ts`: Cliente DB.
+- **`/src/services`**: Capa de servicio para integraciones externas.
+  - `shipping.service.ts`: Lógica de Correo Argentino.
+  - `mercadopago.service.ts`: Creación de preferencias.
+- **`/src/hooks`**: Custom hooks.
+  - `useCart`: Lógica del carrito (add, remove, update quantity, sync with local storage).
 
-## Testing y calidad
+---
 
-- Revisar los workflows de CI en `.github/workflows`.
-- Ejecutar los tests con: `pnpm test` o `pnpm turbo run test --filter rastuci`
-- Para Vitest: `pnpm vitest run -t "<nombre del test>"`
-- Tras mover archivos o cambiar imports, ejecutar: `pnpm lint`
-- No se acepta código con errores de tipos, lint o tests fallidos.
-- Añadir o actualizar tests cuando se cambie comportamiento, aunque no se pida explícitamente.
+## 3. 💳 Reglas de Negocio Críticas (E-commerce)
 
-## Rendimiento y decisiones técnicas
+1.  **Manejo de Dinero**:
+    - **NUNCA** usar `float` para precios.
+    - En DB: `Decimal(10, 2)`.
+    - En código: Usar bibliotecas o enteros (centavos) si es necesario manipular, pero preferir
+      `Decimal` de Prisma.
 
-- No adivinar rendimiento, tamaño de bundle o tiempos de carga: medir.
-- Si algo parece lento, añadir instrumentación antes de optimizar.
-- Validar primero en pequeño antes de escalar cambios a todo el proyecto.
+2.  **Stock & Inventario**:
+    - El stock vive en `product_variants` (Color + Talle).
+    - **Race Conditions**: Al iniciar checkout, verificar stock en tiempo real.
+    - Reserva de stock: Usar `stock_reservations` para bloquear items durante el pago
+      (opcional/avanzado).
 
-## Commits y Pull Requests
+3.  **Checkout Flow**:
+    - **Validación Cruzada**: El precio del frontend es visual. El backend (API Routes/Actions) DEBE
+      recalcular el total sumando items de la DB. Jamás confiar en el total enviado por el cliente.
+    - **Envíos**: Calcular costo de envío basado en CP y peso real de los productos en el carrito.
 
-- Título del PR: [rastuci] Descripción clara y concisa.
-- PRs pequeños y enfocados.
-- Antes de commitear:
-  - pnpm lint
-  - pnpm test
-- Explicar qué ha cambiado, por qué y cómo se ha verificado.
-- Si se introduce una nueva restricción ("nunca X", "siempre Y"), documentarla en este archivo.
+---
 
-## Comportamiento del agente
+## 4. 🗄️ Base de Datos & Neon Branching
 
-- Si una petición no está clara, hacer preguntas concretas antes de ejecutar.
-- Tareas simples y bien definidas se ejecutan directamente.
-- Cambios complejos (refactors, nuevas features, decisiones de arquitectura) requieren confirmar
-  entendimiento antes de actuar.
-- No asumir requisitos implícitos. Si falta información, se pide.
+**Neon Branching** separa los datos reales de ventas de las pruebas.
+
+### **Producción (`main`)**
+
+- **Branch**: `main`
+- **DB URL**: `ep-polished-river...` (Ver `.env.production`)
+- **PELIGRO**: Cada registro aquí es una venta o un cliente real.
+- **Acciones Prohibidas**: `db push` directo, borrado masivo, seeding destructivo.
+
+### **Desarrollo (`develop`)**
+
+- **Branch**: `preview/develop`
+- **DB URL**: `ep-twilight-firefly...` (Ver `.env` local)
+- **Uso**: Desarrollo de features, pruebas de integración.
+- **Seeds**: `yarn db:seed` puebla esta base con productos y categorías de prueba.
+
+---
+
+## 5. 🛡️ Seguridad & Integraciones
+
+1.  **Credenciales**:
+    - Keys de MercadoPago y Correo Argentino viven en Vercel Env Vars.
+    - En local, deben estar en `.env`.
+    - **NUNCA** hardcodear tokens.
+
+2.  **Webhooks**:
+    - Los webhooks de pago deben validar la firma o el origen (IPs de MP) si es posible.
+    - Idempotencia: Procesar el mismo webhook dos veces no debe duplicar la orden.
+
+3.  **Datos de Usuario**:
+    - No exponer datos sensibles (teléfono, dirección exacta) en respuestas públicas de API.
+    - Proteger rutas `/admin` con middleware estricto (`role === 'ADMIN'`).
+
+---
+
+## 6. 🤖 Flujo de Trabajo para el Agente
+
+1.  **Seguridad Primero**:
+    - Si tocas lógica de pagos o checkout, pide revisión doble.
+    - Verifica que tus cambios no rompan la calculadora de envíos.
+
+2.  **Testing**:
+    - "Si no está testeado, está roto".
+    - Nuevas features deben incluir test unitario (Vitest) o E2E (Playwright).
+    - Ejecuta `yarn verify` antes de decir "listo".
+
+3.  **Consultas DB**:
+    - Prisma es poderoso pero cuidado con el **N+1**. Usa `include` sabiamente.
+    - Para reportes de dashboard, considera usar `groupBy` o raw queries si es muy complejo/lento.
+
+---
+
+## 7. 🚫 Anti-Patrones (E-commerce Edition)
+
+- ❌ Confiar en el precio que viene del `localStorage` o del cliente.
+- ❌ Guardar tarjetas de crédito en nuestra DB (Eso es trabajo de MercadoPago).
+- ❌ Usar `any` en respuestas de API de terceros. Definir interfaces para la respuesta de Correo
+  Argentino/MP.
+- ❌ Modificar stock sin transacción de base de datos.
+- ❌ Ignorar errores de red en el checkout. El usuario debe saber si falló el pago.

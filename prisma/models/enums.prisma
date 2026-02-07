@@ -1,0 +1,35 @@
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum StockStatusColor {
+  success
+  warning
+  error
+  info
+  muted
+  primary
+  secondary
+  accent
+}
+
+enum CADeliveryType {
+  D // Domicilio
+  S // Sucursal
+}
+
+enum CADocumentType {
+  DNI
+  CUIT
+}
+
+enum OrderStatus {
+  PENDING // Pedido creado, incompleto (MP sin pagar)
+  PENDING_PAYMENT // Esperando pago (MP)
+  WAITING_TRANSFER_PROOF // Esperando comprobante (Transferencia)
+  PAYMENT_REVIEW // Comprobante subido, esperando aprobación Admin
+  RESERVED // Reservado (Efectivo) - Stock retenido
+  PROCESSED // Pagado / Listo para preparar
+  DELIVERED // Entregado
+  CANCELLED // Cancelado / Rechazado
+}

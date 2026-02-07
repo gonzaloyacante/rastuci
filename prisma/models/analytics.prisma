@@ -1,0 +1,112 @@
+// =============================================================================
+// ANALYTICS MODELS
+// =============================================================================
+
+model analytics_events {
+  id                 String             @id @default(cuid())
+  sessionId          String
+  userId             String?
+  eventName          String
+  eventData          Json?
+  pageUrl            String?
+  referrer           String?
+  deviceType         String?
+  browser            String?
+  os                 String?
+  country            String?
+  city               String?
+  createdAt          DateTime           @default(now())
+  analytics_sessions analytics_sessions @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([eventName])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([eventName, createdAt])
+}
+
+model analytics_sessions {
+  id               String             @id @default(cuid())
+  userId           String?
+  startedAt        DateTime           @default(now())
+  endedAt          DateTime?
+  pageViews        Int                @default(0)
+  deviceType       String?
+  browser          String?
+  os               String?
+  screenWidth      Int?
+  screenHeight     Int?
+  country          String?
+  city             String?
+  timezone         String?
+  entryPage        String?
+  exitPage         String?
+  duration         Int?
+  isConverted      Boolean            @default(false)
+  conversionValue  Decimal?           @db.Decimal(10, 2)
+  analytics_events analytics_events[]
+  cart_abandonment cart_abandonment[]
+  search_analytics search_analytics[]
+
+  @@index([isConverted])
+  @@index([startedAt])
+  @@index([userId])
+  @@index([isConverted, startedAt])
+}
+
+model search_analytics {
+  id                  String             @id @default(cuid())
+  sessionId           String
+  userId              String?
+  query               String
+  resultsCount        Int?
+  clickedProductId    String?
+  clickPosition       Int?
+  convertedToCart     Boolean            @default(false)
+  convertedToPurchase Boolean            @default(false)
+  createdAt           DateTime           @default(now())
+  analytics_sessions  analytics_sessions @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([query])
+  @@index([sessionId])
+  @@index([convertedToPurchase, createdAt])
+}
+
+model cart_abandonment {
+  id                 String                   @id @default(cuid())
+  sessionId          String
+  userId             String?
+  cartItems          Json? // kept for migration
+  // cartItems   Json // Deprecated, replaced by relation
+  items              cart_abandonment_items[]
+  cartValue          Decimal                  @db.Decimal(10, 2)
+  abandonedAt        DateTime                 @default(now())
+  lastStep           String?
+  recoveredAt        DateTime?
+  recoveryOrderId    String?
+  emailSent          Boolean                  @default(false)
+  emailSentAt        DateTime?
+  analytics_sessions analytics_sessions       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([abandonedAt])
+  @@index([recoveredAt])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([emailSent, abandonedAt])
+}
+
+model cart_abandonment_items {
+  id            String           @id @default(cuid())
+  abandonmentId String
+  productId     String
+  quantity      Int
+  price         Decimal          @db.Decimal(10, 2)
+  productName   String?
+  variant       String? // JSON or String description of variant
+  abandonment   cart_abandonment @relation(fields: [abandonmentId], references: [id], onDelete: Cascade)
+  product       products         @relation(fields: [productId], references: [id])
+
+  @@index([abandonmentId])
+  @@index([productId])
+}
