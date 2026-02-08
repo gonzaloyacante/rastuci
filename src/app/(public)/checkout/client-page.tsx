@@ -10,6 +10,7 @@ import {
 } from "@/app/(public)/checkout/components";
 import { Spinner } from "@/components/ui/Spinner";
 import { useCart } from "@/context/CartContext";
+import { useVacationSettings } from "@/hooks/useVacationSettings";
 import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -33,7 +34,8 @@ const stepLabels = [
 
 export default function CheckoutPageClient() {
   const router = useRouter();
-  const { cartItems, placeOrder, getCartTotal, loadCheckoutSettings } = useCart();
+  const { cartItems, placeOrder, getCartTotal, loadCheckoutSettings } =
+    useCart();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(
     CheckoutStep.CUSTOMER_INFO
   );
@@ -49,18 +51,27 @@ export default function CheckoutPageClient() {
     [subtotal, shippingCost]
   );
 
+  const { isVacationMode } = useVacationSettings();
+
   // Check if cart is empty and redirect, and load settings
   useEffect(() => {
     loadCheckoutSettings(); // Cargar configuraciones (envío/pagos) al entrar al checkout
 
     const checkCartTimer = setTimeout(() => {
-      if (cartItems.length === 0 && currentStep !== CheckoutStep.CONFIRMATION) {
-        toast.error("Tu carrito está vacío");
+      if (
+        (cartItems.length === 0 || isVacationMode) &&
+        currentStep !== CheckoutStep.CONFIRMATION
+      ) {
+        toast.error(
+          isVacationMode
+            ? "La tienda está en pausa por vacaciones"
+            : "Tu carrito está vacío"
+        );
         router.push("/carrito");
       }
     }, 300);
     return () => clearTimeout(checkCartTimer);
-  }, [cartItems, router, currentStep, loadCheckoutSettings]);
+  }, [cartItems, router, currentStep, loadCheckoutSettings, isVacationMode]);
 
   const goToNextStep = useCallback(() => {
     if (currentStep < CheckoutStep.CONFIRMATION) {

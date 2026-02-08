@@ -4,6 +4,7 @@ import { PageHeaderWithActions, TabLayout, TabPanel } from "@/components/admin";
 import ContactForm from "@/components/forms/ContactForm";
 import HomeForm from "@/components/forms/HomeForm";
 import StoreForm from "@/components/forms/StoreForm";
+import VacationSettingsForm from "@/components/forms/VacationSettings";
 import PaymentSettings from "@/components/forms/PaymentSettings";
 import StockSettings from "@/components/forms/StockSettings";
 import ShippingSettings from "@/components/forms/ShippingSettings";
@@ -26,7 +27,8 @@ type TabType =
   | "envios"
   | "contacto"
   | "home"
-  | "faqs";
+  | "faqs"
+  | "vacaciones";
 
 interface FAQ {
   question: string;
@@ -102,6 +104,7 @@ export default function ConfiguracionPage() {
           { id: "pagos", label: "Pagos & Vencimientos" },
           { id: "stock", label: "Inventario & Stock" },
           { id: "envios", label: "Envíos y Logística" },
+          { id: "vacaciones", label: "Vacaciones" },
           { id: "contacto", label: "Contacto" },
           { id: "home", label: "Inicio" },
           { id: "faqs", label: "FAQs" },
@@ -139,6 +142,10 @@ export default function ConfiguracionPage() {
               <ShippingSettings />
             </CardContent>
           </Card>
+        </TabPanel>
+
+        <TabPanel id="vacaciones" activeTab={activeTab}>
+          <VacationSettingsForm />
         </TabPanel>
 
         <TabPanel id="contacto" activeTab={activeTab}>

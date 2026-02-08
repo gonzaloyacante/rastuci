@@ -437,3 +437,19 @@ export const getPaymentReminderEmail = (params: {
     customButtonText: "⚡ Completar Compra Ahora",
   });
 };
+
+export const getVacationReopeningEmail = (_params: {
+  customerEmail: string;
+}): string => {
+  return generateEmailHtml({
+    customerName: "Cliente",
+    orderId: "",
+    title: "¡Ya volvimos!",
+    color: "#10b981", // Emerald Green
+    message: `Nos alegra contarte que <strong>Rastuci</strong> está abierto nuevamente.<br><br>
+    Ya podés visitar la tienda y finalizar tu compra. ¡Gracias por esperarnos!<br><br>
+    Si tenías productos en mente, te recomendamos revisarlos pronto antes de que se agoten.`,
+    orderUrl: process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com",
+    customButtonText: "🛍️ Ir a la Tienda",
+  });
+};

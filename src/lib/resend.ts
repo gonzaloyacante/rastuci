@@ -282,4 +282,15 @@ export const emailService = {
       type: "SALES",
     });
   },
+
+  async sendVacationReopening(email: string) {
+    const { getVacationReopeningEmail } = await import("./email-templates");
+
+    return sendEmail({
+      to: email,
+      subject: "¡Volvimos! La tienda está abierta de nuevo",
+      html: getVacationReopeningEmail({ customerEmail: email }),
+      type: "DEFAULT",
+    });
+  },
 };

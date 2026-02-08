@@ -161,3 +161,38 @@ model settings {
 
   @@index([key])
 }
+
+/// Vacation mode configuration
+model vacation_settings {
+  id                  String    @id @default("default")
+  enabled             Boolean   @default(false)
+  title               String    @default("Modo Vacaciones")
+  message             String    @default("Estamos de vacaciones.")
+  startDate           DateTime?
+  endDate             DateTime?
+  showEmailCollection Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+/// Vacation history periods
+model vacation_period {
+  id           String                @id @default(cuid())
+  startAt      DateTime              @default(now())
+  endAt        DateTime?
+  plannedEndAt DateTime?
+  subscribers  vacation_subscriber[]
+}
+
+/// Vacation mode subscribers
+model vacation_subscriber {
+  id           String          @id @default(cuid())
+  email        String
+  periodId     String
+  period       vacation_period @relation(fields: [periodId], references: [id])
+  cartSnapshot Json?
+  notified     Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+
+  @@index([periodId])
+}

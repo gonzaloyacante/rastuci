@@ -1,12 +1,11 @@
 "use client";
 
-import Alert from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-// import { useStoreSettings } from "@/hooks/useStoreSettings"; // Deprecated
-import { useSettings } from "@/hooks/useSettings";
 import { Switch } from "@/components/ui/Switch";
+import { Alert } from "@/components/ui/Alert";
+import { useSettings } from "@/hooks/useSettings";
 import { cn } from "@/lib/utils";
 import { defaultStoreSettings, StoreSettings } from "@/lib/validation/store";
 import { Plus, Save, Trash2 } from "lucide-react";

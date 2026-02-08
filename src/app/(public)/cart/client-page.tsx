@@ -263,6 +263,10 @@ const CartItemComponent = ({
   );
 };
 
+// ... imports
+import { useVacationSettings } from "@/hooks/useVacationSettings";
+import VacationCard from "@/components/vacation/VacationCard";
+
 const OrderSummary = ({
   total,
   itemCount,
@@ -276,6 +280,8 @@ const OrderSummary = ({
   isLoading: boolean;
   shippingSettings: ShippingSettings;
 }) => {
+  const { isVacationMode } = useVacationSettings();
+
   // Check specifically if the global setting is enabled
   const isFreeShippingEnabled = shippingSettings.freeShipping === true;
 
@@ -296,6 +302,7 @@ const OrderSummary = ({
       </h2>
 
       <div className="space-y-3 mb-4 sm:mb-6">
+        {/* ... totals ... */}
         <div className="flex justify-between text-sm sm:text-base">
           <span className="text-content-secondary">
             Productos ({itemCount})
@@ -330,12 +337,18 @@ const OrderSummary = ({
         size="xl"
         fullWidth
         onClick={onCheckout}
-        disabled={isLoading || itemCount === 0}
+        disabled={isLoading || itemCount === 0 || isVacationMode}
         loading={isLoading}
-        className="mb-4 text-base sm:text-lg py-3 sm:py-4"
+        className="mb-4 text-base sm:text-lg py-3 sm:py-4 disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        PROCEDER AL PAGO
+        {isVacationMode ? "TIENDA EN PAUSA" : "PROCEDER AL PAGO"}
       </Button>
+
+      {isVacationMode && (
+        <div className="mb-4 animate-in fade-in slide-in-from-top-2">
+          <VacationCard condensed />
+        </div>
+      )}
 
       <div className="text-xs sm:text-sm muted text-center space-y-1">
         {isFreeShipping ? (

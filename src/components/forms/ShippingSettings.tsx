@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { Switch } from "@/components/ui/Switch";
+import { Alert } from "@/components/ui/Alert";
 import { StoreSettings, defaultStoreSettings } from "@/lib/validation/store";
 import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
 import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
-import Alert from "@/components/ui/Alert";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { useSettings } from "@/hooks/useSettings";
 

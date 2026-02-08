@@ -5,16 +5,17 @@ import React, { ReactNode, useCallback, useEffect, useState } from "react";
 import { Button } from "./Button";
 
 interface AlertProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  message: string;
+  isOpen?: boolean;
+  onClose?: () => void;
+  title?: string;
+  message?: string;
   variant?: "info" | "success" | "warning" | "error";
   icon?: ReactNode;
   autoClose?: number; // milliseconds
   showCloseButton?: boolean;
   inline?: boolean;
   children?: ReactNode;
+  className?: string; // Added className
 }
 
 const variantStyles = {
@@ -46,9 +47,8 @@ const variantStyles = {
   },
 };
 
-// Refactored Alert to support inline mode and children
-export default function Alert({
-  isOpen,
+export function Alert({
+  isOpen = true,
   onClose,
   title,
   message,
@@ -56,12 +56,14 @@ export default function Alert({
   icon,
   autoClose,
   showCloseButton = true,
-  inline = false,
+  inline = true,
   children,
-}: AlertProps & { inline?: boolean; children?: React.ReactNode }) {
+  className = "",
+}: AlertProps) {
   const variantConfig = variantStyles[variant];
   const IconComponent = icon || variantConfig.defaultIcon;
 
+  // Manejo de auto-cierre si no es inline (modal style)
   useEffect(() => {
     if (!inline && isOpen && autoClose && onClose) {
       const timer = setTimeout(() => {
@@ -73,48 +75,50 @@ export default function Alert({
     return undefined;
   }, [isOpen, autoClose, onClose, inline]);
 
-  if (!inline && !isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   const Content = (
     <div
       className={`
+          relative w-full rounded-lg border p-4
           ${variantConfig.bgColor} ${variantConfig.textColor}
-          rounded-lg shadow-sm w-full border
           ${inline ? "" : "shadow-2xl max-w-md mx-auto border-2 animate-in zoom-in-95 slide-in-from-bottom-2 duration-300"}
+          ${className}
         `}
       role="alert"
     >
-      <div className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3 w-full">
-            <div className={`shrink-0 ${variantConfig.iconColor} mt-0.5`}>
-              {React.isValidElement(IconComponent)
-                ? IconComponent
-                : IconComponent &&
-                  React.createElement(IconComponent as React.ElementType, {
-                    size: 20,
-                  })}
-            </div>
-            <div className="flex-1">
-              {title && (
-                <h3 className="text-sm font-medium leading-5 mb-1">{title}</h3>
-              )}
-              {message && <p className="text-sm opacity-90">{message}</p>}
-              {children && <div className="text-sm opacity-90">{children}</div>}
-            </div>
-          </div>
-          {!inline && showCloseButton && onClose && (
-            <Button
-              onClick={onClose}
-              variant="ghost"
-              className={`${variantConfig.iconColor} hover:opacity-80 transition-opacity ml-4 p-0 h-auto min-h-0 min-w-0 hover:bg-transparent`}
-            >
-              <X size={18} />
-            </Button>
-          )}
+      <div className="flex items-start gap-4">
+        {/* Icon Wrapper */}
+        <div className={`shrink-0 ${variantConfig.iconColor} mt-0.5`}>
+          {React.isValidElement(IconComponent)
+            ? IconComponent
+            : IconComponent &&
+              React.createElement(IconComponent as React.ElementType, {
+                size: 20,
+              })}
         </div>
+
+        {/* Content Wrapper */}
+        <div className="flex-1">
+          {title && (
+            <h5 className="mb-1 font-medium leading-none tracking-tight">
+              {title}
+            </h5>
+          )}
+          {message && <div className="text-sm opacity-90">{message}</div>}
+          {children && <div className="text-sm opacity-90">{children}</div>}
+        </div>
+
+        {/* Close Button (only for interactive/non-inline or explicitly requested) */}
+        {!inline && showCloseButton && onClose && (
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            className={`${variantConfig.iconColor} hover:opacity-80 transition-opacity absolute right-2 top-2 p-0 h-6 w-6 hover:bg-transparent`}
+          >
+            <X size={16} />
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -123,6 +127,7 @@ export default function Alert({
     return Content;
   }
 
+  // Modal overlay wrapper
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
       {Content}
@@ -130,7 +135,34 @@ export default function Alert({
   );
 }
 
-// Hook para usar el componente Alert
+export function AlertTitle({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
+  return (
+    <h5
+      className={`mb-1 font-medium leading-none tracking-tight ${className}`}
+      {...props}
+    >
+      {children}
+    </h5>
+  );
+}
+
+export function AlertDescription({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <div className={`text-sm [&_p]:leading-relaxed ${className}`} {...props}>
+      {children}
+    </div>
+  );
+}
+
+// Hook para usar el componente Alert Programáticamente
 interface UseAlertOptions {
   title: string;
   message: string;
@@ -164,6 +196,7 @@ export function useAlert() {
       variant={config.variant}
       autoClose={config.autoClose}
       showCloseButton={config.showCloseButton}
+      inline={false} // Hook always triggers modal style
     />
   );
 

@@ -18,10 +18,30 @@ import { orderService } from "@/services/order-service";
 //   name?: string;
 // }
 
+// ... imports
+import { prisma } from "@/lib/prisma";
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Using apiHandler would be nice but we need specific response shapes for Checkout success
-  // We can try to use it or keep manual try/catch for now to match current return types exactly.
-  // Manual try-catch for safety during refactor to not break frontend expectations.
+  // --- VACATION MODE CHECK ---
+  // We check this first to block any processing if the store is closed.
+  const vacationSettings = await prisma.vacation_settings.findUnique({
+    where: { id: "default" },
+  });
+
+  if (vacationSettings?.enabled) {
+    // If enabled, we block. Admin must disable it manually to open.
+    // We could check dates here too, but 'enabled' is the master switch.
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "La tienda está cerrada por vacaciones. No se pueden realizar compras en este momento.",
+        code: "VACATION_MODE",
+      },
+      { status: 503 }
+    );
+  }
+  // ---------------------------
 
   interface CheckoutItem {
     productId: string;

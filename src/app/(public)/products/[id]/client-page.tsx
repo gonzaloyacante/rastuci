@@ -6,6 +6,7 @@ import {
   ProductDetailSkeleton,
   Skeleton,
 } from "@/components/ui/Skeleton";
+import { Alert, AlertDescription } from "@/components/ui/Alert";
 import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -23,8 +24,10 @@ import {
   ShieldCheck,
   ShoppingCart,
   Truck,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
+import { useVacationSettings } from "@/hooks/useVacationSettings";
 
 import { useRouter } from "next/navigation";
 import React, { Suspense, useState } from "react";
@@ -92,6 +95,7 @@ export default function ProductDetailClient({
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { show } = useToast();
   const { shipping } = useShippingSettings();
+  const { isVacationMode } = useVacationSettings();
 
   // SWR para fetch del producto
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -602,14 +606,26 @@ export default function ProductDetailClient({
 
             {/* Botones de acción */}
             <div className="flex space-x-4">
-              <Button
-                onClick={handleAddToCart}
-                disabled={currentStock === 0}
-                className="flex-1"
-                rightIcon={<ShoppingCart className="w-4 h-4" />}
-              >
-                Agregar al carrito
-              </Button>
+              <div className="flex-1 flex flex-col">
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={currentStock === 0}
+                  className="w-full"
+                  // rightIcon={<ShoppingCart className="w-4 h-4" />}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2 inline-block" />
+                  Agregar al carrito
+                </Button>
+                {isVacationMode && (
+                  <Alert variant="warning" className="mt-2 py-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      <strong>Tienda en pausa:</strong> Podés armar tu carrito,
+                      pero no finalizar la compra por ahora.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
               <Button
                 onClick={handleToggleFavorite}
                 variant="outline"
@@ -635,46 +651,46 @@ export default function ProductDetailClient({
                 <Share2 className="w-4 h-4" />
               </Button>
             </div>
+          </div>
 
-            {/* Beneficios */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-muted">
-              <div className="flex items-center space-x-2">
-                <Truck className="w-5 h-5 text-primary" />
-                <span className="text-sm">
-                  {shipping.freeShipping ? (
-                    <span className="text-success font-semibold">
-                      {shipping.freeShippingLabel || "Envío Gratis"}
-                    </span>
-                  ) : (
-                    shipping.estimatedDelivery || "Envío a todo el país"
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <ShieldCheck className="w-5 h-5 text-primary" />
-                <span className="text-sm">Garantía</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CreditCard className="w-5 h-5 text-primary" />
-                <span className="text-sm">3 cuotas sin interés</span>
-              </div>
+          {/* Beneficios */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-muted">
+            <div className="flex items-center space-x-2">
+              <Truck className="w-5 h-5 text-primary" />
+              <span className="text-sm">
+                {shipping.freeShipping ? (
+                  <span className="text-success font-semibold">
+                    {shipping.freeShippingLabel || "Envío Gratis"}
+                  </span>
+                ) : (
+                  shipping.estimatedDelivery || "Envío a todo el país"
+                )}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <ShieldCheck className="w-5 h-5 text-primary" />
+              <span className="text-sm">Garantía</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              <span className="text-sm">3 cuotas sin interés</span>
             </div>
           </div>
         </div>
-
-        {/* Reseñas */}
-        <Suspense fallback={<ReviewsSkeleton />}>
-          <ProductReviews productId={productId} />
-        </Suspense>
-
-        {/* Productos relacionados */}
-        <Suspense fallback={<RelatedProductsSkeleton />}>
-          <RelatedProducts
-            categoryId={product.categories?.id}
-            currentProductId={productId}
-          />
-        </Suspense>
       </div>
+
+      {/* Reseñas */}
+      <Suspense fallback={<ReviewsSkeleton />}>
+        <ProductReviews productId={productId} />
+      </Suspense>
+
+      {/* Productos relacionados */}
+      <Suspense fallback={<RelatedProductsSkeleton />}>
+        <RelatedProducts
+          categoryId={product.categories?.id}
+          currentProductId={productId}
+        />
+      </Suspense>
     </div>
   );
 }
