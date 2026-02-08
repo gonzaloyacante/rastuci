@@ -23,6 +23,9 @@ vi.mock("@/lib/prisma", () => {
     settings: {
       findUnique: vi.fn(),
     },
+    vacation_settings: {
+      findUnique: vi.fn(),
+    },
     order_items: {
       create: vi.fn(),
       createMany: vi.fn(),
@@ -35,7 +38,7 @@ vi.mock("@/lib/prisma", () => {
     callback(mockClient)
   );
 
-  return { default: mockClient };
+  return { default: mockClient, prisma: mockClient };
 });
 
 // Mock MercadoPago
@@ -77,11 +80,26 @@ const mockPrisma = prisma as unknown as {
     findUnique: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
   };
+  vacation_settings: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
 };
 
 describe("Checkout API - POST /api/checkout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock vacation mode as disabled by default
+    mockPrisma.vacation_settings.findUnique.mockResolvedValue({
+      id: "default",
+      enabled: false,
+      title: "Modo Vacaciones",
+      message: "Estamos de vacaciones",
+      showEmailCollection: true,
+      startDate: null,
+      endDate: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
   });
 
   const validCustomer = {
