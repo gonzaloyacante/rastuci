@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
 const ToggleSchema = z.object({
   enabled: z.boolean(),
+  title: z.string().optional().default("Modo Vacaciones"),
+  message: z.string().optional().default("Estamos de vacaciones."),
+  showEmailCollection: z.boolean().optional().default(true),
   startDate: z
     .string()
     .optional()
@@ -28,23 +32,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const { enabled, startDate, endDate } = parsed.data;
+    const { enabled, title, message, showEmailCollection, startDate, endDate } =
+      parsed.data;
 
     await prisma.$transaction(async (tx) => {
-      // 1. Update Settings
+      // 1. Update ALL settings (not just enabled/dates)
       await tx.vacation_settings.upsert({
         where: { id: "default" },
         update: {
           enabled,
-          startDate, // Update dates if provided
+          title,
+          message,
+          showEmailCollection,
+          startDate,
           endDate,
         },
         create: {
           enabled,
+          title,
+          message,
+          showEmailCollection,
           startDate,
           endDate,
-          title: "Modo Vacaciones",
-          message: "Estamos de vacaciones.",
         },
       });
 
@@ -61,17 +70,19 @@ export async function POST(request: Request) {
           data: {
             startAt: startDate || new Date(),
             plannedEndAt: endDate,
-            // endAt is null
           },
         });
       } else {
         // ENDING VACATION
         await tx.vacation_period.updateMany({
           where: { endAt: null },
-          data: { endAt: new Date() }, // Close it now
+          data: { endAt: new Date() },
         });
       }
     });
+
+    // Revalidate so the public layout picks up the change immediately
+    revalidateTag("vacation-settings", {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

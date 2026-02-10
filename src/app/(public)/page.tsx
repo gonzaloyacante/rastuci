@@ -5,11 +5,11 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { logger } from "@/lib/logger";
 import { generateStoreJsonLd } from "@/lib/metadata";
 import { prisma } from "@/lib/prisma";
-import { defaultHomeSettings, HomeSettingsSchema } from "@/lib/validation/home";
+import { defaultHomeSettings } from "@/lib/validation/home";
 import { defaultShippingSettings } from "@/lib/validation/shipping";
 import { Metadata } from "next";
 
-export const revalidate = 60; // Revalidar cada minuto
+export const revalidate = 300; // Revalidar cada 5 minutos
 
 export const metadata: Metadata = {
   title: "Rastuci - Ropa Infantil de Calidad | Tienda Online",
@@ -19,10 +19,15 @@ export const metadata: Metadata = {
 
 async function getHomeData() {
   try {
-    const [settingsData, storeData, rawCategories, rawFeaturedProducts] =
+    const [homeSettings, shippingSettings, rawCategories, rawFeaturedProducts] =
       await Promise.all([
-        prisma.settings.findUnique({ where: { key: "home" } }),
-        prisma.settings.findUnique({ where: { key: "store" } }),
+        prisma.home_settings.findUnique({
+          where: { id: "default" },
+          include: { benefits: { orderBy: { sortOrder: "asc" } } },
+        }),
+        prisma.shipping_settings.findUnique({
+          where: { id: "default" },
+        }),
         prisma.categories.findMany({
           orderBy: { name: "asc" },
           take: 12,
@@ -68,30 +73,54 @@ async function getHomeData() {
       };
     });
 
-    // Parsear settings o usar defaults
-    let settings = defaultHomeSettings;
-    if (settingsData?.value) {
-      const parsed = HomeSettingsSchema.safeParse(settingsData.value);
-      if (parsed.success) {
-        settings = parsed.data;
-      }
-    }
+    // Usar settings relacionales o defaults
+    const settings = homeSettings
+      ? {
+          heroTitle: homeSettings.heroTitle,
+          showHeroTitle: homeSettings.showHeroTitle,
+          heroSubtitle: homeSettings.heroSubtitle,
+          showHeroSubtitle: homeSettings.showHeroSubtitle,
+          heroLogoUrl: homeSettings.heroLogoUrl ?? "",
+          showHeroLogo: homeSettings.showHeroLogo,
+          heroImage: homeSettings.heroImage ?? undefined,
+          headerLogoUrl: homeSettings.headerLogoUrl ?? "",
+          ctaPrimaryLabel: homeSettings.ctaPrimaryLabel,
+          showCtaPrimary: homeSettings.showCtaPrimary,
+          ctaSecondaryLabel: homeSettings.ctaSecondaryLabel,
+          showCtaSecondary: homeSettings.showCtaSecondary,
+          categoriesTitle: homeSettings.categoriesTitle,
+          showCategoriesTitle: homeSettings.showCategoriesTitle,
+          categoriesSubtitle: homeSettings.categoriesSubtitle,
+          showCategoriesSubtitle: homeSettings.showCategoriesSubtitle,
+          categoriesDisplay: homeSettings.categoriesDisplay as "image" | "icon",
+          featuredTitle: homeSettings.featuredTitle,
+          showFeaturedTitle: homeSettings.showFeaturedTitle,
+          featuredSubtitle: homeSettings.featuredSubtitle,
+          showFeaturedSubtitle: homeSettings.showFeaturedSubtitle,
+          benefits: homeSettings.benefits.map((b) => ({
+            icon: b.icon,
+            title: b.title,
+            description: b.description,
+          })),
+          footer: {
+            brand: homeSettings.footerBrand,
+            showBrand: homeSettings.showFooterBrand,
+            tagline: homeSettings.footerTagline,
+            showTagline: homeSettings.showFooterTagline,
+            logoUrl: homeSettings.footerLogoUrl ?? "",
+            showLogo: homeSettings.showFooterLogo,
+          },
+        }
+      : defaultHomeSettings;
 
-    // Parsear shipping settings
-    let shipping = defaultShippingSettings;
-    if (storeData?.value) {
-      interface StoreSettings {
-        shipping?: { freeShipping?: boolean };
-      }
-      const storeSettings = storeData.value as unknown as StoreSettings;
-      if (storeSettings.shipping) {
-        // Merge admin toggle con defaults
-        shipping = {
+    // Usar shipping settings relacionales o defaults
+    const shipping = shippingSettings
+      ? {
           ...defaultShippingSettings,
-          freeShipping: storeSettings.shipping.freeShipping ?? false,
-        };
-      }
-    }
+          freeShipping: shippingSettings.enableFreeShipping,
+          freeShippingMinAmount: Number(shippingSettings.freeShippingMin),
+        }
+      : defaultShippingSettings;
 
     return { settings, shipping, categories, featuredProducts };
   } catch (error) {

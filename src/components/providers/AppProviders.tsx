@@ -1,5 +1,4 @@
 import AnalyticsInit from "@/components/analytics/AnalyticsInit";
-import SessionProvider from "@/components/providers/SessionProvider";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { Toaster } from "react-hot-toast";
@@ -13,20 +12,18 @@ export default function AppProviders({
   children: React.ReactNode;
 }) {
   return (
-    <SessionProvider>
-      <ThemeProvider>
-        <WishlistProvider>
-          <CartProvider>
-            <ToastProvider>
-              <Suspense fallback={null}>
-                <AnalyticsInit />
-              </Suspense>
-              {children}
-              <Toaster position="top-right" reverseOrder={false} />
-            </ToastProvider>
-          </CartProvider>
-        </WishlistProvider>
-      </ThemeProvider>
-    </SessionProvider>
+    <ThemeProvider>
+      <WishlistProvider>
+        <CartProvider>
+          <ToastProvider>
+            <Suspense fallback={null}>
+              <AnalyticsInit />
+            </Suspense>
+            {children}
+            <Toaster position="top-right" reverseOrder={false} />
+          </ToastProvider>
+        </CartProvider>
+      </WishlistProvider>
+    </ThemeProvider>
   );
 }

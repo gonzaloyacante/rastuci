@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { ORDER_STATUS, PROVINCIAS, ProvinceCode } from "@/lib/constants";
+import { getStoreSettings } from "@/lib/store-settings";
 
 export class ShipmentService {
   /**
@@ -127,35 +128,13 @@ export class ShipmentService {
         length: 30,
       };
 
-      // Fetch Store Settings for Origin Address
-      const storeSettings = await prisma.settings.findUnique({
-        where: { key: "store" },
+      // Fetch Store Settings for Origin Address (New Relational + Aggregated)
+      const storeSettings = await getStoreSettings();
+
+      // Fetch Contact Settings for Phone (Unified Source)
+      const contactSettings = await prisma.contact_settings.findUnique({
+        where: { id: "default" },
       });
-
-      // Fetch Contact Settings for Phone/Email (Unified Source)
-      const contactSettings = await prisma.settings.findUnique({
-        where: { key: "contact" },
-      });
-
-      interface StoreSettingsValue {
-        name?: string;
-        adminEmail?: string;
-        // phone and email removed from store settings
-        address?: {
-          street?: string;
-          number?: string;
-          floor?: string;
-          apartment?: string;
-          city?: string;
-          postalCode?: string;
-          province?: string;
-        };
-      }
-
-      interface ContactSettingsValue {
-        emails?: string[];
-        phones?: string[];
-      }
 
       let senderAddress = {
         streetName: "Av. San Martín",
@@ -170,63 +149,78 @@ export class ShipmentService {
         phone: "1123456789",
       };
 
-      // Override with Contact Settings (Phone/Email)
-      if (contactSettings && contactSettings.value) {
-        const cSettings =
-          contactSettings.value as unknown as ContactSettingsValue;
-        if (cSettings.emails && cSettings.emails.length > 0) {
-          senderAddress.email = cSettings.emails[0];
-        }
-        if (cSettings.phones && cSettings.phones.length > 0) {
-          senderAddress.phone = cSettings.phones[0];
+      // Override with Contact Settings (Phone only - Email handled by storeSettings)
+      if (contactSettings) {
+        if (contactSettings.phones && contactSettings.phones.length > 0) {
+          senderAddress.phone = contactSettings.phones[0];
         }
       }
 
-      // Override with Store Settings (Address & Name)
-      if (storeSettings && storeSettings.value) {
-        const settings = storeSettings.value as unknown as StoreSettingsValue;
-        if (settings.address) {
+      // Override with Store Settings (Address & Name & Email)
+      if (storeSettings) {
+        // Email (already aggregated from contact settings if needed)
+        if (storeSettings.emails?.salesEmail) {
+          senderAddress.email = storeSettings.emails.salesEmail;
+        }
+
+        // Name
+        if (storeSettings.name) {
+          senderAddress.name = storeSettings.name;
+        }
+
+        // Address
+        if (storeSettings.address) {
           let pCode: ProvinceCode = "B";
-          const pName = settings.address.province || "";
+          const pName = storeSettings.address.provinceCode || ""; // provinceCode in StoreSettings is "B", "C", etc.
 
-          const normalizedPName = pName
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "");
-          const match = PROVINCIAS.find(
-            (p) =>
-              p.name
-                .toLowerCase()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "") === normalizedPName
-          );
-
-          if (match) {
-            pCode = match.code;
-          } else if (
-            normalizedPName.includes("capital") ||
-            normalizedPName.includes("caba")
+          // If provinceCode is already a valid code, use it.
+          // StoreSettings schema defines provinceCode as string length 1, default "B".
+          // So we can trust it mostly, but let's be safe.
+          if (
+            [
+              "B",
+              "C",
+              "X",
+              "S",
+              "M",
+              "E",
+              "W",
+              "R",
+              "N",
+              "Q",
+              "A",
+              "Y",
+              "J",
+              "L",
+              "F",
+              "P",
+              "T",
+              "U",
+              "V",
+              "H",
+              "K",
+              "D",
+              "G",
+              "Z",
+            ].includes(pName)
           ) {
-            pCode = "C";
+            pCode = pName as ProvinceCode;
           }
 
           senderAddress = {
-            ...senderAddress, // Keep email/phone from contact settings
-            streetName: settings.address.street || senderAddress.streetName,
-            streetNumber: settings.address.number || senderAddress.streetNumber,
-            floor: settings.address.floor || null,
-            apartment: settings.address.apartment || null,
-            city: settings.address.city || senderAddress.city,
+            ...senderAddress,
+            streetName:
+              storeSettings.address.streetName || senderAddress.streetName,
+            streetNumber:
+              storeSettings.address.streetNumber || senderAddress.streetNumber,
+            floor: storeSettings.address.floor || null,
+            apartment: storeSettings.address.apartment || null,
+            city: storeSettings.address.city || senderAddress.city,
             provinceCode: pCode,
-            postalCode: settings.address.postalCode || senderAddress.postalCode,
-            name: settings.name || senderAddress.name,
-            // Only override email/phone if they were somehow in store settings
+            postalCode:
+              storeSettings.address.postalCode || senderAddress.postalCode,
+            name: storeSettings.name || senderAddress.name,
           };
-        }
-
-        // Ensure name is updated even if address object is missing but value exists
-        if (settings.name) {
-          senderAddress.name = settings.name;
         }
       }
 

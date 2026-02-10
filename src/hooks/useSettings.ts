@@ -42,7 +42,9 @@ export function useSettings<T>(section: string, config?: SWRConfiguration) {
   return {
     settings: data?.data,
     loading: isLoading,
-    error: error ? (error instanceof Error ? error.message : "Error") : null,
+    error:
+      error ||
+      (data && !data.success ? new Error(data.error || "Unknown error") : null),
     mutate,
   };
 }

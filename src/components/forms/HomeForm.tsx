@@ -14,6 +14,7 @@ import { toast } from "react-hot-toast";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { useSettings } from "@/hooks/useSettings";
 import { Switch } from "@/components/ui/Switch";
+import { cn } from "@/lib/utils";
 
 type Props = {
   initial?: HomeSettings;
@@ -26,21 +27,83 @@ interface BenefitItem {
   description: string;
 }
 
+// Reuseable Card Component for Consistency
+const SettingsCard = ({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) => (
+  <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+    <div className="px-6 py-4 border-b border-border bg-muted/5">
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      {description && (
+        <p className="text-sm text-muted-foreground mt-1">{description}</p>
+      )}
+    </div>
+    <div className="p-6 space-y-6">{children}</div>
+  </div>
+);
+
+// Resusable Input Row with Toggle
+const InputRow = ({
+  label,
+  value,
+  onChange,
+  enabled,
+  onToggle,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  enabled?: boolean;
+  onToggle?: (val: boolean) => void;
+  placeholder?: string;
+}) => (
+  <div className="grid md:grid-cols-[1fr_auto] gap-4 items-start p-4 hover:bg-muted/5 rounded-lg border border-transparent hover:border-border transition-colors">
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          {label}
+        </label>
+        {onToggle && !enabled && (
+          <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
+            Oculto
+          </span>
+        )}
+      </div>
+      <input
+        className={cn(
+          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          !enabled && onToggle && "opacity-60 bg-muted/20"
+        )}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    </div>
+    {onToggle && (
+      <div className="flex flex-col items-end gap-1.5 pt-6 md:pt-7">
+        <Switch checked={enabled ?? true} onCheckedChange={onToggle} />
+      </div>
+    )}
+  </div>
+);
+
 export default function HomeForm({ initial }: Props) {
   const [values, setValues] = useState<HomeSettings>(
     initial ?? defaultHomeSettings
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-
-  // Estado para el modal de selección de iconos
   const [iconPickerOpen, setIconPickerOpen] = useState<string | null>(null);
-
-  // Estado para manejar beneficios con IDs únicos
   const [benefitItems, setBenefitItems] = useState<BenefitItem[]>([]);
   const [loading, setLoading] = useState(!initial);
 
-  // SWR Hook
   const {
     settings,
     loading: loadingSettings,
@@ -48,16 +111,16 @@ export default function HomeForm({ initial }: Props) {
   } = useSettings<HomeSettings>("home");
 
   useEffect(() => {
-    if (initial) {
-      setValues(initial);
-      initBenefits(initial.benefits);
-      setLoading(false);
-    } else if (settings) {
+    if (settings) {
       setValues(settings);
       initBenefits(settings.benefits);
       setLoading(false);
+    } else if (initial) {
+      setValues(initial);
+      initBenefits(initial.benefits);
+      setLoading(false);
     } else if (!loadingSettings) {
-      // SWR finished loading but no data - use defaults
+      console.log("[HomeForm] Using DEFAULTS (No settings, no initial)");
       setValues(defaultHomeSettings);
       initBenefits(defaultHomeSettings.benefits);
       setLoading(false);
@@ -75,7 +138,6 @@ export default function HomeForm({ initial }: Props) {
     );
   };
 
-  // Sincronizar los beneficios con IDs con el estado principal
   useEffect(() => {
     setValues((v) => ({
       ...v,
@@ -120,7 +182,6 @@ export default function HomeForm({ initial }: Props) {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Guard: Don't save if data hasn't loaded yet
     if (loading || loadingSettings) {
       toast.error("Espera a que carguen los datos antes de guardar");
       return;
@@ -140,35 +201,20 @@ export default function HomeForm({ initial }: Props) {
         body: JSON.stringify(parsed.data),
       });
 
-      console.log("HomeForm PUT Status:", res.status, res.statusText);
       const text = await res.text();
-      console.log("HomeForm PUT Raw Response:", text);
-
       let data;
       try {
         data = text ? JSON.parse(text) : {};
       } catch (_e) {
-        throw new Error(
-          `Error de servidor: No se pudo procesar la respuesta (${res.status})`
-        );
+        throw new Error(`Error de servidor (${res.status})`);
       }
 
-      if (!res.ok) {
-        throw new Error(
-          data.error ||
-            data.message ||
-            "Error al guardar (Server returned Error)"
-        );
-      }
-
-      if (!data.success) {
-        // Fallback if status is 200 but success is false
-        throw new Error(data.error || "Error al guardar (Success false)");
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Error al guardar");
       }
 
       setMessage("Guardado correctamente");
       toast.success("Configuración del Home guardada");
-      // Sync SWR cache with saved data
       mutateSettings();
     } catch (err: unknown) {
       console.error("HomeForm Submit Error:", err);
@@ -183,155 +229,151 @@ export default function HomeForm({ initial }: Props) {
   if (loading) return <FormSkeleton rows={4} />;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
       {/* Header Section */}
-      <section>
-        <h3 className="text-lg font-semibold mb-3">Header (Navegación)</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Configura el logo que aparece en la barra de navegación superior.
-        </p>
-        <div className="max-w-sm">
+      <SettingsCard
+        title="Header (Navegación)"
+        description="Configura el logo que aparece en la barra de navegación superior."
+      >
+        <div className="grid md:grid-cols-2 gap-8">
           <ImageUploader
             label="Logo del Header"
             value={values.headerLogoUrl}
             onChange={(url) => update("headerLogoUrl", url ?? undefined)}
-            helpText="Logo que aparece en la barra de navegación. Formato recomendado: SVG o PNG transparente."
+            helpText="Formato recomendado: SVG, PNG. Fondo transparente."
+            aspectRatio="auto"
           />
         </div>
-      </section>
+      </SettingsCard>
 
       {/* Hero Section */}
-      <section className="grid md:grid-cols-2 gap-6">
-        <h3 className="text-lg font-semibold md:col-span-2">
-          Sección Principal (Hero)
-        </h3>
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <ImageUploader
-              label="Logo del Hero"
-              value={values.heroLogoUrl}
-              onChange={(url) => update("heroLogoUrl", url ?? undefined)}
-              helpText="Logo principal que se muestra sobre el hero. Formato recomendado: SVG o PNG transparente."
-            />
-            <div className="flex items-center gap-2 mt-2">
-              <Switch
-                checked={values.showHeroLogo ?? true}
-                onCheckedChange={(c) => update("showHeroLogo", c)}
+      <SettingsCard
+        title="Sección Principal (Hero)"
+        description="Personaliza la primera impresión de tu tienda."
+      >
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Visuals Column */}
+          <div className="space-y-6">
+            <div className="border border-border rounded-xl p-4 bg-background/50">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">
+                  Logo del Hero (Sobrepuesto)
+                </label>
+                <Switch
+                  checked={values.showHeroLogo ?? true}
+                  onCheckedChange={(c) => update("showHeroLogo", c)}
+                />
+              </div>
+              <div
+                className={cn(
+                  "transition-opacity",
+                  !(values.showHeroLogo ?? true) && "opacity-50 grayscale"
+                )}
+              >
+                <ImageUploader
+                  label=""
+                  value={values.heroLogoUrl}
+                  onChange={(url) => update("heroLogoUrl", url ?? undefined)}
+                  aspectRatio="auto"
+                />
+              </div>
+            </div>
+
+            <div className="border border-border rounded-xl p-4 bg-background/50">
+              <ImageUploader
+                label="Imagen de Fondo del Hero"
+                value={values.heroImage}
+                onChange={(url) => update("heroImage", url ?? undefined)}
+                helpText="Recomendado: 1920x1080px (16:9). JPG, WEBP."
+                aspectRatio="video"
               />
-              <span className="text-sm">Mostrar Logo</span>
             </div>
           </div>
-          <div>
-            <ImageUploader
-              label="Imagen de Fondo del Hero"
-              value={values.heroImage}
-              onChange={(url) => update("heroImage", url ?? undefined)}
-              helpText="Recomendado: 1920x1080px o superior. Formatos: JPG, WEBP."
-            />
-          </div>
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium">Título del Hero</label>
-            <Switch
-              checked={values.showHeroTitle ?? true}
-              onCheckedChange={(c) => update("showHeroTitle", c)}
-            />
-          </div>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={values.heroTitle}
-            onChange={(e) => update("heroTitle", e.target.value)}
-          />
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium">Subtítulo del Hero</label>
-            <Switch
-              checked={values.showHeroSubtitle ?? true}
-              onCheckedChange={(c) => update("showHeroSubtitle", c)}
-            />
-          </div>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={values.heroSubtitle}
-            onChange={(e) => update("heroSubtitle", e.target.value)}
-          />
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium">CTA principal</label>
-            <Switch
-              checked={values.showCtaPrimary ?? true}
-              onCheckedChange={(c) => update("showCtaPrimary", c)}
-            />
-          </div>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={values.ctaPrimaryLabel}
-            onChange={(e) => update("ctaPrimaryLabel", e.target.value)}
-          />
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium">CTA secundaria</label>
-            <Switch
-              checked={values.showCtaSecondary ?? true}
-              onCheckedChange={(c) => update("showCtaSecondary", c)}
-            />
-          </div>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={values.ctaSecondaryLabel}
-            onChange={(e) => update("ctaSecondaryLabel", e.target.value)}
-          />
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium">Título de Categorías</label>
-            <Switch
-              checked={values.showCategoriesTitle ?? true}
-              onCheckedChange={(c) => update("showCategoriesTitle", c)}
-            />
-          </div>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={values.categoriesTitle}
-            onChange={(e) => update("categoriesTitle", e.target.value)}
-          />
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium">Título de Ofertas</label>
-            <Switch
-              checked={values.showFeaturedTitle ?? true}
-              onCheckedChange={(c) => update("showFeaturedTitle", c)}
-            />
-          </div>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={values.featuredTitle}
-            onChange={(e) => update("featuredTitle", e.target.value)}
-          />
-        </div>
-        <div className="md:col-span-2">
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium">Subtítulo de Ofertas</label>
-            <Switch
-              checked={values.showFeaturedSubtitle ?? true}
-              onCheckedChange={(c) => update("showFeaturedSubtitle", c)}
-            />
-          </div>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={values.featuredSubtitle}
-            onChange={(e) => update("featuredSubtitle", e.target.value)}
-          />
-        </div>
-      </section>
 
-      <section>
-        <h3 className="text-lg font-semibold mb-3">Beneficios</h3>
+          {/* Texts Column */}
+          <div className="space-y-2">
+            <InputRow
+              label="Título Principal"
+              value={values.heroTitle}
+              onChange={(v) => update("heroTitle", v)}
+              enabled={values.showHeroTitle}
+              onToggle={(c) => update("showHeroTitle", c)}
+            />
+            <InputRow
+              label="Subtítulo"
+              value={values.heroSubtitle}
+              onChange={(v) => update("heroSubtitle", v)}
+              enabled={values.showHeroSubtitle}
+              onToggle={(c) => update("showHeroSubtitle", c)}
+            />
+            <div className="h-px bg-border my-2" />
+            <InputRow
+              label="CTA Principal (Botón)"
+              value={values.ctaPrimaryLabel}
+              onChange={(v) => update("ctaPrimaryLabel", v)}
+              enabled={values.showCtaPrimary}
+              onToggle={(c) => update("showCtaPrimary", c)}
+            />
+            <InputRow
+              label="CTA Secundaria (Botón)"
+              value={values.ctaSecondaryLabel}
+              onChange={(v) => update("ctaSecondaryLabel", v)}
+              enabled={values.showCtaSecondary}
+              onToggle={(c) => update("showCtaSecondary", c)}
+            />
+          </div>
+        </div>
+      </SettingsCard>
+
+      {/* Categories & Featured */}
+      <SettingsCard title="Secciones de Contenido">
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm text-primary uppercase tracking-wider">
+              Categorías
+            </h4>
+            <InputRow
+              label="Título de Sección"
+              value={values.categoriesTitle}
+              onChange={(v) => update("categoriesTitle", v)}
+              enabled={values.showCategoriesTitle}
+              onToggle={(c) => update("showCategoriesTitle", c)}
+            />
+            <InputRow
+              label="Subtítulo"
+              value={values.categoriesSubtitle}
+              onChange={(v) => update("categoriesSubtitle", v)}
+              enabled={values.showCategoriesSubtitle}
+              onToggle={(c) => update("showCategoriesSubtitle", c)}
+            />
+          </div>
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm text-primary uppercase tracking-wider">
+              Destacados
+            </h4>
+            <InputRow
+              label="Título de Sección"
+              value={values.featuredTitle}
+              onChange={(v) => update("featuredTitle", v)}
+              enabled={values.showFeaturedTitle}
+              onToggle={(c) => update("showFeaturedTitle", c)}
+            />
+            <InputRow
+              label="Subtítulo"
+              value={values.featuredSubtitle}
+              onChange={(v) => update("featuredSubtitle", v)}
+              enabled={values.showFeaturedSubtitle}
+              onToggle={(c) => update("showFeaturedSubtitle", c)}
+            />
+          </div>
+        </div>
+      </SettingsCard>
+
+      {/* Benefits */}
+      <SettingsCard
+        title="Beneficios"
+        description="Iconos destacando las ventajas de tu tienda."
+      >
         <div className="space-y-4">
           {benefitItems.map((benefitItem) => {
             const IconComponent = (
@@ -341,30 +383,31 @@ export default function HomeForm({ initial }: Props) {
             return (
               <div
                 key={benefitItem.id}
-                className="grid md:grid-cols-12 gap-3 items-end"
+                className="grid md:grid-cols-12 gap-3 items-end p-4 border border-border rounded-lg bg-background hover:border-primary/50 transition-colors"
+                id="benefits-editor"
               >
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-xs font-medium mb-1.5 text-muted-foreground uppercase">
                     Ícono
                   </label>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIconPickerOpen(benefitItem.id)}
-                    className="w-full justify-center h-auto py-2"
+                    className="w-full justify-center h-10"
                   >
-                    {IconComponent && <IconComponent size={20} />}
+                    {IconComponent && <IconComponent size={18} />}
                     <span className="text-sm truncate ml-2">
                       {benefitItem.icon}
                     </span>
                   </Button>
                 </div>
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-xs font-medium mb-1 text-muted-foreground uppercase">
                     Título
                   </label>
                   <input
-                    className="w-full border rounded-md px-3 py-2"
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={benefitItem.title}
                     onChange={(e) =>
                       updateBenefitItem(benefitItem.id, "title", e.target.value)
@@ -372,11 +415,11 @@ export default function HomeForm({ initial }: Props) {
                   />
                 </div>
                 <div className="md:col-span-5">
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-xs font-medium mb-1 text-muted-foreground uppercase">
                     Descripción
                   </label>
                   <input
-                    className="w-full border rounded-md px-3 py-2"
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={benefitItem.description}
                     onChange={(e) =>
                       updateBenefitItem(
@@ -387,49 +430,43 @@ export default function HomeForm({ initial }: Props) {
                     }
                   />
                 </div>
-                <div className="md:col-span-1">
+                <div className="md:col-span-1 flex justify-end">
                   <Button
                     type="button"
-                    variant="destructive"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     onClick={() => removeBenefitItem(benefitItem.id)}
                   >
-                    Quitar
+                    <Icons.Trash2 size={18} />
                   </Button>
                 </div>
               </div>
             );
           })}
         </div>
-        <div className="mt-3">
-          <Button type="button" onClick={addBenefitItem}>
+        <div className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addBenefitItem}
+            className="w-full md:w-auto border-dashed"
+          >
+            <Icons.Plus className="w-4 h-4 mr-2" />
             Agregar beneficio
           </Button>
         </div>
-      </section>
+      </SettingsCard>
 
-      <section>
-        <h3 className="text-lg font-semibold mb-3">Pie de Página (Footer)</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Configura la identidad de marca en el pie de página.
-          <span className="block text-xs mt-1 text-amber-500">
-            Nota: La información de contacto y redes sociales se administra en
-            la sección "Contacto".
-          </span>
-        </p>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="md:col-span-2">
-            <ImageUploader
-              label="Logo del Footer"
-              value={values.footer?.logoUrl}
-              onChange={(url) =>
-                setValues((v) => ({
-                  ...v,
-                  footer: { ...v.footer!, logoUrl: url ?? undefined },
-                }))
-              }
-              helpText="Logo monocromático o simple para el pie de página."
-            />
-            <div className="flex items-center gap-2 mt-2">
+      {/* Footer */}
+      <SettingsCard
+        title="Pie de Página (Footer)"
+        description="Identidad de marca en el pie de página."
+      >
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="border border-border rounded-xl p-4 bg-background/50 h-fit">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">Logo del Footer</label>
               <Switch
                 checked={values.footer?.showLogo ?? true}
                 onCheckedChange={(c) =>
@@ -439,61 +476,67 @@ export default function HomeForm({ initial }: Props) {
                   }))
                 }
               />
-              <span className="text-sm">Mostrar Logo Footer</span>
             </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-sm font-medium">Nombre de Marca</label>
-              <Switch
-                checked={values.footer?.showBrand ?? true}
-                onCheckedChange={(c) =>
+            <div
+              className={cn(
+                "transition-opacity",
+                !(values.footer?.showLogo ?? true) && "opacity-50 grayscale"
+              )}
+            >
+              <ImageUploader
+                label=""
+                value={values.footer?.logoUrl}
+                onChange={(url) =>
                   setValues((v) => ({
                     ...v,
-                    footer: { ...v.footer!, showBrand: c },
+                    footer: { ...v.footer!, logoUrl: url ?? undefined },
                   }))
                 }
+                helpText="Logo monocromático o simple para el pie de página."
+                aspectRatio="auto"
               />
             </div>
-            <input
-              className="w-full border rounded-md px-3 py-2"
-              value={values.footer?.brand}
-              onChange={(e) =>
+          </div>
+
+          <div className="space-y-2">
+            <InputRow
+              label="Nombre de Marca"
+              value={values.footer?.brand || ""}
+              onChange={(val) =>
                 setValues((v) => ({
                   ...v,
-                  footer: { ...v.footer!, brand: e.target.value },
+                  footer: { ...v.footer!, brand: val },
+                }))
+              }
+              enabled={values.footer?.showBrand}
+              onToggle={(c) =>
+                setValues((v) => ({
+                  ...v,
+                  footer: { ...v.footer!, showBrand: c },
                 }))
               }
             />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-sm font-medium">Slogan / Tagline</label>
-              <Switch
-                checked={values.footer?.showTagline ?? true}
-                onCheckedChange={(c) =>
-                  setValues((v) => ({
-                    ...v,
-                    footer: { ...v.footer!, showTagline: c },
-                  }))
-                }
-              />
-            </div>
-            <input
-              className="w-full border rounded-md px-3 py-2"
-              value={values.footer?.tagline}
-              onChange={(e) =>
+            <InputRow
+              label="Slogan / Tagline"
+              value={values.footer?.tagline || ""}
+              onChange={(val) =>
                 setValues((v) => ({
                   ...v,
-                  footer: { ...v.footer!, tagline: e.target.value },
+                  footer: { ...v.footer!, tagline: val },
+                }))
+              }
+              enabled={values.footer?.showTagline}
+              onToggle={(c) =>
+                setValues((v) => ({
+                  ...v,
+                  footer: { ...v.footer!, showTagline: c },
                 }))
               }
             />
           </div>
         </div>
-      </section>
+      </SettingsCard>
 
-      {/* Icon Picker Modal */}
       {iconPickerOpen && (
         <IconPicker
           value={benefitItems.find((b) => b.id === iconPickerOpen)?.icon}
@@ -505,10 +548,19 @@ export default function HomeForm({ initial }: Props) {
         />
       )}
 
-      {message && <p className="text-sm muted">{message}</p>}
-      <div className="flex justify-end pt-4 border-t">
-        <Button type="submit" disabled={saving} className="w-full sm:w-auto">
-          {saving ? "Guardando..." : "Guardar"}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+        {message && (
+          <div className="bg-background/90 backdrop-blur border border-border p-3 rounded-lg shadow-lg text-sm mb-2">
+            {message}
+          </div>
+        )}
+        <Button
+          type="submit"
+          disabled={saving}
+          size="lg"
+          className="shadow-xl px-8"
+        >
+          {saving ? "Guardando..." : "Guardar Cambios"}
         </Button>
       </div>
     </form>
