@@ -29,6 +29,8 @@ model home_settings {
   ctaPrimaryLabel      String          @default("Ver Productos")
   ctaSecondaryLabel    String          @default("Conocer Más")
   categoriesTitle      String          @default("Categorías")
+  categoriesSubtitle   String          @default("Explorá nuestras categorías de productos")
+  categoriesDisplay    String          @default("image") // image, icon
   featuredTitle        String          @default("Ofertas Destacadas")
   featuredSubtitle     String          @default("Los mejores productos con descuento")
   showHeroLogo         Boolean         @default(true)
@@ -37,6 +39,7 @@ model home_settings {
   showCtaPrimary       Boolean         @default(true)
   showCtaSecondary     Boolean         @default(true)
   showCategoriesTitle  Boolean         @default(true)
+  showCategoriesSubtitle Boolean       @default(true)
   showFeaturedTitle    Boolean         @default(true)
   showFeaturedSubtitle Boolean         @default(true)
   footerLogoUrl        String?
@@ -151,8 +154,16 @@ model faq_items {
   @@index([isActive, sortOrder])
 }
 
-/// Legacy settings table - DEPRECATED, will be removed after migration
-/// @deprecated Use specific settings models instead
+/// Legacy settings table - DEPRECATED
+/// This table is being phased out in favor of specific settings models:
+/// - home_settings
+/// - contact_settings
+/// - store_settings
+/// - shipping_settings
+/// - stock_settings
+/// - payment_settings (planned)
+/// Do NOT add new keys here.
+/// @deprecated
 model settings {
   key       String   @id
   value     Json

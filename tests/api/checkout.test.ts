@@ -1,5 +1,5 @@
 import { POST } from "../../src/app/api/checkout/route";
-import prisma from "../../src/lib/prisma";
+import { prisma } from "../../src/lib/prisma";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -38,7 +38,11 @@ vi.mock("@/lib/prisma", () => {
     callback(mockClient)
   );
 
-  return { default: mockClient, prisma: mockClient };
+  return {
+    __esModule: true,
+    default: mockClient,
+    prisma: mockClient,
+  };
 });
 
 // Mock MercadoPago

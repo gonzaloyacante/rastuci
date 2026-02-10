@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
@@ -6,6 +7,8 @@ import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { HomeSettingsSchema, defaultHomeSettings } from "@/lib/validation/home";
+
+export const dynamic = "force-dynamic";
 
 // Helper to convert DB model to API format
 function dbToApiFormat(
@@ -84,11 +87,9 @@ export async function GET(req: NextRequest) {
       windowMs: 60_000,
     });
     if (!rl.ok) {
-      return NextResponse.json(
-        fail("RATE_LIMITED", "Too many requests", 429, {
-          retryAfterMs: rl.retryAfterMs,
-        })
-      );
+      return fail("RATE_LIMITED", "Too many requests", 429, {
+        retryAfterMs: rl.retryAfterMs,
+      });
     }
 
     // Fetch from new explicit model
@@ -105,20 +106,22 @@ export async function GET(req: NextRequest) {
 
     // Validate against schema
     const parsed = HomeSettingsSchema.safeParse(data);
+
     if (!parsed.success) {
-      logger.warn("Invalid home settings in DB, returning defaults", {
+      logger.warn("Invalid home settings in DB, returning data with warnings", {
         issues: parsed.error.flatten(),
       });
-      return NextResponse.json(ok(defaultHomeSettings));
+      // Return data anyway so admin can see/fix it
+      return ok(data);
     }
 
-    return NextResponse.json(ok(parsed.data));
+    return ok(parsed.data);
   } catch (err) {
     const e = normalizeApiError(err);
     logger.error("GET /api/home failed", e);
     const code: ApiErrorCode =
       e.code === "INTERNAL" ? "INTERNAL_ERROR" : (e.code as ApiErrorCode);
-    return NextResponse.json(fail(code, e.message, e.status ?? 500));
+    return fail(code, e.message, e.status ?? 500);
   }
 }
 
@@ -131,17 +134,15 @@ export const PUT = withAdminAuth(async (req: NextRequest) => {
       windowMs: 60_000,
     });
     if (!rl.ok) {
-      return NextResponse.json(
-        fail("RATE_LIMITED", "Too many requests", 429, {
-          retryAfterMs: rl.retryAfterMs,
-        })
-      );
+      return fail("RATE_LIMITED", "Too many requests", 429, {
+        retryAfterMs: rl.retryAfterMs,
+      });
     }
 
     const body = await req.json();
     const parsed = HomeSettingsSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(fail("BAD_REQUEST", parsed.error.message, 400));
+      return fail("BAD_REQUEST", parsed.error.message, 400);
     }
 
     const data = parsed.data;
@@ -234,16 +235,16 @@ export const PUT = withAdminAuth(async (req: NextRequest) => {
 
     const responseData = dbToApiFormat(updated, updated?.benefits ?? []);
 
-    return NextResponse.json({
-      success: true,
-      data: responseData,
-    });
+    // Revalidate paths to ensure fresh data
+    revalidatePath("/", "layout"); // Update header/footer everywhere
+    revalidatePath("/", "page"); // Update homepage content
+
+    return ok(responseData, "Configuración del Home guardada");
   } catch (err) {
     const e = normalizeApiError(err);
     logger.error("PUT /api/home failed", e);
-    return NextResponse.json(
-      { success: false, error: e.message, code: e.code || "INTERNAL_ERROR" },
-      { status: e.status ?? 500 }
-    );
+    const code: ApiErrorCode =
+      e.code === "INTERNAL" ? "INTERNAL_ERROR" : (e.code as ApiErrorCode);
+    return fail(code, e.message, e.status ?? 500);
   }
 });

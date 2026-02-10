@@ -2,12 +2,9 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import ContactPageClient from "./client-page";
 import { prisma } from "@/lib/prisma";
-import {
-  defaultContactSettings,
-  ContactSettingsSchema,
-} from "@/lib/validation/contact";
+import { defaultContactSettings } from "@/lib/validation/contact";
 
-export const revalidate = 3600; // Cache for 1 hour
+export const revalidate = 5; // Cache for 5 seconds (dev)
 
 export const metadata: Metadata = {
   title: "Contacto - Rastuci",
@@ -28,17 +25,64 @@ export const metadata: Metadata = {
 
 async function getContactSettings() {
   try {
-    const settings = await prisma.settings.findUnique({
-      where: { key: "contact" },
+    const settings = await prisma.contact_settings.findUnique({
+      where: { id: "default" },
     });
 
-    if (settings?.value) {
-      const parsed = ContactSettingsSchema.safeParse(settings.value);
-      if (parsed.success) {
-        return parsed.data;
-      }
+    if (!settings) {
+      return defaultContactSettings;
     }
-    return defaultContactSettings;
+
+    return {
+      headerTitle: settings.headerTitle,
+      headerSubtitle: settings.headerSubtitle,
+      emails: settings.emails,
+      phones: settings.phones,
+      address: {
+        lines: [settings.addressLine1 ?? "", settings.addressLine2 ?? ""],
+        cityCountry: settings.addressCityCountry ?? "",
+      },
+      hours: {
+        title: settings.hoursTitle,
+        weekdays: settings.hoursWeekdays,
+        saturday: settings.hoursSaturday,
+        sunday: settings.hoursSunday,
+      },
+      form: {
+        title: settings.formTitle,
+        nameLabel: settings.formNameLabel,
+        emailLabel: settings.formEmailLabel,
+        phoneLabel: settings.formPhoneLabel,
+        messageLabel: settings.formMessageLabel,
+        submitLabel: settings.formSubmitLabel,
+        successTitle: settings.formSuccessTitle,
+        successMessage: settings.formSuccessMessage,
+        sendAnotherLabel: settings.formSendAnother,
+      },
+      faqs: [], // FAQs come from faq_items table
+      social: {
+        instagram: {
+          url: settings.instagramUrl ?? "",
+          username: settings.instagramUsername ?? "",
+        },
+        facebook: {
+          url: settings.facebookUrl ?? "",
+          username: settings.facebookUsername ?? "",
+        },
+        whatsapp: {
+          url: settings.whatsappUrl ?? "",
+          username: settings.whatsappUsername ?? "",
+        },
+        tiktok: {
+          url: settings.tiktokUrl ?? "",
+          username: settings.tiktokUsername ?? "",
+        },
+        youtube: {
+          url: settings.youtubeUrl ?? "",
+          username: settings.youtubeUsername ?? "",
+        },
+      },
+    };
   } catch (_error) {
     return defaultContactSettings;
   }

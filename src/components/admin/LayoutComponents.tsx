@@ -136,14 +136,10 @@ interface TabPanelProps {
 }
 
 export function TabPanel({ id, activeTab, children }: TabPanelProps) {
+  if (id !== activeTab) return null;
+
   return (
-    <div
-      role="tabpanel"
-      id={`tabpanel-${id}`}
-      aria-labelledby={`tab-${id}`}
-      hidden={id !== activeTab}
-      className={id === activeTab ? "block" : "hidden"}
-    >
+    <div role="tabpanel" id={`tabpanel-${id}`} aria-labelledby={`tab-${id}`}>
       {children}
     </div>
   );

@@ -54,6 +54,7 @@ export const defaultHomeSettings: HomeSettings = {
   showHeroSubtitle: true,
   heroLogoUrl: "",
   showHeroLogo: true,
+  heroImage: "",
   headerLogoUrl: "",
   ctaPrimaryLabel: "Ver Productos",
   showCtaPrimary: true,

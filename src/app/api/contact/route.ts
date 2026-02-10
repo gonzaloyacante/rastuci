@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { checkRateLimit } from "@/lib/rateLimiter";
@@ -222,6 +223,10 @@ export const PUT = withAdminAuth(async (req: NextRequest) => {
         youtubeUsername: data.social?.youtube?.username ?? null,
       },
     });
+
+    // Revalidate paths
+    revalidatePath("/contacto");
+    revalidatePath("/", "layout"); // Update footer if contact info changes
 
     return data;
   }, "PUT /api/contact");
