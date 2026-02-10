@@ -1,5 +1,5 @@
 import { POST } from "../../src/app/api/checkout/route";
-import prisma from "../../src/lib/prisma";
+import { prisma } from "../../src/lib/prisma";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -27,6 +27,9 @@ vi.mock("@/lib/prisma", () => {
       create: vi.fn(),
       createMany: vi.fn(),
     },
+    vacation_settings: {
+      findUnique: vi.fn(),
+    },
     $transaction: vi.fn(),
   };
 
@@ -35,7 +38,11 @@ vi.mock("@/lib/prisma", () => {
     callback(mockClient)
   );
 
-  return { default: mockClient };
+  return {
+    __esModule: true,
+    default: mockClient,
+    prisma: mockClient,
+  };
 });
 
 // Mock MercadoPago
@@ -76,6 +83,9 @@ const mockPrisma = prisma as unknown as {
   products: {
     findUnique: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
+  };
+  vacation_settings: {
+    findUnique: ReturnType<typeof vi.fn>;
   };
 };
 
