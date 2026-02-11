@@ -32,6 +32,8 @@ import {
   VacationSettingsFormData,
 } from "@/lib/validation/vacation";
 import VacationHistory from "@/components/vacation/VacationHistory";
+import { DatePicker } from "@/components/ui/DatePicker";
+import { Controller } from "react-hook-form";
 
 // Define Form Data extending Schema to handle dates as strings for input if needed
 // Zod schema expects Dates, but inputs use strings. React Hook Form handles this with Controller usually.
@@ -234,29 +236,47 @@ export default function VacationSettingsForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Fecha de Inicio (Informativa)</Label>
-                <div className="flex">
-                  <Input
-                    type="date"
-                    {...form.register("startDate", { valueAsDate: true })}
-                    className="w-full"
-                    defaultValue={
-                      form.getValues("startDate")?.toISOString().split("T")[0]
-                    } // Quick fix for date input
-                  />
-                </div>
+                <Controller
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Fecha de Inicio"
+                      date={field.value}
+                      setDate={field.onChange}
+                      minDate={new Date()}
+                      disabled={!isEnabled}
+                      placeholder="Seleccionar inicio"
+                    />
+                  )}
+                />
+                {form.formState.errors.startDate && (
+                  <p className="text-error text-xs">
+                    {form.formState.errors.startDate.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label>Fecha de Regreso (Estimada)</Label>
-                <Input
-                  type="date"
-                  {...form.register("endDate", { valueAsDate: true })}
-                  className="w-full"
-                  defaultValue={
-                    form.getValues("endDate")?.toISOString().split("T")[0]
-                  }
+                <Controller
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Fecha de Regreso (Estimada)"
+                      date={field.value}
+                      setDate={field.onChange}
+                      minDate={form.watch("startDate") || new Date()}
+                      disabled={!isEnabled}
+                      placeholder="Seleccionar regreso"
+                    />
+                  )}
                 />
+                {form.formState.errors.endDate && (
+                  <p className="text-error text-xs">
+                    {form.formState.errors.endDate.message}
+                  </p>
+                )}
                 <p className="text-xs text-muted">
                   Se usará para el mensaje "Volvemos el..."
                 </p>
