@@ -77,8 +77,6 @@ model cart_abandonment {
   id                 String                   @id @default(cuid())
   sessionId          String
   userId             String?
-  cartItems          Json? // kept for migration
-  // cartItems   Json // Deprecated, replaced by relation
   items              cart_abandonment_items[]
   cartValue          Decimal                  @db.Decimal(10, 2)
   abandonedAt        DateTime                 @default(now())

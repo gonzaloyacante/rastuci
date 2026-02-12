@@ -154,6 +154,38 @@ model faq_items {
   @@index([isActive, sortOrder])
 }
 
+/// Payment methods available in checkout
+model payment_methods {
+  id               String  @id @default(cuid())
+  methodId         String  @unique // e.g. "mercadopago", "cash"
+  name             String
+  icon             String  @default("wallet")
+  description      String
+  requiresShipping Boolean @default(true)
+  isActive         Boolean @default(true)
+  sortOrder        Int     @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// Shipping options available in checkout
+model shipping_options {
+  id            String  @id @default(cuid())
+  optionId      String  @unique // e.g. "pickup", "standard", "express"
+  name          String
+  description   String
+  price         Decimal @db.Decimal(10, 2)
+  estimatedDays String
+  isActive      Boolean @default(true)
+  sortOrder     Int     @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
 /// Legacy settings table - DEPRECATED
 /// This table is being phased out in favor of specific settings models:
 /// - home_settings
@@ -161,9 +193,10 @@ model faq_items {
 /// - store_settings
 /// - shipping_settings
 /// - stock_settings
-/// - payment_settings (planned)
+/// - payment_methods
+/// - shipping_options
 /// Do NOT add new keys here.
-/// @deprecated
+/// @deprecated — will be removed after grace period (2026-03-12)
 model settings {
   key       String   @id
   value     Json

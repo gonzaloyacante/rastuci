@@ -4,6 +4,12 @@ import { normalizeApiError } from "@/lib/errors";
 import { sanitizers, validateAndSanitize } from "@/lib/input-sanitization";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import {
+  colorImageRowsToRecord,
+  colorImageRecordToRows,
+  sizeGuideRowsToArray,
+  sizeGuideToRows,
+} from "@/lib/product-mappers";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { RATE_LIMITS } from "@/lib/rateLimiterConfig";
 import {
@@ -112,7 +118,6 @@ export async function GET(
         onSale: true,
         isActive: true,
         images: true,
-        colorImages: true,
         sizes: true,
         colors: true,
         rating: true,
@@ -125,6 +130,11 @@ export async function GET(
             size: true,
             stock: true,
           },
+        },
+        // Read from relational tables instead of Json fields
+        product_color_images: {
+          select: { color: true, imageUrl: true, sortOrder: true },
+          orderBy: { sortOrder: "asc" as const },
         },
         categories: {
           select: { id: true, name: true },
@@ -176,6 +186,18 @@ export async function GET(
           // Map product_variants to variants for API compatibility
           variants: (p as unknown as { product_variants?: unknown[] })
             .product_variants,
+          // Source colorImages from relational table
+          colorImages: colorImageRowsToRecord(
+            (
+              p as unknown as {
+                product_color_images?: {
+                  color: string;
+                  imageUrl: string;
+                  sortOrder: number;
+                }[];
+              }
+            ).product_color_images ?? []
+          ),
         }) as Product
     );
 
@@ -264,6 +286,12 @@ export const POST = withAdminAuth(
         return fail("NOT_FOUND", "Categoría no encontrada", 404);
       }
 
+      // Prepare color images and size guide rows for relational tables
+      const colorImageRows = productData.colorImages
+        ? colorImageRecordToRows(productData.colorImages)
+        : [];
+      const sizeGuideRows = sizeGuideToRows(productData.sizeGuide);
+
       // Crear el producto
       const newProduct = await prisma.products.create({
         data: {
@@ -284,7 +312,9 @@ export const POST = withAdminAuth(
           height: productData.height ?? null,
           width: productData.width ?? null,
           length: productData.length ?? null,
+          // Dual-write: keep Json field during grace period
           sizeGuide: productData.sizeGuide ?? undefined,
+          colorImages: productData.colorImages ?? undefined,
           updatedAt: new Date(),
           images: Array.isArray(productData.images)
             ? JSON.stringify(productData.images)
@@ -300,11 +330,22 @@ export const POST = withAdminAuth(
                   })),
                 }
               : undefined,
-          colorImages: productData.colorImages ?? undefined,
+          // Write to relational tables (primary source)
+          product_color_images:
+            colorImageRows.length > 0 ? { create: colorImageRows } : undefined,
+          product_size_guides:
+            sizeGuideRows.length > 0 ? { create: sizeGuideRows } : undefined,
         },
         include: {
           categories: true,
           product_variants: true,
+          product_color_images: {
+            select: { color: true, imageUrl: true, sortOrder: true },
+            orderBy: { sortOrder: "asc" },
+          },
+          product_size_guides: {
+            select: { size: true, measurements: true, ageRange: true },
+          },
         },
       });
 
@@ -327,9 +368,9 @@ export const POST = withAdminAuth(
           ...v,
           sku: v.sku ?? undefined,
         })),
-        colorImages:
-          (newProduct.colorImages as unknown as Record<string, string[]>) ??
-          null,
+        // Source from relational tables
+        colorImages: colorImageRowsToRecord(newProduct.product_color_images),
+        sizeGuide: sizeGuideRowsToArray(newProduct.product_size_guides),
       };
 
       // Devuelve 201 para creación

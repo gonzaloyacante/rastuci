@@ -4,6 +4,12 @@ import { normalizeApiError } from "@/lib/errors";
 import { deleteImage, extractPublicId } from "@/lib/cloudinary";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import {
+  colorImageRowsToRecord,
+  colorImageRecordToRows,
+  sizeGuideRowsToArray,
+  sizeGuideToRows,
+} from "@/lib/product-mappers";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ProductCreateSchema } from "@/lib/validation/product";
@@ -39,6 +45,13 @@ export async function GET(
       include: {
         categories: true,
         product_variants: true,
+        product_color_images: {
+          select: { color: true, imageUrl: true, sortOrder: true },
+          orderBy: { sortOrder: "asc" },
+        },
+        product_size_guides: {
+          select: { size: true, measurements: true, ageRange: true },
+        },
       },
     });
 
@@ -68,14 +81,9 @@ export async function GET(
       salePrice: product.salePrice ? Number(product.salePrice) : undefined,
       description: product.description ?? undefined,
       images: safelyParseImages(product.images),
-      colorImages:
-        product.colorImages &&
-        typeof product.colorImages === "object" &&
-        !Array.isArray(product.colorImages)
-          ? (product.colorImages as unknown as Record<string, string[]>)
-          : typeof product.colorImages === "string"
-            ? JSON.parse(product.colorImages)
-            : null,
+      // Source from relational tables
+      colorImages: colorImageRowsToRecord(product.product_color_images),
+      sizeGuide: sizeGuideRowsToArray(product.product_size_guides),
       categories: {
         ...product.categories,
         description: product.categories.description ?? undefined,
@@ -220,6 +228,35 @@ export const PUT = withAdminAuth(
         }
       }
 
+      // Prepare relational data for color images and size guide
+      const colorImageRows = colorImages
+        ? colorImageRecordToRows(colorImages)
+        : null;
+      const sizeGuideRows = sizeGuideToRows(
+        (parsed.data as { sizeGuide?: unknown }).sizeGuide
+      );
+
+      // Sync relational tables: delete old rows, create new ones
+      if (colorImageRows !== null) {
+        await prisma.product_color_images.deleteMany({
+          where: { productId: id },
+        });
+        if (colorImageRows.length > 0) {
+          await prisma.product_color_images.createMany({
+            data: colorImageRows.map((row) => ({ ...row, productId: id })),
+          });
+        }
+      }
+
+      if (sizeGuideRows.length > 0) {
+        await prisma.product_size_guides.deleteMany({
+          where: { productId: id },
+        });
+        await prisma.product_size_guides.createMany({
+          data: sizeGuideRows.map((row) => ({ ...row, productId: id })),
+        });
+      }
+
       const updatedPrismaProduct = await prisma.products.update({
         where: { id },
         data: {
@@ -240,11 +277,19 @@ export const PUT = withAdminAuth(
           width: width ?? null,
           length: length ?? null,
           updatedAt: new Date(),
+          // Dual-write: keep Json fields during grace period
           colorImages: colorImages ?? undefined,
         },
         include: {
           categories: true,
           product_variants: true,
+          product_color_images: {
+            select: { color: true, imageUrl: true, sortOrder: true },
+            orderBy: { sortOrder: "asc" },
+          },
+          product_size_guides: {
+            select: { size: true, measurements: true, ageRange: true },
+          },
         },
       });
 
@@ -259,11 +304,13 @@ export const PUT = withAdminAuth(
           typeof updatedPrismaProduct.images === "string"
             ? JSON.parse(updatedPrismaProduct.images)
             : updatedPrismaProduct.images,
-        colorImages:
-          (updatedPrismaProduct.colorImages as unknown as Record<
-            string,
-            string[]
-          >) ?? null,
+        // Source from relational tables
+        colorImages: colorImageRowsToRecord(
+          updatedPrismaProduct.product_color_images
+        ),
+        sizeGuide: sizeGuideRowsToArray(
+          updatedPrismaProduct.product_size_guides
+        ),
         categories: {
           ...updatedPrismaProduct.categories,
           description: updatedPrismaProduct.categories.description ?? undefined,
@@ -326,6 +373,13 @@ export const PATCH = withAdminAuth(
         include: {
           categories: true,
           product_variants: true,
+          product_color_images: {
+            select: { color: true, imageUrl: true, sortOrder: true },
+            orderBy: { sortOrder: "asc" },
+          },
+          product_size_guides: {
+            select: { size: true, measurements: true, ageRange: true },
+          },
         },
       });
 
@@ -340,11 +394,13 @@ export const PATCH = withAdminAuth(
           typeof updatedPrismaProduct.images === "string"
             ? JSON.parse(updatedPrismaProduct.images)
             : updatedPrismaProduct.images,
-        colorImages:
-          (updatedPrismaProduct.colorImages as unknown as Record<
-            string,
-            string[]
-          >) ?? null,
+        // Source from relational tables
+        colorImages: colorImageRowsToRecord(
+          updatedPrismaProduct.product_color_images
+        ),
+        sizeGuide: sizeGuideRowsToArray(
+          updatedPrismaProduct.product_size_guides
+        ),
         categories: {
           ...updatedPrismaProduct.categories,
           description: updatedPrismaProduct.categories.description ?? undefined,

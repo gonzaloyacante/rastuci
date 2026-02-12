@@ -33,16 +33,6 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
 
-  // We need to create a response to modify headers, but proxy handles redirects too.
-  // Strategy:
-  // 1. Check for redirects first (auth logic).
-  // 2. If redirect, apply security headers to redirect response and return.
-  // 3. If no redirect, use NextResponse.next({ request: { headers: requestHeaders } }) and apply headers.
-
-  // NOTE: The previous logic had `securityHeaders(request)` but ignored the return value.
-  // This means security headers were NOT being applied by middleware at all!
-  // We will fix this now.
-
   // Apply CSRF protection to API routes
   if (pathname.startsWith("/api/")) {
     const csrfError = csrfProtection(request);
@@ -131,12 +121,26 @@ export async function proxy(request: NextRequest) {
     },
   });
   res.headers.set("x-request-id", reqId);
-  res.headers.set("x-request-id", reqId);
   applySecurityHeaders(res, nonce);
   return res;
 }
 
-// Configurar el proxy para que se ejecute solo en las rutas especificadas
-export const config = {
-  matcher: ["/admin", "/admin/:path*", "/api/:path*"],
+// Next.js v16: proxy uses `proxyConfig` (not `config`)
+// Match all routes for CSP nonce + security headers, admin auth, and API protection
+export const proxyConfig = {
+  matcher: [
+    // Admin routes
+    "/admin",
+    "/admin/:path*",
+    // API routes
+    "/api/:path*",
+    // Public pages (for CSP nonce & security headers)
+    "/",
+    "/products/:path*",
+    "/cart",
+    "/checkout/:path*",
+    "/contact",
+    "/favorites",
+    "/legal/:path*",
+  ],
 };

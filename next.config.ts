@@ -137,30 +137,9 @@ const nextConfig: NextConfig = {
   generateEtags: true,
   // Evitar advertencia sobre lockfiles múltiples (inferred workspace root)
   outputFileTracingRoot: __dirname,
-  // Headers de seguridad y cache
+  // Cache headers only — security headers are applied dynamically via proxy.ts → applySecurityHeaders()
   async headers() {
     return [
-      {
-        source: "/(.*)",
-        headers: [
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "origin-when-cross-origin",
-          },
-          {
-            key: "Strict-Transport-Security",
-            value: "max-age=63072000; includeSubDomains; preload",
-          },
-        ],
-      },
       {
         source: "/api/(.*)",
         headers: [

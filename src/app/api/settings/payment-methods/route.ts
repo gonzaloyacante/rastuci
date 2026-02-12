@@ -4,11 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const PaymentMethodSchema = z.object({
-  id: z.string(),
+  methodId: z.string(),
   name: z.string(),
-  icon: z.string(),
+  icon: z.string().default("wallet"),
   description: z.string(),
-  requiresShipping: z.boolean().optional(),
+  requiresShipping: z.boolean().optional().default(true),
 });
 
 const PaymentMethodsSchema = z.array(PaymentMethodSchema).min(1);
@@ -17,28 +17,19 @@ const PaymentMethodsSchema = z.array(PaymentMethodSchema).min(1);
 export async function GET() {
   try {
     // Obtener configuración de contacto para la ubicación
-    const contactSetting = await prisma.settings.findUnique({
-      where: { key: "contact" },
+    const contactSetting = await prisma.contact_settings.findUnique({
+      where: { id: "default" },
+      select: { addressCityCountry: true },
     });
-    let locationString = "Buenos Aires";
+    const locationString = contactSetting?.addressCityCountry || "Buenos Aires";
 
-    if (contactSetting?.value) {
-      // Intentar parsear ubicación
-      try {
-        const contactData = JSON.parse(JSON.stringify(contactSetting.value));
-        if (contactData?.address?.cityCountry) {
-          locationString = contactData.address.cityCountry;
-        }
-      } catch (_e) {
-        // ignore parsing error
-      }
-    }
-
-    const setting = await prisma.settings.findUnique({
-      where: { key: "payment_methods" },
+    // Obtener métodos de pago de la tabla relacional
+    const methods = await prisma.payment_methods.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
     });
 
-    if (!setting) {
+    if (methods.length === 0) {
       // Retornar métodos por defecto si no existen en DB
       return NextResponse.json({
         success: true,
@@ -62,18 +53,17 @@ export async function GET() {
       });
     }
 
-    // Si existen settings guardados, actualizamos la descripción del efectivo dinámicamente también
-    // por si cambió la dirección pero no el método de pago
-    const methods = setting.value as z.infer<typeof PaymentMethodsSchema>;
-    const updatedMethods = methods.map((m) => {
-      if (m.id === "cash") {
-        return {
-          ...m,
-          description: `Retiro en nuestro local de ${locationString} - Sin costo de envío`,
-        };
-      }
-      return m;
-    });
+    // Actualizar descripción del efectivo dinámicamente con la ubicación
+    const updatedMethods = methods.map((m) => ({
+      id: m.methodId,
+      name: m.name,
+      icon: m.icon,
+      description:
+        m.methodId === "cash"
+          ? `Retiro en nuestro local de ${locationString} - Sin costo de envío`
+          : m.description,
+      requiresShipping: m.requiresShipping,
+    }));
 
     return NextResponse.json({ success: true, data: updatedMethods });
   } catch (error) {
@@ -91,20 +81,40 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
     const body = await req.json();
     const validated = PaymentMethodsSchema.parse(body);
 
-    const setting = await prisma.settings.upsert({
-      where: { key: "payment_methods" },
-      create: {
-        key: "payment_methods",
-        value: validated,
-        updatedAt: new Date(),
-      },
-      update: {
-        value: validated,
-        updatedAt: new Date(),
-      },
-    });
+    // Upsert each payment method
+    const results = await prisma.$transaction(
+      validated.map((method, index) =>
+        prisma.payment_methods.upsert({
+          where: { methodId: method.methodId },
+          create: {
+            methodId: method.methodId,
+            name: method.name,
+            icon: method.icon,
+            description: method.description,
+            requiresShipping: method.requiresShipping ?? true,
+            sortOrder: index,
+          },
+          update: {
+            name: method.name,
+            icon: method.icon,
+            description: method.description,
+            requiresShipping: method.requiresShipping ?? true,
+            sortOrder: index,
+          },
+        })
+      )
+    );
 
-    return NextResponse.json({ success: true, data: setting.value });
+    // Return in the same format as before
+    const data = results.map((r) => ({
+      id: r.methodId,
+      name: r.name,
+      icon: r.icon,
+      description: r.description,
+      requiresShipping: r.requiresShipping,
+    }));
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

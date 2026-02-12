@@ -1,74 +1,18 @@
-import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
-import { defaultShippingSettings } from "@/lib/validation/shipping";
 import type { ApiResponse } from "@/types";
-import { NextRequest, NextResponse } from "next/server";
-
-// Valores por defecto para keys específicas
-const DEFAULT_VALUES: Record<string, unknown> = {
-  shipping: defaultShippingSettings,
-};
+import { NextResponse } from "next/server";
 
 // GET /api/cms - Obtener configuración CMS
-// @deprecated: Use specific settings tables (home_settings, etc.) instead. This route will be removed in Phase 2.
-export async function GET(request: NextRequest) {
+// @deprecated — This route reads from the legacy `settings` JSON table.
+// All settings have been migrated to dedicated relational tables:
+//   - home_settings, contact_settings, store_settings
+//   - shipping_settings, stock_settings
+//   - payment_methods, shipping_options
+// This route will be removed after the grace period (2026-03-12).
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const key = searchParams.get("key");
-
-    if (key) {
-      // Whitelist allowed keys for public access
-      const ALLOWED_KEYS = [
-        "home_banner",
-        "contact_info",
-        "social_links",
-        "shipping_info",
-        "payment_info",
-      ];
-      if (!ALLOWED_KEYS.includes(key)) {
-        // Check admin auth for non-whitelisted keys
-        // Note: For now, we block. Implementing full auth check here might be complex without NextRequest pass-through helper refactor.
-        // Assuming public CMS only needs these.
-        return NextResponse.json<ApiResponse<null>>(
-          { success: false, message: "Restricted", data: null },
-          { status: 403 }
-        );
-      }
-
-      // Obtener un setting específico
-      const setting = await prisma.settings.findUnique({
-        where: { key },
-      });
-
-      // ... match existing structure ...
-      // Si no existe, devolver valores por defecto si los hay
-      if (!setting) {
-        if (DEFAULT_VALUES[key]) {
-          return NextResponse.json<ApiResponse<unknown>>({
-            success: true,
-            message: "Configuración por defecto",
-            data: DEFAULT_VALUES[key],
-          });
-        }
-        return NextResponse.json<ApiResponse<null>>(
-          {
-            success: false,
-            message: "Configuración no encontrada",
-            data: null,
-          },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json<ApiResponse<Record<string, unknown>>>({
-        success: true,
-        message: "Configuración obtenida",
-        data: setting.value as Record<string, unknown>,
-      });
-    }
-
-    // Obtener todos los settings
+    // Return all remaining settings from the deprecated table
     const settings = await prisma.settings.findMany({
       orderBy: { key: "asc" },
     });
@@ -84,7 +28,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json<ApiResponse<Record<string, unknown>>>({
       success: true,
-      message: "Configuraciones obtenidas",
+      message:
+        "⚠️ DEPRECATED: This route reads from legacy settings table. Use specific settings endpoints instead.",
       data: settingsMap,
     });
   } catch (error) {
@@ -99,57 +44,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-// PUT /api/cms - Actualizar configuración CMS (solo admin)
-// @deprecated: Use specific settings tables (home_settings, etc.) instead. This route will be removed in Phase 2.
-export const PUT = withAdminAuth(async (request: NextRequest) => {
-  try {
-    const body = await request.json();
-    const { key, value } = body;
-
-    if (!key) {
-      return NextResponse.json<ApiResponse<null>>(
-        {
-          success: false,
-          message: "La clave es requerida",
-          data: null,
-        },
-        { status: 400 }
-      );
-    }
-
-    if (value === undefined) {
-      return NextResponse.json<ApiResponse<null>>(
-        {
-          success: false,
-          message: "El valor es requerido",
-          data: null,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Upsert: crear o actualizar
-    const setting = await prisma.settings.upsert({
-      where: { key },
-      update: { value, updatedAt: new Date() },
-      create: { key, value, updatedAt: new Date() },
-    });
-
-    return NextResponse.json<ApiResponse<Record<string, unknown>>>({
-      success: true,
-      message: "Configuración actualizada",
-      data: setting.value as Record<string, unknown>,
-    });
-  } catch (error) {
-    logger.error("Error al actualizar configuración CMS", { error });
-    return NextResponse.json<ApiResponse<null>>(
-      {
-        success: false,
-        message: "Error al actualizar configuración",
-        data: null,
-      },
-      { status: 500 }
-    );
-  }
-});

@@ -5,6 +5,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { logger } from "@/lib/logger";
 import { generateStoreJsonLd } from "@/lib/metadata";
 import { prisma } from "@/lib/prisma";
+import { colorImageRowsToRecord } from "@/lib/product-mappers";
 import { defaultHomeSettings } from "@/lib/validation/home";
 import { defaultShippingSettings } from "@/lib/validation/shipping";
 import { Metadata } from "next";
@@ -38,7 +39,13 @@ async function getHomeData() {
             onSale: true,
           },
           take: 4,
-          include: { categories: true },
+          include: {
+            categories: true,
+            product_color_images: {
+              select: { color: true, imageUrl: true, sortOrder: true },
+              orderBy: { sortOrder: "asc" },
+            },
+          },
           orderBy: { updatedAt: "desc" },
         }),
       ]);
@@ -62,14 +69,23 @@ async function getHomeData() {
         }
       }
 
+      // Destructure out Json fields & relational includes to avoid type conflicts
+
+      const {
+        sizeGuide: _sg,
+        colorImages: _ci,
+        product_color_images,
+        ...rest
+      } = p;
+
       return {
-        ...p,
+        ...rest,
         price: Number(p.price),
         description: p.description || undefined,
         salePrice: p.salePrice ? Number(p.salePrice) : undefined,
         rating: p.rating || null,
         images,
-        colorImages: p.colorImages as Record<string, string[]> | null,
+        colorImages: colorImageRowsToRecord(product_color_images),
       };
     });
 

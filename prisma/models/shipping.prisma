@@ -21,8 +21,6 @@ model ca_agencies {
   postalCode         String?
   latitude           Float?
   longitude          Float?
-  hours              Json?
-  // hours     Json? // Deprecated, replaced by relation
   agency_hours       agency_hours[]
   status             String         @default("ACTIVE")
   createdAt          DateTime       @default(now())
