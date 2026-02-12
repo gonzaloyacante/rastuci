@@ -199,6 +199,8 @@ describe("Products API", () => {
         images: JSON.stringify(validProductData.images),
         categories: mockCategory,
         product_variants: [],
+        product_color_images: [],
+        product_size_guides: [],
         colorImages: null,
         createdAt: new Date(),
         updatedAt: new Date(),
