@@ -5,18 +5,16 @@ import { NextResponse } from "next/server";
 import { Decimal } from "@prisma/client/runtime/library";
 
 // Interfaces para tipado
-interface OrderWithItems {
+// Updated interface for optimized query
+interface RecentOrder {
   id: string;
   customerName: string;
   total: Decimal;
   createdAt: Date;
   status: string;
-  order_items: Array<{
-    products: {
-      id: string;
-      name: string;
-    };
-  }>;
+  _count: {
+    order_items: number;
+  };
 }
 
 interface CategoryWithCount {
@@ -67,15 +65,19 @@ export const GET = withAdminAuth(async () => {
       prisma.categories.count(),
       prisma.orders.count(),
       prisma.orders.count({ where: { status: "PENDING" } }),
+      // OPTIMIZACIÓN: Usar select y count para evitar traer productos completos
       prisma.orders.findMany({
         where: { status: "PENDING" },
         take: 5,
         orderBy: { createdAt: "desc" },
-        include: {
-          order_items: {
-            include: {
-              products: true,
-            },
+        select: {
+          id: true,
+          customerName: true,
+          total: true,
+          createdAt: true,
+          status: true,
+          _count: {
+            select: { order_items: true },
           },
         },
       }),
@@ -156,13 +158,14 @@ export const GET = withAdminAuth(async () => {
     });
 
     // Formatea las órdenes recientes para el dashboard
-    const formattedRecentOrders = recentOrders.map((order: OrderWithItems) => ({
+    // OPTIMIZACIÓN: Mapeo ajustado a la nueva estructura de query
+    const formattedRecentOrders = recentOrders.map((order: RecentOrder) => ({
       id: order.id,
       customerName: order.customerName,
-      total: Number(order.total), // Convert Decimal to number
+      total: Number(order.total),
       date: order.createdAt,
       status: order.status,
-      items: order.order_items.length,
+      items: order._count.order_items,
     }));
 
     // Obtener productos por categoría usando Prisma
@@ -184,27 +187,61 @@ export const GET = withAdminAuth(async () => {
       })
     );
 
-    // Ventas mensuales (últimos 6 meses)
-    const monthlySales = [];
-    for (let i = 5; i >= 0; i--) {
-      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+    // Ventas mensuales (últimos 6 meses) - OPTIMIZACIÓN N+1
+    // En lugar de una query por mes, traemos todo de una vez y agregamos en memoria
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1); // Inicio del mes hace 6 meses
 
-      const monthRevenue = await prisma.orders.aggregate({
-        _sum: { total: true },
-        where: {
-          createdAt: {
-            gte: monthStart,
-            lte: monthEnd,
-          },
+    const monthlyOperations = await prisma.orders.findMany({
+      where: {
+        createdAt: {
+          gte: sixMonthsAgo,
         },
-      });
+      },
+      select: {
+        createdAt: true,
+        total: true,
+      },
+    });
 
-      monthlySales.push({
-        month: monthStart.toLocaleDateString("es-AR", { month: "short" }),
-        revenue: Number(monthRevenue._sum.total) || 0,
-      });
+    const monthlySalesMap = new Map<string, number>();
+
+    // Inicializar mapa con 0 para los últimos 6 meses (para mantener el orden y cubrir meses sin ventas)
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(now.getMonth() - i);
+      const key = d.toLocaleDateString("es-AR", { month: "short" });
+      monthlySalesMap.set(key, 0);
     }
+
+    // Sumar totales
+    monthlyOperations.forEach((order) => {
+      const key = order.createdAt.toLocaleDateString("es-AR", {
+        month: "short",
+      });
+      // Solo sumar si el mes está en el rango (debería estarlo por el where, pero por seguridad)
+      if (monthlySalesMap.has(key)) {
+        const current = monthlySalesMap.get(key) || 0;
+        monthlySalesMap.set(key, current + Number(order.total));
+      } else {
+        // Fallback por si acaso las fechas no coinciden exactamente con la generación de claves
+        // (ej: diferencia de timezone en borde de mes).
+        // En este caso simple, podríamos ignorarlo o agregarlo dinámicamente.
+        // Lo agregaremos dinámicamente si no existe, aunque el loop de inicialización debería cubrirlo.
+        monthlySalesMap.set(
+          key,
+          (monthlySalesMap.get(key) || 0) + Number(order.total)
+        );
+      }
+    });
+
+    const monthlySales = Array.from(monthlySalesMap.entries()).map(
+      ([month, revenue]) => ({
+        month,
+        revenue,
+      })
+    );
 
     return NextResponse.json({
       stats: {

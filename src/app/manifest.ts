@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { HomeSettingsSchema } from "@/lib/validation/home";
 import { MetadataRoute } from "next";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
@@ -9,16 +8,13 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     "Discover premium fashion and lifestyle products at Rastuci. Shop the latest trends with fast shipping and excellent customer service.";
 
   try {
-    const settings = await prisma.settings.findUnique({
-      where: { key: "home" },
+    const homeSettings = await prisma.home_settings.findUnique({
+      where: { id: "default" },
     });
 
-    if (settings?.value) {
-      const parsed = HomeSettingsSchema.safeParse(settings.value);
-      if (parsed.success) {
-        brandName = parsed.data.footer?.brand || brandName;
-        description = parsed.data.heroSubtitle || description;
-      }
+    if (homeSettings) {
+      brandName = homeSettings.footerBrand || brandName;
+      description = homeSettings.heroSubtitle || description;
     }
   } catch (error) {
     // Fallback to defaults

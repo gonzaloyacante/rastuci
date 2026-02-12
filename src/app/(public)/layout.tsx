@@ -126,11 +126,17 @@ async function getContactSettings() {
   }
 }
 
+import { headers } from "next/headers";
+
+// ... existing imports
+
 export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
+
   const [home, contact, vacationSettings] = await Promise.all([
     getHomeSettings(),
     getContactSettings(),
@@ -139,28 +145,24 @@ export default async function PublicLayout({
 
   const isVacation = isVacationActive(vacationSettings);
 
-  // SEO Schema for Store Closed
-  const jsonLd =
-    isVacation && vacationSettings
-      ? {
-          "@context": "https://schema.org",
-          "@type": "Store",
-          name: "Rastuci",
-          openingHoursSpecification: [
-            {
-              "@type": "OpeningHoursSpecification",
-              validFrom: vacationSettings.startDate
-                ? new Date(vacationSettings.startDate).toISOString()
-                : new Date().toISOString(),
-              validThrough: vacationSettings.endDate
-                ? new Date(vacationSettings.endDate).toISOString()
-                : undefined,
-              opens: "00:00",
-              closes: "00:00",
-            },
-          ],
-        }
-      : null;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: contact.headerTitle || "Rastuci",
+    url: process.env.NEXT_PUBLIC_APP_URL,
+    logo: home.heroLogoUrl,
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: contact.phones[0],
+      contactType: "customer service",
+      areaServed: "AR",
+    },
+    sameAs: [
+      contact.social.instagram.url,
+      contact.social.facebook.url,
+      contact.social.tiktok.url,
+    ].filter(Boolean),
+  };
 
   return (
     <div className="min-h-screen flex flex-col pt-16">
@@ -168,10 +170,11 @@ export default async function PublicLayout({
         <Script
           id="vacation-schema"
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-
+      // ...
       <VacationProvider
         initialSettings={vacationSettings}
         initialIsActive={isVacation}

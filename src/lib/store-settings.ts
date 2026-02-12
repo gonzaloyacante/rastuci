@@ -5,8 +5,6 @@ import {
 } from "@/lib/validation/store";
 import { logger } from "@/lib/logger";
 
-const SETTINGS_KEY = "store";
-
 /**
  * Get store settings from database
  *
@@ -20,7 +18,6 @@ export async function getStoreSettings(): Promise<StoreSettings> {
       stockRecord,
       stockLevels,
       contactRecord,
-      legacyRecord,
     ] = await Promise.all([
       prisma.store_settings.findUnique({ where: { id: "default" } }),
       prisma.shipping_settings.findUnique({ where: { id: "default" } }),
@@ -30,27 +27,11 @@ export async function getStoreSettings(): Promise<StoreSettings> {
         orderBy: { sortOrder: "asc" },
       }),
       prisma.contact_settings.findUnique({ where: { id: "default" } }),
-      prisma.settings.findUnique({ where: { key: SETTINGS_KEY } }),
     ]);
 
     // 1. Base Defaults
-    let settings: StoreSettings = { ...defaultStoreSettings };
-
-    // 2. Apply Legacy Overrides (if any) - Low priority
-    if (legacyRecord?.value) {
-      const legacy = legacyRecord.value as Partial<StoreSettings>;
-      settings = {
-        ...settings,
-        ...legacy,
-        address: { ...settings.address, ...legacy.address },
-        emails: { ...settings.emails, ...legacy.emails },
-        stock: { ...settings.stock, ...legacy.stock },
-        shipping: { ...settings.shipping, ...legacy.shipping },
-        payments: { ...settings.payments, ...legacy.payments },
-      };
-    }
-
-    // 3. Apply New Table Overrides (High priority)
+    const settings: StoreSettings = { ...defaultStoreSettings };
+    // 2. Apply New Table Overrides (High priority)
 
     // Store Settings (Identity & Address)
     if (storeRecord) {

@@ -2,7 +2,10 @@ import { getRequestId } from "@/lib/logger";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { logApiCall } from "@/lib/api-logger";
-import { csrfProtection, securityHeaders } from "@/middleware-utils/security";
+import {
+  csrfProtection,
+  applySecurityHeaders,
+} from "@/middleware-utils/security";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -21,8 +24,24 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Apply security headers to all requests
-  securityHeaders(request);
+  // Create a nonce for CSP
+  const nonce = Buffer.from(
+    crypto.getRandomValues(new Uint8Array(16))
+  ).toString("base64");
+
+  // Set the nonce in the request headers so it can be accessed by Server Components
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  // We need to create a response to modify headers, but proxy handles redirects too.
+  // Strategy:
+  // 1. Check for redirects first (auth logic).
+  // 2. If redirect, apply security headers to redirect response and return.
+  // 3. If no redirect, use NextResponse.next({ request: { headers: requestHeaders } }) and apply headers.
+
+  // NOTE: The previous logic had `securityHeaders(request)` but ignored the return value.
+  // This means security headers were NOT being applied by middleware at all!
+  // We will fix this now.
 
   // Apply CSRF protection to API routes
   if (pathname.startsWith("/api/")) {
@@ -69,6 +88,7 @@ export async function proxy(request: NextRequest) {
     const res = NextResponse.redirect(new URL("/admin", request.url));
     res.headers.set("x-request-id", reqId);
     res.headers.set("x-auth-debug", debugAuthHeader);
+    applySecurityHeaders(res, nonce);
     return res;
   }
 
@@ -77,6 +97,7 @@ export async function proxy(request: NextRequest) {
     const res = NextResponse.redirect(new URL("/", request.url));
     res.headers.set("x-request-id", reqId);
     res.headers.set("x-auth-debug", "not-admin");
+    applySecurityHeaders(res, nonce);
     return res;
   }
 
@@ -85,6 +106,7 @@ export async function proxy(request: NextRequest) {
     const res = NextResponse.redirect(new URL("/admin/panel", request.url));
     res.headers.set("x-request-id", reqId);
     res.headers.set("x-auth-debug", debugAuthHeader);
+    applySecurityHeaders(res, nonce);
     return res;
   }
 
@@ -98,12 +120,19 @@ export async function proxy(request: NextRequest) {
         { status: 401 }
       );
       res.headers.set("x-request-id", reqId);
+      applySecurityHeaders(res, nonce);
       return res;
     }
   }
 
-  const res = NextResponse.next();
+  const res = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
   res.headers.set("x-request-id", reqId);
+  res.headers.set("x-request-id", reqId);
+  applySecurityHeaders(res, nonce);
   return res;
 }
 

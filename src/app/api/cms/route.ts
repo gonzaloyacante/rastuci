@@ -11,6 +11,7 @@ const DEFAULT_VALUES: Record<string, unknown> = {
 };
 
 // GET /api/cms - Obtener configuración CMS
+// @deprecated: Use specific settings tables (home_settings, etc.) instead. This route will be removed in Phase 2.
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -100,6 +101,7 @@ export async function GET(request: NextRequest) {
 }
 
 // PUT /api/cms - Actualizar configuración CMS (solo admin)
+// @deprecated: Use specific settings tables (home_settings, etc.) instead. This route will be removed in Phase 2.
 export const PUT = withAdminAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();

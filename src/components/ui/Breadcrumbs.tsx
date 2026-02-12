@@ -19,6 +19,7 @@ interface BreadcrumbsProps {
   className?: string;
   maxItems?: number;
   truncateMiddle?: boolean;
+  nonce?: string;
 }
 
 export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
@@ -28,6 +29,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   className = "",
   maxItems = 5,
   truncateMiddle = true,
+  nonce,
 }) => {
   const pathname = usePathname();
 
@@ -144,8 +146,9 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
               </Link>
             ) : (
               <span
-                className={`text-sm font-medium ${item.isActive ? "text-primary" : "text-primary"
-                  }`}
+                className={`text-sm font-medium ${
+                  item.isActive ? "text-primary" : "text-primary"
+                }`}
                 aria-current={item.isActive ? "page" : undefined}
               >
                 {item.icon && <span className="mr-1">{item.icon}</span>}
@@ -225,11 +228,11 @@ export const breadcrumbPatterns = {
     createBreadcrumbItem("Productos", "/productos"),
     ...(categoryName
       ? [
-        createBreadcrumbItem(
-          categoryName,
-          `/productos?categoria=${categoryName}`
-        ),
-      ]
+          createBreadcrumbItem(
+            categoryName,
+            `/productos?categoria=${categoryName}`
+          ),
+        ]
       : []),
     createBreadcrumbItem(productName),
   ],
@@ -287,7 +290,7 @@ export const BreadcrumbsWithSchema: React.FC<BreadcrumbsProps> = (props) => {
       <Breadcrumbs {...props} />
       <script
         type="application/ld+json"
-
+        nonce={props.nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData),
         }}
