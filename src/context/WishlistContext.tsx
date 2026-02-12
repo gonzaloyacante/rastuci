@@ -36,6 +36,7 @@ interface WishlistContextType {
   clearWishlist: () => void;
   isInWishlist: (id: string) => boolean;
   getWishlistCount: () => number;
+  shareWishlist: () => Promise<{ url: string; token: string } | null>;
   isLoaded: boolean;
 }
 
@@ -151,6 +152,26 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     return state.items.length;
   }, [state.items]);
 
+  const shareWishlist = useCallback(async () => {
+    if (state.items.length === 0) return null;
+
+    try {
+      const response = await fetch("/api/wishlist/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: state.items.map((i) => i.id) }),
+      });
+
+      if (!response.ok) throw new Error("Error creating share link");
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      logger.error("Error sharing wishlist", { error });
+      return null;
+    }
+  }, [state.items]);
+
   const value: WishlistContextType = useMemo(
     () => ({
       wishlistItems: state.items,
@@ -159,6 +180,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       clearWishlist,
       isInWishlist,
       getWishlistCount,
+      shareWishlist,
       isLoaded,
     }),
     [
@@ -168,6 +190,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       clearWishlist,
       isInWishlist,
       getWishlistCount,
+      shareWishlist,
       isLoaded,
     ]
   );
@@ -186,6 +209,7 @@ const _defaultWishlist: WishlistContextType = {
   clearWishlist: () => {},
   isInWishlist: () => false,
   getWishlistCount: () => 0,
+  shareWishlist: async () => null,
   isLoaded: false,
 };
 

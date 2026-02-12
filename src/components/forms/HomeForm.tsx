@@ -310,21 +310,76 @@ export default function HomeForm({ initial }: Props) {
               enabled={values.showHeroSubtitle}
               onToggle={(c) => update("showHeroSubtitle", c)}
             />
+
+            <div className="pt-2 pb-2">
+              <label className="text-sm font-medium mb-1.5 block">
+                Opacidad del Overlay (%)
+              </label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="90"
+                  step="5"
+                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
+                  value={values.heroOverlayOpacity ?? 20}
+                  onChange={(e) =>
+                    update("heroOverlayOpacity", Number(e.target.value))
+                  }
+                />
+                <span className="text-sm font-mono w-12 text-right">
+                  {values.heroOverlayOpacity ?? 20}%
+                </span>
+              </div>
+            </div>
+
             <div className="h-px bg-border my-2" />
-            <InputRow
-              label="CTA Principal (Botón)"
-              value={values.ctaPrimaryLabel}
-              onChange={(v) => update("ctaPrimaryLabel", v)}
-              enabled={values.showCtaPrimary}
-              onToggle={(c) => update("showCtaPrimary", c)}
-            />
-            <InputRow
-              label="CTA Secundaria (Botón)"
-              value={values.ctaSecondaryLabel}
-              onChange={(v) => update("ctaSecondaryLabel", v)}
-              enabled={values.showCtaSecondary}
-              onToggle={(c) => update("showCtaSecondary", c)}
-            />
+
+            <div className="grid gap-2">
+              <InputRow
+                label="CTA Principal (Texto)"
+                value={values.ctaPrimaryLabel}
+                onChange={(v) => update("ctaPrimaryLabel", v)}
+                enabled={values.showCtaPrimary}
+                onToggle={(c) => update("showCtaPrimary", c)}
+              />
+              {values.showCtaPrimary && (
+                <div className="pl-4 border-l-2 border-muted ml-2">
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                    Link Botón Principal
+                  </label>
+                  <input
+                    className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    value={values.ctaPrimaryLink ?? ""}
+                    placeholder="/products"
+                    onChange={(e) => update("ctaPrimaryLink", e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-2 mt-2">
+              <InputRow
+                label="CTA Secundaria (Texto)"
+                value={values.ctaSecondaryLabel}
+                onChange={(v) => update("ctaSecondaryLabel", v)}
+                enabled={values.showCtaSecondary}
+                onToggle={(c) => update("showCtaSecondary", c)}
+              />
+              {values.showCtaSecondary && (
+                <div className="pl-4 border-l-2 border-muted ml-2">
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                    Link Botón Secundario
+                  </label>
+                  <input
+                    className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    value={values.ctaSecondaryLink ?? ""}
+                    placeholder="/about"
+                    onChange={(e) => update("ctaSecondaryLink", e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </SettingsCard>
@@ -369,6 +424,30 @@ export default function HomeForm({ initial }: Props) {
               enabled={values.showFeaturedSubtitle}
               onToggle={(c) => update("showFeaturedSubtitle", c)}
             />
+            <div className="px-4">
+              <label className="text-sm font-medium mb-1.5 block">
+                Cantidad de Productos
+              </label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="4"
+                  max="12"
+                  step="4"
+                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
+                  value={values.featuredCount ?? 4}
+                  onChange={(e) =>
+                    update("featuredCount", Number(e.target.value))
+                  }
+                />
+                <span className="text-sm font-mono w-12 text-right">
+                  {values.featuredCount ?? 4}
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Recomendado: Múltiplos de 4
+              </p>
+            </div>
           </div>
         </div>
       </SettingsCard>
@@ -378,6 +457,13 @@ export default function HomeForm({ initial }: Props) {
         title="Beneficios"
         description="Iconos destacando las ventajas de tu tienda."
       >
+        <div className="mb-6">
+          <InputRow
+            label="Título de Sección Beneficios"
+            value={values.benefitsTitle ?? "Por qué elegirnos"}
+            onChange={(v) => update("benefitsTitle", v)}
+          />
+        </div>
         <div className="space-y-4">
           {benefitItems.map((benefitItem) => {
             const IconComponent = (

@@ -51,6 +51,7 @@ model products {
   product_color_images   product_color_images[]
   product_size_guides    product_size_guides[]
   cart_abandonment_items cart_abandonment_items[]
+  shared_wishlists       shared_wishlists[]
 
   @@index([categoryId])
   @@index([categoryId, name])
@@ -134,4 +135,18 @@ model product_size_guides {
 
   @@unique([productId, size])
   @@index([productId])
+}
+
+/// Anonymous Shared Wishlist (Snapshot)
+model shared_wishlists {
+  id        String     @id @default(cuid())
+  token     String     @unique // URL friendly token (nanoid)
+  createdAt DateTime   @default(now())
+  expiresAt DateTime?  // Optional expiration for snapshots
+  
+  // Relations
+  products  products[] 
+
+  @@index([token])
+  @@index([createdAt])
 }

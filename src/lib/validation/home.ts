@@ -8,10 +8,13 @@ export const HomeSettingsSchema = z.object({
   heroLogoUrl: z.string().max(500).optional(),
   showHeroLogo: z.boolean().default(true).optional(),
   heroImage: z.string().max(500).optional(),
+  heroOverlayOpacity: z.number().min(0).max(100).default(20).optional(),
   headerLogoUrl: z.string().max(500).optional(),
   ctaPrimaryLabel: z.string().min(1).max(40),
+  ctaPrimaryLink: z.string().min(1).max(200).default("/products").optional(),
   showCtaPrimary: z.boolean().default(true).optional(),
   ctaSecondaryLabel: z.string().min(1).max(40),
+  ctaSecondaryLink: z.string().min(1).max(200).default("/about").optional(),
   showCtaSecondary: z.boolean().default(true).optional(),
   categoriesTitle: z.string().min(1).max(80),
   showCategoriesTitle: z.boolean().default(true).optional(),
@@ -22,6 +25,13 @@ export const HomeSettingsSchema = z.object({
   showFeaturedTitle: z.boolean().default(true).optional(),
   featuredSubtitle: z.string().min(1).max(200),
   showFeaturedSubtitle: z.boolean().default(true).optional(),
+  featuredCount: z.number().min(1).max(12).default(4).optional(),
+  benefitsTitle: z
+    .string()
+    .min(1)
+    .max(80)
+    .default("Por qué elegirnos")
+    .optional(),
   benefits: z
     .array(
       z.object({
@@ -55,10 +65,13 @@ export const defaultHomeSettings: HomeSettings = {
   heroLogoUrl: "",
   showHeroLogo: true,
   heroImage: "",
+  heroOverlayOpacity: 20,
   headerLogoUrl: "",
   ctaPrimaryLabel: "Ver Productos",
+  ctaPrimaryLink: "/products",
   showCtaPrimary: true,
   ctaSecondaryLabel: "Explorar categorías",
+  ctaSecondaryLink: "/about",
   showCtaSecondary: true,
   categoriesTitle: "Nuestras Categorías",
   showCategoriesTitle: true,
@@ -70,6 +83,8 @@ export const defaultHomeSettings: HomeSettings = {
   featuredSubtitle:
     "Descubrí los favoritos de esta semana con descuentos exclusivos.",
   showFeaturedSubtitle: true,
+  featuredCount: 4,
+  benefitsTitle: "Por qué elegirnos",
   benefits: [
     {
       icon: "Truck",

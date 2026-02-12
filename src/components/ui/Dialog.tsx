@@ -100,7 +100,7 @@ export function DialogContent({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
       <div
-        className={`bg-surface text-foreground rounded-lg shadow-2xl w-full mx-auto relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-200 border border-border p-6 ${className}`}
+        className={`bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 rounded-lg shadow-2xl w-full mx-auto relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-200 border border-slate-200 dark:border-slate-800 p-6 ${className}`}
         role="dialog"
       >
         <Button

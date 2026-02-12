@@ -19,6 +19,7 @@ import {
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import { useState } from "react";
+import { ShareWishlistModal } from "@/components/wishlist/ShareModal";
 
 type SortOption =
   | "name-asc"
@@ -190,6 +191,10 @@ export default function FavoritosPageClient() {
               <Filter className="w-4 h-4 mr-2" />
               Filtros
             </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <ShareWishlistModal />
           </div>
 
           {/* View mode y acciones */}

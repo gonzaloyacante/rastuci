@@ -24,15 +24,20 @@ model home_settings {
   headerLogoUrl        String?
   heroLogoUrl          String?
   heroImage            String?
+  heroOverlayOpacity   Int             @default(20)
   heroTitle            String          @default("Bienvenidos a Rastuci")
   heroSubtitle         String          @default("Ropa para niños con estilo")
   ctaPrimaryLabel      String          @default("Ver Productos")
+  ctaPrimaryLink       String          @default("/products")
   ctaSecondaryLabel    String          @default("Conocer Más")
+  ctaSecondaryLink     String          @default("/about")
   categoriesTitle      String          @default("Categorías")
+  benefitsTitle        String          @default("Por qué elegirnos")
   categoriesSubtitle   String          @default("Explorá nuestras categorías de productos")
   categoriesDisplay    String          @default("image") // image, icon
   featuredTitle        String          @default("Ofertas Destacadas")
   featuredSubtitle     String          @default("Los mejores productos con descuento")
+  featuredCount        Int             @default(4)
   showHeroLogo         Boolean         @default(true)
   showHeroTitle        Boolean         @default(true)
   showHeroSubtitle     Boolean         @default(true)
