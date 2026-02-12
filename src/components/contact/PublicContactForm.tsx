@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -7,7 +8,6 @@ import { logger } from "@/lib/logger";
 import { type ContactSettings } from "@/lib/validation/contact";
 import { Loader2, Mail, MessageCircle, Phone, Send } from "lucide-react";
 import { useState } from "react";
-import { toast } from "react-hot-toast";
 
 type ResponsePreference = "EMAIL" | "PHONE" | "WHATSAPP";
 
@@ -35,6 +35,7 @@ export const PublicContactForm = ({
   const [formData, setFormData] = useState<ContactFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { show } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,15 +44,15 @@ export const PublicContactForm = ({
     try {
       // Validación básica
       if (!formData.name.trim()) {
-        toast.error("Por favor, ingresa tu nombre");
+        show({ type: "error", message: "Por favor, ingresa tu nombre" });
         return;
       }
       if (!formData.email.trim()) {
-        toast.error("Por favor, ingresa tu email");
+        show({ type: "error", message: "Por favor, ingresa tu email" });
         return;
       }
       if (!formData.message.trim()) {
-        toast.error("Por favor, escribe un mensaje");
+        show({ type: "error", message: "Por favor, escribe un mensaje" });
         return;
       }
       // Validar teléfono si la preferencia es PHONE o WHATSAPP
@@ -60,7 +61,10 @@ export const PublicContactForm = ({
           formData.responsePreference === "WHATSAPP") &&
         !formData.phone.trim()
       ) {
-        toast.error("Por favor, ingresa tu teléfono para poder contactarte");
+        show({
+          type: "error",
+          message: "Por favor, ingresa tu teléfono para poder contactarte",
+        });
         return;
       }
 
@@ -89,14 +93,16 @@ export const PublicContactForm = ({
 
       setSubmitted(true);
       setFormData(initialFormData);
-      toast.success("¡Mensaje enviado exitosamente!");
+      show({ type: "success", message: "¡Mensaje enviado exitosamente!" });
     } catch (error) {
       logger.error("Error al enviar formulario:", { error: error });
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Error al enviar el mensaje. Por favor, inténtalo de nuevo."
-      );
+      show({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error al enviar el mensaje. Por favor intenta nuevamente.",
+      });
     } finally {
       setIsSubmitting(false);
     }

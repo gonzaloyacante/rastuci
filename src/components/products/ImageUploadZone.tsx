@@ -1,11 +1,11 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { logger } from "@/lib/logger";
 import { AlertCircle, Check, Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
 
 interface ImageUploadZoneProps {
   existingImages: string[];
@@ -29,6 +29,7 @@ export default function ImageUploadZone({
   maxImages = 10,
   maxSizeMB = 5,
 }: ImageUploadZoneProps) {
+  const { show } = useToast();
   const [images, setImages] = useState<ImageState[]>(
     existingImages.map((url) => ({ url, uploaded: true }))
   );
@@ -94,7 +95,10 @@ export default function ImageUploadZone({
       const remainingSlots = maxImages - currentCount;
 
       if (remainingSlots <= 0) {
-        toast.error(`Máximo ${maxImages} imágenes permitidas`);
+        show({
+          type: "error",
+          message: `Máximo ${maxImages} imágenes permitidas`,
+        });
         return;
       }
 
@@ -105,7 +109,7 @@ export default function ImageUploadZone({
       for (const file of filesToAdd) {
         const error = validateFile(file);
         if (error) {
-          toast.error(`${file.name}: ${error}`);
+          show({ type: "error", message: `${file.name}: ${error}` });
           continue;
         }
 
@@ -139,7 +143,10 @@ export default function ImageUploadZone({
             );
           });
 
-          toast.success(`Imagen ${i + 1}/${newImages.length} subida`);
+          show({
+            type: "success",
+            message: `Imagen ${i + 1}/${newImages.length} subida`,
+          });
         } catch (error) {
           logger.error("Error uploading image:", { error });
           const errorMsg =
@@ -153,7 +160,10 @@ export default function ImageUploadZone({
             )
           );
 
-          toast.error(`Error al subir ${newImages[i].file!.name}`);
+          show({
+            type: "error",
+            message: `Error al subir ${newImages[i].file!.name}`,
+          });
         }
       }
     },
@@ -204,7 +214,7 @@ export default function ImageUploadZone({
       .map((img) => img.url)
       .filter(Boolean) as string[];
     onImagesChange(updatedUrls);
-    toast.success("Imagen eliminada");
+    show({ type: "success", message: "Imagen eliminada" });
   };
 
   const retryUpload = async (index: number) => {
@@ -234,7 +244,7 @@ export default function ImageUploadZone({
       updatedUrls[index] = url;
       onImagesChange(updatedUrls);
 
-      toast.success("Imagen subida correctamente");
+      show({ type: "success", message: "Imagen subida correctamente" });
     } catch (error) {
       logger.error("Error retrying upload:", { error });
       const errorMsg =
@@ -246,7 +256,7 @@ export default function ImageUploadZone({
         )
       );
 
-      toast.error("Error al reintentar subida");
+      show({ type: "error", message: "Error al reintentar subida" });
     }
   };
 

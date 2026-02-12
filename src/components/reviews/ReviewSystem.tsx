@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
+import { useToast } from "@/components/ui/Toast";
 import React, { useState } from "react";
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Star, ThumbsUp, ThumbsDown, Flag, User } from 'lucide-react';
-import { OptimizedImage } from '@/components/ui/OptimizedImage';
-import { EnhancedForm, FormField } from '@/components/forms/EnhancedForm';
-import { z } from 'zod';
-import toast from 'react-hot-toast';
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Star, ThumbsUp, ThumbsDown, Flag, User } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { EnhancedForm, FormField } from "@/components/forms/EnhancedForm";
+import { z } from "zod";
 
 interface Review {
   id: string;
@@ -30,62 +30,92 @@ interface ReviewSystemProps {
   reviews: Review[];
   averageRating: number;
   totalReviews: number;
-  onReviewSubmit: (review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  onReviewSubmit: (
+    review: Omit<Review, "id" | "createdAt" | "updatedAt">
+  ) => Promise<void>;
   onReviewHelpful: (reviewId: string, helpful: boolean) => Promise<void>;
   onReviewReport: (reviewId: string, reason: string) => Promise<void>;
   currentUserId?: string;
 }
 
 const reviewSchema = z.object({
-  rating: z.number().min(1, 'Debes seleccionar una calificación').max(5),
-  title: z.string().min(5, 'El título debe tener al menos 5 caracteres'),
-  comment: z.string().min(20, 'El comentario debe tener al menos 20 caracteres'),
+  rating: z.number().min(1, "Debes seleccionar una calificación").max(5),
+  title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
+  comment: z
+    .string()
+    .min(20, "El comentario debe tener al menos 20 caracteres"),
 });
 
-export default function ReviewSystem({ productId: _productId, reviews, averageRating, totalReviews, onReviewSubmit, onReviewHelpful, onReviewReport, currentUserId }: ReviewSystemProps) {
+export default function ReviewSystem({
+  productId: _productId,
+  reviews,
+  averageRating,
+  totalReviews,
+  onReviewSubmit,
+  onReviewHelpful,
+  onReviewReport,
+  currentUserId,
+}: ReviewSystemProps) {
+  const { show } = useToast();
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'rating-high' | 'rating-low' | 'helpful'>('newest');
+  const [sortBy, setSortBy] = useState<
+    "newest" | "oldest" | "rating-high" | "rating-low" | "helpful"
+  >("newest");
   const [filterRating, setFilterRating] = useState<number | null>(null);
 
-  const userHasReviewed = reviews.some(review => review.userId === currentUserId);
+  const userHasReviewed = reviews.some(
+    (review) => review.userId === currentUserId
+  );
 
   const sortedAndFilteredReviews = reviews
-    .filter(review => filterRating ? review.rating === filterRating : true)
+    .filter((review) => (filterRating ? review.rating === filterRating : true))
     .sort((a, b) => {
       switch (sortBy) {
-        case 'newest':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case 'rating-high':
+        case "newest":
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case "oldest":
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        case "rating-high":
           return b.rating - a.rating;
-        case 'rating-low':
+        case "rating-low":
           return a.rating - b.rating;
-        case 'helpful':
+        case "helpful":
           return b.helpful - a.helpful;
         default:
           return 0;
       }
     });
 
-  const ratingDistribution = [5, 4, 3, 2, 1].map(rating => ({
+  const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => ({
     rating,
-    count: reviews.filter(review => review.rating === rating).length,
-    percentage: totalReviews > 0 ? (reviews.filter(review => review.rating === rating).length / totalReviews) * 100 : 0,
+    count: reviews.filter((review) => review.rating === rating).length,
+    percentage:
+      totalReviews > 0
+        ? (reviews.filter((review) => review.rating === rating).length /
+            totalReviews) *
+          100
+        : 0,
   }));
 
   const handleReviewSubmit = async (data: z.infer<typeof reviewSchema>) => {
     if (!currentUserId) {
-      toast.error('Debes iniciar sesión para escribir una reseña');
+      show({
+        type: "error",
+        message: "Debes iniciar sesión para escribir una reseña",
+      });
       return;
     }
 
     try {
       await onReviewSubmit({
         userId: currentUserId,
-        userName: 'Usuario', // This would come from user context
+        userName: "Usuario", // This would come from user context
         rating: selectedRating,
         title: data.title,
         comment: data.comment,
@@ -93,12 +123,12 @@ export default function ReviewSystem({ productId: _productId, reviews, averageRa
         helpful: 0,
         notHelpful: 0,
       });
-      
+
       setShowReviewForm(false);
       setSelectedRating(0);
-      toast.success('Reseña enviada correctamente');
+      show({ type: "success", message: "Reseña enviada correctamente" });
     } catch {
-      toast.error('Error al enviar la reseña');
+      show({ type: "error", message: "Error al enviar la reseña" });
     }
   };
 
@@ -117,7 +147,9 @@ export default function ReviewSystem({ productId: _productId, reviews, averageRa
                 <Star
                   key={star}
                   className={`w-6 h-6 ${
-                    star <= averageRating ? 'text-warning fill-current' : 'muted'
+                    star <= averageRating
+                      ? "text-warning fill-current"
+                      : "muted"
                   }`}
                 />
               ))}
@@ -156,7 +188,7 @@ export default function ReviewSystem({ productId: _productId, reviews, averageRa
       {showReviewForm && (
         <div className="surface border border-muted rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Escribir Reseña</h3>
-          
+
           <EnhancedForm
             schema={reviewSchema}
             onSubmit={handleReviewSubmit}
@@ -182,15 +214,17 @@ export default function ReviewSystem({ productId: _productId, reviews, averageRa
                         <Star
                           className={`w-8 h-8 transition-colors ${
                             star <= (hoverRating || selectedRating)
-                              ? 'text-warning fill-current'
-                              : 'muted'
+                              ? "text-warning fill-current"
+                              : "muted"
                           }`}
                         />
                       </button>
                     ))}
                   </div>
                   {selectedRating === 0 && (
-                    <p className="text-sm text-error">Selecciona una calificación</p>
+                    <p className="text-sm text-error">
+                      Selecciona una calificación
+                    </p>
                   )}
                 </div>
 
@@ -204,20 +238,25 @@ export default function ReviewSystem({ productId: _productId, reviews, averageRa
                 />
 
                 <div className="space-y-2">
-                  <label htmlFor="comment" className="block text-sm font-medium">
+                  <label
+                    htmlFor="comment"
+                    className="block text-sm font-medium"
+                  >
                     Comentario <span className="text-error">*</span>
                   </label>
                   <textarea
                     id="comment"
                     rows={4}
                     placeholder="Comparte tu experiencia con este producto..."
-                    {...register('comment')}
+                    {...register("comment")}
                     className={`w-full px-3 py-2 border rounded-md surface focus:outline-none focus:ring-2 focus:ring-primary/20 ${
-                      errors.comment ? 'border-error' : 'border-muted'
+                      errors.comment ? "border-error" : "border-muted"
                     }`}
                   />
                   {errors.comment && (
-                    <p className="text-sm text-error">{errors.comment.message}</p>
+                    <p className="text-sm text-error">
+                      {errors.comment.message}
+                    </p>
                   )}
                 </div>
 
@@ -242,7 +281,15 @@ export default function ReviewSystem({ productId: _productId, reviews, averageRa
           <span className="text-sm font-medium">Ordenar por:</span>
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'rating-high' | 'rating-low')}
+            onChange={(e) =>
+              setSortBy(
+                e.target.value as
+                  | "newest"
+                  | "oldest"
+                  | "rating-high"
+                  | "rating-low"
+              )
+            }
             className="px-3 py-1 border border-muted rounded surface text-sm"
           >
             <option value="newest">Más recientes</option>
@@ -281,7 +328,9 @@ export default function ReviewSystem({ productId: _productId, reviews, averageRa
       <div className="space-y-4">
         {sortedAndFilteredReviews.length === 0 ? (
           <div className="text-center py-8 muted">
-            {filterRating ? 'No hay reseñas con esta calificación' : 'No hay reseñas aún'}
+            {filterRating
+              ? "No hay reseñas con esta calificación"
+              : "No hay reseñas aún"}
           </div>
         ) : (
           sortedAndFilteredReviews.map((review) => (
@@ -306,7 +355,12 @@ interface ReviewCardProps {
   currentUserId?: string;
 }
 
-function ReviewCard({ review, onHelpful, onReport, currentUserId }: ReviewCardProps) {
+function ReviewCard({
+  review,
+  onHelpful,
+  onReport,
+  currentUserId,
+}: ReviewCardProps) {
   const [showReportForm, setShowReportForm] = useState(false);
 
   const handleHelpful = (helpful: boolean) => {
@@ -357,7 +411,9 @@ function ReviewCard({ review, onHelpful, onReport, currentUserId }: ReviewCardPr
                 <Star
                   key={star}
                   className={`w-4 h-4 ${
-                    star <= review.rating ? 'text-warning fill-current' : 'muted'
+                    star <= review.rating
+                      ? "text-warning fill-current"
+                      : "muted"
                   }`}
                 />
               ))}
@@ -402,8 +458,7 @@ function ReviewCard({ review, onHelpful, onReport, currentUserId }: ReviewCardPr
                 onClick={() => handleHelpful(false)}
                 className="flex items-center gap-1"
               >
-                <ThumbsDown className="w-4 h-4" />
-                ({review.notHelpful})
+                <ThumbsDown className="w-4 h-4" />({review.notHelpful})
               </Button>
             </div>
 
@@ -425,7 +480,12 @@ function ReviewCard({ review, onHelpful, onReport, currentUserId }: ReviewCardPr
             <div className="mt-4 p-4 border border-muted rounded">
               <h4 className="font-medium mb-2">Reportar reseña</h4>
               <div className="space-y-2">
-                {['Contenido inapropiado', 'Spam', 'Información falsa', 'Otro'].map((reason) => (
+                {[
+                  "Contenido inapropiado",
+                  "Spam",
+                  "Información falsa",
+                  "Otro",
+                ].map((reason) => (
                   <button
                     key={reason}
                     onClick={() => handleReport(reason)}

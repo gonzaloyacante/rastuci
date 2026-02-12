@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -8,7 +9,6 @@ import {
   type StoreSettings,
   defaultStoreSettings,
 } from "@/lib/validation/store";
-import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { useSettings } from "@/hooks/useSettings";
@@ -19,6 +19,7 @@ interface StoreFormProps {
 }
 
 export default function StoreForm({ initial, onSave }: StoreFormProps) {
+  const { show } = useToast();
   const [data, setData] = useState<StoreSettings>(
     initial || defaultStoreSettings
   );
@@ -56,7 +57,10 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
 
     // Guard: Don't save if data hasn't loaded yet
     if (loading || loadingSettings) {
-      toast.error("Espera a que carguen los datos antes de guardar");
+      show({
+        type: "error",
+        message: "Espera a que carguen los datos antes de guardar",
+      });
       return;
     }
 
@@ -70,9 +74,11 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
       });
 
       if (res.status === 401 || res.status === 403) {
-        toast.error(
-          "Sesión expirada. Por favor recarga o inicia sesión nuevamente."
-        );
+        show({
+          type: "error",
+          message:
+            "Sesión expirada. Por favor recarga o inicia sesión nuevamente.",
+        });
         return;
       }
 
@@ -82,11 +88,14 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
         throw new Error(json.error || "Error al guardar");
       }
 
-      toast.success("Configuración guardada");
+      show({ type: "success", message: "Configuración guardada" });
       mutateSettings(); // Sync SWR cache
       onSave?.(data);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Error al guardar");
+      show({
+        type: "error",
+        message: error instanceof Error ? error.message : "Error al guardar",
+      });
     } finally {
       setSaving(false);
     }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import {
   DateRangeFilter,
   DistributionChart,
@@ -14,7 +15,6 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Download, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 
 // ============================================================================
 // Types
@@ -366,6 +366,7 @@ function ProviderStats({
 // ============================================================================
 
 export default function ShippingAnalytics() {
+  const { show } = useToast();
   const [data, setData] = useState<ShippingAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState("");
@@ -397,7 +398,7 @@ export default function ShippingAnalytics() {
       const result = await response.json();
       if (result.success) setData(result.data);
     } catch {
-      toast.error("Error al cargar analíticas");
+      show({ type: "error", message: "Error al cargar analíticas" });
     } finally {
       setLoading(false);
     }
@@ -427,7 +428,7 @@ export default function ShippingAnalytics() {
       );
     }
     downloadCSV(csvData, `shipping-analytics-${startDate}-${endDate}.csv`);
-    toast.success("Exportación completada");
+    show({ type: "success", message: "Exportación completada" });
   };
 
   if (loading)

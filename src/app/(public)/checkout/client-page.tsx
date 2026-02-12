@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import {
   CheckoutStepper,
   CustomerInfoStep,
@@ -14,7 +15,6 @@ import { useVacationSettings } from "@/hooks/useVacationSettings";
 import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
 
 export enum CheckoutStep {
   CUSTOMER_INFO = 0,
@@ -33,6 +33,7 @@ const stepLabels = [
 ];
 
 export default function CheckoutPageClient() {
+  const { show } = useToast();
   const router = useRouter();
   const { cartItems, placeOrder, getCartTotal, loadCheckoutSettings } =
     useCart();
@@ -62,11 +63,12 @@ export default function CheckoutPageClient() {
         (cartItems.length === 0 || isVacationMode) &&
         currentStep !== CheckoutStep.CONFIRMATION
       ) {
-        toast.error(
-          isVacationMode
+        show({
+          type: "error",
+          message: isVacationMode
             ? "La tienda está en pausa por vacaciones"
-            : "Tu carrito está vacío"
-        );
+            : "Tu carrito está vacío",
+        });
         router.push("/carrito");
       }
     }, 300);
@@ -108,7 +110,7 @@ export default function CheckoutPageClient() {
       if (result.success) {
         // Handle MercadoPago redirect
         if (result.paymentMethod === "mercadopago" && result.redirectUrl) {
-          toast.success("Redirigiendo a MercadoPago...");
+          show({ type: "success", message: "Redirigiendo a MercadoPago..." });
           window.location.href = result.redirectUrl;
           return;
         }
@@ -117,13 +119,13 @@ export default function CheckoutPageClient() {
         if (result.orderId) {
           setOrderId(result.orderId);
           setCurrentStep(CheckoutStep.CONFIRMATION);
-          toast.success("¡Pedido realizado con éxito!");
+          show({ type: "success", message: "¡Pedido realizado con éxito!" });
         }
       } else {
         const errorMessage =
           result.error || "Ocurrió un error al procesar tu pedido.";
         setError(errorMessage);
-        toast.error(errorMessage);
+        show({ type: "error", message: errorMessage });
       }
     } catch (error) {
       const errorMessage =
@@ -131,7 +133,7 @@ export default function CheckoutPageClient() {
           ? error.message
           : "Ocurrió un error inesperado. Por favor intenta nuevamente.";
       setError(errorMessage);
-      toast.error(errorMessage);
+      show({ type: "error", message: errorMessage });
       logger.error("Error al finalizar la compra:", { error: error });
     } finally {
       setIsSubmitting(false);

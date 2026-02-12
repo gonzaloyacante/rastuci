@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { PageHeaderWithActions, TabLayout, TabPanel } from "@/components/admin";
 import ContactForm from "@/components/forms/ContactForm";
 import HomeForm from "@/components/forms/HomeForm";
@@ -18,7 +19,6 @@ import { useSettings } from "@/hooks/useSettings";
 import { Plus, Trash2, Save } from "lucide-react";
 
 import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 
 type TabType =
   | "tienda"
@@ -38,6 +38,7 @@ interface FAQ {
 export default function ConfiguracionPage() {
   useDocumentTitle({ title: "Configuración del Sitio" });
   const [activeTab, setActiveTab] = useTabWithUrl("tienda");
+  const { show } = useToast();
   const [loading, setLoading] = useState(false);
 
   // FAQs state
@@ -78,14 +79,14 @@ export default function ConfiguracionPage() {
 
       const data = await res.json();
       if (data.success) {
-        toast.success("FAQs guardadas exitosamente");
+        show({ type: "success", message: "FAQs guardadas exitosamente" });
         mutateFaqs(); // Refresh cache
       } else {
-        toast.error(data.error || "Error al guardar");
+        show({ type: "error", message: data.error || "Error al guardar" });
       }
     } catch (error) {
       console.error("Error saving FAQs:", error);
-      toast.error("Error al guardar");
+      show({ type: "error", message: "Error al guardar" });
     } finally {
       setLoading(false);
     }

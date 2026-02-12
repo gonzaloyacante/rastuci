@@ -1,9 +1,9 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 interface ComparisonContextType {
   comparisonItems: Product[];
@@ -31,6 +31,7 @@ interface ComparisonProviderProps {
 }
 
 export function ComparisonProvider({ children }: ComparisonProviderProps) {
+  const { show } = useToast();
   const [comparisonItems, setComparisonItems] = useState<Product[]>([]);
   const maxItems = 4;
 
@@ -53,27 +54,33 @@ export function ComparisonProvider({ children }: ComparisonProviderProps) {
 
   const addToComparison = (product: Product) => {
     if (comparisonItems.length >= maxItems) {
-      toast.error(`Solo puedes comparar hasta ${maxItems} productos`);
+      show({
+        type: "error",
+        message: `Solo puedes comparar hasta ${maxItems} productos`,
+      });
       return;
     }
 
     if (isInComparison(product.id)) {
-      toast.error("Este producto ya está en la comparación");
+      show({
+        type: "error",
+        message: "Este producto ya está en la comparación",
+      });
       return;
     }
 
     setComparisonItems((prev) => [...prev, product]);
-    toast.success("Producto añadido a la comparación");
+    show({ type: "success", message: "Producto añadido a la comparación" });
   };
 
   const removeFromComparison = (productId: string) => {
     setComparisonItems((prev) => prev.filter((item) => item.id !== productId));
-    toast.success("Producto eliminado de la comparación");
+    show({ type: "success", message: "Producto eliminado de la comparación" });
   };
 
   const clearComparison = () => {
     setComparisonItems([]);
-    toast.success("Comparación limpiada");
+    show({ type: "success", message: "Comparación limpiada" });
   };
 
   const isInComparison = (productId: string) => {

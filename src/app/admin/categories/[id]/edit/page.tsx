@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { AdminPageHeader } from "@/components/admin";
 import { FormSkeleton } from "@/components/admin/skeletons";
 import { CategoryForm } from "@/components/forms";
@@ -7,9 +8,9 @@ import { logger } from "@/lib/logger";
 import { SerializedCategory } from "@/types";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 
 export default function CategoryEditPage() {
+  const { show } = useToast();
   const params = useParams();
   const categoryId = params.id as string;
   const [category, setCategory] = useState<SerializedCategory | null>(null);
@@ -64,10 +65,10 @@ export default function CategoryEditPage() {
       }
 
       router.push("/admin/categorias");
-      toast.success("Categoría actualizada correctamente");
+      show({ type: "success", message: "Categoría actualizada correctamente" });
     } catch (error) {
       logger.error("Error:", { error });
-      toast.error("Error al actualizar la categoría");
+      show({ type: "error", message: "Error al actualizar la categoría" });
       throw error;
     }
   };

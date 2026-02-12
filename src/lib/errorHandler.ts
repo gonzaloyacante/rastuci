@@ -1,4 +1,4 @@
-import { toast } from "react-hot-toast";
+import { showToast } from "@/components/ui/Toast";
 
 // Tipos de errores
 export enum ErrorType {
@@ -141,25 +141,28 @@ export const handleApiError = (error: unknown): AppError => {
 export const showError = (error: AppError | string) => {
   const message = typeof error === "string" ? error : error.message;
 
-  toast.error(message, {
+  showToast({
+    type: "error",
+    message,
     duration: 5000,
-    position: "top-center",
   });
 };
 
 // Función para mostrar éxito
 export const showSuccess = (message: string) => {
-  toast.success(message, {
+  showToast({
+    type: "success",
+    message,
     duration: 3000,
-    position: "top-center",
   });
 };
 
 // Función para mostrar información
 export const showInfo = (message: string) => {
-  toast(message, {
+  showToast({
+    type: "info",
+    message,
     duration: 4000,
-    position: "top-center",
   });
 };
 

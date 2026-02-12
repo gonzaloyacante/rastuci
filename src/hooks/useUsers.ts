@@ -1,5 +1,5 @@
+import { useToast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 
 export interface User {
   id: string;
@@ -43,6 +43,7 @@ interface UseUsersReturn {
 }
 
 export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
+  const { show } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,10 +86,14 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
 
       if (data.success) {
         // Map isAdmin to role since API returns isAdmin but we use role in UI
-        const mappedUsers = data.data.data.map((user: { isAdmin: boolean; role?: string } & Record<string, unknown>) => ({
-          ...user,
-          role: user.role || (user.isAdmin ? "ADMIN" : "USER"),
-        }));
+        const mappedUsers = data.data.data.map(
+          (
+            user: { isAdmin: boolean; role?: string } & Record<string, unknown>
+          ) => ({
+            ...user,
+            role: user.role || (user.isAdmin ? "ADMIN" : "USER"),
+          })
+        );
         setUsers(mappedUsers);
         setTotalPages(data.data.totalPages);
         setCurrentPage(data.data.page);
@@ -99,7 +104,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
       setError(_errorMessage);
-      toast.error(_errorMessage);
+      show({ type: "error", message: _errorMessage });
     } finally {
       setLoading(false);
     }
@@ -130,7 +135,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
       if (data.success) {
         const newUser = data.data;
         setUsers((prevUsers) => [newUser, ...prevUsers]);
-        toast.success("Usuario creado correctamente");
+        show({ type: "success", message: "Usuario creado correctamente" });
         return newUser;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -138,7 +143,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (error) {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
-      toast.error(_errorMessage);
+      show({ type: "error", message: _errorMessage });
       return null;
     }
   };
@@ -165,14 +170,14 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
           prevUsers.map((user) =>
             user.id === userId
               ? {
-                ...user,
-                ...userData,
-                updatedAt: new Date().toISOString(),
-              }
+                  ...user,
+                  ...userData,
+                  updatedAt: new Date().toISOString(),
+                }
               : user
           )
         );
-        toast.success("Usuario actualizado correctamente");
+        show({ type: "success", message: "Usuario actualizado correctamente" });
         return true;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -180,7 +185,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (error) {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
-      toast.error(_errorMessage);
+      show({ type: "error", message: _errorMessage });
       return false;
     }
   };
@@ -199,7 +204,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
 
       if (data.success) {
         setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
-        toast.success("Usuario eliminado correctamente");
+        show({ type: "success", message: "Usuario eliminado correctamente" });
         return true;
       } else {
         throw new Error(data.error || "Error desconocido");
@@ -207,7 +212,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (error) {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
-      toast.error(_errorMessage);
+      show({ type: "error", message: _errorMessage });
       return false;
     }
   };
@@ -230,7 +235,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
     } catch (error) {
       const _errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
-      toast.error(_errorMessage);
+      show({ type: "error", message: _errorMessage });
       return null;
     }
   };

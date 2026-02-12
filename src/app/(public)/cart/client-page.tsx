@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import EmptyState from "@/components/ui/EmptyState";
@@ -13,7 +14,6 @@ import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
 import { ShippingSettings } from "@/lib/validation/shipping";
 import { PLACEHOLDER_IMAGE } from "@/lib/constants";
 
@@ -46,6 +46,7 @@ const CartItemComponent = ({
   ) => void;
   onRemove: (id: string, size: string, color: string) => void;
 }) => {
+  const { show } = useToast();
   const [isRemoving, setIsRemoving] = useState(false);
   const [pendingQuantity, setPendingQuantity] = useState(item.quantity);
 
@@ -55,10 +56,13 @@ const CartItemComponent = ({
     try {
       await new Promise((resolve) => setTimeout(resolve, 300)); // Animación
       onRemove(item.product.id, item.size, item.color);
-      toast.success(`${item.product.name} eliminado del carrito`);
+      show({
+        type: "success",
+        message: `${item.product.name} eliminado del carrito`,
+      });
     } catch (error) {
       logger.error("Error removing item:", { error: error });
-      toast.error("Error al eliminar el producto");
+      show({ type: "error", message: "Error al eliminar el producto" });
       setIsRemoving(false);
     }
   }, [item, onRemove]);
@@ -71,7 +75,10 @@ const CartItemComponent = ({
       }
 
       if (newQuantity > item.product.stock) {
-        toast.error(`Stock máximo disponible: ${item.product.stock}`);
+        show({
+          type: "error",
+          message: `Stock máximo disponible: ${item.product.stock}`,
+        });
         return;
       }
 
@@ -371,6 +378,7 @@ const OrderSummary = ({
 };
 
 export default function CartPageClient() {
+  const { show } = useToast();
   const router = useRouter();
   const {
     cartItems,
@@ -412,7 +420,10 @@ export default function CartPageClient() {
       );
 
       if (outOfStockItems.length > 0) {
-        toast.error("Algunos productos no tienen stock suficiente");
+        show({
+          type: "error",
+          message: "Algunos productos no tienen stock suficiente",
+        });
         setIsCheckingOut(false);
         return;
       }
@@ -420,7 +431,7 @@ export default function CartPageClient() {
       router.push("/finalizar-compra");
     } catch (error) {
       logger.error("Error during checkout:", { error: error });
-      toast.error("Error al proceder al checkout");
+      show({ type: "error", message: "Error al proceder al checkout" });
       setIsCheckingOut(false);
     }
   }, [cartItems, router]);
@@ -437,7 +448,7 @@ export default function CartPageClient() {
 
     if (confirmed) {
       clearCart();
-      toast.success("Carrito vaciado");
+      show({ type: "success", message: "Carrito vaciado" });
     }
   }, [clearCart, confirm]);
 

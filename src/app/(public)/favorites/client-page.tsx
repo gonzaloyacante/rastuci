@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useCart } from "@/context/CartContext";
@@ -18,7 +19,6 @@ import {
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 type SortOption =
   | "name-asc"
@@ -30,6 +30,7 @@ type SortOption =
 type ViewMode = "grid" | "list";
 
 export default function FavoritosPageClient() {
+  const { show } = useToast();
   const { wishlistItems, removeFromWishlist, clearWishlist, isLoaded } =
     useWishlist();
   const { addToCart } = useCart();
@@ -54,12 +55,12 @@ export default function FavoritosPageClient() {
       updatedAt: new Date(),
     };
     addToCart(product, 1, "M", "Sin color");
-    toast.success("Producto agregado al carrito");
+    show({ type: "success", message: "Producto agregado al carrito" });
   };
 
   const handleRemoveFromWishlist = (id: string, name: string) => {
     removeFromWishlist(id);
-    toast.success(`${name} eliminado de favoritos`);
+    show({ type: "success", message: `${name} eliminado de favoritos` });
   };
 
   const handleClearWishlist = async () => {
@@ -74,7 +75,7 @@ export default function FavoritosPageClient() {
 
     if (confirmed) {
       clearWishlist();
-      toast.success("Lista de favoritos limpiada");
+      show({ type: "success", message: "Lista de favoritos limpiada" });
     }
   };
 

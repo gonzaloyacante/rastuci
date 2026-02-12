@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Star } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "react-hot-toast";
 
 interface ProductItem {
   id: string;
@@ -30,6 +30,7 @@ export default function OrderReviewForm({
   customerName,
   products,
 }: OrderReviewFormProps) {
+  const { show } = useToast();
   const router = useRouter();
   const [reviews, setReviews] = useState<Record<string, ReviewState>>({});
   const [loading, setLoading] = useState(false);
@@ -56,7 +57,10 @@ export default function OrderReviewForm({
     );
 
     if (entries.length === 0) {
-      toast.error("Por favor califica al menos un producto");
+      show({
+        type: "error",
+        message: "Por favor califica al menos un producto",
+      });
       return;
     }
 
@@ -85,7 +89,7 @@ export default function OrderReviewForm({
       }
 
       setSubmitted(true);
-      toast.success("¡Gracias por tu opinión!");
+      show({ type: "success", message: "¡Gracias por tu opinión!" });
 
       // Opcional: Redirigir a home después de unos segundos
       setTimeout(() => {
@@ -93,7 +97,7 @@ export default function OrderReviewForm({
       }, 5000);
     } catch (error) {
       console.error(error);
-      toast.error("Error al guardar reseñas");
+      show({ type: "error", message: "Error al guardar reseñas" });
     } finally {
       setLoading(false);
     }

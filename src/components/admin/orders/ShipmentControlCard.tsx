@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useCorreoArgentino } from "@/hooks/useCorreoArgentino";
@@ -11,7 +12,6 @@ import type {
 import { logger } from "@/lib/logger";
 import { MapPin, RefreshCw, Send, Truck } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 import { Order } from "@/types";
 
@@ -24,6 +24,7 @@ export function ShipmentControlCard({
   order,
   onOrderUpdate,
 }: ShipmentControlCardProps) {
+  const { show } = useToast();
   const {
     getTracking,
     importShipment,
@@ -37,7 +38,10 @@ export function ShipmentControlCard({
 
   const handleGetTracking = async () => {
     if (!order.caTrackingNumber) {
-      toast.error("No hay número de tracking de Correo Argentino");
+      show({
+        type: "error",
+        message: "No hay número de tracking de Correo Argentino",
+      });
       return;
     }
 
@@ -46,13 +50,16 @@ export function ShipmentControlCard({
       const result = await getTracking({ shippingId: order.caTrackingNumber });
       if (result) {
         setTrackingInfo(result);
-        toast.success("Información de tracking obtenida");
+        show({ type: "success", message: "Información de tracking obtenida" });
       } else {
-        toast.error("No se pudo obtener información de tracking");
+        show({
+          type: "error",
+          message: "No se pudo obtener información de tracking",
+        });
       }
     } catch (err) {
       logger.error("Error al obtener tracking", { error: err });
-      toast.error("Error al obtener tracking");
+      show({ type: "error", message: "Error al obtener tracking" });
     } finally {
       setLoadingTracking(false);
     }
@@ -69,9 +76,15 @@ export function ShipmentControlCard({
       const json = await res.json();
 
       if (json.success) {
-        toast.success("Estado sincronizado con Correo Argentino");
+        show({
+          type: "success",
+          message: "Estado sincronizado con Correo Argentino",
+        });
         if (json.data.emailSent) {
-          toast.success("Email de seguimiento enviado al cliente");
+          show({
+            type: "success",
+            message: "Email de seguimiento enviado al cliente",
+          });
         }
         // Update local state if tracking number changed
         if (
@@ -81,10 +94,13 @@ export function ShipmentControlCard({
           onOrderUpdate({ caTrackingNumber: json.data.trackingNumber });
         }
       } else {
-        toast.error(json.error || "No se pudo sincronizar");
+        show({
+          type: "error",
+          message: json.error || "No se pudo sincronizar",
+        });
       }
     } catch (_e) {
-      toast.error("Error de conexión al sincronizar");
+      show({ type: "error", message: "Error de conexión al sincronizar" });
     } finally {
       setSyncing(false);
     }
@@ -92,9 +108,10 @@ export function ShipmentControlCard({
 
   const handleImportShipment = async () => {
     if (order.caShipmentId) {
-      toast.error(
-        "Este pedido ya tiene un envío importado en Correo Argentino"
-      );
+      show({
+        type: "error",
+        message: "Este pedido ya tiene un envío importado en Correo Argentino",
+      });
       return;
     }
 
@@ -104,7 +121,10 @@ export function ShipmentControlCard({
       !order.shippingProvince ||
       !order.shippingPostalCode
     ) {
-      toast.error("El pedido no tiene dirección completa de envío");
+      show({
+        type: "error",
+        message: "El pedido no tiene dirección completa de envío",
+      });
       return;
     }
 
@@ -168,11 +188,17 @@ export function ShipmentControlCard({
           caExtOrderId: order.id,
         });
 
-        toast.success("Envío importado correctamente en Correo Argentino");
+        show({
+          type: "success",
+          message: "Envío importado correctamente en Correo Argentino",
+        });
       }
     } catch (err) {
       logger.error("Error al importar envío", { error: err });
-      toast.error("Error al importar envío en Correo Argentino");
+      show({
+        type: "error",
+        message: "Error al importar envío en Correo Argentino",
+      });
     }
   };
 
@@ -185,13 +211,13 @@ export function ShipmentControlCard({
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("Envío creado correctamente");
+        show({ type: "success", message: "Envío creado correctamente" });
         onOrderUpdate(json.data.order);
       } else {
-        toast.error(json.error || "Error al crear envío");
+        show({ type: "error", message: json.error || "Error al crear envío" });
       }
     } catch (_e) {
-      toast.error("Error de conexión");
+      show({ type: "error", message: "Error de conexión" });
     }
   };
 

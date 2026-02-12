@@ -1,22 +1,23 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "react-hot-toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const { show } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email) {
-      toast.error("Por favor ingresa tu email");
+      show({ type: "error", message: "Por favor ingresa tu email" });
       return;
     }
 
@@ -33,13 +34,19 @@ export default function ForgotPasswordPage() {
 
       if (data.success) {
         setEmailSent(true);
-        toast.success("Email enviado. Revisa tu bandeja de entrada");
+        show({
+          type: "success",
+          message: "Email enviado. Revisa tu bandeja de entrada",
+        });
       } else {
-        toast.error(data.error || "Error al enviar el email");
+        show({
+          type: "error",
+          message: data.error || "Error al enviar el email",
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Error al procesar la solicitud");
+      show({ type: "error", message: "Error al procesar la solicitud" });
     } finally {
       setIsLoading(false);
     }
@@ -65,8 +72,8 @@ export default function ForgotPasswordPage() {
           <div className="bg-info/10 border border-info/20 rounded-lg p-4 text-sm text-info">
             <p className="font-medium mb-1">📧 Revisa tu email</p>
             <p>
-              El enlace de recuperación expirará en 1 hora. Si no lo ves,
-              revisa tu carpeta de spam.
+              El enlace de recuperación expirará en 1 hora. Si no lo ves, revisa
+              tu carpeta de spam.
             </p>
           </div>
 

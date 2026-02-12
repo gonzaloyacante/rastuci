@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -16,7 +17,6 @@ import { getColorHex } from "@/utils/colors";
 import { ProductVariant } from "@/types";
 import { sortVariantsBySize } from "@/utils/sizes";
 import { HelpTooltip } from "./ProductFormComponents";
-import { toast } from "react-hot-toast";
 
 interface VariantManagerProps {
   variants: ProductVariant[];
@@ -31,6 +31,7 @@ export default function VariantManager({
   availableColors,
   availableSizes,
 }: VariantManagerProps) {
+  const { show } = useToast();
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [stockInput, setStockInput] = useState<number | "">("");
@@ -41,7 +42,10 @@ export default function VariantManager({
       setError(
         "Debes definir colores y talles primero en las secciones anteriores."
       );
-      toast.error("Debes definir colores y talles primero");
+      show({
+        type: "error",
+        message: "Debes definir colores y talles primero",
+      });
       return;
     }
 
@@ -71,10 +75,16 @@ export default function VariantManager({
     if (addedCount > 0) {
       onChange(sortVariantsBySize(newVariants));
       setError(null);
-      toast.success(`${addedCount} combinaciones generadas`);
+      show({
+        type: "success",
+        message: `${addedCount} combinaciones generadas`,
+      });
     } else {
       setError("Todas las combinaciones posibles ya existen.");
-      toast.error("Todas las combinaciones posibles ya existen");
+      show({
+        type: "error",
+        message: "Todas las combinaciones posibles ya existen",
+      });
     }
   };
 
@@ -95,7 +105,7 @@ export default function VariantManager({
 
     if (exists) {
       setError(`La variante ${selectedColor} - ${selectedSize} ya existe`);
-      toast.error("Esta variante ya existe");
+      show({ type: "error", message: "Esta variante ya existe" });
       return;
     }
 
@@ -110,14 +120,14 @@ export default function VariantManager({
 
     onChange(sortVariantsBySize([...variants, newVariant]));
     setStockInput("");
-    toast.success("Variante agregada");
+    show({ type: "success", message: "Variante agregada" });
   };
 
   const handleRemove = (index: number) => {
     const updated = [...variants];
     updated.splice(index, 1);
     onChange(updated);
-    toast.success("Variante eliminada");
+    show({ type: "success", message: "Variante eliminada" });
   };
 
   const handleUpdateStock = (index: number, val: string) => {

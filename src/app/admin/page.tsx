@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { toast, Toaster } from "react-hot-toast";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
@@ -32,6 +32,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export default function AdminLoginPage() {
   useDocumentTitle({ title: "Iniciar Sesión" });
   const router = useRouter();
+  const { show } = useToast();
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -108,49 +109,49 @@ export default function AdminLoginPage() {
         // Mensajes de error detallados según el tipo
         if (result.error === "CredentialsSignin") {
           setAuthError("Credenciales incorrectas");
-          toast.error(
-            "Email o contraseña incorrectos. Por favor, verifica tus datos.",
-            {
-              duration: 4000,
-            }
-          );
+          show({
+            type: "error",
+            message:
+              "Email o contraseña incorrectos. Por favor, verifica tus datos.",
+          });
         } else if (result.error.includes("password")) {
           setAuthError("Contraseña incorrecta");
-          toast.error("La contraseña ingresada es incorrecta", {
-            duration: 3000,
+          show({
+            type: "error",
+            message: "La contraseña ingresada es incorrecta",
           });
         } else if (
           result.error.includes("email") ||
           result.error.includes("user")
         ) {
           setAuthError("Usuario no encontrado");
-          toast.error("No existe una cuenta con este email", {
-            duration: 3000,
+          show({
+            type: "error",
+            message: "No existe una cuenta con este email",
           });
         } else {
           setAuthError(result.error);
-          toast.error(`Error: ${result.error}`, {
-            duration: 3000,
-          });
+          show({ type: "error", message: `Error: ${result.error}` });
         }
         setLoading(false);
         return;
       }
 
       if (result?.ok) {
-        toast.success("¡Inicio de sesión exitoso!", {
-          duration: 2000,
-        });
+        show({ type: "success", message: "¡Inicio de sesión exitoso!" });
         // Pequeña demora para que se vea el toast de éxito
         await new Promise((resolve) => setTimeout(resolve, 500));
         router.push("/admin/dashboard");
       } else {
-        toast.error("Error desconocido al iniciar sesión");
+        show({ type: "error", message: "Error desconocido al iniciar sesión" });
         setLoading(false);
       }
     } catch (error) {
       logger.error("Error de inicio de sesión", { error });
-      toast.error("Ha ocurrido un error inesperado al iniciar sesión");
+      show({
+        type: "error",
+        message: "Ha ocurrido un error inesperado al iniciar sesión",
+      });
       setLoading(false);
     }
   };
@@ -165,14 +166,19 @@ export default function AdminLoginPage() {
       logger.info("Enviando correo de recuperación", { email: formData.email });
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      toast.success(
-        "Hemos enviado un enlace de recuperación a tu correo electrónico"
-      );
+      show({
+        type: "success",
+        message:
+          "Hemos enviado un enlace de recuperación a tu correo electrónico",
+      });
       setResetEmailSent(true);
       resetForgotPasswordForm();
     } catch (error) {
       logger.error("Error al enviar correo de recuperación", { error });
-      toast.error("No se pudo enviar el correo de recuperación");
+      show({
+        type: "error",
+        message: "No se pudo enviar el correo de recuperación",
+      });
     } finally {
       setLoading(false);
     }
@@ -181,7 +187,7 @@ export default function AdminLoginPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen surface-secondary">
       {/* Toaster para notificaciones */}
-      <Toaster position="top-right" />
+
       <div className="w-full max-w-md p-8 space-y-6 surface rounded-xl shadow-lg border border-muted">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">

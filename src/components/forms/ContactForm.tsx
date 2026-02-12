@@ -1,8 +1,8 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { toast } from "react-hot-toast";
 import { Input } from "@/components/ui/Input";
 import {
   ContactSettings,
@@ -18,6 +18,7 @@ export default function ContactForm({ initial }: Props) {
   const [values, setValues] = useState<ContactSettings>(
     initial ?? defaultContactSettings
   );
+  const { show } = useToast();
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!initial);
 
@@ -67,7 +68,7 @@ export default function ContactForm({ initial }: Props) {
       "emails",
       (values.emails || []).filter((_, i) => i !== index)
     );
-    toast.success("Email eliminado de la lista");
+    show({ type: "success", message: "Email eliminado de la lista" });
   };
 
   // Phone handlers
@@ -84,7 +85,7 @@ export default function ContactForm({ initial }: Props) {
       "phones",
       (values.phones || []).filter((_, i) => i !== index)
     );
-    toast.success("Teléfono eliminado de la lista");
+    show({ type: "success", message: "Teléfono eliminado de la lista" });
   };
 
   // Form submit handler
@@ -93,17 +94,17 @@ export default function ContactForm({ initial }: Props) {
 
     // Guard: Don't save if data hasn't loaded yet
     if (loading || loadingSettings) {
-      toast.error("Espera a que carguen los datos antes de guardar");
+      show({
+        type: "error",
+        message: "Espera a que carguen los datos antes de guardar",
+      });
       return;
     }
 
     const parsed = ContactSettingsSchema.safeParse(values);
     if (!parsed.success) {
       console.error("Validation errors:", parsed.error.flatten());
-      toast.error(
-        "Por favor revisa los campos inválidos: " +
-          parsed.error.issues.map((i) => i.message).join(", ")
-      );
+      show({ type: "error", message: "Por favor revisa los campos inválidos" });
       return;
     }
     setSaving(true);
@@ -117,13 +118,15 @@ export default function ContactForm({ initial }: Props) {
       if (!json.success) {
         throw new Error(json.error || "Error al guardar");
       }
-      toast.success("Configuración de contacto guardada");
+      show({ type: "success", message: "Configuración de contacto guardada" });
       mutateSettings(); // Sync SWR cache
     } catch (err: unknown) {
       console.error(err);
-      toast.error(
-        err instanceof Error ? err.message : "Error al guardar configuración"
-      );
+      show({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Error al guardar configuración",
+      });
     } finally {
       setSaving(false);
     }

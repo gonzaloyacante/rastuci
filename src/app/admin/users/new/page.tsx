@@ -1,12 +1,13 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { AdminPageHeader } from "@/components/admin";
 import { UserForm } from "@/components/forms";
 import { useDocumentTitle } from "@/hooks";
 import { logger } from "@/lib/logger";
-import { toast } from "react-hot-toast";
 
 export default function CreateUserPage() {
+  const { show } = useToast();
   useDocumentTitle({ title: "Nuevo Usuario" });
   const handleSubmit = async (data: {
     name: string;
@@ -35,13 +36,13 @@ export default function CreateUserPage() {
       if (result.success) {
         // Redirigir a la lista de usuarios
         window.location.href = "/admin/usuarios";
-        toast.success("Usuario creado exitosamente");
+        show({ type: "success", message: "Usuario creado exitosamente" });
       } else {
         throw new Error(result.error || "Error desconocido");
       }
     } catch (error) {
       logger.error("Error al crear usuario:", { error: error });
-      toast.error("Error al crear usuario");
+      show({ type: "error", message: "Error al crear usuario" });
     }
   };
 

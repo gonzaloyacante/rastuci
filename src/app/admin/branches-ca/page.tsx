@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -21,7 +22,6 @@ import {
   Search,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 import { CardGridSkeleton } from "@/components/admin/SettingsSkeletons";
 
 // PROVINCIAS imported from @/lib/constants
@@ -38,6 +38,7 @@ export default function SucursalesCAPage() {
     ""
   );
   const [error, setError] = useState<string | null>(null);
+  const { show } = useToast();
   const { getAgencies } = useCorreoArgentino();
 
   const loadAgencies = useCallback(
@@ -115,16 +116,19 @@ export default function SucursalesCAPage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Sucursales sincronizadas correctamente");
+        show({
+          type: "success",
+          message: "Sucursales sincronizadas correctamente",
+        });
       } else {
         const msg = data.error || "Error al sincronizar";
         setError(msg);
-        toast.error(msg);
+        show({ type: "error", message: msg });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error desconocido";
       setError(msg);
-      toast.error(msg);
+      show({ type: "error", message: msg });
     } finally {
       setSyncing(false);
     }
@@ -172,7 +176,7 @@ export default function SucursalesCAPage() {
     link.click();
     link.click();
     URL.revokeObjectURL(url);
-    toast.success("Exportación completada");
+    show({ type: "success", message: "Exportación completada" });
   };
 
   return (

@@ -1,11 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { AdminPageHeader } from "@/components/admin";
 import { CategoryForm } from "@/components/forms";
 import { logger } from "@/lib/logger";
-import { toast } from "react-hot-toast";
 
 export default function CreateCategoryPage() {
+  const { show } = useToast();
   const handleSubmit = async (data: {
     name: string;
     description?: string;
@@ -33,10 +34,10 @@ export default function CreateCategoryPage() {
       }
 
       window.location.href = "/admin/categorias";
-      toast.success("Categoría creada exitosamente");
+      show({ type: "success", message: "Categoría creada exitosamente" });
     } catch (error) {
       logger.error("Error:", { error: error });
-      toast.error("Error al crear categoría");
+      show({ type: "error", message: "Error al crear categoría" });
       throw error;
     }
   };

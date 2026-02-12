@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -7,12 +8,12 @@ import { Label } from "@/components/ui/Label";
 import { Alert } from "@/components/ui/Alert";
 import { StoreSettings, defaultStoreSettings } from "@/lib/validation/store";
 import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
-import { toast } from "react-hot-toast";
 import { Save } from "lucide-react";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { useSettings } from "@/hooks/useSettings";
 
 export default function ShippingSettings() {
+  const { show } = useToast();
   const [data, setData] = useState<StoreSettings>(defaultStoreSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,7 +60,7 @@ export default function ShippingSettings() {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("Configuración de envíos guardada");
+        show({ type: "success", message: "Configuración de envíos guardada" });
       } else {
         // Show validation errors if available
         if (json.details?.fieldErrors) {
@@ -72,11 +73,13 @@ export default function ShippingSettings() {
       }
     } catch (error) {
       console.error(error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Error al guardar configuración"
-      );
+      show({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error al guardar configuración",
+      });
     } finally {
       setSaving(false);
     }

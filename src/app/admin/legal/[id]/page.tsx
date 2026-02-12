@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
@@ -7,7 +8,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import { z } from "zod";
 
@@ -35,6 +35,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function EditPolicyPage({ params }: { params: { id: string } }) {
   const isNew = params.id === "new";
   const router = useRouter();
+  const { show } = useToast();
   const { data: policyData, isLoading } = useSWR(
     !isNew ? `/api/admin/policies/${params.id}` : null,
     fetcher
@@ -68,12 +69,12 @@ export default function EditPolicyPage({ params }: { params: { id: string } }) {
 
       if (!res.ok) throw new Error("Error al guardar");
 
-      toast.success("Política guardada correctamente");
+      show({ type: "success", message: "Política guardada correctamente" });
       router.push("/admin/policies");
       router.refresh();
     } catch (error) {
       console.error(error);
-      toast.error("Error al guardar la política");
+      show({ type: "error", message: "Error al guardar la política" });
     }
   };
 
@@ -117,6 +118,7 @@ function PolicyEditor({
   onSubmit: (data: PolicyForm) => Promise<void>;
   isNew: boolean;
 }) {
+  const { show } = useToast();
   const {
     register,
     control,
@@ -138,7 +140,10 @@ function PolicyEditor({
   });
 
   const insertVariable = (variable: string) => {
-    toast.success(`Variable ${variable} copiada al portapapeles`);
+    show({
+      type: "success",
+      message: `Variable ${variable} copiada al portapapeles`,
+    });
     navigator.clipboard.writeText(variable);
   };
 

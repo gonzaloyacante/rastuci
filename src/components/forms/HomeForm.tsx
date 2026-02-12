@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
 import {
   HomeSettings,
@@ -10,7 +11,6 @@ import { ImageUploader } from "@/components/ui/ImageUploader";
 import { Button } from "@/components/ui/Button";
 import { IconPicker } from "@/components/ui/IconPicker";
 import * as Icons from "lucide-react";
-import { toast } from "react-hot-toast";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { useSettings } from "@/hooks/useSettings";
 import { Switch } from "@/components/ui/Switch";
@@ -95,6 +95,7 @@ const InputRow = ({
 );
 
 export default function HomeForm({ initial }: Props) {
+  const { show } = useToast();
   const [values, setValues] = useState<HomeSettings>(
     initial ?? defaultHomeSettings
   );
@@ -176,14 +177,17 @@ export default function HomeForm({ initial }: Props) {
 
   const removeBenefitItem = (id: string) => {
     setBenefitItems((items) => items.filter((item) => item.id !== id));
-    toast.success("Beneficio eliminado");
+    show({ type: "success", message: "Beneficio eliminado" });
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (loading || loadingSettings) {
-      toast.error("Espera a que carguen los datos antes de guardar");
+      show({
+        type: "error",
+        message: "Espera a que carguen los datos antes de guardar",
+      });
       return;
     }
 
@@ -214,13 +218,13 @@ export default function HomeForm({ initial }: Props) {
       }
 
       setMessage("Guardado correctamente");
-      toast.success("Configuración del Home guardada");
+      show({ type: "success", message: "Configuración del Home guardada" });
       mutateSettings();
     } catch (err: unknown) {
       console.error("HomeForm Submit Error:", err);
       const msg = err instanceof Error ? err.message : "Error inesperado";
       setMessage(msg);
-      toast.error(msg);
+      show({ type: "error", message: msg });
     } finally {
       setSaving(false);
     }

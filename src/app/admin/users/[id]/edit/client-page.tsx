@@ -1,11 +1,11 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { AdminPageHeader } from "@/components/admin";
 import { UserForm } from "@/components/forms";
 import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import toast from "react-hot-toast";
 
 interface User {
   id: string;
@@ -19,6 +19,7 @@ interface EditUserClientProps {
 }
 
 export function EditUserClient({ user }: EditUserClientProps) {
+  const { show } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -44,16 +45,18 @@ export function EditUserClient({ user }: EditUserClientProps) {
           throw new Error(errorData?.error || "Error al actualizar el usuario");
         }
 
-        toast.success("Usuario actualizado correctamente");
+        show({ type: "success", message: "Usuario actualizado correctamente" });
         router.push("/admin/usuarios");
         router.refresh();
       } catch (error) {
         logger.error("Error updating user:", { error });
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Error al actualizar el usuario"
-        );
+        show({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Error al actualizar el usuario",
+        });
         throw error;
       } finally {
         setLoading(false);

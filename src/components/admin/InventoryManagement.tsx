@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import {
   InventoryFilters,
   InventoryTable,
@@ -24,9 +25,9 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 export function InventoryManagement() {
+  const { show } = useToast();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,7 +100,7 @@ export function InventoryManagement() {
       setInventory(mapped);
       setStats(computedStats);
     } catch {
-      toast.error("Error al cargar el inventario");
+      show({ type: "error", message: "Error al cargar el inventario" });
     } finally {
       setLoading(false);
     }
@@ -137,9 +138,12 @@ export function InventoryManagement() {
 
       setShowAdjustmentForm(false);
       setSelectedItem(null);
-      toast.success("Ajuste de stock realizado correctamente");
+      show({
+        type: "success",
+        message: "Ajuste de stock realizado correctamente",
+      });
     } catch {
-      toast.error("Error al realizar el ajuste de stock");
+      show({ type: "error", message: "Error al realizar el ajuste de stock" });
     }
   };
 

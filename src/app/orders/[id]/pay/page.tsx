@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -7,7 +8,6 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { useSettings } from "@/hooks/useSettings";
 import { StoreSettings } from "@/lib/validation/store";
-import { toast } from "react-hot-toast";
 import { Loader2, CheckCircle, Copy } from "lucide-react";
 import Link from "next/link";
 
@@ -20,6 +20,7 @@ interface OrderDetails {
 }
 
 export default function TransferPaymentPage() {
+  const { show } = useToast();
   const params = useParams();
   const router = useRouter();
   const { settings, loading: loadingSettings } =
@@ -46,10 +47,10 @@ export default function TransferPaymentPage() {
           if (data.id) {
             setOrder(data);
           } else {
-            toast.error("Orden no encontrada");
+            show({ type: "error", message: "Orden no encontrada" });
           }
         })
-        .catch(() => toast.error("Error cargando orden"))
+        .catch(() => show({ type: "error", message: "Error cargando orden" }))
         .finally(() => setLoading(false));
     }
   }, [params.id]);
@@ -71,10 +72,10 @@ export default function TransferPaymentPage() {
 
       if (!res.ok) throw new Error("Error al enviar comprobante");
 
-      toast.success("Comprobante enviado con éxito");
+      show({ type: "success", message: "Comprobante enviado con éxito" });
       router.push(`/checkout/success?orderId=${order.id}&method=transfer`);
     } catch {
-      toast.error("Error al enviar. Intenta nuevamente.");
+      show({ type: "error", message: "Error al enviar. Intenta nuevamente." });
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +83,7 @@ export default function TransferPaymentPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("Copiado al portapapeles");
+    show({ type: "success", message: "Copiado al portapapeles" });
   };
 
   if (loading || loadingSettings) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import {
   AdminEmpty,
   AdminEmptyIcons,
@@ -37,7 +38,6 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { toast } from "react-hot-toast";
 
 type ViewMode = "grid" | "list";
 type SortField = "name" | "price" | "stock" | "createdAt";
@@ -60,6 +60,7 @@ const SORT_FIELD_OPTIONS = [
 ];
 
 export default function ProductList() {
+  const { show } = useToast();
   const router = useRouter();
 
   // Estados de filtros
@@ -135,13 +136,16 @@ export default function ProductList() {
       }
 
       // Success
-      toast.success(newStatus ? "Producto activado" : "Producto desactivado");
+      show({
+        type: "success",
+        message: newStatus ? "Producto activado" : "Producto desactivado",
+      });
 
       mutate();
       mutateStats();
     } catch (err) {
       logger.error("Error toggling product active status", { error: err });
-      toast.error("No se pudo actualizar el estado.");
+      show({ type: "error", message: "No se pudo actualizar el estado." });
     }
   };
 

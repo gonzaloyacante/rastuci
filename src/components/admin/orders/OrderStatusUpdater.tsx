@@ -1,10 +1,10 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { useState } from "react";
 import { logger } from "@/lib/logger";
-import toast from "react-hot-toast";
 
 interface OrderStatusUpdaterProps {
   orderId: string;
@@ -23,6 +23,7 @@ export const OrderStatusUpdater: React.FC<OrderStatusUpdaterProps> = ({
   currentStatus,
   onStatusUpdate,
 }) => {
+  const { show } = useToast();
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
 
@@ -48,10 +49,13 @@ export const OrderStatusUpdater: React.FC<OrderStatusUpdaterProps> = ({
       }
 
       onStatusUpdate(selectedStatus);
-      toast.success(`Estado actualizado a ${selectedStatus}`);
+      show({
+        type: "success",
+        message: `Estado actualizado a ${selectedStatus}`,
+      });
     } catch (error) {
       logger.error("Error:", { error: error });
-      toast.error("Error al actualizar el estado");
+      show({ type: "error", message: "Error al actualizar el estado" });
       // Revertir selección
       setSelectedStatus(currentStatus);
     } finally {

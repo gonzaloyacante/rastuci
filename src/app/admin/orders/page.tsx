@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import {
   AdminEmpty,
   AdminEmptyIcons,
@@ -16,7 +17,6 @@ import { useOrders, type Order } from "@/hooks/useOrders";
 import { logger } from "@/lib/logger";
 import { DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 type StatusFilter =
   | "ALL"
@@ -111,6 +111,7 @@ const toOrderCardData = (order: Order): OrderCardData => ({
 });
 
 export default function OrdersPage() {
+  const { show } = useToast();
   useDocumentTitle({ title: "Pedidos" });
 
   // State
@@ -164,7 +165,7 @@ export default function OrdersPage() {
   const exportToCSV = useCallback(() => {
     try {
       if (orders.length === 0) {
-        toast.error("No hay pedidos para exportar");
+        show({ type: "error", message: "No hay pedidos para exportar" });
         return;
       }
 
@@ -248,10 +249,10 @@ export default function OrdersPage() {
       link.click();
       document.body.removeChild(link);
 
-      toast.success("Pedidos exportados correctamente");
+      show({ type: "success", message: "Pedidos exportados correctamente" });
     } catch (err) {
       logger.error("Error al exportar pedidos", { error: err });
-      toast.error("Error al exportar pedidos");
+      show({ type: "error", message: "Error al exportar pedidos" });
     }
   }, [orders]);
 

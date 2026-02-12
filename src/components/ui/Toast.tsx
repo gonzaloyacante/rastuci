@@ -32,6 +32,22 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+// Module-level ref so non-component code can trigger toasts via showToast()
+let showRef: ToastContextValue["show"] | null = null;
+
+/**
+ * Standalone function to show a toast from anywhere (components or plain modules).
+ * Falls back to console.warn if called before the provider mounts.
+ */
+export function showToast(t: Omit<Toast, "id">) {
+  if (showRef) {
+    showRef(t);
+  } else {
+    // Provider not mounted yet — fallback so the message isn't silently lost
+    console.warn("[Toast] Provider not mounted. Message:", t.message);
+  }
+}
+
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) {
@@ -77,6 +93,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     },
     []
   );
+
+  // Wire the standalone showToast() function
+  useEffect(() => {
+    showRef = show;
+    return () => {
+      showRef = null;
+    };
+  }, [show]);
 
   return (
     <ToastContext.Provider value={{ toasts, show, dismiss }}>

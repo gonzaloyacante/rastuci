@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ORDER_STATUS } from "@/lib/constants";
 import { Order, OrderStatus } from "@/types";
 import { CheckCircle, Clock, CreditCard, Package, Truck } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 interface OrderActionsCardProps {
   order: Pick<Order, "id" | "status">;
@@ -17,6 +17,7 @@ export function OrderActionsCard({
   order,
   onOrderUpdate,
 }: OrderActionsCardProps) {
+  const { show } = useToast();
   const [updating, setUpdating] = useState(false);
 
   const updateOrderStatus = async (newStatus: OrderStatus) => {
@@ -38,12 +39,15 @@ export function OrderActionsCard({
 
       if (data.success) {
         onOrderUpdate({ status: newStatus });
-        toast.success(`Pedido actualizado a ${newStatus}`);
+        show({ type: "success", message: `Pedido actualizado a ${newStatus}` });
       } else {
         throw new Error(data.error || "Error al actualizar el pedido");
       }
     } catch (_error) {
-      toast.error("No se pudo actualizar el estado del pedido");
+      show({
+        type: "error",
+        message: "No se pudo actualizar el estado del pedido",
+      });
     } finally {
       setUpdating(false);
     }

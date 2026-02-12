@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import {
   AnalyticsPageHeader,
   BulkActionsBar,
@@ -14,7 +15,6 @@ import { Select } from "@/components/ui/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { useDocumentTitle } from "@/hooks";
 // import { useToast } from "@/hooks/use-toast"; // Replaced by react-hot-toast
-import toast from "react-hot-toast";
 import {
   AlertTriangle,
   CheckCircle,
@@ -443,7 +443,7 @@ export default function AdminTrackingDashboard() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [alertFilter, setAlertFilter] = useState("all");
-  // const { toast } = useToast();
+  const { show } = useToast();
 
   const loadTrackingData = useCallback(async () => {
     try {
@@ -454,7 +454,7 @@ export default function AdminTrackingDashboard() {
       setTrackingData(data.trackings || []);
       setStats(data.stats || null);
     } catch {
-      toast.error("No se pudieron cargar los datos");
+      show({ type: "error", message: "No se pudieron cargar los datos" });
     } finally {
       setLoading(false);
     }
@@ -469,9 +469,9 @@ export default function AdminTrackingDashboard() {
     try {
       await fetch("/api/admin/tracking/refresh", { method: "POST" });
       await loadTrackingData();
-      toast.success("Datos actualizados correctamente");
+      show({ type: "success", message: "Datos actualizados correctamente" });
     } catch {
-      toast.error("Error al actualizar");
+      show({ type: "error", message: "Error al actualizar" });
     } finally {
       setRefreshing(false);
     }
@@ -490,9 +490,9 @@ export default function AdminTrackingDashboard() {
       window.URL.revokeObjectURL(url);
       a.click();
       window.URL.revokeObjectURL(url);
-      toast.success("Datos exportados correctamente");
+      show({ type: "success", message: "Datos exportados correctamente" });
     } catch {
-      toast.error("Error al exportar");
+      show({ type: "error", message: "Error al exportar" });
     }
   };
 
@@ -508,9 +508,12 @@ export default function AdminTrackingDashboard() {
       setSelectedItems([]);
       await loadTrackingData();
       setSelectedItems([]);
-      toast.success(`${selectedItems.length} envíos actualizados`);
+      show({
+        type: "success",
+        message: `${selectedItems.length} envíos actualizados`,
+      });
     } catch {
-      toast.error("Error al actualizar");
+      show({ type: "error", message: "Error al actualizar" });
     }
   };
 

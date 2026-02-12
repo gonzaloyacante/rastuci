@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import {
   DetailPanel,
   EmptyState,
@@ -28,7 +29,6 @@ import {
   User,
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 
 // ============================================================================
 // Types
@@ -363,6 +363,7 @@ const chatStatusOptions = [
 ];
 
 export default function SupportPage() {
+  const { show } = useToast();
   useDocumentTitle({ title: "Soporte" });
   const [activeTab, setActiveTab] = useState<TabType>("tickets");
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -422,9 +423,9 @@ export default function SupportPage() {
       });
       setNewMessage("");
       fetchData();
-      toast.success("Mensaje enviado");
+      show({ type: "success", message: "Mensaje enviado" });
     } catch {
-      toast.error("Error al enviar mensaje");
+      show({ type: "error", message: "Error al enviar mensaje" });
     }
   };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -10,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { defaultStoreSettings, StoreSettings } from "@/lib/validation/store";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 
 const STATUS_COLORS = [
@@ -31,6 +31,7 @@ const STATUS_COLORS = [
 ];
 
 export default function StockSettings() {
+  const { show } = useToast();
   const { settings, loading, mutate } = useSettings<StoreSettings>("store");
 
   // Initialize with safe defaults to avoid crashes if settings typically load partial data
@@ -108,7 +109,7 @@ export default function StockSettings() {
     }));
 
     if (!settings) {
-      toast.error("Error: No hay configuración cargada");
+      show({ type: "error", message: "Error: No hay configuración cargada" });
       setSaving(false);
       return;
     }
@@ -121,9 +122,12 @@ export default function StockSettings() {
     });
 
     if (result.success) {
-      toast.success("Configuración de stock guardada correctamente");
+      show({
+        type: "success",
+        message: "Configuración de stock guardada correctamente",
+      });
     } else {
-      toast.error(result.error || "Error al guardar");
+      show({ type: "error", message: result.error || "Error al guardar" });
     }
     setSaving(false);
   };

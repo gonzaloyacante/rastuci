@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useTranslation } from "@/lib/i18n";
 import { usePWA } from "@/lib/pwa";
 import { AlertCircle, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 interface OfflineIndicatorProps {
   className?: string;
@@ -21,20 +21,25 @@ export function OfflineIndicator({
 }: OfflineIndicatorProps) {
   const { isOnline } = usePWA();
   const { t } = useTranslation();
+  const { show } = useToast();
   const [wasOffline, setWasOffline] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     if (!isOnline) {
       setWasOffline(true);
-      toast.error(t("pwa.offline.message"), {
+      show({
+        type: "error",
+        message: t("pwa.offline.message"),
         duration: 5000,
-        icon: <WifiOff className="w-4 h-4" />,
+        // icon: <WifiOff className="w-4 h-4" />, // Toast doesn't support custom icon prop yet in show(), handled by type
       });
     } else if (wasOffline) {
-      toast.success(t("pwa.online.message"), {
+      show({
+        type: "success",
+        message: t("pwa.online.message"),
         duration: 3000,
-        icon: <Wifi className="w-4 h-4" />,
+        // icon: <Wifi className="w-4 h-4" />,
       });
       setWasOffline(false);
     }
@@ -45,9 +50,11 @@ export function OfflineIndicator({
     try {
       // Try to fetch a simple endpoint to test connectivity
       await fetch("/api/health", { cache: "no-cache" });
-      toast.success(t("pwa.retry.success"));
+      const successMsg = t("pwa.retry.success");
+      show({ type: "success", message: successMsg });
     } catch {
-      toast.error(t("pwa.retry.failed"));
+      const errorMsg = t("pwa.retry.failed");
+      show({ type: "error", message: errorMsg });
     } finally {
       setIsRetrying(false);
     }

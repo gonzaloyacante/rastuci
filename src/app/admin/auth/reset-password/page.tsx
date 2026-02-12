@@ -1,17 +1,18 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { CheckCircle, Eye, EyeOff, Loader2, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { toast } from "react-hot-toast";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const { show } = useToast();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,17 +24,20 @@ function ResetPasswordForm() {
     e.preventDefault();
 
     if (!token) {
-      toast.error("Token no válido");
+      show({ type: "error", message: "Token no válido" });
       return;
     }
 
     if (password.length < 8) {
-      toast.error("La contraseña debe tener al menos 8 caracteres");
+      show({
+        type: "error",
+        message: "La contraseña debe tener al menos 8 caracteres",
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error("Las contraseñas no coinciden");
+      show({ type: "error", message: "Las contraseñas no coinciden" });
       return;
     }
 
@@ -50,16 +54,22 @@ function ResetPasswordForm() {
 
       if (data.success) {
         setSuccess(true);
-        toast.success("Contraseña actualizada exitosamente");
+        show({
+          type: "success",
+          message: "Contraseña actualizada exitosamente",
+        });
         setTimeout(() => {
           router.push("/admin/auth/signin");
         }, 2000);
       } else {
-        toast.error(data.error || "Error al actualizar la contraseña");
+        show({
+          type: "error",
+          message: data.error || "Error al actualizar la contraseña",
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Error al procesar la solicitud");
+      show({ type: "error", message: "Error al procesar la solicitud" });
     } finally {
       setIsLoading(false);
     }

@@ -1,11 +1,11 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
 import { ProductImagePlaceholder } from "./ProductImagePlaceholder";
 import { Button } from "./Button";
-import { toast } from "react-hot-toast";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +30,7 @@ export function ImageUploader({
   aspectRatio = "square",
   className,
 }: ImageUploaderProps) {
+  const { show } = useToast();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -76,13 +77,13 @@ export function ImageUploader({
       }
 
       onChange(data.url);
-      toast.success("Imagen subida correctamente");
+      show({ type: "success", message: "Imagen subida correctamente" });
     } catch (err) {
       logger.error("Error uploading image:", { error: err });
       const errorMessage =
         err instanceof Error ? err.message : "Error al subir la imagen";
       setUploadError(errorMessage);
-      toast.error(errorMessage);
+      show({ type: "error", message: errorMessage });
     } finally {
       setUploading(false);
       if (fileInputRef.current) {

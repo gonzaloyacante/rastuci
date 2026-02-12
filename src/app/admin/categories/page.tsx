@@ -16,8 +16,7 @@ import CategoryIcon from "@/components/ui/CategoryIcon";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 // import { Spinner } from "@/components/ui/Spinner";
-// import { useToast } from "@/components/ui/Toast";
-import toast from "react-hot-toast";
+import { useToast } from "@/components/ui/Toast";
 import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 import { useCategories, useDocumentTitle } from "@/hooks";
 import { logger } from "@/lib/logger";
@@ -48,7 +47,7 @@ export default function AdminCategoriasPage() {
     new Set()
   );
   const router = useRouter();
-  // const { show } = useToast();
+  const { show } = useToast();
   const { confirm: confirmDialog, ConfirmDialog } = useConfirmDialog();
 
   const filteredCategories = (categories || []).filter(
@@ -112,7 +111,7 @@ export default function AdminCategoriasPage() {
         method: "DELETE",
       });
       if (response.ok) {
-        toast.success("Categoría eliminada");
+        show({ type: "success", message: "Categoría eliminada" });
         mutate?.();
       } else {
         const errorData = await response.json().catch(() => ({}) as unknown);
@@ -127,11 +126,11 @@ export default function AdminCategoriasPage() {
             errorMessage = possible;
           }
         }
-        toast.error(errorMessage);
+        show({ type: "error", message: errorMessage });
       }
     } catch (err) {
       logger.error("Error deleting category", { error: err });
-      toast.error("Error al eliminar la categoría");
+      show({ type: "error", message: "Error al eliminar la categoría" });
     }
   };
 

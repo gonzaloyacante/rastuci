@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
@@ -173,6 +173,7 @@ export default function ProductForm({
   categories,
 }: ProductFormProps) {
   const router = useRouter();
+  const { show } = useToast();
 
   // Mount logger to verifying hydration
   useEffect(() => {
@@ -308,14 +309,17 @@ export default function ProductForm({
 
       // 1. Validar nombre
       if (!data.name || data.name.trim().length < 3) {
-        toast.error("El nombre debe tener al menos 3 caracteres");
+        show({
+          type: "error",
+          message: "El nombre debe tener al menos 3 caracteres",
+        });
         setLoading(false);
         return;
       }
 
       // 2. Validar precio
       if (!data.price || data.price <= 0 || isNaN(data.price)) {
-        toast.error("El precio debe ser mayor a 0");
+        show({ type: "error", message: "El precio debe ser mayor a 0" });
         setLoading(false);
         return;
       }
@@ -325,7 +329,7 @@ export default function ProductForm({
 
       // 4. Validar categoría
       if (!data.categoryId || data.categoryId.trim() === "") {
-        toast.error("Debes seleccionar una categoría");
+        show({ type: "error", message: "Debes seleccionar una categoría" });
         setLoading(false);
         return;
       }
@@ -339,7 +343,10 @@ export default function ProductForm({
       );
 
       if (!hasGlobalImages && !hasColorImages) {
-        toast.error("Debes subir al menos una imagen del producto");
+        show({
+          type: "error",
+          message: "Debes subir al menos una imagen del producto",
+        });
         setLoading(false);
         return;
       }
@@ -349,7 +356,10 @@ export default function ProductForm({
         (img) => !img || typeof img !== "string" || img.trim() === ""
       );
       if (invalidImages.length > 0) {
-        toast.error("Hay imágenes inválidas. Por favor, vuelve a subirlas.");
+        show({
+          type: "error",
+          message: "Hay imágenes inválidas. Por favor, vuelve a subirlas.",
+        });
         setLoading(false);
         return;
       }
@@ -361,9 +371,10 @@ export default function ProductForm({
           data.weight < 1 ||
           data.weight > 30000
         ) {
-          toast.error(
-            "El peso debe ser un número entero entre 1 y 30000 gramos"
-          );
+          show({
+            type: "error",
+            message: "El peso debe ser un número entero entre 1 y 30000 gramos",
+          });
           setLoading(false);
           return;
         }
@@ -375,7 +386,10 @@ export default function ProductForm({
           data.height < 1 ||
           data.height > 150
         ) {
-          toast.error("La altura debe ser un número entero entre 1 y 150 cm");
+          show({
+            type: "error",
+            message: "La altura debe ser un número entero entre 1 y 150 cm",
+          });
           setLoading(false);
           return;
         }
@@ -387,7 +401,10 @@ export default function ProductForm({
           data.width < 1 ||
           data.width > 150
         ) {
-          toast.error("El ancho debe ser un número entero entre 1 y 150 cm");
+          show({
+            type: "error",
+            message: "El ancho debe ser un número entero entre 1 y 150 cm",
+          });
           setLoading(false);
           return;
         }
@@ -399,7 +416,10 @@ export default function ProductForm({
           data.length < 1 ||
           data.length > 150
         ) {
-          toast.error("El largo debe ser un número entero entre 1 y 150 cm");
+          show({
+            type: "error",
+            message: "El largo debe ser un número entero entre 1 y 150 cm",
+          });
           setLoading(false);
           return;
         }
@@ -411,7 +431,10 @@ export default function ProductForm({
         data.discountPercentage !== undefined
       ) {
         if (data.discountPercentage < 0 || data.discountPercentage > 100) {
-          toast.error("El descuento debe estar entre 0 y 100%");
+          show({
+            type: "error",
+            message: "El descuento debe estar entre 0 y 100%",
+          });
           setLoading(false);
           return;
         }
@@ -484,16 +507,19 @@ export default function ProductForm({
           errorData.error?.message ||
           errorData.message ||
           `Error ${response.status}`;
-        toast.error(errorMsg);
+        show({ type: "error", message: errorMsg });
         throw new Error(errorMsg);
       }
 
       router.push("/admin/productos");
       router.refresh();
-      toast.success(toastMessage);
+      show({ type: "success", message: toastMessage });
     } catch (error) {
       logger.error("Error al guardar el producto:", { error });
-      toast.error("Error al procesar la solicitud. Intenta nuevamente.");
+      show({
+        type: "error",
+        message: "Error al procesar la solicitud. Intenta nuevamente.",
+      });
     } finally {
       setLoading(false);
     }
@@ -586,9 +612,11 @@ export default function ProductForm({
             );
             logger.warn("Form validation errors:", sanitizedErrors);
 
-            toast.error(
-              "Hay errores en el formulario. Por favor revisa los campos en rojo."
-            );
+            show({
+              type: "error",
+              message:
+                "Hay errores en el formulario. Por favor revisa los campos en rojo.",
+            });
 
             // Slight delay to allow UI to expand with error messages before scrolling
             setTimeout(() => {

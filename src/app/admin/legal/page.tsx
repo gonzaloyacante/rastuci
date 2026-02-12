@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Plus, Save, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import useSWR from "swr";
 
 // --- Types ---
@@ -37,6 +37,7 @@ const TABS = [
 export default function LegalAdminPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { show } = useToast();
 
   // Get active tab from URL or default to first
   const activeTab = searchParams.get("tab") || TABS[0].id;
@@ -83,6 +84,7 @@ export default function LegalAdminPage() {
 // --- Editor Component ---
 
 function PolicyEditor({ slug }: { slug: string }) {
+  const { show } = useToast();
   const {
     data: policyData,
     isLoading,
@@ -164,10 +166,10 @@ function PolicyEditor({ slug }: { slug: string }) {
       const result = await res.json();
       if (!result.success) throw new Error(result.error);
 
-      toast.success("Cambios guardados");
+      show({ type: "success", message: "Cambios guardados" });
       mutate(); // Refresh SWR
     } catch (error) {
-      toast.error("Error al guardar");
+      show({ type: "error", message: "Error al guardar" });
       console.error(error);
     } finally {
       setIsSubmitting(false);

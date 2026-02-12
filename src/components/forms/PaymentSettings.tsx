@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -8,7 +9,6 @@ import {
   type StoreSettings,
   defaultStoreSettings,
 } from "@/lib/validation/store";
-import { toast } from "react-hot-toast";
 import { Save, AlertTriangle } from "lucide-react";
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { useSettings } from "@/hooks/useSettings";
@@ -22,6 +22,7 @@ export default function PaymentSettings({
   initial,
   onSave,
 }: PaymentSettingsProps) {
+  const { show } = useToast();
   const [data, setData] = useState<StoreSettings>(
     initial || defaultStoreSettings
   );
@@ -74,11 +75,11 @@ export default function PaymentSettings({
 
       if (!res.ok) throw new Error("Error al guardar configuración");
 
-      toast.success("Configuración de pagos actualizada");
+      show({ type: "success", message: "Configuración de pagos actualizada" });
       mutateSettings();
       onSave?.(data);
     } catch (error) {
-      toast.error("Error al guardar cambios");
+      show({ type: "error", message: "Error al guardar cambios" });
       console.error(error);
     } finally {
       setSaving(false);

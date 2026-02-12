@@ -1,9 +1,9 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
-import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 
 interface ColorImageManagerProps {
@@ -16,12 +16,14 @@ interface ColorImageManagerProps {
  * Manages image uploads for each product color.
  * Shows an expandable section for each color where admin can upload images.
  */
+
 export default function ColorImageManager({
   colors,
   colorImages,
   onColorImagesChange,
 }: ColorImageManagerProps) {
   const [expandedColors, setExpandedColors] = useState<Set<string>>(new Set());
+  const { show } = useToast();
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
   const toggleColor = (color: string) => {
@@ -64,7 +66,7 @@ export default function ColorImageManager({
             newUrls.push(data.url);
           }
         } catch (_error) {
-          toast.error(`Error subiendo ${file.name}`);
+          show({ type: "error", message: `Error subiendo ${file.name}` });
         }
       }
 
@@ -73,7 +75,10 @@ export default function ColorImageManager({
           ...colorImages,
           [color]: [...currentImages, ...newUrls],
         });
-        toast.success(`${newUrls.length} imagen(es) agregada(s) a ${color}`);
+        show({
+          type: "success",
+          message: `${newUrls.length} imagen(es) agregada(s) a ${color}`,
+        });
       }
 
       setUploading((prev) => ({ ...prev, [color]: false }));
@@ -89,7 +94,7 @@ export default function ColorImageManager({
         ...colorImages,
         [color]: updated,
       });
-      toast.success("Imagen de color eliminada");
+      show({ type: "success", message: "Imagen de color eliminada" });
     },
     [colorImages, onColorImagesChange]
   );

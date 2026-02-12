@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/ui/Toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useTranslation } from "@/lib/i18n";
 import { useNotifications } from "@/lib/pwa";
 import { Bell, BellOff, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 interface NotificationManagerProps {
   className?: string;
@@ -18,6 +18,7 @@ export function NotificationManager({
   const { permission, requestPermission, showNotification } =
     useNotifications();
   const { t } = useTranslation();
+  const { show } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [preferences, setPreferences] = useState({
     orderUpdates: true,
@@ -44,7 +45,7 @@ export function NotificationManager({
   const handleRequestPermission = async () => {
     const result = await requestPermission();
     if (result === "granted") {
-      toast.success(t("notifications.permission.granted"));
+      show({ type: "success", message: t("notifications.permission.granted") });
       // Send welcome notification
       await showNotification({
         title: t("notifications.welcome.title"),
@@ -52,13 +53,13 @@ export function NotificationManager({
         tag: "welcome",
       });
     } else {
-      toast.error(t("notifications.permission.denied"));
+      show({ type: "error", message: t("notifications.permission.denied") });
     }
   };
 
   const handleTestNotification = async () => {
     if (permission !== "granted") {
-      toast.error(t("notifications.permission.required"));
+      show({ type: "error", message: t("notifications.permission.required") });
       return;
     }
 
@@ -78,7 +79,7 @@ export function NotificationManager({
       ],
     });
 
-    toast.success(t("notifications.test.sent"));
+    show({ type: "success", message: t("notifications.test.sent") });
   };
 
   const getPermissionStatus = () => {
@@ -148,10 +149,10 @@ export function NotificationManager({
                 <Badge
                   variant={
                     status.color as
-                    | "default"
-                    | "secondary"
-                    | "destructive"
-                    | "outline"
+                      | "default"
+                      | "secondary"
+                      | "destructive"
+                      | "outline"
                   }
                 >
                   {status.text}
