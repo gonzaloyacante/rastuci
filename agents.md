@@ -11,7 +11,7 @@
 
 | Herramienta         | Versión/Detalle         | Restricción                                                            |
 | :------------------ | :---------------------- | :--------------------------------------------------------------------- |
-| **Package Manager** | `yarn`                  | **PROHIBIDO** usar npm o pnpm.                                         |
+| **Package Manager** | `pnpm`                  | **PROHIBIDO** usar npm o yarn.                                         |
 | **Framework**       | Next.js 16 (App Router) | Migración gradual de Pages a App Router (Verificar directorio actual). |
 | **Lenguaje**        | TypeScript              | **Strict Mode**. Tipos para API Responses son obligatorios.            |
 | **Base de Datos**   | PostgreSQL (Neon Tech)  | Neon Branching activo.                                                 |
@@ -80,7 +80,7 @@
 - **Branch**: `preview/develop`
 - **DB URL**: `ep-twilight-firefly...` (Ver `.env` local)
 - **Uso**: Desarrollo de features, pruebas de integración.
-- **Seeds**: `yarn db:seed` puebla esta base con productos y categorías de prueba.
+- **Seeds**: `pnpm db:seed` puebla esta base con productos y categorías de prueba.
 
 ---
 
@@ -110,7 +110,7 @@
 2.  **Testing**:
     - "Si no está testeado, está roto".
     - Nuevas features deben incluir test unitario (Vitest) o E2E (Playwright).
-    - Ejecuta `yarn verify` antes de decir "listo".
+    - Ejecuta `pnpm verify` antes de decir "listo".
 
 3.  **Consultas DB**:
     - Prisma es poderoso pero cuidado con el **N+1**. Usa `include` sabiamente.

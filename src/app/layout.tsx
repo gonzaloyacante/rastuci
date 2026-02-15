@@ -1,4 +1,5 @@
 import AppProviders from "@/components/providers/AppProviders";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
@@ -100,7 +101,9 @@ export default async function RootLayout({
         className={`${inter.className} ${poppins.variable}`}
         suppressHydrationWarning={true}
       >
-        <AppProviders>{children}</AppProviders>
+        <ErrorBoundary>
+          <AppProviders>{children}</AppProviders>
+        </ErrorBoundary>
       </body>
     </html>
   );

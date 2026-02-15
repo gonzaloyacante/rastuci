@@ -68,3 +68,17 @@ export const ProductReviewCreateSchema = z.object({
 });
 
 export type ProductReviewCreate = z.infer<typeof ProductReviewCreateSchema>;
+
+// Schema for Bulk Updates
+export const ProductBulkUpdateItemSchema = z.object({
+  id: z.string().min(1),
+  price: z.number().finite().nonnegative().optional(),
+  salePrice: z.number().finite().nonnegative().optional().nullable(),
+  stock: z.number().int().min(0).optional(),
+  onSale: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const ProductBulkUpdateSchema = z.array(ProductBulkUpdateItemSchema);
+
+export type ProductBulkUpdateItem = z.infer<typeof ProductBulkUpdateItemSchema>;

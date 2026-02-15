@@ -34,10 +34,12 @@ import {
   Search,
   SortAsc,
   SortDesc,
+  Upload,
   XCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { BulkImportModal } from "./BulkImportModal";
 
 type ViewMode = "grid" | "list";
 type SortField = "name" | "price" | "stock" | "createdAt";
@@ -70,6 +72,7 @@ export default function ProductList() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // UI helpers
   const { ConfirmDialog } = useConfirmDialog();
@@ -257,6 +260,14 @@ export default function ProductList() {
               <RotateCcw className="w-4 h-4 mr-2" />
               Actualizar
             </Button>
+            <Button
+              onClick={() => setIsImportModalOpen(true)}
+              variant="outline"
+              size="sm"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Importar
+            </Button>
             <Button onClick={handleExportCSV} variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               Exportar
@@ -380,6 +391,15 @@ export default function ProductList() {
       )}
 
       {ConfirmDialog}
+
+      <BulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => {
+          mutate(); // Refresh list after import
+          mutateStats(); // Refresh stats
+        }}
+      />
     </div>
   );
 }
