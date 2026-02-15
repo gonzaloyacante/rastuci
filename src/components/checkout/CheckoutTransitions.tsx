@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { DURATION, EASE, FADE_IN_DOWN } from "@/lib/animations";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 interface CheckoutTransitionsProps {
   children: React.ReactNode;
@@ -21,8 +24,8 @@ const stepVariants = {
     opacity: 1,
     scale: 1,
     transition: {
-      duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
+      duration: DURATION.SLOW,
+      ease: EASE.DEFAULT,
     },
   },
   exit: (direction: number) => ({
@@ -30,8 +33,8 @@ const stepVariants = {
     opacity: 0,
     scale: 0.95,
     transition: {
-      duration: 0.3,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
+      duration: DURATION.NORMAL,
+      ease: EASE.DEFAULT,
     },
   }),
 };
@@ -53,6 +56,8 @@ export function StepTransition({
           ? 1
           : -1;
 
+  const reduceMotion = useReducedMotion();
+
   useEffect(() => {
     setPrevStep(currentStep);
   }, [currentStep]);
@@ -64,9 +69,9 @@ export function StepTransition({
           key={currentStep}
           custom={directionValue}
           variants={stepVariants}
-          initial="enter"
+          initial={reduceMotion ? "center" : "enter"}
           animate="center"
-          exit="exit"
+          exit={reduceMotion ? "center" : "exit"}
           className="w-full"
         >
           {children}
@@ -89,15 +94,15 @@ export function SkeletonLoader({
   return (
     <div className={`space-y-3 ${className}`}>
       {Array.from({ length: lines }).map(() => (
-        <div key={`skeleton-line-${Math.random()}`} className="animate-pulse">
-          <div
-            className="h-4 surface-secondary rounded"
-            style={{
-              width: `${Math.random() * 40 + 60}%`,
-              animationDelay: `${Math.random() * 0.5}s`,
-            }}
-          />
-        </div>
+        <Skeleton
+          key={`skeleton-line-${Math.random()}`}
+          className="h-4"
+          style={{
+            width: `${Math.random() * 40 + 60}%`,
+            animationDelay: `${Math.random() * 0.5}s`,
+          }}
+          rounded="md"
+        />
       ))}
     </div>
   );
@@ -152,7 +157,7 @@ export function ProgressBar({
           initial={{ width: 0 }}
           animate={{ width: `${animatedProgress}%` }}
           transition={{
-            duration: animated ? 0.8 : 0,
+            duration: animated ? DURATION.VERY_SLOW : 0,
             ease: "easeOut",
           }}
         />
@@ -192,13 +197,18 @@ export function FloatingNotification({
     info: "surface-secondary border-primary text-primary",
   };
 
+  // ... inside component
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: -50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -50, scale: 0.9 }}
+          variants={FADE_IN_DOWN}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={{
+            duration: DURATION.NORMAL,
+          }}
           className={`fixed top-4 right-4 z-50 p-4 rounded-lg border-l-4 shadow-lg max-w-sm ${typeStyles[type]}`}
         >
           <div className="flex items-center justify-between">
@@ -234,21 +244,23 @@ export function PulseHighlight({
     success: "ring-success/20",
   };
 
+  const reduceMotion = useReducedMotion();
+
   return (
     <motion.div
       animate={
         isActive
           ? {
-            boxShadow: [
-              `0 0 0 0px rgba(var(--${color}), 0.4)`,
-              `0 0 0 10px rgba(var(--${color}), 0)`,
-            ],
-          }
+              boxShadow: [
+                `0 0 0 0px rgba(var(--${color}), 0.4)`,
+                `0 0 0 10px rgba(var(--${color}), 0)`,
+              ],
+            }
           : {}
       }
       transition={{
         duration: 1.5,
-        repeat: isActive ? Infinity : 0,
+        repeat: isActive && !reduceMotion ? Infinity : 0,
         ease: "easeOut",
       }}
       className={isActive ? `ring-4 ${pulseColors[color]} rounded-lg` : ""}

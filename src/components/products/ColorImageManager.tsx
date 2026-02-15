@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface ColorImageManagerProps {
   colors: string[];
@@ -183,9 +184,10 @@ export default function ColorImageManager({
                 {/* Upload Button */}
                 <label className="flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
                   {isUploading ? (
-                    <span className="text-sm text-muted-foreground animate-pulse">
-                      Subiendo...
-                    </span>
+                    <div className="flex items-center gap-2 text-primary">
+                      <Spinner size="sm" />
+                      <span className="text-sm">Subiendo...</span>
+                    </div>
                   ) : (
                     <>
                       <ImagePlus className="h-5 w-5 text-muted-foreground" />

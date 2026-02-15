@@ -3,7 +3,7 @@
 import { useToast } from "@/components/ui/Toast";
 import {
   DetailPanel,
-  EmptyState,
+  AdminEmpty,
   InfoGrid,
   ListItemCard,
   MessageThread,
@@ -167,7 +167,7 @@ interface TicketListProps {
 function TicketList({ tickets, selectedId, onSelect }: TicketListProps) {
   if (tickets.length === 0) {
     return (
-      <EmptyState
+      <AdminEmpty
         icon={<TicketIcon size={48} />}
         title="No hay tickets"
         description="Los tickets de soporte aparecerán aquí"
@@ -295,7 +295,7 @@ interface ChatSessionsProps {
 function ChatSessions({ sessions }: ChatSessionsProps) {
   if (sessions.length === 0) {
     return (
-      <EmptyState
+      <AdminEmpty
         icon={<MessageSquare size={48} />}
         title="No hay chats activos"
         description="Las conversaciones en vivo aparecerán aquí"

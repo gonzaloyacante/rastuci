@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import ContactPageClient from "./client-page";
 import { prisma } from "@/lib/prisma";
 import { defaultContactSettings } from "@/lib/validation/contact";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export const revalidate = 5; // Cache for 5 seconds (dev)
 
@@ -93,13 +94,13 @@ const ContactPageSkeleton = () => (
     <main className="max-w-[1200px] mx-auto py-8 px-6">
       {/* Header Skeleton */}
       <div className="text-center mb-12">
-        <div className="h-12 surface-secondary rounded animate-pulse w-96 mx-auto mb-4" />
-        <div className="h-6 surface-secondary rounded animate-pulse w-full max-w-2xl mx-auto" />
+        <Skeleton className="h-12 w-96 mx-auto mb-4" rounded="md" />
+        <Skeleton className="h-6 w-full max-w-2xl mx-auto" rounded="md" />
       </div>
-      {/* ... Content Skeleton omitted for brevity ... */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <div className="h-96 surface-secondary rounded animate-pulse w-full" />
-        <div className="h-96 surface-secondary rounded animate-pulse w-full" />
+        <Skeleton className="h-96 w-full" rounded="md" />
+        <Skeleton className="h-96 w-full" rounded="md" />
       </div>
     </main>
   </div>

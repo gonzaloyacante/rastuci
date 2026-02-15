@@ -4,11 +4,11 @@ import {
   AlertCircle,
   Clock,
   FileText,
-  Loader2,
   MapPin,
   Package,
   Phone,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -261,7 +261,7 @@ function CheckoutPendingLoading() {
   return (
     <div className="py-12 px-6">
       <div className="max-w-2xl mx-auto text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+        <Spinner size="lg" className="mx-auto mb-4" />
         <p className="muted">Cargando información del pago...</p>
       </div>
     </div>

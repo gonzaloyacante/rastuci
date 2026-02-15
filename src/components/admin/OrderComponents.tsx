@@ -1,3 +1,5 @@
+"use client";
+
 // import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 // import { Card, CardContent } from "@/components/ui/Card";
@@ -19,6 +21,7 @@ import {
 import Link from "next/link";
 import React, { ReactNode } from "react";
 import { Pagination as UIPagination } from "@/components/ui/Pagination";
+import { useToast } from "@/components/ui/Toast";
 
 // ============================================================================
 // Status Badge System
@@ -80,6 +83,7 @@ const shippingMethodLabels: Record<string, string> = {
   standard: "Envío estándar",
   express: "Envío express",
   ca: "Correo Argentino",
+  correo_argentino: "Correo Argentino",
 };
 
 export function ShippingMethodLabel({ method }: { method?: string }) {
@@ -151,6 +155,7 @@ export function OrderCard({
   onStatusChange,
 }: OrderCardProps) {
   const [isUpdating, setIsUpdating] = React.useState(false);
+  const { show } = useToast();
 
   const handleMarkProcessed = async () => {
     if (!confirm("¿Confirmas que ya pagaste el envío en MiCorreo?")) return;
@@ -171,10 +176,15 @@ export function OrderCard({
 
       // Éxito
       if (onStatusChange) onStatusChange();
+      show({ type: "success", message: "Pedido marcado como procesado" });
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Error al actualizar el pedido"
-      );
+      show({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar el pedido",
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -200,10 +210,15 @@ export function OrderCard({
 
       // Éxito
       if (onStatusChange) onStatusChange();
+      show({ type: "success", message: "Pedido marcado como entregado" });
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Error al actualizar el pedido"
-      );
+      show({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar el pedido",
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -226,8 +241,18 @@ export function OrderCard({
       }
 
       if (onStatusChange) onStatusChange();
+      show({
+        type: "success",
+        message: "Transferencia aprobada correctamente",
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Error al aprobar");
+      show({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error al aprobar la transferencia",
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -253,8 +278,13 @@ export function OrderCard({
       }
 
       if (onStatusChange) onStatusChange();
+      show({ type: "success", message: "Orden cancelada correctamente" });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Error al cancelar");
+      show({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Error al cancelar la orden",
+      });
     } finally {
       setIsUpdating(false);
     }

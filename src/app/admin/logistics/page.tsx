@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  EmptyState,
+  AdminEmpty,
   PageHeaderWithActions,
   SearchFiltersBar,
   TabLayout,
@@ -147,7 +147,7 @@ function StatusBadge({ status }: { status: string }) {
 function SuppliersGrid({ suppliers }: { suppliers: Supplier[] }) {
   if (suppliers.length === 0) {
     return (
-      <EmptyState
+      <AdminEmpty
         icon={<Package size={48} />}
         title="No hay proveedores"
         description="Agrega proveedores para gestionar la cadena de suministro"
@@ -211,7 +211,7 @@ function SuppliersGrid({ suppliers }: { suppliers: Supplier[] }) {
 function RoutesGrid({ routes }: { routes: OptimizedRoute[] }) {
   if (routes.length === 0) {
     return (
-      <EmptyState
+      <AdminEmpty
         icon={<Truck size={48} />}
         title="No hay rutas optimizadas"
         description="Crea rutas optimizadas para las entregas"
@@ -273,7 +273,7 @@ function RoutesGrid({ routes }: { routes: OptimizedRoute[] }) {
 function ReturnsGrid({ returns }: { returns: ReturnRequest[] }) {
   if (returns.length === 0) {
     return (
-      <EmptyState
+      <AdminEmpty
         icon={<RotateCcw size={48} />}
         title="No hay solicitudes de devolución"
         description="Las solicitudes de devolución aparecerán aquí"

@@ -3,7 +3,8 @@
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { logger } from "@/lib/logger";
-import { AlertCircle, Check, Loader2, Upload, X } from "lucide-react";
+import { AlertCircle, Check, Upload, X } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -287,7 +288,7 @@ export default function ImageUploadZone({
               {image.uploading && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <div className="text-center text-white">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                    <Spinner size="lg" color="white" className="mx-auto mb-2" />
                     <p className="text-xs">Subiendo...</p>
                   </div>
                 </div>

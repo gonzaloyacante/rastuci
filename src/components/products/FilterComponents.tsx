@@ -3,6 +3,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { DURATION, SLIDE_IN_LEFT } from "@/lib/animations";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 // ==============================================================================
 // TYPES
@@ -342,6 +344,8 @@ export function FilterGroupSection({
     group.max || 100,
   ];
 
+  const reduceMotion = useReducedMotion();
+
   return (
     <div className="border-b border-surface-secondary pb-6">
       <button
@@ -364,9 +368,18 @@ export function FilterGroupSection({
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
+            initial={
+              reduceMotion
+                ? { opacity: 1, height: "auto" }
+                : { opacity: 0, height: 0 }
+            }
             animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            exit={
+              reduceMotion
+                ? { opacity: 1, height: "auto" }
+                : { opacity: 0, height: 0 }
+            }
+            transition={{ duration: reduceMotion ? 0 : DURATION.FAST }}
             className="mt-4 space-y-3"
           >
             {group.type === "range" && (
@@ -530,6 +543,8 @@ export function MobileFiltersModal({
   onFilterChange,
   onClearFilters,
 }: MobileFiltersModalProps) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -547,10 +562,14 @@ export function MobileFiltersModal({
 
           {/* Panel */}
           <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "tween", duration: 0.3 }}
+            variants={SLIDE_IN_LEFT}
+            initial={reduceMotion ? "animate" : "initial"}
+            animate="animate"
+            exit={reduceMotion ? "animate" : "exit"}
+            transition={{
+              type: "tween",
+              duration: reduceMotion ? 0 : DURATION.NORMAL,
+            }}
             className="absolute inset-y-0 left-0 w-80 bg-white shadow-xl overflow-y-auto"
           >
             <div className="p-6">

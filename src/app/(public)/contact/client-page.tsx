@@ -3,8 +3,7 @@
 import { Card, CardContent } from "@/components/ui/Card";
 // import { logger } from "@/lib/logger";
 import { type ContactSettings } from "@/lib/validation/contact";
-// import { Clock, Loader2, Mail, MapPin, Phone } from "lucide-react";
-import { Clock, Mail, MapPin, Phone } from "lucide-react"; // Loader2 unused
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 // import useSWR from "swr";
 import { PublicContactForm } from "@/components/contact/PublicContactForm";
 import { FaqSection } from "@/components/contact/FaqSection";

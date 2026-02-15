@@ -1,8 +1,7 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 
-interface SkeletonProps {
-  className?: string;
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   width?: string | number;
   height?: string | number;
   rounded?: "none" | "sm" | "md" | "lg" | "full";
@@ -13,6 +12,8 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   width,
   height,
   rounded = "md",
+  style,
+  ...props
 }) => {
   const roundedClasses = {
     none: "",
@@ -32,7 +33,9 @@ export const Skeleton: React.FC<SkeletonProps> = ({
       style={{
         width: width,
         height: height,
+        ...style,
       }}
+      {...props}
     />
   );
 };
@@ -235,6 +238,77 @@ export const DashboardCardSkeleton = () => (
         <Skeleton className="h-8 w-16" />
       </div>
       <Skeleton className="h-12 w-12" rounded="full" />
+    </div>
+  </div>
+);
+
+// ============================================
+// CART ITEM SKELETON
+// ============================================
+
+export const CartItemSkeleton = () => (
+  <div className="flex items-center gap-4 surface p-4 rounded-lg shadow-sm border border-muted">
+    {/* Product Image */}
+    <Skeleton className="w-20 h-20 sm:w-24 sm:h-24" rounded="md" />
+
+    {/* Product Info */}
+    <div className="flex-1 space-y-2">
+      <Skeleton className="h-5 w-full max-w-xs" />
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-4 w-20" />
+      <div className="flex items-center gap-2 mt-2">
+        <Skeleton className="h-6 w-16" />
+      </div>
+    </div>
+
+    {/* Quantity Selector */}
+    <Skeleton className="h-10 w-24" rounded="md" />
+
+    {/* Remove Button */}
+    <Skeleton className="h-5 w-5" rounded="sm" />
+  </div>
+);
+
+// ============================================
+// REVIEW SKELETON
+// ============================================
+
+export const ReviewSkeleton = () => (
+  <div className="surface p-4 sm:p-6 rounded-xl border border-muted">
+    {/* Reviewer Header */}
+    <div className="flex items-center gap-3 mb-3">
+      <Skeleton className="h-10 w-10" rounded="full" />
+      <div className="flex-1">
+        <Skeleton className="h-4 w-32 mb-1" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+    </div>
+
+    {/* Rating Stars */}
+    <div className="flex gap-1 mb-3">
+      {[...Array(5)].map((_, i) => (
+        <Skeleton key={`star-${i}`} className="h-4 w-4" rounded="sm" />
+      ))}
+    </div>
+
+    {/* Review Text */}
+    <div className="space-y-2">
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+    </div>
+
+    {/* Review Images (Optional) */}
+    <div className="flex gap-2 mt-4">
+      <Skeleton className="h-16 w-16" rounded="md" />
+      <Skeleton className="h-16 w-16" rounded="md" />
+      <Skeleton className="h-16 w-16" rounded="md" />
+    </div>
+
+    {/* Helpful Counter */}
+    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-muted">
+      <Skeleton className="h-4 w-20" />
+      <Skeleton className="h-4 w-16" />
     </div>
   </div>
 );

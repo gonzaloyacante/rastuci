@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/Dialog";
 import { useWishlist } from "@/context/WishlistContext";
 import { useToast } from "@/components/ui/Toast";
-import { Copy, Link as LinkIcon, Share2, Loader2, Check } from "lucide-react";
+import { Copy, Link as LinkIcon, Share2, Check } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { useState } from "react";
 
 export function ShareWishlistModal() {
@@ -85,7 +86,7 @@ export function ShareWishlistModal() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Spinner size="sm" color="white" className="mr-2" />
                     Generando enlace...
                   </>
                 ) : (

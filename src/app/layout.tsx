@@ -1,4 +1,5 @@
 import AppProviders from "@/components/providers/AppProviders";
+import KeyboardShortcutsProvider from "@/components/providers/KeyboardShortcutsProvider";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
@@ -102,7 +103,9 @@ export default async function RootLayout({
         suppressHydrationWarning={true}
       >
         <ErrorBoundary>
-          <AppProviders>{children}</AppProviders>
+          <AppProviders>
+            <KeyboardShortcutsProvider>{children}</KeyboardShortcutsProvider>
+          </AppProviders>
         </ErrorBoundary>
       </body>
     </html>

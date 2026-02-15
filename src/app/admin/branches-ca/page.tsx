@@ -14,7 +14,6 @@ import {
   Clock,
   Download,
   Filter,
-  Loader2,
   Mail,
   MapPin,
   Phone,
@@ -23,6 +22,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { CardGridSkeleton } from "@/components/admin/SettingsSkeletons";
+import { Spinner } from "@/components/ui/Spinner";
 
 // PROVINCIAS imported from @/lib/constants
 
@@ -249,7 +249,7 @@ export default function SucursalesCAPage() {
                   className="flex-1"
                 >
                   {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Spinner size="sm" />
                   ) : (
                     <RefreshCw className="w-4 h-4" />
                   )}
@@ -281,7 +281,7 @@ export default function SucursalesCAPage() {
               <Button onClick={syncAgenciesToDB} disabled={syncing}>
                 {syncing ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Spinner size="sm" className="mr-2" />
                     Sincronizando...
                   </>
                 ) : (

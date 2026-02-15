@@ -11,11 +11,11 @@ import {
   CheckCircle,
   Clock,
   ExternalLink,
-  Loader2,
   Package,
   Search,
   Truck,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { useState } from "react";
 
 interface TrackingValidatorProps {
@@ -125,11 +125,7 @@ export function TrackingValidator({
           disabled={!trackingInput.trim() || isLoading}
           className="flex items-center gap-2"
         >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Search className="w-4 h-4" />
-          )}
+          {isLoading ? <Spinner size="sm" /> : <Search className="w-4 h-4" />}
           {isLoading ? "Validando..." : "Buscar"}
         </Button>
       </div>

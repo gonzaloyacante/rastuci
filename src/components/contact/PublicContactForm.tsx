@@ -6,96 +6,98 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { logger } from "@/lib/logger";
 import { type ContactSettings } from "@/lib/validation/contact";
-import { Loader2, Mail, MessageCircle, Phone, Send } from "lucide-react";
+import { Mail, MessageCircle, Phone, Send, AlertCircle } from "lucide-react";
 import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-type ResponsePreference = "EMAIL" | "PHONE" | "WHATSAPP";
+// Define schema directly or import if available.
+// Assuming we want a specific schema for this form.
+const contactFormSchema = z
+  .object({
+    name: z
+      .string()
+      .min(2, "Por favor, ingresa tu nombre (mínimo 2 caracteres)"),
+    email: z.string().email("Por favor, ingresa un email válido"),
+    phone: z.string().optional(),
+    message: z
+      .string()
+      .min(10, "Por favor, escribe un mensaje de al menos 10 caracteres"),
+    responsePreference: z.enum(["EMAIL", "PHONE", "WHATSAPP"]),
+  })
+  .refine(
+    (data) => {
+      if (
+        (data.responsePreference === "PHONE" ||
+          data.responsePreference === "WHATSAPP") &&
+        (!data.phone || data.phone.trim().length < 6)
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Por favor, ingresa tu teléfono para poder contactarte",
+      path: ["phone"],
+    }
+  );
 
-interface ContactFormData {
-  name: string;
-  email: string;
-  phone: string;
-  message: string;
-  responsePreference: ResponsePreference;
-}
-
-const initialFormData: ContactFormData = {
-  name: "",
-  email: "",
-  phone: "",
-  message: "",
-  responsePreference: "EMAIL",
-};
+type ContactFormData = z.infer<typeof contactFormSchema>;
 
 export const PublicContactForm = ({
   contact,
 }: {
   contact: ContactSettings;
 }) => {
-  const [formData, setFormData] = useState<ContactFormData>(initialFormData);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { show } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isValid, isSubmitting },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      message: "",
+      responsePreference: "EMAIL",
+    },
+    mode: "onBlur",
+  });
 
+  const responsePreference = watch("responsePreference");
+
+  const onSubmit = async (data: ContactFormData) => {
     try {
-      // Validación básica
-      if (!formData.name.trim()) {
-        show({ type: "error", message: "Por favor, ingresa tu nombre" });
-        return;
-      }
-      if (!formData.email.trim()) {
-        show({ type: "error", message: "Por favor, ingresa tu email" });
-        return;
-      }
-      if (!formData.message.trim()) {
-        show({ type: "error", message: "Por favor, escribe un mensaje" });
-        return;
-      }
-      // Validar teléfono si la preferencia es PHONE o WHATSAPP
-      if (
-        (formData.responsePreference === "PHONE" ||
-          formData.responsePreference === "WHATSAPP") &&
-        !formData.phone.trim()
-      ) {
-        show({
-          type: "error",
-          message: "Por favor, ingresa tu teléfono para poder contactarte",
-        });
-        return;
-      }
-
-      // Enviar al endpoint
       const response = await fetch("/api/contact/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       const result = await response.json();
-      console.log("Contact API Response:", { status: response.status, result }); // DEBUG
 
       if (!response.ok || !result.success) {
-        // apiResponse returns error as a string, but sometimes it might be nested
         const errorMsg =
           typeof result.error === "string"
             ? result.error
-            : result.error?.message ||
-              result.message ||
-              "Error desconocido (FALLBACK)";
-
-        console.error("API Error Details:", errorMsg);
+            : result.error?.message || result.message || "Error desconocido";
         throw new Error(errorMsg);
       }
 
       setSubmitted(true);
-      setFormData(initialFormData);
+      reset();
       show({ type: "success", message: "¡Mensaje enviado exitosamente!" });
     } catch (error) {
-      logger.error("Error al enviar formulario:", { error: error });
+      logger.error("Error al enviar formulario:", { error });
       show({
         type: "error",
         message:
@@ -103,25 +105,12 @@ export const PublicContactForm = ({
             ? error.message
             : "Error al enviar el mensaje. Por favor intenta nuevamente.",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const resetForm = () => {
+  const handleReset = () => {
     setSubmitted(false);
-    setFormData(initialFormData);
+    reset();
   };
 
   return (
@@ -138,7 +127,7 @@ export const PublicContactForm = ({
               {contact.form.successTitle}
             </h3>
             <p className="muted mb-4">{contact.form.successMessage}</p>
-            <Button onClick={resetForm} variant="hero">
+            <Button onClick={handleReset} variant="hero">
               {contact.form.sendAnotherLabel}
             </Button>
           </CardContent>
@@ -146,7 +135,7 @@ export const PublicContactForm = ({
       ) : (
         <Card className="surface border border-theme rounded-xl shadow-sm">
           <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label
@@ -157,15 +146,17 @@ export const PublicContactForm = ({
                   </label>
                   <Input
                     id="name"
-                    name="name"
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="form-input h-12"
+                    {...register("name")}
                     placeholder="Tu nombre completo"
+                    className={`form-input ${errors.name ? "border-error" : "h-12"}`}
                     autoComplete="name"
                   />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.name.message}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -176,15 +167,18 @@ export const PublicContactForm = ({
                   </label>
                   <Input
                     id="email"
-                    name="email"
+                    {...register("email")}
                     type="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="form-input h-12"
                     placeholder="tu@email.com"
+                    className={`form-input ${errors.email ? "border-error" : "h-12"}`}
                     autoComplete="email"
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -197,14 +191,18 @@ export const PublicContactForm = ({
                 </label>
                 <Input
                   id="phone"
-                  name="phone"
+                  {...register("phone")}
                   type="tel"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="form-input h-12"
                   placeholder="+54 9 11 1234-5678"
+                  className={`form-input ${errors.phone ? "border-error" : "h-12"}`}
                   autoComplete="tel"
                 />
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-error flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
 
               {/* Selector de preferencia de respuesta */}
@@ -212,67 +210,62 @@ export const PublicContactForm = ({
                 <label className="block text-sm font-semibold mb-2 font-montserrat">
                   ¿Cómo preferís que te contactemos? *
                 </label>
-                <div className="grid grid-cols-3 gap-3">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() =>
-                      setFormData({ ...formData, responsePreference: "EMAIL" })
-                    }
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
-                      formData.responsePreference === "EMAIL"
-                        ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
-                        : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
-                    }`}
-                  >
-                    <Mail className="w-5 h-5" />
-                    <span className="text-sm font-medium">Email</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() =>
-                      setFormData({ ...formData, responsePreference: "PHONE" })
-                    }
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
-                      formData.responsePreference === "PHONE"
-                        ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
-                        : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
-                    }`}
-                  >
-                    <Phone className="w-5 h-5" />
-                    <span className="text-sm font-medium">Teléfono</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        responsePreference: "WHATSAPP",
-                      })
-                    }
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
-                      formData.responsePreference === "WHATSAPP"
-                        ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
-                        : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
-                    }`}
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium">WhatsApp</span>
-                  </Button>
-                </div>
-                {(formData.responsePreference === "PHONE" ||
-                  formData.responsePreference === "WHATSAPP") &&
-                  !formData.phone && (
-                    <p className="text-xs text-amber-600 mt-2">
-                      * Para contactarte por{" "}
-                      {formData.responsePreference === "PHONE"
-                        ? "teléfono"
-                        : "WhatsApp"}
-                      , necesitamos tu número
-                    </p>
+                <Controller
+                  control={control}
+                  name="responsePreference"
+                  render={({ field }) => (
+                    <div className="grid grid-cols-3 gap-3">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => field.onChange("EMAIL")}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
+                          field.value === "EMAIL"
+                            ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                            : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
+                        }`}
+                      >
+                        <Mail className="w-5 h-5" />
+                        <span className="text-sm font-medium">Email</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => field.onChange("PHONE")}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
+                          field.value === "PHONE"
+                            ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                            : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
+                        }`}
+                      >
+                        <Phone className="w-5 h-5" />
+                        <span className="text-sm font-medium">Teléfono</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => field.onChange("WHATSAPP")}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 h-auto min-h-0 ${
+                          field.value === "WHATSAPP"
+                            ? "border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                            : "border-theme surface hover:border-primary/50 hover:bg-muted/10"
+                        }`}
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        <span className="text-sm font-medium">WhatsApp</span>
+                      </Button>
+                    </div>
                   )}
+                />
+
+                {(responsePreference === "PHONE" ||
+                  responsePreference === "WHATSAPP") && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    * Para contactarte por{" "}
+                    {responsePreference === "PHONE" ? "teléfono" : "WhatsApp"},
+                    necesitamos tu número arriba.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -284,15 +277,18 @@ export const PublicContactForm = ({
                 </label>
                 <textarea
                   id="message"
-                  name="message"
-                  required
+                  {...register("message")}
                   rows={6}
-                  value={formData.message}
-                  onChange={handleChange}
-                  className="form-input w-full px-4 py-3 resize-none"
+                  className={`form-input w-full px-4 py-3 resize-none ${errors.message ? "border-error" : ""}`}
                   placeholder="Escribe tu mensaje aquí..."
                   autoComplete="off"
                 />
+                {errors.message && (
+                  <p className="mt-1 text-sm text-error flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.message.message}
+                  </p>
+                )}
               </div>
 
               <Button
@@ -301,18 +297,10 @@ export const PublicContactForm = ({
                 size="xl"
                 fullWidth
                 disabled={isSubmitting}
+                loading={isSubmitting}
+                leftIcon={<Send size={20} />}
               >
-                {isSubmitting ? (
-                  <div className="flex items-center space-x-2">
-                    <Loader2 size={20} className="animate-spin" />
-                    <span>Enviando...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <Send size={20} />
-                    <span>{contact.form.submitLabel}</span>
-                  </div>
-                )}
+                {contact.form.submitLabel}
               </Button>
 
               <p className="text-xs muted text-center">* Campos obligatorios</p>

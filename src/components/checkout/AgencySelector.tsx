@@ -7,7 +7,8 @@ import {
   PROVINCE_CODE_MAP as PROVINCE_NAMES,
 } from "@/lib/constants";
 import { Agency } from "@/lib/correo-argentino-service";
-import { Loader2, MapPin, Search, Store } from "lucide-react";
+import { MapPin, Search, Store } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/LoadingStates";
 import { useCart } from "@/context/CartContext";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -308,7 +309,7 @@ export function AgencySelector({
         <label className="text-sm font-medium">Sucursal</label>
         {loading ? (
           <div className="flex items-center justify-center py-4 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+            <LoadingSpinner size="sm" className="mr-2" />
             Cargando sucursales...
           </div>
         ) : error ? (

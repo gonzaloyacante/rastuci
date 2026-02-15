@@ -3,7 +3,6 @@
 import {
   AlertTriangle,
   CreditCard,
-  Loader2,
   MapPin,
   Phone,
   RefreshCw,
@@ -12,6 +11,7 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { Spinner } from "@/components/ui/Spinner";
 
 function CheckoutFailureContent() {
   const searchParams = useSearchParams();
@@ -111,7 +111,9 @@ function CheckoutFailureContent() {
             Pago Rechazado
           </h1>
           <p className="muted">
-            {mounted && orderId && !orderId.startsWith("tmp_") ? `Referencia: #${orderId}` : "Referencia: Pago no procesado"}
+            {mounted && orderId && !orderId.startsWith("tmp_")
+              ? `Referencia: #${orderId}`
+              : "Referencia: Pago no procesado"}
           </p>
         </div>
 
@@ -240,7 +242,7 @@ function CheckoutFailureLoading() {
   return (
     <div className="py-12 px-6">
       <div className="max-w-2xl mx-auto text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+        <Spinner size="lg" className="mx-auto mb-4" />
         <p className="muted">Cargando información del pago...</p>
       </div>
     </div>

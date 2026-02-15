@@ -228,41 +228,6 @@ export function SearchFiltersBar({
 }
 
 // ============================================================================
-// Empty State
-// ============================================================================
-
-interface EmptyStateProps {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}
-
-export function EmptyState({
-  icon,
-  title,
-  description,
-  action,
-}: EmptyStateProps) {
-  return (
-    <Card className="p-8 text-center">
-      <div className="mx-auto mb-4 text-muted">{icon}</div>
-      <h3 className="text-lg font-medium text-primary mb-2">{title}</h3>
-      <p className="text-muted mb-4">{description}</p>
-      {action && (
-        <Button variant="primary" onClick={action.onClick} className="gap-2">
-          <Plus size={16} />
-          {action.label}
-        </Button>
-      )}
-    </Card>
-  );
-}
-
-// ============================================================================
 // Page Header with Actions
 // ============================================================================
 

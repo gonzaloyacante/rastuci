@@ -28,6 +28,7 @@ import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder
 import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 import { DynamicTags } from "@/components/products/DynamicTags";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { LoadingSkeleton } from "@/components/ui/LoadingStates";
 
 /** Badge de precio con descuento */
 export const PriceBadge = ({
@@ -211,10 +212,10 @@ const ProductCard = React.memo((props: ProductCardProps) => {
       e.preventDefault();
       e.stopPropagation();
       if (!isAdmin) {
-        toggleFavorite(product.id);
+        toggleFavorite(product);
       }
     },
-    [toggleFavorite, product.id, isAdmin]
+    [toggleFavorite, product, isAdmin]
   );
 
   const handleImageError = useCallback(() => {
@@ -242,7 +243,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             ) : (
               <div className="relative w-full h-full">
                 {imageLoading && (
-                  <div className="absolute inset-0 surface-secondary animate-pulse" />
+                  <LoadingSkeleton className="absolute inset-0" />
                 )}
                 <OptimizedImage
                   src={mainImage}

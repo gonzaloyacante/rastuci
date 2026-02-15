@@ -1,13 +1,15 @@
 "use client";
 
 import useDebounce from "@/hooks/useDebounce";
+import { DURATION, FADE_IN_DOWN } from "@/lib/animations";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
+import { LoadingSpinner } from "@/components/ui/LoadingStates";
 import {
   ChevronRight,
   Clock,
-  Loader2,
   Search,
   Star,
   Tag,
@@ -50,6 +52,7 @@ export default function SmartSearch({
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
+  const reduceMotion = useReducedMotion();
 
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -295,7 +298,7 @@ export default function SmartSearch({
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           {isLoading ? (
-            <Loader2 className={`${sizes[size].icon} muted animate-spin`} />
+            <LoadingSpinner size="sm" className="muted" />
           ) : (
             <Search className={`${sizes[size].icon} muted`} />
           )}
@@ -333,10 +336,13 @@ export default function SmartSearch({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            variants={FADE_IN_DOWN}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{
+              duration: reduceMotion ? 0 : DURATION.FAST,
+            }}
             className="absolute top-full left-0 right-0 mt-1 bg-white border border-surface-secondary rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
           >
             {/* Sugerencias de productos y categorías */}

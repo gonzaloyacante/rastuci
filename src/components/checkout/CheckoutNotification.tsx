@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, Check, Info, Loader2, X } from "lucide-react";
+import { AlertCircle, Check, Info, X } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { useEffect, useState } from "react";
 
 interface CheckoutNotificationProps {
@@ -47,7 +48,7 @@ const notificationConfig = {
     messageColor: "muted",
   },
   loading: {
-    icon: Loader2,
+    icon: Spinner,
     bgColor: "surface-secondary",
     borderColor: "border-primary",
     iconColor: "text-primary",

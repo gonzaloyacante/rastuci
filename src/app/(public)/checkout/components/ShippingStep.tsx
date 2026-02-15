@@ -15,12 +15,12 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   MapPin,
   Store,
   Truck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Spinner } from "@/components/ui/Spinner";
 
 // ============================================================================
 // HELPER FUNCTIONS (fuera del componente)
@@ -234,10 +234,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     if (loading) {
       return (
         <div className="flex flex-col items-center justify-center py-8 sm:py-10">
-          <Loader2
-            size={32}
-            className="animate-spin text-primary mb-3 sm:mb-4 sm:w-10 sm:h-10"
-          />
+          <Spinner size="lg" className="mb-3 sm:mb-4" />
           <p className="text-muted-foreground text-sm sm:text-base">
             Calculando opciones de envío...
           </p>

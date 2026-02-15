@@ -3,7 +3,8 @@
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ArrowLeft, Loader2, Mail } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -119,7 +120,7 @@ export default function ForgotPasswordPage() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Spinner size="sm" className="mr-2" />
                 Enviando...
               </>
             ) : (

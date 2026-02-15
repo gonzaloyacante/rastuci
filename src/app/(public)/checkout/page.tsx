@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 import CheckoutPageClient from "./client-page";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export const metadata: Metadata = {
   title: "Checkout - Finalizar Compra | Rastuci",
@@ -25,7 +26,7 @@ const CheckoutPageSkeleton = () => (
   <div className="surface text-primary min-h-screen flex flex-col">
     <main className="grow max-w-[1200px] mx-auto py-8 px-6 w-full">
       {/* Header Skeleton */}
-      <div className="h-10 surface-secondary rounded animate-pulse w-48 mb-8" />
+      <Skeleton className="h-10 w-48 mb-8" />
 
       {/* Stepper Skeleton */}
       <div className="mb-8">
@@ -35,10 +36,8 @@ const CheckoutPageSkeleton = () => (
               key={`checkout-step-${Math.random()}`}
               className="flex items-center"
             >
-              <div className="w-8 h-8 surface-secondary rounded-full animate-pulse" />
-              {i < 4 && (
-                <div className="w-16 h-0.5 surface-secondary animate-pulse mx-4" />
-              )}
+              <Skeleton className="w-8 h-8 rounded-full" />
+              {i < 4 && <Skeleton className="w-16 h-0.5 mx-4" />}
             </div>
           ))}
         </div>
@@ -48,12 +47,12 @@ const CheckoutPageSkeleton = () => (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="surface border border-muted rounded-lg p-6">
-            <div className="h-8 surface-secondary rounded animate-pulse w-64 mb-6" />
+            <Skeleton className="h-8 w-64 mb-6" />
             <div className="space-y-4">
               {[...Array(4)].map(() => (
                 <div key={`form-field-${Math.random()}`}>
-                  <div className="h-4 surface-secondary rounded animate-pulse w-24 mb-2" />
-                  <div className="h-12 surface-secondary rounded animate-pulse w-full" />
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-12 w-full" />
                 </div>
               ))}
             </div>
@@ -62,19 +61,19 @@ const CheckoutPageSkeleton = () => (
 
         <div className="lg:col-span-1">
           <div className="surface border border-muted rounded-lg p-6 sticky top-24">
-            <div className="h-6 surface-secondary rounded animate-pulse w-32 mb-4" />
+            <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-3">
               {[...Array(3)].map(() => (
                 <div
                   key={`order-line-${Math.random()}`}
                   className="flex justify-between"
                 >
-                  <div className="h-4 surface-secondary rounded animate-pulse w-20" />
-                  <div className="h-4 surface-secondary rounded animate-pulse w-16" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
                 </div>
               ))}
             </div>
-            <div className="h-12 surface-secondary rounded animate-pulse w-full mt-6" />
+            <Skeleton className="h-12 w-full mt-6" />
           </div>
         </div>
       </div>

@@ -11,7 +11,6 @@ import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-// import { ColorChip } from "@/components/ui/ColorChip";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Product, ProductVariant } from "@/types";
@@ -1004,37 +1003,25 @@ export default function ProductForm({
           </Card>
 
           {/* Botones de Acción */}
-          {/* Botones de Acción - Ahora al final del flujo, sin sticky */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6 mt-8 border-t border-muted">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold shadow-lg relative z-[101] bg-primary hover:bg-primary/90 text-white"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3" />
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-5 w-5 mr-3" />
-                  {action}
-                </>
-              )}
-            </Button>
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                logger.info("Back button clicked");
-                router.push("/admin/productos");
-              }}
-              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold border-2 relative z-[101]"
+              onClick={() => router.back()}
               disabled={loading}
+              className="bg-surface/90 backdrop-blur-sm shadow-md hover:bg-surface-secondary flex-1 sm:flex-none"
             >
-              <ArrowLeft className="h-5 w-5 mr-3" />
-              Volver sin Guardar
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              loading={loading}
+              className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold shadow-lg bg-primary hover:bg-primary/90 text-white"
+              size="lg"
+            >
+              <Save className="h-5 w-5 mr-2" />
+              {action}
             </Button>
           </div>
         </form>

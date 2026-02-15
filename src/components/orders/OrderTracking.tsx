@@ -11,7 +11,6 @@ import {
   Clock,
   Download,
   Info,
-  Loader2,
   Mail,
   MapPin,
   Navigation,
@@ -20,6 +19,7 @@ import {
   RefreshCw,
   Truck,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCallback, useEffect, useState } from "react";
 
 interface OrderStatus {
@@ -343,7 +343,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <Spinner size="lg" className="mx-auto mb-4" />
           <p className="text-muted-foreground">
             Cargando información del pedido...
           </p>
@@ -433,7 +433,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
             >
               {trackingLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Spinner size="sm" className="mr-2" />
                   Actualizando...
                 </>
               ) : (

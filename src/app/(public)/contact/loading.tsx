@@ -6,8 +6,8 @@ export default function Loading() {
       <main className="max-w-[1200px] mx-auto py-8 px-6">
         {/* Header Skeleton */}
         <div className="text-center mb-12">
-          <div className="h-12 surface-secondary rounded animate-pulse w-96 mx-auto mb-4" />
-          <div className="h-6 surface-secondary rounded animate-pulse w-full max-w-2xl mx-auto" />
+          <Skeleton className="h-12 w-96 mx-auto mb-4" rounded="md" />
+          <Skeleton className="h-6 w-full max-w-2xl mx-auto" rounded="md" />
         </div>
 
         {/* Info Cards Skeleton */}

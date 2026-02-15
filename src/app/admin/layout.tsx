@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/Button";
 
 import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
 import SessionProvider from "@/components/providers/SessionProvider";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { SPRING } from "@/lib/animations";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -28,6 +30,7 @@ import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
 const NAV_LINKS = [
   { name: "Dashboard", href: "/admin/panel", icon: LayoutGrid },
@@ -75,6 +78,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const check = () => {
@@ -126,12 +130,7 @@ export default function AdminLayout({
                 initial={isMobile ? { x: "100%" } : false}
                 animate={{ x: 0 }}
                 exit={isMobile ? { x: "100%" } : { x: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  mass: 0.8,
-                }}
+                transition={reduceMotion ? { duration: 0 } : SPRING.DEFAULT}
                 className={`${isOpen ? "w-64 items-stretch" : "w-18 items-center"}
                   ${isMobile ? "fixed right-0" : "relative"}
                   surface border-r border-muted flex flex-col z-50 h-full shadow-lg`}
@@ -200,6 +199,19 @@ export default function AdminLayout({
                     isOpen ? "" : "flex flex-col items-center"
                   }`}
                 >
+                  {/* Language Selector */}
+                  <div
+                    className={`mb-2 w-full ${isOpen ? "" : "flex justify-center"}`}
+                  >
+                    <LanguageSelector
+                      variant={isOpen ? "inline" : "dropdown"}
+                      showFlag={true}
+                      showName={isOpen}
+                      className={isOpen ? "" : "w-full"}
+                    />
+                  </div>
+
+                  {/* Theme Toggle */}
                   <div
                     className={`mb-3 w-full ${isOpen ? "" : "flex justify-center"}`}
                   >

@@ -13,30 +13,43 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   className,
 }) => {
   const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-6 h-6",
-    lg: "w-8 h-8",
+    sm: "h-4 w-4",
+    md: "h-5 w-5",
+    lg: "h-6 w-6",
   };
 
   const colorClasses = {
-    primary: "text-blue-600",
+    primary: "text-primary",
     white: "text-white",
     gray: "text-gray-500",
   };
 
   return (
-    <div
+    <svg
       className={cn(
-        "animate-spin rounded-full border-2 border-current border-t-transparent",
+        "animate-spin",
         sizeClasses[size],
         colorClasses[color],
         className
       )}
+      viewBox="0 0 24 24"
       role="status"
       aria-label="Cargando..."
     >
-      <span className="sr-only">Cargando...</span>
-    </div>
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+      />
+    </svg>
   );
 };
 

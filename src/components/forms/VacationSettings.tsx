@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Lock, Unlock } from "lucide-react";
+import { Lock, Unlock } from "lucide-react";
+import { SectionLoader } from "@/components/ui/Spinner";
 
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
@@ -167,8 +168,7 @@ export default function VacationSettingsForm() {
     }
   };
 
-  if (isLoading)
-    return <Loader2 className="animate-spin w-8 h-8 text-amber-500 mx-auto" />;
+  if (isLoading) return <SectionLoader className="h-64" />;
 
   const isEnabled = form.watch("enabled");
 
@@ -342,9 +342,9 @@ export default function VacationSettingsForm() {
             <Button
               type="submit"
               disabled={isSaving}
+              loading={isSaving}
               className="w-full md:w-auto"
             >
-              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Guardar Cambios
             </Button>
           </form>

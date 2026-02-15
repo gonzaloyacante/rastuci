@@ -3,6 +3,7 @@
 import { Product } from "@/types";
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
+import { ProductCardSkeleton } from "@/components/ui/Skeleton";
 
 interface RelatedProductsProps {
   categoryId?: string;
@@ -58,10 +59,7 @@ export default function RelatedProducts({
         </h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
           {[...Array(4)].map(() => (
-            <div
-              key={`related-skeleton-${Math.random()}`}
-              className="h-48 surface rounded-lg animate-pulse border border-muted"
-            />
+            <ProductCardSkeleton key={`related-skeleton-${Math.random()}`} />
           ))}
         </div>
       </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Check } from "lucide-react";
 import { useMemo } from "react";
 
@@ -130,7 +131,7 @@ export default function CheckoutStepper({
 
                 {/* Indicador de paso actual */}
                 {isCurrent && (
-                  <div className="w-1 h-1 bg-primary rounded-full mt-1 animate-pulse" />
+                  <Skeleton className="w-1 h-1 bg-primary rounded-full mt-1" />
                 )}
               </div>
             );

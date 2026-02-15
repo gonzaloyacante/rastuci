@@ -13,6 +13,7 @@ import {
   ViewModeToggle,
 } from "@/components/products/ProductListComponents";
 import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
 import Select from "@/components/ui/Select";
 import { useCategories } from "@/hooks/useCategories";
 import { Product } from "@/types";
@@ -216,8 +217,8 @@ export default function ProductsPageClient({
       <div className="min-h-screen surface">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="mb-8">
-            <div className="h-8 surface-secondary rounded animate-pulse w-48 mb-4" />
-            <div className="h-4 surface-secondary rounded animate-pulse w-full max-w-md" />
+            <Skeleton className="h-8 w-48 mb-4" />
+            <Skeleton className="h-4 w-full max-w-md" />
           </div>
           <ProductGridSkeleton />
         </div>

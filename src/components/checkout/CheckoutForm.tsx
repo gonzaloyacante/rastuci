@@ -5,7 +5,8 @@ import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
-import { CreditCard, Loader2, Lock, Shield } from "lucide-react";
+import { CreditCard, Lock, Shield } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { useState } from "react";
 import { CustomerForm } from "./CustomerForm";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
@@ -298,7 +299,7 @@ export function CheckoutForm({
           >
             {isProcessing ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <Spinner size="sm" color="white" className="mr-2" />
                 Procesando...
               </>
             ) : (

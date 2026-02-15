@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
@@ -83,10 +84,10 @@ export default function NotFound() {
     <Suspense
       fallback={
         <div className="flex flex-col items-center justify-center min-h-screen surface px-4">
-          <div className="animate-pulse">
-            <div className="w-32 h-32 bg-surface-secondary rounded mb-8"></div>
-            <div className="w-64 h-8 bg-surface-secondary rounded mb-4"></div>
-            <div className="w-48 h-6 bg-surface-secondary rounded"></div>
+          <div className="flex flex-col items-center gap-4">
+            <Skeleton className="w-32 h-32" rounded="md" />
+            <Skeleton className="w-64 h-8" rounded="md" />
+            <Skeleton className="w-48 h-6" rounded="md" />
           </div>
         </div>
       }

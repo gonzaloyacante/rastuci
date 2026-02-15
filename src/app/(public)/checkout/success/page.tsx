@@ -5,7 +5,6 @@ import {
   CheckCircle,
   Copy,
   ExternalLink,
-  Loader2,
   MapPin,
   Package,
   Phone,
@@ -15,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface OrderInfo {
   id: string;
@@ -390,7 +390,7 @@ function CheckoutSuccessContent() {
         {loadingOrder ? (
           <div className="surface border border-muted rounded-lg p-6 mb-6">
             <div className="flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-primary mr-3" />
+              <Spinner size="md" className="mr-3" />
               <span className="muted">Cargando información del pedido...</span>
             </div>
           </div>
@@ -476,7 +476,7 @@ function CheckoutSuccessLoading() {
   return (
     <div className="py-12 px-6">
       <div className="max-w-2xl mx-auto text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+        <Spinner size="lg" className="mx-auto mb-4" />
         <p className="muted">Procesando información del pedido...</p>
       </div>
     </div>

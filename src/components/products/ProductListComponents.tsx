@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Pagination as UIPagination } from "@/components/ui/Pagination";
-import { ProductCardSkeleton } from "@/components/ui/Skeleton";
+import { ProductCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { Grid, List, ShoppingCart } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -369,9 +369,7 @@ export function ProductsCountLabel({
   count,
 }: ProductsCountLabelProps) {
   if (isLoading) {
-    return (
-      <span className="text-sm muted animate-pulse">Cargando productos...</span>
-    );
+    return <Skeleton className="h-5 w-40" />;
   }
 
   return (

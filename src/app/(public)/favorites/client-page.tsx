@@ -12,7 +12,6 @@ import {
   Grid3X3,
   Heart,
   List,
-  Loader2,
   ShoppingCart,
   Trash2,
 } from "lucide-react";
@@ -20,6 +19,7 @@ import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import { useState } from "react";
 import { ShareWishlistModal } from "@/components/wishlist/ShareModal";
+import { Spinner } from "@/components/ui/Spinner";
 
 type SortOption =
   | "name-asc"
@@ -114,7 +114,7 @@ export default function FavoritosPageClient() {
       <div className="min-h-screen surface">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-16">
-            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
+            <Spinner size="lg" className="mx-auto mb-4" />
             <p className="muted">Cargando favoritos...</p>
           </div>
         </div>

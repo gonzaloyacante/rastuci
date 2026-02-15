@@ -1,83 +1,63 @@
-import { logger } from "@/lib/logger";
-import { useEffect, useState } from "react";
-
-const FAVORITES_STORAGE_KEY = "rastuci_favorites";
+import { useWishlist } from "@/context/WishlistContext";
+import { Product } from "@/types";
+import { useMemo } from "react";
 
 export const useFavorites = () => {
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const {
+    wishlistItems,
+    addToWishlist,
+    removeFromWishlist,
+    isInWishlist,
+    getWishlistCount,
+    clearWishlist,
+    isLoaded,
+  } = useWishlist();
 
-  // Cargar favoritos desde localStorage al montar el componente
-  useEffect(() => {
-    const savedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
-    if (savedFavorites) {
-      try {
-        const parsedFavorites = JSON.parse(savedFavorites);
-        // Asegurar que sea un array
-        if (Array.isArray(parsedFavorites)) {
-          setFavorites(parsedFavorites);
-        } else {
-          setFavorites([]);
-        }
-      } catch (error) {
-        logger.error("Error loading favorites from localStorage", { error });
-        setFavorites([]);
-      }
-    }
-    setIsLoaded(true);
-  }, []);
+  // Derived state: list of favorite IDs for backward compatibility if needed
+  const favorites = useMemo(
+    () => wishlistItems.map((item) => item.id),
+    [wishlistItems]
+  );
 
-  // Guardar favoritos en localStorage cuando cambien
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-    }
-  }, [favorites, isLoaded]);
-
-  // Agregar producto a favoritos
-  const addToFavorites = (productId: string) => {
-    if (!favorites.includes(productId)) {
-      setFavorites((prev) => [...prev, productId]);
-    }
-  };
-
-  // Remover producto de favoritos
-  const removeFromFavorites = (productId: string) => {
-    setFavorites((prev) => prev.filter((id) => id !== productId));
-  };
-
-  // Toggle favorito
-  const toggleFavorite = (productId: string) => {
-    if (favorites.includes(productId)) {
-      removeFromFavorites(productId);
+  // Toggle favorito - Now requires the full product (or at least enough to create a WishlistItem)
+  // We type it as Product to be safe, but internally we only need specific fields.
+  const toggleFavorite = (product: Product) => {
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
     } else {
-      addToFavorites(productId);
+      // Map Product to WishlistItem matching the context interface
+      // Note: WishlistContext expects { id, name, price, image }
+      // We need to resolve the image safely.
+      let image = "";
+      if (typeof product.images === "string") {
+        try {
+          const parsed = JSON.parse(product.images);
+          image = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : "";
+        } catch {
+          image = "";
+        }
+      } else if (Array.isArray(product.images) && product.images.length > 0) {
+        image = product.images[0];
+      }
+
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: image,
+      });
     }
-  };
-
-  // Verificar si un producto está en favoritos
-  const isFavorite = (productId: string) => {
-    return favorites.includes(productId);
-  };
-
-  // Obtener cantidad de favoritos
-  const getFavoritesCount = () => {
-    return favorites.length;
-  };
-
-  // Limpiar todos los favoritos
-  const clearFavorites = () => {
-    setFavorites([]);
   };
 
   return {
-    favorites,
-    addToFavorites,
-    removeFromFavorites,
+    favorites, // List of IDs
+    wishlistItems, // List of full objects (new!)
+    addToFavorites: (product: Product) => toggleFavorite(product), // Alias for backward compatibility but smarter
+    removeFromFavorites: removeFromWishlist,
     toggleFavorite,
-    isFavorite,
-    getFavoritesCount,
-    clearFavorites,
+    isFavorite: isInWishlist,
+    getFavoritesCount: getWishlistCount,
+    clearFavorites: clearWishlist,
     isLoaded,
   };
 };

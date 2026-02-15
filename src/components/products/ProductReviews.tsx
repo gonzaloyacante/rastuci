@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/Card";
+import { ReviewSkeleton } from "@/components/ui/Skeleton";
 import { logger } from "@/lib/logger";
 import { Star, User } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -63,19 +64,9 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 surface border border-muted rounded animate-pulse w-1/3" />
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={`item-${i}`}
-              className="p-4 surface border border-muted rounded-lg"
-            >
-              <div className="h-4 surface border border-muted rounded animate-pulse w-1/4 mb-2" />
-              <div className="h-3 surface border border-muted rounded animate-pulse w-full mb-1" />
-              <div className="h-3 surface border border-muted rounded animate-pulse w-3/4" />
-            </div>
-          ))}
-        </div>
+        {[...Array(3)].map((_, i) => (
+          <ReviewSkeleton key={`skeleton-${i}`} />
+        ))}
       </div>
     );
   }

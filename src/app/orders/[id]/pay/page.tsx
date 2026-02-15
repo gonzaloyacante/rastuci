@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { useSettings } from "@/hooks/useSettings";
 import { StoreSettings } from "@/lib/validation/store";
-import { Loader2, CheckCircle, Copy } from "lucide-react";
+import { CheckCircle, Copy } from "lucide-react";
 import Link from "next/link";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface OrderDetails {
   id: string;
@@ -89,7 +90,7 @@ export default function TransferPaymentPage() {
   if (loading || loadingSettings) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -229,7 +230,7 @@ export default function TransferPaymentPage() {
                   >
                     {submitting ? (
                       <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        <Spinner size="sm" className="mr-2" />
                         Enviando...
                       </>
                     ) : (

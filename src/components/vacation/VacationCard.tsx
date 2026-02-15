@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Mail, CheckCircle, AlertTriangle } from "lucide-react";
+import { Mail, CheckCircle, AlertTriangle } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -127,11 +128,7 @@ export default function VacationCard({
               disabled={isLoading}
               className="bg-warning-600 hover:bg-warning-700 text-white shrink-0"
             >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Avisarme"
-              )}
+              {isLoading ? <Spinner size="sm" color="white" /> : "Avisarme"}
             </Button>
           </div>
 
