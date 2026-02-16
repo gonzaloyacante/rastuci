@@ -15,6 +15,7 @@ interface AnalyticsHeaderProps {
   setRange: (range: string) => void;
   isRefreshing: boolean;
   onRefresh: () => void;
+  onExport: () => void;
 }
 
 export function AnalyticsHeader({
@@ -22,6 +23,7 @@ export function AnalyticsHeader({
   setRange,
   isRefreshing,
   onRefresh,
+  onExport,
 }: AnalyticsHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 animate-in fade-in duration-500">
@@ -71,6 +73,7 @@ export function AnalyticsHeader({
           size="sm"
           className="bg-background/50 backdrop-blur border-border/50 shadow-sm hover:bg-accent/50"
           title="Exportar reporte"
+          onClick={onExport}
         >
           <Download className="w-4 h-4 text-muted-foreground" />
         </Button>

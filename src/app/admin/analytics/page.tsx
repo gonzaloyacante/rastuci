@@ -27,6 +27,32 @@ export default function AnalyticsPage() {
     staleTime: 60 * 1000, // 1 minute
   });
 
+  const handleExport = () => {
+    if (!data) return;
+
+    const headers = ["Fecha", "Ingresos", "Ordenes"];
+    const rows = data.chart.map((item) => [
+      item.date,
+      item.revenue.toFixed(2),
+      item.orders.toString(),
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `analytics_report_${range}_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (isError) {
     return (
       <div className="p-8">
@@ -49,6 +75,7 @@ export default function AnalyticsPage() {
         setRange={setRange}
         isRefreshing={isRefetching || isLoading}
         onRefresh={refetch}
+        onExport={handleExport}
       />
 
       {isLoading || !data ? (

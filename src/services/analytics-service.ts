@@ -243,6 +243,24 @@ export const analyticsService = {
       take: 5,
     });
 
+    const emails = customers.map((c) => c.customerEmail!);
+
+    const namesMap = new Map<string, string>();
+
+    // Fetch latest name for each email (only 5, so efficient enough)
+    await Promise.all(
+      emails.map(async (email) => {
+        const order = await prisma.orders.findFirst({
+          where: { customerEmail: email },
+          select: { customerName: true },
+          orderBy: { createdAt: "desc" },
+        });
+        if (order?.customerName) {
+          namesMap.set(email, order.customerName);
+        }
+      })
+    );
+
     return customers.map((c) => {
       const spentDecimal = c._sum.total;
       const spent = spentDecimal ? Number(spentDecimal) : 0;
@@ -251,7 +269,7 @@ export const analyticsService = {
 
       return {
         email: c.customerEmail!,
-        name: null,
+        name: namesMap.get(c.customerEmail!) || null,
         spent,
         count,
         isVip: false, // will be calculated in getDashboardData
