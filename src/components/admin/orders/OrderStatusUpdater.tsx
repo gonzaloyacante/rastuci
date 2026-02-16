@@ -2,7 +2,13 @@
 
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { useState } from "react";
 import { logger } from "@/lib/logger";
 
@@ -66,11 +72,21 @@ export const OrderStatusUpdater: React.FC<OrderStatusUpdaterProps> = ({
   return (
     <div className="flex items-center gap-2">
       <Select
-        options={STATUS_OPTIONS}
         value={selectedStatus}
-        onChange={setSelectedStatus}
+        onValueChange={setSelectedStatus}
         disabled={loading}
-      />
+      >
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {STATUS_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {selectedStatus !== currentStatus && (
         <Button onClick={handleStatusChange} disabled={loading} size="sm">

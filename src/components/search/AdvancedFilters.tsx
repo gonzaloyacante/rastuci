@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/Button";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { Slider } from "@/components/ui/Slider";
 import { Filter, Star, X } from "lucide-react";
 
@@ -129,9 +135,8 @@ export function AdvancedFilters({
                 Ordenar por
               </label>
               <Select
-                options={sortOptions}
                 value={localFilters.sortBy}
-                onChange={(value: string) =>
+                onValueChange={(value) =>
                   setLocalFilters((prev) => ({
                     ...prev,
                     sortBy: value as
@@ -142,7 +147,18 @@ export function AdvancedFilters({
                       | "rating",
                   }))
                 }
-              />
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar orden" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Price Range */}

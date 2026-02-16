@@ -2,7 +2,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import type { LucideIcon } from "lucide-react";
 import {
   Calendar,
@@ -431,12 +437,18 @@ export function RegionSelect({
   return (
     <div>
       <label className="block text-sm font-medium mb-2">Región</label>
-      <Select
-        value={value}
-        onChange={(v: string) => onChange(v)}
-        placeholder="Todas las regiones"
-        options={regions}
-      />
+      <Select value={value} onValueChange={(v: string) => onChange(v)}>
+        <SelectTrigger>
+          <SelectValue placeholder="Todas las regiones" />
+        </SelectTrigger>
+        <SelectContent>
+          {regions.map((region) => (
+            <SelectItem key={region.value} value={region.value}>
+              {region.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import {
   WEEKDAY_NAMES_SHORT,
   type WeekdayKey,
@@ -237,15 +243,23 @@ export function AgencySelector({
         <label className="text-sm font-medium">Provincia</label>
         <Select
           value={province}
-          onChange={(val) => {
+          onValueChange={(val) => {
             setProvince(val);
             setQuery("");
             setSearchTerm("");
           }}
-          options={provinceOptions}
-          placeholder="Selecciona una provincia"
-          searchable
-        />
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecciona una provincia" />
+          </SelectTrigger>
+          <SelectContent>
+            {provinceOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Buscador de Sucursales */}
@@ -319,20 +333,30 @@ export function AgencySelector({
         ) : (
           <Select
             value={selectedAgency?.code || ""}
-            onChange={handleAgencyChange}
-            options={agencyOptions}
-            placeholder={
-              !province
-                ? "Selecciona primero una provincia"
-                : agencies.length === 0
-                  ? "No hay sucursales disponibles"
-                  : filteredAgencies.length === 0
-                    ? "No hay sucursales que coincidan"
-                    : "Selecciona una sucursal"
-            }
+            onValueChange={handleAgencyChange}
             disabled={!province || agencies.length === 0}
-            searchable
-          />
+          >
+            <SelectTrigger>
+              <SelectValue
+                placeholder={
+                  !province
+                    ? "Selecciona primero una provincia"
+                    : agencies.length === 0
+                      ? "No hay sucursales disponibles"
+                      : filteredAgencies.length === 0
+                        ? "No hay sucursales que coincidan"
+                        : "Selecciona una sucursal"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {agencyOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
 

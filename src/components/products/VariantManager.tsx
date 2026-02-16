@@ -3,7 +3,13 @@
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import Select from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import {
   Trash2,
   Plus,
@@ -198,22 +204,34 @@ export default function VariantManager({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div>
             <label className="block text-xs font-medium mb-1">Color</label>
-            <Select
-              value={selectedColor}
-              onChange={setSelectedColor}
-              placeholder="Seleccionar..."
-              options={availableColors.map((c) => ({ value: c, label: c }))}
-            />
+            <Select value={selectedColor} onValueChange={setSelectedColor}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableColors.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <label className="block text-xs font-medium mb-1">Talle</label>
-            <Select
-              value={selectedSize}
-              onChange={setSelectedSize}
-              placeholder="Seleccionar..."
-              options={availableSizes.map((s) => ({ value: s, label: s }))}
-            />
+            <Select value={selectedSize} onValueChange={setSelectedSize}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableSizes.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

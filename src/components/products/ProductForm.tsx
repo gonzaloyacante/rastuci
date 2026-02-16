@@ -12,7 +12,13 @@ import * as z from "zod";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { Product, ProductVariant } from "@/types";
 import { useMemo } from "react";
 import { getColorHex } from "@/utils/colors";
@@ -671,18 +677,21 @@ export default function ProductForm({
                     Categoría *
                   </label>
                   <Select
-                    id="categoryId"
-                    name="categoryId"
-                    options={categories.map((c) => ({
-                      value: c.id,
-                      label: c.name,
-                    }))}
                     value={selectedCategoryId}
-                    onChange={handleCategoryChange}
-                    placeholder="Selecciona una categoría"
+                    onValueChange={handleCategoryChange}
                     disabled={loading}
-                    error={!!errors.categoryId}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {errors.categoryId && (
                     <p className="mt-1 text-sm text-error flex items-center gap-1">
                       <AlertCircle className="h-4 w-4" />

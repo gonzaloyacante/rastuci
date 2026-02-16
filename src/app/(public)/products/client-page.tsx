@@ -14,7 +14,13 @@ import {
 } from "@/components/products/ProductListComponents";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
-import Select from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { useCategories } from "@/hooks/useCategories";
 import { Product } from "@/types";
 import { useRouter } from "next/navigation";
@@ -338,20 +344,39 @@ export default function ProductsPageClient({
             <div className="flex-1">
               <Select
                 value={selectedCategory}
-                onChange={(value) => handleCategoryChange(value)}
-                options={categoryOptions}
-                placeholder="Categoría"
-                className="w-full"
-              />
+                onValueChange={(value) => handleCategoryChange(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map((option) => (
+                    <SelectItem
+                      key={option.value || "all"}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex-1">
               <Select
                 value={sortValue}
-                onChange={(value) => handleSortChange(value)}
-                options={SORT_OPTIONS}
-                placeholder="Ordenar"
-                className="w-full"
-              />
+                onValueChange={(value) => handleSortChange(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

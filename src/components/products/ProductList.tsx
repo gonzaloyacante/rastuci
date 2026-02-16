@@ -13,7 +13,13 @@ import ProductCard from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import {
   useCategories,
@@ -287,25 +293,51 @@ export default function ProductList() {
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-content-tertiary w-4 h-4" />
           </div>
 
-          <Select
-            value={selectedCategory}
-            onChange={setSelectedCategory}
-            options={categoryOptions}
-          />
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="Categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {categoryOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <Select
             value={stockFilter}
-            onChange={(v) => setStockFilter(v as StockFilter)}
-            options={STOCK_FILTER_OPTIONS}
-          />
+            onValueChange={(v) => setStockFilter(v as StockFilter)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STOCK_FILTER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <div className="flex gap-2">
             <Select
               value={sortField}
-              onChange={(v) => setSortField(v as SortField)}
-              options={SORT_FIELD_OPTIONS}
-              className="flex-1"
-            />
+              onValueChange={(v) => setSortField(v as SortField)}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_FIELD_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
               variant="outline"

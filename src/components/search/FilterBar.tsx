@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { Filter, RotateCcw } from "lucide-react";
 import React from "react";
 
@@ -55,18 +61,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <Select
             key={field.key}
             value={(value as string) || ""}
-            onChange={(newValue) => onChange(field.key, newValue || null)}
-            options={[
-              {
-                value: "",
-                label:
-                  field.placeholder || `Todos ${field.label.toLowerCase()}`,
-              },
-              ...(field.options || []),
-            ]}
-            placeholder={field.placeholder}
-            className="w-full"
-          />
+            onValueChange={(newValue) =>
+              onChange(field.key, newValue === "ALL" ? null : newValue)
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={field.placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">
+                {field.placeholder || `Todos ${field.label.toLowerCase()}`}
+              </SelectItem>
+              {field.options?.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
 
       case "multiselect":
@@ -78,20 +90,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             value={
               Array.isArray(value) ? value[0] || "" : (value as string) || ""
             }
-            onChange={(newValue) =>
-              onChange(field.key, newValue ? [newValue] : null)
+            onValueChange={(newValue) =>
+              onChange(field.key, newValue === "ALL" ? null : [newValue])
             }
-            options={[
-              {
-                value: "",
-                label:
-                  field.placeholder || `Todos ${field.label.toLowerCase()}`,
-              },
-              ...(field.options || []),
-            ]}
-            placeholder={field.placeholder}
-            className="w-full"
-          />
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={field.placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">
+                {field.placeholder || `Todos ${field.label.toLowerCase()}`}
+              </SelectItem>
+              {field.options?.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
 
       case "date":
@@ -123,7 +139,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
       <div className="flex items-center gap-3 flex-wrap flex-1">
         {fields.map((field) => (
-          <div key={field.key} className="flex flex-col flex-1 min-w-[140px] sm:min-w-[150px]">
+          <div
+            key={field.key}
+            className="flex flex-col flex-1 min-w-[140px] sm:min-w-[150px]"
+          >
             <label className="text-xs text-content-secondary mb-1">
               {field.label}
             </label>

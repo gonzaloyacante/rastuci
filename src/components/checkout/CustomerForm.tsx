@@ -1,7 +1,13 @@
 "use client";
 
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { User } from "lucide-react";
 
 interface CustomerData {
@@ -92,11 +98,20 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
             Tipo de documento
           </label>
           <Select
-            options={identificationTypes}
             value={data.identificationType}
-            onChange={(value) => handleChange("identificationType", value)}
-            placeholder="Tipo"
-          />
+            onValueChange={(value) => handleChange("identificationType", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              {identificationTypes.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="sm:col-span-2">
