@@ -1,8 +1,9 @@
-import { POST } from "@/app/api/auth/login/route";
-import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { POST } from "@/app/api/auth/login/route";
+import { prisma } from "@/lib/prisma";
 
 // Mock Prisma
 vi.mock("@/lib/prisma", () => ({
@@ -102,8 +103,7 @@ describe("Auth API - POST /api/auth/login", () => {
 
       expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.error?.field).toBe("email");
-      expect(data.data?.userExists).toBe(false);
+      expect(data.error?.field).toBe("general");
     });
 
     it("debe retornar 401 si la contraseña es incorrecta", async () => {
@@ -125,12 +125,10 @@ describe("Auth API - POST /api/auth/login", () => {
 
       expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.error?.field).toBe("password");
-      expect(data.data?.userExists).toBe(true);
-      expect(data.data?.passwordCorrect).toBe(false);
+      expect(data.error?.field).toBe("general");
     });
 
-    it("debe retornar 403 si el usuario no es admin", async () => {
+    it("debe retornar 401 si el usuario no es admin", async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
         id: "user-1",
         email: "test@example.com",
@@ -147,9 +145,10 @@ describe("Auth API - POST /api/auth/login", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(403);
+      // The security policy returns generic 401 to prevent role enumeration
+      expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.error?.message).toContain("permisos");
+      expect(data.error?.field).toBe("general");
     });
 
     it("debe retornar 200 con login exitoso para admin", async () => {
@@ -171,8 +170,6 @@ describe("Auth API - POST /api/auth/login", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.data?.userExists).toBe(true);
-      expect(data.data?.passwordCorrect).toBe(true);
     });
 
     it("debe normalizar el email a minúsculas", async () => {

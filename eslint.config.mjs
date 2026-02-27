@@ -37,7 +37,7 @@ export default tseslint.config(
         ecmaFeatures: {
           jsx: true,
         },
-        project: "./tsconfig.json", // Required for type-aware linting rules
+        project: "./tsconfig.lint.json", // Includes tests/ — tsconfig.json excludes them for build
       },
     },
     rules: {
