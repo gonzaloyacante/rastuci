@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import prisma from "@/lib/prisma"; // Adjust path if needed
 import { VacationSettingsSchema } from "@/lib/validation/vacation";
 // import { auth } from "@/auth"; // If auth is needed, but we start with open or existing middleware protection

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import ProductList from "../../../components/products/ProductList";
 import React from "react";
+
+import ProductList from "../../../components/products/ProductList";
 
 // Mock fetch for all ProductList dependencies
 const FetchDecorator = (Story: React.ComponentType) => {

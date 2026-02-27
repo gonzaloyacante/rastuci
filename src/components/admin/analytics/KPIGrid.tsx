@@ -1,16 +1,17 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { type DashboardData } from "@/services/analytics-service";
 import {
-  TrendingUp,
-  TrendingDown,
   DollarSign,
   ShoppingCart,
-  Users,
   Target,
+  TrendingDown,
+  TrendingUp,
+  Users,
 } from "lucide-react";
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+import { Line, LineChart, ResponsiveContainer } from "recharts";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { type DashboardData } from "@/services/analytics-service";
 
 interface KPIGridProps {
   data: DashboardData["kpi"];

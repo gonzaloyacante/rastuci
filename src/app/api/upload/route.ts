@@ -1,5 +1,6 @@
-import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
+import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
 import { NextRequest, NextResponse } from "next/server";
+
 import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 

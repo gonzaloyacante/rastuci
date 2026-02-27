@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import HomeForm from "@/components/forms/HomeForm";
 import { HomeSettings } from "@/lib/validation/home";
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
-import { useEffect, useState } from "react";
 
 export default function AdminHomePage() {
   const [loading, setLoading] = useState(true);

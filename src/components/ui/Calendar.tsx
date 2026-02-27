@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   addMonths,
   eachDayOfInterval,
@@ -16,9 +14,11 @@ import {
   subMonths,
 } from "date-fns";
 import { es } from "date-fns/locale";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 export type CalendarProps = {
   value?: Date | null;

@@ -1,7 +1,3 @@
-// =============================================================================
-// ENUMS
-// =============================================================================
-
 enum StockStatusColor {
   success
   warning
@@ -14,8 +10,8 @@ enum StockStatusColor {
 }
 
 enum CADeliveryType {
-  D // Domicilio
-  S // Sucursal
+  D
+  S
 }
 
 enum CADocumentType {
@@ -24,12 +20,12 @@ enum CADocumentType {
 }
 
 enum OrderStatus {
-  PENDING // Pedido creado, incompleto (MP sin pagar)
-  PENDING_PAYMENT // Esperando pago (MP)
-  WAITING_TRANSFER_PROOF // Esperando comprobante (Transferencia)
-  PAYMENT_REVIEW // Comprobante subido, esperando aprobación Admin
-  RESERVED // Reservado (Efectivo) - Stock retenido
-  PROCESSED // Pagado / Listo para preparar
-  DELIVERED // Entregado
-  CANCELLED // Cancelado / Rechazado
+  PENDING
+  PROCESSED
+  DELIVERED
+  PENDING_PAYMENT
+  WAITING_TRANSFER_PROOF
+  PAYMENT_REVIEW
+  RESERVED
+  CANCELLED
 }

@@ -1,22 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
 import {
-  ProductCardSkeleton,
-  ProductDetailSkeleton,
-  Skeleton,
-} from "@/components/ui/Skeleton";
-import { Alert, AlertDescription } from "@/components/ui/Alert";
-import { useToast } from "@/components/ui/Toast";
-import { useCart } from "@/context/CartContext";
-import { useWishlist } from "@/context/WishlistContext";
-import { useShippingSettings } from "@/hooks/useShippingSettings";
-import { logger } from "@/lib/logger";
-import { Product } from "@/types";
-import { getColorHex } from "@/utils/colors";
-import { formatPriceARS } from "@/utils/formatters";
-import { PLACEHOLDER_IMAGE } from "@/lib/constants";
-import {
+  AlertTriangle,
   ArrowLeft,
   CreditCard,
   Heart,
@@ -24,25 +9,40 @@ import {
   ShieldCheck,
   ShoppingCart,
   Truck,
-  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
-import { useVacationSettings } from "@/hooks/useVacationSettings";
-
 import { useRouter } from "next/navigation";
 import React, { Suspense, useState } from "react";
 import useSWR from "swr";
 
+import { ColorSwatch } from "@/components/products/ProductHelpers";
 // Dynamic imports para componentes no críticos
 import ProductImageGallery from "@/components/products/ProductImageGallery";
+import { SizeGuide, SizeGuideData } from "@/components/products/SizeGuide";
+import { Alert, AlertDescription } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
+import {
+  ProductCardSkeleton,
+  ProductDetailSkeleton,
+  Skeleton,
+} from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { useShippingSettings } from "@/hooks/useShippingSettings";
+import { useVacationSettings } from "@/hooks/useVacationSettings";
+import { PLACEHOLDER_IMAGE } from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import { Product } from "@/types";
+import { getColorHex } from "@/utils/colors";
+import { formatPriceARS } from "@/utils/formatters";
+
 const ProductReviews = React.lazy(
   () => import("@/components/products/ProductReviews")
 );
 const RelatedProducts = React.lazy(
   () => import("@/components/products/RelatedProducts")
 );
-import { SizeGuide } from "@/components/products/SizeGuide";
-import { ColorSwatch } from "@/components/products/ProductHelpers";
 
 interface ProductDetailClientProps {
   productId: string;
@@ -492,7 +492,7 @@ export default function ProductDetailClient({
                       {selectedSize || "Elegí uno"}
                     </span>
                   </h2>
-                  <SizeGuide data={product.sizeGuide} />
+                  <SizeGuide data={product.sizeGuide as SizeGuideData} />
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   {allSizes.map((size) => {

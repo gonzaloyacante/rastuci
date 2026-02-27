@@ -1,9 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
-import { logger } from "@/lib/logger";
 import {
   AlertCircle,
   Calendar,
@@ -19,8 +15,13 @@ import {
   RefreshCw,
   Truck,
 } from "lucide-react";
-import { Spinner } from "@/components/ui/Spinner";
 import { useCallback, useEffect, useState } from "react";
+
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { Spinner } from "@/components/ui/Spinner";
+import { logger } from "@/lib/logger";
 
 interface OrderStatus {
   id: string;

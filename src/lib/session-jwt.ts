@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 import { NextRequest } from "next/server";
 
 // SECURITY: JWT_SECRET must be configured in environment variables

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
 import { withAdminAuth } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
 
 const FaqSchema = z.object({
   question: z.string().min(1).max(160),

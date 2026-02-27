@@ -1,9 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import {
-  ProgressBar,
-  FloatingNotification,
-  PulseHighlight,
   AnimatedCounter,
+  FloatingNotification,
+  ProgressBar,
+  PulseHighlight,
   SkeletonLoader,
 } from "../../../components/checkout/CheckoutTransitions";
 import { Button } from "../../../components/ui/Button";

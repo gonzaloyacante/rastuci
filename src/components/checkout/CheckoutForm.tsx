@@ -1,18 +1,20 @@
 "use client";
 
+import { CreditCard, Lock, Shield } from "lucide-react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
+import { useSettings } from "@/hooks/useSettings";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
-import { CreditCard, Lock, Shield } from "lucide-react";
-import { Spinner } from "@/components/ui/Spinner";
-import { useState } from "react";
-import { CustomerForm } from "./CustomerForm";
-import { PaymentMethodSelector } from "./PaymentMethodSelector";
-import { OrderSummaryCard } from "./OrderSummaryCard";
-import { useSettings } from "@/hooks/useSettings";
 import { StoreSettings } from "@/lib/validation/store";
+
+import { CustomerForm } from "./CustomerForm";
+import { OrderSummaryCard } from "./OrderSummaryCard";
+import { PaymentMethodSelector } from "./PaymentMethodSelector";
 // import {
 //   ShippingCostCalculator,
 //   type ShippingOption,

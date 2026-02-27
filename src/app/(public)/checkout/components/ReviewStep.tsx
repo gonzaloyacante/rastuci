@@ -1,8 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { useCart } from "@/context/CartContext";
-import { formatPriceARS } from "@/utils/formatters";
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,6 +11,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { useCart } from "@/context/CartContext";
+import { formatPriceARS } from "@/utils/formatters";
 // import { OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
 // import { PaymentProcessor } from "@/components/checkout/PaymentProcessor";
 

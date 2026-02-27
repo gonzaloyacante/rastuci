@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import OfflinePageClient from "./client-page";
+
 import { Skeleton } from "@/components/ui/Skeleton";
+
+import OfflinePageClient from "./client-page";
 
 export const metadata: Metadata = {
   title: "Sin Conexión - Rastuci",

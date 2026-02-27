@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import CheckoutPageClient from "./client-page";
+
 import { Skeleton } from "@/components/ui/Skeleton";
+
+import CheckoutPageClient from "./client-page";
 
 export const metadata: Metadata = {
   title: "Checkout - Finalizar Compra | Rastuci",

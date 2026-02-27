@@ -1,14 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+import { useState } from "react";
+
+import { Button } from "../../../components/ui/Button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "../../../components/ui/Dialog";
-import { Button } from "../../../components/ui/Button";
-import { useState } from "react";
 
 const meta: Meta<typeof Dialog> = {
   title: "UI/Dialog",

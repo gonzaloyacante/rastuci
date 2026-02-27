@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
+
 import { FormSkeleton } from "@/components/admin/skeletons";
 import ProductForm from "@/components/products/ProductForm";
 import { useCategories } from "@/hooks";
-import { Suspense } from "react";
 
 function CreateProductContent() {
   const { categories } = useCategories();

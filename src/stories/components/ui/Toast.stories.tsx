@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import ToastProvider, { useToast } from "../../../components/ui/Toast";
+
 import { Button } from "../../../components/ui/Button";
+import ToastProvider, { useToast } from "../../../components/ui/Toast";
 
 // Mock component to test hook
 const ToastDemo = () => {

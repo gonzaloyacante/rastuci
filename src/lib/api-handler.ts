@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+
 import { logger } from "@/lib/logger";
 
 export class AppError extends Error {

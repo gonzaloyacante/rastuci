@@ -1,9 +1,10 @@
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
-import { type ContactSettings } from "@/lib/validation/contact";
 import { Facebook, Instagram, Youtube } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { type ContactSettings } from "@/lib/validation/contact";
+import { defaultHomeSettings, type HomeSettings } from "@/lib/validation/home";
 
 interface FooterProps {
   home?: HomeSettings;

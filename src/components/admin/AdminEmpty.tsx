@@ -1,6 +1,7 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/Card";
+
 import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
 
 interface AdminEmptyAction {
   label: string;
@@ -23,7 +24,8 @@ const defaultIcons = {
       className="w-12 h-12 mx-auto mb-4"
       fill="none"
       stroke="currentColor"
-      viewBox="0 0 24 24">
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -37,7 +39,8 @@ const defaultIcons = {
       className="w-12 h-12 mx-auto mb-4"
       fill="none"
       stroke="currentColor"
-      viewBox="0 0 24 24">
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -51,7 +54,8 @@ const defaultIcons = {
       className="w-12 h-12 mx-auto mb-4"
       fill="none"
       stroke="currentColor"
-      viewBox="0 0 24 24">
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -65,7 +69,8 @@ const defaultIcons = {
       className="w-12 h-12 mx-auto mb-4"
       fill="none"
       stroke="currentColor"
-      viewBox="0 0 24 24">
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -79,7 +84,8 @@ const defaultIcons = {
       className="w-12 h-12 mx-auto mb-4"
       fill="none"
       stroke="currentColor"
-      viewBox="0 0 24 24">
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -110,7 +116,8 @@ export const AdminEmpty: React.FC<AdminEmptyProps> = ({
             <Button
               variant={action.variant || "primary"}
               className="btn-primary"
-              onClick={action.onClick}>
+              onClick={action.onClick}
+            >
               {action.icon && <span className="mr-2">{action.icon}</span>}
               {action.label}
             </Button>

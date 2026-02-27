@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import prisma from "@/lib/prisma";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+
+import prisma from "@/lib/prisma";
 
 const ToggleSchema = z.object({
   enabled: z.boolean(),

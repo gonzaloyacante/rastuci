@@ -1,7 +1,8 @@
 "use client";
 
-import { useVacationSettings } from "@/hooks/useVacationSettings";
 import { AlertCircle } from "lucide-react";
+
+import { useVacationSettings } from "@/hooks/useVacationSettings";
 
 export default function VacationBanner() {
   const { isVacationMode, settings } = useVacationSettings();

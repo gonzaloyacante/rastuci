@@ -1,5 +1,7 @@
 "use client";
 
+import { User } from "lucide-react";
+
 import { Input } from "@/components/ui/Input";
 import {
   Select,
@@ -8,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { User } from "lucide-react";
 
 interface CustomerData {
   email: string;

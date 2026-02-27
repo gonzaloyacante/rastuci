@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import SmartSearch from "../../../components/search/SmartSearch";
 import React from "react";
+
+import SmartSearch from "../../../components/search/SmartSearch";
 
 // Mock fetch for SmartSearch
 const FetchDecorator = (Story: React.ComponentType) => {

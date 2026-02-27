@@ -8,10 +8,11 @@ import {
   Package,
   Phone,
 } from "lucide-react";
-import { Spinner } from "@/components/ui/Spinner";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+
+import { Spinner } from "@/components/ui/Spinner";
 
 function CheckoutPendingContent() {
   const searchParams = useSearchParams();

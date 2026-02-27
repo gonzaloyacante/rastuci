@@ -1,7 +1,8 @@
+import { NextRequest } from "next/server";
+import { getServerSession } from "next-auth/next";
+
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logger } from "@/lib/logger";
-import { getServerSession } from "next-auth/next";
-import { NextRequest } from "next/server";
 
 interface AdminAuthResult {
   success: boolean;

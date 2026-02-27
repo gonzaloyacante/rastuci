@@ -1,5 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import Select from "../../../components/ui/Select";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/Select";
 
 const meta: Meta<typeof Select> = {
   title: "UI/Select",
@@ -10,36 +17,19 @@ const meta: Meta<typeof Select> = {
 export default meta;
 type Story = StoryObj<typeof Select>;
 
-const options = [
-  { value: "apple", label: "Apple" },
-  { value: "banana", label: "Banana" },
-  { value: "blueberry", label: "Blueberry" },
-  { value: "grape", label: "Grape" },
-  { value: "pineapple", label: "Pineapple" },
-];
-
 export const Default: Story = {
-  args: {
-    options,
-    placeholder: "Select a fruit",
-    value: "",
-    onChange: (val) => console.log(val),
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    options,
-    placeholder: "Select a fruit",
-    disabled: true,
-    value: "",
-  },
-};
-
-export const WithValue: Story = {
-  args: {
-    options,
-    value: "apple",
-    onChange: (val) => console.log(val),
-  },
+  render: () => (
+    <Select>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Select a fruit" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="apple">Apple</SelectItem>
+        <SelectItem value="banana">Banana</SelectItem>
+        <SelectItem value="blueberry">Blueberry</SelectItem>
+        <SelectItem value="grapes">Grapes</SelectItem>
+        <SelectItem value="pineapple">Pineapple</SelectItem>
+      </SelectContent>
+    </Select>
+  ),
 };

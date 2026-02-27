@@ -1,6 +1,7 @@
 "use client";
 
-import { ShoppingBag, CreditCard, Truck } from "lucide-react";
+import { CreditCard, ShoppingBag, Truck } from "lucide-react";
+
 import { Spinner } from "@/components/ui/Spinner";
 
 interface CheckoutLoadingStateProps {

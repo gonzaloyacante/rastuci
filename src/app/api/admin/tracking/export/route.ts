@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+
 import { withAdminAuth } from "@/lib/adminAuth";
+import { prisma } from "@/lib/prisma";
 
 export const GET = withAdminAuth(
   async (_request: NextRequest): Promise<NextResponse> => {
@@ -26,8 +27,7 @@ export const GET = withAdminAuth(
 
       const csvRows = [
         headers.join(","), // Header row
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...orders.map((order: any) =>
+        ...orders.map((order) =>
           [
             order.id,
             order.trackingNumber || "",

@@ -11,12 +11,13 @@
  * @version 1.1.1
  */
 
+import pLimit from "p-limit";
+
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
-import { emailService } from "@/lib/resend";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { emailService } from "@/lib/resend";
 import type { OrderStatus } from "@/types";
-import pLimit from "p-limit";
 
 // ============================================================================
 // TIPOS Y INTERFACES

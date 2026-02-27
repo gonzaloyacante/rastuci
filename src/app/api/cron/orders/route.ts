@@ -1,7 +1,9 @@
+import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { logger } from "@/lib/logger";
+
 import { ORDER_STATUS } from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 import { emailService } from "@/lib/resend";
 import { getStoreSettings } from "@/lib/store-settings";
 
@@ -49,7 +51,7 @@ export async function GET(request: NextRequest) {
           // A. Mark Cancelled
           await tx.orders.update({
             where: { id: order.id },
-            data: { status: "CANCELLED" as any }, // Cast if enum mismatch in types, but should match
+            data: { status: "CANCELLED" as OrderStatus }, // Cast if enum mismatch in types, but should match
           });
 
           // B. Restore Stock

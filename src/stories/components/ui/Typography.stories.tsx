@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import Typography from "../../../components/ui/Typography";
 
 const meta: Meta<typeof Typography> = {

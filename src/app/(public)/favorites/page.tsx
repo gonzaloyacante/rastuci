@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import FavoritosPageClient from "./client-page";
+
 import { ProductCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
+
+import FavoritosPageClient from "./client-page";
 
 export const metadata: Metadata = {
   title: "Mis Favoritos - Rastuci",

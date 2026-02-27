@@ -1,17 +1,18 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import { Plus, Save, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Switch } from "@/components/ui/Switch";
-import { Alert } from "@/components/ui/Alert";
+import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
 import { cn } from "@/lib/utils";
 import { defaultStoreSettings, StoreSettings } from "@/lib/validation/store";
-import { Plus, Save, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 
 const STATUS_COLORS = [
   {

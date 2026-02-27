@@ -1,7 +1,9 @@
 "use client";
 
-import { logger } from "@/lib/logger";
 import { Component, ErrorInfo, ReactNode } from "react";
+
+import { logger } from "@/lib/logger";
+
 import { Button } from "./Button";
 
 interface Props {

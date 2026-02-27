@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import { ProductCard } from "../../../components/products/ProductCard";
 
 const meta: Meta<typeof ProductCard> = {
@@ -98,8 +99,7 @@ export const AdminView: Story = {
   args: {
     product: defaultProduct,
     variant: "admin",
-    onEdit: (id) => alert(`Edit ${id}`),
-    onDelete: (id) => alert(`Delete ${id}`),
-    onView: (id) => alert(`View ${id}`),
+    onEdit: (id: string) => alert(`Edit ${id}`),
+    onView: (id: string) => alert(`View ${id}`),
   },
 };

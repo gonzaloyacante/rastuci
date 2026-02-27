@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+import { Home, Settings, Users } from "lucide-react";
+
 import { SidebarLink } from "../../../components/admin/SidebarLink";
-import { Home, Users, Settings } from "lucide-react";
 
 const meta: Meta<typeof SidebarLink> = {
   title: "Admin/Navigation/SidebarLink",

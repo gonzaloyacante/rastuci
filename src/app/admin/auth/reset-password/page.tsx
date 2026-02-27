@@ -1,13 +1,14 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { CheckCircle, Eye, EyeOff, Lock } from "lucide-react";
-import { Spinner } from "@/components/ui/Spinner";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 
 function ResetPasswordForm() {
   const router = useRouter();

@@ -1,6 +1,7 @@
-import prisma from "@/lib/prisma";
 import { vacation_settings } from "@prisma/client";
 import { unstable_cache } from "next/cache";
+
+import prisma from "@/lib/prisma";
 
 /**
  * Fetch vacation settings with caching

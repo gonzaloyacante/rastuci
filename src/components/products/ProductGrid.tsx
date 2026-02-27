@@ -1,9 +1,11 @@
 "use client";
 
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import { Product } from "@/types";
 import { Grid, List } from "lucide-react";
 import { useMemo, useState } from "react";
+
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { Product } from "@/types";
+
 import { Button } from "../ui/Button";
 import { LoadingSkeleton, LoadingSpinner } from "../ui/LoadingStates";
 import { Pagination, PaginationInfo } from "../ui/Pagination";

@@ -1,5 +1,5 @@
-import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 export function useAdminAuth() {

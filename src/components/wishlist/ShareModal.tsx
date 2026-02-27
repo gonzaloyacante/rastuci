@@ -1,5 +1,8 @@
 "use client";
 
+import { Check, Copy, Link as LinkIcon, Share2 } from "lucide-react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import {
   Dialog,
@@ -8,11 +11,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/Dialog";
-import { useWishlist } from "@/context/WishlistContext";
-import { useToast } from "@/components/ui/Toast";
-import { Copy, Link as LinkIcon, Share2, Check } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { useState } from "react";
+import { useToast } from "@/components/ui/Toast";
+import { useWishlist } from "@/context/WishlistContext";
 
 export function ShareWishlistModal() {
   const { shareWishlist, wishlistItems } = useWishlist();

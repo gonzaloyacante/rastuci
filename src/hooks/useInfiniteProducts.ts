@@ -1,8 +1,9 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
-import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseInfiniteProductsOptions {
   category?: string;

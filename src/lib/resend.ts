@@ -1,14 +1,16 @@
 import { Resend } from "resend";
-import { logger } from "./logger";
+
+import { OrderEmailItem, OrderEmailSummary } from "@/types";
+
 import {
+  getBankTransferEmail,
+  getLowStockAlertEmail,
   getNewOrderAdminEmail,
   getOrderConfirmationEmail,
   getWelcomeEmail,
-  getLowStockAlertEmail,
-  getBankTransferEmail,
 } from "./email-templates";
+import { logger } from "./logger";
 import { getStoreSettings } from "./store-settings";
-import { OrderEmailSummary, OrderEmailItem } from "@/types";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

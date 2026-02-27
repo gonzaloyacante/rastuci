@@ -2,6 +2,7 @@
 
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+
 import { FilterSidebar } from "./ProductListComponents";
 
 interface MobileFiltersSheetProps {

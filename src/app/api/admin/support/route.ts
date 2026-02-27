@@ -6,8 +6,9 @@
  * Por ahora retorna estructuras vacías hasta que se implemente la BD.
  */
 
-import { withAdminAuth } from "@/lib/adminAuth";
 import { NextRequest, NextResponse } from "next/server";
+
+import { withAdminAuth } from "@/lib/adminAuth";
 
 // Tipos para la API
 interface SupportStats {

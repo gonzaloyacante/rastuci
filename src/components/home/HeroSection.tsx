@@ -1,11 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
-import { type ShippingSettings } from "@/lib/validation/shipping";
 import { Truck } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/Button";
+import { defaultHomeSettings, type HomeSettings } from "@/lib/validation/home";
+import { type ShippingSettings } from "@/lib/validation/shipping";
 
 interface HeroSectionProps {
   home?: HomeSettings;

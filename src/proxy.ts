@@ -1,10 +1,11 @@
-import { getRequestId } from "@/lib/logger";
-import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+
 import { logApiCall } from "@/lib/api-logger";
+import { getRequestId } from "@/lib/logger";
 import {
-  csrfProtection,
   applySecurityHeaders,
+  csrfProtection,
 } from "@/middleware-utils/security";
 
 export async function proxy(request: NextRequest) {

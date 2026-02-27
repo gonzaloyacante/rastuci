@@ -1,9 +1,11 @@
+import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { logger } from "@/lib/logger";
-import { ORDER_STATUS } from "@/lib/constants";
 import { getServerSession } from "next-auth";
+
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { ORDER_STATUS } from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
@@ -37,7 +39,7 @@ export async function POST(
 
     await prisma.orders.update({
       where: { id: orderId },
-      data: { status: ORDER_STATUS.PROCESSED as any },
+      data: { status: ORDER_STATUS.PROCESSED as OrderStatus },
     });
 
     logger.info(`[Admin] Approved transfer for order ${orderId}`);

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { AdminTable } from "../../../components/admin/AdminTable";
 import { Edit, Trash2 } from "lucide-react";
+
+import { AdminTable } from "../../../components/admin/AdminTable";
 
 const meta: Meta<typeof AdminTable> = {
   title: "Admin/AdminTable",
@@ -14,7 +15,12 @@ type Story = StoryObj<typeof AdminTable>;
 const mockData = [
   { id: "1", name: "John Doe", email: "john@example.com", status: "Active" },
   { id: "2", name: "Jane Smith", email: "jane@example.com", status: "Pending" },
-  { id: "3", name: "Bob Johnson", email: "bob@example.com", status: "Inactive" },
+  {
+    id: "3",
+    name: "Bob Johnson",
+    email: "bob@example.com",
+    status: "Inactive",
+  },
 ];
 
 const columns = [

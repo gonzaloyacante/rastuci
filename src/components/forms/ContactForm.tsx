@@ -1,16 +1,17 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
+import { useSettings } from "@/hooks/useSettings";
 import {
   ContactSettings,
   ContactSettingsSchema,
   defaultContactSettings,
 } from "@/lib/validation/contact";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { useSettings } from "@/hooks/useSettings";
 
 type Props = { initial?: ContactSettings };
 

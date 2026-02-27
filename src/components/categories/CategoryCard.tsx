@@ -1,8 +1,9 @@
+import Link from "next/link";
+import { memo } from "react";
+
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { type Category } from "@/types";
-import Link from "next/link";
-import { memo } from "react";
 
 interface CategoryCardProps {
   category: Category;

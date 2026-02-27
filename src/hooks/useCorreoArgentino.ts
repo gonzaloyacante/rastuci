@@ -5,11 +5,13 @@
  * @version 2.0.0
  */
 
+import { useCallback, useState } from "react";
+
 import {
-  correoArgentinoService,
   type Agency,
   type CalculateRatesParams,
   type CalculateRatesResponse,
+  correoArgentinoService,
   type GetAgenciesParams,
   type GetTrackingParams,
   type ImportShipmentParams,
@@ -22,7 +24,6 @@ import {
   type ValidateUserResponse,
 } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
-import { useCallback, useState } from "react";
 
 interface UseCorreoArgentinoResult {
   // Estado

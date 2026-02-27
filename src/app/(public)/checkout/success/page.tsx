@@ -1,6 +1,5 @@
 "use client";
 
-import { useCart } from "@/context/CartContext";
 import {
   CheckCircle,
   Copy,
@@ -10,11 +9,13 @@ import {
   Phone,
   Truck,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { useCart } from "@/context/CartContext";
 
 interface OrderInfo {
   id: string;

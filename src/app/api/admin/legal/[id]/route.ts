@@ -1,9 +1,11 @@
-import { prisma } from "@/lib/prisma";
-import { withAdminAuth } from "@/lib/adminAuth";
-import { apiHandler, AppError } from "@/lib/api-handler";
+import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { z } from "zod";
+
+import { withAdminAuth } from "@/lib/adminAuth";
+import { apiHandler, AppError } from "@/lib/api-handler";
 import { generateHtmlContent } from "@/lib/policy-utils";
+import { prisma } from "@/lib/prisma";
 
 const updatePolicySchema = z.object({
   title: z.string().min(1).optional(),
@@ -62,7 +64,7 @@ export const PUT = withAdminAuth(
           ...(slug && { slug }),
           ...(description !== undefined && { description }),
           ...(sections && {
-            content: { sections } as any,
+            content: { sections } as unknown as Prisma.InputJsonValue,
             htmlContent: generateHtmlContent(sections),
           }),
           ...(isActive !== undefined && { isActive }),

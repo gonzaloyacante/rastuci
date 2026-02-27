@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
+
 import { useLazyLoad } from "@/hooks/useLazyLoad";
+
 import { LoadingSpinner } from "./LoadingStates";
 
 interface LazySectionProps {

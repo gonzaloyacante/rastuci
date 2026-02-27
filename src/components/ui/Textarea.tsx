@@ -1,8 +1,8 @@
 import React from "react";
+
 import { cn } from "@/lib/utils";
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: boolean | string;
   helpText?: string;
@@ -56,9 +56,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {error && (
           <p className="mt-1 text-xs text-error font-medium">{error}</p>
         )}
-        {helpText && !error && (
-          <p className="mt-1 text-xs muted">{helpText}</p>
-        )}
+        {helpText && !error && <p className="mt-1 text-xs muted">{helpText}</p>}
       </div>
     );
   }

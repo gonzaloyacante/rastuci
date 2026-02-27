@@ -1,8 +1,9 @@
 "use client";
 
+import { Check, ChevronDown, Globe, X } from "lucide-react";
 import { useState } from "react";
+
 import { Button } from "@/components/ui/Button";
-import { Globe, Check, ChevronDown, X } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 interface LanguageSelectorProps {

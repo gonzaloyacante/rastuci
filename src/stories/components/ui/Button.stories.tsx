@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { Button } from "../../../components/ui/Button";
 import { ShoppingCart } from "lucide-react";
+
+import { Button } from "../../../components/ui/Button";
 
 const meta: Meta<typeof Button> = {
   title: "UI/Button",

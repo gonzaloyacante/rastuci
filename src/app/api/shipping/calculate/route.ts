@@ -1,7 +1,8 @@
+import { NextResponse } from "next/server";
+
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { getStorePostalCode } from "@/lib/store-settings";
-import { NextResponse } from "next/server";
 
 // Opciones de envío de fallback cuando la API de CA no está disponible
 const FALLBACK_SHIPPING_OPTIONS = {

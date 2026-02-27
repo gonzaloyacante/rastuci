@@ -2,8 +2,9 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
+
 import { Button } from "@/components/ui/Button";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 interface ProductImageGalleryProps {
   images: string[];

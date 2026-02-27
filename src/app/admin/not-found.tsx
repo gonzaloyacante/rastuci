@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import { Button } from "@/components/ui/Button";
 
 export default function AdminNotFound() {
@@ -21,9 +22,7 @@ export default function AdminNotFound() {
         </div>
         <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
           <Link href="/admin/dashboard">
-            <Button variant="primary">
-              Volver al Dashboard
-            </Button>
+            <Button variant="primary">Volver al Dashboard</Button>
           </Link>
           <Link href="/">
             <Button variant="outline">Ver tienda</Button>

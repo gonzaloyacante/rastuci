@@ -1,7 +1,8 @@
+import React from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
-import React from "react";
 
 interface AdminCardAction {
   label: string;

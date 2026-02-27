@@ -7,8 +7,8 @@ export { LazyReviewSystem } from "../reviews/LazyReviewSystem";
 
 // Re-export the LazyWrapper utilities
 export {
-  LazyWrapper,
   createLazyComponent,
+  LazyWrapper,
   withLazyLoading,
 } from "../ui/LazyWrapper";
 

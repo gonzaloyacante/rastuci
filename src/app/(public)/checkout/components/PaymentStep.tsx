@@ -1,10 +1,11 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
+
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
 import { Button } from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
 
 interface PaymentStepProps {
   onNext: () => void;

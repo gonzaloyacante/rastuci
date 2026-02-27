@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import { Label } from "../../../components/ui/Label";
 
 const meta: Meta<typeof Label> = {

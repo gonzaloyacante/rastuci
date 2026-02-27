@@ -1,6 +1,7 @@
-import { TrackingValidator } from "@/components/tracking/TrackingValidator";
 import { Info, Search } from "lucide-react";
 import Link from "next/link";
+
+import { TrackingValidator } from "@/components/tracking/TrackingValidator";
 
 export default function TrackingPage() {
   return (

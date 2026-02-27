@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import { FeaturedProductsSection } from "../../../components/home/FeaturedProductsSection";
 
 const meta: Meta<typeof FeaturedProductsSection> = {
@@ -60,7 +61,9 @@ const mockProducts = [
 
 export const Default: Story = {
   args: {
-    products: mockProducts as unknown as Parameters<typeof FeaturedProductsSection>[0]["products"],
+    products: mockProducts as unknown as Parameters<
+      typeof FeaturedProductsSection
+    >[0]["products"],
   },
 };
 

@@ -1,9 +1,10 @@
-import ProductCard from "@/components/products/ProductCard";
-import { ProductCardSkeleton as UISkeletonProductCard } from "@/components/ui/Skeleton";
-import { type HomeSettings, defaultHomeSettings } from "@/lib/validation/home";
-import { Product } from "@/types";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+
+import ProductCard from "@/components/products/ProductCard";
+import { ProductCardSkeleton as UISkeletonProductCard } from "@/components/ui/Skeleton";
+import { defaultHomeSettings, type HomeSettings } from "@/lib/validation/home";
+import { Product } from "@/types";
 
 interface FeaturedProductsSectionProps {
   products: Product[];

@@ -1,9 +1,10 @@
 "use client";
 
-import { AdminPageHeader } from "@/components/admin";
-import { Card } from "@/components/ui/Card";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+
+import { AdminPageHeader } from "@/components/admin";
+import { Card } from "@/components/ui/Card";
 
 export default function CMSPage() {
   return (

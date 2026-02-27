@@ -2,10 +2,10 @@
 export { CategoryForm } from "./CategoryForm";
 export { default as ContactForm } from "./ContactForm";
 export {
+  contactFormSchema,
   ContactForm as EnhancedContactForm,
   EnhancedForm,
   FormField,
-  contactFormSchema,
   productFormSchema,
   userFormSchema,
 } from "./EnhancedForm";

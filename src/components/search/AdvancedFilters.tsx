@@ -1,8 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Filter, Star, X } from "lucide-react";
 import { useEffect, useState } from "react";
+
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import {
   Select,
@@ -12,7 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { Slider } from "@/components/ui/Slider";
-import { Filter, Star, X } from "lucide-react";
 
 export interface FilterOptions {
   priceRange: [number, number];

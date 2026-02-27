@@ -1,7 +1,8 @@
-import { withAdminAuth } from "@/lib/adminAuth";
-import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 

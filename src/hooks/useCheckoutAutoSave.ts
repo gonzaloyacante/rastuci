@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+
 import { logger } from "@/lib/logger";
 
 // Implementación simple de debounce específica para CheckoutData

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
+
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { DURATION, EASE, FADE_IN_UP } from "@/lib/animations";
 

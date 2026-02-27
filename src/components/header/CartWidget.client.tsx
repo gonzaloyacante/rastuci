@@ -1,9 +1,10 @@
 "use client";
 
-import { useCart } from "@/context/CartContext";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { useCart } from "@/context/CartContext";
 
 interface CartWidgetProps {
   mobile?: boolean;

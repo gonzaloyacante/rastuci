@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server";
+
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +16,10 @@ export async function POST(req: NextRequest) {
 
     if (password.length < 8) {
       return NextResponse.json(
-        { success: false, error: "La contraseña debe tener al menos 8 caracteres" },
+        {
+          success: false,
+          error: "La contraseña debe tener al menos 8 caracteres",
+        },
         { status: 400 }
       );
     }

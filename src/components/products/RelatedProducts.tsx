@@ -1,9 +1,11 @@
 "use client";
 
-import { Product } from "@/types";
 import { useEffect, useState } from "react";
-import ProductCard from "./ProductCard";
+
 import { ProductCardSkeleton } from "@/components/ui/Skeleton";
+import { Product } from "@/types";
+
+import ProductCard from "./ProductCard";
 
 interface RelatedProductsProps {
   categoryId?: string;

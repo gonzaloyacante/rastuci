@@ -1,8 +1,8 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Check } from "lucide-react";
 
 interface SortPopoverProps {
   isOpen: boolean;

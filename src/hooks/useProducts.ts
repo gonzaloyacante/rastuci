@@ -1,6 +1,7 @@
-import { Product } from "@/types";
 import { useCallback } from "react";
 import useSWR, { SWRConfiguration } from "swr";
+
+import { Product } from "@/types";
 
 interface UseProductsOptions {
   category?: string;

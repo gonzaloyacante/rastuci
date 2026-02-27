@@ -1,9 +1,11 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import ContactPageClient from "./client-page";
+
+import { Skeleton } from "@/components/ui/Skeleton";
 import { prisma } from "@/lib/prisma";
 import { defaultContactSettings } from "@/lib/validation/contact";
-import { Skeleton } from "@/components/ui/Skeleton";
+
+import ContactPageClient from "./client-page";
 
 export const revalidate = 5; // Cache for 5 seconds (dev)
 

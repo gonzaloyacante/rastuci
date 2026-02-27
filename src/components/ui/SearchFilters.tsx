@@ -1,9 +1,10 @@
 "use client";
 
+import { ChevronDown, Filter, X } from "lucide-react";
 import { useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ChevronDown, Filter, X } from "lucide-react";
 
 interface Category {
   id: string;

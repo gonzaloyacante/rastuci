@@ -1,6 +1,5 @@
 "use client";
 
-import { logger } from "@/lib/logger";
 import React, {
   createContext,
   useCallback,
@@ -10,6 +9,8 @@ import React, {
   useReducer,
   useState,
 } from "react";
+
+import { logger } from "@/lib/logger";
 
 interface WishlistItem {
   id: string;

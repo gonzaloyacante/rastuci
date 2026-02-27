@@ -1,10 +1,11 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { CustomerInfo, useCart } from "@/context/CartContext";
 import { ARGENTINA_PROVINCES } from "@/lib/constants";
-import { ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
 
 interface CustomerInfoStepProps {
   onNext: () => void;

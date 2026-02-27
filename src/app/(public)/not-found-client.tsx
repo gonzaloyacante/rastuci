@@ -1,15 +1,16 @@
 "use client";
 
-import ProductCard from "@/components/products/ProductCard";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { Product } from "@/types";
 import { ArrowLeft, Home, Package, Search, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
+
+import ProductCard from "@/components/products/ProductCard";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Product } from "@/types";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);

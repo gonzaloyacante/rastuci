@@ -1,15 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
 import { useState } from "react";
+
 import { AnalyticsHeader } from "@/components/admin/analytics/AnalyticsHeader";
+import { DevicesCard } from "@/components/admin/analytics/DevicesCard";
 import { KPIGrid } from "@/components/admin/analytics/KPIGrid";
 import { RevenueChart } from "@/components/admin/analytics/RevenueChart";
-import { DevicesCard } from "@/components/admin/analytics/DevicesCard";
 import { TopLists } from "@/components/admin/analytics/TopLists";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { type DashboardData } from "@/services/analytics-service";
 
 async function fetchAnalytics(range: string): Promise<DashboardData> {

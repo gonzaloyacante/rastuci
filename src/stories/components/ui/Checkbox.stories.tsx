@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import { Checkbox } from "../../../components/ui/Checkbox";
 
 const meta: Meta<typeof Checkbox> = {

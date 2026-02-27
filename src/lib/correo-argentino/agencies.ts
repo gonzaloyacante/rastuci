@@ -1,6 +1,8 @@
-import { AxiosInstance } from "axios";
-import { GetAgenciesParams, Agency, ApiResponse } from "./types";
+import { AxiosInstance, isAxiosError } from "axios";
+
 import { logger } from "@/lib/logger";
+
+import { Agency, ApiResponse, GetAgenciesParams } from "./types";
 
 export class CorreoArgentinoAgencies {
   private api: AxiosInstance;
@@ -44,14 +46,29 @@ export class CorreoArgentinoAgencies {
       });
 
       return { success: true, data: response.data };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let status: number | undefined;
+      let statusText: string | undefined;
+      let data: unknown;
+      let message = "Unknown error";
+      let url: string | undefined;
+
+      if (isAxiosError(error)) {
+        status = error.response?.status;
+        statusText = error.response?.statusText;
+        data = error.response?.data;
+        message = error.message;
+        url = error.config?.url;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
       logger.error("[CorreoArgentino] Fetching agencies failed", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: JSON.stringify(error.response?.data).substring(0, 500),
-        message: error.message,
-        url: error.config?.url,
+        status,
+        statusText,
+        data: JSON.stringify(data).substring(0, 500),
+        message,
+        url,
       });
 
       return {
@@ -59,7 +76,7 @@ export class CorreoArgentinoAgencies {
         error: {
           code: "AGENCIES_ERROR",
           message: "Error obteniendo sucursales",
-          details: error.response?.data,
+          details: data,
         },
       };
     }

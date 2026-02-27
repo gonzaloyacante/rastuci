@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server";
+
 import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 // import { fail } from "@/lib/apiResponse";
 

@@ -1,7 +1,8 @@
+import { NextResponse } from "next/server";
+
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import type { ApiResponse } from "@/types";
-import { NextResponse } from "next/server";
 
 // GET /api/cms - Obtener configuración CMS
 // @deprecated — This route reads from the legacy `settings` JSON table.

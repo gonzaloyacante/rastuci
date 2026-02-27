@@ -1,6 +1,7 @@
 "use client";
 
-import React, { Suspense, ComponentType } from "react";
+import React, { ComponentType, Suspense } from "react";
+
 import { LoadingSpinner } from "./LoadingStates";
 
 interface LazyWrapperProps {
@@ -26,10 +27,10 @@ export const LazyWrapper: React.FC<LazyWrapperProps> = ({
 // HOC para crear componentes lazy con fallback personalizado - versión simplificada
 export function withLazyLoading(
   Component: ComponentType<Record<string, unknown>>,
-  fallback?: React.ReactNode,
+  fallback?: React.ReactNode
 ) {
   const LazyComponent = React.lazy(() =>
-    Promise.resolve({ default: Component }),
+    Promise.resolve({ default: Component })
   );
 
   const WrappedComponent = (props: Record<string, unknown>) => (
@@ -45,7 +46,7 @@ export function withLazyLoading(
 // Utilidad para crear lazy imports con mejor UX - versión simplificada
 export function createLazyComponent(
   importFn: () => Promise<{ default: ComponentType<Record<string, unknown>> }>,
-  fallback?: React.ReactNode,
+  fallback?: React.ReactNode
 ) {
   const LazyComponent = React.lazy(importFn);
 
@@ -63,11 +64,15 @@ export function createLazyComponent(
 export function createLazyComponentFromNamed(
   importFn: () => Promise<Record<string, unknown>>,
   componentName: string,
-  fallback?: React.ReactNode,
+  fallback?: React.ReactNode
 ) {
   const LazyComponent = React.lazy(async () => {
     const moduleImport = await importFn();
-    return { default: moduleImport[componentName] as ComponentType<Record<string, unknown>> };
+    return {
+      default: moduleImport[componentName] as ComponentType<
+        Record<string, unknown>
+      >,
+    };
   });
 
   const WrappedComponent = (props: Record<string, unknown>) => (

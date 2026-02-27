@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { AdminCard, StatCard, AdminColor } from "../../../components/admin/AdminCards";
 import { DollarSign, Users } from "lucide-react";
+
+import {
+  AdminCard,
+  AdminColor,
+  StatCard,
+} from "../../../components/admin/AdminCards";
 
 // AdminCard stories
 const metaAdminCard: Meta<typeof AdminCard> = {

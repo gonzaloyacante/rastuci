@@ -1,3 +1,6 @@
+import { Filter, RotateCcw } from "lucide-react";
+import React from "react";
+
 import { Button } from "@/components/ui/Button";
 import {
   Select,
@@ -6,8 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { Filter, RotateCcw } from "lucide-react";
-import React from "react";
 
 export interface FilterOption {
   value: string;

@@ -1,8 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { AlertTriangle, CheckCircle, Info, X, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import React, {
   createContext,
   useCallback,
@@ -11,6 +9,9 @@ import React, {
   useRef,
   useState,
 } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { logger } from "@/lib/logger";
 
 // Image optimization utilities

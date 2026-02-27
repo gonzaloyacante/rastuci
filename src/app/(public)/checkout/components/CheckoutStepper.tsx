@@ -1,9 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { Check } from "lucide-react";
 import { useMemo } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 interface CheckoutStepperProps {
   currentStep: number;

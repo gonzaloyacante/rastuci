@@ -1,6 +1,8 @@
-import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { Metadata } from "next";
+import { Suspense } from "react";
+
+import { Skeleton } from "@/components/ui/Skeleton";
+
 import NotFoundClient from "./not-found-client";
 
 export const metadata: Metadata = {

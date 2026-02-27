@@ -1,10 +1,12 @@
-import { AxiosInstance } from "axios";
+import { AxiosInstance, isAxiosError } from "axios";
+
+import { logger } from "@/lib/logger";
+
 import {
+  ApiResponse,
   CalculateRatesParams,
   CalculateRatesResponse,
-  ApiResponse,
 } from "./types";
-import { logger } from "@/lib/logger";
 
 export class CorreoArgentinoRates {
   private api: AxiosInstance;
@@ -42,12 +44,18 @@ export class CorreoArgentinoRates {
         requestBody
       );
       return { success: true, data: response.data };
+    } catch (error: unknown) {
+      let status: number | undefined;
+      let data: unknown;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+      if (isAxiosError(error)) {
+        status = error.response?.status;
+        data = error.response?.data;
+      }
+
       logger.error("[CorreoArgentino] Rate calculation failed", {
-        status: error.response?.status,
-        data: error.response?.data,
+        status,
+        data,
       });
 
       return {
@@ -55,7 +63,7 @@ export class CorreoArgentinoRates {
         error: {
           code: "RATES_ERROR",
           message: "Error obteniendo cotización",
-          details: error.response?.data,
+          details: data,
         },
       };
     }

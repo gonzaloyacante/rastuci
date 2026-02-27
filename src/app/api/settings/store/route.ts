@@ -1,15 +1,31 @@
+import { StockStatusColor, store_settings } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+
 import { withAdminAuth } from "@/lib/adminAuth";
-import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 import {
-  StoreSettingsSchema,
   defaultStoreSettings,
   type StoreSettings,
+  StoreSettingsSchema,
 } from "@/lib/validation/store";
-import { StockStatusColor, store_settings } from "@prisma/client";
 
-// Helper to convert DB models to API format
+// Interface for fields potentially missing in Prisma schema but used in code
+interface LegacyStoreSettings extends store_settings {
+  cashDiscount?: number;
+  transferDiscount?: number;
+  mpDiscount?: number;
+  cashExpirationHours?: number;
+  transferExpirationHours?: number;
+  mpExpirationMinutes?: number;
+  bankName?: string;
+  bankCbu?: string;
+  bankAlias?: string;
+  bankHolder?: string;
+  bankCuit?: string;
+  couponsEnabled?: boolean;
+}
+
 function dbToApiFormat(
   store: store_settings | null,
   shipping: {
@@ -27,7 +43,7 @@ function dbToApiFormat(
   } | null
 ): StoreSettings {
   // Use defaults where data is missing
-  const s = store;
+  const s = store as unknown as LegacyStoreSettings | null;
   const sh = shipping;
   const st = stock;
 
@@ -76,31 +92,26 @@ function dbToApiFormat(
       })) ?? defaultStoreSettings.stockStatuses,
     payments: {
       cashDiscount:
-        (s as any)?.cashDiscount ?? defaultStoreSettings.payments.cashDiscount,
+        s?.cashDiscount ?? defaultStoreSettings.payments.cashDiscount,
       transferDiscount:
-        (s as any)?.transferDiscount ??
-        defaultStoreSettings.payments.transferDiscount,
-      mpDiscount:
-        (s as any)?.mpDiscount ?? defaultStoreSettings.payments.mpDiscount,
+        s?.transferDiscount ?? defaultStoreSettings.payments.transferDiscount,
+      mpDiscount: s?.mpDiscount ?? defaultStoreSettings.payments.mpDiscount,
       cashExpirationHours:
-        (s as any)?.cashExpirationHours ??
+        s?.cashExpirationHours ??
         defaultStoreSettings.payments.cashExpirationHours,
       transferExpirationHours:
-        (s as any)?.transferExpirationHours ??
+        s?.transferExpirationHours ??
         defaultStoreSettings.payments.transferExpirationHours,
       mpExpirationMinutes:
-        (s as any)?.mpExpirationMinutes ??
+        s?.mpExpirationMinutes ??
         defaultStoreSettings.payments.mpExpirationMinutes,
-      bankName: (s as any)?.bankName ?? defaultStoreSettings.payments.bankName,
-      bankCbu: (s as any)?.bankCbu ?? defaultStoreSettings.payments.bankCbu,
-      bankAlias:
-        (s as any)?.bankAlias ?? defaultStoreSettings.payments.bankAlias,
-      bankHolder:
-        (s as any)?.bankHolder ?? defaultStoreSettings.payments.bankHolder,
-      bankCuit: (s as any)?.bankCuit ?? defaultStoreSettings.payments.bankCuit,
+      bankName: s?.bankName ?? defaultStoreSettings.payments.bankName,
+      bankCbu: s?.bankCbu ?? defaultStoreSettings.payments.bankCbu,
+      bankAlias: s?.bankAlias ?? defaultStoreSettings.payments.bankAlias,
+      bankHolder: s?.bankHolder ?? defaultStoreSettings.payments.bankHolder,
+      bankCuit: s?.bankCuit ?? defaultStoreSettings.payments.bankCuit,
       couponsEnabled:
-        (s as any)?.couponsEnabled ??
-        defaultStoreSettings.payments.couponsEnabled,
+        s?.couponsEnabled ?? defaultStoreSettings.payments.couponsEnabled,
     },
   };
 }

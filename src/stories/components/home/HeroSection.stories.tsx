@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import { HeroSection } from "../../../components/home/HeroSection";
 
 const meta: Meta<typeof HeroSection> = {

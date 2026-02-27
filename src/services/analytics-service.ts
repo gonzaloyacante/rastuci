@@ -1,6 +1,7 @@
-import prisma from "@/lib/prisma";
-import { logger } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
+
+import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 
 export type DateRange = "today" | "week" | "month" | "year";
 

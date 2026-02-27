@@ -1,8 +1,9 @@
 "use client";
 
 import { AlertCircle, Check, Info, X } from "lucide-react";
-import { Spinner } from "@/components/ui/Spinner";
 import { useEffect, useState } from "react";
+
+import { Spinner } from "@/components/ui/Spinner";
 
 interface CheckoutNotificationProps {
   type: "success" | "error" | "warning" | "info" | "loading";

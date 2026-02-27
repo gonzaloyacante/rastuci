@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 // Interfaces
 interface FAQResponse {
@@ -255,8 +257,6 @@ const knowledgeBase = new Map<string, CategoryData>([
 
 // Estadísticas de FAQs
 const faqStats = new Map<string, FAQStats>();
-
-import { checkRateLimit } from "@/lib/rateLimiter";
 
 // ...
 

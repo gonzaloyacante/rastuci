@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
+
+import { prisma } from "@/lib/prisma";
 
 /**
  * Servicio de productos optimizado con Cache de Next.js

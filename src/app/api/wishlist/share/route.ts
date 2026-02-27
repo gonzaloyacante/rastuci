@@ -1,8 +1,9 @@
-import { prisma } from "@/lib/prisma";
+import { add } from "date-fns";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { add } from "date-fns";
+
+import { prisma } from "@/lib/prisma";
 
 const ShareWishlistSchema = z.object({
   productIds: z.array(z.string()),

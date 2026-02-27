@@ -1,7 +1,8 @@
-import { prisma } from "@/lib/prisma";
-import OrderReviewForm from "@/components/reviews/OrderReviewForm";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+import OrderReviewForm from "@/components/reviews/OrderReviewForm";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Califica tu compra - Rastuci",

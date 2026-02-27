@@ -1,7 +1,8 @@
+import { NextResponse } from "next/server";
+
 import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
 
 interface TrackingStats {
   total: number;

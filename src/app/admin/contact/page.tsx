@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { FormSkeleton } from "@/components/admin/skeletons";
 import ContactForm from "@/components/forms/ContactForm";
 import { ContactSettings } from "@/lib/validation/contact";
-import { useEffect, useState } from "react";
 
 export default function AdminContactPage() {
   const [loading, setLoading] = useState(true);

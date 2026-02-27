@@ -1,9 +1,9 @@
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import {
   defaultStoreSettings,
   type StoreSettings,
 } from "@/lib/validation/store";
-import { logger } from "@/lib/logger";
 
 /**
  * Get store settings from database
@@ -42,7 +42,8 @@ export async function getStoreSettings(): Promise<StoreSettings> {
         streetName: storeRecord.addressStreet ?? settings.address.streetName,
         city: storeRecord.addressCity ?? settings.address.city,
         provinceCode:
-          (storeRecord.addressProvince as any) ?? settings.address.provinceCode,
+          (storeRecord.addressProvince as unknown as string) ??
+          settings.address.provinceCode,
         postalCode:
           storeRecord.addressPostalCode ?? settings.address.postalCode,
       };

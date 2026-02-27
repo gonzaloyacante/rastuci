@@ -1,17 +1,18 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import {
-  type StoreSettings,
-  defaultStoreSettings,
-} from "@/lib/validation/store";
-import { Save } from "lucide-react";
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
+import {
+  defaultStoreSettings,
+  type StoreSettings,
+} from "@/lib/validation/store";
 
 interface StoreFormProps {
   initial?: StoreSettings;

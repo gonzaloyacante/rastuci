@@ -24,10 +24,11 @@
  * curl https://tu-dominio.vercel.app/api/cron/tracking-notifications?secret=tu_secret
  */
 
+import { NextRequest, NextResponse } from "next/server";
+
 import { logger } from "@/lib/logger";
 import { trackingNotificationService } from "@/lib/tracking-notifications";
 import { cleanExpiredReservations } from "@/utils/stockReservations";
-import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 10; // Máximo 10 segundos en Vercel Hobby (gratis)
 export const dynamic = "force-dynamic";

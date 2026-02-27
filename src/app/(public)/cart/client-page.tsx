@@ -1,21 +1,25 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/Button";
-import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
-import EmptyState from "@/components/ui/EmptyState";
-import QuantityButton from "@/components/ui/QuantityButton";
-import { useCart } from "@/context/CartContext";
-import { useShippingSettings } from "@/hooks/useShippingSettings";
-import { logger } from "@/lib/logger";
-import { formatPriceARS } from "@/utils/formatters";
 import { AlertCircle, Check, ShoppingCart, Trash2 } from "lucide-react";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import { ShippingSettings } from "@/lib/validation/shipping";
+
+import { Button } from "@/components/ui/Button";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
+import EmptyState from "@/components/ui/EmptyState";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import QuantityButton from "@/components/ui/QuantityButton";
+import { useToast } from "@/components/ui/Toast";
+import VacationCard from "@/components/vacation/VacationCard";
+import { useCart } from "@/context/CartContext";
+import { useShippingSettings } from "@/hooks/useShippingSettings";
+// ... imports
+import { useVacationSettings } from "@/hooks/useVacationSettings";
 import { PLACEHOLDER_IMAGE } from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import { ShippingSettings } from "@/lib/validation/shipping";
+import { formatPriceARS } from "@/utils/formatters";
 
 interface CartItem {
   product: {
@@ -269,10 +273,6 @@ const CartItemComponent = ({
     </div>
   );
 };
-
-// ... imports
-import { useVacationSettings } from "@/hooks/useVacationSettings";
-import VacationCard from "@/components/vacation/VacationCard";
 
 const OrderSummary = ({
   total,

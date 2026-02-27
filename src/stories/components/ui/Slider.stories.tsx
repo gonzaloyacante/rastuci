@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import { Slider } from "../../../components/ui/Slider";
 
 const meta: Meta<typeof Slider> = {

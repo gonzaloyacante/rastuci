@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
-import { logger } from "@/lib/logger";
+import { ORDER_STATUS, ProvinceCode, PROVINCIAS } from "@/lib/constants";
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
-import { ORDER_STATUS, PROVINCIAS, ProvinceCode } from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 import { getStoreSettings } from "@/lib/store-settings";
 
 export class ShipmentService {

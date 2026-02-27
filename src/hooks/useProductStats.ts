@@ -1,5 +1,6 @@
-import { ApiResponse } from "@/types";
 import useSWR from "swr";
+
+import { ApiResponse } from "@/types";
 
 export interface ProductInventoryStats {
   total: number;

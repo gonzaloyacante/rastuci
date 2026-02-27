@@ -1,8 +1,8 @@
 "use client";
 
 import Footer from "@/components/layout/Footer";
-import { HomeSettings } from "@/lib/validation/home";
 import { ContactSettings } from "@/lib/validation/contact";
+import { HomeSettings } from "@/lib/validation/home";
 
 export default function SiteChrome({
   children,

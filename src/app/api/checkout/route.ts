@@ -1,14 +1,12 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { PAYMENT_METHODS } from "@/lib/constants"; // Removed PROVINCE_CODE_MAP
 import {} from // CorreoArgentinoService,
 // type ProvinceCode,
 "@/lib/correo-argentino-service";
-import { PAYMENT_METHODS } from "@/lib/constants"; // Removed PROVINCE_CODE_MAP
 import { logger } from "@/lib/logger";
 import { createPreference } from "@/lib/mercadopago"; // Leaving this here or move to checkout-service too? It's fine here or via service.
-import { NextRequest, NextResponse } from "next/server";
-import { checkoutService } from "@/services/checkout-service";
-import { orderService } from "@/services/order-service";
 // import { apiHandler } from "@/lib/api-handler";
-
 // interface OrderItem {
 //   productId: string;
 //   quantity: number;
@@ -17,9 +15,10 @@ import { orderService } from "@/services/order-service";
 //   color?: string;
 //   name?: string;
 // }
-
 // ... imports
 import { prisma } from "@/lib/prisma";
+import { checkoutService } from "@/services/checkout-service";
+import { orderService } from "@/services/order-service";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // --- VACATION MODE CHECK ---
@@ -105,10 +104,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 2. Validate Stock via Service
     try {
       await checkoutService.validateStock(items);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Error validando stock";
       return NextResponse.json(
-        { success: false, error: e.message },
+        { success: false, error: message },
         { status: 400 }
       );
     }

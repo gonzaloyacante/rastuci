@@ -1,12 +1,13 @@
 "use client";
 
+import React, { useCallback, useEffect, useState } from "react";
+
 import { PageHeaderWithActions } from "@/components/admin";
+import LazyAdvancedCharts from "@/components/admin/dashboard/LazyAdvancedCharts";
 import { MetricsSkeleton } from "@/components/admin/skeletons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import LazyAdvancedCharts from "@/components/admin/dashboard/LazyAdvancedCharts";
-import React, { useCallback, useEffect, useState } from "react";
 
 // ============================================================================
 // Types

@@ -1,9 +1,10 @@
-import { fail, ok } from "@/lib/apiResponse";
+import { NextRequest, NextResponse } from "next/server";
+
 import { withAdminAuth } from "@/lib/adminAuth";
+import { fail, ok } from "@/lib/apiResponse";
+import { getOrderConfirmationEmail } from "@/lib/email-templates";
 import { logger } from "@/lib/logger";
 import { sendEmail } from "@/lib/resend";
-import { getOrderConfirmationEmail } from "@/lib/email-templates";
-import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/admin/test-email

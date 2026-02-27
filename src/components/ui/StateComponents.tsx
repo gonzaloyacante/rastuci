@@ -1,9 +1,10 @@
 "use client";
 
+import { AlertCircle, RefreshCw, WifiOff } from "lucide-react";
 import React from "react";
+
 import { Button } from "./Button";
 import { Spinner } from "./Spinner";
-import { AlertCircle, WifiOff, RefreshCw } from "lucide-react";
 
 // Componente para estados de error mejorados
 interface ErrorStateProps {
@@ -116,7 +117,9 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           <div className="w-8 h-8 bg-primary rounded-full animate-pulse" />
         );
       default:
-        return <Spinner size={size === "sm" ? "xs" : size === "md" ? "sm" : "md"} />;
+        return (
+          <Spinner size={size === "sm" ? "xs" : size === "md" ? "sm" : "md"} />
+        );
     }
   };
 
@@ -200,7 +203,7 @@ interface UIStateActions {
 }
 
 export function useUIState(
-  options: UseUIStateOptions = {},
+  options: UseUIStateOptions = {}
 ): [UIState, UIStateActions] {
   const [state, setState] = React.useState<UIState>({
     isLoading: options.initialLoading ?? false,
@@ -218,7 +221,7 @@ export function useUIState(
         setState((prev) => ({ ...prev, isEmpty: empty })),
       reset: () => setState({ isLoading: false, error: null, isEmpty: false }),
     }),
-    [],
+    []
   );
 
   return [state, actions];

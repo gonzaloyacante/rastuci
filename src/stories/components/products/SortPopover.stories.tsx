@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { SortPopover } from "../../../components/products/SortPopover";
 import React, { useRef, useState } from "react";
+
+import { SortPopover } from "../../../components/products/SortPopover";
 
 const meta: Meta<typeof SortPopover> = {
   title: "Public/Products/SortPopover",

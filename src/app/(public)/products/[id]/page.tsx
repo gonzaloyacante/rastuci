@@ -1,10 +1,13 @@
+import { Metadata } from "next";
+import { headers } from "next/headers";
+import { Suspense } from "react";
+
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
 import { logger } from "@/lib/logger";
 import { generateProductJsonLd } from "@/lib/metadata";
 import prisma from "@/lib/prisma";
 import { generateProductMetadata } from "@/lib/seo";
-import { Metadata } from "next";
-import { Suspense } from "react";
+
 import ProductDetailClient from "./client-page";
 
 interface ProductPageProps {
@@ -75,8 +78,6 @@ export async function generateStaticParams() {
     return [];
   }
 }
-
-import { headers } from "next/headers";
 
 // ... existing imports
 

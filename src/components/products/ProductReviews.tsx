@@ -1,10 +1,11 @@
 "use client";
 
+import { Star, User } from "lucide-react";
+import { useEffect, useState } from "react";
+
 import { Card, CardContent } from "@/components/ui/Card";
 import { ReviewSkeleton } from "@/components/ui/Skeleton";
 import { logger } from "@/lib/logger";
-import { Star, User } from "lucide-react";
-import { useEffect, useState } from "react";
 
 interface Review {
   id: string;

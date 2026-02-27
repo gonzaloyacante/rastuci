@@ -1,8 +1,9 @@
+import { NextResponse } from "next/server";
+
 import { fail, ok } from "@/lib/apiResponse";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { ApiResponse } from "@/types";
-import { NextResponse } from "next/server";
 
 // GET /api/products/stats - Estadísticas para filtros dinámicos e inventario
 export async function GET(): Promise<

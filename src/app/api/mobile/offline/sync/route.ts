@@ -4,9 +4,10 @@
  * Sincroniza datos para modo offline usando Prisma.
  */
 
-import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+
+import prisma from "@/lib/prisma";
 
 interface ApiResponse<T> {
   success: boolean;

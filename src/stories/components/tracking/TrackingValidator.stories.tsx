@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { TrackingValidator } from "../../../components/tracking/TrackingValidator";
 import React from "react";
+
+import { TrackingValidator } from "../../../components/tracking/TrackingValidator";
 
 // Mock fetch for Tracking
 const FetchDecorator = (Story: React.ComponentType) => {

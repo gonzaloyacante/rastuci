@@ -1,6 +1,3 @@
-import { Agency } from "@/lib/correo-argentino-service";
-import { Button } from "@/components/ui/Button";
-import { formatPriceARS } from "@/utils/formatters";
 import {
   CreditCard,
   Edit2,
@@ -8,11 +5,15 @@ import {
   Mail,
   MapPin,
   Phone,
-  Truck,
   Store,
+  Truck,
 } from "lucide-react";
+
+import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { WEEKDAY_NAMES_SHORT, type WeekdayKey } from "@/lib/constants";
+import { Agency } from "@/lib/correo-argentino-service";
+import { formatPriceARS } from "@/utils/formatters";
 
 interface OrderItem {
   id: string;

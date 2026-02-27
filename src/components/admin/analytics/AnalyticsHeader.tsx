@@ -1,5 +1,7 @@
 "use client";
 
+import { CalendarDays, Download, RefreshCw } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 import {
   Select,
@@ -8,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { Download, RefreshCw, CalendarDays } from "lucide-react";
 
 interface AnalyticsHeaderProps {
   range: string;

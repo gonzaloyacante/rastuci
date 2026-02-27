@@ -1,21 +1,5 @@
 "use client";
 
-import { AdminError } from "@/components/admin";
-import {
-  AdminSection,
-  PageHeader,
-  StatCardData,
-  StatsGrid,
-} from "@/components/admin/AdminCards";
-import ModernDashboardCharts from "@/components/admin/dashboard/ModernDashboardCharts";
-import LazyAdvancedCharts from "@/components/admin/dashboard/LazyAdvancedCharts";
-import {
-  QuickAction,
-  QuickActionsGrid,
-} from "@/components/admin/dashboard/QuickActionCard";
-import { DashboardSkeleton } from "@/components/admin/skeletons";
-import { useDashboard } from "@/hooks";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { motion } from "framer-motion";
 import {
   DollarSign,
@@ -26,6 +10,23 @@ import {
   Tag,
   Users,
 } from "lucide-react";
+
+import { AdminError } from "@/components/admin";
+import {
+  AdminSection,
+  PageHeader,
+  StatCardData,
+  StatsGrid,
+} from "@/components/admin/AdminCards";
+import LazyAdvancedCharts from "@/components/admin/dashboard/LazyAdvancedCharts";
+import ModernDashboardCharts from "@/components/admin/dashboard/ModernDashboardCharts";
+import {
+  QuickAction,
+  QuickActionsGrid,
+} from "@/components/admin/dashboard/QuickActionCard";
+import { DashboardSkeleton } from "@/components/admin/skeletons";
+import { useDashboard } from "@/hooks";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const quickActions: QuickAction[] = [
   {

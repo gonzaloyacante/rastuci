@@ -1,4 +1,5 @@
 import React from "react";
+
 import { cn } from "@/lib/utils";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -13,7 +14,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         "rounded-lg border border-muted surface text-primary shadow-sm",
         className
       )}
-      {...props}>
+      {...props}
+    >
       {children}
     </div>
   )
@@ -24,7 +26,8 @@ const CardHeader = React.forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn("flex flex-col space-y-1.5 p-6", className)}
-      {...props}>
+      {...props}
+    >
       {children}
     </div>
   )
@@ -40,7 +43,8 @@ const CardTitle = React.forwardRef<
       "text-2xl font-semibold leading-none tracking-tight",
       className
     )}
-    {...props}>
+    {...props}
+  >
     {children}
   </h3>
 ));
@@ -67,7 +71,8 @@ const CardFooter = React.forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn("flex items-center p-6 pt-0", className)}
-      {...props}>
+      {...props}
+    >
       {children}
     </div>
   )
@@ -82,9 +87,9 @@ CardFooter.displayName = "CardFooter";
 
 export {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 };

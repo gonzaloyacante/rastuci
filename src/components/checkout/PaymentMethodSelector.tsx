@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { CreditCard, Banknote, Building2, Wallet } from "lucide-react";
+import { Banknote, Building2, CreditCard, Wallet } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
 interface PaymentMethodSelectorProps {
   selectedMethod: string;

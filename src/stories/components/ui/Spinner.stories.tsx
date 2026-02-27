@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import { Spinner } from "../../../components/ui/Spinner";
 
 const meta: Meta<typeof Spinner> = {

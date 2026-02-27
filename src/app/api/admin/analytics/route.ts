@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
-import { analyticsService, DateRange } from "@/services/analytics-service";
-import { ok, fail } from "@/lib/apiResponse";
+
+import { fail, ok } from "@/lib/apiResponse";
 import { logger } from "@/lib/logger";
+import { analyticsService, DateRange } from "@/services/analytics-service";
 
 export async function GET(req: NextRequest) {
   try {

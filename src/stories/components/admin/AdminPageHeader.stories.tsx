@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { AdminPageHeader } from "../../../components/admin/AdminPageHeader";
 import { Plus, Settings } from "lucide-react";
+
+import { AdminPageHeader } from "../../../components/admin/AdminPageHeader";
 
 const meta: Meta<typeof AdminPageHeader> = {
   title: "Admin/AdminPageHeader",

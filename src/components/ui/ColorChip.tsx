@@ -1,6 +1,7 @@
+import React from "react";
+
 import { cn } from "@/lib/utils";
 import { getColorHex } from "@/utils/colors";
-import React from "react";
 
 interface ColorChipProps extends React.HTMLAttributes<HTMLSpanElement> {
   color: string;
@@ -9,7 +10,10 @@ interface ColorChipProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export const ColorChip = React.forwardRef<HTMLSpanElement, ColorChipProps>(
-  ({ className = "", color, size = "sm", showTooltip = true, ...props }, ref) => {
+  (
+    { className = "", color, size = "sm", showTooltip = true, ...props },
+    ref
+  ) => {
     const sizes = {
       xs: "w-3 h-3",
       sm: "w-4 h-4",

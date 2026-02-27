@@ -1,12 +1,5 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/Button";
-import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useCart } from "@/context/CartContext";
-import { useWishlist } from "@/context/WishlistContext";
-import { Product } from "@/types";
-import { formatPriceARS } from "@/utils/formatters";
 import {
   Filter,
   Grid3X3,
@@ -15,11 +8,19 @@ import {
   ShoppingCart,
   Trash2,
 } from "lucide-react";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import { useState } from "react";
-import { ShareWishlistModal } from "@/components/wishlist/ShareModal";
+
+import { Button } from "@/components/ui/Button";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
+import { ShareWishlistModal } from "@/components/wishlist/ShareModal";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { Product } from "@/types";
+import { formatPriceARS } from "@/utils/formatters";
 
 type SortOption =
   | "name-asc"

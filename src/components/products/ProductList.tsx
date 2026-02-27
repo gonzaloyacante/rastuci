@@ -1,6 +1,22 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Download,
+  Grid,
+  List,
+  Package,
+  RotateCcw,
+  Search,
+  SortAsc,
+  SortDesc,
+  Upload,
+  XCircle,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
+
 import {
   AdminEmpty,
   AdminEmptyIcons,
@@ -21,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 import {
   useCategories,
   useInfiniteProducts,
@@ -29,22 +46,7 @@ import {
 } from "@/hooks";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
-import {
-  AlertTriangle,
-  CheckCircle,
-  Download,
-  Grid,
-  List,
-  Package,
-  RotateCcw,
-  Search,
-  SortAsc,
-  SortDesc,
-  Upload,
-  XCircle,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+
 import { BulkImportModal } from "./BulkImportModal";
 
 type ViewMode = "grid" | "list";
@@ -125,15 +127,9 @@ export default function ProductList() {
     id: string,
     currentStatus: boolean | undefined
   ) => {
-    // Optimistic Update is not supported with current hook structure easily,
-    // and mutate() refreshes the list from server.
-    // For now we just call API and then refresh.
-
-    // Calculate new status
     const newStatus = !(currentStatus !== false); // Toggle
 
     try {
-      // Use the new fast PATCH endpoint
       const response = await fetch(`/api/products/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -144,7 +140,6 @@ export default function ProductList() {
         throw new Error("Failed to update status");
       }
 
-      // Success
       show({
         type: "success",
         message: newStatus ? "Producto activado" : "Producto desactivado",
@@ -155,6 +150,38 @@ export default function ProductList() {
     } catch (err) {
       logger.error("Error toggling product active status", { error: err });
       show({ type: "error", message: "No se pudo actualizar el estado." });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const product = products.find((p: Product) => p.id === id);
+    const confirmed = await new Promise<boolean>((resolve) => {
+      // Use browser confirm as fallback since ConfirmDialog hook may not expose a promise API
+      resolve(
+        window.confirm(
+          `¿Estás seguro de que querés eliminar "${product?.name || "este producto"}"? Esta acción no se puede deshacer.`
+        )
+      );
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || "Failed to delete product");
+      }
+
+      show({ type: "success", message: "Producto eliminado correctamente" });
+      mutate();
+      mutateStats();
+    } catch (err) {
+      logger.error("Error deleting product", { error: err });
+      show({ type: "error", message: "No se pudo eliminar el producto." });
     }
   };
 
@@ -395,11 +422,10 @@ export default function ProductList() {
                     onEdit={() =>
                       router.push(`/admin/productos/${product.id}/editar`)
                     }
-                    // deleteDisabled={true} // Deprecated
-                    // onDelete={() => {}} // Removed
                     onToggleActive={() =>
                       handleToggleActive(product.id, product.isActive)
                     }
+                    onDelete={() => handleDelete(product.id)}
                   />
                 </div>
               );

@@ -4,6 +4,7 @@ import {
   BarElement,
   CategoryScale,
   Chart as ChartJS,
+  Filler,
   Legend,
   LinearScale,
   LineElement,
@@ -11,11 +12,16 @@ import {
   RadialLinearScale,
   Title,
   Tooltip,
-  Filler,
 } from "chart.js";
 import { motion } from "framer-motion";
-import { BarChart3, Calendar, TrendingUp, Users, ShoppingCart } from "lucide-react";
-import { Bar, Line, Radar, PolarArea } from "react-chartjs-2";
+import {
+  BarChart3,
+  Calendar,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { Bar, Line, PolarArea, Radar } from "react-chartjs-2";
 
 // Registrar componentes
 ChartJS.register(
@@ -36,7 +42,12 @@ interface AdvancedChartsProps {
   topCustomers?: { name: string; totalSpent: number }[];
   orderStatus?: { status: string; count: number }[];
   hourlyOrders?: { hour: string; orders: number }[];
-  productPerformance?: { product: string; sales: number; revenue: number; rating: number }[];
+  productPerformance?: {
+    product: string;
+    sales: number;
+    revenue: number;
+    rating: number;
+  }[];
   loading?: boolean;
 }
 
@@ -136,7 +147,7 @@ export default function AdvancedCharts({
           "rgba(245, 158, 11, 0.7)", // Pendiente
           "rgba(59, 130, 246, 0.7)", // Procesando
           "rgba(16, 185, 129, 0.7)", // Completado
-          "rgba(239, 68, 68, 0.7)",  // Cancelado
+          "rgba(239, 68, 68, 0.7)", // Cancelado
         ],
         borderWidth: 0,
       },
@@ -187,7 +198,10 @@ export default function AdvancedCharts({
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="surface rounded-lg shadow-sm border muted p-4 lg:p-6">
+          <div
+            key={i}
+            className="surface rounded-lg shadow-sm border muted p-4 lg:p-6"
+          >
             <div className="animate-pulse">
               <div className="h-4 surface-secondary rounded w-1/3 mb-4"></div>
               <div className="h-48 lg:h-64 surface-secondary rounded"></div>
@@ -242,7 +256,9 @@ export default function AdvancedCharts({
               <h3 className="text-base lg:text-lg font-bold text-primary">
                 Mejores Clientes
               </h3>
-              <p className="text-xs lg:text-sm muted mt-1">Top 5 por gasto total</p>
+              <p className="text-xs lg:text-sm muted mt-1">
+                Top 5 por gasto total
+              </p>
             </div>
             <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
               <Users className="h-5 w-5 text-blue-600" />
@@ -250,12 +266,12 @@ export default function AdvancedCharts({
           </div>
           <div className="h-48 lg:h-64">
             {topCustomers.length > 0 ? (
-              <Bar 
-                data={topCustomersData} 
+              <Bar
+                data={topCustomersData}
                 options={{
                   ...chartOptions,
-                  indexAxis: 'y' as const,
-                }} 
+                  indexAxis: "y" as const,
+                }}
               />
             ) : (
               <div className="flex items-center justify-center h-full">
@@ -277,7 +293,9 @@ export default function AdvancedCharts({
               <h3 className="text-base lg:text-lg font-bold text-primary">
                 Estado de Pedidos
               </h3>
-              <p className="text-xs lg:text-sm muted mt-1">Distribución actual</p>
+              <p className="text-xs lg:text-sm muted mt-1">
+                Distribución actual
+              </p>
             </div>
             <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
               <ShoppingCart className="h-5 w-5 text-amber-600" />
@@ -285,12 +303,12 @@ export default function AdvancedCharts({
           </div>
           <div className="h-48 lg:h-64">
             {orderStatus.length > 0 ? (
-              <PolarArea 
-                data={orderStatusData} 
+              <PolarArea
+                data={orderStatusData}
                 options={{
                   ...chartOptions,
                   scales: undefined,
-                }} 
+                }}
               />
             ) : (
               <div className="flex items-center justify-center h-full">
@@ -312,7 +330,9 @@ export default function AdvancedCharts({
               <h3 className="text-base lg:text-lg font-bold text-primary">
                 Pedidos por Hora
               </h3>
-              <p className="text-xs lg:text-sm muted mt-1">Patrón de actividad del día</p>
+              <p className="text-xs lg:text-sm muted mt-1">
+                Patrón de actividad del día
+              </p>
             </div>
             <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
               <TrendingUp className="h-5 w-5 text-purple-600" />
@@ -343,15 +363,17 @@ export default function AdvancedCharts({
               <h3 className="text-base lg:text-lg font-bold text-primary">
                 Rendimiento de Productos
               </h3>
-              <p className="text-xs lg:text-sm muted mt-1">Comparativa multidimensional</p>
+              <p className="text-xs lg:text-sm muted mt-1">
+                Comparativa multidimensional
+              </p>
             </div>
             <div className="h-10 w-10 rounded-full bg-cyan-100 dark:bg-cyan-900/20 flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-cyan-600" />
             </div>
           </div>
           <div className="h-64 lg:h-80">
-            <Radar 
-              data={productPerformanceData} 
+            <Radar
+              data={productPerformanceData}
               options={{
                 ...chartOptions,
                 scales: {
@@ -360,7 +382,7 @@ export default function AdvancedCharts({
                     grid: { color: "rgba(209, 213, 219, 0.3)" },
                   },
                 },
-              }} 
+              }}
             />
           </div>
         </motion.div>

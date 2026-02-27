@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import CartPageClient from "./client-page";
+
 import { Skeleton } from "@/components/ui/Skeleton";
+
+import CartPageClient from "./client-page";
 
 export const metadata: Metadata = {
   title: "Carrito de Compras - Rastuci",

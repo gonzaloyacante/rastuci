@@ -1,9 +1,20 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
 import {
-  DetailPanel,
+  CheckCircle,
+  Clock,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Send,
+  TicketIcon,
+  User,
+} from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+
+import {
   AdminEmpty,
+  DetailPanel,
   InfoGrid,
   ListItemCard,
   MessageThread,
@@ -17,18 +28,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
 import { useDocumentTitle } from "@/hooks";
-import {
-  CheckCircle,
-  Clock,
-  MessageSquare,
-  Plus,
-  RefreshCw,
-  Send,
-  TicketIcon,
-  User,
-} from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
 
 // ============================================================================
 // Types

@@ -1,11 +1,11 @@
+import Image from "next/image";
+import { useEffect, useState } from "react";
+
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import Image from "next/image";
-
-import { Order, OrderStatus } from "@/types";
 import { Agency } from "@/lib/correo-argentino-service";
-import { useEffect, useState } from "react";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { Order, OrderStatus } from "@/types";
 
 interface OrderSummaryCardProps {
   order: Order;

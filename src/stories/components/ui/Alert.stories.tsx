@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import Alert, { useAlert } from "../../../components/ui/Alert";
+
+import { Alert, useAlert } from "../../../components/ui/Alert";
 import { Button } from "../../../components/ui/Button";
 
 const meta: Meta<typeof Alert> = {

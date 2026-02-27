@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import CartWidget from "../../../components/header/CartWidget.client";
 import React from "react";
+
 import type { Product } from "@/types";
 
+import CartWidget from "../../../components/header/CartWidget.client";
 // We need to match the module import that CartWidget uses.
 // Since we can't easily module-mock in generic storybook without setup,
 // we'll rely on the fact that CartWidget imports from '@/context/CartContext'.
@@ -34,7 +35,6 @@ import type { Product } from "@/types";
 // `CartProvider` renders `<CartContext.Provider ...>`.
 // So we must use `CartProvider`.
 // To simulate items in `CartProvider`, we can use `addToCart` in a `useEffect`.
-
 import { CartProvider, useCart } from "../../../context/CartContext";
 
 const AddItemsDecorator = (Story: React.ComponentType) => {

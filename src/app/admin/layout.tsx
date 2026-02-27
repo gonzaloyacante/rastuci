@@ -1,12 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-
-import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
-import SessionProvider from "@/components/providers/SessionProvider";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { SPRING } from "@/lib/animations";
-
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart3,
@@ -25,12 +18,19 @@ import {
   User,
   X,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 // import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import React, { useEffect, useState } from "react";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+
+import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
+import { SidebarLink } from "@/components/admin/SidebarLink";
+import SessionProvider from "@/components/providers/SessionProvider";
+import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { SPRING } from "@/lib/animations";
 
 const NAV_LINKS = [
   { name: "Dashboard", href: "/admin/panel", icon: LayoutGrid },
@@ -67,8 +67,6 @@ function isNavActive(pathname: string, href: string): boolean {
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
-
-import { SidebarLink } from "@/components/admin/SidebarLink";
 
 export default function AdminLayout({
   children,

@@ -1,6 +1,7 @@
+import { useMemo } from "react";
+
 import { useWishlist } from "@/context/WishlistContext";
 import { Product } from "@/types";
-import { useMemo } from "react";
 
 export const useFavorites = () => {
   const {

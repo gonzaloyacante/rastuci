@@ -1,20 +1,26 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
 import { Plus, Save, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import {
+  Control,
+  useFieldArray,
+  useForm,
+  UseFormRegister,
+} from "react-hook-form";
 import useSWR from "swr";
+
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { useToast } from "@/components/ui/Toast";
 
 // --- Types ---
 
 interface Section {
   title: string;
   content: string;
-  items?: string[];
+  items: { value: string }[];
 }
 
 interface PolicyForm {
@@ -23,6 +29,22 @@ interface PolicyForm {
   description: string;
   sections: Section[];
   isActive: boolean;
+}
+
+interface Policy {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  content?: { sections: Section[] };
+  isActive: boolean;
+}
+
+interface SectionItemProps {
+  index: number;
+  register: UseFormRegister<PolicyForm>;
+  control: Control<PolicyForm>;
+  remove: (index: number) => void;
 }
 
 // --- Constants ---
@@ -128,7 +150,7 @@ function PolicyEditor({ slug }: { slug: string }) {
   // Load Data
   useEffect(() => {
     if (policyData?.data) {
-      const found = policyData.data.find((p: any) => p.slug === slug);
+      const found = policyData.data.find((p: Policy) => p.slug === slug);
       if (found) {
         setPolicyId(found.id);
         reset({
@@ -262,7 +284,7 @@ function PolicyEditor({ slug }: { slug: string }) {
   );
 }
 
-function SectionItem({ index, register, control, remove }: any) {
+function SectionItem({ index, register, control, remove }: SectionItemProps) {
   const {
     fields: itemFields,
     append,
@@ -307,7 +329,7 @@ function SectionItem({ index, register, control, remove }: any) {
             <div key={item.id} className="flex items-start gap-2 group/item">
               <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
               <input
-                {...register(`sections.${index}.items.${k}`)}
+                {...register(`sections.${index}.items.${k}.value`)}
                 className="flex-1 bg-transparent border-b border-transparent hover:border-muted focus:border-primary focus:outline-none text-sm py-1"
                 placeholder={`Punto ${k + 1}`}
               />
@@ -327,7 +349,7 @@ function SectionItem({ index, register, control, remove }: any) {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => append("Nuevo punto")}
+            onClick={() => append({ value: "Nuevo punto" })}
             className="text-xs text-muted-foreground hover:text-primary pl-0"
           >
             <Plus size={12} className="mr-1" /> Agregar Viñeta

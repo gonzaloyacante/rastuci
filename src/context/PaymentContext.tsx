@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 export interface PaymentMethod {
   id: string;
@@ -31,7 +31,8 @@ interface PaymentProviderProps {
 }
 
 export const PaymentProvider = ({ children }: PaymentProviderProps) => {
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod | null>(null);
 
   // Métodos de pago actualizados para Argentina
   const availablePaymentMethods: PaymentMethod[] = [

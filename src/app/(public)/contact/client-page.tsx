@@ -1,13 +1,14 @@
 "use client";
 
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
+
+import { FaqSection } from "@/components/contact/FaqSection";
+// import useSWR from "swr";
+import { PublicContactForm } from "@/components/contact/PublicContactForm";
+import { SocialLinks } from "@/components/contact/SocialLinks";
 import { Card, CardContent } from "@/components/ui/Card";
 // import { logger } from "@/lib/logger";
 import { type ContactSettings } from "@/lib/validation/contact";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
-// import useSWR from "swr";
-import { PublicContactForm } from "@/components/contact/PublicContactForm";
-import { FaqSection } from "@/components/contact/FaqSection";
-import { SocialLinks } from "@/components/contact/SocialLinks";
 
 // Fetcher para SWR (Unused)
 // const fetcher = async (url: string): Promise<ContactSettings> => {

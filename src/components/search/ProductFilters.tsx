@@ -1,8 +1,9 @@
+import { Filter, X } from "lucide-react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Category } from "@/types";
-import { Filter, X } from "lucide-react";
-import { useState } from "react";
 
 interface ProductFiltersProps {
   categories: Category[];

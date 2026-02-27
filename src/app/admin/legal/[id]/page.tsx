@@ -1,15 +1,16 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
+
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { useToast } from "@/components/ui/Toast";
 
 const sectionSchema = z.object({
   title: z.string().min(1, "El título es requerido"),

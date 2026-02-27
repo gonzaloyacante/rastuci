@@ -1,8 +1,10 @@
 import { Metadata } from "next";
-import prisma from "@/lib/prisma";
+import { Suspense } from "react";
+
 import { ProductGridSkeleton } from "@/components/products/ProductListComponents";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Suspense } from "react";
+import prisma from "@/lib/prisma";
+
 import ProductsPageClient from "./client-page";
 
 export async function generateMetadata({

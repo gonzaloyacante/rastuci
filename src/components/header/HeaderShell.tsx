@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
@@ -5,7 +6,6 @@ import CartWidget from "@/components/header/CartWidget.client";
 import MobileMenuClient from "@/components/header/MobileMenu.client";
 import WishlistWidget from "@/components/header/WishlistWidget.client";
 import { type HomeSettings } from "@/lib/validation/home";
-import Image from "next/image";
 
 export default function HeaderShell({
   children: _children,

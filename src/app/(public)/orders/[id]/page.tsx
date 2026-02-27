@@ -1,5 +1,6 @@
-import { OrderTracking } from "@/components/orders/OrderTracking";
 import { notFound } from "next/navigation";
+
+import { OrderTracking } from "@/components/orders/OrderTracking";
 
 interface OrderPageProps {
   params: Promise<{

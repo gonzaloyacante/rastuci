@@ -23,14 +23,14 @@ function TabsList({ children, ...props }: TabsListProps) {
   return (
     <div
       className="inline-flex h-10 items-center justify-center rounded-md surface-secondary p-1 muted"
-      {...props}>
+      {...props}
+    >
       {children}
     </div>
   );
 }
 
-interface TabsTriggerProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
   className?: string;
   children: React.ReactNode;
@@ -46,7 +46,8 @@ function TabsTrigger({
     <button
       className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className}`}
       value={value}
-      {...props}>
+      {...props}
+    >
       {children}
     </button>
   );
@@ -66,4 +67,4 @@ function TabsContent({
   return <div {...props}>{children}</div>;
 }
 
-export { Tabs, TabsList, TabsTrigger, TabsContent };
+export { Tabs, TabsContent, TabsList, TabsTrigger };

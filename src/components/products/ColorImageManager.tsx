@@ -1,11 +1,12 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
 import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 
 interface ColorImageManagerProps {
   colors: string[];

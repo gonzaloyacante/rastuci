@@ -1,5 +1,6 @@
-import { ORDER_STATUS } from "@/lib/constants";
 import { z } from "zod";
+
+import { ORDER_STATUS } from "@/lib/constants";
 
 export const OrderStatusSchema = z.enum(
   Object.values(ORDER_STATUS) as [string, ...string[]]

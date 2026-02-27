@@ -1,5 +1,8 @@
 "use client";
 
+import { Edit3, Trash2 } from "lucide-react";
+import { useState } from "react";
+
 import {
   AdminEmpty,
   AdminEmptyIcons,
@@ -12,8 +15,6 @@ import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pagination } from "@/components/ui/Pagination";
 import { useDocumentTitle } from "@/hooks";
 import { User, useUsers } from "@/hooks/useUsers";
-import { Edit3, Trash2 } from "lucide-react";
-import { useState } from "react";
 
 export default function UsuariosPage() {
   useDocumentTitle({ title: "Usuarios" });

@@ -1,10 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 function NotFoundContent() {
   const pathname = usePathname();

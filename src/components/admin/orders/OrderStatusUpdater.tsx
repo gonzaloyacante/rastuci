@@ -1,6 +1,7 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import {
   Select,
@@ -9,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
 
 interface OrderStatusUpdaterProps {

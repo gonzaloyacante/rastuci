@@ -1,10 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { useCart } from "@/context/CartContext";
 import { ArrowLeft, CheckCircle, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { useCart } from "@/context/CartContext";
 
 interface OrderConfirmationProps {
   orderId?: string;
@@ -29,7 +30,9 @@ export default function OrderConfirmation({ orderId }: OrderConfirmationProps) {
           <CheckCircle size={80} className="mx-auto text-success" />
         </div>
 
-        <h1 className="text-3xl font-bold mb-4 text-primary">¡Gracias por tu compra!</h1>
+        <h1 className="text-3xl font-bold mb-4 text-primary">
+          ¡Gracias por tu compra!
+        </h1>
 
         <p className="text-lg muted mb-6">
           Tu pedido ha sido recibido y está siendo procesado.
@@ -76,7 +79,9 @@ export default function OrderConfirmation({ orderId }: OrderConfirmationProps) {
               1
             </div>
             <div>
-              <p className="font-medium text-primary">Confirmación por correo electrónico</p>
+              <p className="font-medium text-primary">
+                Confirmación por correo electrónico
+              </p>
               <p className="muted text-sm">
                 Recibirás un correo electrónico con los detalles de tu pedido y
                 el seguimiento cuando esté disponible.

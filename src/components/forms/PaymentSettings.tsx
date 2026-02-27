@@ -1,17 +1,18 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import { AlertTriangle, Save } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import {
-  type StoreSettings,
-  defaultStoreSettings,
-} from "@/lib/validation/store";
-import { Save, AlertTriangle } from "lucide-react";
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
+import {
+  defaultStoreSettings,
+  type StoreSettings,
+} from "@/lib/validation/store";
 
 interface PaymentSettingsProps {
   initial?: StoreSettings;
@@ -50,8 +51,7 @@ export default function PaymentSettings({
   if (loading) return <FormSkeleton rows={3} />;
 
   // Helper to update payments nested object
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updatePayment = (field: string, value: any) => {
+  const updatePayment = (field: string, value: string | number) => {
     setData((prev) => ({
       ...prev,
       payments: {

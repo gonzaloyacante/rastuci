@@ -5,9 +5,10 @@
  * Si CA soporta webhooks, configurar esta URL en su panel de administración.
  */
 
+import { NextRequest, NextResponse } from "next/server";
+
 import { logger } from "@/lib/logger";
 import { trackingNotificationService } from "@/lib/tracking-notifications";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {

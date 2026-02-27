@@ -1,5 +1,9 @@
 "use client";
 
+import { CheckCircle, FileSpreadsheet, Upload } from "lucide-react";
+import Papa from "papaparse";
+import { useState } from "react";
+
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import {
@@ -13,9 +17,6 @@ import { Label } from "@/components/ui/Label";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { ProductBulkUpdateItem } from "@/lib/validation/product";
-import { CheckCircle, FileSpreadsheet, Upload } from "lucide-react";
-import Papa from "papaparse";
-import { useState } from "react";
 
 interface BulkImportModalProps {
   isOpen: boolean;

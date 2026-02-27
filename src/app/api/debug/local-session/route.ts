@@ -1,5 +1,6 @@
-import { getSession } from "@/lib/session-jwt";
 import { NextRequest, NextResponse } from "next/server";
+
+import { getSession } from "@/lib/session-jwt";
 
 export async function GET(req: NextRequest) {
   // SECURITY: Only available in development

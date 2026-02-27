@@ -1,3 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
@@ -10,9 +14,6 @@ import {
   CategoryCreateSchema,
 } from "@/lib/validation/category";
 import { ApiResponse, Category } from "@/types";
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // GET /api/categories - Obtener todas las categorías con búsqueda y paginación
 export async function GET(request: NextRequest): Promise<

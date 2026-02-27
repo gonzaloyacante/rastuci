@@ -1,9 +1,11 @@
-import { prisma } from "@/lib/prisma";
-import { withAdminAuth } from "@/lib/adminAuth";
-import { apiHandler, AppError } from "@/lib/api-handler";
+import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { z } from "zod";
+
+import { withAdminAuth } from "@/lib/adminAuth";
+import { apiHandler, AppError } from "@/lib/api-handler";
 import { generateHtmlContent } from "@/lib/policy-utils";
+import { prisma } from "@/lib/prisma";
 
 const createPolicySchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -49,7 +51,9 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
         title,
         slug,
         description,
-        content: { sections: sections || [] } as any,
+        content: {
+          sections: sections || [],
+        } as unknown as Prisma.InputJsonValue,
         htmlContent: generateHtmlContent(sections),
         isActive: isActive ?? true,
       },

@@ -1,12 +1,13 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { ArrowLeft, Mail } from "lucide-react";
-import { Spinner } from "@/components/ui/Spinner";
 import Link from "next/link";
 import { useState } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");

@@ -1,10 +1,11 @@
 "use client";
 
-import { Button } from "./Button";
 import { X } from "lucide-react";
 import * as Icons from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+
+import { Button } from "./Button";
 
 interface IconPickerProps {
   value?: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Filter, Grid, List, ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Filter, Grid, List } from "lucide-react";
 
 interface MobileActionBarProps {
   viewMode: "grid" | "list";

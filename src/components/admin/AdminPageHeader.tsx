@@ -1,4 +1,5 @@
 import React from "react";
+
 import { Button } from "@/components/ui/Button";
 
 interface AdminPageHeaderAction {
@@ -47,7 +48,9 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
               className={`w-full sm:w-auto text-xs sm:text-sm ${action.className || ""}`}
               onClick={action.onClick}
             >
-              {action.icon && <span className="mr-1 sm:mr-2">{action.icon}</span>}
+              {action.icon && (
+                <span className="mr-1 sm:mr-2">{action.icon}</span>
+              )}
               <span className="truncate">{action.label}</span>
             </Button>
           ))}

@@ -1,11 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import {
-  useTrackingValidation,
-  type TrackingValidationResponse,
-} from "@/hooks/useTrackingValidation";
 import {
   AlertCircle,
   CheckCircle,
@@ -15,8 +9,15 @@ import {
   Search,
   Truck,
 } from "lucide-react";
-import { Spinner } from "@/components/ui/Spinner";
 import { useState } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
+import {
+  type TrackingValidationResponse,
+  useTrackingValidation,
+} from "@/hooks/useTrackingValidation";
 
 interface TrackingValidatorProps {
   onValidationSuccess?: (result: TrackingValidationResponse) => void;

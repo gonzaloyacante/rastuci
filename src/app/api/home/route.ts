@@ -1,12 +1,13 @@
-import { NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
+import { NextRequest } from "next/server";
+
 import { withAdminAuth } from "@/lib/adminAuth";
-import { prisma } from "@/lib/prisma";
-import { ok, fail, ApiErrorCode } from "@/lib/apiResponse";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { HomeSettingsSchema, defaultHomeSettings } from "@/lib/validation/home";
+import { defaultHomeSettings, HomeSettingsSchema } from "@/lib/validation/home";
 
 export const dynamic = "force-dynamic";
 

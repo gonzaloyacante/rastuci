@@ -1,5 +1,6 @@
-import { logger } from "@/lib/logger";
 import { v2 as cloudinary } from "cloudinary";
+
+import { logger } from "@/lib/logger";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -46,7 +47,6 @@ export async function uploadImage(file: File, folder = "rastuci") {
     throw error;
   }
 }
-
 
 // Función para eliminar una imagen
 export async function deleteImage(publicId: string) {

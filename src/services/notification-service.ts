@@ -1,6 +1,7 @@
-import { validateWebhookSignature } from "@/lib/mercadopago";
-import { logger } from "@/lib/logger";
 import { MercadoPagoConfig, Payment } from "mercadopago";
+
+import { logger } from "@/lib/logger";
+import { validateWebhookSignature } from "@/lib/mercadopago";
 
 export class MPWebhookService {
   private client: MercadoPagoConfig;

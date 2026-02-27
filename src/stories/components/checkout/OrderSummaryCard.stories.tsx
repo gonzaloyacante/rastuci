@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { OrderSummaryCard } from "../../../components/checkout/OrderSummaryCard";
+
 import type { ProvinceCode } from "@/lib/constants";
+
+import { OrderSummaryCard } from "../../../components/checkout/OrderSummaryCard";
 
 const meta: Meta<typeof OrderSummaryCard> = {
   title: "Checkout/OrderSummaryCard",
@@ -97,7 +99,9 @@ export const Default: Story = {
     shippingCost: 4500,
     discount: 25000,
     total: 124500,
-    agency: mockAgency as unknown as Parameters<typeof OrderSummaryCard>[0]["agency"],
+    agency: mockAgency as unknown as Parameters<
+      typeof OrderSummaryCard
+    >[0]["agency"],
   },
 };
 

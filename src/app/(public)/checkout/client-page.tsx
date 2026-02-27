@@ -1,6 +1,8 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
   CheckoutStepper,
   CustomerInfoStep,
@@ -10,11 +12,10 @@ import {
   ShippingStep,
 } from "@/app/(public)/checkout/components";
 import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
 import { useVacationSettings } from "@/hooks/useVacationSettings";
 import { logger } from "@/lib/logger";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
 
 export enum CheckoutStep {
   CUSTOMER_INFO = 0,

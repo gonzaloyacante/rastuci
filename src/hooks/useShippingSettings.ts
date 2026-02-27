@@ -1,10 +1,11 @@
 "use client";
 
+import useSWR from "swr";
+
 import {
   defaultShippingSettings,
   ShippingSettings,
 } from "@/lib/validation/shipping";
-import useSWR from "swr";
 
 // const fetcher = async (url: string): Promise<ShippingSettings> => {
 //   try {

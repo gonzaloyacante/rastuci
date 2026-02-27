@@ -1,9 +1,10 @@
 "use client";
 
+import React, { createContext, useContext, useEffect, useState } from "react";
+
 import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
-import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface ComparisonContextType {
   comparisonItems: Product[];

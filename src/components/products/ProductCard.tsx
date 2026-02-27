@@ -1,11 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { useFavorites } from "@/hooks/useFavorites";
-import { Product } from "@/types";
-import { formatPriceARS } from "@/utils/formatters";
-import { sortSizes } from "@/utils/sizes";
 import {
   Edit,
   Eye,
@@ -13,22 +7,28 @@ import {
   Power,
   ShoppingCart,
   Star,
+  Trash2,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
-// import { useHotToast } from "@/hooks/use-hot-toast";
 
+import { DynamicTags } from "@/components/products/DynamicTags";
+import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { LoadingSkeleton } from "@/components/ui/LoadingStates";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
+// import { useHotToast } from "@/hooks/use-hot-toast";
 // ============================================================================
 // Sub-componentes reutilizables
 // ============================================================================
-
 import { StockBadge } from "@/components/ui/StockBadge";
-import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
-import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
-import { DynamicTags } from "@/components/products/DynamicTags";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
-import { LoadingSkeleton } from "@/components/ui/LoadingStates";
+import { useFavorites } from "@/hooks/useFavorites";
+import { Product } from "@/types";
+import { formatPriceARS } from "@/utils/formatters";
+import { sortSizes } from "@/utils/sizes";
 
 /** Badge de precio con descuento */
 export const PriceBadge = ({
@@ -123,6 +123,7 @@ interface AdminProductCardProps extends ProductCardBaseProps {
   onEdit: (id: string) => void;
   onView?: (id: string) => void;
   onToggleActive?: (id: string, isActive: boolean) => void;
+  onDelete?: (id: string) => void;
 }
 
 export type ProductCardProps = PublicProductCardProps | AdminProductCardProps;
@@ -231,10 +232,11 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   // VARIANTE ADMIN
   // =========================================================================
   if (isAdmin) {
-    const { onEdit, onView, onToggleActive } = props as AdminProductCardProps;
+    const { onEdit, onView, onToggleActive, onDelete } =
+      props as AdminProductCardProps;
 
     return (
-      <div className="group surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden h-full flex flex-col">
+      <div className="group relative surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden h-full flex flex-col">
         {/* Image Section */}
         <div className="relative shrink-0">
           <div className="aspect-square surface-secondary rounded-t-xl overflow-hidden">
@@ -411,7 +413,18 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             >
               <span className="hidden sm:inline">Editar</span>
             </Button>
-            {/* Delete button removed in favor of Soft Delete (Deactivate) only */}
+            {onDelete && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 min-w-[2.5rem]"
+                onClick={() => onDelete(product.id)}
+                leftIcon={<Trash2 className="h-4 w-4" />}
+                title="Eliminar producto"
+              >
+                {""}
+              </Button>
+            )}
           </div>
         </div>
 

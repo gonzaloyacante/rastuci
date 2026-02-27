@@ -1,5 +1,5 @@
-import { mobilePushService } from '@/lib/mobile-push';
-import { handleOrderStatusChange } from '@/lib/email-service';
+import { handleOrderStatusChange } from "@/lib/email-service";
+import { mobilePushService } from "@/lib/mobile-push";
 
 interface OrderStatusChangeInput {
   orderId: string;
@@ -12,7 +12,6 @@ interface OrderStatusChangeInput {
 
 // Servicio integrado que maneja tanto email como push notifications
 export class IntegratedNotificationService {
-  
   // Manejar cambio de estado de orden con notificaciones integradas
   async handleOrderStatusChange(input: OrderStatusChangeInput): Promise<{
     emailSent: boolean;
@@ -152,15 +151,15 @@ export class IntegratedNotificationService {
 
   private getStatusMessage(status: string): string {
     const statusMessages: Record<string, string> = {
-      'pending': 'Tu pedido está siendo preparado',
-      'in-transit': 'Tu pedido está en camino',
-      'out-for-delivery': 'Tu pedido está siendo entregado hoy',
-      'delivered': 'Tu pedido ha sido entregado exitosamente',
-      'delayed': 'Hay un retraso en tu envío',
-      'error': 'Ha ocurrido un problema con tu envío',
+      pending: "Tu pedido está siendo preparado",
+      "in-transit": "Tu pedido está en camino",
+      "out-for-delivery": "Tu pedido está siendo entregado hoy",
+      delivered: "Tu pedido ha sido entregado exitosamente",
+      delayed: "Hay un retraso en tu envío",
+      error: "Ha ocurrido un problema con tu envío",
     };
 
-    return statusMessages[status] || 'Actualización en tu pedido';
+    return statusMessages[status] || "Actualización en tu pedido";
   }
 }
 

@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Unlock } from "lucide-react";
-import { SectionLoader } from "@/components/ui/Spinner";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/Button";
-import { Switch } from "@/components/ui/Switch";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
 import {
   Card,
   CardContent,
@@ -17,7 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { useToast } from "@/components/ui/Toast";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { DatePicker } from "@/components/ui/DatePicker";
 import {
   Dialog,
   DialogContent,
@@ -26,15 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/Dialog";
-import { Checkbox } from "@/components/ui/Checkbox";
-
-import {
-  VacationSettingsSchema,
-  VacationSettingsFormData,
-} from "@/lib/validation/vacation";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { SectionLoader } from "@/components/ui/Spinner";
+import { Switch } from "@/components/ui/Switch";
+import { useToast } from "@/components/ui/Toast";
 import VacationHistory from "@/components/vacation/VacationHistory";
-import { DatePicker } from "@/components/ui/DatePicker";
-import { Controller } from "react-hook-form";
+import {
+  VacationSettingsFormData,
+  VacationSettingsSchema,
+} from "@/lib/validation/vacation";
 
 // Define Form Data extending Schema to handle dates as strings for input if needed
 // Zod schema expects Dates, but inputs use strings. React Hook Form handles this with Controller usually.

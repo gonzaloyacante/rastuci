@@ -1,8 +1,8 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
 import { AdminPageHeader } from "@/components/admin";
 import { CategoryForm } from "@/components/forms";
+import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
 
 export default function CreateCategoryPage() {

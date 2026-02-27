@@ -1,9 +1,10 @@
+import { NextResponse } from "next/server";
+
 import {
   correoArgentinoService,
   type ProvinceCode,
 } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
-import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
@@ -83,16 +84,18 @@ export async function GET(request: Request) {
       agencies,
       isFallback: false,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error inesperado";
+    const stack = error instanceof Error ? error.stack : undefined;
+
     logger.error("[Agencies] Unexpected error", {
-      message: error.message,
-      stack: error.stack?.substring(0, 500),
+      message,
+      stack: stack?.substring(0, 500),
     });
 
     return NextResponse.json({
       success: false,
-      error: error.message || "Error inesperado",
+      error: message,
       agencies: [],
     });
   }

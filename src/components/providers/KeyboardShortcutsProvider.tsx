@@ -1,7 +1,7 @@
 "use client";
 
-import { useGlobalKeyboardShortcuts } from "@/hooks/useGlobalKeyboardShortcuts";
 import { KeyboardShortcutsModal } from "@/components/ui/KeyboardShortcutsModal";
+import { useGlobalKeyboardShortcuts } from "@/hooks/useGlobalKeyboardShortcuts";
 
 interface KeyboardShortcutsProviderProps {
   children: React.ReactNode;

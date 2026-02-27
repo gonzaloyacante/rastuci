@@ -1,9 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { BillingOption, CustomerInfo, useCart } from "@/context/CartContext";
 import { Check, ChevronRight, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/Button";
+import { BillingOption, CustomerInfo, useCart } from "@/context/CartContext";
 
 interface BillingStepProps {
   onNext: () => void;

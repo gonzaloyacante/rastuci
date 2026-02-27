@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { Button } from "@/components/ui/Button";
 
 interface EmptyStateSectionProps {
@@ -6,7 +7,10 @@ interface EmptyStateSectionProps {
   showCategories: boolean;
 }
 
-export function EmptyStateSection({ showProducts, showCategories }: EmptyStateSectionProps) {
+export function EmptyStateSection({
+  showProducts,
+  showCategories,
+}: EmptyStateSectionProps) {
   if (showProducts || showCategories) {
     return null;
   }
@@ -20,7 +24,8 @@ export function EmptyStateSection({ showProducts, showCategories }: EmptyStateSe
               className="w-12 h-12 text-primary"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24">
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -33,8 +38,8 @@ export function EmptyStateSection({ showProducts, showCategories }: EmptyStateSe
             Próximamente
           </h2>
           <p className="muted text-lg max-w-md mx-auto">
-            Estamos preparando nuestra colección de productos. ¡Vuelve
-            pronto para descubrir nuestra ropa infantil!
+            Estamos preparando nuestra colección de productos. ¡Vuelve pronto
+            para descubrir nuestra ropa infantil!
           </p>
         </div>
         <Link href="/contacto">

@@ -1,12 +1,13 @@
 "use client";
 
+import { ArrowRight, Package, User } from "lucide-react";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Progress";
 import { type DashboardData } from "@/services/analytics-service";
-import { Package, User, ArrowRight } from "lucide-react";
 
 interface TopListsProps {
   products: DashboardData["topProducts"];

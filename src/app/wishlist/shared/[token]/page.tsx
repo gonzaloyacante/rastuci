@@ -1,11 +1,12 @@
-import { prisma } from "@/lib/prisma";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
-import { Button } from "@/components/ui/Button";
-import Link from "next/link";
-import { formatPriceARS } from "@/utils/formatters";
 import { ShoppingCart } from "lucide-react";
-import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { Button } from "@/components/ui/Button";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { prisma } from "@/lib/prisma";
+import { formatPriceARS } from "@/utils/formatters";
 
 interface Props {
   params: { token: string };

@@ -1,12 +1,13 @@
-import prisma from "@/lib/prisma";
-import { ORDER_STATUS } from "@/lib/constants";
-import { logger } from "@/lib/logger";
-import { OrderStatus } from "@prisma/client";
-import { getStoreSettings } from "@/lib/store-settings";
-import { emailService } from "@/lib/resend";
-import { OrderItemInput, MercadoPagoPayer } from "@/types";
-import { PROVINCIAS } from "@/lib/constants";
+import { OrderStatus, Prisma } from "@prisma/client";
 import { add } from "date-fns";
+import { nanoid } from "nanoid";
+
+import { ORDER_STATUS, PROVINCIAS } from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
+import { emailService } from "@/lib/resend";
+import { getStoreSettings } from "@/lib/store-settings";
+import { MercadoPagoPayer, OrderItemInput } from "@/types";
 
 export interface OrderMetadata {
   tempOrderId?: string;
@@ -31,8 +32,6 @@ export type OrderUpdateData = {
   mpStatus: string;
   mappedStatus: OrderStatus;
 };
-
-import { nanoid } from "nanoid";
 
 export class OrderService {
   mapStatus(mpStatus: string): OrderStatus {
@@ -441,9 +440,30 @@ export class OrderService {
       hours: settings.payments?.cashExpirationHours || 72,
     });
 
-    let emailContext: any = null;
+    interface ValidatedItem {
+      productId: string;
+      quantity: number;
+      price: number;
+      originalPrice: number;
+      size?: string;
+      color?: string;
+    }
 
-    const order = await prisma.$transaction(async (tx) => {
+    interface EmailContext {
+      validatedItems: ValidatedItem[];
+      dbProducts: Array<{
+        id: string;
+        name: string;
+        price: Prisma.Decimal;
+        salePrice: Prisma.Decimal | null;
+        onSale: boolean;
+        stock: number;
+      }>;
+    }
+
+    let emailContext: EmailContext | null = null;
+
+    const transactionResult = await prisma.$transaction(async (tx) => {
       // 1. Fetch products
       const productIds = items.map((i) => i.productId);
       const dbProducts = await tx.products.findMany({
@@ -553,12 +573,15 @@ export class OrderService {
         });
       }
 
-      return newOrder;
+      return { newOrder, emailContext };
     });
 
+    const { newOrder: order, emailContext: resultEmailContext } =
+      transactionResult;
+
     // 5. Emails
-    if (emailContext) {
-      const { validatedItems, dbProducts } = emailContext;
+    if (resultEmailContext) {
+      const { validatedItems, dbProducts } = resultEmailContext;
       if (settings.adminEmail) {
         // Send alert - could add admin-specific email
       }

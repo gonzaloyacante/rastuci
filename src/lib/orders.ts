@@ -1,6 +1,7 @@
-import type { Order, OrderStatus } from "@/types";
 import { Prisma } from "@prisma/client";
+
 import prisma from "@/lib/prisma";
+import type { Order, OrderStatus } from "@/types";
 
 // Define the type for the order with nested relations
 type OrderWithItems = Prisma.ordersGetPayload<{

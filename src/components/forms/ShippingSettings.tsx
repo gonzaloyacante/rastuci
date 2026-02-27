@@ -1,16 +1,17 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { Alert } from "@/components/ui/Alert";
-import { StoreSettings, defaultStoreSettings } from "@/lib/validation/store";
-import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
-import { Save } from "lucide-react";
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
+import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
+import { defaultStoreSettings, StoreSettings } from "@/lib/validation/store";
 
 export default function ShippingSettings() {
   const { show } = useToast();

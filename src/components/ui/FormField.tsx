@@ -1,4 +1,5 @@
 import React from "react";
+
 import { cn } from "@/lib/utils";
 
 interface FormFieldProps {
@@ -71,7 +72,8 @@ export const TextField: React.FC<TextFieldProps> = ({
       error={error}
       required={required}
       className={className}
-      helpText={helpText}>
+      helpText={helpText}
+    >
       <input
         id={name}
         name={name}
@@ -124,7 +126,8 @@ export const TextAreaField: React.FC<TextAreaFieldProps> = ({
       error={error}
       required={required}
       className={className}
-      helpText={helpText}>
+      helpText={helpText}
+    >
       <textarea
         id={name}
         name={name}
@@ -177,7 +180,8 @@ export const SelectField: React.FC<SelectFieldProps> = ({
       error={error}
       required={required}
       className={className}
-      helpText={helpText}>
+      helpText={helpText}
+    >
       <select
         id={name}
         name={name}
@@ -187,7 +191,8 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         className={cn(
           "w-full px-3 py-2 border border-muted rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:surface-secondary disabled:cursor-not-allowed",
           error && "border-error focus:ring-error focus:border-error"
-        )}>
+        )}
+      >
         {placeholder && (
           <option value="" disabled>
             {placeholder}
@@ -231,7 +236,8 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
       name={name}
       error={error}
       className={className}
-      helpText={helpText}>
+      helpText={helpText}
+    >
       <div className="flex items-center">
         <input
           id={name}
@@ -283,7 +289,8 @@ export const RadioField: React.FC<RadioFieldProps> = ({
       name={name}
       error={error}
       className={className}
-      helpText={helpText}>
+      helpText={helpText}
+    >
       <div className="space-y-2">
         {options.map((option) => (
           <div key={option.value} className="flex items-center">
@@ -302,7 +309,8 @@ export const RadioField: React.FC<RadioFieldProps> = ({
             />
             <label
               htmlFor={`${name}-${option.value}`}
-              className="ml-2 block text-sm text-primary">
+              className="ml-2 block text-sm text-primary"
+            >
               {option.label}
             </label>
           </div>

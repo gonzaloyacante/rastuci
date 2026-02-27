@@ -1,11 +1,12 @@
 "use strict";
 
+import useSWR from "swr";
+
 import {
   defaultStoreSettings,
   StoreSettings,
   StoreSettingsSchema,
 } from "@/lib/validation/store";
-import useSWR from "swr";
 
 export function useStoreSettings() {
   const { data, error, isLoading, mutate } = useSWR<StoreSettings>(

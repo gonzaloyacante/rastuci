@@ -1,5 +1,6 @@
 // PWA utilities and service worker management
 import { useEffect, useState } from "react";
+
 import { logger } from "./logger";
 
 export interface PWAInstallPrompt {

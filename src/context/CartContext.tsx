@@ -1,9 +1,5 @@
 "use client";
 
-import { Agency } from "@/lib/correo-argentino-service";
-import { logger } from "@/lib/logger";
-import { Product } from "@/types";
-import { analytics } from "@/lib/analytics"; // Import analytics singleton
 import {
   createContext,
   ReactNode,
@@ -13,6 +9,11 @@ import {
   useMemo,
   useState,
 } from "react";
+
+import { analytics } from "@/lib/analytics"; // Import analytics singleton
+import { Agency } from "@/lib/correo-argentino-service";
+import { logger } from "@/lib/logger";
+import { Product } from "@/types";
 
 // Interfaces para el checkout
 export interface ShippingOption {

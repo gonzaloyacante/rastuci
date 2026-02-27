@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import ConfirmDialog from "../../../components/ui/ConfirmDialog";
-import { Button } from "../../../components/ui/Button";
 import { useState } from "react";
+
+import { Button } from "../../../components/ui/Button";
+import ConfirmDialog from "../../../components/ui/ConfirmDialog";
 
 const meta: Meta<typeof ConfirmDialog> = {
   title: "UI/ConfirmDialog",

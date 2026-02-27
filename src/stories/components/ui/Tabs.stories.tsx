@@ -1,9 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import {
   Tabs,
+  TabsContent,
   TabsList,
   TabsTrigger,
-  TabsContent,
 } from "../../../components/ui/Tabs";
 
 const meta: Meta<typeof Tabs> = {

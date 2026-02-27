@@ -1,9 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { Badge } from "@/components/ui/Badge";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
 
 // Map colors to classes
 const COLOR_CLASSES: Record<string, string> = {

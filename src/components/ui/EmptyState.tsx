@@ -1,6 +1,7 @@
 import { LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+
+import { Button } from "@/components/ui/Button";
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -32,9 +33,7 @@ export default function EmptyState({
       )}
 
       {actionText && onAction && (
-        <Button
-          onClick={onAction}
-          variant="hero">
+        <Button onClick={onAction} variant="hero">
           {actionText}
         </Button>
       )}

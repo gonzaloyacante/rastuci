@@ -1,10 +1,11 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { DURATION, EASE, FADE_IN_DOWN } from "@/lib/animations";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { DURATION, EASE, FADE_IN_DOWN } from "@/lib/animations";
 
 interface CheckoutTransitionsProps {
   children: React.ReactNode;

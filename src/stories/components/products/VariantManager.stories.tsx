@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import VariantManager from "../../../components/products/VariantManager";
 import { useState } from "react";
+
+import VariantManager from "../../../components/products/VariantManager";
 import { ProductVariant } from "../../../types";
 
 const meta: Meta<typeof VariantManager> = {
@@ -50,8 +51,22 @@ export const WithVariants: Story = {
       availableColors={["Rojo", "Azul"]}
       availableSizes={["S", "M"]}
       initialVariants={[
-        { id: "1", productId: "p1", color: "Rojo", size: "S", stock: 10, sku: "RED-S-1" },
-        { id: "2", productId: "p1", color: "Rojo", size: "M", stock: 5, sku: "RED-M-1" },
+        {
+          id: "1",
+          productId: "p1",
+          color: "Rojo",
+          size: "S",
+          stock: 10,
+          sku: "RED-S-1",
+        },
+        {
+          id: "2",
+          productId: "p1",
+          color: "Rojo",
+          size: "M",
+          stock: 5,
+          sku: "RED-M-1",
+        },
       ]}
     />
   ),

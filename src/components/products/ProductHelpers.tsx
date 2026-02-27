@@ -1,9 +1,10 @@
-import { cn } from "@/lib/utils";
 import { Check, HelpCircle } from "lucide-react";
-import { useState, useEffect } from "react";
-import { StockBadge } from "@/components/ui/StockBadge";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/Button";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { StockBadge } from "@/components/ui/StockBadge";
+import { cn } from "@/lib/utils";
 
 // ==============================================================================
 // Shared Toggle Button

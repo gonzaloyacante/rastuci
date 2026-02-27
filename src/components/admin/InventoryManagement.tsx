@@ -1,18 +1,5 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import {
-  InventoryFilters,
-  InventoryTable,
-  ItemDetailsModal,
-  StatCard,
-  StockAdjustmentModal,
-  type InventoryItem,
-  type InventoryStats,
-  type StockAdjustmentData,
-  type StockMovement,
-} from "@/components/admin/InventoryComponents";
-import type { Product } from "@/types";
 import {
   AlertTriangle,
   Download,
@@ -25,6 +12,20 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import {
+  InventoryFilters,
+  type InventoryItem,
+  type InventoryStats,
+  InventoryTable,
+  ItemDetailsModal,
+  StatCard,
+  type StockAdjustmentData,
+  StockAdjustmentModal,
+  type StockMovement,
+} from "@/components/admin/InventoryComponents";
+import { useToast } from "@/components/ui/Toast";
+import type { Product } from "@/types";
 
 export function InventoryManagement() {
   const { show } = useToast();

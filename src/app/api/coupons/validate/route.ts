@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkRateLimit } from "@/lib/rateLimiter";
+
 import { fail } from "@/lib/apiResponse";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 export async function POST(request: NextRequest) {
   try {

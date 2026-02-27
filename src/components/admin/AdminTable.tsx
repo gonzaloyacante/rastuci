@@ -1,7 +1,8 @@
+import React from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
-import React from "react";
 
 interface AdminTableColumn<T = Record<string, unknown>> {
   key: string;

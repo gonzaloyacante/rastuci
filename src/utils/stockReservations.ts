@@ -1,5 +1,5 @@
-import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 
 const RESERVATION_DURATION_MS = 15 * 60 * 1000; // 15 minutos
 
@@ -82,7 +82,10 @@ export async function releaseStockReservation(
       where: { sessionId },
     });
 
-    logger.info("[Stock] Reservation released", { sessionId, count: deleted.count });
+    logger.info("[Stock] Reservation released", {
+      sessionId,
+      count: deleted.count,
+    });
   } catch (error) {
     logger.error("[Stock] Error releasing reservation", { error, sessionId });
   }

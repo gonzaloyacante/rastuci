@@ -1,8 +1,9 @@
 "use client";
 
-import { useAnalytics } from "@/lib/analytics";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+
+import { useAnalytics } from "@/lib/analytics";
 
 export default function AnalyticsInit() {
   const pathname = usePathname();

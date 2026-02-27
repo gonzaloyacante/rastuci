@@ -1,12 +1,17 @@
-import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { withAdminAuth } from "@/lib/adminAuth";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { sanitizers, validateAndSanitize } from "@/lib/input-sanitization";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
-  colorImageRowsToRecord,
   colorImageRecordToRows,
+  colorImageRowsToRecord,
   sizeGuideRowsToArray,
   sizeGuideToRows,
 } from "@/lib/product-mappers";
@@ -17,10 +22,6 @@ import {
   ProductsQuerySchema,
 } from "@/lib/validation/product";
 import { ApiResponse, PaginatedResponse, Product } from "@/types";
-import { Prisma } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // GET /api/products - Obtener productos con filtros y paginación
 export async function GET(

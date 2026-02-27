@@ -1,14 +1,5 @@
 "use client";
 
-import { AgencySelector } from "@/components/checkout/AgencySelector";
-import {
-  DeliveryMode,
-  ShippingMethodSelector,
-} from "@/components/checkout/ShippingMethodSelector";
-import { Button } from "@/components/ui/Button";
-import { ShippingOption, useCart } from "@/context/CartContext";
-import { logger } from "@/lib/logger";
-import { formatPriceARS } from "@/utils/formatters";
 import {
   AlertCircle,
   Check,
@@ -20,7 +11,18 @@ import {
   Truck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { AgencySelector } from "@/components/checkout/AgencySelector";
+import {
+  DeliveryMode,
+  ShippingMethodSelector,
+} from "@/components/checkout/ShippingMethodSelector";
+import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { ShippingOption, useCart } from "@/context/CartContext";
+import { useShippingSettings } from "@/hooks/useShippingSettings";
+import { logger } from "@/lib/logger";
+import { formatPriceARS } from "@/utils/formatters";
 
 // ============================================================================
 // HELPER FUNCTIONS (fuera del componente)
@@ -82,8 +84,6 @@ interface ShippingStepProps {
   onNext: () => void;
   onBack: () => void;
 }
-
-import { useShippingSettings } from "@/hooks/useShippingSettings";
 
 export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
   const { shipping: shippingSettings } = useShippingSettings();

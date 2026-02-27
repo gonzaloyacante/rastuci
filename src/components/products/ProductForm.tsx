@@ -1,28 +1,6 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { logger } from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import * as z from "zod";
-
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
-import { Product, ProductVariant } from "@/types";
-import { useMemo } from "react";
-import { getColorHex } from "@/utils/colors";
-import { formatPriceARS } from "@/utils/formatters";
 import {
   AlertCircle,
   ArrowLeft,
@@ -40,6 +18,27 @@ import {
   Tag,
   TrendingUp,
 } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import * as z from "zod";
+
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import { useToast } from "@/components/ui/Toast";
+import { logger } from "@/lib/logger";
+import { Product, ProductVariant } from "@/types";
+import { getColorHex } from "@/utils/colors";
+import { formatPriceARS } from "@/utils/formatters";
 
 import {
   ColorPicker,
@@ -50,8 +49,8 @@ import {
   SizeManager,
   // StockIndicator,
 } from "./ProductFormComponents";
-import VariantManager from "./VariantManager";
 import SizeGuideEditor, { SizeGuideData } from "./SizeGuideEditor";
+import VariantManager from "./VariantManager";
 
 // ==============================================================================
 // TYPES & SCHEMA

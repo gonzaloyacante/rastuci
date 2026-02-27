@@ -1,5 +1,9 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import useSWR from "swr";
+
 import ProductCard from "@/components/products/ProductCard";
 import {
   ActiveFilterChips,
@@ -13,7 +17,6 @@ import {
   ViewModeToggle,
 } from "@/components/products/ProductListComponents";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
 import {
   Select,
   SelectContent,
@@ -21,13 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useCategories } from "@/hooks/useCategories";
-import { Product } from "@/types";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useRef } from "react";
-import { useSearchParams } from "next/navigation";
-import useSWR from "swr";
 import { SORT_OPTIONS as SORT_OPTIONS_BASE } from "@/lib/constants";
+import { Product } from "@/types";
 
 // ==============================================================================
 // TYPES & CONSTANTS

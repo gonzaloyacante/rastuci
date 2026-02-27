@@ -1,7 +1,9 @@
-import { FormSkeleton } from "@/components/admin/skeletons";
-import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+
+import { FormSkeleton } from "@/components/admin/skeletons";
+import prisma from "@/lib/prisma";
+
 import { EditUserClient } from "./client-page";
 
 interface UserEditPageProps {

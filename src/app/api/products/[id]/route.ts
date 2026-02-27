@@ -1,12 +1,16 @@
-import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { withAdminAuth } from "@/lib/adminAuth";
-import { normalizeApiError } from "@/lib/errors";
+import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { deleteImage, extractPublicId } from "@/lib/cloudinary";
+import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import {
-  colorImageRowsToRecord,
   colorImageRecordToRows,
+  colorImageRowsToRecord,
   sizeGuideRowsToArray,
   sizeGuideToRows,
 } from "@/lib/product-mappers";
@@ -15,9 +19,6 @@ import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ProductCreateSchema } from "@/lib/validation/product";
 import { variantService } from "@/services/variant-service";
 import { ApiResponse, Product } from "@/types";
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 interface RouteParams {
   params: Promise<{
@@ -420,6 +421,67 @@ export const PATCH = withAdminAuth(
         error,
         "INTERNAL_ERROR",
         "Error al actualizar el estado",
+        500
+      );
+      return fail(
+        e.code as ApiErrorCode,
+        e.message,
+        e.status,
+        e.details as Record<string, unknown>
+      );
+    }
+  }
+);
+
+// DELETE /api/products/[id] - Eliminar producto (ADMIN ONLY)
+export const DELETE = withAdminAuth(
+  async (
+    _request: NextRequest,
+    { params }: RouteParams
+  ): Promise<NextResponse<ApiResponse<{ deleted: boolean }>>> => {
+    try {
+      const { id } = await params;
+
+      // Fetch product to get images for cleanup
+      const product = await prisma.products.findUnique({
+        where: { id },
+        select: { id: true, images: true },
+      });
+
+      if (!product) {
+        return fail("NOT_FOUND", "Producto no encontrado", 404);
+      }
+
+      // Delete product (cascades to variants, color images, size guides via DB relations)
+      await prisma.products.delete({ where: { id } });
+
+      // Clean up Cloudinary images in background (non-blocking)
+      if (product.images) {
+        const images: string[] =
+          typeof product.images === "string"
+            ? JSON.parse(product.images)
+            : product.images;
+
+        Promise.allSettled(
+          images.map(async (url) => {
+            const publicId = extractPublicId(url);
+            if (publicId) {
+              await deleteImage(publicId);
+            }
+          })
+        ).then((results) => {
+          logger.info("Product image deletion results", { results });
+        });
+      }
+
+      logger.info(`[Admin] Deleted product ${id}`);
+      return ok({ deleted: true }, "Producto eliminado correctamente");
+    } catch (error) {
+      logger.error("Error deleting product:", { error });
+      const e = normalizeApiError(
+        error,
+        "INTERNAL_ERROR",
+        "Error al eliminar el producto",
         500
       );
       return fail(

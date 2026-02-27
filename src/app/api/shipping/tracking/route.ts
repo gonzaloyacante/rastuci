@@ -1,6 +1,7 @@
+import { NextResponse } from "next/server";
+
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
-import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {

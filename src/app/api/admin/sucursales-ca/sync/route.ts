@@ -1,8 +1,9 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import type { ApiResponse } from "@/types";
-import { NextRequest, NextResponse } from "next/server";
 
 interface AgencyData {
   code: string;

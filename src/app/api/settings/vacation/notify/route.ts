@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
 import prisma from "@/lib/prisma";
 import { emailService } from "@/lib/resend"; // We will add sendVacationReopening here
-import { z } from "zod";
 
 const NotifySchema = z.object({
   periodId: z.string().min(1),

@@ -1,7 +1,3 @@
-// =============================================================================
-// SETTINGS MODELS (Explicit - No JSON)
-// =============================================================================
-
 /// Store identity and email configuration
 model store_settings {
   id                String   @id @default("default")
@@ -20,42 +16,42 @@ model store_settings {
 
 /// Homepage visual configuration
 model home_settings {
-  id                   String          @id @default("default")
-  headerLogoUrl        String?
-  heroLogoUrl          String?
-  heroImage            String?
-  heroOverlayOpacity   Int             @default(20)
-  heroTitle            String          @default("Bienvenidos a Rastuci")
-  heroSubtitle         String          @default("Ropa para niños con estilo")
-  ctaPrimaryLabel      String          @default("Ver Productos")
-  ctaPrimaryLink       String          @default("/products")
-  ctaSecondaryLabel    String          @default("Conocer Más")
-  ctaSecondaryLink     String          @default("/about")
-  categoriesTitle      String          @default("Categorías")
-  benefitsTitle        String          @default("Por qué elegirnos")
-  categoriesSubtitle   String          @default("Explorá nuestras categorías de productos")
-  categoriesDisplay    String          @default("image") // image, icon
-  featuredTitle        String          @default("Ofertas Destacadas")
-  featuredSubtitle     String          @default("Los mejores productos con descuento")
-  featuredCount        Int             @default(4)
-  showHeroLogo         Boolean         @default(true)
-  showHeroTitle        Boolean         @default(true)
-  showHeroSubtitle     Boolean         @default(true)
-  showCtaPrimary       Boolean         @default(true)
-  showCtaSecondary     Boolean         @default(true)
-  showCategoriesTitle  Boolean         @default(true)
-  showCategoriesSubtitle Boolean       @default(true)
-  showFeaturedTitle    Boolean         @default(true)
-  showFeaturedSubtitle Boolean         @default(true)
-  footerLogoUrl        String?
-  footerBrand          String          @default("Rastuci")
-  footerTagline        String          @default("Moda infantil con amor")
-  showFooterLogo       Boolean         @default(true)
-  showFooterBrand      Boolean         @default(true)
-  showFooterTagline    Boolean         @default(true)
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
-  benefits             home_benefits[]
+  id                     String          @id @default("default")
+  headerLogoUrl          String?
+  heroLogoUrl            String?
+  heroImage              String?
+  heroOverlayOpacity     Int             @default(20)
+  heroTitle              String          @default("Bienvenidos a Rastuci")
+  heroSubtitle           String          @default("Ropa para niños con estilo")
+  ctaPrimaryLabel        String          @default("Ver Productos")
+  ctaPrimaryLink         String          @default("/products")
+  ctaSecondaryLabel      String          @default("Conocer Más")
+  ctaSecondaryLink       String          @default("/about")
+  categoriesTitle        String          @default("Categorías")
+  benefitsTitle          String          @default("Por qué elegirnos")
+  categoriesSubtitle     String          @default("Explorá nuestras categorías de productos")
+  categoriesDisplay      String          @default("image")
+  featuredTitle          String          @default("Ofertas Destacadas")
+  featuredSubtitle       String          @default("Los mejores productos con descuento")
+  featuredCount          Int             @default(4)
+  showHeroLogo           Boolean         @default(true)
+  showHeroTitle          Boolean         @default(true)
+  showHeroSubtitle       Boolean         @default(true)
+  showCtaPrimary         Boolean         @default(true)
+  showCtaSecondary       Boolean         @default(true)
+  showCategoriesTitle    Boolean         @default(true)
+  showCategoriesSubtitle Boolean         @default(true)
+  showFeaturedTitle      Boolean         @default(true)
+  showFeaturedSubtitle   Boolean         @default(true)
+  footerLogoUrl          String?
+  footerBrand            String          @default("Rastuci")
+  footerTagline          String          @default("Moda infantil con amor")
+  showFooterLogo         Boolean         @default(true)
+  showFooterBrand        Boolean         @default(true)
+  showFooterTagline      Boolean         @default(true)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  benefits               home_benefits[]
 }
 
 /// Homepage benefit items
@@ -161,14 +157,14 @@ model faq_items {
 
 /// Payment methods available in checkout
 model payment_methods {
-  id               String  @id @default(cuid())
-  methodId         String  @unique // e.g. "mercadopago", "cash"
+  id               String   @id @default(cuid())
+  methodId         String   @unique
   name             String
-  icon             String  @default("wallet")
+  icon             String   @default("wallet")
   description      String
-  requiresShipping Boolean @default(true)
-  isActive         Boolean @default(true)
-  sortOrder        Int     @default(0)
+  requiresShipping Boolean  @default(true)
+  isActive         Boolean  @default(true)
+  sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -177,14 +173,14 @@ model payment_methods {
 
 /// Shipping options available in checkout
 model shipping_options {
-  id            String  @id @default(cuid())
-  optionId      String  @unique // e.g. "pickup", "standard", "express"
+  id            String   @id @default(cuid())
+  optionId      String   @unique
   name          String
   description   String
-  price         Decimal @db.Decimal(10, 2)
+  price         Decimal  @db.Decimal(10, 2)
   estimatedDays String
-  isActive      Boolean @default(true)
-  sortOrder     Int     @default(0)
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -238,10 +234,10 @@ model vacation_subscriber {
   id           String          @id @default(cuid())
   email        String
   periodId     String
-  period       vacation_period @relation(fields: [periodId], references: [id])
   cartSnapshot Json?
   notified     Boolean         @default(false)
   createdAt    DateTime        @default(now())
+  period       vacation_period @relation(fields: [periodId], references: [id])
 
   @@index([periodId])
 }

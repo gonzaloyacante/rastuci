@@ -1,6 +1,15 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import {
+  AlertCircle,
+  Calculator,
+  Check,
+  Download,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -10,18 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import {
-  Trash2,
-  Plus,
-  AlertCircle,
-  Calculator,
-  Download,
-  Check,
-} from "lucide-react";
-import { useState, useMemo } from "react";
-import { getColorHex } from "@/utils/colors";
+import { useToast } from "@/components/ui/Toast";
 import { ProductVariant } from "@/types";
+import { getColorHex } from "@/utils/colors";
 import { sortVariantsBySize } from "@/utils/sizes";
+
 import { HelpTooltip } from "./ProductFormComponents";
 
 interface VariantManagerProps {

@@ -1,11 +1,12 @@
 "use client";
 
+import { Grid, List, ShoppingCart } from "lucide-react";
+import { ReactNode } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Pagination as UIPagination } from "@/components/ui/Pagination";
 import { ProductCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
-import { Grid, List, ShoppingCart } from "lucide-react";
-import { ReactNode } from "react";
 
 // ==============================================================================
 // ProductGridSkeleton

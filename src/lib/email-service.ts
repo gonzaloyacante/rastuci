@@ -1,5 +1,5 @@
-import { emailService } from "@/lib/resend";
 import { prisma } from "@/lib/prisma";
+import { emailService } from "@/lib/resend";
 
 export interface OrderStatusChangeInput {
   orderId: string;

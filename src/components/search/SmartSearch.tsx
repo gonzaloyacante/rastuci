@@ -1,12 +1,6 @@
 "use client";
 
-import useDebounce from "@/hooks/useDebounce";
-import { DURATION, FADE_IN_DOWN } from "@/lib/animations";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { logger } from "@/lib/logger";
-import { Product } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
-import { LoadingSpinner } from "@/components/ui/LoadingStates";
 import {
   ChevronRight,
   Clock,
@@ -19,6 +13,13 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
+
+import { LoadingSpinner } from "@/components/ui/LoadingStates";
+import useDebounce from "@/hooks/useDebounce";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { DURATION, FADE_IN_DOWN } from "@/lib/animations";
+import { logger } from "@/lib/logger";
+import { Product } from "@/types";
 
 interface SearchSuggestion {
   id: string;

@@ -5,6 +5,8 @@ import nextPlugin from "@next/eslint-plugin-next";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import importPlugin from "eslint-plugin-import";
 
 export default tseslint.config(
   // Ignores globales
@@ -27,12 +29,15 @@ export default tseslint.config(
       "@next/next": nextPlugin,
       react: reactPlugin,
       "react-hooks": reactHooksPlugin,
+      "simple-import-sort": simpleImportSort,
+      import: importPlugin,
     },
     languageOptions: {
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
         },
+        project: "./tsconfig.json", // Required for type-aware linting rules
       },
     },
     rules: {
@@ -48,7 +53,7 @@ export default tseslint.config(
       "react/no-unescaped-entities": "off",
       "react/display-name": "off",
 
-      // TypeScript - relajadas para compatibilidad
+      // TypeScript - STRICT MODE (Golden Rules)
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {
@@ -57,12 +62,20 @@ export default tseslint.config(
           caughtErrorsIgnorePattern: "^_",
         },
       ],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error", // PROHIBITED: Golden Rule
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-floating-promises": "warn", // Catch missing awaits
 
-      // Console permitido
-      "no-console": "off",
+      // Console restriction
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+
+      // Import sorting
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
+      "import/first": "error",
+      "import/newline-after-import": "error",
+      "import/no-duplicates": "error",
     },
   },
   storybook.configs["flat/recommended"]

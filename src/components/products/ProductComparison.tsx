@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useComparison } from '@/context/ComparisonContext';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { OptimizedImage } from '@/components/ui/OptimizedImage';
-import { X, Star, ShoppingCart, Heart } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
-import Link from 'next/link';
+import { Heart, ShoppingCart, Star, X } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { useCart } from "@/context/CartContext";
+import { useComparison } from "@/context/ComparisonContext";
+import { useWishlist } from "@/context/WishlistContext";
 
 // Extended product type for comparison features
 type ProductWithExtras = Record<string, unknown> & {
@@ -19,7 +20,8 @@ type ProductWithExtras = Record<string, unknown> & {
 };
 
 export function ProductComparison() {
-  const { comparisonItems, removeFromComparison, clearComparison } = useComparison();
+  const { comparisonItems, removeFromComparison, clearComparison } =
+    useComparison();
   const { addToCart } = useCart();
   const { addToWishlist, isInWishlist } = useWishlist();
   const [isOpen, setIsOpen] = useState(false);
@@ -31,19 +33,35 @@ export function ProductComparison() {
   const handleAddToCart = (product: ProductWithExtras) => {
     // Type assertion needed for compatibility with existing cart system
     const productForCart = product as unknown;
-    addToCart(productForCart as never, 1, 'M', 'Sin color');
+    addToCart(productForCart as never, 1, "M", "Sin color");
   };
 
   const comparisonFeatures = [
-    { key: 'price', label: 'Precio', format: (value: number) => `$${value}` },
-    { key: 'category', label: 'Categoría' },
-    { key: 'brand', label: 'Marca' },
-    { key: 'rating', label: 'Valoración', format: (value: number) => `${value}/5` },
-    { key: 'stock', label: 'Stock' },
-    { key: 'sizes', label: 'Tallas', format: (value: string[]) => value?.join(', ') || 'N/A' },
-    { key: 'colors', label: 'Colores', format: (value: string[]) => value?.join(', ') || 'N/A' },
-    { key: 'material', label: 'Material' },
-    { key: 'onSale', label: 'En Oferta', format: (value: boolean) => value ? 'Sí' : 'No' },
+    { key: "price", label: "Precio", format: (value: number) => `$${value}` },
+    { key: "category", label: "Categoría" },
+    { key: "brand", label: "Marca" },
+    {
+      key: "rating",
+      label: "Valoración",
+      format: (value: number) => `${value}/5`,
+    },
+    { key: "stock", label: "Stock" },
+    {
+      key: "sizes",
+      label: "Tallas",
+      format: (value: string[]) => value?.join(", ") || "N/A",
+    },
+    {
+      key: "colors",
+      label: "Colores",
+      format: (value: string[]) => value?.join(", ") || "N/A",
+    },
+    { key: "material", label: "Material" },
+    {
+      key: "onSale",
+      label: "En Oferta",
+      format: (value: boolean) => (value ? "Sí" : "No"),
+    },
   ];
 
   return (
@@ -80,7 +98,9 @@ export function ProductComparison() {
               <table className="w-full">
                 <thead className="sticky top-0 surface border-b border-muted">
                   <tr>
-                    <th className="text-left p-4 font-medium w-32">Característica</th>
+                    <th className="text-left p-4 font-medium w-32">
+                      Característica
+                    </th>
                     {comparisonItems.map((product) => (
                       <th key={product.id} className="text-center p-4 min-w-64">
                         <div className="space-y-3">
@@ -103,7 +123,7 @@ export function ProductComparison() {
 
                           {/* Product Name */}
                           <div>
-                            <Link 
+                            <Link
                               href={`/productos/${product.id}`}
                               className="font-medium hover:text-primary transition-colors"
                             >
@@ -114,7 +134,11 @@ export function ProductComparison() {
                           {/* Action Buttons */}
                           <div className="flex flex-col gap-2">
                             <Button
-                              onClick={() => handleAddToCart(product as unknown as ProductWithExtras)}
+                              onClick={() =>
+                                handleAddToCart(
+                                  product as unknown as ProductWithExtras
+                                )
+                              }
                               className="w-full"
                               size="sm"
                             >
@@ -128,15 +152,19 @@ export function ProductComparison() {
                                   id: product.id,
                                   name: product.name,
                                   price: product.price,
-                                  image: product.images?.[0] ?? '',
+                                  image: product.images?.[0] ?? "",
                                 })
                               }
                               disabled={isInWishlist(product.id)}
                               className="w-full"
                               size="sm"
                             >
-                              <Heart className={`w-4 h-4 mr-2 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
-                              {isInWishlist(product.id) ? 'En Favoritos' : 'Añadir a Favoritos'}
+                              <Heart
+                                className={`w-4 h-4 mr-2 ${isInWishlist(product.id) ? "fill-current" : ""}`}
+                              />
+                              {isInWishlist(product.id)
+                                ? "En Favoritos"
+                                : "Añadir a Favoritos"}
                             </Button>
                           </div>
                         </div>
@@ -147,44 +175,84 @@ export function ProductComparison() {
 
                 <tbody>
                   {comparisonFeatures.map((feature, index) => (
-                    <tr key={feature.key} className={index % 2 === 0 ? 'surface' : ''}>
+                    <tr
+                      key={feature.key}
+                      className={index % 2 === 0 ? "surface" : ""}
+                    >
                       <td className="p-4 font-medium border-r border-muted">
                         {feature.label}
                       </td>
                       {comparisonItems.map((product) => {
-                        const value = (product as unknown as Record<string, unknown>)[feature.key];
-                        const displayValue = feature.format ? (feature.format as (v: unknown) => unknown)(value) : String(value || 'N/A');
-                        
+                        const value = (
+                          product as unknown as Record<string, unknown>
+                        )[feature.key];
+                        const displayValue = feature.format
+                          ? (feature.format as (v: unknown) => unknown)(value)
+                          : String(value || "N/A");
+
                         return (
                           <td key={product.id} className="p-4 text-center">
-                            {feature.key === 'rating' && value ? (
+                            {feature.key === "rating" && value ? (
                               <div className="flex items-center justify-center gap-1">
                                 <div className="flex">
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <Star
                                       key={star}
                                       className={`w-4 h-4 ${
-                                        star <= Number(value || 0) ? 'text-warning fill-current' : 'muted'
+                                        star <= Number(value || 0)
+                                          ? "text-warning fill-current"
+                                          : "muted"
                                       }`}
                                     />
                                   ))}
                                 </div>
-                                <span className="text-sm muted">({String(value || '')})</span>
+                                <span className="text-sm muted">
+                                  ({String(value || "")})
+                                </span>
                               </div>
-                            ) : feature.key === 'onSale' && value ? (
+                            ) : feature.key === "onSale" && value ? (
                               <Badge variant="success">En Oferta</Badge>
-                            ) : feature.key === 'stock' ? (
-                              <Badge variant={Number(value || 0) > 0 ? 'success' : 'error'}>
-                                {Number(value || 0) > 0 ? `${value} disponibles` : 'Agotado'}
+                            ) : feature.key === "stock" ? (
+                              <Badge
+                                variant={
+                                  Number(value || 0) > 0 ? "success" : "error"
+                                }
+                              >
+                                {Number(value || 0) > 0
+                                  ? `${value} disponibles`
+                                  : "Agotado"}
                               </Badge>
-                            ) : feature.key === 'price' ? (
+                            ) : feature.key === "price" ? (
                               <div className="space-y-1">
                                 <div className="text-lg font-bold text-primary">
                                   ${product.price}
                                 </div>
-                                {Boolean((product as unknown as Record<string, unknown>).originalPrice && Number((product as unknown as Record<string, unknown>).originalPrice || 0) > product.price) && (
+                                {Boolean(
+                                  (
+                                    product as unknown as Record<
+                                      string,
+                                      unknown
+                                    >
+                                  ).originalPrice &&
+                                  Number(
+                                    (
+                                      product as unknown as Record<
+                                        string,
+                                        unknown
+                                      >
+                                    ).originalPrice || 0
+                                  ) > product.price
+                                ) && (
                                   <div className="text-sm muted line-through">
-                                    ${String((product as unknown as Record<string, unknown>).originalPrice || '')}
+                                    $
+                                    {String(
+                                      (
+                                        product as unknown as Record<
+                                          string,
+                                          unknown
+                                        >
+                                      ).originalPrice || ""
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -215,7 +283,8 @@ export function ProductComparison() {
 
 // Comparison toggle button for product cards
 export function ComparisonToggle({ product }: { product: ProductWithExtras }) {
-  const { addToComparison, removeFromComparison, isInComparison } = useComparison();
+  const { addToComparison, removeFromComparison, isInComparison } =
+    useComparison();
   const inComparison = isInComparison(product.id);
 
   const handleToggle = () => {
@@ -233,7 +302,7 @@ export function ComparisonToggle({ product }: { product: ProductWithExtras }) {
       onClick={handleToggle}
       className="w-full"
     >
-      {inComparison ? 'Quitar de Comparación' : 'Comparar'}
+      {inComparison ? "Quitar de Comparación" : "Comparar"}
     </Button>
   );
 }

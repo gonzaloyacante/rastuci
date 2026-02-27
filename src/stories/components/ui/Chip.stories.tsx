@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import { Chip } from "../../../components/ui/Chip";
 
 const meta: Meta<typeof Chip> = {

@@ -1,9 +1,10 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+
 import { logger } from "@/lib/logger";
-import { checkRateLimit } from "@/lib/rateLimiter";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 const analyticsEventSchema = z.object({
   name: z.string(),

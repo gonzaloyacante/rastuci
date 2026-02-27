@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import {
-  Download,
-  X,
-  Smartphone,
-  Monitor,
-  Zap,
-  Wifi,
   Bell,
+  Download,
+  Monitor,
+  Smartphone,
+  Wifi,
+  X,
+  Zap,
 } from "lucide-react";
-import { usePWA } from "@/lib/pwa";
+import { useEffect, useState } from "react";
+
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { useTranslation } from "@/lib/i18n";
+import { usePWA } from "@/lib/pwa";
 
 interface PWAInstallPromptProps {
   className?: string;

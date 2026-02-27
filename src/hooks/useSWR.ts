@@ -1,5 +1,5 @@
-import useSWR, { SWRConfiguration, SWRResponse } from "swr";
 import { useCallback } from "react";
+import useSWR, { SWRConfiguration, SWRResponse } from "swr";
 
 // Generic fetcher function
 const fetcher = async (url: string) => {
@@ -13,7 +13,7 @@ const fetcher = async (url: string) => {
 // Custom hook for API calls with SWR
 export function useAPI<T = unknown>(
   url: string | null,
-  config?: SWRConfiguration,
+  config?: SWRConfiguration
 ): SWRResponse<T, Error> & { refetch: () => void } {
   const { mutate, ...swr } = useSWR<T, Error>(url, fetcher, {
     revalidateOnFocus: false,
@@ -36,7 +36,9 @@ export function useProducts(params?: {
   page?: number;
   limit?: number;
 }) {
-  const query = params ? new URLSearchParams(params as Record<string, string>).toString() : "";
+  const query = params
+    ? new URLSearchParams(params as Record<string, string>).toString()
+    : "";
   const url = `/api/products${query ? `?${query}` : ""}`;
 
   return useAPI(url, {
@@ -84,7 +86,9 @@ export function useAdminProducts(params?: {
   limit?: number;
   search?: string;
 }) {
-  const query = params ? new URLSearchParams(params as Record<string, string>).toString() : "";
+  const query = params
+    ? new URLSearchParams(params as Record<string, string>).toString()
+    : "";
   const url = `/api/admin/products${query ? `?${query}` : ""}`;
 
   return useAPI(url);
@@ -95,7 +99,9 @@ export function useAdminUsers(params?: {
   limit?: number;
   search?: string;
 }) {
-  const query = params ? new URLSearchParams(params as Record<string, string>).toString() : "";
+  const query = params
+    ? new URLSearchParams(params as Record<string, string>).toString()
+    : "";
   const url = `/api/admin/users${query ? `?${query}` : ""}`;
 
   return useAPI(url);
@@ -109,11 +115,11 @@ export function useSearch(
     minPrice?: number;
     maxPrice?: number;
     sortBy?: string;
-  },
+  }
 ) {
   const searchParams = new URLSearchParams();
   // Map 'q' to 'search' which is what the products API expects
-  searchParams.append('search', query);
+  searchParams.append("search", query);
 
   if (options) {
     Object.entries(options).forEach(([key, value]) => {
@@ -130,7 +136,7 @@ export function useSearch(
     {
       dedupingInterval: 2000,
       revalidateOnFocus: false,
-    },
+    }
   );
 }
 
@@ -164,7 +170,7 @@ export function useMutation<T = unknown>(url: string, options?: RequestInit) {
 
       return res.json();
     },
-    [url, options],
+    [url, options]
   );
 }
 

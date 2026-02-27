@@ -1,8 +1,9 @@
-import { prisma } from "@/lib/prisma";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+
 import { LegalPolicyRenderer } from "@/components/ui/LegalPolicyRenderer";
 import { PolicySection } from "@/lib/policy-utils";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Términos y Condiciones",

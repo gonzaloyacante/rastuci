@@ -1,3 +1,6 @@
+import { Metadata } from "next";
+import { headers } from "next/headers";
+
 import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
 import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
@@ -8,7 +11,6 @@ import { prisma } from "@/lib/prisma";
 import { colorImageRowsToRecord } from "@/lib/product-mappers";
 import { defaultHomeSettings } from "@/lib/validation/home";
 import { defaultShippingSettings } from "@/lib/validation/shipping";
-import { Metadata } from "next";
 
 export const revalidate = 300; // Revalidar cada 5 minutos
 
@@ -149,8 +151,6 @@ async function getHomeData() {
     };
   }
 }
-
-import { headers } from "next/headers";
 
 // ... existing imports
 

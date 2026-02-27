@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { Category } from "@/types";
+
 import useGlobalCache from "./useGlobalCache";
 
 // Hook optimizado para categorías con cache global

@@ -1,14 +1,16 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, isAxiosError } from "axios";
+
+import { logger } from "@/lib/logger";
+
 import {
-  CorreoArgentinoCredentials,
-  TokenResponse,
   ApiResponse,
+  CorreoArgentinoCredentials,
   RegisterUserParams,
   RegisterUserResponse,
+  TokenResponse,
   ValidateUserParams,
   ValidateUserResponse,
 } from "./types";
-import { logger } from "@/lib/logger";
 
 // IMPORTANTE: Siempre usar URL de producción porque la API de test no tiene datos de sucursales
 const URL_PROD = "https://api.correoargentino.com.ar/micorreo/v1";
@@ -89,11 +91,20 @@ export class CorreoArgentinoAuth {
 
       logger.info("[CorreoArgentino] Authentication successful");
       return { success: true, data: this.token };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let errorMessage = "Error desconocido";
+      let errorResponse = undefined;
+
+      if (isAxiosError(error)) {
+        errorMessage = error.message;
+        errorResponse = error.response?.data;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       logger.error("[CorreoArgentino] Authentication failed", {
-        message: error.message,
-        response: error.response?.data,
+        message: errorMessage,
+        response: errorResponse,
       });
 
       return {
@@ -101,7 +112,7 @@ export class CorreoArgentinoAuth {
         error: {
           code: "AUTH_FAILED",
           message: "No se pudo autenticar con Correo Argentino",
-          details: error.response?.data || error.message,
+          details: errorResponse || errorMessage,
         },
       };
     }
@@ -119,14 +130,17 @@ export class CorreoArgentinoAuth {
         params
       );
       return { success: true, data: response.data };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let details = undefined;
+      if (isAxiosError(error)) {
+        details = error.response?.data;
+      }
       return {
         success: false,
         error: {
           code: "USER_VALIDATION_FAILED",
           message: "Error validando usuario",
-          details: error.response?.data,
+          details,
         },
       };
     }
@@ -144,14 +158,17 @@ export class CorreoArgentinoAuth {
         params
       );
       return { success: true, data: response.data };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let details = undefined;
+      if (isAxiosError(error)) {
+        details = error.response?.data;
+      }
       return {
         success: false,
         error: {
           code: "REGISTER_FAILED",
           message: "Error registrando usuario",
-          details: error.response?.data,
+          details,
         },
       };
     }

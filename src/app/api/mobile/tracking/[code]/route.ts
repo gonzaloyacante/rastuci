@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+
+import { prisma } from "@/lib/prisma";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -40,17 +41,20 @@ export async function GET(
     const trackingCode = params.code;
 
     if (!trackingCode) {
-      return NextResponse.json<ApiResponse<null>>({
-        success: false,
-        message: "Código de tracking requerido",
-        data: null
-      }, { status: 400 });
+      return NextResponse.json<ApiResponse<null>>(
+        {
+          success: false,
+          message: "Código de tracking requerido",
+          data: null,
+        },
+        { status: 400 }
+      );
     }
 
     // Buscar la orden en la base de datos
     const order = await prisma.orders.findFirst({
       where: {
-        trackingNumber: trackingCode
+        trackingNumber: trackingCode,
       },
       select: {
         id: true,
@@ -59,15 +63,18 @@ export async function GET(
         caTrackingNumber: true,
         customerAddress: true,
         updatedAt: true,
-      }
+      },
     });
 
     if (!order) {
-      return NextResponse.json<ApiResponse<null>>({
-        success: false,
-        message: "Código de tracking no encontrado",
-        data: null
-      }, { status: 404 });
+      return NextResponse.json<ApiResponse<null>>(
+        {
+          success: false,
+          message: "Código de tracking no encontrado",
+          data: null,
+        },
+        { status: 404 }
+      );
     }
 
     // Obtener tracking desde API de Correo Argentino
@@ -75,23 +82,31 @@ export async function GET(
 
     if (order.caTrackingNumber) {
       try {
-        const { correoArgentinoService } = await import('@/lib/correo-argentino-service');
+        const { correoArgentinoService } =
+          await import("@/lib/correo-argentino-service");
         await correoArgentinoService.authenticate();
 
-        const trackingData = await correoArgentinoService.getTracking({ shippingId: order.caTrackingNumber });
+        const trackingData = await correoArgentinoService.getTracking({
+          shippingId: order.caTrackingNumber,
+        });
 
-        if (trackingData.success && trackingData.data && !Array.isArray(trackingData.data) && 'events' in trackingData.data) {
+        if (
+          trackingData.success &&
+          trackingData.data &&
+          !Array.isArray(trackingData.data) &&
+          "events" in trackingData.data
+        ) {
           // Transform events to local format
           events = trackingData.data.events.map((event) => ({
-            date: new Date(event.eventDate).toLocaleDateString('es-AR'),
-            time: new Date(event.eventDate).toLocaleTimeString('es-AR'),
+            date: new Date(event.eventDate).toLocaleDateString("es-AR"),
+            time: new Date(event.eventDate).toLocaleTimeString("es-AR"),
             description: event.eventDescription,
             status: event.eventDescription,
             location: event.branchName,
           }));
         }
       } catch (error) {
-        console.error('Error fetching CA tracking:', error);
+        console.error("Error fetching CA tracking:", error);
       }
     }
 
@@ -99,40 +114,42 @@ export async function GET(
     if (events.length === 0) {
       events = [
         {
-          date: new Date(order.updatedAt).toLocaleDateString('es-AR'),
+          date: new Date(order.updatedAt).toLocaleDateString("es-AR"),
           description: `Pedido ${getStatusLabel(order.status)}`,
           status: order.status,
           location: order.customerAddress || undefined,
-        }
+        },
       ];
     }
 
     const trackingData: MobileTrackingData = {
       orderId: order.id,
-      trackingCode: order.trackingNumber || '',
+      trackingCode: order.trackingNumber || "",
       currentStatus: order.status,
       currentStatusLabel: getStatusLabel(order.status),
       lastUpdate: order.updatedAt.toISOString(),
       events,
       shippingInfo: {
-        carrier: 'Correo Argentino',
-        service: 'Estándar',
+        carrier: "Correo Argentino",
+        service: "Estándar",
         to: order.customerAddress || undefined,
-      }
+      },
     };
 
     return NextResponse.json<ApiResponse<MobileTrackingData>>({
       success: true,
       message: "Tracking obtenido exitosamente",
-      data: trackingData
+      data: trackingData,
     });
-
   } catch {
-    return NextResponse.json<ApiResponse<null>>({
-      success: false,
-      message: "Error interno del servidor",
-      data: null
-    }, { status: 500 });
+    return NextResponse.json<ApiResponse<null>>(
+      {
+        success: false,
+        message: "Error interno del servidor",
+        data: null,
+      },
+      { status: 500 }
+    );
   }
 }
 

@@ -1,13 +1,15 @@
 import axios, { AxiosInstance } from "axios";
+
+import { logger } from "@/lib/logger";
+
 import {
-  ImportShipmentParams,
-  ImportShipmentResponse,
   ApiResponse,
   GetTrackingParams,
-  TrackingInfo,
+  ImportShipmentParams,
+  ImportShipmentResponse,
   TrackingErrorResponse,
+  TrackingInfo,
 } from "./types";
-import { logger } from "@/lib/logger";
 
 export class CorreoArgentinoShipping {
   private api: AxiosInstance;

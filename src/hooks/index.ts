@@ -21,9 +21,8 @@ export { useDashboard } from "./useDashboard";
 export { useDocumentTitle } from "./useDocumentTitle";
 export { useHomeData } from "./useHomeData";
 export { useShippingSettings } from "./useShippingSettings";
-
-export { useSession } from "next-auth/react";
 export { useRouter } from "next/navigation";
+export { useSession } from "next-auth/react";
 export { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Tipos

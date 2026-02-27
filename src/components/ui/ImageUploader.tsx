@@ -1,13 +1,15 @@
 "use client";
 
+import { Image as ImageIcon, Upload, X } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+
 import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
-import Image from "next/image";
-import { useRef, useState, useEffect } from "react";
-import { ProductImagePlaceholder } from "./ProductImagePlaceholder";
-import { Button } from "./Button";
-import { X, Upload, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+import { Button } from "./Button";
+import { ProductImagePlaceholder } from "./ProductImagePlaceholder";
 
 interface ImageUploaderProps {
   value?: string | null;

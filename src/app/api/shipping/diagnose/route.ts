@@ -1,5 +1,6 @@
-import { logger } from "@/lib/logger";
 import { NextResponse } from "next/server";
+
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/shipping/diagnose
@@ -277,9 +278,9 @@ export async function GET() {
 
     const hasRates = Boolean(
       ratesResult.success &&
-        ratesResult.data?.rates &&
-        Array.isArray(ratesResult.data.rates) &&
-        ratesResult.data.rates.length > 0
+      ratesResult.data?.rates &&
+      Array.isArray(ratesResult.data.rates) &&
+      ratesResult.data.rates.length > 0
     );
 
     results.push({

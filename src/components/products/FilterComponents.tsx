@@ -3,8 +3,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { DURATION, SLIDE_IN_LEFT } from "@/lib/animations";
+
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { DURATION, SLIDE_IN_LEFT } from "@/lib/animations";
 
 // ==============================================================================
 // TYPES

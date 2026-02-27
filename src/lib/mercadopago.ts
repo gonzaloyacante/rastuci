@@ -1,6 +1,7 @@
-import { logger } from "@/lib/logger";
 import crypto from "crypto";
 import { MercadoPagoConfig, Payment, Preference } from "mercadopago";
+
+import { logger } from "@/lib/logger";
 
 // Clean, single implementation of MercadoPago helper for server-side use.
 // Includes diagnostic logging for SDK errors to help triage 500s from /api/checkout.

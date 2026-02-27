@@ -1,8 +1,9 @@
 "use client";
 
+import { X } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+
 import { Button } from "./Button";
 
 interface BottomSheetProps {

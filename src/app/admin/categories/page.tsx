@@ -1,5 +1,10 @@
 "use client";
 
+import { Edit3, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+
 import {
   AdminEmpty,
   AdminEmptyIcons,
@@ -11,20 +16,16 @@ import {
   CategoriesSkeleton,
   TableSkeleton,
 } from "@/components/admin/skeletons";
+import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 import { Button } from "@/components/ui/Button";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 // import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
-import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 import { useCategories, useDocumentTitle } from "@/hooks";
 import { logger } from "@/lib/logger";
-import { Edit3, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import React, { useState } from "react";
 import { Product } from "@/types"; // Import Product type
-import Image from "next/image";
 
 type CategoryRow = {
   id: string;

@@ -1,12 +1,13 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { useTranslation } from "@/lib/i18n";
-import { useNotifications } from "@/lib/pwa";
 import { Bell, BellOff, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { useTranslation } from "@/lib/i18n";
+import { useNotifications } from "@/lib/pwa";
 
 interface NotificationManagerProps {
   className?: string;

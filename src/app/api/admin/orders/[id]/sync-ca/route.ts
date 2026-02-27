@@ -1,9 +1,11 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+
 import { withAdminAuth } from "@/lib/adminAuth";
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
-import { emailService } from "@/lib/resend";
 import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
+import { emailService } from "@/lib/resend";
 
 export const POST = withAdminAuth(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
@@ -71,8 +73,7 @@ export const POST = withAdminAuth(
       }
 
       // 4. Check for updates
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updates: any = {};
+      const updates: Prisma.ordersUpdateInput = {};
       let emailSent = false;
 
       // Detect new Tracking Number (if we queried by ID and got a CP...AR code)
@@ -108,7 +109,7 @@ export const POST = withAdminAuth(
               to: order.customerEmail,
               customerName: order.customerName,
               orderId: order.id,
-              trackingCode: updates.caTrackingNumber,
+              trackingCode: updates.caTrackingNumber as string,
               status: "in-transit", // We assume it's moving if we got a code
               statusMessage:
                 "¡Tu envío ha sido procesado por Correo Argentino!",

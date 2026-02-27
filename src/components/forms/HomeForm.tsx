@@ -1,20 +1,21 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
+import * as Icons from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  HomeSettings,
-  HomeSettingsSchema,
-  defaultHomeSettings,
-} from "@/lib/validation/home";
-import { ImageUploader } from "@/components/ui/ImageUploader";
+
+import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { Button } from "@/components/ui/Button";
 import { IconPicker } from "@/components/ui/IconPicker";
-import * as Icons from "lucide-react";
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
-import { useSettings } from "@/hooks/useSettings";
+import { ImageUploader } from "@/components/ui/ImageUploader";
 import { Switch } from "@/components/ui/Switch";
+import { useToast } from "@/components/ui/Toast";
+import { useSettings } from "@/hooks/useSettings";
 import { cn } from "@/lib/utils";
+import {
+  defaultHomeSettings,
+  HomeSettings,
+  HomeSettingsSchema,
+} from "@/lib/validation/home";
 
 type Props = {
   initial?: HomeSettings;

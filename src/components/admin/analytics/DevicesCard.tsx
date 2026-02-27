@@ -1,13 +1,14 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { type DashboardData } from "@/services/analytics-service";
 import {
   Legend,
   RadialBar,
   RadialBarChart,
   ResponsiveContainer,
 } from "recharts";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { type DashboardData } from "@/services/analytics-service";
 
 interface DevicesCardProps {
   data: DashboardData["devices"];
@@ -24,27 +25,45 @@ export function DevicesCard({ data, className }: DevicesCardProps) {
 
   const totalSessions = chartData.reduce((acc, curr) => acc + curr.count, 0);
 
-  const renderLegend = (props: any) => {
-    const { payload } = props;
+  // Recharts passes this shape at runtime to the custom legend content renderer
+  type RechartLegendEntry = {
+    value?: string | number;
+    color?: string;
+    payload?: Record<string, unknown>;
+  };
+
+  const renderLegend = ({
+    payload,
+  }: {
+    payload?: readonly RechartLegendEntry[];
+  }) => {
+    if (!payload) return null;
+
     return (
       <ul className="flex flex-col gap-2 mt-4">
-        {payload.map((entry: any, index: number) => (
-          <li
-            key={`item-${index}`}
-            className="flex items-center justify-between text-sm"
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-muted-foreground">{entry.value}</span>
-            </div>
-            <span className="font-bold tabular-nums">
-              {Math.round((entry.payload.count / (totalSessions || 1)) * 100)}%
-            </span>
-          </li>
-        ))}
+        {payload.map((entry, index) => {
+          const name =
+            (entry.payload?.name as string | undefined) ??
+            String(entry.value ?? "");
+          const count = (entry.payload?.count as number | undefined) ?? 0;
+          return (
+            <li
+              key={`item-${index}`}
+              className="flex items-center justify-between text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-muted-foreground">{name}</span>
+              </div>
+              <span className="font-bold tabular-nums">
+                {Math.round((count / (totalSessions || 1)) * 100)}%
+              </span>
+            </li>
+          );
+        })}
       </ul>
     );
   };

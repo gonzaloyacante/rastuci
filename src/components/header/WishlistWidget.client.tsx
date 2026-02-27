@@ -1,9 +1,10 @@
 "use client";
 
-import { useWishlist } from "@/context/WishlistContext";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { useWishlist } from "@/context/WishlistContext";
 
 interface WishlistWidgetProps {
   mobile?: boolean;

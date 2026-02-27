@@ -1,14 +1,15 @@
+import { headers } from "next/headers";
 import Script from "next/script";
 
-import { VacationProvider } from "@/components/providers/VacationProvider";
-import VacationBanner from "@/components/vacation/VacationBanner";
-import { getVacationSettings, isVacationActive } from "@/lib/vacation";
-import { prisma } from "@/lib/prisma";
-import { defaultHomeSettings } from "@/lib/validation/home";
-import { defaultContactSettings } from "@/lib/validation/contact";
-import { SkipLink } from "@/components/ui/SkipLink";
 import HeaderShell from "@/components/header/HeaderShell";
 import SiteChrome from "@/components/layout/SiteChrome";
+import { VacationProvider } from "@/components/providers/VacationProvider";
+import { SkipLink } from "@/components/ui/SkipLink";
+import VacationBanner from "@/components/vacation/VacationBanner";
+import { prisma } from "@/lib/prisma";
+import { getVacationSettings, isVacationActive } from "@/lib/vacation";
+import { defaultContactSettings } from "@/lib/validation/contact";
+import { defaultHomeSettings } from "@/lib/validation/home";
 
 async function getHomeSettings() {
   try {
@@ -125,8 +126,6 @@ async function getContactSettings() {
     return defaultContactSettings;
   }
 }
-
-import { headers } from "next/headers";
 
 // ... existing imports
 

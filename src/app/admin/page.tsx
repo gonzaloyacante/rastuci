@@ -1,19 +1,19 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
+import { Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { logger } from "@/lib/logger";
-import { Mail, Lock } from "lucide-react";
 
 // Esquema para validación del formulario de login
 const loginSchema = z.object({

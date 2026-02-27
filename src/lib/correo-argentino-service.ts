@@ -1,24 +1,24 @@
+import { CorreoArgentinoAgencies } from "./correo-argentino/agencies";
 import { CorreoArgentinoAuth } from "./correo-argentino/auth";
 import { CorreoArgentinoRates } from "./correo-argentino/rates";
-import { CorreoArgentinoAgencies } from "./correo-argentino/agencies";
 import { CorreoArgentinoShipping } from "./correo-argentino/shipping";
 import {
-  CalculateRatesParams,
-  CalculateRatesResponse,
-  ImportShipmentParams,
-  ImportShipmentResponse,
-  GetAgenciesParams,
   Agency,
   ApiResponse,
-  ValidateUserParams,
-  ValidateUserResponse,
+  CalculateRatesParams,
+  CalculateRatesResponse,
+  CorreoArgentinoCredentials,
+  GetAgenciesParams,
+  GetTrackingParams,
+  ImportShipmentParams,
+  ImportShipmentResponse,
   ProvinceCode,
   RegisterUserParams,
   RegisterUserResponse,
-  CorreoArgentinoCredentials,
-  GetTrackingParams,
-  TrackingInfo,
   TrackingErrorResponse,
+  TrackingInfo,
+  ValidateUserParams,
+  ValidateUserResponse,
 } from "./correo-argentino/types";
 // import { logger } from "@/lib/logger";
 
@@ -171,20 +171,20 @@ export const correoArgentinoService = new CorreoArgentinoService(
 
 // Re-exportar tipos para uso externo
 export type {
-  CalculateRatesParams,
-  CalculateRatesResponse,
-  ImportShipmentParams,
-  ImportShipmentResponse,
-  GetAgenciesParams,
   Agency,
   ApiResponse,
+  CalculateRatesParams,
+  CalculateRatesResponse,
+  CorreoArgentinoCredentials,
+  GetAgenciesParams,
+  GetTrackingParams,
+  ImportShipmentParams,
+  ImportShipmentResponse,
   ProvinceCode,
   RegisterUserParams,
   RegisterUserResponse,
+  TrackingErrorResponse,
+  TrackingInfo,
   ValidateUserParams,
   ValidateUserResponse,
-  CorreoArgentinoCredentials,
-  GetTrackingParams,
-  TrackingInfo,
-  TrackingErrorResponse,
 };

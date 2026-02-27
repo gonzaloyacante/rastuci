@@ -1,7 +1,9 @@
+import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { logger } from "@/lib/logger";
+
 import { ORDER_STATUS } from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 
 // Fix for param typing in Next.js 15+ if needed, but sticking to standard pattern
 export async function POST(
@@ -43,7 +45,7 @@ export async function POST(
     const updatedOrder = await prisma.orders.update({
       where: { id: orderId },
       data: {
-        status: ORDER_STATUS.PAYMENT_REVIEW as any, // Cast if enum mismatch
+        status: ORDER_STATUS.PAYMENT_REVIEW as OrderStatus, // Cast if enum mismatch
         transferSenderName: senderName,
         transferTransactionId: transactionId,
         transferProofAt: new Date(),

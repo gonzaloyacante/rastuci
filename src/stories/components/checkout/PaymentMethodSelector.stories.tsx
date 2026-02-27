@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { PaymentMethodSelector } from "../../../components/checkout/PaymentMethodSelector";
 import React from "react";
+
+import { PaymentMethodSelector } from "../../../components/checkout/PaymentMethodSelector";
 
 const meta: Meta<typeof PaymentMethodSelector> = {
   title: "Checkout/PaymentMethodSelector",

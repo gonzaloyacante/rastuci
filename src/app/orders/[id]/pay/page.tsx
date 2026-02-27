@@ -1,16 +1,17 @@
 "use client";
 
-import { useToast } from "@/components/ui/Toast";
-import { useEffect, useState } from "react";
+import { CheckCircle, Copy } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
 import { StoreSettings } from "@/lib/validation/store";
-import { CheckCircle, Copy } from "lucide-react";
-import Link from "next/link";
-import { Spinner } from "@/components/ui/Spinner";
 
 interface OrderDetails {
   id: string;

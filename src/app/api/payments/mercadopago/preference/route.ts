@@ -1,10 +1,13 @@
+import { NextRequest } from "next/server";
+
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { getRequestId, logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
-import { NextRequest } from "next/server";
+import { checkoutService } from "@/services/checkout-service";
+import { orderService } from "@/services/order-service";
 
 interface MercadoPagoPreference {
   items: Array<{
@@ -27,8 +30,14 @@ interface MercadoPagoPreference {
   metadata?: Record<string, unknown>;
 }
 
-import { orderService } from "@/services/order-service";
-import { checkoutService } from "@/services/checkout-service";
+interface IncomingItem {
+  productId: string;
+  quantity: number;
+  unit_price: number;
+  title: string;
+  size?: string;
+  color?: string;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,7 +95,7 @@ export async function POST(req: NextRequest) {
     let createdOrder;
     try {
       // Map items to simple format expected by service
-      const simpleItems = items.map((i: any) => ({
+      const simpleItems = items.map((i: IncomingItem) => ({
         productId: i.productId,
         quantity: i.quantity,
         size: i.size,
@@ -151,10 +160,17 @@ export async function POST(req: NextRequest) {
       // CRITICAL: Validate stock before creating potential ghost order
       // We map to the interface expected by validateStock
       await checkoutService.validateStock(
-        simpleItems.map((i: any) => ({
-          ...i,
-          price: 0, // Price irrelevant for stock check
-        }))
+        simpleItems.map(
+          (i: {
+            productId: string;
+            quantity: number;
+            size?: string;
+            color?: string;
+          }) => ({
+            ...i,
+            price: 0, // Price irrelevant for stock check
+          })
+        )
       );
 
       createdOrder = await orderService.createFullOrder(

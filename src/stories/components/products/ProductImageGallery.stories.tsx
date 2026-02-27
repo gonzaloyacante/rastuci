@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
+
 import ProductImageGallery from "../../../components/products/ProductImageGallery";
 
 const meta: Meta<typeof ProductImageGallery> = {
