@@ -51,28 +51,30 @@ export function csrfProtection(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Rutas públicas que NO necesitan protección CSRF
-  // Estas son APIs del e-commerce que se llaman desde el frontend sin autenticación
+  // ONLY read-only public APIs and external webhooks are exempt.
+  // State-modifying admin routes (/api/upload, /api/settings, /api/admin)
+  // MUST be CSRF-protected even though they have withAdminAuth.
   const publicApiRoutes = [
-    "/api/shipping", // Cálculo de envío
-    "/api/checkout", // Proceso de checkout
-    "/api/contact", // Formulario de contacto
-    "/api/payments", // Webhooks de MercadoPago
-    "/api/webhooks", // Webhooks externos
-    "/api/products", // Catálogo de productos (público)
-    "/api/categories", // Categorías (público)
-    "/api/orders", // Creación de pedidos
-    "/api/coupons", // Validación de cupones
-    // "/api/search", // Removed: useSearch now calls /api/products directly
+    "/api/shipping", // Cálculo de envío (público, read-only)
+    "/api/checkout", // Proceso de checkout (guest, no session)
+    "/api/contact", // Formulario de contacto (guest)
+    "/api/payments", // Webhooks de MercadoPago (external, signature-validated)
+    "/api/webhooks", // Webhooks externos (external)
+    "/api/products", // Catálogo de productos (público, read-only)
+    "/api/categories", // Categorías (público, read-only)
+    "/api/orders", // Creación de pedidos (guest checkout flow)
+    "/api/coupons", // Validación de cupones (guest)
     "/api/auth", // Autenticación (NextAuth maneja su propio CSRF)
-    "/api/ai-faq", // FAQ con IA
-    "/api/live-chat", // Chat en vivo
-    "/api/cms", // Contenido CMS público
-    "/api/home", // Página de inicio
-    "/api/health", // Health check
-    "/api/ready", // Ready check
-    "/api/analytics", // Analytics (tracking anónimo)
-    "/api/upload", // Subida de imágenes por admin (protegido por AdminAuth)
-    "/api/settings", // Admin settings (protegido por withAdminAuth, no necesita CSRF adicional)
+    "/api/ai-faq", // FAQ con IA (público)
+    "/api/live-chat", // Chat en vivo (público)
+    "/api/cms", // Contenido CMS público (read-only)
+    "/api/home", // Página de inicio (read-only)
+    "/api/health", // Health check (read-only)
+    "/api/ready", // Ready check (read-only)
+    "/api/reviews", // Reseñas (guest con orderId)
+    "/api/search", // Búsqueda (público, read-only)
+    // NOT exempt: /api/upload, /api/settings, /api/admin, /api/analytics
+    // These modify state and require CSRF + admin auth
   ];
 
   // Verificar si la ruta actual es una ruta pública

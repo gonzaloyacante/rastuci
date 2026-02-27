@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { withAdminAuth } from "@/lib/adminAuth";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const ShippingOptionSchema = z.object({
@@ -63,7 +64,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error fetching shipping options:", error);
+    logger.error("Error fetching shipping options:", { error });
     return NextResponse.json(
       { success: false, error: "Error al obtener las opciones de envío" },
       { status: 500 }
@@ -117,7 +118,7 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
         { status: 400 }
       );
     }
-    console.error("Error updating shipping options:", error);
+    logger.error("Error updating shipping options:", { error });
     return NextResponse.json(
       { success: false, error: "Error al actualizar las opciones de envío" },
       { status: 500 }

@@ -101,6 +101,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // Validate customer data format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!customer.email || !emailRegex.test(customer.email)) {
+      return NextResponse.json(
+        { success: false, error: "Email inválido" },
+        { status: 400 }
+      );
+    }
+    if (!customer.name || customer.name.trim().length < 2) {
+      return NextResponse.json(
+        { success: false, error: "Nombre del cliente inválido" },
+        { status: 400 }
+      );
+    }
+    if (customer.phone && customer.phone.replace(/\D/g, "").length < 8) {
+      return NextResponse.json(
+        { success: false, error: "Número de teléfono inválido" },
+        { status: 400 }
+      );
+    }
+    if (!customer.address || customer.address.trim().length < 5) {
+      return NextResponse.json(
+        { success: false, error: "Dirección inválida" },
+        { status: 400 }
+      );
+    }
+
     // 2. Validate Stock via Service
     try {
       await checkoutService.validateStock(items);

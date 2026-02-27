@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma"; // Adjust path if needed
 import { VacationSettingsSchema } from "@/lib/validation/vacation";
 // import { auth } from "@/auth"; // If auth is needed, but we start with open or existing middleware protection
@@ -22,7 +23,7 @@ export async function GET() {
 
     return NextResponse.json(settings);
   } catch (error) {
-    console.error("[Settings API] Error fetching vacation settings:", error);
+    logger.error("[Settings API] Error fetching vacation settings:", { error });
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -75,7 +76,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(settings);
   } catch (error) {
-    console.error("[Settings API] Error updating vacation settings:", error);
+    logger.error("[Settings API] Error updating vacation settings:", { error });
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

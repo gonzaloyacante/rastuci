@@ -61,8 +61,8 @@ let messageCounter = 1;
 
 // Helper to check admin for specific actions
 async function checkAdmin(req: NextRequest) {
-  const isAdmin = await verifyAdminAuth(req);
-  if (!isAdmin) {
+  const result = await verifyAdminAuth(req);
+  if (!result.success) {
     throw new Error("Unauthorized");
   }
 }
@@ -271,9 +271,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Actualizar estado de sesion
+// PUT - Actualizar estado de sesion (ADMIN ONLY)
 export async function PUT(request: NextRequest) {
   try {
+    await checkAdmin(request);
     const body = await request.json();
     const { sessionId, action, ...updates } = body;
 
@@ -320,9 +321,10 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Finalizar sesion
+// DELETE - Finalizar sesion (ADMIN ONLY)
 export async function DELETE(request: NextRequest) {
   try {
+    await checkAdmin(request);
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("sessionId");
 
@@ -341,14 +343,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    session.status = "ended";
-    activeSessions.set(sessionId, session);
-
-    // Limpiar despues de 1 hora
-    setTimeout(() => {
-      activeSessions.delete(sessionId);
-      sessionMessages.delete(sessionId);
-    }, 3600000);
+    // Mark as ended and clean up immediately (setTimeout never fires in serverless)
+    activeSessions.delete(sessionId);
+    sessionMessages.delete(sessionId);
 
     return NextResponse.json({ success: true, message: "Sesion finalizada" });
   } catch (error) {

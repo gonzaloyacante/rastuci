@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -42,7 +43,7 @@ export async function GET(
 
     return NextResponse.json(wishlist);
   } catch (error) {
-    console.error("[GetSharedWishlist] Error:", error);
+    logger.error("[GetSharedWishlist] Error:", { error });
     return NextResponse.json(
       { error: "Error interno al obtener la lista" },
       { status: 500 }

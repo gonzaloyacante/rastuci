@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { sendEmail } from "@/lib/resend";
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Enviar email con link de recuperación
-    const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/admin/auth/reset-password?token=${token}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://rastuci.com"}/admin/auth/reset-password?token=${token}`;
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -123,7 +124,7 @@ export async function POST(req: NextRequest) {
         "Si el email existe, recibirás instrucciones para recuperar tu contraseña",
     });
   } catch (error) {
-    console.error("Error en forgot-password:", error);
+    logger.error("Error en forgot-password:", { error });
     return NextResponse.json(
       { success: false, error: "Error al procesar la solicitud" },
       { status: 500 }

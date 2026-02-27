@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -296,7 +297,7 @@ export const POST = withAdminAuth(
       // Crear el producto
       const newProduct = await prisma.products.create({
         data: {
-          id: `product-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          id: `product-${nanoid(16)}`,
           name: productData.name,
           description: productData.description ?? null,
           price: Number(productData.price),

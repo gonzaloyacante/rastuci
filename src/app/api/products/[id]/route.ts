@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -324,6 +325,8 @@ export const PUT = withAdminAuth(
           : [],
       };
 
+      revalidatePath("/products");
+      revalidatePath(`/products/${(await params).id}`);
       return ok(updatedProduct, "Producto actualizado exitosamente");
     } catch (error) {
       logger.error("Error updating product:", { error });
@@ -414,6 +417,7 @@ export const PATCH = withAdminAuth(
           : [],
       };
 
+      revalidatePath("/products");
       return ok(updatedProduct, "Estado actualizado correctamente");
     } catch (error) {
       logger.error("Error patching product:", { error });
@@ -475,6 +479,7 @@ export const DELETE = withAdminAuth(
       }
 
       logger.info(`[Admin] Deleted product ${id}`);
+      revalidatePath("/products");
       return ok({ deleted: true }, "Producto eliminado correctamente");
     } catch (error) {
       logger.error("Error deleting product:", { error });

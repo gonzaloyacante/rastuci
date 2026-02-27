@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { VacationSubscriberSchema } from "@/lib/validation/vacation";
 
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[Subscribe API] Error subscribing:", error);
+    logger.error("[Subscribe API] Error subscribing:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { emailService } from "@/lib/resend"; // We will add sendVacationReopening here
 
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
       total: subscribers.length,
     });
   } catch (error) {
-    console.error("[Notify API] Error sending notifications:", error);
+    logger.error("[Notify API] Error sending notifications:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

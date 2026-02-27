@@ -1,10 +1,25 @@
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting: prevent brute force on reset tokens
+    const rl = await checkRateLimit(req, {
+      key: makeKey("POST", "/api/auth/reset-password"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { success: false, error: "Demasiados intentos, intenta más tarde" },
+        { status: 429 }
+      );
+    }
+
     const { token, password } = await req.json();
 
     if (!token || !password) {
@@ -81,7 +96,7 @@ export async function POST(req: NextRequest) {
       message: "Contraseña actualizada exitosamente",
     });
   } catch (error) {
-    console.error("Error en reset-password:", error);
+    logger.error("Error en reset-password:", { error });
     return NextResponse.json(
       { success: false, error: "Error al procesar la solicitud" },
       { status: 500 }

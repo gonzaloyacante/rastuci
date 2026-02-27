@@ -88,15 +88,24 @@ export async function POST(
       return ok({ ok: true });
     }
 
-    // 3. Validate Signature (Optional/Recommended)
+    // 3. Validate Signature (MANDATORY — fail-closed)
     const xSignature = req.headers.get("x-signature") || "";
     const xRequestId = req.headers.get("x-request-id") || "";
     const ts = req.headers.get("ts") || "";
-    if (xSignature && xRequestId && ts) {
-      if (!mpWebhookService.validateSignature(xSignature, xRequestId, id, ts)) {
-        logger.warn("[MP webhook] Invalid signature", { requestId });
-        return new NextResponse("Invalid signature", { status: 401 });
-      }
+
+    if (!xSignature || !xRequestId || !ts) {
+      logger.warn("[MP webhook] Missing signature headers — rejected", {
+        requestId,
+        hasSignature: !!xSignature,
+        hasRequestId: !!xRequestId,
+        hasTs: !!ts,
+      });
+      return new NextResponse("Missing signature headers", { status: 401 });
+    }
+
+    if (!mpWebhookService.validateSignature(xSignature, xRequestId, id, ts)) {
+      logger.warn("[MP webhook] Invalid signature", { requestId });
+      return new NextResponse("Invalid signature", { status: 401 });
     }
 
     if (topic && topic !== "payment") {

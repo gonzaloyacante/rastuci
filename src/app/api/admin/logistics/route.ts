@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
+import { logger } from "@/lib/logger";
 
 // Tipos para la API
 interface LogisticsStats {
@@ -54,7 +55,7 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
         );
     }
   } catch (error) {
-    console.error("Error en logistics API:", error);
+    logger.error("Error en logistics API:", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }
@@ -75,7 +76,7 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
       { status: 501 }
     );
   } catch (error) {
-    console.error("Error en logistics POST:", error);
+    logger.error("Error en logistics POST:", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }
@@ -96,7 +97,7 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
       { status: 501 }
     );
   } catch (error) {
-    console.error("Error en logistics PUT:", error);
+    logger.error("Error en logistics PUT:", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }
@@ -116,7 +117,7 @@ export const DELETE = withAdminAuth(async (_request: NextRequest) => {
       { status: 501 }
     );
   } catch (error) {
-    console.error("Error en logistics DELETE:", error);
+    logger.error("Error en logistics DELETE:", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }

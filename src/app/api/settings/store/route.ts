@@ -1,4 +1,5 @@
 import { StockStatusColor, store_settings } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
@@ -256,6 +257,9 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
     logger.info("[StoreSettings] Settings updated", {
       adminEmail: data.adminEmail,
     });
+
+    revalidatePath("/");
+    revalidatePath("/products");
 
     return NextResponse.json({
       success: true,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { withAdminAuth } from "@/lib/adminAuth";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types";
 
@@ -684,7 +685,7 @@ export const GET = withAdminAuth(
         data: dashboard,
       } satisfies ApiResponse<MetricsDashboard>);
     } catch (error) {
-      console.error("Error en dashboard API:", error);
+      logger.error("Error en dashboard API:", { error });
       return NextResponse.json(
         {
           success: false,

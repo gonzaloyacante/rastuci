@@ -1,7 +1,9 @@
 import { revalidateTag } from "next/cache";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { withAdminAuth } from "@/lib/adminAuth";
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
 const ToggleSchema = z.object({
@@ -21,7 +23,7 @@ const ToggleSchema = z.object({
     .transform((val) => (val ? new Date(val) : null)),
 });
 
-export async function POST(request: Request) {
+export const POST = withAdminAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const parsed = ToggleSchema.safeParse(body);
@@ -83,11 +85,11 @@ export async function POST(request: Request) {
     });
 
     // Revalidate so the public layout picks up the change immediately
-    revalidateTag("vacation-settings", {});
+    revalidateTag("vacation-settings", "max");
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[Toggle API] Error toggling vacation mode:", error);
+    logger.error("[Toggle API] Error toggling vacation mode:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
-}
+});

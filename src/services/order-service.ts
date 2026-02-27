@@ -101,7 +101,10 @@ export class OrderService {
           }
 
           await tx.products.update({
-            where: { id: item.productId },
+            where: {
+              id: item.productId,
+              stock: { gte: item.quantity },
+            },
             data: { stock: { decrement: item.quantity } },
           });
         }
@@ -547,7 +550,7 @@ export class OrderService {
           updatedAt: new Date(),
           order_items: {
             create: validatedItems.map((item) => ({
-              id: `${orderId}_${item.productId}_${Date.now()}`,
+              id: `${orderId}_${item.productId}_${nanoid(8)}`,
               quantity: item.quantity,
               price: item.price,
               size: item.size || null,
@@ -568,7 +571,10 @@ export class OrderService {
       // 4. Decrement Stock (Immediate)
       for (const item of validatedItems) {
         await tx.products.update({
-          where: { id: item.productId },
+          where: {
+            id: item.productId,
+            stock: { gte: item.quantity },
+          },
           data: { stock: { decrement: item.quantity } },
         });
       }
@@ -607,7 +613,9 @@ export class OrderService {
           };
         }
       );
-      emailService.sendOrderConfirmation(
+      // TODO: Use waitUntil() when available in Next.js to ensure email
+      // completes in serverless. For now, void prefix marks this as intentional.
+      void emailService.sendOrderConfirmation(
         {
           id: order.id,
           customerName: order.customerName,
@@ -830,7 +838,7 @@ export class OrderService {
           updatedAt: new Date(),
           order_items: {
             create: validatedItems.map((item) => ({
-              id: `${orderId}_${item.productId}_${Date.now()}`,
+              id: `${orderId}_${item.productId}_${nanoid(8)}`,
               quantity: item.quantity,
               price: item.price,
               size: item.size || null,
@@ -853,7 +861,10 @@ export class OrderService {
       // 5. Decrement Stock
       for (const item of validatedItems) {
         await tx.products.update({
-          where: { id: item.productId },
+          where: {
+            id: item.productId,
+            stock: { gte: item.quantity },
+          },
           data: { stock: { decrement: item.quantity } },
         });
       }
@@ -1008,7 +1019,7 @@ export class OrderService {
           updatedAt: new Date(),
           order_items: {
             create: validatedItems.map((item) => ({
-              id: `${orderId}_${item.productId}_${Date.now()}`,
+              id: `${orderId}_${item.productId}_${nanoid(8)}`,
               quantity: item.quantity,
               price: item.price,
               size: item.size || null,
@@ -1031,7 +1042,10 @@ export class OrderService {
       // 5. Decrement Stock
       for (const item of validatedItems) {
         await tx.products.update({
-          where: { id: item.productId },
+          where: {
+            id: item.productId,
+            stock: { gte: item.quantity },
+          },
           data: { stock: { decrement: item.quantity } },
         });
       }
@@ -1041,7 +1055,8 @@ export class OrderService {
 
     // 5. Emails (Async)
     if (order.customerEmail) {
-      emailService.sendBankTransferInstructions({
+      // TODO: Use waitUntil() for serverless reliability
+      void emailService.sendBankTransferInstructions({
         id: order.id,
         customerName: order.customerName,
         customerEmail: order.customerEmail,

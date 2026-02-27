@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
 export async function GET() {
@@ -15,7 +16,7 @@ export async function GET() {
 
     return NextResponse.json(periods);
   } catch (error) {
-    console.error("[Periods API] Error fetching history:", error);
+    logger.error("[Periods API] Error fetching history:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const ShareWishlistSchema = z.object({
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       token: sharedList.token,
-      url: `${process.env.NEXT_PUBLIC_BASE_URL}/wishlist/shared/${sharedList.token}`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/wishlist/shared/${sharedList.token}`,
       expiresAt: sharedList.expiresAt,
     });
   } catch (error) {
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    console.error("[WishlistShare] Error creating shared list:", error);
+    logger.error("[WishlistShare] Error creating shared list:", { error });
     return NextResponse.json(
       { error: "Error interno al compartir la lista" },
       { status: 500 }

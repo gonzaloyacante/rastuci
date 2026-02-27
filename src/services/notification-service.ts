@@ -24,7 +24,7 @@ export class MPWebhookService {
     id: string,
     ts: string
   ): boolean {
-    if (!xSignature || !xRequestId || !ts) return true; // Optional validation
+    if (!xSignature || !xRequestId || !ts) return false; // Fail-closed: missing headers = invalid
     return validateWebhookSignature(xSignature, xRequestId, id, ts);
   }
 

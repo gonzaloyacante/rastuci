@@ -23,6 +23,34 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
       );
     }
 
+    // Validate file size (max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { success: false, error: "El archivo excede el tamaño máximo de 10MB" },
+        { status: 400 }
+      );
+    }
+
+    // Validate MIME type — only images allowed
+    const ALLOWED_TYPES = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "image/svg+xml",
+      "image/avif",
+    ];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Tipo de archivo no permitido: ${file.type}. Solo se aceptan imágenes.`,
+        },
+        { status: 400 }
+      );
+    }
+
     // Convertir archivo a buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);

@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
+import { logger } from "@/lib/logger";
 
 // Tipos para la API
 interface SupportStats {
@@ -52,7 +53,7 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
         );
     }
   } catch (error) {
-    console.error("Error en support API:", error);
+    logger.error("Error en support API:", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }
@@ -73,7 +74,7 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
       { status: 501 }
     );
   } catch (error) {
-    console.error("Error en support POST:", error);
+    logger.error("Error en support POST:", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }
@@ -94,7 +95,7 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
       { status: 501 }
     );
   } catch (error) {
-    console.error("Error en support PUT:", error);
+    logger.error("Error en support PUT:", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }
@@ -114,7 +115,7 @@ export const DELETE = withAdminAuth(async (_request: NextRequest) => {
       { status: 501 }
     );
   } catch (error) {
-    console.error("Error en support DELETE:", error);
+    logger.error("Error en support DELETE:", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }

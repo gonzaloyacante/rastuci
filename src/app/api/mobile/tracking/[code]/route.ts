@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 interface ApiResponse<T> {
@@ -106,7 +107,7 @@ export async function GET(
           }));
         }
       } catch (error) {
-        console.error("Error fetching CA tracking:", error);
+        logger.error("Error fetching CA tracking:", { error });
       }
     }
 

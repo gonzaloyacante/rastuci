@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  // Solo para debugging en desarrollo/preview
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not available in production' }, { status: 404 });
+import { withAdminAuth } from "@/lib/adminAuth";
+
+// Debug endpoints are admin-only and blocked in production
+export const GET = withAdminAuth(async (request: NextRequest) => {
+  // Block in production for safety — Vercel preview also uses NODE_ENV=production
+  if (process.env.VERCEL_ENV === "production") {
+    return NextResponse.json(
+      { error: "Not available in production" },
+      { status: 404 }
+    );
   }
 
   const debugInfo = {
@@ -11,18 +17,15 @@ export async function GET(request: NextRequest) {
     environment: process.env.NODE_ENV,
     url: request.url,
     headers: {
-      host: request.headers.get('host'),
-      'user-agent': request.headers.get('user-agent'),
-      'x-forwarded-host': request.headers.get('x-forwarded-host'),
-      'x-forwarded-proto': request.headers.get('x-forwarded-proto'),
+      host: request.headers.get("host"),
+      "x-forwarded-host": request.headers.get("x-forwarded-host"),
     },
     env: {
       NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? 'SET' : 'NOT_SET',
-      VERCEL_URL: process.env.VERCEL_URL,
+      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? "SET" : "NOT_SET",
       VERCEL_ENV: process.env.VERCEL_ENV,
-    }
+    },
   };
 
   return NextResponse.json(debugInfo);
-}
+});

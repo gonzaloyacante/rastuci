@@ -44,13 +44,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    console.log("Contact API Body:", body); // DEBUG
 
     const parsed = ContactMessageSchema.safeParse(body);
 
     if (!parsed.success) {
       const errorDetails = parsed.error.issues[0]?.message || "Datos inválidos";
-      console.log("Contact API Validation Error:", errorDetails); // DEBUG
       return NextResponse.json(fail("BAD_REQUEST", errorDetails, 400));
     }
 

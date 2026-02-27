@@ -88,18 +88,14 @@ export async function POST(
       },
     });
 
-    // Usuario no existe
+    // Usuario no existe — use GENERIC message to prevent enumeration
     if (!user) {
       return NextResponse.json(
         {
           success: false,
           error: {
-            field: "email",
-            message: "No existe una cuenta con este correo electrónico",
-          },
-          data: {
-            userExists: false,
-            passwordCorrect: false,
+            field: "general",
+            message: "Email o contraseña incorrectos",
           },
         },
         { status: 401 }
@@ -132,43 +128,31 @@ export async function POST(
         {
           success: false,
           error: {
-            field: "password",
-            message: "La contraseña es incorrecta",
-          },
-          data: {
-            userExists: true,
-            passwordCorrect: false,
+            field: "general",
+            message: "Email o contraseña incorrectos",
           },
         },
         { status: 401 }
       );
     }
 
-    // Verificar que sea admin
+    // Verificar que sea admin — use GENERIC message
     if (!user.isAdmin) {
       return NextResponse.json(
         {
           success: false,
           error: {
             field: "general",
-            message: "No tienes permisos de administrador",
-          },
-          data: {
-            userExists: true,
-            passwordCorrect: true,
+            message: "Email o contraseña incorrectos",
           },
         },
-        { status: 403 }
+        { status: 401 }
       );
     }
 
     // Login exitoso
     return NextResponse.json({
       success: true,
-      data: {
-        userExists: true,
-        passwordCorrect: true,
-      },
     });
   } catch (error) {
     logger.error("Error en login validation:", { error: error });

@@ -204,7 +204,7 @@ export const getOrderConfirmationEmail = (params: {
     message: `Confirmamos que recibimos tu pago y tu pedido está siendo procesado.<br><br>
     <strong>Total: $${total.toFixed(2)}</strong><br><br>
     ${itemsHtml}`,
-    orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/orders/${orderId}`,
+    orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/orders/${orderId}`,
     customButtonText: "Ver Pedido",
   });
 };
@@ -268,7 +268,7 @@ export const getNewOrderAdminEmail = (params: {
     ${customerDetails ? `${customerDetails}<br><br>` : ""}
     <strong>Total: $${total.toFixed(2)}</strong><br><br>
     ${itemsHtml}`,
-    orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/admin/pedidos`,
+    orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/admin/pedidos`,
     customButtonText: "Gestionar Pedido En Panel",
   });
 };
@@ -286,7 +286,7 @@ export const getLowStockAlertEmail = (params: {
     message: `El producto <strong>${params.productName}</strong> tiene pocas unidades.<br><br>
     <strong>Stock Actual: ${params.currentStock}</strong><br><br>
     Te recomendamos reponer inventario pronto o pausar la publicación.`,
-    orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/admin/products/${params.productId}`,
+    orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/admin/products/${params.productId}`,
     customButtonText: "Ver Producto",
   });
 };
@@ -316,7 +316,7 @@ export const getTrackingUpdateEmail = (params: {
     Puedes seguir el estado de tu envío en la página del correo.`,
     trackingCode,
     trackingUrl: `https://www.correoargentino.com.ar/formularios/e-commerce`, // Generic CA URL or specific
-    orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/orders/${orderId}`,
+    orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/orders/${orderId}`,
     customButtonText: "Rastrear Envío",
   });
 };
@@ -326,7 +326,7 @@ export const getOrderDeliveredEmail = (params: {
   orderId: string;
 }): string => {
   const { customerName, orderId } = params;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com";
 
   return generateEmailHtml({
     customerName,
@@ -358,7 +358,7 @@ export const getOrderShippedEmail = (params: {
       Pronto recibirás tu compra.`,
     trackingCode: trackingNumber,
     trackingUrl: `https://www.correoargentino.com.ar/formularios/e-commerce`,
-    orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/orders/${orderId}`,
+    orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/orders/${orderId}`,
     customButtonText: "Rastrear Envío",
   });
 };
@@ -411,7 +411,7 @@ export const getOrderCancelledEmail = (params: {
     message: `El tiempo de reserva de tu pedido ha finalizado, y los productos han vuelto a estar disponibles para otros clientes.<br><br>
     ¡No te preocupes! Si todavía los querés, es probable que aun haya stock.<br><br>
     Te invitamos a visitar la tienda y volver a pedirlos antes de que se agoten definitivamente.`,
-    orderUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/`,
+    orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/`,
     customButtonText: "🛍️ Volver a la Tienda",
   });
 };
@@ -449,7 +449,7 @@ export const getVacationReopeningEmail = (_params: {
     message: `Nos alegra contarte que <strong>Rastuci</strong> está abierto nuevamente.<br><br>
     Ya podés visitar la tienda y finalizar tu compra. ¡Gracias por esperarnos!<br><br>
     Si tenías productos en mente, te recomendamos revisarlos pronto antes de que se agoten.`,
-    orderUrl: process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com",
+    orderUrl: process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com",
     customButtonText: "🛍️ Ir a la Tienda",
   });
 };

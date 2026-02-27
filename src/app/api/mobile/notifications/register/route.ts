@@ -8,6 +8,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
+
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -48,7 +50,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error en notifications GET:", error);
+    logger.error("Error en notifications GET:", { error });
     return NextResponse.json<ApiResponse<null>>(
       {
         success: false,
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
       data: { registered: true },
     });
   } catch (error) {
-    console.error("Error en notifications POST:", error);
+    logger.error("Error en notifications POST:", { error });
     return NextResponse.json<ApiResponse<null>>(
       {
         success: false,
@@ -140,7 +142,7 @@ export async function PUT(request: NextRequest) {
       { status: 501 }
     );
   } catch (error) {
-    console.error("Error en notifications PUT:", error);
+    logger.error("Error en notifications PUT:", { error });
     return NextResponse.json<ApiResponse<null>>(
       {
         success: false,
@@ -177,7 +179,7 @@ export async function DELETE(request: NextRequest) {
       data: { unregistered: true },
     });
   } catch (error) {
-    console.error("Error en notifications DELETE:", error);
+    logger.error("Error en notifications DELETE:", { error });
     return NextResponse.json<ApiResponse<null>>(
       {
         success: false,

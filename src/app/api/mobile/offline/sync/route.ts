@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
 interface ApiResponse<T> {
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
       data: offlineData,
     });
   } catch (error) {
-    console.error("Error en offline sync:", error);
+    logger.error("Error en offline sync:", { error });
     return NextResponse.json<ApiResponse<null>>(
       {
         success: false,
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error en offline sync POST:", error);
+    logger.error("Error en offline sync POST:", { error });
     return NextResponse.json<ApiResponse<null>>(
       {
         success: false,

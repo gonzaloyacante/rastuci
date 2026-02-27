@@ -116,7 +116,7 @@ export const emailService = {
       html: getWelcomeEmail({
         name,
         email,
-        loginUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/admin`,
+        loginUrl: `${process.env.NEXT_PUBLIC_APP_URL}/admin`,
       }),
       type: "DEFAULT",
     });
@@ -219,7 +219,7 @@ export const emailService = {
       holder: settings.payments?.bankHolder || "",
     };
 
-    const uploadUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com"}/orders/${order.id}/pay`;
+    const uploadUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/orders/${order.id}/pay`;
 
     return sendEmail({
       to: order.customerEmail,
@@ -264,7 +264,7 @@ export const emailService = {
     const { getPaymentReminderEmail } = await import("./email-templates");
 
     // Determine the payment/resume link
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://rastuci.com";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com";
     let paymentUrl = `${baseUrl}/orders/${order.id}`;
 
     // If it's transfer, direct to upload page. If generic/MP, order detail has pay button usually or we redirect

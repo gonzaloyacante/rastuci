@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(subscribers);
   } catch (error) {
-    console.error("[Subscribers API] Error fetching list:", error);
+    logger.error("[Subscribers API] Error fetching list:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

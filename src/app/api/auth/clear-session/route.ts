@@ -1,11 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 /**
  * Endpoint para limpiar cookies de sesión corruptas.
  * Útil cuando hay errores de JWT_SESSION_ERROR por tokens
  * encriptados con un NEXTAUTH_SECRET diferente.
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
+  // Rate limiting: prevent abuse
+  const rl = await checkRateLimit(req, {
+    key: makeKey("POST", "/api/auth/clear-session"),
+    ...getPreset("mutatingLow"),
+  });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { success: false, error: "Demasiados intentos" },
+      { status: 429 }
+    );
+  }
+
   const response = NextResponse.json({
     success: true,
     message: "Session cookies cleared",
@@ -36,6 +51,6 @@ export async function POST() {
   return response;
 }
 
-export async function GET() {
-  return POST();
+export async function GET(req: NextRequest) {
+  return POST(req);
 }
