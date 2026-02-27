@@ -25,7 +25,7 @@ describe("mapOrderToDTO", () => {
             description: null,
             price: 50,
             stock: 10,
-            images: JSON.stringify(["/img1.jpg"]),
+            images: ["/img1.jpg"],
             categoryId: "cat_1",
             createdAt: new Date("2024-12-31T00:00:00Z"),
             updatedAt: new Date("2025-01-01T00:00:00Z"),
@@ -39,7 +39,7 @@ describe("mapOrderToDTO", () => {
           },
         },
       ],
-    } as any;
+    } as unknown as Parameters<typeof mapOrderToDTO>[0];
 
     const dto = mapOrderToDTO(prismaOrder);
 
@@ -49,6 +49,6 @@ describe("mapOrderToDTO", () => {
     const first = dto.items![0]!;
     expect(first.product?.description).toBeUndefined();
     expect(Array.isArray(first.product?.images)).toBe(true);
-    expect((first.product?.images as any[])?.[0]).toBe("/img1.jpg");
+    expect((first.product?.images as string[])?.[0]).toBe("/img1.jpg");
   });
 });
