@@ -1,15 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { fail, ok } from "@/lib/apiResponse";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ApiResponse } from "@/types";
 
 // GET /api/search/trending - Devuelve búsquedas trending basadas en ventas
-export async function GET(): Promise<
-  NextResponse<ApiResponse<{ trending: string[] }>>
-> {
+export async function GET(
+  req: NextRequest
+): Promise<NextResponse<ApiResponse<{ trending: string[] }>>> {
   try {
+    // Fix #116: rate limit this endpoint to prevent sales data scraping
+    const rl = await checkRateLimit(req, {
+      key: makeKey("GET", "/api/search/trending"),
+      ...getPreset("publicRead"),
+    });
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Too many requests", 429);
+    }
+
     // Top products by number of orderItems (proxy de ventas)
     const topProducts = await prisma.order_items.groupBy({
       by: ["productId"],

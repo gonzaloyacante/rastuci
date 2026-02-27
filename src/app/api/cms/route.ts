@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import type { ApiResponse } from "@/types";
@@ -11,7 +12,8 @@ import type { ApiResponse } from "@/types";
 //   - shipping_settings, stock_settings
 //   - payment_methods, shipping_options
 // This route will be removed after the grace period (2026-03-12).
-export async function GET() {
+// Fix #117: restrict to admin — settings data must not be public
+export const GET = withAdminAuth(async () => {
   try {
     // Return all remaining settings from the deprecated table
     const settings = await prisma.settings.findMany({
@@ -44,4 +46,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
