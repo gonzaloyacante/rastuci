@@ -65,8 +65,6 @@ export function csrfProtection(request: NextRequest) {
     "/api/orders", // Creación de pedidos (guest checkout flow)
     "/api/coupons", // Validación de cupones (guest)
     "/api/auth", // Autenticación (NextAuth maneja su propio CSRF)
-    "/api/ai-faq", // FAQ con IA (público)
-    "/api/live-chat", // Chat en vivo (público)
     "/api/cms", // Contenido CMS público (read-only)
     "/api/home", // Página de inicio (read-only)
     "/api/health", // Health check (read-only)

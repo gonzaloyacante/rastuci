@@ -1,14 +1,7 @@
-/**
- * Mobile Push Notifications API
- *
- * Gestiona el registro de tokens para push notifications.
- * Los tokens se almacenan en memoria ya que no hay tabla en la BD.
- * En produccion, se deberia crear una tabla NotificationToken en Prisma.
- */
-
 import { NextRequest, NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 interface ApiResponse<T> {
   success: boolean;

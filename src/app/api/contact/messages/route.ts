@@ -5,7 +5,7 @@ import { withAdminAuth } from "@/lib/adminAuth";
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
 import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
-// import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 
 // Schema de validación para mensajes de contacto
@@ -52,34 +52,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(fail("BAD_REQUEST", errorDetails, 400));
     }
 
-    const {
-      name,
-      email,
-      phone: _phone,
-      message: _message,
-      responsePreference,
-    } = parsed.data;
+    const { name, email, phone, message, responsePreference } = parsed.data;
 
-    // TODO: Crear modelo contact_messages en Prisma schema
-    // const contactMessage = await prisma.contactMessage.create({
-    //   data: {
-    //     name,
-    //     email,
-    //     phone,
-    //     message,
-    //     responsePreference,
-    //   },
-    // });
+    // Persist contact message to DB (#28 fix)
+    const contactMessage = await prisma.contact_messages.create({
+      data: {
+        name,
+        email,
+        phone: phone ?? null,
+        message,
+        responsePreference,
+      },
+    });
 
-    logger.info("New contact message received", {
-      name,
+    logger.info("New contact message saved", {
+      id: contactMessage.id,
       email,
       responsePreference,
     });
 
     return NextResponse.json(
       ok({
-        id: `temp-${Date.now()}`,
+        id: contactMessage.id,
         message: "Mensaje enviado exitosamente",
       }),
       { status: 201 }
@@ -115,31 +109,30 @@ export const GET = withAdminAuth(async (req: NextRequest) => {
     const isRead = searchParams.get("isRead");
     const isArchived = searchParams.get("isArchived") === "true";
 
-    const _where = {
+    const where = {
       isArchived,
       ...(isRead !== null &&
         isRead !== undefined && { isRead: isRead === "true" }),
     };
 
-    // TODO: Implementar cuando exista el modelo contact_messages
-    // const [messages, total] = await Promise.all([
-    //   prisma.contactMessage.findMany({
-    //     where,
-    //     orderBy: { createdAt: "desc" },
-    //     skip: (page - 1) * limit,
-    //     take: limit,
-    //   }),
-    //   prisma.contactMessage.count({ where }),
-    // ]);
+    const [messages, total] = await Promise.all([
+      prisma.contact_messages.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.contact_messages.count({ where }),
+    ]);
 
     return NextResponse.json(
       ok({
-        messages: [],
+        messages,
         pagination: {
           page,
           limit,
-          total: 0,
-          totalPages: 0,
+          total,
+          totalPages: Math.ceil(total / limit),
         },
       })
     );

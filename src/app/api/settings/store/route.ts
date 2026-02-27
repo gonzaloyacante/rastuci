@@ -11,22 +11,6 @@ import {
   StoreSettingsSchema,
 } from "@/lib/validation/store";
 
-// Interface for fields potentially missing in Prisma schema but used in code
-interface LegacyStoreSettings extends store_settings {
-  cashDiscount?: number;
-  transferDiscount?: number;
-  mpDiscount?: number;
-  cashExpirationHours?: number;
-  transferExpirationHours?: number;
-  mpExpirationMinutes?: number;
-  bankName?: string;
-  bankCbu?: string;
-  bankAlias?: string;
-  bankHolder?: string;
-  bankCuit?: string;
-  couponsEnabled?: boolean;
-}
-
 function dbToApiFormat(
   store: store_settings | null,
   shipping: {
@@ -43,8 +27,7 @@ function dbToApiFormat(
     }[];
   } | null
 ): StoreSettings {
-  // Use defaults where data is missing
-  const s = store as unknown as LegacyStoreSettings | null;
+  const s = store;
   const sh = shipping;
   const st = stock;
 
@@ -93,10 +76,17 @@ function dbToApiFormat(
       })) ?? defaultStoreSettings.stockStatuses,
     payments: {
       cashDiscount:
-        s?.cashDiscount ?? defaultStoreSettings.payments.cashDiscount,
+        s?.cashDiscount !== null && s?.cashDiscount !== undefined
+          ? Number(s.cashDiscount)
+          : defaultStoreSettings.payments.cashDiscount,
       transferDiscount:
-        s?.transferDiscount ?? defaultStoreSettings.payments.transferDiscount,
-      mpDiscount: s?.mpDiscount ?? defaultStoreSettings.payments.mpDiscount,
+        s?.transferDiscount !== null && s?.transferDiscount !== undefined
+          ? Number(s.transferDiscount)
+          : defaultStoreSettings.payments.transferDiscount,
+      mpDiscount:
+        s?.mpDiscount !== null && s?.mpDiscount !== undefined
+          ? Number(s.mpDiscount)
+          : defaultStoreSettings.payments.mpDiscount,
       cashExpirationHours:
         s?.cashExpirationHours ??
         defaultStoreSettings.payments.cashExpirationHours,

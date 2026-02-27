@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { fail } from "@/lib/apiResponse";
+import { logger } from "@/lib/logger";
+import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
+
+const ValidateCouponSchema = z.object({
+  code: z.string().min(1).max(50).toUpperCase(),
+});
 
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 5 attempts per minute (Brute-force protection)
-    // Cast strict Request to NextRequest-like if needed by checkRateLimit or update usage
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rl = await checkRateLimit(request as any, {
+    const rl = await checkRateLimit(request, {
       key: "coupon:validate",
       limit: 5,
       windowMs: 60_000,
@@ -21,39 +26,64 @@ export async function POST(request: NextRequest) {
         { status: 429 }
       );
     }
-    const { code } = await request.json();
 
-    if (!code) {
+    const body = await request.json();
+    const parsed = ValidateCouponSchema.safeParse(body);
+
+    if (!parsed.success) {
       return NextResponse.json(
         { success: false, error: "Código de cupón requerido" },
         { status: 400 }
       );
     }
 
-    // Simular validación de cupón (esto podría venir de una base de datos)
-    const validCoupons = [
-      { code: "WELCOME10", discount: 10 },
-      { code: "SUMMER20", discount: 20 },
-      { code: "FREESHIP", discount: 0 }, // Descuento especial para envío
-    ];
+    const { code } = parsed.data;
 
-    const coupon = validCoupons.find((c) => c.code === code.toUpperCase());
+    // Lookup from DB (#25/#87 fix — was hardcoded array)
+    const coupon = await prisma.coupons.findFirst({
+      where: {
+        code,
+        isActive: true,
+      },
+    });
 
-    if (coupon) {
-      return NextResponse.json({
-        success: true,
-        coupon: {
-          code: coupon.code,
-          discount: coupon.discount,
-          isValid: true,
-        },
-      });
+    if (!coupon) {
+      return NextResponse.json(
+        { success: false, error: "Cupón inválido o expirado" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json(
-      { success: false, error: "Cupón inválido o expirado" },
-      { status: 404 }
-    );
+    // Check expiration
+    if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+      return NextResponse.json(
+        { success: false, error: "El cupón ha expirado" },
+        { status: 404 }
+      );
+    }
+
+    // Check usage limit
+    if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
+      return NextResponse.json(
+        { success: false, error: "El cupón ha alcanzado su límite de usos" },
+        { status: 404 }
+      );
+    }
+
+    logger.info("Coupon validated", { code: coupon.code });
+
+    return NextResponse.json({
+      success: true,
+      coupon: {
+        code: coupon.code,
+        discount: Number(coupon.discount),
+        discountType: coupon.discountType,
+        minOrderTotal: coupon.minOrderTotal
+          ? Number(coupon.minOrderTotal)
+          : null,
+        isValid: true,
+      },
+    });
   } catch {
     return NextResponse.json(
       { success: false, error: "Error al validar el cupón" },

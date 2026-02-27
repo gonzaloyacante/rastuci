@@ -1,17 +1,33 @@
 /// Store identity and email configuration
 model store_settings {
-  id                String   @id @default("default")
-  name              String   @default("Rastuci")
-  adminEmail        String?
-  salesEmail        String?
-  supportEmail      String?
-  senderName        String?
-  addressStreet     String?
-  addressCity       String?
-  addressProvince   String?
-  addressPostalCode String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                       String   @id @default("default")
+  name                     String   @default("Rastuci")
+  adminEmail               String?
+  salesEmail               String?
+  supportEmail             String?
+  senderName               String?
+  addressStreet            String?
+  addressCity              String?
+  addressProvince          String?
+  addressPostalCode        String?
+  /// Payment discount percentages per method (%)
+  cashDiscount             Decimal? @db.Decimal(5, 2)
+  transferDiscount         Decimal? @db.Decimal(5, 2)
+  mpDiscount               Decimal? @db.Decimal(5, 2)
+  /// Order expiration timeouts
+  cashExpirationHours      Int      @default(48)
+  transferExpirationHours  Int      @default(48)
+  mpExpirationMinutes      Int      @default(30)
+  /// Bank transfer details
+  bankName                 String?
+  bankCbu                  String?
+  bankAlias                String?
+  bankHolder               String?
+  bankCuit                 String?
+  /// Feature flags
+  couponsEnabled           Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }
 
 /// Homepage visual configuration
@@ -240,4 +256,39 @@ model vacation_subscriber {
   period       vacation_period @relation(fields: [periodId], references: [id])
 
   @@index([periodId])
+}
+
+/// Contact form messages from customers
+model contact_messages {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String
+  phone              String?
+  message            String
+  responsePreference String   @default("EMAIL")
+  isRead             Boolean  @default(false)
+  isArchived         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([isRead, isArchived])
+  @@index([createdAt])
+}
+
+/// Discount coupons managed via admin panel
+model coupons {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  discount      Decimal   @db.Decimal(5, 2)
+  discountType  String    @default("PERCENTAGE") // PERCENTAGE | FIXED
+  isActive      Boolean   @default(true)
+  usageLimit    Int?
+  usageCount    Int       @default(0)
+  minOrderTotal Decimal?  @db.Decimal(10, 2)
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
 }

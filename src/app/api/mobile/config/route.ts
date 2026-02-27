@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -40,6 +41,19 @@ interface MobileAppConfig {
 // GET /api/mobile/config - Obtener configuración para app móvil
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const rl = await checkRateLimit(request, {
+      key: "mobile:config",
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { success: false, message: "Too many requests", data: null },
+        { status: 429 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const appVersion = searchParams.get("version");
     const platform = searchParams.get("platform"); // 'ios' | 'android'

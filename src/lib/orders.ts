@@ -3,6 +3,23 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import type { Order, OrderStatus } from "@/types";
 
+/**
+ * Shared Prisma include for orders with full relations.
+ * Use via `prisma.orders.findUnique({ include: ORDER_INCLUDE })`.
+ * Centralizes the pattern to avoid duplication across routes (#66).
+ */
+export const ORDER_INCLUDE = {
+  order_items: {
+    include: {
+      products: {
+        include: {
+          categories: true,
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.ordersInclude;
+
 // Define the type for the order with nested relations
 type OrderWithItems = Prisma.ordersGetPayload<{
   include: {
