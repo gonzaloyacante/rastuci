@@ -450,23 +450,24 @@ export const DELETE = withAdminAuth(
       // Delete product (cascades to variants, color images, size guides via DB relations)
       await prisma.products.delete({ where: { id } });
 
-      // Clean up Cloudinary images in background (non-blocking)
+      // Fix #109: await Cloudinary cleanup — in serverless the fn exits after response,
+      // so fire-and-forget Promises never execute. Must complete before returning.
       if (product.images) {
-        // images is now a native String[] — no JSON.parse needed
         const images: string[] = Array.isArray(product.images)
           ? product.images
           : [];
 
-        Promise.allSettled(
-          images.map(async (url) => {
-            const publicId = extractPublicId(url);
-            if (publicId) {
-              await deleteImage(publicId);
-            }
-          })
-        ).then((results) => {
+        if (images.length > 0) {
+          const results = await Promise.allSettled(
+            images.map(async (url) => {
+              const publicId = extractPublicId(url);
+              if (publicId) {
+                await deleteImage(publicId);
+              }
+            })
+          );
           logger.info("Product image deletion results", { results });
-        });
+        }
       }
 
       logger.info(`[Admin] Deleted product ${id}`);

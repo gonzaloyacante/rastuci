@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
@@ -23,9 +24,11 @@ export async function POST(req: NextRequest) {
 
     const { email } = await req.json();
 
-    if (!email) {
+    // Validate email format — prevent malformed queries and injection strings
+    const emailValidation = z.string().email().safeParse(email);
+    if (!emailValidation.success) {
       return NextResponse.json(
-        { success: false, error: "Email requerido" },
+        { success: false, error: "Email inválido" },
         { status: 400 }
       );
     }

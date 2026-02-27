@@ -270,9 +270,9 @@ export async function POST(req: NextRequest) {
           }
         : undefined,
       back_urls: {
-        success: `${origin}/finalizar-compra/success`,
-        failure: `${origin}/finalizar-compra/failure`,
-        pending: `${origin}/finalizar-compra/pending`,
+        success: `${origin}/checkout/success`,
+        failure: `${origin}/checkout/failure`,
+        pending: `${origin}/checkout/pending`,
       },
       auto_return: "all",
       external_reference: externalReference, // LINK TO DB ORDER

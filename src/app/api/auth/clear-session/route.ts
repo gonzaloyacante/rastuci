@@ -51,6 +51,10 @@ export async function POST(req: NextRequest) {
   return response;
 }
 
-export async function GET(req: NextRequest) {
-  return POST(req);
+// Fix #114: GET must NOT clear cookies — it's CSRF-able via <img src="...">
+export async function GET(_req: NextRequest) {
+  return NextResponse.json(
+    { error: "Method Not Allowed — use POST" },
+    { status: 405 }
+  );
 }

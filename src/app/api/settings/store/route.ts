@@ -182,6 +182,20 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
           addressCity: data.address?.city || null,
           addressProvince: data.address?.provinceCode || null,
           addressPostalCode: data.address?.postalCode || null,
+          // Fix #103: Payment fields were missing — admin changes silently discarded
+          cashDiscount: data.payments?.cashDiscount ?? null,
+          transferDiscount: data.payments?.transferDiscount ?? null,
+          mpDiscount: data.payments?.mpDiscount ?? null,
+          cashExpirationHours: data.payments?.cashExpirationHours ?? null,
+          transferExpirationHours:
+            data.payments?.transferExpirationHours ?? null,
+          mpExpirationMinutes: data.payments?.mpExpirationMinutes ?? null,
+          bankName: data.payments?.bankName || null,
+          bankCbu: data.payments?.bankCbu || null,
+          bankAlias: data.payments?.bankAlias || null,
+          bankHolder: data.payments?.bankHolder || null,
+          bankCuit: data.payments?.bankCuit || null,
+          couponsEnabled: data.payments?.couponsEnabled ?? true,
           updatedAt: new Date(),
         },
         create: {
@@ -195,6 +209,20 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
           addressCity: data.address?.city || null,
           addressProvince: data.address?.provinceCode || null,
           addressPostalCode: data.address?.postalCode || null,
+          // Fix #103: Payment fields on first create
+          cashDiscount: data.payments?.cashDiscount ?? null,
+          transferDiscount: data.payments?.transferDiscount ?? null,
+          mpDiscount: data.payments?.mpDiscount ?? null,
+          cashExpirationHours: data.payments?.cashExpirationHours ?? null,
+          transferExpirationHours:
+            data.payments?.transferExpirationHours ?? null,
+          mpExpirationMinutes: data.payments?.mpExpirationMinutes ?? null,
+          bankName: data.payments?.bankName || null,
+          bankCbu: data.payments?.bankCbu || null,
+          bankAlias: data.payments?.bankAlias || null,
+          bankHolder: data.payments?.bankHolder || null,
+          bankCuit: data.payments?.bankCuit || null,
+          couponsEnabled: data.payments?.couponsEnabled ?? true,
         },
       });
 
