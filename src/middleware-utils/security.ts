@@ -4,14 +4,17 @@ export function applySecurityHeaders(response: NextResponse, nonce: string) {
   // Content Security Policy — nonce-based for scripts
   const csp = [
     "default-src 'self'",
-    // Nonce-based script-src: 'unsafe-eval' kept temporarily for dev tools compatibility
-    `script-src 'self' 'unsafe-eval' 'nonce-${nonce}' https://fonts.googleapis.com https://va.vercel-scripts.com https://www.googletagmanager.com`,
-    // Style 'unsafe-inline' needed for CSS-in-JS / styled-jsx; nonce for styles is a future improvement
+    // Nonce-based script-src. 'unsafe-eval' removed: not required by MercadoPago or Sentry at runtime.
+    // Sentry SDK is purely build-time (source maps). Next.js hydration works with nonces.
+    `script-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://va.vercel-scripts.com https://www.googletagmanager.com`,
+    // 'unsafe-inline' required for Next.js CSS-in-JS (styled-jsx, emotion, and inline style attributes).
+    // Nonce-based styles would require custom Document config; tracked for future improvement.
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     "img-src 'self' data: https: blob: res.cloudinary.com images.unsplash.com placehold.co via.placeholder.com picsum.photos",
     "font-src 'self' https://fonts.gstatic.com data:",
     "connect-src 'self' https://api.mercadopago.com https://*.sentry.io https://*.google-analytics.com https://www.googletagmanager.com wss://localhost:* ws://localhost:*",
     "worker-src 'self' blob:",
+    // MercadoPago checkout and 3D-secure may open in iframes — allow their domains only
     "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",

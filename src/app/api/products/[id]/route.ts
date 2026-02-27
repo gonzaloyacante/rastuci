@@ -70,11 +70,9 @@ export async function GET(
 
     const safelyParseImages = (images: string | string[]): string[] => {
       if (Array.isArray(images)) return images;
-      try {
-        return JSON.parse(images);
-      } catch {
-        return [];
-      }
+      // Backward compat: if somehow still a string (during migration grace period)
+      if (typeof images === "string" && images.length > 0) return [images];
+      return [];
     };
 
     const responseProduct: Product = {
@@ -263,7 +261,7 @@ export const PUT = withAdminAuth(
           salePrice: salePrice ? Number(salePrice) : null,
           stock: Number(stock),
           categoryId,
-          images: Array.isArray(images) ? JSON.stringify(images) : images,
+          images: Array.isArray(images) ? images : [],
           onSale: onSale ?? false,
           isActive: isActive ?? true,
           sizes: sizes ?? undefined,
@@ -297,10 +295,9 @@ export const PUT = withAdminAuth(
           ? Number(updatedPrismaProduct.salePrice)
           : undefined,
         description: updatedPrismaProduct.description ?? undefined,
-        images:
-          typeof updatedPrismaProduct.images === "string"
-            ? JSON.parse(updatedPrismaProduct.images)
-            : updatedPrismaProduct.images,
+        images: Array.isArray(updatedPrismaProduct.images)
+          ? updatedPrismaProduct.images
+          : [],
         // Source from relational tables
         colorImages: colorImageRowsToRecord(
           updatedPrismaProduct.product_color_images
@@ -389,10 +386,9 @@ export const PATCH = withAdminAuth(
           ? Number(updatedPrismaProduct.salePrice)
           : undefined,
         description: updatedPrismaProduct.description ?? undefined,
-        images:
-          typeof updatedPrismaProduct.images === "string"
-            ? JSON.parse(updatedPrismaProduct.images)
-            : updatedPrismaProduct.images,
+        images: Array.isArray(updatedPrismaProduct.images)
+          ? updatedPrismaProduct.images
+          : [],
         // Source from relational tables
         colorImages: colorImageRowsToRecord(
           updatedPrismaProduct.product_color_images
@@ -456,10 +452,10 @@ export const DELETE = withAdminAuth(
 
       // Clean up Cloudinary images in background (non-blocking)
       if (product.images) {
-        const images: string[] =
-          typeof product.images === "string"
-            ? JSON.parse(product.images)
-            : product.images;
+        // images is now a native String[] — no JSON.parse needed
+        const images: string[] = Array.isArray(product.images)
+          ? product.images
+          : [];
 
         Promise.allSettled(
           images.map(async (url) => {

@@ -242,7 +242,7 @@ async function main() {
         salePrice: salePrice,
         categoryId: categoryId,
         stock: colors.length * SIZES.length * 10,
-        images: JSON.stringify(allImages),
+        images: allImages,
         // Legacy fields (kept for compatibility)
         colorImages: productColorImages,
         sizeGuide: {

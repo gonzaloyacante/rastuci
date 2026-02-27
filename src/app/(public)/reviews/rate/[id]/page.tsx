@@ -41,24 +41,10 @@ export default async function RateOrderPage({ params }: RateOrderPageProps) {
 
   order.order_items.forEach((item) => {
     if (!uniqueProductsMap.has(item.productId)) {
-      // Parsear imágenes (pueden venir como string JSON o simple)
-      let image = "";
-      try {
-        const rawImages = item.products.images;
-        if (rawImages) {
-          // Si es string JSON
-          if (typeof rawImages === "string" && rawImages.startsWith("[")) {
-            const parsed = JSON.parse(rawImages);
-            image = Array.isArray(parsed) ? parsed[0] : image;
-          } else {
-            // Si es string URL directo
-            image = rawImages as string;
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing product images for review:", error);
-        // Fallback to empty image
-      }
+      // images is now a native String[] from Postgres
+      const image = Array.isArray(item.products.images)
+        ? (item.products.images[0] ?? "")
+        : "";
 
       uniqueProductsMap.set(item.productId, {
         id: item.productId,

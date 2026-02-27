@@ -177,10 +177,11 @@ export async function GET(
           price: Number(p.price), // Convert Decimal to number
           salePrice: p.salePrice ? Number(p.salePrice) : undefined,
           description: p.description ?? undefined,
-          images:
-            typeof p.images === "string"
-              ? JSON.parse(p.images as string)
-              : (p.images as string[] | undefined),
+          images: Array.isArray(p.images)
+            ? (p.images as string[])
+            : typeof p.images === "string" && (p.images as string).length > 0
+              ? [p.images as string]
+              : [],
           category: {
             ...(p.category ?? {}),
             description: p.category?.description ?? undefined,
@@ -315,9 +316,7 @@ export const POST = withAdminAuth(
           sizeGuide: productData.sizeGuide ?? undefined,
           colorImages: productData.colorImages ?? undefined,
           updatedAt: new Date(),
-          images: Array.isArray(productData.images)
-            ? JSON.stringify(productData.images)
-            : productData.images,
+          images: Array.isArray(productData.images) ? productData.images : [],
           product_variants:
             productData.variants && productData.variants.length > 0
               ? {
@@ -355,10 +354,7 @@ export const POST = withAdminAuth(
           ? Number(newProduct.salePrice)
           : undefined,
         description: newProduct.description ?? undefined,
-        images:
-          typeof newProduct.images === "string"
-            ? JSON.parse(newProduct.images)
-            : newProduct.images,
+        images: Array.isArray(newProduct.images) ? newProduct.images : [],
         categories: {
           ...newProduct.categories,
           description: newProduct.categories.description ?? undefined,

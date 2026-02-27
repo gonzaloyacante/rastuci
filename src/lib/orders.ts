@@ -69,7 +69,7 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
         stock: item.products.stock,
         images:
           typeof item.products.images === "string"
-            ? JSON.parse(item.products.images)
+            ? [item.products.images]
             : item.products.images,
         categoryId: item.products.categoryId,
         createdAt: item.products.createdAt,

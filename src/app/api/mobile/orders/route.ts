@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
         product: {
           id: item.products.id,
           name: item.products.name,
-          image: item.products.images,
+          image: item.products.images?.[0] ?? undefined,
           price: item.products.price,
         },
       })),
