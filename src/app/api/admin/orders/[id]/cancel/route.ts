@@ -38,6 +38,13 @@ export async function POST(
       );
     }
 
+    if (order.status === ORDER_STATUS.DELIVERED) {
+      return NextResponse.json(
+        { error: "No se puede cancelar una orden ya entregada" },
+        { status: 400 }
+      );
+    }
+
     // Cancel and Restore Stock
     await prisma.$transaction(async (tx) => {
       // 1. Update Status

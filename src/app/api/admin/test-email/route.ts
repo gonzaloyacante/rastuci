@@ -31,9 +31,7 @@ export const GET = withAdminAuth(
       // Información de diagnóstico
       const diagnostics = {
         resendConfigured: !!resendApiKey,
-        resendKeyPrefix: resendApiKey
-          ? resendApiKey.substring(0, 10) + "..."
-          : "(no configurada)",
+        resendKeyPrefix: resendApiKey ? "re_***" : "(no configurada)",
         adminEmail,
         targetEmail: toEmail,
         nodeEnv: process.env.NODE_ENV,

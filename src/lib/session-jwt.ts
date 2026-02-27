@@ -1,22 +1,30 @@
 import { jwtVerify, SignJWT } from "jose";
 import { NextRequest } from "next/server";
 
-// SECURITY: JWT_SECRET must be configured in environment variables
-const JWT_SECRET_STRING = process.env.JWT_SECRET;
-if (!JWT_SECRET_STRING) {
-  // In development, warn but allow startup
-  if (process.env.NODE_ENV === "development") {
+// SECURITY: JWT_SECRET must be configured in environment variables.
+// Lazy initialization to avoid throwing during `next build` page data collection.
+let _jwtSecret: Uint8Array | null = null;
+
+function getJwtSecret(): Uint8Array {
+  if (_jwtSecret) return _jwtSecret;
+
+  const secretString = process.env.JWT_SECRET;
+  if (!secretString && process.env.NODE_ENV !== "development") {
+    throw new Error(
+      "[FATAL] JWT_SECRET is NOT configured. This is required in production. " +
+        "Set JWT_SECRET in your environment variables."
+    );
+  }
+  if (!secretString && process.env.NODE_ENV === "development") {
     console.warn(
       "[SECURITY WARNING] JWT_SECRET not configured. Using insecure fallback for development only."
     );
   }
+  _jwtSecret = new TextEncoder().encode(
+    secretString || "dev-only-secret-do-not-use-in-prod"
+  );
+  return _jwtSecret;
 }
-const JWT_SECRET = new TextEncoder().encode(
-  JWT_SECRET_STRING ||
-    (process.env.NODE_ENV === "development"
-      ? "dev-only-secret-do-not-use-in-prod"
-      : "")
-);
 
 export interface SessionData {
   userId: string;
@@ -52,7 +60,7 @@ export async function createSession(
     .setExpirationTime(exp)
     .setIssuer(issuer)
     .setAudience(audience)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 // Verify JWT token
@@ -60,7 +68,7 @@ export async function verifySession(
   token: string
 ): Promise<SessionData | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, {
+    const { payload } = await jwtVerify(token, getJwtSecret(), {
       issuer: "rastuci",
       audience: "rastuci-users",
     });

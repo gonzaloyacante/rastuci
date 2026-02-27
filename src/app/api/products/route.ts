@@ -250,9 +250,6 @@ export const POST = withAdminAuth(
 
       const body = await request.json();
 
-      // DEBUG: Log del body recibido
-      logger.info("POST /api/products - Body recibido:", { body });
-
       // Sanitize and validate input
       const validation = validateAndSanitize(
         ProductCreateSchema,

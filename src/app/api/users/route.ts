@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
@@ -69,7 +70,7 @@ export const PATCH = withAdminAuth(
           })
         : await prisma.user.create({
             data: {
-              id: `user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+              id: `user-${nanoid(16)}`,
               email,
               name: body.name || "",
               password: hashedPassword,
@@ -244,7 +245,7 @@ export const POST = withAdminAuth(
       // Crear el usuario
       const user = await prisma.user.create({
         data: {
-          id: `user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          id: `user-${nanoid(16)}`,
           name,
           email,
           password: hashedPassword,

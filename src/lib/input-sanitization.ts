@@ -95,7 +95,7 @@ export const schemas = {
   address: z.string().min(1).max(500),
   price: z.number().min(0).max(999999.99),
   stock: z.number().int().min(0).max(999999),
-  id: z.string().uuid(),
+  id: z.string().min(1),
   slug: z.string().regex(/^[a-z0-9-]+$/),
   search: z.string().max(100),
   pagination: z.object({

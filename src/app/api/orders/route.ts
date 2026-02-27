@@ -260,10 +260,13 @@ export async function POST(
           },
         });
 
-        // Actualizar el stock de los productos
+        // Actualizar el stock de los productos (with gte guard to prevent race condition)
         for (const item of validatedItems) {
           await tx.products.update({
-            where: { id: item.productId },
+            where: {
+              id: item.productId,
+              stock: { gte: item.quantity },
+            },
             data: {
               stock: {
                 decrement: item.quantity,

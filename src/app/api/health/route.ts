@@ -8,6 +8,5 @@ export async function GET() {
     success: true,
     status: "ok",
     timestamp: now.toISOString(),
-    uptimeSec: Math.round(process.uptime()),
   });
 }

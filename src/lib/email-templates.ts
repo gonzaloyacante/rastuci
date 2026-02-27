@@ -1,3 +1,16 @@
+/**
+ * Escape HTML entities to prevent XSS in email templates.
+ * User-supplied data (customerName, phone, address, product names) MUST be escaped.
+ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 export const EMAIL_STYLES = {
   fontFamily: "font-family: Arial, sans-serif;",
   body: "margin: 0; padding: 0; background-color: #f4f4f4; width: 100%;",
@@ -96,7 +109,7 @@ export function generateEmailHtml({
     </div>
 
     <div style="${EMAIL_STYLES.content}">
-      <p style="${EMAIL_STYLES.text}">Hola <strong>${customerName}</strong>,</p>
+      <p style="${EMAIL_STYLES.text}">Hola <strong>${escapeHtml(customerName)}</strong>,</p>
       
       <p style="${EMAIL_STYLES.text}">${message}</p>
       

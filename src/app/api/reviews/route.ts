@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -58,9 +59,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return fail("NOT_FOUND", "Orden no encontrada", 404);
     }
 
-    // Opcional: Validar estado DELIVERED
-    // Se comenta para permitir testeo mas fácil, o si el usuario quiere opinar antes
-    // if (order.status !== 'DELIVERED') { ... }
+    // #59 Fix: Use customerName from the order, not the request body (prevent impersonation)
+    const verifiedCustomerName = order.customerName || customerName;
 
     // 2. Filtrar reviews válidas (solo productos comprados)
     const orderProductIds = new Set(
@@ -82,42 +82,43 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Prisma no soporta updates anidado complejo con aggregates en transacción fácil,
     // así que lo haremos secuencial para asegurar recálculo correcto.
 
-    const results = [];
+    // #67 Fix: Wrap all review operations in a transaction
+    const results = await prisma.$transaction(async (tx) => {
+      const txResults = [];
 
-    for (const review of validReviews) {
-      // Crear Review
-      await prisma.product_reviews.create({
-        data: {
-          id: `review-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-          rating: review.rating,
-          comment: review.comment || "",
-          customerName: customerName, // Usamos nombre provisto (editable) o de la orden
-          productId: review.productId,
-          createdAt: new Date(),
-        },
-      });
+      for (const review of validReviews) {
+        // #68 Fix: Use nanoid instead of Date.now()+Math.random()
+        await tx.product_reviews.create({
+          data: {
+            id: `review-${nanoid(12)}`,
+            rating: review.rating,
+            comment: review.comment || "",
+            customerName: verifiedCustomerName,
+            productId: review.productId,
+            createdAt: new Date(),
+          },
+        });
 
-      // Recalcular Promedio (Optimizado con Aggregate)
-      const aggregates = await prisma.product_reviews.aggregate({
-        where: { productId: review.productId },
-        _avg: { rating: true },
-        _count: true,
-      });
+        // Recalculate average
+        const aggregates = await tx.product_reviews.aggregate({
+          where: { productId: review.productId },
+          _avg: { rating: true },
+          _count: true,
+        });
 
-      const newRating = aggregates._avg.rating || 0;
-      const newCount = aggregates._count || 0;
+        await tx.products.update({
+          where: { id: review.productId },
+          data: {
+            rating: aggregates._avg.rating || 0,
+            reviewCount: aggregates._count || 0,
+          },
+        });
 
-      // Actualizar Producto
-      await prisma.products.update({
-        where: { id: review.productId },
-        data: {
-          rating: newRating,
-          reviewCount: newCount,
-        },
-      });
+        txResults.push({ productId: review.productId, success: true });
+      }
 
-      results.push({ productId: review.productId, success: true });
-    }
+      return txResults;
+    });
 
     logger.info(`[Reviews] Batch created for Order ${orderId}`, {
       count: results.length,

@@ -53,7 +53,10 @@ export async function POST(request: NextRequest) {
       windowMs: 60_000,
     });
     if (!rl.ok) {
-      return NextResponse.json({ success: true, warning: "Rate limited" });
+      return NextResponse.json(
+        { success: false, error: "Rate limited" },
+        { status: 429 }
+      );
     }
 
     const body = await request.json();

@@ -131,15 +131,10 @@ export const PUT = withAdminAuth(
       const { id } = await params;
       const body = await request.json();
 
-      // DEBUG: Log del body recibido
-      logger.info(`PUT /api/products/${id} - Body recibido:`, { body });
-
       const parsed = ProductCreateSchema.safeParse(body);
       if (!parsed.success) {
-        // DEBUG: Log del error de validación
-        logger.error(`PUT /api/products/${id} - Error de validación:`, {
+        logger.warn(`PUT /api/products/${id} - Error de validación:`, {
           error: parsed.error.issues,
-          body,
         });
 
         return fail("BAD_REQUEST", "Datos inválidos", 400, {

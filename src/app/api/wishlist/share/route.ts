@@ -1,17 +1,31 @@
 import { add } from "date-fns";
 import { nanoid } from "nanoid";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 const ShareWishlistSchema = z.object({
   productIds: z.array(z.string()),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    // Rate limiting: prevent wishlist spam
+    const rl = await checkRateLimit(req, {
+      key: makeKey("POST", "/api/wishlist/share"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Demasiados intentos" },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { productIds } = ShareWishlistSchema.parse(body);
 

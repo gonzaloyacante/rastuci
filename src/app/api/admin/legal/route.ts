@@ -14,7 +14,14 @@ const createPolicySchema = z.object({
     .min(3)
     .regex(/^[a-z0-9-]+$/, "Invalid slug format"),
   description: z.string().optional(),
-  sections: z.array(z.any()).optional(), // JSON content
+  sections: z
+    .array(
+      z.object({
+        title: z.string().default(""),
+        content: z.string(),
+      })
+    )
+    .optional(),
   isActive: z.boolean().optional(),
 });
 

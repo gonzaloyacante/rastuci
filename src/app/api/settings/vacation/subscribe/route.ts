@@ -1,11 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { VacationSubscriberSchema } from "@/lib/validation/vacation";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: prevent subscriber spam
+    const rl = await checkRateLimit(request, {
+      key: makeKey("POST", "/api/settings/vacation/subscribe"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Demasiados intentos" },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const parsed = VacationSubscriberSchema.safeParse(body);
 

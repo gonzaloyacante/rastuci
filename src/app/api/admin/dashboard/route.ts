@@ -306,6 +306,7 @@ export const GET = withAdminAuth(
           sales: number;
           orders: number;
           revenue: number;
+          rating: number;
         }
       >();
       currentOrders.forEach((order) => {
@@ -316,6 +317,7 @@ export const GET = withAdminAuth(
             sales: 0,
             orders: 0,
             revenue: 0,
+            rating: Number(item.products?.rating ?? 0),
           };
           existing.sales += item.quantity;
           existing.orders += 1;
@@ -571,7 +573,7 @@ export const GET = withAdminAuth(
         product: p.name.substring(0, 20),
         sales: p.sales,
         revenue: p.revenue,
-        rating: Math.random() * 5, // Mock - en producción usar rating real
+        rating: p.rating ?? 0,
       }));
 
       const dashboard: MetricsDashboard = {
