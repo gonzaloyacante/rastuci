@@ -130,10 +130,8 @@ export function CheckoutForm({
       const customer = {
         name: `${customerData.firstName} ${customerData.lastName}`,
         email: customerData.email,
-        phone: customerData.identificationNumber, // Using ID field as phone proxy if needed, or update form
-        address: customerInfo?.address || customerData.identificationNumber, // Legacy field mapping check?
-        // Note: CustomerForm should ideally have Phone/Address fields if we require them.
-        // Assuming CustomerForm updates customerInfo in context or we specifically ask for them.
+        phone: customerInfo?.phone || "",
+        address: customerInfo?.address || "",
         city: customerInfo?.city || "",
         province: customerInfo?.province || "",
         postalCode: customerInfo?.postalCode || "",

@@ -99,39 +99,50 @@ export async function confirmStockReservation(
   sessionId: string
 ): Promise<boolean> {
   try {
-    // Obtener todas las reservas de esta sesión
-    const reservations = await prisma.stock_reservations.findMany({
-      where: { sessionId },
-    });
-
-    if (reservations.length === 0) {
-      logger.warn("[Stock] No reservations found for session", { sessionId });
-      return false;
-    }
-
-    // Decrementar stock para cada producto
-    for (const reservation of reservations) {
-      await prisma.products.update({
-        where: { id: reservation.productId },
-        data: {
-          stock: {
-            decrement: reservation.quantity,
-          },
-        },
+    return await prisma.$transaction(async (tx) => {
+      // 1. Obtener todas las reservas de esta sesión
+      const reservations = await tx.stock_reservations.findMany({
+        where: { sessionId },
       });
-    }
 
-    // Eliminar las reservas
-    await prisma.stock_reservations.deleteMany({
-      where: { sessionId },
+      if (reservations.length === 0) {
+        logger.warn("[Stock] No reservations found for session", { sessionId });
+        return false;
+      }
+
+      // 2. Eliminar las reservas PRIMERO para adquirir el control (lock implícito)
+      const deleted = await tx.stock_reservations.deleteMany({
+        where: { sessionId },
+      });
+
+      // Si otro proceso eliminó las reservas primero (race condition evitada)
+      if (deleted.count === 0) {
+        logger.warn(
+          "[Stock] Reservations already processed by another request",
+          { sessionId }
+        );
+        return false;
+      }
+
+      // 3. Decrementar stock para cada producto de forma segura
+      for (const reservation of reservations) {
+        await tx.products.update({
+          where: { id: reservation.productId },
+          data: {
+            stock: {
+              decrement: reservation.quantity,
+            },
+          },
+        });
+      }
+
+      logger.info("[Stock] Reservations confirmed and stock decremented", {
+        sessionId,
+        count: reservations.length,
+      });
+
+      return true;
     });
-
-    logger.info("[Stock] Reservations confirmed and stock decremented", {
-      sessionId,
-      count: reservations.length,
-    });
-
-    return true;
   } catch (error) {
     logger.error("[Stock] Error confirming reservation", { error, sessionId });
     return false;

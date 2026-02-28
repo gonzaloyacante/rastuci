@@ -85,6 +85,7 @@ export function useStoreSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(mergedSettings),
       });
+      if (!res.ok) throw new Error("Error al guardar la configuración");
 
       const json = await res.json();
 

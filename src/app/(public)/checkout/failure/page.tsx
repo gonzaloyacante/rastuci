@@ -171,7 +171,7 @@ function CheckoutFailureContent() {
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Link
             href="/carrito"
-            className="flex-1 bg-pink-600 text-white px-6 py-3 rounded-md font-medium hover:bg-pink-700 transition-colors text-center flex items-center justify-center"
+            className="flex-1 bg-primary text-white px-6 py-3 rounded-md font-medium hover:bg-primary/90 transition-colors text-center flex items-center justify-center"
           >
             <RefreshCw className="w-5 h-5 mr-2" />
             Intentar Nuevamente
@@ -193,23 +193,13 @@ function CheckoutFailureContent() {
           <div className="space-y-3">
             <div className="flex items-center text-sm">
               <Phone className="w-4 h-4 muted mr-3" />
-              <span className="muted">WhatsApp:</span>
-              <a
-                href="https://wa.me/5491234567890"
-                className="text-pink-600 hover:underline ml-2"
+              <span className="muted">Contacto:</span>
+              <Link
+                href="/contacto"
+                className="text-primary hover:underline ml-2"
               >
-                +54 9 123 456-7890
-              </a>
-            </div>
-            <div className="flex items-center text-sm">
-              <MapPin className="w-4 h-4 muted mr-3" />
-              <span className="muted">Email:</span>
-              <a
-                href="mailto:soporte@rastuci.com"
-                className="text-pink-600 hover:underline ml-2"
-              >
-                soporte@rastuci.com
-              </a>
+                Ir a la página de contacto
+              </Link>
             </div>
           </div>
         </div>
@@ -228,7 +218,7 @@ function CheckoutFailureContent() {
         <div className="mt-8 text-center text-sm muted">
           <p>
             Los pagos son procesados de forma segura por MercadoPago.{" "}
-            <Link href="/contacto" className="text-pink-600 hover:underline">
+            <Link href="/politicas" className="text-primary hover:underline">
               Política de privacidad
             </Link>
           </p>

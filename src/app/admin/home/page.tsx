@@ -16,6 +16,7 @@ export default function AdminHomePage() {
       setLoading(true);
       try {
         const res = await fetch("/api/home");
+        if (!res.ok) throw new Error("Error HTTP al cargar");
         const json = await res.json();
         if (!json.success) {
           throw new Error(json.error?.message || "Error");

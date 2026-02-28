@@ -38,7 +38,6 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
       "image/png",
       "image/gif",
       "image/webp",
-      "image/svg+xml",
       "image/avif",
     ];
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -55,17 +54,14 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const isSvg = file.type === "image/svg+xml";
-
     // Subir a Cloudinary
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
           {
-            resource_type: isSvg ? "image" : "auto",
+            resource_type: "auto",
             folder: "Rastuci",
-            // Removed strict constraints to allow SVGs and other formats supported by Cloudinary
-            // "auto" resource_type handles most magic, but SVGs need "image" to be transformable/viewable often.
+            // "auto" resource_type handles most magic.
           },
           (error, result) => {
             if (error) {

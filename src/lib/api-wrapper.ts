@@ -54,6 +54,9 @@ export function withApiLogger(handler: RouteHandler): RouteHandler {
 
       try {
         const clonedResponse = response.clone();
+        if (!response.ok) {
+          // We might still want to parse it to log the exact error structure
+        }
         responseBody = await clonedResponse.json();
       } catch {
         // No es JSON

@@ -1,27 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { PAYMENT_METHODS } from "@/lib/constants"; // Removed PROVINCE_CODE_MAP
+import { PAYMENT_METHODS } from "@/lib/constants";
 import {} from // CorreoArgentinoService,
 // type ProvinceCode,
 "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
-import { createPreference } from "@/lib/mercadopago"; // Leaving this here or move to checkout-service too? It's fine here or via service.
-// import { apiHandler } from "@/lib/api-handler";
-// interface OrderItem {
-//   productId: string;
-//   quantity: number;
-//   price: number;
-//   size?: string;
-//   color?: string;
-//   name?: string;
-// }
-// ... imports
+import { createPreference } from "@/lib/mercadopago";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
 import { checkoutService } from "@/services/checkout-service";
 import { orderService } from "@/services/order-service";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // [C-03] Rate limit: max 10 checkout attempts per IP per minute
+  const rateLimit = await checkRateLimit(request, {
+    key: "checkout",
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Demasiados intentos. Intenta nuevamente en un momento.",
+      },
+      { status: 429 }
+    );
+  }
+
   // --- VACATION MODE CHECK ---
+
   // We check this first to block any processing if the store is closed.
   const vacationSettings = await prisma.vacation_settings.findUnique({
     where: { id: "default" },

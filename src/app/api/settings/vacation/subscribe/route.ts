@@ -69,7 +69,9 @@ export async function POST(request: NextRequest) {
       data: {
         email,
         periodId: activePeriod.id,
-        cartSnapshot: cartSnapshot ?? undefined,
+        cartSnapshot: cartSnapshot
+          ? (cartSnapshot as unknown as import("@prisma/client").Prisma.InputJsonValue)
+          : undefined,
       },
     });
 

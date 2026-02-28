@@ -473,7 +473,10 @@ export default function AdminTrackingDashboard() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetch("/api/admin/tracking/refresh", { method: "POST" });
+      const response = await fetch("/api/admin/tracking/refresh", {
+        method: "POST",
+      });
+      if (!response.ok) throw new Error("Error HTTP al actualizar");
       await loadTrackingData();
       show({ type: "success", message: "Datos actualizados correctamente" });
     } catch {

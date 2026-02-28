@@ -64,7 +64,7 @@ export default function OfflinePageClient() {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("es-ES", {
+    return date.toLocaleTimeString("es-AR", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",

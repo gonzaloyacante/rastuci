@@ -62,6 +62,7 @@ export function useShippingSettings() {
     try {
       // First get current store settings
       const currentRes = await fetch("/api/settings/store");
+      if (!currentRes.ok) throw new Error("Error fetching store settings HTTP");
       const currentData = await currentRes.json();
 
       if (!currentData.success)

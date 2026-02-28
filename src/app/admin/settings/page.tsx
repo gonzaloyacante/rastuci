@@ -77,6 +77,11 @@ export default function ConfiguracionPage() {
         body: JSON.stringify(faqs),
       });
 
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Error HTTP: ${res.status}`);
+      }
+
       const data = await res.json();
       if (data.success) {
         show({ type: "success", message: "FAQs guardadas exitosamente" });

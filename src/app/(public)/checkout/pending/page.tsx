@@ -128,7 +128,7 @@ function CheckoutPendingContent() {
           <div className="space-y-3">
             {paymentInstructions.steps.map((step) => (
               <div key={step.substring(0, 30)} className="flex items-start">
-                <div className="w-6 h-6 rounded-full bg-pink-100 text-pink-600 text-sm font-semibold flex items-center justify-center mr-3 mt-0.5 shrink-0">
+                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center mr-3 mt-0.5 shrink-0">
                   {paymentInstructions.steps.indexOf(step) + 1}
                 </div>
                 <p className="text-sm muted flex-1">{step}</p>
@@ -192,7 +192,7 @@ function CheckoutPendingContent() {
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Link
             href="/productos"
-            className="flex-1 bg-pink-600 text-white px-6 py-3 rounded-md font-medium hover:bg-pink-700 transition-colors text-center"
+            className="flex-1 bg-primary text-white px-6 py-3 rounded-md font-medium hover:bg-primary/90 transition-colors text-center"
           >
             Seguir Comprando
           </Link>
@@ -213,23 +213,13 @@ function CheckoutPendingContent() {
           <div className="space-y-3">
             <div className="flex items-center text-sm">
               <Phone className="w-4 h-4 muted mr-3" />
-              <span className="muted">WhatsApp:</span>
-              <a
-                href="https://wa.me/5491234567890"
-                className="text-pink-600 hover:underline ml-2"
+              <span className="muted">Contacto:</span>
+              <Link
+                href="/contacto"
+                className="text-primary hover:underline ml-2"
               >
-                +54 9 123 456-7890
-              </a>
-            </div>
-            <div className="flex items-center text-sm">
-              <MapPin className="w-4 h-4 muted mr-3" />
-              <span className="muted">Email:</span>
-              <a
-                href="mailto:soporte@rastuci.com"
-                className="text-pink-600 hover:underline ml-2"
-              >
-                soporte@rastuci.com
-              </a>
+                Ir a la página de contacto
+              </Link>
             </div>
           </div>
           <div className="mt-4 p-3 surface-secondary rounded-lg">
@@ -247,7 +237,7 @@ function CheckoutPendingContent() {
         <div className="mt-8 text-center text-sm muted">
           <p>
             Los pagos son procesados de forma segura por MercadoPago.{" "}
-            <Link href="/politicas" className="text-pink-600 hover:underline">
+            <Link href="/politicas" className="text-primary hover:underline">
               Términos y condiciones
             </Link>
           </p>

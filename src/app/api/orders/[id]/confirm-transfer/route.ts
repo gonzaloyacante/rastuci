@@ -1,16 +1,26 @@
 import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
-// Fix for param typing in Next.js 15+ if needed, but sticking to standard pattern
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // [C-01] Require an authenticated session before processing transfer proof
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Debes iniciar sesión para confirmar una transferencia" },
+        { status: 401 }
+      );
+    }
+
     const orderId = params.id;
     const body = await request.json();
     const { senderName, transactionId } = body;
@@ -22,15 +32,30 @@ export async function POST(
       );
     }
 
-    // 1. Fetch Order to validate status
+    // 1. Fetch Order to validate status AND ownership
     const order = await prisma.orders.findUnique({
       where: { id: orderId },
+      select: { id: true, status: true, customerEmail: true },
     });
 
     if (!order) {
       return NextResponse.json(
         { error: "Orden no encontrada" },
         { status: 404 }
+      );
+    }
+
+    // Ensure the requesting user owns this order (or is admin)
+    const isAdmin = session.user.isAdmin === true;
+    if (!isAdmin && order.customerEmail !== session.user.email) {
+      logger.warn("[Transfer] Unauthorized attempt to confirm transfer", {
+        orderId,
+        requestingUserEmail: session.user.email,
+        orderCustomerEmail: order.customerEmail,
+      });
+      return NextResponse.json(
+        { error: "No tienes permiso para modificar esta orden" },
+        { status: 403 }
       );
     }
 
@@ -45,7 +70,7 @@ export async function POST(
     const updatedOrder = await prisma.orders.update({
       where: { id: orderId },
       data: {
-        status: ORDER_STATUS.PAYMENT_REVIEW as OrderStatus, // Cast if enum mismatch
+        status: ORDER_STATUS.PAYMENT_REVIEW as OrderStatus,
         transferSenderName: senderName,
         transferTransactionId: transactionId,
         transferProofAt: new Date(),
@@ -55,9 +80,8 @@ export async function POST(
     logger.info(`[Transfer] Proof submitted for ${orderId}`, {
       senderName,
       transactionId,
+      userId: session.user.id,
     });
-
-    // TODO: Send Email to Admin? (New Transfer Proof Uploaded)
 
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error) {

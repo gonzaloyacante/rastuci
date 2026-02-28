@@ -45,6 +45,7 @@ export default function AdminLoginPage() {
     const checkSession = async () => {
       try {
         const res = await fetch("/api/auth/session");
+        if (!res.ok) throw new Error("Error fetching session");
         const data = await res.json();
 
         // Si hay usuario válido, redirigir al dashboard

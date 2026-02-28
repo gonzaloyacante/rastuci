@@ -22,16 +22,11 @@ import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Spinner } from "@/components/ui/Spinner";
 import { logger } from "@/lib/logger";
+import { OrderStatus } from "@/types";
 
-interface OrderStatus {
+interface OrderHistoryEvent {
   id: string;
-  status:
-    | "pending"
-    | "confirmed"
-    | "processing"
-    | "shipped"
-    | "delivered"
-    | "cancelled";
+  status: OrderStatus;
   timestamp: Date;
   description: string;
   location?: string;
@@ -53,7 +48,7 @@ interface Order {
   orderNumber: string;
   customerName: string;
   customerAddress?: string;
-  status: OrderStatus["status"];
+  status: OrderStatus;
   items: OrderItem[];
   total: number;
   shippingAddress: {
@@ -67,7 +62,7 @@ interface Order {
   };
   trackingNumber?: string;
   estimatedDelivery?: Date;
-  statusHistory?: OrderStatus[];
+  statusHistory?: OrderHistoryEvent[];
   createdAt: Date;
   mpPaymentId?: string;
   shippingMethod?: "domicilio" | "sucursal";
@@ -210,6 +205,16 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     try {
       logger.info("Downloading invoice", { orderId: order.id });
 
+      const escapeHtml = (unsafe: string) => {
+        return (unsafe || "")
+          .toString()
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      };
+
       // Generar contenido HTML de la factura
       const invoiceHTML = `
         <!DOCTYPE html>
@@ -232,10 +237,10 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
             <p>Factura de Compra</p>
           </div>
           <div class="info">
-            <p><strong>Factura #:</strong> ${order.id}</p>
-            <p><strong>Fecha:</strong> ${new Date(order.createdAt).toLocaleDateString("es-AR")}</p>
-            <p><strong>Cliente:</strong> ${order.customerName}</p>
-            <p><strong>Dirección:</strong> ${order.customerAddress || "N/A"}</p>
+            <p><strong>Factura #:</strong> ${escapeHtml(order.id)}</p>
+            <p><strong>Fecha:</strong> ${escapeHtml(new Date(order.createdAt).toLocaleDateString("es-AR"))}</p>
+            <p><strong>Cliente:</strong> ${escapeHtml(order.customerName)}</p>
+            <p><strong>Dirección:</strong> ${escapeHtml(order.customerAddress || "N/A")}</p>
           </div>
           <table>
             <thead>
@@ -255,7 +260,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
                     price: number;
                   }) => `
                 <tr>
-                  <td>${item.product?.name || "Producto"}</td>
+                  <td>${escapeHtml(item.product?.name || "Producto")}</td>
                   <td>${item.quantity}</td>
                   <td>$${item.price.toFixed(2)}</td>
                   <td>$${(item.quantity * item.price).toFixed(2)}</td>
@@ -289,51 +294,54 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     }
   };
 
-  const getStatusColor = (
-    status: OrderStatus["status"]
-  ): "default" | "success" | "warning" | "error" | "info" => {
+  const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case "delivered":
+      case OrderStatus.DELIVERED:
         return "success";
-      case "shipped":
-        return "info";
-      case "processing":
+      case OrderStatus.PROCESSED:
+      case OrderStatus.PENDING_PAYMENT:
+      case OrderStatus.WAITING_TRANSFER_PROOF:
+      case OrderStatus.PAYMENT_REVIEW:
+      case OrderStatus.RESERVED:
         return "warning";
-      case "cancelled":
+      case OrderStatus.CANCELLED:
         return "error";
       default:
         return "default";
     }
   };
 
-  const getStatusIcon = (status: OrderStatus["status"]) => {
+  const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
-      case "delivered":
+      case OrderStatus.DELIVERED:
         return <CheckCircle className="h-5 w-5" />;
-      case "shipped":
-        return <Truck className="h-5 w-5" />;
-      case "processing":
+      case OrderStatus.PROCESSED:
+      case OrderStatus.PENDING_PAYMENT:
         return <Package className="h-5 w-5" />;
-      case "cancelled":
+      case OrderStatus.CANCELLED:
         return <AlertCircle className="h-5 w-5" />;
       default:
         return <Clock className="h-5 w-5" />;
     }
   };
 
-  const getStatusText = (status: OrderStatus["status"]): string => {
+  const getStatusText = (status: OrderStatus): string => {
     switch (status) {
-      case "pending":
+      case OrderStatus.PENDING:
         return "Pendiente";
-      case "confirmed":
-        return "Confirmado";
-      case "processing":
+      case OrderStatus.PENDING_PAYMENT:
+        return "Esperando pago de envío";
+      case OrderStatus.RESERVED:
+        return "Reservado";
+      case OrderStatus.WAITING_TRANSFER_PROOF:
+        return "Esperando comprobante";
+      case OrderStatus.PAYMENT_REVIEW:
+        return "Pago en revisión";
+      case OrderStatus.PROCESSED:
         return "En preparación";
-      case "shipped":
-        return "Enviado";
-      case "delivered":
+      case OrderStatus.DELIVERED:
         return "Entregado";
-      case "cancelled":
+      case OrderStatus.CANCELLED:
         return "Cancelado";
       default:
         return status;

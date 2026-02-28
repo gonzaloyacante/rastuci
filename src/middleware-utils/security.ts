@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function timingSafeStringEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 export function applySecurityHeaders(response: NextResponse, nonce: string) {
   // Content Security Policy — nonce-based for scripts
   const csp = [
@@ -93,7 +107,7 @@ export function csrfProtection(request: NextRequest) {
 
   const sessionToken = request.cookies.get("session-csrf")?.value;
 
-  if (!token || !sessionToken || token !== sessionToken) {
+  if (!token || !sessionToken || !timingSafeStringEqual(token, sessionToken)) {
     return NextResponse.json(
       { success: false, error: "CSRF token inválido" },
       { status: 403 }

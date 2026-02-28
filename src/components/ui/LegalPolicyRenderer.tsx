@@ -1,4 +1,5 @@
 import { PolicySection } from "@/lib/policy-utils";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 interface LegalPolicyRendererProps {
   htmlContent?: string | null;
@@ -13,7 +14,8 @@ export function LegalPolicyRenderer({
     return (
       <div
         className="prose prose-sm sm:prose lg:prose-lg max-w-none text-content-secondary"
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
+        // [C-05] Sanitized to prevent stored XSS from malicious CMS content
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }}
       />
     );
   }
@@ -28,8 +30,9 @@ export function LegalPolicyRenderer({
             </h2>
             {section.content && (
               <div
+                // [C-05] Sanitized before rendering
                 dangerouslySetInnerHTML={{
-                  __html: section.content.replace(/\n/g, "<br/>"),
+                  __html: sanitizeHtml(section.content.replace(/\n/g, "<br/>")),
                 }}
               />
             )}
@@ -39,8 +42,9 @@ export function LegalPolicyRenderer({
                 {section.items.map((item, i) => (
                   <li
                     key={i}
+                    // [C-05] Sanitized before rendering
                     dangerouslySetInnerHTML={{
-                      __html: item,
+                      __html: sanitizeHtml(item),
                     }}
                   />
                 ))}
@@ -51,8 +55,9 @@ export function LegalPolicyRenderer({
                 {section.bullets.map((b, i) => (
                   <li
                     key={i}
+                    // [C-05] Sanitized before rendering
                     dangerouslySetInnerHTML={{
-                      __html: b.text,
+                      __html: sanitizeHtml(b.text),
                     }}
                   />
                 ))}

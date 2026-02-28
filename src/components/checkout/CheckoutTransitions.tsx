@@ -94,13 +94,13 @@ export function SkeletonLoader({
 }: SkeletonLoaderProps) {
   return (
     <div className={`space-y-3 ${className}`}>
-      {Array.from({ length: lines }).map(() => (
+      {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
-          key={`skeleton-line-${Math.random()}`}
+          key={`skeleton-line-${i}`}
           className="h-4"
           style={{
-            width: `${Math.random() * 40 + 60}%`,
-            animationDelay: `${Math.random() * 0.5}s`,
+            width: `${60 + i * 15}%`,
+            animationDelay: `${i * 0.2}s`,
           }}
           rounded="md"
         />

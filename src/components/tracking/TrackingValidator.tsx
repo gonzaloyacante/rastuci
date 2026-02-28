@@ -178,7 +178,7 @@ export function TrackingValidator({
                             Última actualización:{" "}
                             {new Date(
                               validationResult.lastUpdate
-                            ).toLocaleString("es-ES")}
+                            ).toLocaleString("es-AR")}
                           </p>
                         )}
                       </div>

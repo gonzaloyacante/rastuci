@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
@@ -39,6 +41,15 @@ export async function GET(
   { params }: { params: { code: string } }
 ) {
   try {
+    // [C-02] Require authentication - endpoint exposes PII (customerAddress)
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "No autorizado", data: null },
+        { status: 401 }
+      );
+    }
+
     const trackingCode = params.code;
 
     if (!trackingCode) {

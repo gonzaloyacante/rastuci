@@ -29,17 +29,16 @@ export default function CreateUserPage() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText}`);
+        throw new Error(`Error HTTP ${response.status}: ${errorText}`);
       }
 
       const result = await response.json();
-      if (result.success) {
-        // Redirigir a la lista de usuarios
-        window.location.href = "/admin/usuarios";
-        show({ type: "success", message: "Usuario creado exitosamente" });
-      } else {
+      if (!result.success) {
         throw new Error(result.error || "Error desconocido");
       }
+
+      window.location.href = "/admin/usuarios";
+      show({ type: "success", message: "Usuario creado exitosamente" });
     } catch (error) {
       logger.error("Error al crear usuario:", { error: error });
       show({ type: "error", message: "Error al crear usuario" });

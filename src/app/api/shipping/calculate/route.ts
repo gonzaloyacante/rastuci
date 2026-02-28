@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimiter";
 import { getStorePostalCode } from "@/lib/store-settings";
 
 // Opciones de envío de fallback cuando la API de CA no está disponible
@@ -38,8 +39,24 @@ const FALLBACK_SHIPPING_OPTIONS = {
   ],
 };
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // [C-03] Rate limit: max 20 shipping calculations per IP per minute
+    const rateLimit = await checkRateLimit(request, {
+      key: "shipping-calculate",
+      limit: 20,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Demasiados intentos. Intenta nuevamente en un momento.",
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { postalCode, dimensions, deliveredType } = body;
 

@@ -9,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -42,22 +43,12 @@ export default function FavoritosPageClient() {
   const [showFilters, setShowFilters] = useState(false);
   const { confirm, ConfirmDialog } = useConfirmDialog();
 
+  const router = useRouter();
+
   const handleAddToCart = (item: (typeof wishlistItems)[0]) => {
-    // Convert wishlist item to product format for addToCart
-    const product: Product = {
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      images: [item.image],
-      description: "",
-      categoryId: "default",
-      stock: 1,
-      onSale: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    addToCart(product, 1, "M", "Sin color");
-    show({ type: "success", message: "Producto agregado al carrito" });
+    // Para evitar variants falsos ("M", "Sin color") que rompen el checkout,
+    // redirigimos al usuario a la página del producto para que elija opciones.
+    router.push(`/productos/${item.id}`);
   };
 
   const handleRemoveFromWishlist = (id: string, name: string) => {
@@ -271,7 +262,7 @@ export default function FavoritosPageClient() {
 
                   <div className="absolute bottom-2 left-2">
                     <span className="text-xs surface px-2 py-1 rounded text-primary shadow-sm">
-                      {new Date(item.addedAt).toLocaleDateString("es-ES", {
+                      {new Date(item.addedAt).toLocaleDateString("es-AR", {
                         day: "numeric",
                         month: "short",
                       })}
@@ -300,7 +291,7 @@ export default function FavoritosPageClient() {
                       className="flex-1"
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />
-                      Al carrito
+                      Ver opciones
                     </Button>
 
                     <Button
@@ -345,7 +336,7 @@ export default function FavoritosPageClient() {
 
                       <p className="text-sm muted">
                         Agregado el{" "}
-                        {new Date(item.addedAt).toLocaleDateString("es-ES", {
+                        {new Date(item.addedAt).toLocaleDateString("es-AR", {
                           day: "numeric",
                           month: "long",
                           year: "numeric",

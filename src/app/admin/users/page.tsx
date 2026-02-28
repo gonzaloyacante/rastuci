@@ -67,7 +67,7 @@ export default function UsuariosPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-CO", {
+    return new Date(dateString).toLocaleDateString("es-AR", {
       year: "numeric",
       month: "short",
       day: "numeric",

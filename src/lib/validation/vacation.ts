@@ -45,7 +45,9 @@ export type VacationSettingsFormData = z.infer<typeof VacationSettingsSchema>;
 
 export const VacationSubscriberSchema = z.object({
   email: z.string().email("Email inválido"),
-  cartSnapshot: z.any().optional(), // We accept any JSON for the cart snapshot
+  cartSnapshot: z
+    .union([z.record(z.string(), z.unknown()), z.array(z.unknown())])
+    .optional(), // We accept any JSON array or object for the cart snapshot
 });
 
 export type VacationSubscriberData = z.infer<typeof VacationSubscriberSchema>;

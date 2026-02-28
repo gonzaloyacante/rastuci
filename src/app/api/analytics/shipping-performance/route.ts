@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { verifyAdminAuth } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 
 interface _ApiResponse<T> {
@@ -52,6 +53,15 @@ interface ShippingAnalyticsData {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
+    // [C-02] Only admins should access shipping analytics data
+    const auth = await verifyAdminAuth(request);
+    if (!auth.success) {
+      return NextResponse.json(
+        { success: false, error: "No autorizado" },
+        { status: 401 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");

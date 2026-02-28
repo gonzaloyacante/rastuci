@@ -34,10 +34,7 @@ const CheckoutPageSkeleton = () => (
       <div className="mb-8">
         <div className="flex justify-between items-center">
           {Array.from({ length: 5 }, (_, i) => (
-            <div
-              key={`checkout-step-${Math.random()}`}
-              className="flex items-center"
-            >
+            <div key={`checkout-step-${i}`} className="flex items-center">
               <Skeleton className="w-8 h-8 rounded-full" />
               {i < 4 && <Skeleton className="w-16 h-0.5 mx-4" />}
             </div>
@@ -51,8 +48,8 @@ const CheckoutPageSkeleton = () => (
           <div className="surface border border-muted rounded-lg p-6">
             <Skeleton className="h-8 w-64 mb-6" />
             <div className="space-y-4">
-              {[...Array(4)].map(() => (
-                <div key={`form-field-${Math.random()}`}>
+              {[...Array(4)].map((_, i) => (
+                <div key={`form-field-${i}`}>
                   <Skeleton className="h-4 w-24 mb-2" />
                   <Skeleton className="h-12 w-full" />
                 </div>
@@ -65,11 +62,8 @@ const CheckoutPageSkeleton = () => (
           <div className="surface border border-muted rounded-lg p-6 sticky top-24">
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-3">
-              {[...Array(3)].map(() => (
-                <div
-                  key={`order-line-${Math.random()}`}
-                  className="flex justify-between"
-                >
+              {[...Array(3)].map((_, i) => (
+                <div key={`order-line-${i}`} className="flex justify-between">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-4 w-16" />
                 </div>

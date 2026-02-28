@@ -161,10 +161,14 @@ export interface SerializedOrderItem {
 }
 
 export enum OrderStatus {
-  PENDING = "PENDING", // Pedido creado, esperando pago del cliente
-  PENDING_PAYMENT = "PENDING_PAYMENT", // Cliente pagó, admin debe pagar envío
-  PROCESSED = "PROCESSED", // Envío pagado, listo para entregar
-  DELIVERED = "DELIVERED", // Entregado al cliente
+  PENDING = "PENDING",
+  PENDING_PAYMENT = "PENDING_PAYMENT",
+  RESERVED = "RESERVED",
+  WAITING_TRANSFER_PROOF = "WAITING_TRANSFER_PROOF",
+  PAYMENT_REVIEW = "PAYMENT_REVIEW",
+  PROCESSED = "PROCESSED",
+  DELIVERED = "DELIVERED",
+  CANCELLED = "CANCELLED",
 }
 
 // Tipos para formularios

@@ -396,6 +396,8 @@ export default function ShippingAnalytics() {
       const response = await fetch(
         `/api/analytics/shipping-performance?${params}`
       );
+      if (!response.ok)
+        throw new Error("Error fetching shipping performance data");
       const result = await response.json();
       if (result.success) setData(result.data);
     } catch {

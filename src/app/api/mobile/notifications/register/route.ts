@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimiter";
 
@@ -12,6 +14,15 @@ interface ApiResponse<T> {
 // GET - Obtener estado de registro
 export async function GET(request: NextRequest) {
   try {
+    // [C-02] Require authentication to check notification registration
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "No autorizado", data: null },
+        { status: 401 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const customerEmail = searchParams.get("customerEmail");
     const deviceId = searchParams.get("deviceId");
@@ -58,6 +69,15 @@ export async function GET(request: NextRequest) {
 // POST - Registrar token para push notifications
 export async function POST(request: NextRequest) {
   try {
+    // [C-02] Require authentication to register push tokens
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "No autorizado", data: null },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { token, platform } = body;
 

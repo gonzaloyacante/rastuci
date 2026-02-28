@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { headers } from "next/headers";
 import { Suspense } from "react";
 
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
@@ -82,7 +81,6 @@ export async function generateStaticParams() {
 // ... existing imports
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const nonce = (await headers()).get("x-nonce") || undefined;
   const { id } = await params;
 
   const product = await prisma.products.findUnique({
@@ -128,7 +126,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {jsonLd && (
         <script
           type="application/ld+json"
-          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
           }}

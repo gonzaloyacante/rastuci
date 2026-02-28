@@ -65,6 +65,10 @@ export default function CategoryEditPage() {
         throw new Error("Error al actualizar la categoría");
       }
 
+      const payload = await response.json().catch(() => ({}));
+      if (!payload.success)
+        throw new Error(payload.error || "Error al actualizar la categoría");
+
       router.push("/admin/categorias");
       show({ type: "success", message: "Categoría actualizada correctamente" });
     } catch (error) {

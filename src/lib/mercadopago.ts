@@ -253,7 +253,15 @@ export function validateWebhookSignature(
       .split(",")
       .find((s) => s.trim().startsWith("v1="))
       ?.split("=")[1];
-    return signature === expected;
+
+    if (!signature || signature.length !== expected.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expected)
+    );
   } catch (e) {
     logger.error("[mercadopago] validateWebhookSignature error", { error: e });
     return false;

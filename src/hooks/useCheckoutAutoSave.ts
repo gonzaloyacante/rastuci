@@ -75,7 +75,7 @@ export function useCheckoutAutoSave(
                 ...dataToSave.cardData,
                 cardNumber: "", // No guardar número de tarjeta
                 securityCode: "", // No guardar CVV
-                cardholderName: dataToSave.cardData.cardholderName || "",
+                cardholderName: "", // No guardar nombre (PII)
               }
             : undefined,
         };

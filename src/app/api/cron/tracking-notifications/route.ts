@@ -21,7 +21,7 @@
  * El schedule "0 9 * * *" ejecuta 1 vez al día a las 9am (aprox).
  *
  * También se puede ejecutar manualmente:
- * curl https://tu-dominio.vercel.app/api/cron/tracking-notifications?secret=tu_secret
+ * curl -H "Authorization: Bearer tu_secret" https://tu-dominio.vercel.app/api/cron/tracking-notifications
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -37,15 +37,10 @@ export async function GET(request: NextRequest) {
   try {
     // Validar secret para evitar ejecuciones no autorizadas
     const authHeader = request.headers.get("authorization");
-    const querySecret = request.nextUrl.searchParams.get("secret");
     const expectedSecret = process.env.CRON_SECRET;
 
     // Fail-Closed: If secret is missing or mismatch, deny.
-    if (
-      !expectedSecret ||
-      (authHeader !== `Bearer ${expectedSecret}` &&
-        querySecret !== expectedSecret)
-    ) {
+    if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
       logger.warn("[Cron] Unauthorized cron attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

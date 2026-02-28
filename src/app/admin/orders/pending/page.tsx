@@ -58,13 +58,13 @@ export default function PendingOrdersPage() {
   };
 
   const formatCurrency = (value: number) => {
-    return `$${value.toLocaleString("es-CO")}`;
+    return `$${value.toLocaleString("es-AR")}`;
   };
 
   const formatDate = (dateString: string | Date) => {
     const date =
       typeof dateString === "string" ? new Date(dateString) : dateString;
-    return date.toLocaleDateString("es-CO", {
+    return date.toLocaleDateString("es-AR", {
       year: "numeric",
       month: "short",
       day: "numeric",

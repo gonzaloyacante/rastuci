@@ -412,7 +412,7 @@ export default function SupportPage() {
   const handleSendMessage = async () => {
     if (!selectedTicket || !newMessage.trim()) return;
     try {
-      await fetch("/api/admin/support", {
+      const response = await fetch("/api/admin/support", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -422,6 +422,7 @@ export default function SupportPage() {
           isInternal: false,
         }),
       });
+      if (!response.ok) throw new Error("Error al enviar");
       setNewMessage("");
       fetchData();
       show({ type: "success", message: "Mensaje enviado" });

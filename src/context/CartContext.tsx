@@ -462,6 +462,18 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           body: JSON.stringify({ postalCode, deliveredType }),
         });
 
+        if (!response.ok) {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.error ||
+                `Error calculando envío (HTTP ${response.status})`
+            );
+          }
+          throw new Error(`Error calculando envío: HTTP ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success && result.options) {
@@ -494,6 +506,13 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         const response = await fetch(
           `/api/shipping/agencies?provinceCode=${provinceCode}&customerId=${customerId}`
         );
+
+        if (!response.ok) {
+          throw new Error(
+            `Error obteniendo sucursales: HTTP ${response.status}`
+          );
+        }
+
         const result = await response.json();
 
         if (result.success && result.agencies) {
@@ -522,6 +541,15 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         },
         body: JSON.stringify({ code }),
       });
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Error validando cupón`);
+        }
+        throw new Error(`Error validando cupón: HTTP ${response.status}`);
+      }
 
       const result = await response.json();
 
@@ -646,6 +674,21 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         },
         body: JSON.stringify(orderData),
       });
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          return {
+            success: false,
+            error: errorData.error || "Error al procesar el pedido",
+          };
+        }
+        return {
+          success: false,
+          error: `Error de red: HTTP ${response.status}`,
+        };
+      }
 
       const result = await response.json();
 

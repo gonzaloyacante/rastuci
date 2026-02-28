@@ -104,12 +104,14 @@ export default function Footer({ home, contact }: FooterProps) {
               </Link>
             </li>
             <li>
-              <Link
-                href="/contacto"
+              <a
+                href="https://www.argentina.gob.ar/produccion/defensadelconsumidor"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="muted hover:text-primary transition-colors"
               >
                 Defensa del Consumidor
-              </Link>
+              </a>
             </li>
           </ul>
         </div>

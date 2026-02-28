@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { headers } from "next/headers";
 
 import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
@@ -155,7 +154,6 @@ async function getHomeData() {
 // ... existing imports
 
 export default async function HomePage() {
-  const nonce = (await headers()).get("x-nonce") || undefined;
   const { settings, shipping, categories, featuredProducts } =
     await getHomeData();
 
@@ -165,7 +163,6 @@ export default async function HomePage() {
     <main className="min-h-screen">
       <script
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}

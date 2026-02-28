@@ -170,14 +170,14 @@ export function formatChartValue(
 ): string {
   switch (type) {
     case "currency":
-      return new Intl.NumberFormat("es-ES", {
+      return new Intl.NumberFormat("es-AR", {
         style: "currency",
         currency: "EUR",
       }).format(value);
     case "percentage":
       return `${value.toFixed(1)}%`;
     default:
-      return new Intl.NumberFormat("es-ES").format(value);
+      return new Intl.NumberFormat("es-AR").format(value);
   }
 }
 

@@ -15,7 +15,7 @@ const updatePolicySchema = z.object({
     .regex(/^[a-z0-9-]+$/)
     .optional(),
   description: z.string().optional(),
-  sections: z.array(z.any()).optional(),
+  sections: z.array(z.record(z.string(), z.unknown())).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -65,7 +65,9 @@ export const PUT = withAdminAuth(
           ...(description !== undefined && { description }),
           ...(sections && {
             content: { sections } as unknown as Prisma.InputJsonValue,
-            htmlContent: generateHtmlContent(sections),
+            htmlContent: generateHtmlContent(
+              sections as unknown as import("@/lib/policy-utils").PolicySection[]
+            ),
           }),
           ...(isActive !== undefined && { isActive }),
         },

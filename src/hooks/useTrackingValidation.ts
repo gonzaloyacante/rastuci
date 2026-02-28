@@ -59,10 +59,17 @@ export function useTrackingValidation(): UseTrackingValidationResult {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          const errorText = await response.text();
+          let errorData: Record<string, unknown> = {};
+          try {
+            errorData = JSON.parse(errorText) as Record<string, unknown>;
+          } catch {
+            // It's fine if it's not JSON
+          }
+          const messageStr =
+            typeof errorData.message === "string" ? errorData.message : "";
           throw new Error(
-            errorData.message ||
-              `Error ${response.status}: ${response.statusText}`
+            messageStr || `Error HTTP ${response.status}: ${errorText}`
           );
         }
 
@@ -123,9 +130,17 @@ export async function validateTrackingNumber(
   );
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorText = await response.text();
+    let errorData: Record<string, unknown> = {};
+    try {
+      errorData = JSON.parse(errorText) as Record<string, unknown>;
+    } catch {
+      // It's fine if it's not JSON
+    }
+    const messageStr =
+      typeof errorData.message === "string" ? errorData.message : "";
     throw new Error(
-      errorData.message || `Error ${response.status}: ${response.statusText}`
+      messageStr || `Error HTTP ${response.status}: ${errorText}`
     );
   }
 

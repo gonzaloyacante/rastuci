@@ -2,7 +2,7 @@
  * Formatear precio en pesos colombianos
  */
 export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat("es-CO", {
+  return new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "COP",
     minimumFractionDigits: 0,
@@ -28,7 +28,7 @@ export function formatCurrency(amount: number) {
  * Formatear número con separadores de miles
  */
 export const formatNumber = (num: number): string => {
-  return new Intl.NumberFormat("es-CO").format(num);
+  return new Intl.NumberFormat("es-AR").format(num);
 };
 
 /**
@@ -36,7 +36,7 @@ export const formatNumber = (num: number): string => {
  */
 export const formatDate = (date: Date | string): string => {
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("es-CO", {
+  return new Intl.DateTimeFormat("es-AR", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -50,7 +50,7 @@ export const formatDate = (date: Date | string): string => {
  */
 export const formatDateShort = (date: Date | string): string => {
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("es-CO", {
+  return new Intl.DateTimeFormat("es-AR", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

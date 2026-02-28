@@ -2,6 +2,7 @@
 
 import { Heart, ShoppingCart, Star, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -26,14 +27,15 @@ export function ProductComparison() {
   const { addToWishlist, isInWishlist } = useWishlist();
   const [isOpen, setIsOpen] = useState(false);
 
+  const router = useRouter();
+
   if (comparisonItems.length === 0) {
     return null;
   }
 
   const handleAddToCart = (product: ProductWithExtras) => {
-    // Type assertion needed for compatibility with existing cart system
-    const productForCart = product as unknown;
-    addToCart(productForCart as never, 1, "M", "Sin color");
+    // Evitar variantes falsas ("M", "Sin color") enviando al usuario a la página del producto
+    router.push(`/productos/${product.id}`);
   };
 
   const comparisonFeatures = [
@@ -139,11 +141,11 @@ export function ProductComparison() {
                                   product as unknown as ProductWithExtras
                                 )
                               }
-                              className="w-full"
+                              className="w-full mb-2"
                               size="sm"
                             >
                               <ShoppingCart className="w-4 h-4 mr-2" />
-                              Añadir al Carrito
+                              Ver opciones
                             </Button>
                             <Button
                               variant="outline"

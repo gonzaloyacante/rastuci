@@ -273,7 +273,7 @@ function CheckoutSuccessContent() {
                     </span>
                     <span className="muted">
                       {new Date(orderInfo.estimatedDelivery).toLocaleDateString(
-                        "es-ES",
+                        "es-AR",
                         {
                           weekday: "long",
                           year: "numeric",

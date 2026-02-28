@@ -137,7 +137,7 @@ const productSchema = z.object({
   sizesInput: z.string().optional(),
   colorsInput: z.string().optional(),
   featuresInput: z.string().optional(),
-  sizeGuide: z.any().optional(),
+  sizeGuide: z.record(z.string(), z.unknown()).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -269,7 +269,7 @@ export default function ProductForm({
         height: initialData.height || null,
         width: initialData.width || null,
         length: initialData.length || null,
-        sizeGuide: initialData.sizeGuide,
+        sizeGuide: initialData.sizeGuide as unknown as Record<string, unknown>,
       });
     }
   }, [initialData, reset]);
@@ -581,7 +581,9 @@ export default function ProductForm({
 
   const handleSizeGuideChange = useCallback(
     (data: SizeGuideData | null) => {
-      setValue("sizeGuide", data, { shouldDirty: true });
+      setValue("sizeGuide", data as unknown as Record<string, unknown>, {
+        shouldDirty: true,
+      });
     },
     [setValue]
   );
@@ -895,7 +897,7 @@ export default function ProductForm({
               </label>
               <SizeGuideEditor
                 sizes={sizes}
-                value={watch("sizeGuide")}
+                value={watch("sizeGuide") as unknown as SizeGuideData}
                 onChange={handleSizeGuideChange}
               />
             </CardContent>

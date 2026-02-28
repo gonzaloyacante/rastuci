@@ -113,6 +113,7 @@ export default function SucursalesCAPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ agencies }),
       });
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
       const data = await response.json();
 

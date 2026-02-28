@@ -313,8 +313,12 @@ export const POST = withAdminAuth(
           width: productData.width ?? null,
           length: productData.length ?? null,
           // Dual-write: keep Json field during grace period
-          sizeGuide: productData.sizeGuide ?? undefined,
-          colorImages: productData.colorImages ?? undefined,
+          sizeGuide: productData.sizeGuide
+            ? (productData.sizeGuide as unknown as Prisma.InputJsonValue)
+            : undefined,
+          colorImages: productData.colorImages
+            ? (productData.colorImages as unknown as Prisma.InputJsonValue)
+            : undefined,
           updatedAt: new Date(),
           images: Array.isArray(productData.images) ? productData.images : [],
           product_variants:
