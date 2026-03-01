@@ -152,10 +152,12 @@ export function useCart(userId: string | null) {
 
 // Generic mutation hook
 export function useMutation<T = unknown>(url: string, options?: RequestInit) {
+  // [M-36] Extract stable primitive from options to avoid object-in-deps infinite re-render
+  const method = options?.method ?? "POST";
   return useCallback(
     async (data?: unknown): Promise<T> => {
       const res = await fetch(url, {
-        method: "POST",
+        method,
         headers: {
           "Content-Type": "application/json",
           ...options?.headers,
@@ -170,7 +172,8 @@ export function useMutation<T = unknown>(url: string, options?: RequestInit) {
 
       return res.json();
     },
-    [url, options]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [url, method]
   );
 }
 

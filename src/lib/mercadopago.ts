@@ -35,7 +35,8 @@ type PaymentCreateLike = Record<string, unknown>;
 type PaymentGetDataLike = { id: string };
 
 function genIdempotency() {
-  return `rastuci_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  // [M-22] Use crypto.randomUUID() instead of Math.random() for strong idempotency keys
+  return `rastuci_${crypto.randomUUID()}`;
 }
 
 function getBaseUrl() {

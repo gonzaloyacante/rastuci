@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export interface CMSData {
   [key: string]: unknown;
@@ -19,18 +19,22 @@ export function useCMS(key?: string) {
 
         const url = key
           ? `/api/cms?key=${encodeURIComponent(key)}`
-          : '/api/cms';
+          : "/api/cms";
 
         const response = await fetch(url);
+        // [M-37] Check response.ok before parsing JSON to avoid silent errors
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const result = await response.json();
 
         if (result.success) {
           setData(result.data);
         } else {
-          setError(result.message || 'Error al cargar configuración');
+          setError(result.message || "Error al cargar configuración");
         }
       } catch {
-        setError('Error al conectar con el servidor');
+        setError("Error al conectar con el servidor");
       } finally {
         setLoading(false);
       }
@@ -41,29 +45,34 @@ export function useCMS(key?: string) {
 
   const updateCMS = async (updateKey: string, value: unknown) => {
     try {
-      const response = await fetch('/api/cms', {
-        method: 'PUT',
+      const response = await fetch("/api/cms", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ key: updateKey, value })
+        body: JSON.stringify({ key: updateKey, value }),
       });
 
+      // [M-37] Check response.ok before parsing JSON
+      if (!response.ok) {
+        setError(`Error al actualizar: HTTP ${response.status}`);
+        return false;
+      }
       const result = await response.json();
 
       if (result.success) {
         // Actualizar estado local
-        setData(prev => ({
+        setData((prev) => ({
           ...prev,
-          [updateKey]: value
+          [updateKey]: value,
         }));
         return true;
       } else {
-        setError(result.message || 'Error al actualizar');
+        setError(result.message || "Error al actualizar");
         return false;
       }
     } catch {
-      setError('Error al actualizar configuración');
+      setError("Error al actualizar configuración");
       return false;
     }
   };
@@ -72,6 +81,6 @@ export function useCMS(key?: string) {
     data,
     loading,
     error,
-    updateCMS
+    updateCMS,
   };
 }

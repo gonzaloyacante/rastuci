@@ -136,6 +136,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // [H-07] SECURITY: Require auth for offline sync POST
+    const session = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+    const isAuthorized =
+      session && (session.isAdmin || session.email === customerEmail);
+
+    if (!isAuthorized) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "No autorizado", data: null },
+        { status: 401 }
+      );
+    }
+
     // Por ahora solo confirmamos la sincronización
     // Las acciones pendientes como favoritos/carrito
     // se pueden implementar cuando existan esas tablas
