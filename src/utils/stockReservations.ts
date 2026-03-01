@@ -27,19 +27,21 @@ export async function createStockReservation(
   sessionId: string
 ): Promise<ReservationResult> {
   try {
-    // [H-15] Wrap check-then-act in a $transaction to prevent TOCTOU race
+    // [H-15] FIX TOCTOU race condition using row-level write locking
     return await prisma.$transaction(async (tx) => {
-      // Obtener producto con stock real
-      const product = await tx.products.findUnique({
-        where: { id: productId },
-        select: { stock: true },
-      });
+      // 1. SELECT FOR UPDATE - Lock the specific product row so concurrent requests wait
+      // This is the ONLY way to prevent TOCTOU in standard Read Committed isolation
+      const products = await tx.$queryRaw<
+        Array<{ stock: number }>
+      >`SELECT stock FROM "Products" WHERE id = ${productId} FOR UPDATE`;
 
-      if (!product) {
+      if (!products || products.length === 0) {
         return { success: false, message: "Producto no encontrado" };
       }
 
-      // Calcular reservas activas dentro de la misma transacción
+      const product = products[0];
+
+      // 2. Calcular reservas activas para el producto bloqueado
       const now = new Date();
       const activeReservations = await tx.stock_reservations.aggregate({
         where: {
@@ -59,7 +61,7 @@ export async function createStockReservation(
         };
       }
 
-      // Crear reserva dentro de la misma transacción
+      // 3. Crear la reserva de manera segura ya estabilizada
       const expiresAt = new Date(Date.now() + RESERVATION_DURATION_MS);
       const reservation = await tx.stock_reservations.create({
         data: {

@@ -67,38 +67,63 @@ export function csrfProtection(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Rutas públicas que NO necesitan protección CSRF
-  // ONLY read-only public APIs and external webhooks are exempt.
-  // State-modifying admin routes (/api/upload, /api/settings, /api/admin)
-  // MUST be CSRF-protected even though they have withAdminAuth.
+  // Rutas que SIEMPRE están exentas de CSRF y Validación de Origin (Ej: Webhooks externos)
+  const strictlyPublicRoutes = [
+    "/api/payments", // Webhooks de MercadoPago (external, signature-validated)
+    "/api/webhooks", // Webhooks externos (external)
+    "/api/auth", // Autenticación (NextAuth maneja su propio CSRF)
+  ];
+
+  if (strictlyPublicRoutes.some((route) => pathname.startsWith(route))) {
+    return null;
+  }
+
+  // Rutas públicas de Guest Flow o Read-Only
   const publicApiRoutes = [
     "/api/shipping", // Cálculo de envío (público, read-only)
     "/api/checkout", // Proceso de checkout (guest, no session)
     "/api/contact", // Formulario de contacto (guest)
-    "/api/payments", // Webhooks de MercadoPago (external, signature-validated)
-    "/api/webhooks", // Webhooks externos (external)
     "/api/products", // Catálogo de productos (público, read-only)
     "/api/categories", // Categorías (público, read-only)
     "/api/orders", // Creación de pedidos (guest checkout flow)
     "/api/coupons", // Validación de cupones (guest)
-    "/api/auth", // Autenticación (NextAuth maneja su propio CSRF)
     "/api/cms", // Contenido CMS público (read-only)
     "/api/home", // Página de inicio (read-only)
     "/api/health", // Health check (read-only)
     "/api/ready", // Ready check (read-only)
     "/api/reviews", // Reseñas (guest con orderId)
     "/api/search", // Búsqueda (público, read-only)
-    // NOT exempt: /api/upload, /api/settings, /api/admin, /api/analytics
-    // These modify state and require CSRF + admin auth
   ];
 
-  // Verificar si la ruta actual es una ruta pública
   const isPublicRoute = publicApiRoutes.some((route) =>
     pathname.startsWith(route)
   );
 
   if (isPublicRoute) {
-    return null; // No aplicar CSRF a rutas públicas
+    // Mitigación CSRF sin estado para rutas públicas: Validación estricta de Origin/Referer
+    const origin = request.headers.get("origin");
+    const referer = request.headers.get("referer");
+    // host will be like 'localhost:3000' or 'rastuci.com'
+    const host = request.headers.get("host");
+
+    if (origin || referer) {
+      const sourceUrl = new URL(origin || referer || "");
+      if (sourceUrl.host !== host) {
+        return NextResponse.json(
+          { success: false, error: "CSRF: Origin mismatch on guest flow" },
+          { status: 403 }
+        );
+      }
+    } else {
+      // Browsers siempre envían origin/referer en peticiones fetch/xhr mutacionales.
+      // Si no hay, bloqueamos por seguridad.
+      return NextResponse.json(
+        { success: false, error: "CSRF: Missing Origin header" },
+        { status: 403 }
+      );
+    }
+
+    return null; // Pasó la validación de Origin
   }
 
   const token =

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { PAYMENT_METHODS } from "@/lib/constants";
 import {} from // CorreoArgentinoService,
@@ -50,91 +51,68 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   // ---------------------------
 
-  interface CheckoutItem {
-    productId: string;
-    quantity: number;
-    price: number;
-    name: string;
-    size?: string;
-    color?: string;
-  }
+  // Zod Schemas para Validación Estricta (H-19)
+  const CheckoutItemSchema = z.object({
+    productId: z.string().min(1, "ID de producto requerido"),
+    quantity: z.number().int().positive("La cantidad debe ser positiva"),
+    price: z.number().nonnegative("El precio no puede ser negativo"),
+    name: z.string().min(1, "Nombre del producto requerido"),
+    size: z.string().optional(),
+    color: z.string().optional(),
+  });
 
-  interface CheckoutCustomer {
-    name: string;
-    email: string;
-    phone?: string;
-    address: string;
-    city: string;
-    province: string;
-    postalCode: string;
-  }
+  const CheckoutCustomerSchema = z.object({
+    name: z.string().min(2, "Nombre del cliente demasiado corto").max(100),
+    email: z.string().email("Email inválido").max(150),
+    phone: z
+      .string()
+      .regex(/^\+?[\d\s-]{8,20}$/, "Número de teléfono inválido")
+      .optional()
+      .or(z.literal("")),
+    address: z.string().min(5, "Dirección inválida").max(200),
+    city: z.string().min(2, "Ciudad requerida").max(100),
+    province: z.string().min(2, "Provincia requerida").max(50),
+    postalCode: z.string().min(2, "Código postal requerido").max(20),
+  });
 
-  interface CheckoutShippingMethod {
-    id: string;
-    name: string;
-    price: number;
-  }
+  const CheckoutShippingMethodSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number().nonnegative(),
+  });
 
-  interface CheckoutRequestBody {
-    items: CheckoutItem[];
-    customer: CheckoutCustomer;
-    shippingMethod?: CheckoutShippingMethod;
-    paymentMethod: string;
-    orderData: {
-      total: number;
-      subtotal: number;
-      shippingCost: number;
-      discount: number;
-    };
-    shippingAgency?: {
-      code: string;
-    };
-  }
+  const CheckoutRequestSchema = z.object({
+    items: z.array(CheckoutItemSchema).min(1, "No hay productos en el carrito"),
+    customer: CheckoutCustomerSchema,
+    shippingMethod: CheckoutShippingMethodSchema.optional(),
+    paymentMethod: z.string().min(1, "Método de pago requerido"),
+    orderData: z.object({
+      total: z.number().nonnegative(),
+      subtotal: z.number().nonnegative(),
+      shippingCost: z.number().nonnegative(),
+      discount: z.number().nonnegative(),
+    }),
+    shippingAgency: z.object({ code: z.string() }).optional(),
+  });
 
   try {
-    const body: CheckoutRequestBody = await request.json();
+    const rawBody = await request.json();
+
+    // 1. Zod Validation Estricta (H-19)
+    const validationResult = CheckoutRequestSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.errors
+        .map((e: z.ZodIssue) => e.message)
+        .join(", ");
+      return NextResponse.json(
+        { success: false, error: `Validación fallida: ${errorMsg}` },
+        { status: 400 }
+      );
+    }
+
+    const body = validationResult.data;
     const { items, customer, shippingMethod, paymentMethod, orderData } = body;
-
-    // 1. Validate
-    if (!items || items.length === 0) {
-      return NextResponse.json(
-        { success: false, error: "No hay productos en el carrito" },
-        { status: 400 }
-      );
-    }
-    if (!customer || !paymentMethod) {
-      return NextResponse.json(
-        { success: false, error: "Faltan datos del cliente o método de pago" },
-        { status: 400 }
-      );
-    }
-
-    // Validate customer data format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!customer.email || !emailRegex.test(customer.email)) {
-      return NextResponse.json(
-        { success: false, error: "Email inválido" },
-        { status: 400 }
-      );
-    }
-    if (!customer.name || customer.name.trim().length < 2) {
-      return NextResponse.json(
-        { success: false, error: "Nombre del cliente inválido" },
-        { status: 400 }
-      );
-    }
-    if (customer.phone && customer.phone.replace(/\D/g, "").length < 8) {
-      return NextResponse.json(
-        { success: false, error: "Número de teléfono inválido" },
-        { status: 400 }
-      );
-    }
-    if (!customer.address || customer.address.trim().length < 5) {
-      return NextResponse.json(
-        { success: false, error: "Dirección inválida" },
-        { status: 400 }
-      );
-    }
 
     // 2. Validate Stock via Service
     try {

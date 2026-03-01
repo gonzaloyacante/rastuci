@@ -205,9 +205,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     try {
       logger.info("Downloading invoice", { orderId: order.id });
 
-      const escapeHtml = (unsafe: string) => {
-        return (unsafe || "")
-          .toString()
+      const escapeHtml = (unsafe: string | null | undefined): string => {
+        if (unsafe == null) return "";
+        return String(unsafe)
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")

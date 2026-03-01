@@ -300,7 +300,7 @@ export default function ProductDetailClient({
         logger.error("Error sharing:", { error: err });
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(window.location.href);
       show({
         type: "success",
         title: "Compartir",
@@ -528,12 +528,12 @@ export default function ProductDetailClient({
                         disabled={isDisabled}
                         variant="ghost"
                         className={`
-                          min-w-[3rem] px-3 py-2 border rounded-lg text-sm font-medium transition-all h-auto
+                          min-w-12 px-3 py-2 border rounded-lg text-sm font-medium transition-all h-auto
                           ${
                             selectedSize === size
                               ? "border-primary bg-primary text-white shadow-md hover:bg-primary hover:text-white"
                               : isDisabled
-                                ? "border-muted bg-muted/10 text-muted-foreground cursor-not-allowed opacity-50 decoration-slice"
+                                ? "border-muted bg-muted/10 text-muted-foreground cursor-not-allowed opacity-50 box-decoration-slice"
                                 : "border-muted hover:border-primary text-primary bg-surface hover:bg-muted/10"
                           }
                           ${isOOS && !isDisabled ? "border-dashed" : ""} 
