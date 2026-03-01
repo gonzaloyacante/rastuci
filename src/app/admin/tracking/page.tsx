@@ -464,7 +464,7 @@ export default function AdminTrackingDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [show]);
 
   useEffect(() => {
     loadTrackingData();
@@ -497,8 +497,6 @@ export default function AdminTrackingDashboard() {
       a.download = `tracking-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
-      a.click();
-      window.URL.revokeObjectURL(url);
       show({ type: "success", message: "Datos exportados correctamente" });
     } catch {
       show({ type: "error", message: "Error al exportar" });
@@ -513,8 +511,6 @@ export default function AdminTrackingDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trackingIds: selectedItems, status: newStatus }),
       });
-      await loadTrackingData();
-      setSelectedItems([]);
       await loadTrackingData();
       setSelectedItems([]);
       show({

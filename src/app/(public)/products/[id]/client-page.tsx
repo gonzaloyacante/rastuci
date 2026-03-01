@@ -98,7 +98,11 @@ export default function ProductDetailClient({
   const { isVacationMode } = useVacationSettings();
 
   // SWR para fetch del producto
-  const fetcher = (url: string) => fetch(url).then((res) => res.json());
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Error loading product");
+    return res.json();
+  };
   const { data, isLoading, error } = useSWR(
     productId ? `/api/products/${productId}` : null,
     fetcher,
@@ -673,7 +677,7 @@ export default function ProductDetailClient({
             </div>
             <div className="flex items-center space-x-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              <span className="text-sm">3 cuotas sin interés</span>
+              <span className="text-sm">Múltiples medios de pago</span>
             </div>
           </div>
         </div>

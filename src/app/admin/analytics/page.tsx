@@ -31,11 +31,21 @@ export default function AnalyticsPage() {
   const handleExport = () => {
     if (!data) return;
 
-    const headers = ["Fecha", "Ingresos", "Ordenes"];
+    // [M-18] Sanitize CSV cell to prevent formula injection in Excel (CWE-1236)
+    const sanitizeCsvCell = (value: string | number) => {
+      const str = String(value);
+      const sanitized = /^[=+@-]/.test(str) ? `'${str}` : str;
+      if (/[",\n]/.test(sanitized)) {
+        return `"${sanitized.replace(/"/g, '""')}"`;
+      }
+      return sanitized;
+    };
+
+    const headers = ["Fecha", "Ingresos", "Ordenes"].map(sanitizeCsvCell);
     const rows = data.chart.map((item) => [
-      item.date,
-      item.revenue.toFixed(2),
-      item.orders.toString(),
+      sanitizeCsvCell(item.date),
+      sanitizeCsvCell(item.revenue.toFixed(2)),
+      sanitizeCsvCell(item.orders),
     ]);
 
     const csvContent =

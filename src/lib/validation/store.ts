@@ -11,7 +11,7 @@ export const StoreSettingsSchema = z.object({
   name: z.string().min(1).max(100).default("Rastuci"),
 
   // Admin notifications
-  adminEmail: z.string().email().default("gyacante9@gmail.com"),
+  adminEmail: z.string().email().default("admin@rastuci.com"),
 
   // Contact for shipping (remitente) - Now fetched from Global Contact Settings
   // phone: removed
@@ -19,13 +19,13 @@ export const StoreSettingsSchema = z.object({
 
   // Origin address for shipping calculations and CA imports
   address: z.object({
-    streetName: z.string().min(1).max(100).default("Av. San Martín"),
-    streetNumber: z.string().min(1).max(20).default("1234"),
+    streetName: z.string().min(1).max(100).default("Calle Falsa"),
+    streetNumber: z.string().min(1).max(20).default("123"),
     floor: z.string().max(10).optional(),
     apartment: z.string().max(10).optional(),
-    city: z.string().min(1).max(100).default("Buenos Aires"),
-    provinceCode: z.string().length(1).default("B"), // CA province code
-    postalCode: z.string().min(1).max(10).default("1611"),
+    city: z.string().min(1).max(100).default("Ciudad Autónoma de Buenos Aires"),
+    provinceCode: z.string().length(1).default("C"), // CABA province code
+    postalCode: z.string().min(1).max(10).default("1000"),
   }),
   // Shipping global settings
   shipping: z
@@ -139,15 +139,15 @@ export type StoreSettings = z.infer<typeof StoreSettingsSchema>;
 
 export const defaultStoreSettings: StoreSettings = {
   name: "Rastuci",
-  adminEmail: "gyacante9@gmail.com",
+  adminEmail: "admin@rastuci.com",
   address: {
-    streetName: "Av. San Martín",
-    streetNumber: "1234",
+    streetName: "Calle Falsa",
+    streetNumber: "123",
     floor: "",
     apartment: "",
-    city: "Buenos Aires",
-    provinceCode: "B",
-    postalCode: "1611",
+    city: "Ciudad Autónoma de Buenos Aires",
+    provinceCode: "C",
+    postalCode: "1000",
   },
   shipping: {
     freeShipping: false,

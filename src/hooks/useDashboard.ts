@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { logger } from "@/lib/logger";
 
@@ -67,14 +67,16 @@ export const useDashboard = (): UseDashboardReturn => {
   const [monthlySales, setMonthlySales] = useState<MonthlySales[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isFetching = useRef(false);
 
   const fetchDashboardData = useCallback(async () => {
     // Prevenir múltiples llamadas simultáneas
-    if (loading) {
+    if (isFetching.current) {
       return;
     }
 
     try {
+      isFetching.current = true;
       setLoading(true);
       setError(null);
 
@@ -95,7 +97,7 @@ export const useDashboard = (): UseDashboardReturn => {
         totalProducts: data.stats?.totalProducts || 0,
         totalCategories: data.stats?.totalCategories || 0,
         totalOrders: data.stats?.totalOrders || 0,
-        totalUsers: 0,
+        totalUsers: data.stats?.totalUsers || 0,
         totalRevenue: data.stats?.totalRevenue || 0,
         pendingOrders: data.stats?.pendingOrders || 0,
         lowStockProducts: data.lowStockProducts?.length || 0,
@@ -121,8 +123,8 @@ export const useDashboard = (): UseDashboardReturn => {
       });
     } finally {
       setLoading(false);
+      isFetching.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshDashboard = async () => {

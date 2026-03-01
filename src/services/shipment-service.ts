@@ -137,16 +137,17 @@ export class ShipmentService {
       });
 
       let senderAddress = {
-        streetName: "Av. San Martín",
-        streetNumber: "1234",
+        streetName: process.env.STORE_ADDRESS_STREET || "Calle Falsa",
+        streetNumber: process.env.STORE_ADDRESS_NUMBER || "123",
         floor: null as string | null,
         apartment: null as string | null,
-        city: "Don Torcuato",
-        provinceCode: "B" as ProvinceCode,
-        postalCode: "1611",
-        name: "Rastuci E-commerce",
-        email: "ventas@rastuci.com",
-        phone: "1123456789",
+        city: process.env.STORE_ADDRESS_CITY || "Buenos Aires",
+        provinceCode: (process.env.STORE_ADDRESS_PROVINCE ||
+          "B") as ProvinceCode,
+        postalCode: process.env.STORE_ADDRESS_ZIP || "1000",
+        name: process.env.STORE_NAME || "Rastuci E-commerce",
+        email: process.env.STORE_EMAIL || "ventas@rastuci.com",
+        phone: process.env.STORE_PHONE || "1100000000",
       };
 
       // Override with Contact Settings (Phone only - Email handled by storeSettings)

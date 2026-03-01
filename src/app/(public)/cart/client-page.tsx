@@ -3,7 +3,7 @@
 import { AlertCircle, Check, ShoppingCart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -53,6 +53,13 @@ const CartItemComponent = ({
   const { show } = useToast();
   const [isRemoving, setIsRemoving] = useState(false);
   const [pendingQuantity, setPendingQuantity] = useState(item.quantity);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const handleRemove = useCallback(async () => {
     setIsRemoving(true);
@@ -88,14 +95,17 @@ const CartItemComponent = ({
 
       setPendingQuantity(newQuantity);
 
+      // Limpiar timeout anterior si existe
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       // Debounce la actualización
-      const timeoutId = setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         onUpdateQuantity(item.product.id, item.size, item.color, newQuantity);
       }, 300);
-
-      return () => clearTimeout(timeoutId);
     },
-    [item, onUpdateQuantity, handleRemove]
+    [item, onUpdateQuantity, handleRemove, show]
   );
 
   const imageUrl = useMemo(() => {

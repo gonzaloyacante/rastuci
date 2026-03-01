@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Upload,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   InventoryFilters,
@@ -25,6 +25,7 @@ import {
   type StockMovement,
 } from "@/components/admin/InventoryComponents";
 import { useToast } from "@/components/ui/Toast";
+import useDebounce from "@/hooks/useDebounce";
 import type { Product } from "@/types";
 
 export function InventoryManagement() {
@@ -38,14 +39,14 @@ export function InventoryManagement() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [showAdjustmentForm, setShowAdjustmentForm] = useState(false);
 
-  useEffect(() => {
-    loadInventoryData();
-  }, []);
+  const debouncedSearch = useDebounce(searchTerm, 500);
 
-  const loadInventoryData = async () => {
+  const loadInventoryData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/products?page=1&limit=1000");
+      const res = await fetch(
+        `/api/products?page=1&limit=50&search=${encodeURIComponent(debouncedSearch)}`
+      );
       if (!res.ok) {
         throw new Error("Error fetching products");
       }
@@ -105,7 +106,11 @@ export function InventoryManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, show]);
+
+  useEffect(() => {
+    loadInventoryData();
+  }, [loadInventoryData]);
 
   const handleStockAdjustment = async (data: StockAdjustmentData) => {
     if (!selectedItem) return;

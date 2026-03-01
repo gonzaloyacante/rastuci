@@ -131,8 +131,22 @@ export function ShipmentControlCard({
     if (!confirm("¿Confirmar creación de envío en Correo Argentino?")) return;
 
     try {
+      // Calculate dynamic weight and dimensions from products if available, fallback to defaults
       const totalWeight = (order.items || []).reduce(
-        (sum, item) => sum + item.quantity * 1000,
+        (sum, item) => sum + item.quantity * (item.product?.weight || 1000),
+        0
+      );
+
+      const height = Math.max(
+        10,
+        ...(order.items || []).map((i) => i.product?.height || 10)
+      );
+      const width = Math.max(
+        20,
+        ...(order.items || []).map((i) => i.product?.width || 20)
+      );
+      const length = (order.items || []).reduce(
+        (sum, item) => sum + item.quantity * (item.product?.length || 30),
         0
       );
 
@@ -142,7 +156,7 @@ export function ShipmentControlCard({
         recipient: {
           name: order.customerName,
           phone: order.customerPhone,
-          email: order.customerEmail || "cliente@example.com",
+          email: order.customerEmail || "cliente@rastuci.com",
         },
         shipping: {
           deliveryType:
@@ -159,9 +173,9 @@ export function ShipmentControlCard({
             postalCode: order.shippingPostalCode ?? undefined,
           },
           weight: totalWeight,
-          height: 10,
-          width: 20,
-          length: 30,
+          height: height,
+          width: width,
+          length: Math.max(length, 30), // Minimum sum length 30cm
           declaredValue: order.total,
         },
       };

@@ -29,17 +29,11 @@ export const useFavorites = () => {
       // Map Product to WishlistItem matching the context interface
       // Note: WishlistContext expects { id, name, price, image }
       // We need to resolve the image safely.
-      let image = "";
-      if (typeof product.images === "string") {
-        try {
-          const parsed = JSON.parse(product.images);
-          image = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : "";
-        } catch {
-          image = "";
-        }
-      } else if (Array.isArray(product.images) && product.images.length > 0) {
-        image = product.images[0];
-      }
+      // We expect images to be string[] according to Product type
+      const image =
+        Array.isArray(product.images) && product.images.length > 0
+          ? product.images[0]
+          : "";
 
       addToWishlist({
         id: product.id,

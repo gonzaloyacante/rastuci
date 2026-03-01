@@ -9,6 +9,7 @@ import { getRequestId, logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
+import { CategoryCreateSchema } from "@/lib/validation/category";
 import { ApiResponse, Category } from "@/types";
 
 interface RouteParams {
@@ -98,17 +99,15 @@ export const PUT = withAdminAuth(
         return fail("RATE_LIMITED", "Too many requests", 429, { requestId });
       }
       const { id } = await params;
-      const body = await request.json();
-      const { name, description } = body;
-
-      if (!name) {
-        return fail(
-          "BAD_REQUEST",
-          "El nombre de la categoría es requerido",
-          400,
-          { requestId }
-        );
+      const json = await request.json();
+      const parsed = CategoryCreateSchema.safeParse(json);
+      if (!parsed.success) {
+        return fail("BAD_REQUEST", "Datos inválidos", 400, {
+          requestId,
+          issues: parsed.error.issues,
+        });
       }
+      const { name, description } = parsed.data;
 
       // Verificar si existe otra categoría con ese nombre
       const existingCategory = await prisma.categories.findFirst({

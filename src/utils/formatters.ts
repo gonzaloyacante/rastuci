@@ -152,8 +152,13 @@ export const capitalizeFirst = (str: string): string => {
  */
 export const generateOrderNumber = (): string => {
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `ORD-${timestamp}-${random}`;
+  let randomStr = "";
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    randomStr = crypto.randomUUID().split("-")[0].toUpperCase();
+  } else {
+    randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+  return `ORD-${timestamp}-${randomStr}`;
 };
 
 /**

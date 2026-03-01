@@ -176,7 +176,6 @@ export default function SucursalesCAPage() {
     link.href = url;
     link.download = `sucursales-ca-${selectedProvince || "todas"}-${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    link.click();
     URL.revokeObjectURL(url);
     show({ type: "success", message: "Exportación completada" });
   };
