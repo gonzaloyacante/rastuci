@@ -5,6 +5,7 @@ import SiteChrome from "@/components/layout/SiteChrome";
 import { VacationProvider } from "@/components/providers/VacationProvider";
 import { SkipLink } from "@/components/ui/SkipLink";
 import VacationBanner from "@/components/vacation/VacationBanner";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { getVacationSettings, isVacationActive } from "@/lib/vacation";
 import { defaultContactSettings } from "@/lib/validation/contact";
@@ -57,7 +58,7 @@ async function getHomeSettings() {
       },
     };
   } catch (err) {
-    console.error("Error fetching home settings in layout:", err);
+    logger.error("Error fetching home settings in layout:", { error: err });
     return defaultHomeSettings;
   }
 }
@@ -121,7 +122,7 @@ async function getContactSettings() {
       },
     };
   } catch (err) {
-    console.error("Error fetching contact settings in layout:", err);
+    logger.error("Error fetching contact settings in layout:", { error: err });
     return defaultContactSettings;
   }
 }
@@ -133,7 +134,6 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   const [home, contact, vacationSettings] = await Promise.all([
     getHomeSettings(),
     getContactSettings(),

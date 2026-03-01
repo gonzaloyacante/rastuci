@@ -1,6 +1,7 @@
 import { vacation_settings } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
 /**
@@ -15,7 +16,7 @@ export const getVacationSettings = unstable_cache(
       });
       return settings;
     } catch (error) {
-      console.error("[Vacation] Error fetching settings:", error);
+      logger.error("[Vacation] Error fetching settings:", { error: error });
       return null;
     }
   },

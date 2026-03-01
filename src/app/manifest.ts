@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
@@ -19,7 +20,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     }
   } catch (error) {
     // Fallback to defaults
-    console.error("Failed to fetch manifest settings", error);
+    logger.error("Failed to fetch manifest settings", { error: error });
   }
 
   return {

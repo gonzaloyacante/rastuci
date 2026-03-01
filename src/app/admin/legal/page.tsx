@@ -14,6 +14,7 @@ import useSWR from "swr";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { logger } from "@/lib/logger";
 
 // --- Types ---
 
@@ -192,7 +193,7 @@ function PolicyEditor({ slug }: { slug: string }) {
       mutate(); // Refresh SWR
     } catch (error) {
       show({ type: "error", message: "Error al guardar" });
-      console.error(error);
+      logger.error("Error saving legal policy", { error: error });
     } finally {
       setIsSubmitting(false);
     }

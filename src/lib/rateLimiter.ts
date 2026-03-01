@@ -2,6 +2,8 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import type { NextRequest } from "next/server";
 
+import { logger } from "@/lib/logger";
+
 // Simple in-memory rate limiter for Next.js Route Handlers (fallback)
 type Bucket = {
   count: number;
@@ -14,9 +16,9 @@ const buckets = new Map<string, Bucket>();
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
     : null;
 
 function getIp(req: NextRequest): string {
@@ -75,7 +77,9 @@ export async function checkRateLimit(
         key: compositeKey,
       };
     } catch (error) {
-      console.error("Upstash rate limit error, falling back to in-memory", error);
+      logger.error("Upstash rate limit error, falling back to in-memory", {
+        error: error,
+      });
       // Fallback to in-memory if Redis fails
     }
   }

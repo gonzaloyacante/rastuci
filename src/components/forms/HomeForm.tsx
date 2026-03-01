@@ -10,6 +10,7 @@ import { ImageUploader } from "@/components/ui/ImageUploader";
 import { Switch } from "@/components/ui/Switch";
 import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
+import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import {
   defaultHomeSettings,
@@ -122,7 +123,7 @@ export default function HomeForm({ initial }: Props) {
       initBenefits(initial.benefits);
       setLoading(false);
     } else if (!loadingSettings) {
-      console.log("[HomeForm] Using DEFAULTS (No settings, no initial)");
+      logger.info("[HomeForm] Using DEFAULTS (No settings, no initial)");
       setValues(defaultHomeSettings);
       initBenefits(defaultHomeSettings.benefits);
       setLoading(false);
@@ -222,7 +223,7 @@ export default function HomeForm({ initial }: Props) {
       show({ type: "success", message: "Configuración del Home guardada" });
       mutateSettings();
     } catch (err: unknown) {
-      console.error("HomeForm Submit Error:", err);
+      logger.error("HomeForm Submit Error:", { error: err });
       const msg = err instanceof Error ? err.message : "Error inesperado";
       setMessage(msg);
       show({ type: "error", message: msg });

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/Label";
 import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
 import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 import { defaultStoreSettings, StoreSettings } from "@/lib/validation/store";
 
 export default function ShippingSettings() {
@@ -73,7 +74,7 @@ export default function ShippingSettings() {
         throw new Error(json.error || "Error al guardar");
       }
     } catch (error) {
-      console.error(error);
+      logger.error("Error", { error: error });
       show({
         type: "error",
         message:

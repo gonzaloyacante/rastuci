@@ -175,9 +175,9 @@ export default function TrackingPage() {
         <div className="text-center mt-8 space-y-2">
           <p className="text-sm muted">¿No encuentras lo que buscas?</p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
-            <a href="/contacto" className="text-primary hover:underline">
+            <Link href="/contacto" className="text-primary hover:underline">
               Contactar Soporte
-            </a>
+            </Link>
             <a
               href="https://www.correoargentino.com.ar"
               target="_blank"

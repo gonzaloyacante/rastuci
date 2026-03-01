@@ -2,6 +2,7 @@
 
 import useSWR from "swr";
 
+import { logger } from "@/lib/logger";
 import {
   defaultStoreSettings,
   StoreSettings,
@@ -48,7 +49,7 @@ export function useStoreSettings() {
         }
         return defaultStoreSettings;
       } catch (err) {
-        console.error("Error fetching store settings:", err);
+        logger.error("Error fetching store settings:", { error: err });
         return defaultStoreSettings;
       }
     },
@@ -73,7 +74,7 @@ export function useStoreSettings() {
       // Validate before sending
       const parsed = StoreSettingsSchema.safeParse(mergedSettings);
       if (!parsed.success) {
-        console.error("Validation error:", parsed.error);
+        logger.error("Validation error:", { error: parsed.error });
         return {
           success: false,
           error: "Datos inválidos. Verifica los campos.",
@@ -96,7 +97,7 @@ export function useStoreSettings() {
         return { success: false, error: json.error || "Error al guardar" };
       }
     } catch (err) {
-      console.error("Error updating store settings:", err);
+      logger.error("Error updating store settings:", { error: err });
       return { success: false, error: "Error de conexión" };
     }
   };

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { logger } from "@/lib/logger";
 
 export default function AdminError({
   error,
@@ -15,7 +16,7 @@ export default function AdminError({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service
-    console.error("Admin Error Boundary caught:", error);
+    logger.error("Admin Error Boundary caught:", { error: error });
   }, [error]);
 
   return (

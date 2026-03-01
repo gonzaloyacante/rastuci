@@ -313,7 +313,7 @@ export class TrackingNotificationService {
     try {
       logger.info("[TrackingNotifications] Processing webhook", { payload });
     } catch (e) {
-      console.error(e);
+      logger.error("Error", { error: e });
     }
   }
 }

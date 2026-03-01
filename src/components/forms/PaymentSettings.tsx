@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
+import { logger } from "@/lib/logger";
 import {
   defaultStoreSettings,
   type StoreSettings,
@@ -80,7 +81,7 @@ export default function PaymentSettings({
       onSave?.(data);
     } catch (error) {
       show({ type: "error", message: "Error al guardar cambios" });
-      console.error(error);
+      logger.error("Error saving payment settings", { error: error });
     } finally {
       setSaving(false);
     }

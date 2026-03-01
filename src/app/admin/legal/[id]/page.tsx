@@ -11,6 +11,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { logger } from "@/lib/logger";
 
 const sectionSchema = z.object({
   title: z.string().min(1, "El título es requerido"),
@@ -74,7 +75,7 @@ export default function EditPolicyPage({ params }: { params: { id: string } }) {
       router.push("/admin/policies");
       router.refresh();
     } catch (error) {
-      console.error(error);
+      logger.error("Error", { error: error });
       show({ type: "error", message: "Error al guardar la política" });
     }
   };

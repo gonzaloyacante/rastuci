@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { formatPriceARS } from "@/utils/formatters";
 
@@ -44,7 +45,7 @@ async function getSharedWishlist(token: string) {
 
     return wishlist;
   } catch (error) {
-    console.error("Error fetching shared wishlist:", error);
+    logger.error("Error fetching shared wishlist:", { error: error });
     return null;
   }
 }

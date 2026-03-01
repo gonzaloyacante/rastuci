@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
+import { logger } from "@/lib/logger";
 import {
   ContactSettings,
   ContactSettingsSchema,
@@ -104,7 +105,9 @@ export default function ContactForm({ initial }: Props) {
 
     const parsed = ContactSettingsSchema.safeParse(values);
     if (!parsed.success) {
-      console.error("Validation errors:", parsed.error.flatten());
+      logger.warn("ContactForm validation error", {
+        details: parsed.error.flatten(),
+      });
       show({ type: "error", message: "Por favor revisa los campos inválidos" });
       return;
     }
@@ -122,7 +125,7 @@ export default function ContactForm({ initial }: Props) {
       show({ type: "success", message: "Configuración de contacto guardada" });
       mutateSettings(); // Sync SWR cache
     } catch (err: unknown) {
-      console.error(err);
+      logger.error("Error", { error: err });
       show({
         type: "error",
         message:

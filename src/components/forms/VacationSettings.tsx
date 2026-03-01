@@ -29,6 +29,7 @@ import { SectionLoader } from "@/components/ui/Spinner";
 import { Switch } from "@/components/ui/Switch";
 import { useToast } from "@/components/ui/Toast";
 import VacationHistory from "@/components/vacation/VacationHistory";
+import { logger } from "@/lib/logger";
 import {
   VacationSettingsFormData,
   VacationSettingsSchema,
@@ -71,7 +72,7 @@ export default function VacationSettingsForm() {
           endDate: data.endDate ? new Date(data.endDate) : null,
         });
       } catch (e) {
-        console.error(e);
+        logger.error("Error loading vacation settings", { error: e });
       } finally {
         setIsLoading(false);
       }

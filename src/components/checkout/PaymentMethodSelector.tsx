@@ -3,6 +3,8 @@
 import { Banknote, Building2, CreditCard, Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
+import { logger } from "@/lib/logger";
+
 interface PaymentMethodSelectorProps {
   selectedMethod: string;
   onMethodChange: (method: string) => void;
@@ -45,7 +47,9 @@ export function PaymentMethodSelector({
           setPaymentMethods(data.data);
         }
       })
-      .catch((err) => console.error("Error loading payment methods:", err));
+      .catch((err) =>
+        logger.error("Error loading payment methods", { error: err })
+      );
   }, []);
 
   const methodsToShow = allowedMethods

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/Card";
+import { logger } from "@/lib/logger";
 
 export const FaqSection = () => {
   const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>(
@@ -17,7 +18,7 @@ export const FaqSection = () => {
           setFaqs(data.data);
         }
       })
-      .catch((err) => console.error("Error loading FAQs:", err));
+      .catch((err) => logger.error("Error loading FAQs", { error: err }));
   }, []);
 
   if (!faqs || faqs.length === 0) return null;

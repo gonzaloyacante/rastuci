@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
+import { logger } from "@/lib/logger";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -47,7 +48,7 @@ export default function ForgotPasswordPage() {
         });
       }
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", { error: error });
       show({ type: "error", message: "Error al procesar la solicitud" });
     } finally {
       setIsLoading(false);

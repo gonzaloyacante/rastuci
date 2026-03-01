@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 
 import { AdminTable } from "@/components/admin/AdminTable";
 import { useToast } from "@/components/ui/Toast";
+import { logger } from "@/lib/logger";
 
 interface VacationPeriod extends Record<string, unknown> {
   id: string;
@@ -36,7 +37,7 @@ export default function VacationHistory() {
         setPeriods(data);
       }
     } catch (error) {
-      console.error(error);
+      logger.error("Error fetching vacation history", { error: error });
     } finally {
       setIsLoading(false);
     }

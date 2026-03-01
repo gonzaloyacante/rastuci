@@ -19,6 +19,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useDocumentTitle } from "@/hooks";
 import { useSettings } from "@/hooks/useSettings";
 import { useTabWithUrl } from "@/hooks/useTabWithUrl";
+import { logger } from "@/lib/logger";
 
 type TabType =
   | "tienda"
@@ -90,7 +91,7 @@ export default function ConfiguracionPage() {
         show({ type: "error", message: data.error || "Error al guardar" });
       }
     } catch (error) {
-      console.error("Error saving FAQs:", error);
+      logger.error("Error saving FAQs:", { error: error });
       show({ type: "error", message: "Error al guardar" });
     } finally {
       setLoading(false);

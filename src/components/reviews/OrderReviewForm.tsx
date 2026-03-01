@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { logger } from "@/lib/logger";
 
 interface ProductItem {
   id: string;
@@ -97,7 +98,7 @@ export default function OrderReviewForm({
         router.push("/");
       }, 5000);
     } catch (error) {
-      console.error(error);
+      logger.error("Error", { error: error });
       show({ type: "error", message: "Error al guardar reseñas" });
     } finally {
       setLoading(false);
