@@ -46,6 +46,7 @@ import {
 } from "@/hooks";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
+import { escapeCsvCell } from "@/utils/formatters";
 
 import { BulkImportModal } from "./BulkImportModal";
 
@@ -145,8 +146,8 @@ export default function ProductList() {
         message: newStatus ? "Producto activado" : "Producto desactivado",
       });
 
-      mutate();
-      mutateStats();
+      void mutate();
+      void mutateStats();
     } catch (err) {
       logger.error("Error toggling product active status", { error: err });
       show({ type: "error", message: "No se pudo actualizar el estado." });
@@ -177,8 +178,8 @@ export default function ProductList() {
       }
 
       show({ type: "success", message: "Producto eliminado correctamente" });
-      mutate();
-      mutateStats();
+      void mutate();
+      void mutateStats();
     } catch (err) {
       logger.error("Error deleting product", { error: err });
       show({ type: "error", message: "No se pudo eliminar el producto." });
@@ -186,14 +187,17 @@ export default function ProductList() {
   };
 
   const handleExportCSV = useCallback(() => {
+    const headers = ["Nombre", "Categoría", "Precio", "Stock", "En Oferta"].map(
+      escapeCsvCell
+    );
     const csvContent = [
-      ["Nombre", "Categoría", "Precio", "Stock", "En Oferta"],
+      headers,
       ...products.map((p: Product) => [
-        `"${p.name.replace(/"/g, '""')}"`,
-        `"${p.categories?.name || "Sin categoría"}"`,
-        p.price.toString(),
-        p.stock.toString(),
-        p.onSale ? "Sí" : "No",
+        escapeCsvCell(p.name),
+        escapeCsvCell(p.categories?.name || "Sin categoría"),
+        escapeCsvCell(p.price.toString()),
+        escapeCsvCell(p.stock.toString()),
+        escapeCsvCell(p.onSale ? "Sí" : "No"),
       ]),
     ]
       .map((row) => row.join(","))
@@ -454,8 +458,8 @@ export default function ProductList() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onSuccess={() => {
-          mutate(); // Refresh list after import
-          mutateStats(); // Refresh stats
+          void mutate(); // Refresh list after import
+          void mutateStats(); // Refresh stats
         }}
       />
     </div>

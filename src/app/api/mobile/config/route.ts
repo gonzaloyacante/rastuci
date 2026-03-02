@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 
 interface ApiResponse<T> {
@@ -174,56 +173,4 @@ function isVersionOutdated(
 
 function parseVersion(version: string): number[] {
   return version.split(".").map((v) => parseInt(v, 10) || 0);
-}
-
-// Obtener estadísticas para la app móvil
-async function _getMobileAppStats() {
-  try {
-    const [totalOrders, pendingOrders, deliveredOrders, activeTracking] =
-      await Promise.all([
-        prisma.orders.count(),
-        prisma.orders.count({
-          where: {
-            status: {
-              in: ["PENDING", "PROCESSED"],
-            },
-          },
-        }),
-        prisma.orders.count({
-          where: {
-            status: "DELIVERED",
-          },
-        }),
-        prisma.orders.count({
-          where: {
-            trackingNumber: {
-              not: null,
-            },
-            status: {
-              not: "DELIVERED",
-            },
-          },
-        }),
-      ]);
-
-    return {
-      orders: {
-        total: totalOrders,
-        pending: pendingOrders,
-        delivered: deliveredOrders,
-        activeTracking,
-      },
-      lastUpdated: new Date().toISOString(),
-    };
-  } catch {
-    return {
-      orders: {
-        total: 0,
-        pending: 0,
-        delivered: 0,
-        activeTracking: 0,
-      },
-      lastUpdated: new Date().toISOString(),
-    };
-  }
 }

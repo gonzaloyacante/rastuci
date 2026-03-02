@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useDocumentTitle } from "@/hooks";
 import { type Order, useOrders } from "@/hooks/useOrders";
 import { logger } from "@/lib/logger";
+import { escapeCsvCell } from "@/utils/formatters";
 
 type StatusFilter =
   | "ALL"
@@ -215,26 +216,26 @@ export default function OrdersPage() {
             .join("; ");
 
           return [
-            order.id,
-            order.customerName,
-            order.customerEmail || "No especificado",
-            order.customerPhone,
-            order.customerAddress || "No especificada",
-            order.total,
-            subtotalProducts,
-            order.shippingCost || 0,
-            getStatusLabel(order.status),
-            order.mpStatus || "N/A",
-            order.shippingMethod || "No especificado",
-            (order as Order & { shippingAgency?: string }).shippingAgency ||
-              "-",
-            order.caTrackingNumber || "Sin tracking",
-            formatDate(order.createdAt),
-            products,
-            variants,
-          ]
-            .map((v) => `"${String(v).replace(/"/g, '""')}"`) // Escapar comillas dobles
-            .join(",");
+            escapeCsvCell(order.id),
+            escapeCsvCell(order.customerName),
+            escapeCsvCell(order.customerEmail || "No especificado"),
+            escapeCsvCell(order.customerPhone),
+            escapeCsvCell(order.customerAddress || "No especificada"),
+            escapeCsvCell(order.total),
+            escapeCsvCell(subtotalProducts),
+            escapeCsvCell(order.shippingCost || 0),
+            escapeCsvCell(getStatusLabel(order.status)),
+            escapeCsvCell(order.mpStatus || "N/A"),
+            escapeCsvCell(order.shippingMethod || "No especificado"),
+            escapeCsvCell(
+              (order as Order & { shippingAgency?: string }).shippingAgency ||
+                "-"
+            ),
+            escapeCsvCell(order.caTrackingNumber || "Sin tracking"),
+            escapeCsvCell(formatDate(order.createdAt)),
+            escapeCsvCell(products),
+            escapeCsvCell(variants),
+          ].join(",");
         }),
       ].join("\n");
 
@@ -255,7 +256,7 @@ export default function OrdersPage() {
       logger.error("Error al exportar pedidos", { error: err });
       show({ type: "error", message: "Error al exportar pedidos" });
     }
-  }, [orders]);
+  }, [orders, show]);
 
   // Empty state message
   const getEmptyMessage = () => {

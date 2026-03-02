@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
 import useSWR from "swr";
 
+import { OrderStatus } from "@/types";
+
 export interface OrderItem {
   id: string;
   quantity: number;
@@ -21,7 +23,7 @@ export interface Order {
   customerEmail?: string;
   customerAddress?: string;
   total: number;
-  status: string;
+  status: OrderStatus;
   paymentMethod?: string;
   createdAt: string;
   updatedAt: string;
@@ -39,7 +41,7 @@ export interface Order {
 interface UseOrdersParams {
   page?: number;
   limit?: number;
-  status?: string;
+  status?: OrderStatus | string;
   search?: string;
 }
 

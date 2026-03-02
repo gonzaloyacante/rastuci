@@ -768,5 +768,5 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 ProductCard.displayName = "ProductCard";
 
 export default ProductCard;
-
+// Named export for backwards compatibility with stories and legacy imports
 export { ProductCard };

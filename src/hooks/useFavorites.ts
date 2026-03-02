@@ -29,11 +29,21 @@ export const useFavorites = () => {
       // Map Product to WishlistItem matching the context interface
       // Note: WishlistContext expects { id, name, price, image }
       // We need to resolve the image safely.
-      // We expect images to be string[] according to Product type
-      const image =
-        Array.isArray(product.images) && product.images.length > 0
-          ? product.images[0]
-          : "";
+      // We need to resolve the image safely. Handles stringified JSON from prisma.
+      let image = "";
+      if (Array.isArray(product.images) && product.images.length > 0) {
+        image = product.images[0] as string;
+      } else if (typeof product.images === "string") {
+        try {
+          const parsed = JSON.parse(product.images);
+          image =
+            Array.isArray(parsed) && parsed.length > 0
+              ? parsed[0]
+              : (product.images as string);
+        } catch {
+          image = product.images as string;
+        }
+      }
 
       addToWishlist({
         id: product.id,

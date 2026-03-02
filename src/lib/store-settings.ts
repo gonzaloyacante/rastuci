@@ -104,7 +104,7 @@ export async function getStoreSettings(): Promise<StoreSettings> {
  */
 export async function getAdminEmail(): Promise<string> {
   const settings = await getStoreSettings();
-  return settings.adminEmail;
+  return settings.adminEmail || "admin@rastuci.com";
 }
 
 /**

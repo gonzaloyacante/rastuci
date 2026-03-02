@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logger } from "@/lib/logger";
-import { checkRateLimit } from "@/lib/rateLimiter";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -103,11 +102,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json<ApiResponse<{ registered: boolean }>>({
-      success: true,
-      message: "Token registrado. Nota: No hay persistencia sin tabla en BD.",
-      data: { registered: true },
-    });
+    return NextResponse.json<ApiResponse<{ registered: boolean }>>(
+      {
+        success: false,
+        message: "Servicio de push notifications no configurado actualmente",
+        data: { registered: false },
+      },
+      { status: 501 }
+    );
   } catch (error) {
     logger.error("Error en notifications POST:", { error });
     return NextResponse.json<ApiResponse<null>>(

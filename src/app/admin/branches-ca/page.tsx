@@ -24,6 +24,7 @@ import { useCorreoArgentino } from "@/hooks/useCorreoArgentino";
 import { type ProvinceCode, PROVINCIAS } from "@/lib/constants";
 // import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { normalizeAgency, type NormalizedAgency } from "@/utils/agency-helpers";
+import { escapeCsvCell } from "@/utils/formatters";
 
 // PROVINCIAS imported from @/lib/constants
 
@@ -90,7 +91,7 @@ export default function SucursalesCAPage() {
 
   useEffect(() => {
     if (selectedProvince) {
-      loadAgencies(selectedProvince);
+      void loadAgencies(selectedProvince);
     }
   }, [selectedProvince, loadAgencies]);
 
@@ -156,20 +157,21 @@ export default function SucursalesCAPage() {
     ];
 
     const rows = filteredAgencies.map((a) => [
-      a.code,
-      a.name,
-      a.address,
-      a.city,
-      a.province,
-      a.postalCode || "",
-      a.phone || "",
-      a.email || "",
-      a.schedule || "",
-      a.latitude || "",
-      a.longitude || "",
+      escapeCsvCell(a.code),
+      escapeCsvCell(a.name),
+      escapeCsvCell(a.address),
+      escapeCsvCell(a.city),
+      escapeCsvCell(a.province),
+      escapeCsvCell(a.postalCode || ""),
+      escapeCsvCell(a.phone || ""),
+      escapeCsvCell(a.email || ""),
+      escapeCsvCell(a.schedule || ""),
+      escapeCsvCell(a.latitude || ""),
+      escapeCsvCell(a.longitude || ""),
     ]);
 
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
+    const csvHeaders = headers.map((h) => escapeCsvCell(h));
+    const csv = [csvHeaders, ...rows].map((row) => row.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

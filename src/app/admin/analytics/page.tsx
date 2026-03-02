@@ -12,6 +12,7 @@ import { TopLists } from "@/components/admin/analytics/TopLists";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { type DashboardData } from "@/services/analytics-service";
+import { escapeCsvCell } from "@/utils/formatters";
 
 async function fetchAnalytics(range: string): Promise<DashboardData> {
   const res = await fetch(`/api/admin/analytics/dashboard?range=${range}`);
@@ -31,21 +32,11 @@ export default function AnalyticsPage() {
   const handleExport = () => {
     if (!data) return;
 
-    // [M-18] Sanitize CSV cell to prevent formula injection in Excel (CWE-1236)
-    const sanitizeCsvCell = (value: string | number) => {
-      const str = String(value);
-      const sanitized = /^[=+@-]/.test(str) ? `'${str}` : str;
-      if (/[",\n]/.test(sanitized)) {
-        return `"${sanitized.replace(/"/g, '""')}"`;
-      }
-      return sanitized;
-    };
-
-    const headers = ["Fecha", "Ingresos", "Ordenes"].map(sanitizeCsvCell);
+    const headers = ["Fecha", "Ingresos", "Ordenes"].map(escapeCsvCell);
     const rows = data.chart.map((item) => [
-      sanitizeCsvCell(item.date),
-      sanitizeCsvCell(item.revenue.toFixed(2)),
-      sanitizeCsvCell(item.orders),
+      escapeCsvCell(item.date),
+      escapeCsvCell(item.revenue.toFixed(2)),
+      escapeCsvCell(item.orders),
     ]);
 
     const csvContent =

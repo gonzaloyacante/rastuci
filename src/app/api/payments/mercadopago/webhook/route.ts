@@ -187,7 +187,8 @@ export async function POST(
         mappedStatus,
         preferenceId,
         metadata,
-        payment.payer
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        payment.payer as any // Payer structure might not perfectly match between MP versions
       );
     }
 

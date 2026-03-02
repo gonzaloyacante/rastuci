@@ -444,7 +444,7 @@ export default function CartPageClient() {
       show({ type: "error", message: "Error al proceder al checkout" });
       setIsCheckingOut(false);
     }
-  }, [cartItems, router]);
+  }, [cartItems, router, show]);
 
   const handleClearCart = useCallback(async () => {
     const confirmed = await confirm({
@@ -460,7 +460,7 @@ export default function CartPageClient() {
       clearCart();
       show({ type: "success", message: "Carrito vaciado" });
     }
-  }, [clearCart, confirm]);
+  }, [clearCart, confirm, show]);
 
   if (cartItems.length === 0) {
     return (

@@ -100,8 +100,14 @@ export default function ProductDetailClient({
   // SWR para fetch del producto
   const fetcher = async (url: string) => {
     const res = await fetch(url);
-    if (!res.ok) throw new Error("Error loading product");
-    return res.json();
+    if (!res.ok) {
+      throw new Error(`Error loading product: HTTP ${res.status}`);
+    }
+    const json = await res.json();
+    if (!json.success) {
+      throw new Error(json.error || "Error from server payload");
+    }
+    return json;
   };
   const { data, isLoading, error } = useSWR(
     productId ? `/api/products/${productId}` : null,
@@ -181,8 +187,6 @@ export default function ProductDetailClient({
 
   // --- EFFECTS ---
 
-  // 1. Sync Images
-  // 1. Sync Images
   // --- DERIVED STATE (SAFE) ---
 
   // 1. Sync Images - Derived State to prevent race conditions

@@ -671,7 +671,7 @@ export class OrderService {
             p.name,
             p.stock,
             p.id,
-            settings.adminEmail
+            settings.adminEmail || "admin@rastuci.com"
           );
           logger.info(
             `[StockAlert] Sent alert for ${p.name} (Stock: ${p.stock}, Status: ${status.label})`

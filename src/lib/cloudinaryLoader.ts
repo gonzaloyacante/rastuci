@@ -6,7 +6,7 @@
  * for optimal image delivery from Cloudinary CDN.
  */
 
-const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "djlknirsd";
+const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
 interface CloudinaryLoaderParams {
   src: string;
@@ -91,6 +91,7 @@ export function getCloudinaryUrl(
     crop = "limit",
   } = options;
 
+  if (!cloudName) throw new Error("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME missing");
   const transforms: string[] = [];
 
   if (width) transforms.push(`w_${width}`);

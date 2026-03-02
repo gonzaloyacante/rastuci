@@ -132,10 +132,12 @@ export function ShipmentControlCard({
 
     try {
       // Calculate dynamic weight and dimensions from products if available, fallback to defaults
-      const totalWeight = (order.items || []).reduce(
-        (sum, item) => sum + item.quantity * (item.product?.weight || 1000),
-        0
-      );
+      // Uses 1kg / 10x20x30 as maximum fallback if absolutely nothing was set.
+      const totalWeight =
+        (order.items || []).reduce(
+          (sum, item) => sum + item.quantity * (item.product?.weight || 1000),
+          0
+        ) || 1000;
 
       const height = Math.max(
         10,
@@ -145,10 +147,11 @@ export function ShipmentControlCard({
         20,
         ...(order.items || []).map((i) => i.product?.width || 20)
       );
-      const length = (order.items || []).reduce(
+      const lengthAccum = (order.items || []).reduce(
         (sum, item) => sum + item.quantity * (item.product?.length || 30),
         0
       );
+      const finalLength = Math.max(lengthAccum, 30); // Minimum sum length 30cm
 
       const shipmentData = {
         customerId: process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID || "",
@@ -156,7 +159,11 @@ export function ShipmentControlCard({
         recipient: {
           name: order.customerName,
           phone: order.customerPhone,
-          email: order.customerEmail || "cliente@rastuci.com",
+          // Evitamos mandar data hardcodeada falsa (M-27)
+          email:
+            order.customerEmail ||
+            process.env.NEXT_PUBLIC_STORE_SUPPORT_EMAIL ||
+            "info@rastuci.com",
         },
         shipping: {
           deliveryType:
@@ -175,7 +182,7 @@ export function ShipmentControlCard({
           weight: totalWeight,
           height: height,
           width: width,
-          length: Math.max(length, 30), // Minimum sum length 30cm
+          length: finalLength,
           declaredValue: order.total,
         },
       };

@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Truck,
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -625,9 +626,11 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
           <Download className="h-4 w-4 mr-2" />
           Descargar Factura
         </Button>
-        <Button variant="outline" className="flex-1">
-          <Mail className="h-4 w-4 mr-2" />
-          Contactar Soporte
+        <Button variant="outline" className="flex-1" asChild>
+          <Link href="/contacto">
+            <Mail className="h-4 w-4 mr-2" />
+            Contactar Soporte
+          </Link>
         </Button>
       </div>
     </div>

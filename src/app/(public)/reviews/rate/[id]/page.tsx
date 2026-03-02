@@ -19,9 +19,14 @@ export default async function RateOrderPage({ params }: RateOrderPageProps) {
   const { id } = await params;
 
   // Fetch order with products
-  // Usamos el ID como "token", sin auth de usuario de session
+  // Security: restrict reviews to completed orders only — prevents reviewing orders
+  // that haven't been delivered yet, and limits the usefulness of ID enumeration attacks.
   const order = await prisma.orders.findUnique({
-    where: { id },
+    where: {
+      id,
+      // Only allow reviews for delivered or processed orders
+      status: { in: ["DELIVERED", "PROCESSED"] },
+    },
     include: {
       order_items: {
         include: {

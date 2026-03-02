@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { logger } from "@/lib/logger";
 
@@ -67,20 +67,13 @@ export const useDashboard = (): UseDashboardReturn => {
   const [monthlySales, setMonthlySales] = useState<MonthlySales[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const isFetching = useRef(false);
 
-  const fetchDashboardData = useCallback(async () => {
-    // Prevenir múltiples llamadas simultáneas
-    if (isFetching.current) {
-      return;
-    }
-
+  const fetchDashboardData = useCallback(async (signal?: AbortSignal) => {
     try {
-      isFetching.current = true;
       setLoading(true);
       setError(null);
 
-      const response = await fetch("/api/dashboard");
+      const response = await fetch("/api/dashboard", { signal });
 
       if (!response.ok) {
         throw new Error("Error al cargar los datos del dashboard");
@@ -88,7 +81,6 @@ export const useDashboard = (): UseDashboardReturn => {
 
       const data = await response.json();
 
-      // El API devuelve directamente los datos sin success/data wrapper
       if (data.error) {
         throw new Error(data.error);
       }
@@ -112,18 +104,19 @@ export const useDashboard = (): UseDashboardReturn => {
       setLowStockProducts(data.lowStockProducts || []);
       setCategoryData(data.productsByCategoryCount || []);
       setMonthlySales(data.monthlySales || []);
-    } catch (err) {
+    } catch (err: unknown) {
+      if ((err as Error).name === "AbortError") return;
       const errorMessage =
         err instanceof Error ? err.message : "Error desconocido";
       setError(errorMessage);
 
-      // En lugar de usar notificaciones, solo registrar el error
       logger.error("Error al cargar datos del dashboard", {
         error: errorMessage,
       });
     } finally {
+      // Usar callback de estado asegura que siempre leemos el `loading` correcto y real,
+      // no la variable atrapada en un stale closure (M-32).
       setLoading(false);
-      isFetching.current = false;
     }
   }, []);
 
@@ -131,23 +124,14 @@ export const useDashboard = (): UseDashboardReturn => {
     await fetchDashboardData();
   };
 
-  // Cargar datos del dashboard al montar el componente
   useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      if (isMounted) {
-        await fetchDashboardData();
-      }
-    };
-
-    loadData();
+    const controller = new AbortController();
+    void fetchDashboardData(controller.signal);
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Solo ejecutar al montar, no cuando fetchDashboardData cambie
+  }, [fetchDashboardData]);
 
   return {
     stats,
