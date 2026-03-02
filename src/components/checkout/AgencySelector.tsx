@@ -207,7 +207,8 @@ export function AgencySelector({
       });
     });
 
-    return options; // Retornar TODAS las opciones filtradas
+    // Filtrar opciones con value vacío – Radix Select.Item prohíbe value=""
+    return options.filter((opt) => opt.value !== "");
   }, [filteredAgencies]);
 
   const handleAgencyChange = useCallback(
