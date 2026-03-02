@@ -88,9 +88,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     paymentMethod: z.string().min(1, "Método de pago requerido"),
     orderData: z.object({
       total: z.number().nonnegative(),
-      subtotal: z.number().nonnegative(),
-      shippingCost: z.number().nonnegative(),
-      discount: z.number().nonnegative(),
+      subtotal: z.number().nonnegative().default(0),
+      shippingCost: z.number().nonnegative().default(0),
+      discount: z.number().nonnegative().default(0),
     }),
     shippingAgency: z.object({ code: z.string() }).optional(),
   });
@@ -102,9 +102,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const validationResult = CheckoutRequestSchema.safeParse(rawBody);
 
     if (!validationResult.success) {
-      const errorMsg = validationResult.error.errors
-        .map((e: z.ZodIssue) => e.message)
-        .join(", ");
+      const errors = validationResult.error.errors;
+      const hasCustomerError = errors.some(
+        (e: z.ZodIssue) => e.path[0] === "customer"
+      );
+      if (hasCustomerError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Datos del cliente requeridos o inválidos",
+          },
+          { status: 400 }
+        );
+      }
+      const errorMsg = errors.map((e: z.ZodIssue) => e.message).join(", ");
       return NextResponse.json(
         { success: false, error: `Validación fallida: ${errorMsg}` },
         { status: 400 }
