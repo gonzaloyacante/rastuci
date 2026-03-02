@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
+import { escapeCsvCell } from "@/utils/formatters";
 
 export const GET = withAdminAuth(
   async (_request: NextRequest): Promise<NextResponse> => {
@@ -29,18 +30,16 @@ export const GET = withAdminAuth(
         headers.join(","), // Header row
         ...orders.map((order) =>
           [
-            order.id,
-            order.trackingNumber || "",
-            order.status,
-            order.customerName || "",
-            order.customerEmail || "",
-            order.customerAddress || "",
-            order.createdAt.toISOString().split("T")[0],
-            order.updatedAt.toISOString().split("T")[0],
-            order.total ? Number(order.total).toString() : "0",
-          ]
-            .map((field: string) => `"${field}"`)
-            .join(",")
+            escapeCsvCell(order.id),
+            escapeCsvCell(order.trackingNumber || ""),
+            escapeCsvCell(order.status),
+            escapeCsvCell(order.customerName || ""),
+            escapeCsvCell(order.customerEmail || ""),
+            escapeCsvCell(order.customerAddress || ""),
+            escapeCsvCell(order.createdAt.toISOString().split("T")[0]),
+            escapeCsvCell(order.updatedAt.toISOString().split("T")[0]),
+            escapeCsvCell(order.total ? Number(order.total).toString() : "0"),
+          ].join(",")
         ),
       ];
 

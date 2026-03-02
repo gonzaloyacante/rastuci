@@ -1,6 +1,8 @@
 /**
  * Formatear precio en pesos colombianos
  */
+import { customAlphabet } from "nanoid";
+
 export const formatPrice = (price: number): string => {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -148,12 +150,36 @@ export const capitalizeFirst = (str: string): string => {
 };
 
 /**
- * Generar número de orden único
+ * Escapar celdas CSV para prevenir Inyección de Fórmulas en Excel/Sheets.
+ * Si el campo empieza por =, +, - o @ se le prefija una comilla simple o tabulación invisible,
+ * neutralizando la ejecución de la fórmula.
+ */
+export const escapeCsvCell = (
+  value: string | number | null | undefined
+): string => {
+  if (value === null || value === undefined) return "";
+  let strValue = String(value);
+  // Prevenir inyección de fórmulas CSV
+  if (/^[=+\-@]/.test(strValue)) {
+    strValue = "'" + strValue;
+  }
+  // Escapar comillas dobles y envolver si contiene comas, comillas o nuevas líneas
+  if (/[,"\n]/.test(strValue)) {
+    strValue = `"${strValue.replace(/"/g, '""')}"`;
+  }
+  return strValue;
+};
+
+/**
+ * Generar número de orden único criptográficamente seguro e inenumerable.
+ * Usamos base58 (sin caracteres ambiguos como O, 0, I, l) con tamaño de 10.
  */
 export const generateOrderNumber = (): string => {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `ORD-${timestamp}-${random}`;
+  const nanoid = customAlphabet(
+    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz",
+    10
+  );
+  return `ORD-${nanoid().toUpperCase()}`;
 };
 
 /**

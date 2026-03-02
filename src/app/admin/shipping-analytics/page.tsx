@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { escapeCsvCell } from "@/utils/formatters";
 
 // ============================================================================
 // Types
@@ -405,29 +406,47 @@ export default function ShippingAnalytics() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, selectedRegion, includeDetails]);
+  }, [startDate, endDate, selectedRegion, includeDetails, show]);
 
   useEffect(() => {
-    if (startDate && endDate) fetchAnalytics();
+    if (startDate && endDate) void fetchAnalytics();
   }, [startDate, endDate, selectedRegion, includeDetails, fetchAnalytics]);
 
   const handleExport = () => {
     if (!data) return;
     const csvData: (string | number)[][] = [
       ["Métrica", "Valor"],
-      ["Tiempo Promedio de Entrega (días)", data.delivery.averageDeliveryTime],
-      ["Tasa de Entrega a Tiempo (%)", data.delivery.onTimeDeliveryRate],
-      ["Total de Órdenes", data.delivery.totalOrders],
-      ["Órdenes Entregadas", data.delivery.deliveredOrders],
-      ["Costo Promedio de Envío", data.delivery.averageShippingCost],
-      ["Ingresos Totales de Envío", data.delivery.totalShippingRevenue],
-      ["Puntaje de Performance", data.summary.performanceScore],
+      [
+        "Tiempo Promedio de Entrega (días)",
+        escapeCsvCell(data.delivery.averageDeliveryTime),
+      ],
+      [
+        "Tasa de Entrega a Tiempo (%)",
+        escapeCsvCell(data.delivery.onTimeDeliveryRate),
+      ],
+      ["Total de Órdenes", escapeCsvCell(data.delivery.totalOrders)],
+      ["Órdenes Entregadas", escapeCsvCell(data.delivery.deliveredOrders)],
+      [
+        "Costo Promedio de Envío",
+        escapeCsvCell(data.delivery.averageShippingCost),
+      ],
+      [
+        "Ingresos Totales de Envío",
+        escapeCsvCell(data.delivery.totalShippingRevenue),
+      ],
+      ["Puntaje de Performance", escapeCsvCell(data.summary.performanceScore)],
     ];
     if (data.satisfaction) {
       csvData.push(
-        ["Satisfacción Promedio", data.satisfaction.overallSatisfactionRate],
-        ["NPS Score", data.satisfaction.npsScore],
-        ["Tasa de Recomendación (%)", data.satisfaction.recommendationRate]
+        [
+          "Satisfacción Promedio",
+          escapeCsvCell(data.satisfaction.overallSatisfactionRate),
+        ],
+        ["NPS Score", escapeCsvCell(data.satisfaction.npsScore)],
+        [
+          "Tasa de Recomendación (%)",
+          escapeCsvCell(data.satisfaction.recommendationRate),
+        ]
       );
     }
     downloadCSV(csvData, `shipping-analytics-${startDate}-${endDate}.csv`);

@@ -196,7 +196,7 @@ export function useGlobalCache<T>(
       cachedData === null ||
       (revalidateOnMount && globalCache.isStale(key))
     ) {
-      fetchData();
+      void fetchData();
     } else {
       setData(cachedData);
       setIsLoading(false);
@@ -211,7 +211,7 @@ export function useGlobalCache<T>(
 
     const handleFocus = () => {
       if (globalCache.isStale(key)) {
-        fetchData();
+        void fetchData();
       }
     };
 

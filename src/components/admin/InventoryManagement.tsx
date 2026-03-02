@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Upload,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   InventoryFilters,
@@ -22,9 +22,9 @@ import {
   StatCard,
   type StockAdjustmentData,
   StockAdjustmentModal,
-  type StockMovement,
 } from "@/components/admin/InventoryComponents";
 import { useToast } from "@/components/ui/Toast";
+import useDebounce from "@/hooks/useDebounce";
 import type { Product } from "@/types";
 
 export function InventoryManagement() {
@@ -38,14 +38,14 @@ export function InventoryManagement() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [showAdjustmentForm, setShowAdjustmentForm] = useState(false);
 
-  useEffect(() => {
-    loadInventoryData();
-  }, []);
+  const debouncedSearch = useDebounce(searchTerm, 500);
 
-  const loadInventoryData = async () => {
+  const loadInventoryData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/products?page=1&limit=1000");
+      const res = await fetch(
+        `/api/products?page=1&limit=50&search=${encodeURIComponent(debouncedSearch)}`
+      );
       if (!res.ok) {
         throw new Error("Error fetching products");
       }
@@ -105,43 +105,35 @@ export function InventoryManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, show]);
+
+  useEffect(() => {
+    void loadInventoryData();
+  }, [loadInventoryData]);
 
   const handleStockAdjustment = async (data: StockAdjustmentData) => {
     if (!selectedItem) return;
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const resp = await fetch(`/api/products/${selectedItem.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        // Adjust product stock in BD overriding completely with new calculated value.
+        body: JSON.stringify({
+          stock: selectedItem.currentStock + data.quantity,
+        }),
+      });
 
-      const newMovement: StockMovement = {
-        id: Date.now().toString(),
-        type: "adjustment",
-        quantity: data.quantity,
-        reason: data.reason,
-        reference: data.reference,
-        userId: "admin-1",
-        userName: "Admin",
-        createdAt: new Date(),
-      };
+      if (!resp.ok) {
+        throw new Error("Error HTTP al actualizar inventario");
+      }
 
-      setInventory((prev) =>
-        prev.map((item) =>
-          item.id === selectedItem.id
-            ? {
-                ...item,
-                currentStock: item.currentStock + data.quantity,
-                availableStock: item.availableStock + data.quantity,
-                movements: [newMovement, ...item.movements],
-              }
-            : item
-        )
-      );
-
+      await loadInventoryData();
       setShowAdjustmentForm(false);
       setSelectedItem(null);
       show({
         type: "success",
-        message: "Ajuste de stock realizado correctamente",
+        message: "Ajuste de stock realizado correctamente en Base de Datos",
       });
     } catch {
       show({ type: "error", message: "Error al realizar el ajuste de stock" });

@@ -3,7 +3,6 @@
 import {
   AlertTriangle,
   CreditCard,
-  MapPin,
   Phone,
   RefreshCw,
   XCircle,
@@ -16,14 +15,12 @@ import { Spinner } from "@/components/ui/Spinner";
 
 function CheckoutFailureContent() {
   const searchParams = useSearchParams();
-  const [_paymentMethod, setPaymentMethod] = useState<string>("");
   const [orderId, setOrderId] = useState<string>("");
   const [errorReason, setErrorReason] = useState<string>("");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     // Obtener datos de la URL
-    const method = searchParams.get("method") || "mercadopago";
     const id =
       searchParams.get("order_id") ||
       searchParams.get("external_reference") ||
@@ -31,7 +28,6 @@ function CheckoutFailureContent() {
     const reason =
       searchParams.get("reason") || searchParams.get("status_detail") || "";
 
-    setPaymentMethod(method);
     setOrderId(id);
     setErrorReason(reason);
     setMounted(true);

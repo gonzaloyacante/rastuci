@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
         }
       }
     };
-    checkSession();
+    void checkSession();
   }, [router]);
 
   // Form para login

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { AdminTable } from "@/components/admin/AdminTable";
 import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
+import { escapeCsvCell } from "@/utils/formatters";
 
 interface VacationPeriod extends Record<string, unknown> {
   id: string;
@@ -26,7 +27,7 @@ export default function VacationHistory() {
   const { show: toast } = useToast();
 
   useEffect(() => {
-    fetchPeriods();
+    void fetchPeriods();
   }, []);
 
   const fetchPeriods = async () => {
@@ -70,11 +71,13 @@ export default function VacationHistory() {
       }
 
       // Generate CSV
-      const headers = ["Email", "Fecha Suscripcion", "Notificado"];
+      const headers = ["Email", "Fecha Suscripcion", "Notificado"].map(
+        escapeCsvCell
+      );
       const rows = subscribers.map((sub) => [
-        sub.email,
-        new Date(sub.createdAt).toISOString(),
-        sub.notified ? "Si" : "No",
+        escapeCsvCell(sub.email),
+        escapeCsvCell(new Date(sub.createdAt).toISOString()),
+        escapeCsvCell(sub.notified ? "Si" : "No"),
       ]);
 
       const csvContent = [

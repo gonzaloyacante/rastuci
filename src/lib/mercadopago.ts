@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { MercadoPagoConfig, Payment, Preference } from "mercadopago";
+import { customAlphabet } from "nanoid";
 
 import { logger } from "@/lib/logger";
 
@@ -34,8 +35,15 @@ type PreferenceRequestLike = {
 type PaymentCreateLike = Record<string, unknown>;
 type PaymentGetDataLike = { id: string };
 
+// Alfabeto base58 para evitar caracteres ambiguos y ser URL-safe (mantiene alta entropía)
+const getSafeNanoId = customAlphabet(
+  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz",
+  21
+);
+
 function genIdempotency() {
-  return `rastuci_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  // [M-22] Generación fuerte de Idempotency Key usando base58 nanoid (CSPRNG)
+  return `rasti_${getSafeNanoId()}`;
 }
 
 function getBaseUrl() {

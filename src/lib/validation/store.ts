@@ -11,7 +11,7 @@ export const StoreSettingsSchema = z.object({
   name: z.string().min(1).max(100).default("Rastuci"),
 
   // Admin notifications
-  adminEmail: z.string().email().default("gyacante9@gmail.com"),
+  adminEmail: z.string().email().optional(),
 
   // Contact for shipping (remitente) - Now fetched from Global Contact Settings
   // phone: removed
@@ -19,13 +19,13 @@ export const StoreSettingsSchema = z.object({
 
   // Origin address for shipping calculations and CA imports
   address: z.object({
-    streetName: z.string().min(1).max(100).default("Av. San Martín"),
-    streetNumber: z.string().min(1).max(20).default("1234"),
+    streetName: z.string().min(1).max(100).default("San Juan"),
+    streetNumber: z.string().min(1).max(20).default("0"),
     floor: z.string().max(10).optional(),
     apartment: z.string().max(10).optional(),
-    city: z.string().min(1).max(100).default("Buenos Aires"),
-    provinceCode: z.string().length(1).default("B"), // CA province code
-    postalCode: z.string().min(1).max(10).default("1611"),
+    city: z.string().min(1).max(100).default("San Juan"),
+    provinceCode: z.string().length(1).default("J"), // San Juan province code
+    postalCode: z.string().min(1).max(10).default("J5400"),
   }),
   // Shipping global settings
   shipping: z
@@ -37,14 +37,12 @@ export const StoreSettingsSchema = z.object({
   // Email Configuration
   emails: z
     .object({
-      salesEmail: z.string().email().default("pedidos@rastuci.com"),
-      supportEmail: z.string().email().default("soporte@rastuci.com"),
+      salesEmail: z.string().email().optional(),
+      supportEmail: z.string().email().optional(),
       senderName: z.string().min(1).default("Rastuci"),
       footerText: z.string().optional(),
     })
     .default({
-      salesEmail: "pedidos@rastuci.com",
-      supportEmail: "soporte@rastuci.com",
       senderName: "Rastuci",
     }),
 
@@ -139,22 +137,22 @@ export type StoreSettings = z.infer<typeof StoreSettingsSchema>;
 
 export const defaultStoreSettings: StoreSettings = {
   name: "Rastuci",
-  adminEmail: "gyacante9@gmail.com",
+  adminEmail: undefined,
   address: {
-    streetName: "Av. San Martín",
-    streetNumber: "1234",
+    streetName: "San Juan",
+    streetNumber: "0",
     floor: "",
     apartment: "",
-    city: "Buenos Aires",
-    provinceCode: "B",
-    postalCode: "1611",
+    city: "San Juan",
+    provinceCode: "J",
+    postalCode: "J5400",
   },
   shipping: {
     freeShipping: false,
   },
   emails: {
-    salesEmail: "pedidos@rastuci.com",
-    supportEmail: "soporte@rastuci.com",
+    salesEmail: undefined,
+    supportEmail: undefined,
     senderName: "Rastuci",
     footerText: "",
   },

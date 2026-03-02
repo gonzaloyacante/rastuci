@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 // Tipos para OrderStatus (directos desde schema)
 type OrderStatus = "PENDING" | "PROCESSED" | "DELIVERED";
@@ -20,10 +21,29 @@ interface OrderWhereClause {
 // GET /api/mobile/orders - Obtener pedidos para móvil
 export async function GET(request: NextRequest) {
   try {
+    // [H-10] Rate limit: 30 req/min per IP
+    const rateLimit = await checkRateLimit(request, {
+      key: "mobile-orders",
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.ok) {
+      return NextResponse.json<ApiResponse<null>>(
+        {
+          success: false,
+          message: "Demasiadas solicitudes. Intenta nuevamente en un momento.",
+          data: null,
+        },
+        { status: 429 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const customerEmail = searchParams.get("customerEmail");
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    // [H-10] Clamp limit to max 50 to prevent unbounded queries
+    const requestedLimit = parseInt(searchParams.get("limit") || "10");
+    const limit = Math.min(Math.max(1, requestedLimit), 50);
     const status = searchParams.get("status");
 
     if (!customerEmail) {

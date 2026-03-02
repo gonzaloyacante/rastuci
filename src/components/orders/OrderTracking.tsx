@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Truck,
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -178,7 +179,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
   }, [order, loadTracking]);
 
   useEffect(() => {
-    loadOrderData();
+    void loadOrderData();
   }, [loadOrderData]);
 
   // Auto-refresh tracking cada 5 minutos
@@ -189,7 +190,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
 
     const interval = setInterval(
       () => {
-        refreshTracking();
+        void refreshTracking();
       },
       5 * 60 * 1000
     );
@@ -205,9 +206,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     try {
       logger.info("Downloading invoice", { orderId: order.id });
 
-      const escapeHtml = (unsafe: string) => {
-        return (unsafe || "")
-          .toString()
+      const escapeHtml = (unsafe: string | null | undefined): string => {
+        if (unsafe == null) return "";
+        return String(unsafe)
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")
@@ -625,9 +626,11 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
           <Download className="h-4 w-4 mr-2" />
           Descargar Factura
         </Button>
-        <Button variant="outline" className="flex-1">
-          <Mail className="h-4 w-4 mr-2" />
-          Contactar Soporte
+        <Button variant="outline" className="flex-1" asChild>
+          <Link href="/contacto">
+            <Mail className="h-4 w-4 mr-2" />
+            Contactar Soporte
+          </Link>
         </Button>
       </div>
     </div>

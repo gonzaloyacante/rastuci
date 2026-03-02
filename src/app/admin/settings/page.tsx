@@ -86,7 +86,7 @@ export default function ConfiguracionPage() {
       const data = await res.json();
       if (data.success) {
         show({ type: "success", message: "FAQs guardadas exitosamente" });
-        mutateFaqs(); // Refresh cache
+        void mutateFaqs(); // Refresh cache
       } else {
         show({ type: "error", message: data.error || "Error al guardar" });
       }

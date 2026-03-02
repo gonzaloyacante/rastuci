@@ -23,7 +23,7 @@ type ProductWithExtras = Record<string, unknown> & {
 export function ProductComparison() {
   const { comparisonItems, removeFromComparison, clearComparison } =
     useComparison();
-  const { addToCart } = useCart();
+  const { addToCart: _addToCart } = useCart();
   const { addToWishlist, isInWishlist } = useWishlist();
   const [isOpen, setIsOpen] = useState(false);
 

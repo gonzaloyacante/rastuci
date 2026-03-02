@@ -45,6 +45,15 @@ export default function OfflinePageClient() {
     };
   }, []);
 
+  // [M-45] Auto-redirect to home when connection is restored
+  useEffect(() => {
+    if (!isOnline) return;
+    const redirectTimer = setTimeout(() => {
+      window.location.href = "/";
+    }, 3000);
+    return () => clearTimeout(redirectTimer);
+  }, [isOnline]);
+
   const handleRetry = async () => {
     setIsRetrying(true);
 

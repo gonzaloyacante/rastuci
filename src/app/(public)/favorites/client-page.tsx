@@ -20,7 +20,6 @@ import { useToast } from "@/components/ui/Toast";
 import { ShareWishlistModal } from "@/components/wishlist/ShareModal";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { Product } from "@/types";
 import { formatPriceARS } from "@/utils/formatters";
 
 type SortOption =
@@ -36,7 +35,7 @@ export default function FavoritosPageClient() {
   const { show } = useToast();
   const { wishlistItems, removeFromWishlist, clearWishlist, isLoaded } =
     useWishlist();
-  const { addToCart } = useCart();
+  const { addToCart: _addToCart } = useCart();
 
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { escapeCsvCell } from "@/utils/formatters";
 
 export const dynamic = "force-dynamic";
 
@@ -39,16 +40,16 @@ export const GET = withAdminAuth(async (_req: NextRequest) => {
         .join("; ");
 
       return [
-        product.id,
-        `"${(product.name || "").replace(/"/g, '""')}"`, // Escape quotes
-        `"${(product.categories?.name || "").replace(/"/g, '""')}"`,
-        product.price.toString(),
-        product.salePrice ? product.salePrice.toString() : "",
-        product.stock.toString(),
-        product.onSale ? "SI" : "NO",
-        product.isActive ? "SI" : "NO",
-        `"${variantsString}"`,
-        `"${(product.description || "").replace(/"/g, '""').replace(/\n/g, " ")}"`, // Escape quotes & newlines
+        escapeCsvCell(product.id),
+        escapeCsvCell(product.name),
+        escapeCsvCell(product.categories?.name),
+        escapeCsvCell(product.price.toString()),
+        escapeCsvCell(product.salePrice ? product.salePrice.toString() : ""),
+        escapeCsvCell(product.stock.toString()),
+        escapeCsvCell(product.onSale ? "SI" : "NO"),
+        escapeCsvCell(product.isActive ? "SI" : "NO"),
+        escapeCsvCell(variantsString),
+        escapeCsvCell((product.description || "").replace(/\n/g, " ")),
       ].join(",");
     });
 

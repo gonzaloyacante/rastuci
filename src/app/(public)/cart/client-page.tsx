@@ -3,7 +3,7 @@
 import { AlertCircle, Check, ShoppingCart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -53,6 +53,13 @@ const CartItemComponent = ({
   const { show } = useToast();
   const [isRemoving, setIsRemoving] = useState(false);
   const [pendingQuantity, setPendingQuantity] = useState(item.quantity);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const handleRemove = useCallback(async () => {
     setIsRemoving(true);
@@ -69,12 +76,12 @@ const CartItemComponent = ({
       show({ type: "error", message: "Error al eliminar el producto" });
       setIsRemoving(false);
     }
-  }, [item, onRemove]);
+  }, [item, onRemove, show]);
 
   const handleQuantityChange = useCallback(
     (newQuantity: number) => {
       if (newQuantity < 1) {
-        handleRemove();
+        void handleRemove();
         return;
       }
 
@@ -88,14 +95,17 @@ const CartItemComponent = ({
 
       setPendingQuantity(newQuantity);
 
+      // Limpiar timeout anterior si existe
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       // Debounce la actualización
-      const timeoutId = setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         onUpdateQuantity(item.product.id, item.size, item.color, newQuantity);
       }, 300);
-
-      return () => clearTimeout(timeoutId);
     },
-    [item, onUpdateQuantity, handleRemove]
+    [item, onUpdateQuantity, handleRemove, show]
   );
 
   const imageUrl = useMemo(() => {
@@ -434,7 +444,7 @@ export default function CartPageClient() {
       show({ type: "error", message: "Error al proceder al checkout" });
       setIsCheckingOut(false);
     }
-  }, [cartItems, router]);
+  }, [cartItems, router, show]);
 
   const handleClearCart = useCallback(async () => {
     const confirmed = await confirm({
@@ -450,7 +460,7 @@ export default function CartPageClient() {
       clearCart();
       show({ type: "success", message: "Carrito vaciado" });
     }
-  }, [clearCart, confirm]);
+  }, [clearCart, confirm, show]);
 
   if (cartItems.length === 0) {
     return (

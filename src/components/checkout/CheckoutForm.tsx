@@ -15,17 +15,6 @@ import { StoreSettings } from "@/lib/validation/store";
 import { CustomerForm } from "./CustomerForm";
 import { OrderSummaryCard } from "./OrderSummaryCard";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
-// import {
-//   ShippingCostCalculator,
-//   type ShippingOption,
-// } from "./ShippingCostCalculator";
-
-// type ShippingOption = {
-//   name: string;
-//   cost: number;
-//   provider?: string;
-//   description?: string;
-// };
 
 interface CheckoutFormProps {
   onPaymentSuccess?: (paymentId: string) => void;
@@ -177,7 +166,37 @@ export function CheckoutForm({
           data.paymentMethod === PAYMENT_METHODS.MERCADOPAGO &&
           data.initPoint
         ) {
-          window.location.href = data.initPoint;
+          // [H-11] Validate URL is from MercadoPago before redirecting (open redirect prevention)
+          let isMercadoPagoUrl = false;
+          try {
+            const url = new URL(data.initPoint);
+            const allowedHosts = [
+              "www.mercadopago.com.ar",
+              "mercadopago.com.ar",
+              "www.mercadopago.com",
+              "mercadopago.com",
+              "www.mercadolibre.com",
+              "mercadolibre.com",
+            ];
+            isMercadoPagoUrl = allowedHosts.includes(url.hostname);
+          } catch {
+            logger.error("[Checkout] Invalid initPoint URL received", {
+              initPoint: data.initPoint,
+            });
+          }
+
+          if (isMercadoPagoUrl) {
+            window.location.href = data.initPoint;
+          } else {
+            logger.error("[Checkout] Blocked suspicious redirect URL", {
+              initPoint: data.initPoint,
+            });
+            show({
+              type: "error",
+              title: "Error",
+              message: "Error al procesar el pago. Contacta al soporte.",
+            });
+          }
         } else if (data.orderId) {
           // Redirect to success page or show success
           window.location.href = `/checkout/success?orderId=${data.orderId}&method=${data.paymentMethod}`;
@@ -188,7 +207,6 @@ export function CheckoutForm({
             title: "Pedido Creado",
             message: data.message,
           });
-          // Clear cart?
         }
       }
     } catch (error) {
@@ -353,7 +371,9 @@ export function CheckoutForm({
                   ? "Mercado Pago"
                   : selectedPaymentMethod === PAYMENT_METHODS.CASH
                     ? "Efectivo"
-                    : "No seleccionado",
+                    : selectedPaymentMethod === PAYMENT_METHODS.TRANSFER
+                      ? "Transferencia Bancaria"
+                      : "No seleccionado",
               description: selectedPaymentMethod ? "Procesamiento seguro" : "",
             }}
             subtotal={subtotal}

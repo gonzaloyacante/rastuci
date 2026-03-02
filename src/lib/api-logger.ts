@@ -1,6 +1,8 @@
+/* eslint-disable no-console */
 /**
  * API Logger - Sistema centralizado de logging para todas las llamadas API
  * Muestra en consola de forma linda y descriptiva todas las requests/responses
+ * NOTE: console.* is intentional here — this IS the API logging module.
  */
 
 import { logger } from "./logger";
@@ -89,83 +91,89 @@ export function logApiCall(entry: ApiLogEntry) {
     ? getStatusColor(entry.status)
     : colors.white;
 
-  console.log("\n" + "━".repeat(50));
-  console.log(
-    `${colors.bright}${colors.cyan}🌐 API CALL${colors.reset} ${colors.dim}[${timestamp}]${colors.reset}`
-  );
-  console.log("━".repeat(50));
-
-  // 1. Method & URL
-  console.log(
-    `${colors.dim}► METHOD:${colors.reset} ${methodColor}${colors.bright}${entry.method.toUpperCase()}${colors.reset}`
-  );
-  console.log(
-    `${colors.dim}► URL:${colors.reset}    ${colors.white}${entry.url}${colors.reset}`
-  );
-
-  // 2. Status
-  if (entry.status) {
+  if (process.env.NODE_ENV !== "production") {
+    console.log("\n" + "━".repeat(50));
     console.log(
-      `${colors.dim}► STATUS:${colors.reset} ${statusColor}${colors.bright}${entry.status} ${entry.statusText || ""}${colors.reset}`
+      `${colors.bright}${colors.cyan}🌐 API CALL${colors.reset} ${colors.dim}[${timestamp}]${colors.reset}`
     );
-  }
+    console.log("━".repeat(50));
 
-  // 3. Duration
-  if (entry.duration !== undefined) {
+    // 1. Method & URL
     console.log(
-      `${colors.dim}► TIME:${colors.reset}   ${formatDuration(entry.duration)}`
+      `${colors.dim}► METHOD:${colors.reset} ${methodColor}${colors.bright}${entry.method.toUpperCase()}${colors.reset}`
     );
-  }
-
-  // 4. Headers
-  if (entry.headers) {
-    const importantHeaders = ["content-type", "authorization", "x-request-id"];
-    const headersToPrint = Object.entries(entry.headers).filter(([key]) =>
-      importantHeaders.includes(key.toLowerCase())
-    );
-
-    if (headersToPrint.length > 0) {
-      console.log(`${colors.dim}► HEADERS:${colors.reset}`);
-      headersToPrint.forEach(([key, value]) => {
-        const displayValue =
-          key.toLowerCase() === "authorization"
-            ? value.substring(0, 20) + "..."
-            : value;
-        console.log(
-          `   - ${colors.cyan}${key}:${colors.reset} ${displayValue}`
-        );
-      });
-    }
-  }
-
-  // 5. Request Body (FULL)
-  if (entry.requestBody) {
-    console.log(`${colors.dim}► REQUEST BODY:${colors.reset}`);
-    try {
-      console.log(JSON.stringify(entry.requestBody, null, 2));
-    } catch {
-      console.log(String(entry.requestBody));
-    }
-  }
-
-  // 6. Response Body (FULL)
-  if (entry.responseBody) {
-    console.log(`${colors.dim}► RESPONSE BODY:${colors.reset}`);
-    try {
-      console.log(JSON.stringify(entry.responseBody, null, 2));
-    } catch {
-      console.log(String(entry.responseBody));
-    }
-  }
-
-  // 7. Error
-  if (entry.error) {
     console.log(
-      `${colors.red}${colors.bright}► ERROR:${colors.reset} ${colors.red}${entry.error}${colors.reset}`
+      `${colors.dim}► URL:${colors.reset}    ${colors.white}${entry.url}${colors.reset}`
     );
-  }
 
-  console.log("━".repeat(50) + "\n");
+    // 2. Status
+    if (entry.status) {
+      console.log(
+        `${colors.dim}► STATUS:${colors.reset} ${statusColor}${colors.bright}${entry.status} ${entry.statusText || ""}${colors.reset}`
+      );
+    }
+
+    // 3. Duration
+    if (entry.duration !== undefined) {
+      console.log(
+        `${colors.dim}► TIME:${colors.reset}   ${formatDuration(entry.duration)}`
+      );
+    }
+
+    // 4. Headers
+    if (entry.headers) {
+      const importantHeaders = [
+        "content-type",
+        "authorization",
+        "x-request-id",
+      ];
+      const headersToPrint = Object.entries(entry.headers).filter(([key]) =>
+        importantHeaders.includes(key.toLowerCase())
+      );
+
+      if (headersToPrint.length > 0) {
+        console.log(`${colors.dim}► HEADERS:${colors.reset}`);
+        headersToPrint.forEach(([key, value]) => {
+          const displayValue =
+            key.toLowerCase() === "authorization"
+              ? value.substring(0, 20) + "..."
+              : value;
+          console.log(
+            `   - ${colors.cyan}${key}:${colors.reset} ${displayValue}`
+          );
+        });
+      }
+    }
+
+    // 5. Request Body (FULL)
+    if (entry.requestBody) {
+      console.log(`${colors.dim}► REQUEST BODY:${colors.reset}`);
+      try {
+        console.log(JSON.stringify(entry.requestBody, null, 2));
+      } catch {
+        console.log(String(entry.requestBody));
+      }
+    }
+
+    // 6. Response Body (FULL)
+    if (entry.responseBody) {
+      console.log(`${colors.dim}► RESPONSE BODY:${colors.reset}`);
+      try {
+        console.log(JSON.stringify(entry.responseBody, null, 2));
+      } catch {
+        console.log(String(entry.responseBody));
+      }
+    }
+
+    // 7. Error
+    if (entry.error) {
+      console.log(
+        `${colors.red}${colors.bright}► ERROR:${colors.reset} ${colors.red}${entry.error}${colors.reset}`
+      );
+    }
+
+    console.log("━".repeat(50) + "\n");
+  }
 
   // También log estructurado para el logger
   logger.info("API Call", {

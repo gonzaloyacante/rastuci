@@ -168,6 +168,7 @@ export const PAYMENT_METHODS = {
 } as const;
 
 export const SHIPPING_COSTS = {
+  // Fallback values — real costs are configured via admin settings (StoreSettings.shipping)
   standard: 1500,
   express: 2500,
   pickup: 0,

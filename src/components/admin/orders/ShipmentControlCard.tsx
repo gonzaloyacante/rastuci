@@ -131,10 +131,27 @@ export function ShipmentControlCard({
     if (!confirm("¿Confirmar creación de envío en Correo Argentino?")) return;
 
     try {
-      const totalWeight = (order.items || []).reduce(
-        (sum, item) => sum + item.quantity * 1000,
+      // Calculate dynamic weight and dimensions from products if available, fallback to defaults
+      // Uses 1kg / 10x20x30 as maximum fallback if absolutely nothing was set.
+      const totalWeight =
+        (order.items || []).reduce(
+          (sum, item) => sum + item.quantity * (item.product?.weight || 1000),
+          0
+        ) || 1000;
+
+      const height = Math.max(
+        10,
+        ...(order.items || []).map((i) => i.product?.height || 10)
+      );
+      const width = Math.max(
+        20,
+        ...(order.items || []).map((i) => i.product?.width || 20)
+      );
+      const lengthAccum = (order.items || []).reduce(
+        (sum, item) => sum + item.quantity * (item.product?.length || 30),
         0
       );
+      const finalLength = Math.max(lengthAccum, 30); // Minimum sum length 30cm
 
       const shipmentData = {
         customerId: process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID || "",
@@ -142,7 +159,11 @@ export function ShipmentControlCard({
         recipient: {
           name: order.customerName,
           phone: order.customerPhone,
-          email: order.customerEmail || "cliente@example.com",
+          // Evitamos mandar data hardcodeada falsa (M-27)
+          email:
+            order.customerEmail ||
+            process.env.NEXT_PUBLIC_STORE_SUPPORT_EMAIL ||
+            "info@rastuci.com",
         },
         shipping: {
           deliveryType:
@@ -159,9 +180,9 @@ export function ShipmentControlCard({
             postalCode: order.shippingPostalCode ?? undefined,
           },
           weight: totalWeight,
-          height: 10,
-          width: 20,
-          length: 30,
+          height: height,
+          width: width,
+          length: finalLength,
           declaredValue: order.total,
         },
       };

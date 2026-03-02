@@ -3,22 +3,10 @@
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 
 import { FaqSection } from "@/components/contact/FaqSection";
-// import useSWR from "swr";
 import { PublicContactForm } from "@/components/contact/PublicContactForm";
 import { SocialLinks } from "@/components/contact/SocialLinks";
 import { Card, CardContent } from "@/components/ui/Card";
-// import { logger } from "@/lib/logger";
 import { type ContactSettings } from "@/lib/validation/contact";
-
-// Fetcher para SWR (Unused)
-// const fetcher = async (url: string): Promise<ContactSettings> => {
-//   const res = await fetch(url);
-//   const json = await res.json();
-//   if (json?.success && json.data) {
-//     return json.data;
-//   }
-//   return defaultContactSettings;
-// };
 
 const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
   <div>

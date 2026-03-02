@@ -135,7 +135,7 @@ function CheckoutSuccessContent() {
       setLoadingOrder(false);
     };
 
-    attemptLoad();
+    void attemptLoad();
   }, [orderId, searchParams]);
 
   const copyTrackingNumber = async (trackingNumber: string) => {

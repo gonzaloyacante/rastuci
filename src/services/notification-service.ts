@@ -1,4 +1,5 @@
 import { MercadoPagoConfig, Payment } from "mercadopago";
+import type { PaymentResponse } from "mercadopago/dist/clients/payment/commonTypes";
 
 import { logger } from "@/lib/logger";
 import { validateWebhookSignature } from "@/lib/mercadopago";
@@ -28,8 +29,7 @@ export class MPWebhookService {
     return validateWebhookSignature(xSignature, xRequestId, id, ts);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async getPayment(id: string): Promise<any> {
+  async getPayment(id: string): Promise<PaymentResponse> {
     try {
       return await this.payment.get({ id });
     } catch (error) {

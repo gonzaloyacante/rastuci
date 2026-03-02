@@ -55,7 +55,7 @@ export default function TransferPaymentPage() {
         .catch(() => show({ type: "error", message: "Error cargando orden" }))
         .finally(() => setLoading(false));
     }
-  }, [params.id]);
+  }, [params.id, show]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +84,7 @@ export default function TransferPaymentPage() {
   };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     show({ type: "success", message: "Copiado al portapapeles" });
   };
 

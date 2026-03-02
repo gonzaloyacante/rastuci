@@ -80,10 +80,9 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
     if (order.shippingAgency && order.shippingProvinceCode && !agencyDetails) {
       const fetchAgency = async () => {
         try {
-          // Use the public API endpoint - ensure clean postal code usage if needed
+          // [H-12] Do NOT hardcode CA customer ID client-side
           const customerId =
-            process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID ||
-            "0001718183";
+            process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID ?? "";
           const res = await fetch(
             `/api/shipping/agencies?provinceCode=${order.shippingProvinceCode}&customerId=${customerId}`
           );
@@ -102,7 +101,7 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
           logger.error("Failed to fetch agency details", { error: err });
         }
       };
-      fetchAgency();
+      void fetchAgency();
     }
   }, [order.shippingAgency, order.shippingProvinceCode, agencyDetails]);
 

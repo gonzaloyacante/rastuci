@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
+import { escapeCsvCell } from "@/utils/formatters";
 
 // ============================================================================
 // Page Header with Actions
@@ -580,7 +581,9 @@ export function downloadCSV(
   data: (string | number)[][],
   filename: string
 ): void {
-  const csvContent = data.map((row) => row.join(",")).join("\n");
+  const csvContent = data
+    .map((row) => row.map(escapeCsvCell).join(","))
+    .join("\n");
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");

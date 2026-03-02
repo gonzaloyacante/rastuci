@@ -13,7 +13,9 @@ interface ReservationResult {
 }
 
 /**
- * Crea una reserva temporal de stock para un producto
+ * Crea una reserva temporal de stock para un producto.
+ * La verificación de stock y la creación de la reserva se realizan en una
+ * transacción atómica para evitar race conditions TOCTOU (H-15).
  * @param productId ID del producto
  * @param quantity Cantidad a reservar
  * @param sessionId ID único de la sesión de checkout
@@ -25,42 +27,67 @@ export async function createStockReservation(
   sessionId: string
 ): Promise<ReservationResult> {
   try {
-    // Verificar stock disponible (considerando reservas activas)
-    const availableStock = await getAvailableStock(productId);
+    // [H-15] FIX TOCTOU race condition using row-level write locking
+    return await prisma.$transaction(async (tx) => {
+      // 1. SELECT FOR UPDATE - Lock the specific product row so concurrent requests wait
+      // This is the ONLY way to prevent TOCTOU in standard Read Committed isolation
+      const products = await tx.$queryRaw<
+        Array<{ stock: number }>
+      >`SELECT stock FROM "Products" WHERE id = ${productId} FOR UPDATE`;
 
-    if (availableStock < quantity) {
-      return {
-        success: false,
-        message: `Stock insuficiente. Disponible: ${availableStock}`,
-      };
-    }
+      if (!products || products.length === 0) {
+        return { success: false, message: "Producto no encontrado" };
+      }
 
-    // Crear reserva
-    const expiresAt = new Date(Date.now() + RESERVATION_DURATION_MS);
-    const reservation = await prisma.stock_reservations.create({
-      data: {
+      const product = products[0];
+
+      // 2. Calcular reservas activas para el producto bloqueado
+      const now = new Date();
+      const activeReservations = await tx.stock_reservations.aggregate({
+        where: {
+          productId,
+          expiresAt: { gt: now },
+        },
+        _sum: { quantity: true },
+      });
+
+      const reserved = activeReservations._sum.quantity || 0;
+      const availableStock = Math.max(0, product.stock - reserved);
+
+      if (availableStock < quantity) {
+        return {
+          success: false,
+          message: `Stock insuficiente. Disponible: ${availableStock}`,
+        };
+      }
+
+      // 3. Crear la reserva de manera segura ya estabilizada
+      const expiresAt = new Date(Date.now() + RESERVATION_DURATION_MS);
+      const reservation = await tx.stock_reservations.create({
+        data: {
+          productId,
+          quantity,
+          sessionId,
+          expiresAt,
+        },
+      });
+
+      logger.info("[Stock] Reservation created", {
+        reservationId: reservation.id,
         productId,
         quantity,
         sessionId,
         expiresAt,
-      },
-    });
+      });
 
-    logger.info("[Stock] Reservation created", {
-      reservationId: reservation.id,
-      productId,
-      quantity,
-      sessionId,
-      expiresAt,
+      return {
+        success: true,
+        reservation: {
+          id: reservation.id,
+          expiresAt: reservation.expiresAt,
+        },
+      };
     });
-
-    return {
-      success: true,
-      reservation: {
-        id: reservation.id,
-        expiresAt: reservation.expiresAt,
-      },
-    };
   } catch (error) {
     logger.error("[Stock] Error creating reservation", { error });
     return {

@@ -365,11 +365,11 @@ function ReviewCard({
   const [showReportForm, setShowReportForm] = useState(false);
 
   const handleHelpful = (helpful: boolean) => {
-    onHelpful(review.id, helpful);
+    void onHelpful(review.id, helpful);
   };
 
   const handleReport = (reason: string) => {
-    onReport(review.id, reason);
+    void onReport(review.id, reason);
     setShowReportForm(false);
   };
 

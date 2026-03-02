@@ -46,8 +46,9 @@ const RelatedProducts = React.lazy(
 
 interface ProductDetailClientProps {
   productId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialProduct?: any; // Using any to avoid complex type matching with serialized dates
+  // Server components serialize Date to string; kept as Record to avoid complex
+  // type gymnastics. SWR re-validates immediately, so this is only an initial hint.
+  initialProduct?: Record<string, unknown>;
 }
 
 // Loading components usando componentes reutilizables
@@ -98,7 +99,17 @@ export default function ProductDetailClient({
   const { isVacationMode } = useVacationSettings();
 
   // SWR para fetch del producto
-  const fetcher = (url: string) => fetch(url).then((res) => res.json());
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Error loading product: HTTP ${res.status}`);
+    }
+    const json = await res.json();
+    if (!json.success) {
+      throw new Error(json.error || "Error from server payload");
+    }
+    return json;
+  };
   const { data, isLoading, error } = useSWR(
     productId ? `/api/products/${productId}` : null,
     fetcher,
@@ -177,8 +188,6 @@ export default function ProductDetailClient({
 
   // --- EFFECTS ---
 
-  // 1. Sync Images
-  // 1. Sync Images
   // --- DERIVED STATE (SAFE) ---
 
   // 1. Sync Images - Derived State to prevent race conditions
@@ -296,7 +305,7 @@ export default function ProductDetailClient({
         logger.error("Error sharing:", { error: err });
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(window.location.href);
       show({
         type: "success",
         title: "Compartir",
@@ -524,12 +533,12 @@ export default function ProductDetailClient({
                         disabled={isDisabled}
                         variant="ghost"
                         className={`
-                          min-w-[3rem] px-3 py-2 border rounded-lg text-sm font-medium transition-all h-auto
+                          min-w-12 px-3 py-2 border rounded-lg text-sm font-medium transition-all h-auto
                           ${
                             selectedSize === size
                               ? "border-primary bg-primary text-white shadow-md hover:bg-primary hover:text-white"
                               : isDisabled
-                                ? "border-muted bg-muted/10 text-muted-foreground cursor-not-allowed opacity-50 decoration-slice"
+                                ? "border-muted bg-muted/10 text-muted-foreground cursor-not-allowed opacity-50 box-decoration-slice"
                                 : "border-muted hover:border-primary text-primary bg-surface hover:bg-muted/10"
                           }
                           ${isOOS && !isDisabled ? "border-dashed" : ""} 
@@ -673,7 +682,7 @@ export default function ProductDetailClient({
             </div>
             <div className="flex items-center space-x-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              <span className="text-sm">3 cuotas sin interés</span>
+              <span className="text-sm">Múltiples medios de pago</span>
             </div>
           </div>
         </div>

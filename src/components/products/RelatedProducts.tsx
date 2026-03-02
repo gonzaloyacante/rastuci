@@ -47,7 +47,7 @@ export default function RelatedProducts({
       }
     };
 
-    fetchRelatedProducts();
+    void fetchRelatedProducts();
   }, [categoryId, currentProductId]);
 
   if (loading) {

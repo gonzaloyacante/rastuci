@@ -1,3 +1,7 @@
+/* eslint-disable no-console */
+// Logger module is the ONLY place where console.* is intentionally used.
+import { nanoid } from "nanoid";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 export type LogContext = Record<string, unknown> | undefined;
@@ -46,7 +50,7 @@ function maskValue(v: unknown, depth = 0, seen = new WeakSet()): unknown {
   }
 
   if (Array.isArray(v)) {
-    return v.map(item => maskValue(item, depth + 1, seen));
+    return v.map((item) => maskValue(item, depth + 1, seen));
   }
   if (v && typeof v === "object") {
     return maskObject(v as Record<string, unknown>, depth + 1, seen);
@@ -54,7 +58,11 @@ function maskValue(v: unknown, depth = 0, seen = new WeakSet()): unknown {
   return v;
 }
 
-function maskObject(obj: Record<string, unknown>, depth = 0, seen = new WeakSet()): Record<string, unknown> {
+function maskObject(
+  obj: Record<string, unknown>,
+  depth = 0,
+  seen = new WeakSet()
+): Record<string, unknown> {
   if (depth > MAX_DEPTH) return { _truncated: "[Max Depth Reached]" };
 
   const out: Record<string, unknown> = {};
@@ -133,10 +141,8 @@ export function getRequestId(headers: Headers): string {
   }
   // Node/Edge has crypto.randomUUID
   try {
-    return (
-      globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`
-    );
+    return globalThis.crypto?.randomUUID?.() || nanoid();
   } catch {
-    return `${Date.now()}-${Math.random()}`;
+    return nanoid();
   }
 }

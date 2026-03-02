@@ -33,7 +33,7 @@ export default function PendingOrdersPage() {
       }
     };
 
-    fetchOrders();
+    void fetchOrders();
   }, []);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {

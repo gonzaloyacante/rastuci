@@ -77,7 +77,10 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "your-google-verification-code",
+    // [M-17] Configure via NEXT_PUBLIC_GOOGLE_VERIFICATION env var when available
+    ...(process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION
+      ? { google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION }
+      : {}),
   },
 };
 

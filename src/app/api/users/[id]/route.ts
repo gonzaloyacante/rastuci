@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { withAdminAuth } from "@/lib/adminAuth";
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
@@ -84,7 +85,26 @@ export const PATCH = withAdminAuth(
       }
       const { id } = await params;
       const body = await request.json();
-      const { name, email, password, isAdmin } = body;
+
+      // [M-10] Validate input using Zod
+      const UpdateUserSchema = z
+        .object({
+          name: z.string().min(2).max(100).optional(),
+          email: z.string().email().optional(),
+          password: z.string().min(6).max(100).optional(),
+          isAdmin: z.boolean().optional(),
+        })
+        .strict();
+
+      const parsed = UpdateUserSchema.safeParse(body);
+      if (!parsed.success) {
+        return fail("BAD_REQUEST", "Datos inválidos", 400, {
+          requestId,
+          issues: parsed.error.issues,
+        });
+      }
+
+      const { name, email, password, isAdmin } = parsed.data;
 
       // Verificar si el usuario existe
       const existingUser = await prisma.user.findUnique({

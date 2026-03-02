@@ -3,21 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  stock: number;
-  images: string[];
-  categoryId: string;
-  category: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
+import { Product } from "@/types";
 
 interface SearchFilters {
   search?: string;

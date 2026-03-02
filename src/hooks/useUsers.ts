@@ -243,7 +243,7 @@ export const useUsers = (initialParams?: UseUsersParams): UseUsersReturn => {
 
   // Cargar usuarios iniciales
   useEffect(() => {
-    fetchUsers(initialParams);
+    void fetchUsers(initialParams);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

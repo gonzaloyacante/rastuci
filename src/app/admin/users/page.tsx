@@ -49,7 +49,7 @@ export default function UsuariosPage() {
 
   // Búsqueda
   const handleSearch = () => {
-    fetchUsers({ page: 1, limit: 20, search: searchInput });
+    void fetchUsers({ page: 1, limit: 20, search: searchInput });
   };
 
   // Paginación
@@ -57,7 +57,7 @@ export default function UsuariosPage() {
     if (page < 1 || page > totalPages) {
       return;
     }
-    fetchUsers({ page, limit: 20, search: searchInput });
+    void fetchUsers({ page, limit: 20, search: searchInput });
   };
 
   const getRoleBadge = (role: string) => {

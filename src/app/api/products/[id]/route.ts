@@ -210,7 +210,7 @@ export const PUT = withAdminAuth(
             `Deleting ${imagesToDelete.length} removed images from Cloudinary`
           );
           // Eliminar en segundo plano para no bloquear la respuesta
-          Promise.allSettled(
+          void Promise.allSettled(
             imagesToDelete.map(async (url) => {
               const publicId = extractPublicId(url);
               if (publicId) {

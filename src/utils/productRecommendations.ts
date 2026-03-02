@@ -108,8 +108,10 @@ export async function fetchRelatedProducts(
 
     const currentProduct = currentProductData.data;
 
-    // Obtener todos los productos para hacer el análisis
-    const allProductsResponse = await fetch("/api/products?page=1&limit=100");
+    // Obtener productos de la misma categoría para optimizar consulta en lugar de pedir 100 productos
+    const allProductsResponse = await fetch(
+      `/api/products?categoryId=${currentProduct.categoryId}&limit=12`
+    );
     if (!allProductsResponse.ok) return [];
 
     const allProductsData = await allProductsResponse.json();

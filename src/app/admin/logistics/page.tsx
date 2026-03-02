@@ -419,7 +419,7 @@ export default function LogisticsPage() {
   }, [activeTab, statusFilter, searchTerm]);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, [fetchData]);
 
   const getAddLabel = () => {

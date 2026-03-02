@@ -12,6 +12,7 @@ import { TopLists } from "@/components/admin/analytics/TopLists";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { type DashboardData } from "@/services/analytics-service";
+import { escapeCsvCell } from "@/utils/formatters";
 
 async function fetchAnalytics(range: string): Promise<DashboardData> {
   const res = await fetch(`/api/admin/analytics/dashboard?range=${range}`);
@@ -31,11 +32,11 @@ export default function AnalyticsPage() {
   const handleExport = () => {
     if (!data) return;
 
-    const headers = ["Fecha", "Ingresos", "Ordenes"];
+    const headers = ["Fecha", "Ingresos", "Ordenes"].map(escapeCsvCell);
     const rows = data.chart.map((item) => [
-      item.date,
-      item.revenue.toFixed(2),
-      item.orders.toString(),
+      escapeCsvCell(item.date),
+      escapeCsvCell(item.revenue.toFixed(2)),
+      escapeCsvCell(item.orders),
     ]);
 
     const csvContent =

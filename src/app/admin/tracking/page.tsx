@@ -451,23 +451,36 @@ export default function AdminTrackingDashboard() {
   const [alertFilter, setAlertFilter] = useState("all");
   const { show } = useToast();
 
-  const loadTrackingData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/admin/tracking");
-      if (!response.ok) throw new Error("Error");
-      const data = await response.json();
-      setTrackingData(data.trackings || []);
-      setStats(data.stats || null);
-    } catch {
-      show({ type: "error", message: "No se pudieron cargar los datos" });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loadTrackingData = useCallback(
+    async (isMounted = true) => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/admin/tracking");
+        if (!response.ok) throw new Error("Error");
+        const data = await response.json();
+        if (isMounted) {
+          setTrackingData(data.trackings || []);
+          setStats(data.stats || null);
+        }
+      } catch {
+        if (isMounted) {
+          show({ type: "error", message: "No se pudieron cargar los datos" });
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    },
+    [show]
+  );
 
   useEffect(() => {
-    loadTrackingData();
+    let isMounted = true;
+    void loadTrackingData(isMounted);
+    return () => {
+      isMounted = false;
+    };
   }, [loadTrackingData]);
 
   const handleRefresh = async () => {
@@ -497,8 +510,6 @@ export default function AdminTrackingDashboard() {
       a.download = `tracking-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
-      a.click();
-      window.URL.revokeObjectURL(url);
       show({ type: "success", message: "Datos exportados correctamente" });
     } catch {
       show({ type: "error", message: "Error al exportar" });
@@ -506,16 +517,15 @@ export default function AdminTrackingDashboard() {
   };
 
   const handleBulkUpdate = async (newStatus: string) => {
-    if (selectedItems.length === 0) return;
+    if (selectedItems.length === 0 || refreshing) return;
     try {
+      setRefreshing(true);
       await fetch("/api/admin/tracking/bulk-update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trackingIds: selectedItems, status: newStatus }),
       });
-      await loadTrackingData();
-      setSelectedItems([]);
-      await loadTrackingData();
+      await loadTrackingData(true);
       setSelectedItems([]);
       show({
         type: "success",
@@ -523,6 +533,8 @@ export default function AdminTrackingDashboard() {
       });
     } catch {
       show({ type: "error", message: "Error al actualizar" });
+    } finally {
+      setRefreshing(false);
     }
   };
 

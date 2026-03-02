@@ -51,7 +51,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
       }
     };
 
-    fetchReviews();
+    void fetchReviews();
   }, [productId]);
 
   const formatDate = (dateString: string) => {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 
 /**
@@ -10,7 +11,7 @@ import { logger } from "@/lib/logger";
  * - Prueba todos los endpoints de la API
  * - Detecta problemas de configuración
  *
- * SOLO PARA DESARROLLO
+ * SOLO PARA ADMINS (M-09: add withAdminAuth protection beyond NODE_ENV check)
  */
 
 interface DiagnosticResult {
@@ -64,8 +65,9 @@ async function makeCARequest<T>(
   }
 }
 
-export async function GET() {
-  // Solo permitir en desarrollo
+// [M-09] Wrap with withAdminAuth to protect in staging/preview environments
+export const GET = withAdminAuth(async () => {
+  // Also block in production for safety
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
       { success: false, error: "Solo disponible en desarrollo" },
@@ -363,6 +365,5 @@ export async function GET() {
           ? (successfulRates[0].data as Record<string, unknown>)?.customerId
           : realCustomerId || configuredCustomerId,
     },
-    results,
   });
-}
+});

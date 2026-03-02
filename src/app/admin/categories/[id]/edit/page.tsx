@@ -35,7 +35,7 @@ export default function CategoryEditPage() {
     };
 
     if (categoryId) {
-      fetchCategory();
+      void fetchCategory();
     }
   }, [categoryId]);
 

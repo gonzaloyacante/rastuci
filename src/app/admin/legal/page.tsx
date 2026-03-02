@@ -60,8 +60,6 @@ const TABS = [
 export default function LegalAdminPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { show } = useToast();
-
   // Get active tab from URL or default to first
   const activeTab = searchParams.get("tab") || TABS[0].id;
 
@@ -190,7 +188,7 @@ function PolicyEditor({ slug }: { slug: string }) {
       if (!result.success) throw new Error(result.error);
 
       show({ type: "success", message: "Cambios guardados" });
-      mutate(); // Refresh SWR
+      void mutate(); // Refresh SWR
     } catch (error) {
       show({ type: "error", message: "Error al guardar" });
       logger.error("Error saving legal policy", { error: error });

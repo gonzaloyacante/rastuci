@@ -1,5 +1,3 @@
-import { Prisma } from "@prisma/client";
-
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
@@ -154,7 +152,7 @@ export const analyticsService = {
     return { revenue, orders, aov, conversion };
   },
 
-  async fetchRevenueTrend(start: Date, end: Date, range: DateRange) {
+  async fetchRevenueTrend(start: Date, end: Date, _range: DateRange) {
     const orders = await prisma.orders.findMany({
       where: {
         createdAt: { gte: start, lte: end },
@@ -279,7 +277,7 @@ export const analyticsService = {
     });
   },
 
-  async fetchDeviceStats(start: Date, end: Date) {
+  async fetchDeviceStats(_start: Date, _end: Date) {
     return [
       { name: "Mobile", value: 65, color: "#ef4444" },
       { name: "Desktop", value: 30, color: "#3b82f6" },

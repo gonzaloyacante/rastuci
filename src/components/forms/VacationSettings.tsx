@@ -77,7 +77,7 @@ export default function VacationSettingsForm() {
         setIsLoading(false);
       }
     }
-    load();
+    void load();
   }, [form]);
 
   // Submit Handler

@@ -169,13 +169,13 @@ export default function ImageUploadZone({
         }
       }
     },
-    [images, maxImages, maxSizeMB]
+    [images, maxImages, maxSizeMB, show]
   );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      addFiles(files);
+      void addFiles(files);
     }
     e.target.value = ""; // Reset input
   };
@@ -196,7 +196,7 @@ export default function ImageUploadZone({
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      addFiles(files);
+      void addFiles(files);
     }
   };
 

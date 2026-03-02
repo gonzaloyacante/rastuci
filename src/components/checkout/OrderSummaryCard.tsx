@@ -69,7 +69,6 @@ export function OrderSummaryCard({
   customerInfo,
   shippingOption,
   paymentMethod,
-  subtotal: _subtotal,
   shippingCost,
   discount,
   total,
@@ -90,7 +89,8 @@ export function OrderSummaryCard({
           const hasDiscount =
             item.onSale && item.salePrice && item.salePrice < item.price;
           const itemTotal =
-            (hasDiscount ? item.salePrice! : item.price) * item.quantity;
+            (hasDiscount && item.salePrice ? item.salePrice : item.price) *
+            item.quantity;
 
           return (
             <div
@@ -130,21 +130,6 @@ export function OrderSummaryCard({
             </div>
           );
         })}
-      </div>
-
-      {/* Cupón de Descuento */}
-      <div className="surface rounded-xl border border-muted p-4 mt-4">
-        <h4 className="text-sm font-semibold mb-3">Cupón de Descuento</h4>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Código de cupón"
-            className="flex-1 bg-muted/50 border border-muted rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-          <Button size="sm" variant="outline">
-            Aplicar
-          </Button>
-        </div>
       </div>
 
       {/* Información de Contacto */}

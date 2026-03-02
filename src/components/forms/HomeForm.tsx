@@ -221,7 +221,7 @@ export default function HomeForm({ initial }: Props) {
 
       setMessage("Guardado correctamente");
       show({ type: "success", message: "Configuración del Home guardada" });
-      mutateSettings();
+      void mutateSettings();
     } catch (err: unknown) {
       logger.error("HomeForm Submit Error:", { error: err });
       const msg = err instanceof Error ? err.message : "Error inesperado";

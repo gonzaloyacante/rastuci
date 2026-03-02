@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { Meta, StoryObj } from "@storybook/nextjs";
 
 import { Alert, useAlert } from "../../../components/ui/Alert";

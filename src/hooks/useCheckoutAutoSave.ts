@@ -98,10 +98,22 @@ export function useCheckoutAutoSave(
     [enabled, key, onSave]
   );
 
-  // Función debounced para guardar
-  const debouncedSave = useCallback(() => {
-    return createDebounce(saveToStorage, debounceMs);
-  }, [saveToStorage, debounceMs])();
+  // [M-29] Use useRef to maintain a stable debounce instance across renders.
+  // Previously, debouncedSave was recreated on every render invalidating the debounce timer.
+  const debouncedSaveRef = useRef<ReturnType<typeof createDebounce> | null>(
+    null
+  );
+
+  useEffect(() => {
+    debouncedSaveRef.current = createDebounce(saveToStorage, debounceMs);
+    return () => {
+      debouncedSaveRef.current?.cancel();
+    };
+  }, [saveToStorage, debounceMs]);
+
+  const debouncedSave = useCallback((data: CheckoutData) => {
+    debouncedSaveRef.current?.(data);
+  }, []);
 
   // Función para limpiar datos guardados
   const clearSavedData = useCallback(() => {
@@ -179,7 +191,7 @@ export function useCheckoutAutoSave(
 
     // Cleanup function para cancelar debounce pendiente
     return () => {
-      debouncedSave.cancel();
+      debouncedSaveRef.current?.cancel();
     };
   }, [data, enabled, debouncedSave]);
 

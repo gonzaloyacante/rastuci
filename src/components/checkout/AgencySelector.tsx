@@ -117,7 +117,7 @@ export function AgencySelector({
       }
     };
 
-    loadAgencies();
+    void loadAgencies();
   }, [province, getAgencies]);
 
   // Filtrar sucursales por término de búsqueda con scoring para mejorar relevancia

@@ -85,7 +85,7 @@ export default function ColorImageManager({
 
       setUploading((prev) => ({ ...prev, [color]: false }));
     },
-    [colorImages, onColorImagesChange]
+    [colorImages, onColorImagesChange, show]
   );
 
   const removeImage = useCallback(
@@ -98,7 +98,7 @@ export default function ColorImageManager({
       });
       show({ type: "success", message: "Imagen de color eliminada" });
     },
-    [colorImages, onColorImagesChange]
+    [colorImages, onColorImagesChange, show]
   );
 
   if (colors.length === 0) {

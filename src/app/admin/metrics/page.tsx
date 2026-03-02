@@ -362,7 +362,7 @@ export default function MetricasPage() {
   }, [period]);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, [fetchData]);
 
   if (loading) return <MetricsSkeleton />;

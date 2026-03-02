@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logger } from "@/lib/logger";
-import { checkRateLimit } from "@/lib/rateLimiter";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -103,11 +102,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json<ApiResponse<{ registered: boolean }>>({
-      success: true,
-      message: "Token registrado. Nota: No hay persistencia sin tabla en BD.",
-      data: { registered: true },
-    });
+    return NextResponse.json<ApiResponse<{ registered: boolean }>>(
+      {
+        success: false,
+        message: "Servicio de push notifications no configurado actualmente",
+        data: { registered: false },
+      },
+      { status: 501 }
+    );
   } catch (error) {
     logger.error("Error en notifications POST:", { error });
     return NextResponse.json<ApiResponse<null>>(
@@ -124,6 +126,15 @@ export async function POST(request: NextRequest) {
 // PUT - Enviar notificacion push
 export async function PUT(request: NextRequest) {
   try {
+    // [H-06] SECURITY: Only admins can push notifications
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.isAdmin) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "No autorizado", data: null },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { customerEmail, deviceId, title, message } = body;
 
@@ -170,10 +181,31 @@ export async function PUT(request: NextRequest) {
 // DELETE - Desregistrar token
 export async function DELETE(request: NextRequest) {
   try {
+    // [H-06] SECURITY: Require auth to unregister notification tokens
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "No autorizado", data: null },
+        { status: 401 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const customerEmail = searchParams.get("customerEmail");
     const deviceId = searchParams.get("deviceId");
     const token = searchParams.get("token");
+
+    // Non-admin users can only unregister their own tokens
+    if (
+      !session.user.isAdmin &&
+      customerEmail &&
+      customerEmail !== session.user.email
+    ) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "No autorizado", data: null },
+        { status: 403 }
+      );
+    }
 
     if (!customerEmail && !deviceId && !token) {
       return NextResponse.json<ApiResponse<null>>(

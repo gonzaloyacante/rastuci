@@ -70,7 +70,7 @@ export default function OrderDetailPage() {
     };
 
     if (orderId) {
-      fetchOrder();
+      void fetchOrder();
     }
   }, [orderId]);
 

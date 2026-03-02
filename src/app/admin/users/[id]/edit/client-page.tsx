@@ -63,7 +63,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
         setLoading(false);
       }
     },
-    [user.id, router]
+    [user.id, router, show]
   );
 
   const handleCancel = useCallback(() => {

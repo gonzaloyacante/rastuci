@@ -44,7 +44,7 @@ export function OfflineIndicator({
       });
       setWasOffline(false);
     }
-  }, [isOnline, wasOffline, t]);
+  }, [isOnline, wasOffline, t, show]);
 
   const handleRetry = async () => {
     setIsRetrying(true);
