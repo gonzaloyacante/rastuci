@@ -2,8 +2,11 @@
   "name": "rastuci",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.30.3",
   "engines": {
-    "npm": "please-use-yarn"
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0",
+    "npm": "please-use-pnpm"
   },
   "pnpm": {
     "overrides": {
