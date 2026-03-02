@@ -15,17 +15,6 @@ import { StoreSettings } from "@/lib/validation/store";
 import { CustomerForm } from "./CustomerForm";
 import { OrderSummaryCard } from "./OrderSummaryCard";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
-// import {
-//   ShippingCostCalculator,
-//   type ShippingOption,
-// } from "./ShippingCostCalculator";
-
-// type ShippingOption = {
-//   name: string;
-//   cost: number;
-//   provider?: string;
-//   description?: string;
-// };
 
 interface CheckoutFormProps {
   onPaymentSuccess?: (paymentId: string) => void;

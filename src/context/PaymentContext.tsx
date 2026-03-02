@@ -44,6 +44,13 @@ export const PaymentProvider = ({ children }: PaymentProviderProps) => {
       requiresShipping: true,
     },
     {
+      id: "transfer",
+      name: "Transferencia Bancaria",
+      icon: "landmark",
+      description: "Pago por transferencia o depósito bancario",
+      requiresShipping: true,
+    },
+    {
       id: "cash",
       name: "Efectivo - Retiro en Local",
       icon: "dollar-sign",

@@ -46,8 +46,9 @@ const RelatedProducts = React.lazy(
 
 interface ProductDetailClientProps {
   productId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialProduct?: any; // Using any to avoid complex type matching with serialized dates
+  // Server components serialize Date to string; kept as Record to avoid complex
+  // type gymnastics. SWR re-validates immediately, so this is only an initial hint.
+  initialProduct?: Record<string, unknown>;
 }
 
 // Loading components usando componentes reutilizables

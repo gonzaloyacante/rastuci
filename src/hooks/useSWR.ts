@@ -10,6 +10,22 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+/**
+ * Safely serializes a params object to a URL query string.
+ * Handles number/boolean values without unsafe `as Record<string, string>` casts.
+ */
+function buildQuery(
+  params: Record<string, string | number | boolean | undefined | null>
+): string {
+  const urlParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      urlParams.set(key, String(value));
+    }
+  }
+  return urlParams.toString();
+}
+
 // Custom hook for API calls with SWR
 export function useAPI<T = unknown>(
   url: string | null,
@@ -36,9 +52,7 @@ export function useProducts(params?: {
   page?: number;
   limit?: number;
 }) {
-  const query = params
-    ? new URLSearchParams(params as Record<string, string>).toString()
-    : "";
+  const query = params ? buildQuery(params) : "";
   const url = `/api/products${query ? `?${query}` : ""}`;
 
   return useAPI(url, {
@@ -86,9 +100,7 @@ export function useAdminProducts(params?: {
   limit?: number;
   search?: string;
 }) {
-  const query = params
-    ? new URLSearchParams(params as Record<string, string>).toString()
-    : "";
+  const query = params ? buildQuery(params) : "";
   const url = `/api/admin/products${query ? `?${query}` : ""}`;
 
   return useAPI(url);
@@ -99,9 +111,7 @@ export function useAdminUsers(params?: {
   limit?: number;
   search?: string;
 }) {
-  const query = params
-    ? new URLSearchParams(params as Record<string, string>).toString()
-    : "";
+  const query = params ? buildQuery(params) : "";
   const url = `/api/admin/users${query ? `?${query}` : ""}`;
 
   return useAPI(url);
