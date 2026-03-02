@@ -343,21 +343,23 @@ export default function ProductsPageClient({
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <Select
-                value={selectedCategory}
-                onValueChange={(value) => handleCategoryChange(value)}
+                value={selectedCategory || "__all__"}
+                onValueChange={(value) =>
+                  handleCategoryChange(value === "__all__" ? "" : value)
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryOptions.map((option) => (
-                    <SelectItem
-                      key={option.value || "all"}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="__all__">Todas las categorías</SelectItem>
+                  {categoryOptions
+                    .filter((option) => option.value !== "")
+                    .map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

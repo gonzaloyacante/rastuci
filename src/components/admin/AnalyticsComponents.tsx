@@ -422,7 +422,7 @@ interface RegionSelectProps {
 }
 
 const defaultRegions = [
-  { label: "Todas las regiones", value: "" },
+  { label: "Todas las regiones", value: "all" },
   { label: "Buenos Aires", value: "Buenos Aires" },
   { label: "Córdoba", value: "Córdoba" },
   { label: "Rosario", value: "Rosario" },
@@ -439,13 +439,16 @@ export function RegionSelect({
   return (
     <div>
       <label className="block text-sm font-medium mb-2">Región</label>
-      <Select value={value} onValueChange={(v: string) => onChange(v)}>
+      <Select
+        value={value || "all"}
+        onValueChange={(v: string) => onChange(v === "all" ? "" : v)}
+      >
         <SelectTrigger>
           <SelectValue placeholder="Todas las regiones" />
         </SelectTrigger>
         <SelectContent>
           {regions.map((region) => (
-            <SelectItem key={region.value} value={region.value}>
+            <SelectItem key={region.value || "all"} value={region.value || "all"}>
               {region.label}
             </SelectItem>
           ))}
