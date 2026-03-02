@@ -200,7 +200,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
       }
     };
 
-    fetchShippingOptions();
+    void fetchShippingOptions();
   }, [
     customerInfo?.postalCode,
     deliveryMode,

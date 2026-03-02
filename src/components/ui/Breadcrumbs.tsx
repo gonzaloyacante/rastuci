@@ -29,7 +29,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   className = "",
   maxItems = 5,
   truncateMiddle = true,
-  nonce,
+  nonce: _nonce,
 }) => {
   const pathname = usePathname();
 

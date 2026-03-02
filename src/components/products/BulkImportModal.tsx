@@ -25,12 +25,6 @@ interface BulkImportModalProps {
   onSuccess: () => void;
 }
 
-interface ParseResult {
-  data: Record<string, unknown>[];
-  errors: Papa.ParseError[];
-  meta: Papa.ParseMeta;
-}
-
 interface ImportSummary {
   totalRows: number;
   validRows: number;

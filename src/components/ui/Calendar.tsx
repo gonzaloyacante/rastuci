@@ -42,7 +42,7 @@ export function Calendar({
     if (value && !isSameMonth(value, currentMonth)) {
       setCurrentMonth(value);
     }
-  }, [value]);
+  }, [value, currentMonth]);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);

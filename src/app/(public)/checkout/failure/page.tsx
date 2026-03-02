@@ -3,7 +3,6 @@
 import {
   AlertTriangle,
   CreditCard,
-  MapPin,
   Phone,
   RefreshCw,
   XCircle,

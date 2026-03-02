@@ -89,7 +89,7 @@ export function useCategory(id: string) {
     };
 
     if (id) {
-      fetchCategory();
+      void fetchCategory();
     }
   }, [id, cachedCategories]);
 

@@ -262,7 +262,7 @@ export const POST = withAdminAuth(
       };
 
       // Enviar Email de Bienvenida (Async, no bloqueante)
-      import("@/lib/resend").then(({ emailService }) => {
+      void import("@/lib/resend").then(({ emailService }) => {
         emailService.sendWelcome(email, name).catch((err) => {
           logger.error("Failed to send welcome email", {
             userId: user.id,

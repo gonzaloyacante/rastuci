@@ -179,7 +179,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
   }, [order, loadTracking]);
 
   useEffect(() => {
-    loadOrderData();
+    void loadOrderData();
   }, [loadOrderData]);
 
   // Auto-refresh tracking cada 5 minutos
@@ -190,7 +190,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
 
     const interval = setInterval(
       () => {
-        refreshTracking();
+        void refreshTracking();
       },
       5 * 60 * 1000
     );

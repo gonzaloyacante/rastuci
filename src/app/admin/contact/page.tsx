@@ -28,7 +28,7 @@ export default function AdminContactPage() {
         setLoading(false);
       }
     };
-    load();
+    void load();
   }, []);
 
   if (loading) {

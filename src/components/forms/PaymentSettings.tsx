@@ -22,7 +22,7 @@ interface PaymentSettingsProps {
 
 export default function PaymentSettings({
   initial,
-  onSave,
+  onSave: _onSave,
 }: PaymentSettingsProps) {
   const { show } = useToast();
   const [data, setData] = useState<StoreSettings>(
@@ -77,8 +77,7 @@ export default function PaymentSettings({
       if (!res.ok) throw new Error("Error al guardar configuración");
 
       show({ type: "success", message: "Configuración de pagos actualizada" });
-      mutateSettings();
-      onSave?.(data);
+      void mutateSettings();
     } catch (error) {
       show({ type: "error", message: "Error al guardar cambios" });
       logger.error("Error saving payment settings", { error: error });

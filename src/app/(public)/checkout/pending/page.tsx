@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  AlertCircle,
-  Clock,
-  FileText,
-  MapPin,
-  Package,
-  Phone,
-} from "lucide-react";
+import { AlertCircle, Clock, FileText, Package, Phone } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";

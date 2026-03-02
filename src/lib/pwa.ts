@@ -32,7 +32,7 @@ class PWAManager {
   private swRegistration: ServiceWorkerRegistration | null = null;
 
   constructor() {
-    this.init();
+    void this.init();
   }
 
   private async init() {
@@ -75,7 +75,7 @@ class PWAManager {
 
     // Check if installed via navigator
     if ("getInstalledRelatedApps" in navigator) {
-      (navigator as { getInstalledRelatedApps?: () => Promise<unknown[]> })
+      void (navigator as { getInstalledRelatedApps?: () => Promise<unknown[]> })
         .getInstalledRelatedApps?.()
         .then((apps: unknown[]) => {
           this.isInstalled = apps.length > 0;

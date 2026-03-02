@@ -155,7 +155,7 @@ export default function SmartSearch({
 
   useEffect(() => {
     if (debouncedQuery.length >= 2) {
-      fetchSuggestions(debouncedQuery);
+      void fetchSuggestions(debouncedQuery);
     } else {
       setSuggestions([]);
       setIsLoading(false);

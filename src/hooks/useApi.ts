@@ -109,7 +109,7 @@ export function useApi<T = unknown>(
   const refresh = useCallback(() => fetchData(true), [fetchData]);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
 
     return () => {
       if (abortControllerRef.current) {

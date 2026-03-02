@@ -80,7 +80,7 @@ echo ""
 # ═══════════════════════════════════════════════════════════════════
 echo "🔐 [Bonus] Security: Verificando vulnerabilidades críticas..."
 # Solo avisar, no fallar - algunas dependencias tienen issues conocidos
-yarn audit --level critical 2>/dev/null || echo "⚠️  Hay vulnerabilidades críticas (revisar después del commit)"
+pnpm audit --audit-level critical 2>/dev/null || echo "⚠️  Hay vulnerabilidades críticas (revisar después del commit)"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════

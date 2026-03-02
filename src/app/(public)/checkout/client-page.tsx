@@ -57,7 +57,7 @@ export default function CheckoutPageClient() {
 
   // Check if cart is empty and redirect, and load settings
   useEffect(() => {
-    loadCheckoutSettings(); // Cargar configuraciones (envío/pagos) al entrar al checkout
+    void loadCheckoutSettings(); // Cargar configuraciones (envío/pagos) al entrar al checkout
 
     const checkCartTimer = setTimeout(() => {
       if (
@@ -74,7 +74,14 @@ export default function CheckoutPageClient() {
       }
     }, 300);
     return () => clearTimeout(checkCartTimer);
-  }, [cartItems, router, currentStep, loadCheckoutSettings, isVacationMode]);
+  }, [
+    cartItems,
+    router,
+    currentStep,
+    loadCheckoutSettings,
+    isVacationMode,
+    show,
+  ]);
 
   const goToNextStep = useCallback(() => {
     if (currentStep < CheckoutStep.CONFIRMATION) {

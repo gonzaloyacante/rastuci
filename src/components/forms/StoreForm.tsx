@@ -90,7 +90,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
       }
 
       show({ type: "success", message: "Configuración guardada" });
-      mutateSettings(); // Sync SWR cache
+      void mutateSettings(); // Sync SWR cache
       onSave?.(data);
     } catch (error) {
       show({

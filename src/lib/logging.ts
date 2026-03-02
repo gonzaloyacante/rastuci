@@ -1,4 +1,6 @@
+/* eslint-disable no-console */
 // Logging and monitoring utilities
+// NOTE: console.* is intentional here — this is the core logging/monitoring module.
 export enum LogLevel {
   ERROR = 0,
   WARN = 1,
@@ -91,7 +93,7 @@ class Logger {
 
   private startFlushInterval(): void {
     this.flushInterval = setInterval(() => {
-      this.flushLogs();
+      void this.flushLogs();
     }, 5000); // Flush every 5 seconds
   }
 
@@ -208,7 +210,7 @@ class Logger {
     if (this.flushInterval) {
       clearInterval(this.flushInterval);
     }
-    this.flushLogs();
+    void this.flushLogs();
   }
 }
 

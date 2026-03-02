@@ -123,7 +123,7 @@ export default function ContactForm({ initial }: Props) {
         throw new Error(json.error || "Error al guardar");
       }
       show({ type: "success", message: "Configuración de contacto guardada" });
-      mutateSettings(); // Sync SWR cache
+      void mutateSettings(); // Sync SWR cache
     } catch (err: unknown) {
       logger.error("Error", { error: err });
       show({

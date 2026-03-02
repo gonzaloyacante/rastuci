@@ -76,12 +76,12 @@ const CartItemComponent = ({
       show({ type: "error", message: "Error al eliminar el producto" });
       setIsRemoving(false);
     }
-  }, [item, onRemove]);
+  }, [item, onRemove, show]);
 
   const handleQuantityChange = useCallback(
     (newQuantity: number) => {
       if (newQuantity < 1) {
-        handleRemove();
+        void handleRemove();
         return;
       }
 

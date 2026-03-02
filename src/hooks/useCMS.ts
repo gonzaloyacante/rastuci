@@ -40,7 +40,7 @@ export function useCMS(key?: string) {
       }
     };
 
-    fetchCMS();
+    void fetchCMS();
   }, [key]);
 
   const updateCMS = async (updateKey: string, value: unknown) => {

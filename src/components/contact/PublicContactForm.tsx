@@ -59,9 +59,9 @@ export const PublicContactForm = ({
     handleSubmit,
     control,
     watch,
-    setValue,
+    setValue: _setValue,
     reset,
-    formState: { errors, isValid, isSubmitting },
+    formState: { errors, isValid: _isValid, isSubmitting },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {

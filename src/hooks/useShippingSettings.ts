@@ -59,7 +59,7 @@ export function useShippingSettings() {
       });
 
       if (response.ok) {
-        mutate({ ...data, ...settings } as ShippingSettings);
+        void mutate({ ...data, ...settings } as ShippingSettings);
         return true;
       }
       return false;

@@ -179,7 +179,7 @@ export function useInfiniteProducts(options: UseInfiniteProductsOptions = {}) {
   // Refrescar datos
   const mutate = useCallback(() => {
     setPage(1);
-    fetchProducts(true);
+    void fetchProducts(true);
   }, [fetchProducts]);
 
   // Effect para carga inicial y cambios de filtros
@@ -189,7 +189,7 @@ export function useInfiniteProducts(options: UseInfiniteProductsOptions = {}) {
       setPage(1);
       setProducts([]);
       setHasMore(true);
-      fetchProducts(true);
+      void fetchProducts(true);
     }
   }, [optionsKey, fetchProducts]);
 

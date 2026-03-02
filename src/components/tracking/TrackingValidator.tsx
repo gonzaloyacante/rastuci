@@ -62,7 +62,7 @@ export function TrackingValidator({
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleValidate();
+      void handleValidate();
     }
   };
 

@@ -39,7 +39,7 @@ export function useAPI<T = unknown>(
   });
 
   const refetch = useCallback(() => {
-    mutate();
+    void mutate();
   }, [mutate]);
 
   return { ...swr, mutate, refetch };

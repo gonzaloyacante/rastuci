@@ -1,6 +1,8 @@
+/* eslint-disable no-console */
 /**
  * API Logger - Sistema centralizado de logging para todas las llamadas API
  * Muestra en consola de forma linda y descriptiva todas las requests/responses
+ * NOTE: console.* is intentional here — this IS the API logging module.
  */
 
 import { logger } from "./logger";

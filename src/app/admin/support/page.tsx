@@ -400,7 +400,7 @@ export default function SupportPage() {
   }, [activeTab, statusFilter, searchTerm]);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, [fetchData]);
 
   const handleTabChange = (tabId: string) => {
@@ -424,7 +424,7 @@ export default function SupportPage() {
       });
       if (!response.ok) throw new Error("Error al enviar");
       setNewMessage("");
-      fetchData();
+      void fetchData();
       show({ type: "success", message: "Mensaje enviado" });
     } catch {
       show({ type: "error", message: "Error al enviar mensaje" });

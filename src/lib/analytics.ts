@@ -55,7 +55,7 @@ class AnalyticsManager {
   private providers: AnalyticsProvider[] = [];
 
   constructor() {
-    this.init();
+    void this.init();
   }
 
   private async init() {
@@ -289,7 +289,7 @@ class AnalyticsManager {
 
     // Send to providers immediately for important events
     if (this.isImportantEvent(name)) {
-      this.flushEvents();
+      void this.flushEvents();
     }
   }
 

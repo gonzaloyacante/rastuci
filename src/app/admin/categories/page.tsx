@@ -113,7 +113,7 @@ export default function AdminCategoriasPage() {
       });
       if (response.ok) {
         show({ type: "success", message: "Categoría eliminada" });
-        mutate?.();
+        void mutate?.();
       } else {
         const errorData = await response.json().catch(() => ({}) as unknown);
         let errorMessage = "Error al eliminar la categoría";
@@ -359,7 +359,7 @@ export default function AdminCategoriasPage() {
                                   className="text-xs flex items-center gap-1 justify-center"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDelete(category.id);
+                                    void handleDelete(category.id);
                                   }}
                                 >
                                   <Trash2 className="w-4 h-4" />

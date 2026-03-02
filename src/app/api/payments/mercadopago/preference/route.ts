@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       items = [],
       customer = null,
       metadata = {},
-      discount = 0,
+      discount: _discount = 0,
       shippingCost = 0,
       shippingMethodName,
     } = body || {};

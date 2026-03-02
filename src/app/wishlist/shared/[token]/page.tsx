@@ -13,7 +13,9 @@ interface Props {
   params: { token: string };
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params: _params,
+}: Props): Promise<Metadata> {
   return {
     title: "Lista de Deseos Compartida - Rastuci",
     description: "Mira los productos favoritos que han compartido contigo.",

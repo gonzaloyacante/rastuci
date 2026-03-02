@@ -28,7 +28,7 @@ export default function AdminHomePage() {
         setLoading(false);
       }
     };
-    load();
+    void load();
   }, []);
 
   if (loading) {

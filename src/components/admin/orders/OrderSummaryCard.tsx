@@ -101,7 +101,7 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
           logger.error("Failed to fetch agency details", { error: err });
         }
       };
-      fetchAgency();
+      void fetchAgency();
     }
   }, [order.shippingAgency, order.shippingProvinceCode, agencyDetails]);
 

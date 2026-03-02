@@ -38,7 +38,7 @@ export function useInfiniteScroll(
         (entries) => {
           if (entries[0].isIntersecting && hasMore && !isFetching) {
             setIsFetching(true);
-            fetchMore().finally(() => setIsFetching(false));
+            void fetchMore().finally(() => setIsFetching(false));
           }
         },
         {

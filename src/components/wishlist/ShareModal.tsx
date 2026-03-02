@@ -46,7 +46,7 @@ export function ShareWishlistModal() {
 
   const copyToClipboard = () => {
     if (!sharedUrl) return;
-    navigator.clipboard.writeText(sharedUrl);
+    void navigator.clipboard.writeText(sharedUrl);
     setIsCopied(true);
     show({ type: "success", message: "Enlace copiado al portapapeles" });
     setTimeout(() => setIsCopied(false), 2000);

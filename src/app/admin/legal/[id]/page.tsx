@@ -146,7 +146,7 @@ function PolicyEditor({
       type: "success",
       message: `Variable ${variable} copiada al portapapeles`,
     });
-    navigator.clipboard.writeText(variable);
+    void navigator.clipboard.writeText(variable);
   };
 
   return (

@@ -14,7 +14,7 @@ export type SpinnerProps = {
 export const Spinner: React.FC<SpinnerProps> = ({
   size = "sm",
   className,
-  ariaLabel = "Cargando",
+  ariaLabel: _ariaLabel = "Cargando",
   color = "primary",
 }) => {
   // Map 'xs' to 'sm' or handle it if LoadingSpinner supports it. LoadingSpinner supports sm, md, lg.
