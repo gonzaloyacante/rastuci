@@ -5,7 +5,6 @@
     }
   },
   "buildCommand": "pnpm prisma generate && pnpm next build",
-  "installCommand": "npm i -g pnpm && pnpm install",
   "crons": [
     {
       "path": "/api/cron/tracking-notifications",
