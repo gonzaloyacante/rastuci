@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import Script from "next/script";
 
 import HeaderShell from "@/components/header/HeaderShell";
@@ -127,13 +128,13 @@ async function getContactSettings() {
   }
 }
 
-// ... existing imports
-
 export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = (await headers()).get("x-nonce") ?? "";
+
   const [home, contact, vacationSettings] = await Promise.all([
     getHomeSettings(),
     getContactSettings(),
@@ -165,8 +166,9 @@ export default async function PublicLayout({
     <div className="min-h-screen flex flex-col pt-16">
       {jsonLd && (
         <Script
-          id="vacation-schema"
+          id="org-schema"
           type="application/ld+json"
+          nonce={nonce || undefined}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}

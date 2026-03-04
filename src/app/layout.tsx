@@ -2,6 +2,7 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
+import { headers } from "next/headers";
 
 import AppProviders from "@/components/providers/AppProviders";
 import KeyboardShortcutsProvider from "@/components/providers/KeyboardShortcutsProvider";
@@ -89,6 +90,11 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Reading x-nonce here is required so Next.js App Router propagates the nonce generated
+  // by proxy.ts to ALL inline scripts it injects (RSC payload, hydration bootstrap, etc.).
+  // Without this, those inline scripts don’t carry the nonce and get blocked by the CSP.
+  const nonce = (await headers()).get("x-nonce") ?? "";
+
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -102,6 +108,8 @@ export default async function RootLayout({
         {/* Preconnect to Cloudinary for faster LCP */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        {/* Expose nonce to meta so client-side scripts can read it if needed */}
+        {nonce && <meta name="csp-nonce" content={nonce} />}
       </head>
       <body
         className={`${inter.className} ${poppins.variable}`}

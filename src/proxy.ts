@@ -127,21 +127,18 @@ export async function proxy(request: NextRequest) {
 }
 
 // Next.js v16: proxy uses `proxyConfig` (not `config`)
-// Match all routes for CSP nonce + security headers, admin auth, and API protection
+// Match ALL routes except static assets so every page gets the CSP + nonce headers.
+// The negative lookahead excludes: _next internals, static files, icons, favicon.
 export const proxyConfig = {
   matcher: [
-    // Admin routes
-    "/admin",
-    "/admin/:path*",
-    // API routes
-    "/api/:path*",
-    // Public pages (for CSP nonce & security headers)
+    /*
+     * Match all request paths EXCEPT:
+     *  - _next/static  (static files)
+     *  - _next/image   (image optimization)
+     *  - favicon.ico, sw.js, manifest.json (public files)
+     *  - icons/, images/ (public asset folders)
+     */
+    "/((?!_next/static|_next/image|favicon|sw\\.js|manifest\\.json|icons/|images/).+)",
     "/",
-    "/products/:path*",
-    "/cart",
-    "/checkout/:path*",
-    "/contact",
-    "/favorites",
-    "/legal/:path*",
   ],
 };
