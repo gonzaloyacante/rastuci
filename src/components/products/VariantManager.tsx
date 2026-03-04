@@ -211,11 +211,13 @@ export default function VariantManager({
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent>
-                {availableColors.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
+                {availableColors
+                  .filter((c) => c?.trim())
+                  .map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -227,11 +229,13 @@ export default function VariantManager({
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent>
-                {availableSizes.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
+                {availableSizes
+                  .filter((s) => s?.trim())
+                  .map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

@@ -170,7 +170,6 @@ export default async function PublicLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      // ...
       <VacationProvider
         initialSettings={vacationSettings}
         initialIsActive={isVacation}

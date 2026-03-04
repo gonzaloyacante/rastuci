@@ -1,87 +1,92 @@
 // Service Worker for PWA functionality
-const CACHE_NAME = 'rastuci-v1';
-const STATIC_CACHE = 'rastuci-static-v1';
-const DYNAMIC_CACHE = 'rastuci-dynamic-v1';
-const API_CACHE = 'rastuci-api-v1';
+// VERSION: bump this string on every deploy to evict stale caches
+const CACHE_NAME = "rastuci-v2";
+const STATIC_CACHE = "rastuci-static-v2";
+const DYNAMIC_CACHE = "rastuci-dynamic-v2";
+const API_CACHE = "rastuci-api-v2";
 
 // Files to cache immediately
 const STATIC_ASSETS = [
-  '/',
-  '/productos',
-  '/carrito',
-  '/favoritos',
-  '/offline',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  "/",
+  "/productos",
+  "/carrito",
+  "/favoritos",
+  "/offline",
+  "/manifest.json",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
   // Add other critical assets
 ];
 
 // API endpoints to cache
 const API_ENDPOINTS = [
-  '/api/products',
-  '/api/categories',
-  '/api/cart',
-  '/api/wishlist',
+  "/api/products",
+  "/api/categories",
+  "/api/cart",
+  "/api/wishlist",
 ];
 
 // Install event - cache static assets
-self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
-  
+self.addEventListener("install", (event) => {
+  console.log("Service Worker: Installing...");
+
   event.waitUntil(
-    caches.open(STATIC_CACHE)
+    caches
+      .open(STATIC_CACHE)
       .then((cache) => {
-        console.log('Service Worker: Caching static assets');
+        console.log("Service Worker: Caching static assets");
         return cache.addAll(STATIC_ASSETS);
       })
       .then(() => {
-        console.log('Service Worker: Static assets cached');
+        console.log("Service Worker: Static assets cached");
         return self.skipWaiting();
       })
       .catch((error) => {
-        console.error('Service Worker: Cache failed', error);
+        console.error("Service Worker: Cache failed", error);
       })
   );
 });
 
 // Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
-  
+self.addEventListener("activate", (event) => {
+  console.log("Service Worker: Activating...");
+
   event.waitUntil(
-    caches.keys()
+    caches
+      .keys()
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== STATIC_CACHE && 
-                cacheName !== DYNAMIC_CACHE && 
-                cacheName !== API_CACHE) {
-              console.log('Service Worker: Deleting old cache', cacheName);
+            if (
+              cacheName !== STATIC_CACHE &&
+              cacheName !== DYNAMIC_CACHE &&
+              cacheName !== API_CACHE
+            ) {
+              console.log("Service Worker: Deleting old cache", cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('Service Worker: Activated');
+        console.log("Service Worker: Activated");
         return self.clients.claim();
       })
   );
 });
 
 // Fetch event - serve from cache with network fallback
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Skip non-GET requests
-  if (request.method !== 'GET') {
+  if (request.method !== "GET") {
     return;
   }
 
   // Handle API requests
-  if (url.pathname.startsWith('/api/')) {
+  if (url.pathname.startsWith("/api/")) {
     event.respondWith(handleApiRequest(request));
     return;
   }
@@ -93,17 +98,17 @@ self.addEventListener('fetch', (event) => {
 // Handle API requests with cache-first strategy for GET requests
 async function handleApiRequest(request) {
   const url = new URL(request.url);
-  
+
   try {
     // Try network first for API requests
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       // Cache successful API responses
       const cache = await caches.open(API_CACHE);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     // Fallback to cache if network fails
@@ -111,63 +116,99 @@ async function handleApiRequest(request) {
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Return offline response for API
     return new Response(
-      JSON.stringify({ 
-        error: 'Offline', 
-        message: 'No network connection available' 
+      JSON.stringify({
+        error: "Offline",
+        message: "No network connection available",
       }),
       {
         status: 503,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
 }
 
-// Handle static requests with cache-first strategy
+// Handle static requests:
+// - HTML navigation requests → network-first (always fresh HTML so JS hashes are current)
+// - /_next/static/ assets → cache-first (content-hash named, immutable)
+// - Everything else → stale-while-revalidate (serve cached, refresh in background)
 async function handleStaticRequest(request) {
-  try {
-    // Check cache first
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
+  const url = new URL(request.url);
 
-    // Try network
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      // Cache successful responses
-      const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
-    }
-    
-    return networkResponse;
-  } catch (error) {
-    // Fallback to offline page for navigation requests
-    if (request.mode === 'navigate') {
-      const offlineResponse = await caches.match('/offline');
-      if (offlineResponse) {
-        return offlineResponse;
+  // NETWORK-FIRST for HTML page navigations
+  // This guarantees the HTML always references the latest JS/CSS hashes from the CDN,
+  // preventing "blank page" bugs caused by cached HTML pointing at deleted chunks.
+  if (request.mode === "navigate") {
+    try {
+      const networkResponse = await fetch(request);
+      if (networkResponse.ok) {
+        const cache = await caches.open(DYNAMIC_CACHE);
+        cache.put(request, networkResponse.clone());
       }
+      return networkResponse;
+    } catch (error) {
+      // Only fall back to cached HTML if we're truly offline
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) return cachedResponse;
+      const offlineResponse = await caches.match("/offline");
+      if (offlineResponse) return offlineResponse;
+      return new Response("Offline", { status: 503 });
     }
-    
-    // Return a basic offline response
-    return new Response('Offline', { status: 503 });
+  }
+
+  // CACHE-FIRST for Next.js static chunks (content-hash named → immutable)
+  if (url.pathname.startsWith("/_next/static/")) {
+    try {
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) return cachedResponse;
+      const networkResponse = await fetch(request);
+      if (networkResponse.ok) {
+        const cache = await caches.open(STATIC_CACHE);
+        cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    } catch (error) {
+      return new Response("Offline", { status: 503 });
+    }
+  }
+
+  // STALE-WHILE-REVALIDATE for other static assets
+  try {
+    const cachedResponse = await caches.match(request);
+    const networkFetch = fetch(request)
+      .then(async (networkResponse) => {
+        if (networkResponse.ok) {
+          const cache = await caches.open(DYNAMIC_CACHE);
+          cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+      })
+      .catch(() => null);
+
+    // Return cached immediately but refresh in background
+    if (cachedResponse) return cachedResponse;
+
+    // No cache → wait for network
+    const networkResponse = await networkFetch;
+    if (networkResponse) return networkResponse;
+    return new Response("Offline", { status: 503 });
+  } catch (error) {
+    return new Response("Offline", { status: 503 });
   }
 }
 
 // Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  console.log('Service Worker: Background sync', event.tag);
-  
-  if (event.tag === 'cart-sync') {
+self.addEventListener("sync", (event) => {
+  console.log("Service Worker: Background sync", event.tag);
+
+  if (event.tag === "cart-sync") {
     event.waitUntil(syncCart());
-  } else if (event.tag === 'wishlist-sync') {
+  } else if (event.tag === "wishlist-sync") {
     event.waitUntil(syncWishlist());
-  } else if (event.tag === 'order-sync') {
+  } else if (event.tag === "order-sync") {
     event.waitUntil(syncOrders());
   }
 });
@@ -175,119 +216,118 @@ self.addEventListener('sync', (event) => {
 // Sync cart data when back online
 async function syncCart() {
   try {
-    const cartData = await getStoredData('pending-cart');
+    const cartData = await getStoredData("pending-cart");
     if (cartData) {
-      await fetch('/api/cart/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cartData)
+      await fetch("/api/cart/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cartData),
       });
-      await clearStoredData('pending-cart');
+      await clearStoredData("pending-cart");
     }
   } catch (error) {
-    console.error('Cart sync failed:', error);
+    console.error("Cart sync failed:", error);
   }
 }
 
 // Sync wishlist data when back online
 async function syncWishlist() {
   try {
-    const wishlistData = await getStoredData('pending-wishlist');
+    const wishlistData = await getStoredData("pending-wishlist");
     if (wishlistData) {
-      await fetch('/api/wishlist/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(wishlistData)
+      await fetch("/api/wishlist/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(wishlistData),
       });
-      await clearStoredData('pending-wishlist');
+      await clearStoredData("pending-wishlist");
     }
   } catch (error) {
-    console.error('Wishlist sync failed:', error);
+    console.error("Wishlist sync failed:", error);
   }
 }
 
 // Sync orders when back online
 async function syncOrders() {
   try {
-    const orderData = await getStoredData('pending-orders');
+    const orderData = await getStoredData("pending-orders");
     if (orderData) {
-      await fetch('/api/orders/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
+      await fetch("/api/orders/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderData),
       });
-      await clearStoredData('pending-orders');
+      await clearStoredData("pending-orders");
     }
   } catch (error) {
-    console.error('Order sync failed:', error);
+    console.error("Order sync failed:", error);
   }
 }
 
 // Push notification handling
-self.addEventListener('push', (event) => {
-  console.log('Service Worker: Push received');
-  
+self.addEventListener("push", (event) => {
+  console.log("Service Worker: Push received");
+
   let data = {};
   if (event.data) {
     try {
       data = event.data.json();
     } catch (error) {
-      data = { title: 'Rastuci', body: event.data.text() };
+      data = { title: "Rastuci", body: event.data.text() };
     }
   }
 
   const options = {
-    title: data.title || 'Rastuci',
-    body: data.body || 'Nueva notificación',
-    icon: data.icon || '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    title: data.title || "Rastuci",
+    body: data.body || "Nueva notificación",
+    icon: data.icon || "/icons/icon-192x192.png",
+    badge: "/icons/icon-72x72.png",
     image: data.image,
-    tag: data.tag || 'general',
+    tag: data.tag || "general",
     data: data.data || {},
     actions: data.actions || [
       {
-        action: 'view',
-        title: 'Ver',
-        icon: '/icons/action-view.png'
+        action: "view",
+        title: "Ver",
+        icon: "/icons/action-view.png",
       },
       {
-        action: 'dismiss',
-        title: 'Descartar',
-        icon: '/icons/action-dismiss.png'
-      }
+        action: "dismiss",
+        title: "Descartar",
+        icon: "/icons/action-dismiss.png",
+      },
     ],
     requireInteraction: data.requireInteraction || false,
-    vibrate: data.vibrate || [200, 100, 200]
+    vibrate: data.vibrate || [200, 100, 200],
   };
 
-  event.waitUntil(
-    self.registration.showNotification(options.title, options)
-  );
+  event.waitUntil(self.registration.showNotification(options.title, options));
 });
 
 // Notification click handling
-self.addEventListener('notificationclick', (event) => {
-  console.log('Service Worker: Notification clicked', event.action);
-  
+self.addEventListener("notificationclick", (event) => {
+  console.log("Service Worker: Notification clicked", event.action);
+
   event.notification.close();
 
-  if (event.action === 'dismiss') {
+  if (event.action === "dismiss") {
     return;
   }
 
   // Handle notification click
-  const urlToOpen = event.notification.data?.url || '/';
-  
+  const urlToOpen = event.notification.data?.url || "/";
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
         // Check if app is already open
         for (const client of clientList) {
-          if (client.url === urlToOpen && 'focus' in client) {
+          if (client.url === urlToOpen && "focus" in client) {
             return client.focus();
           }
         }
-        
+
         // Open new window/tab
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
@@ -297,14 +337,14 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Message handling from main thread
-self.addEventListener('message', (event) => {
-  console.log('Service Worker: Message received', event.data);
-  
-  if (event.data.type === 'SKIP_WAITING') {
+self.addEventListener("message", (event) => {
+  console.log("Service Worker: Message received", event.data);
+
+  if (event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
-  } else if (event.data.type === 'SCHEDULE_NOTIFICATION') {
+  } else if (event.data.type === "SCHEDULE_NOTIFICATION") {
     scheduleNotification(event.data.payload);
-  } else if (event.data.type === 'CACHE_URLS') {
+  } else if (event.data.type === "CACHE_URLS") {
     cacheUrls(event.data.urls);
   }
 });
@@ -321,32 +361,32 @@ async function cacheUrls(urls) {
   try {
     const cache = await caches.open(DYNAMIC_CACHE);
     await cache.addAll(urls);
-    console.log('Service Worker: URLs cached', urls);
+    console.log("Service Worker: URLs cached", urls);
   } catch (error) {
-    console.error('Service Worker: Failed to cache URLs', error);
+    console.error("Service Worker: Failed to cache URLs", error);
   }
 }
 
 // Utility functions for IndexedDB storage
 async function getStoredData(key) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('RastuciOfflineDB', 1);
-    
+    const request = indexedDB.open("RastuciOfflineDB", 1);
+
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const db = request.result;
-      const transaction = db.transaction(['offlineData'], 'readonly');
-      const store = transaction.objectStore('offlineData');
+      const transaction = db.transaction(["offlineData"], "readonly");
+      const store = transaction.objectStore("offlineData");
       const getRequest = store.get(key);
-      
+
       getRequest.onsuccess = () => resolve(getRequest.result?.data);
       getRequest.onerror = () => reject(getRequest.error);
     };
-    
+
     request.onupgradeneeded = () => {
       const db = request.result;
-      if (!db.objectStoreNames.contains('offlineData')) {
-        db.createObjectStore('offlineData', { keyPath: 'key' });
+      if (!db.objectStoreNames.contains("offlineData")) {
+        db.createObjectStore("offlineData", { keyPath: "key" });
       }
     };
   });
@@ -354,15 +394,15 @@ async function getStoredData(key) {
 
 async function storeData(key, data) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('RastuciOfflineDB', 1);
-    
+    const request = indexedDB.open("RastuciOfflineDB", 1);
+
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const db = request.result;
-      const transaction = db.transaction(['offlineData'], 'readwrite');
-      const store = transaction.objectStore('offlineData');
+      const transaction = db.transaction(["offlineData"], "readwrite");
+      const store = transaction.objectStore("offlineData");
       const putRequest = store.put({ key, data });
-      
+
       putRequest.onsuccess = () => resolve();
       putRequest.onerror = () => reject(putRequest.error);
     };
@@ -371,15 +411,15 @@ async function storeData(key, data) {
 
 async function clearStoredData(key) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('RastuciOfflineDB', 1);
-    
+    const request = indexedDB.open("RastuciOfflineDB", 1);
+
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const db = request.result;
-      const transaction = db.transaction(['offlineData'], 'readwrite');
-      const store = transaction.objectStore('offlineData');
+      const transaction = db.transaction(["offlineData"], "readwrite");
+      const store = transaction.objectStore("offlineData");
       const deleteRequest = store.delete(key);
-      
+
       deleteRequest.onsuccess = () => resolve();
       deleteRequest.onerror = () => reject(deleteRequest.error);
     };
@@ -387,10 +427,10 @@ async function clearStoredData(key) {
 }
 
 // Periodic background sync (if supported)
-self.addEventListener('periodicsync', (event) => {
-  console.log('Service Worker: Periodic sync', event.tag);
-  
-  if (event.tag === 'content-sync') {
+self.addEventListener("periodicsync", (event) => {
+  console.log("Service Worker: Periodic sync", event.tag);
+
+  if (event.tag === "content-sync") {
     event.waitUntil(syncContent());
   }
 });
@@ -398,16 +438,19 @@ self.addEventListener('periodicsync', (event) => {
 async function syncContent() {
   try {
     // Sync product data, categories, etc.
-    const response = await fetch('/api/sync/content');
+    const response = await fetch("/api/sync/content");
     if (response.ok) {
       const data = await response.json();
-      
+
       // Update caches with fresh data
       const cache = await caches.open(API_CACHE);
-      cache.put('/api/products', new Response(JSON.stringify(data.products)));
-      cache.put('/api/categories', new Response(JSON.stringify(data.categories)));
+      cache.put("/api/products", new Response(JSON.stringify(data.products)));
+      cache.put(
+        "/api/categories",
+        new Response(JSON.stringify(data.categories))
+      );
     }
   } catch (error) {
-    console.error('Content sync failed:', error);
+    console.error("Content sync failed:", error);
   }
 }
