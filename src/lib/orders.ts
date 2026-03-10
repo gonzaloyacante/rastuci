@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 
+import { ORDER_STATUS } from "@/lib/constants";
 import prisma from "@/lib/prisma";
 import type { Order, OrderStatus } from "@/types";
 
@@ -86,8 +87,60 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
   };
 }
 
+// Allowed status transitions for admin PATCH/PUT.
+// Keys = current status; values = statuses the admin can manually set.
+// This prevents obviously invalid jumps (e.g. PENDING → DELIVERED) while
+// still giving admins flexibility to correct edge cases.
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  [ORDER_STATUS.PENDING]: [
+    ORDER_STATUS.PENDING_PAYMENT,
+    ORDER_STATUS.RESERVED,
+    ORDER_STATUS.WAITING_TRANSFER_PROOF,
+    ORDER_STATUS.PAYMENT_REVIEW,
+    ORDER_STATUS.PROCESSED,
+    ORDER_STATUS.CANCELLED,
+  ],
+  [ORDER_STATUS.PENDING_PAYMENT]: [
+    ORDER_STATUS.PROCESSED,
+    ORDER_STATUS.PAYMENT_REVIEW,
+    ORDER_STATUS.CANCELLED,
+  ],
+  [ORDER_STATUS.RESERVED]: [
+    ORDER_STATUS.PROCESSED,
+    ORDER_STATUS.PAYMENT_REVIEW,
+    ORDER_STATUS.CANCELLED,
+  ],
+  [ORDER_STATUS.WAITING_TRANSFER_PROOF]: [
+    ORDER_STATUS.PAYMENT_REVIEW,
+    ORDER_STATUS.CANCELLED,
+  ],
+  [ORDER_STATUS.PAYMENT_REVIEW]: [
+    ORDER_STATUS.PROCESSED,
+    ORDER_STATUS.CANCELLED,
+  ],
+  [ORDER_STATUS.PROCESSED]: [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED],
+  [ORDER_STATUS.DELIVERED]: [],
+  [ORDER_STATUS.CANCELLED]: [],
+};
+
 // Update order status and return fully-hydrated order including items->product->category
 export async function updateOrderStatus(id: string, status: OrderStatus) {
+  const current = await prisma.orders.findUnique({
+    where: { id },
+    select: { status: true },
+  });
+
+  if (!current) {
+    throw new Error("Pedido no encontrado");
+  }
+
+  const allowed = VALID_TRANSITIONS[current.status] ?? [];
+  if (!allowed.includes(status)) {
+    throw new Error(
+      `Transición inválida: ${current.status} → ${status}. Transiciones permitidas: ${allowed.join(", ") || "ninguna"}`
+    );
+  }
+
   const order = await prisma.orders.update({
     where: { id },
     data: { status },

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import {
   correoArgentinoService,
@@ -6,18 +7,62 @@ import {
 } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 
+const VALID_PROVINCE_CODES = [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "J",
+  "K",
+  "L",
+  "M",
+  "N",
+  "P",
+  "Q",
+  "R",
+  "S",
+  "T",
+  "U",
+  "V",
+  "W",
+  "X",
+  "Y",
+  "Z",
+] as const;
+
+const AgenciesQuerySchema = z.object({
+  provinceCode: z.enum(VALID_PROVINCE_CODES),
+  postalCode: z
+    .string()
+    .regex(/^\d{4}([A-Z]{3})?$/, "Código postal inválido")
+    .optional(),
+});
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const provinceCode = searchParams.get("provinceCode");
-    const postalCode = searchParams.get("postalCode");
 
-    if (!provinceCode) {
+    const parsed = AgenciesQuerySchema.safeParse({
+      provinceCode: searchParams.get("provinceCode") ?? undefined,
+      postalCode: searchParams.get("postalCode") ?? undefined,
+    });
+
+    if (!parsed.success) {
+      const firstError = parsed.error.errors[0];
       return NextResponse.json(
-        { success: false, error: "Código de provincia requerido" },
+        {
+          success: false,
+          error: firstError?.message ?? "Parámetros inválidos",
+        },
         { status: 400 }
       );
     }
+
+    const { provinceCode, postalCode } = parsed.data;
 
     const customerId = process.env.CORREO_ARGENTINO_CUSTOMER_ID;
 

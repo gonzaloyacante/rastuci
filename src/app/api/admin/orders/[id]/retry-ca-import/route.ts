@@ -16,10 +16,10 @@ import prisma from "@/lib/prisma";
 export const POST = withAdminAuth(
   async (
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
   ): Promise<NextResponse> => {
     try {
-      const orderId = params.id;
+      const { id: orderId } = await params;
 
       // 1. Obtener la orden
       const order = await prisma.orders.findUnique({

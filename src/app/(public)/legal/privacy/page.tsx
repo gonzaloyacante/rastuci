@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 async function getPrivacy() {
   const policy = await prisma.legalPolicy.findUnique({
     where: { slug: "politica-de-privacidad" },
+    include: { sections: { orderBy: { sortOrder: "asc" } } },
   });
   return policy;
 }
@@ -24,8 +25,8 @@ export default async function PrivacidadPage() {
     notFound();
   }
 
-  const content = policy.content as {
-    sections: { title: string; content: string; items?: string[] }[];
+  const content = {
+    sections: policy.sections as unknown as PolicySection[],
   };
 
   return (

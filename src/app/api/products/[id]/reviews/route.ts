@@ -73,33 +73,33 @@ export async function POST(
       return fail("NOT_FOUND", "Producto no encontrado", 404);
     }
 
-    // Crear la reseña
-    const review = await prisma.product_reviews.create({
-      data: {
-        id: `review-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        rating,
-        comment,
-        customerName,
-        productId: id,
-      },
-    });
+    // Crear la reseña y recalcular rating en una sola transacción atómica
+    const review = await prisma.$transaction(async (tx) => {
+      const newReview = await tx.product_reviews.create({
+        data: {
+          id: crypto.randomUUID(),
+          rating,
+          comment,
+          customerName,
+          productId: id,
+        },
+      });
 
-    // Actualizar el rating promedio y conteo de reseñas del producto
-    const allReviews = await prisma.product_reviews.findMany({
-      where: { productId: id },
-    });
+      const { _avg, _count } = await tx.product_reviews.aggregate({
+        where: { productId: id },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
 
-    type ReviewType = (typeof allReviews)[0];
-    const averageRating =
-      allReviews.reduce((acc: number, rev: ReviewType) => acc + rev.rating, 0) /
-      allReviews.length;
+      await tx.products.update({
+        where: { id },
+        data: {
+          rating: _avg.rating ?? rating,
+          reviewCount: _count.rating,
+        },
+      });
 
-    await prisma.products.update({
-      where: { id },
-      data: {
-        rating: averageRating,
-        reviewCount: allReviews.length,
-      },
+      return newReview;
     });
 
     return ok(review);

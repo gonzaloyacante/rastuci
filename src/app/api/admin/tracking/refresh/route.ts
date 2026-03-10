@@ -12,11 +12,15 @@ interface ApiResponse<T = unknown> {
 export const POST = withAdminAuth(
   async (_request: NextRequest): Promise<NextResponse> => {
     try {
-      // Actualizar todos los tracking codes activos
+      // Actualizar tracking codes activos — límite de 50 por solicitud para evitar DoS/timeouts
+      const REFRESH_BATCH_SIZE = 50;
       const orders = await prisma.orders.findMany({
         where: {
-          status: { notIn: ["DELIVERED"] }, // Solo actualizar envíos activos
+          status: { notIn: ["DELIVERED", "CANCELLED"] }, // Solo envíos activos
+          trackingNumber: { not: null }, // Solo órdenes con número de seguimiento
         },
+        take: REFRESH_BATCH_SIZE,
+        orderBy: { updatedAt: "asc" }, // Procesar primero las menos actualizadas
       });
 
       let updatedCount = 0;
@@ -66,6 +70,7 @@ export const POST = withAdminAuth(
         data: {
           updatedCount,
           totalProcessed: orders.length,
+          hasMore: orders.length === REFRESH_BATCH_SIZE,
           errors: errors.length > 0 ? errors : undefined,
         },
       };

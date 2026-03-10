@@ -38,9 +38,10 @@ interface MobileTrackingData {
 // GET /api/mobile/tracking/[code] - Obtener tracking para móvil
 export async function GET(
   request: NextRequest,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
+    const { code: trackingCode } = await params;
     // [C-02] Require authentication - endpoint exposes PII (customerAddress)
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -49,8 +50,6 @@ export async function GET(
         { status: 401 }
       );
     }
-
-    const trackingCode = params.code;
 
     if (!trackingCode) {
       return NextResponse.json<ApiResponse<null>>(

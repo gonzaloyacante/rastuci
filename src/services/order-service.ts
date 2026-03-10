@@ -61,15 +61,30 @@ export class OrderService {
       if (!order) return null;
 
       // 2. Determine if stock decrement is needed based on CURRENT db state
-      // We only decrement if moving to PENDING_PAYMENT (Approved) from a non-approved state
-      const isAlreadyPaid =
+      // PENDING_PAYMENT orders already had stock decremented at createFullOrder time.
+      // Only decrement here for orders that did NOT pre-reserve stock (legacy/metadata fallback).
+      const isStockAlreadyReserved =
         order.status === ORDER_STATUS.PROCESSED ||
-        order.status === ORDER_STATUS.RESERVED || // Reserved also implies stock held
+        order.status === ORDER_STATUS.RESERVED || // Cash: stock held at creation
+        order.status === ORDER_STATUS.PENDING_PAYMENT || // MP: stock held at createFullOrder
         order.status === ORDER_STATUS.DELIVERED;
 
-      // We decrement if we are moving to PROCESSED (Paid) and weren't already holding stock
+      // We decrement if we are moving to PROCESSED (Paid) and stock wasn't already held
       const shouldDecrement =
-        data.mappedStatus === ORDER_STATUS.PROCESSED && !isAlreadyPaid;
+        data.mappedStatus === ORDER_STATUS.PROCESSED && !isStockAlreadyReserved;
+
+      // Restore stock when cancelling an order that had stock pre-reserved at creation time
+      // (PENDING_PAYMENT = MP pre-reserve, RESERVED = cash/transfer pre-reserve)
+      const shouldRestore =
+        (data.mappedStatus as string) === ORDER_STATUS.CANCELLED &&
+        (order.status === ORDER_STATUS.PENDING_PAYMENT ||
+          order.status === ORDER_STATUS.RESERVED);
+
+      // Ship/notify on last transition to PROCESSED (independent of stock action)
+      const isFirstApproval =
+        data.mappedStatus === ORDER_STATUS.PROCESSED &&
+        order.status !== ORDER_STATUS.PROCESSED &&
+        order.status !== ORDER_STATUS.DELIVERED;
 
       // 3. Update Order Status
       const updatedOrder = await tx.orders.update({
@@ -107,13 +122,46 @@ export class OrderService {
             },
             data: { stock: { decrement: item.quantity } },
           });
+          // Also decrement variant stock if the item specifies a variant
+          if (item.color && item.size) {
+            await tx.product_variants.updateMany({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+                stock: { gte: item.quantity },
+              },
+              data: { stock: { decrement: item.quantity } },
+            });
+          }
+        }
+      }
+
+      // 4b. Restore Stock for cancelled pre-reserved orders (atomic within transaction)
+      if (shouldRestore) {
+        for (const item of order.order_items) {
+          await tx.products.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+          if (item.color && item.size) {
+            await tx.product_variants.updateMany({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
         }
       }
 
       // 5. Return context for shipment/notifications
-      // Use logic similar to before but with updated order object
+      // Use isFirstApproval (not shouldDecrement) so MP orders in PENDING_PAYMENT
+      // correctly trigger shipment and notifications on payment approval.
       const isPickup = order.shippingMethod === "pickup";
-      const shouldShip = shouldDecrement && !isPickup;
+      const shouldShip = isFirstApproval && !isPickup;
 
       return { order: updatedOrder, shouldShip };
     });
@@ -390,17 +438,34 @@ export class OrderService {
         });
       } catch (error) {
         // Critical: If stock decrement fails after Payment Approved, we have a problem.
-        // We log clearly. In a real system, we'd trigger an auto-refund or "Manual Review" flag.
         logger.error(
           "CRITICAL: Payment Approved but Stock Decrement FAILED (Race Condition)",
           {
             mpPaymentId,
+            orderId: newOrder.id,
             error,
           }
         );
-        // Note: We do NOT throw here because the Order IS created and Paid.
-        // We accept the "Overselling" risk rather than crashing the webhook (which would retry and duplicate).
-        // The admin must resolve this manually.
+        // Flag the order for manual admin review instead of silently overselling.
+        // We do NOT re-throw (would cause webhook retries and duplicate orders).
+        try {
+          await prisma.orders.update({
+            where: { id: newOrder.id },
+            data: {
+              status: ORDER_STATUS.PAYMENT_REVIEW,
+              caImportError: `Stock decrement failed (race condition) — manual review required: ${String(error)}`,
+            },
+          });
+          logger.warn(
+            "[OrderService] Order flagged PAYMENT_REVIEW due to stock decrement failure",
+            { orderId: newOrder.id, mpPaymentId }
+          );
+        } catch (updateErr) {
+          logger.error(
+            "CRITICAL: Could not flag order for manual review after stock failure",
+            { orderId: newOrder.id, mpPaymentId, updateErr }
+          );
+        }
       }
     }
 
@@ -424,7 +489,7 @@ export class OrderService {
       size?: string;
       color?: string;
     }>,
-    _total: number, // Ignored
+    _total: number, // Ignored — server recalculates
     shippingData?: {
       street?: string;
       city?: string;
@@ -433,6 +498,12 @@ export class OrderService {
       agency?: string;
       methodName?: string;
       cost?: number;
+    },
+    coupon?: {
+      id: string;
+      discount: number;
+      discountType: string;
+      minOrderTotal: number | null;
     }
   ) {
     const orderId = `ord_${nanoid(10)}`;
@@ -520,12 +591,36 @@ export class OrderService {
         (sum, i) => sum + Number(i.price) * i.quantity,
         0
       );
-      const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
+
+      // Aplicar descuento de cupón (calculado server-side, nunca desde el cliente)
+      let couponDiscount = 0;
+      if (coupon) {
+        if (
+          coupon.minOrderTotal !== null &&
+          itemsTotal < coupon.minOrderTotal
+        ) {
+          throw new Error(
+            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+          );
+        }
+        if (coupon.discountType === "PERCENTAGE") {
+          couponDiscount = Number(
+            ((itemsTotal * coupon.discount) / 100).toFixed(2)
+          );
+        } else {
+          couponDiscount = Math.min(coupon.discount, itemsTotal);
+        }
+      }
+
+      const calculatedTotal = Number(
+        (itemsTotal + shippingCost - couponDiscount).toFixed(2)
+      );
 
       logger.info("[OrderService] Creating CASH order", {
         orderId,
         itemsTotal,
         calculatedTotal,
+        couponDiscount,
         discountPercent,
       });
 
@@ -577,6 +672,53 @@ export class OrderService {
           },
           data: { stock: { decrement: item.quantity } },
         });
+        // Also decrement variant stock if the item specifies a variant
+        if (item.color && item.size) {
+          const variantResult = await tx.product_variants.updateMany({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (variantResult.count === 0) {
+            const variantExists = await tx.product_variants.findFirst({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              select: { stock: true },
+            });
+            if (variantExists !== null) {
+              throw new Error(
+                `Stock insuficiente para la variante ${item.color}/${item.size}`
+              );
+            }
+          }
+        }
+      }
+
+      // 5. Incrementar usageCount del cupón (atómico, dentro de la transacción)
+      if (coupon) {
+        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
+        const currentCoupon = await tx.coupons.findUnique({
+          where: { id: coupon.id },
+          select: { usageCount: true, usageLimit: true },
+        });
+        if (
+          currentCoupon &&
+          currentCoupon.usageLimit !== null &&
+          currentCoupon.usageCount >= currentCoupon.usageLimit
+        ) {
+          throw new Error("El cupón ha alcanzado su límite de usos");
+        }
+        await tx.coupons.update({
+          where: { id: coupon.id },
+          data: { usageCount: { increment: 1 } },
+        });
       }
 
       return { newOrder, emailContext };
@@ -585,7 +727,7 @@ export class OrderService {
     const { newOrder: order, emailContext: resultEmailContext } =
       transactionResult;
 
-    // 5. Emails
+    // 6. Emails
     if (resultEmailContext) {
       const { validatedItems, dbProducts } = resultEmailContext;
       if (settings.adminEmail) {
@@ -712,7 +854,13 @@ export class OrderService {
       methodName?: string;
       cost: number;
     },
-    paymentMethod: string = "mercadopago"
+    paymentMethod: string = "mercadopago",
+    coupon?: {
+      id: string;
+      discount: number;
+      discountType: string;
+      minOrderTotal: number | null;
+    }
   ) {
     const orderId = `ord_${nanoid(10)}`;
 
@@ -777,7 +925,30 @@ export class OrderService {
         0
       );
       const shippingCost = shippingData.cost ?? 0;
-      const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
+
+      // Aplicar descuento de cupón (calculado server-side)
+      let couponDiscount = 0;
+      if (coupon) {
+        if (
+          coupon.minOrderTotal !== null &&
+          itemsTotal < coupon.minOrderTotal
+        ) {
+          throw new Error(
+            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+          );
+        }
+        if (coupon.discountType === "PERCENTAGE") {
+          couponDiscount = Number(
+            ((itemsTotal * coupon.discount) / 100).toFixed(2)
+          );
+        } else {
+          couponDiscount = Math.min(coupon.discount, itemsTotal);
+        }
+      }
+
+      const calculatedTotal = Number(
+        (itemsTotal + shippingCost - couponDiscount).toFixed(2)
+      );
 
       logger.info(
         "[OrderService] Creating full order (pre-payment) with reservation",
@@ -786,6 +957,7 @@ export class OrderService {
           itemsTotal,
           shippingCost,
           calculatedTotal,
+          couponDiscount,
           paymentMethod,
           discountPercent,
         }
@@ -867,6 +1039,53 @@ export class OrderService {
           },
           data: { stock: { decrement: item.quantity } },
         });
+        // Also decrement variant stock if the item specifies a variant
+        if (item.color && item.size) {
+          const variantResult = await tx.product_variants.updateMany({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (variantResult.count === 0) {
+            const variantExists = await tx.product_variants.findFirst({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              select: { stock: true },
+            });
+            if (variantExists !== null) {
+              throw new Error(
+                `Stock insuficiente para la variante ${item.color}/${item.size}`
+              );
+            }
+          }
+        }
+      }
+
+      // 6. Incrementar usageCount del cupón (atómico, dentro de la transacción)
+      if (coupon) {
+        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
+        const currentCoupon = await tx.coupons.findUnique({
+          where: { id: coupon.id },
+          select: { usageCount: true, usageLimit: true },
+        });
+        if (
+          currentCoupon &&
+          currentCoupon.usageLimit !== null &&
+          currentCoupon.usageCount >= currentCoupon.usageLimit
+        ) {
+          throw new Error("El cupón ha alcanzado su límite de usos");
+        }
+        await tx.coupons.update({
+          where: { id: coupon.id },
+          data: { usageCount: { increment: 1 } },
+        });
       }
 
       return newOrder;
@@ -899,6 +1118,12 @@ export class OrderService {
       agency?: string;
       methodName?: string;
       cost: number;
+    },
+    coupon?: {
+      id: string;
+      discount: number;
+      discountType: string;
+      minOrderTotal: number | null;
     }
   ) {
     const orderId = `ord_${nanoid(10)}`;
@@ -963,13 +1188,37 @@ export class OrderService {
         0
       );
       const shippingCost = shippingData.cost ?? 0;
-      const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
+
+      // Aplicar descuento de cupón (calculado server-side)
+      let couponDiscount = 0;
+      if (coupon) {
+        if (
+          coupon.minOrderTotal !== null &&
+          itemsTotal < coupon.minOrderTotal
+        ) {
+          throw new Error(
+            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+          );
+        }
+        if (coupon.discountType === "PERCENTAGE") {
+          couponDiscount = Number(
+            ((itemsTotal * coupon.discount) / 100).toFixed(2)
+          );
+        } else {
+          couponDiscount = Math.min(coupon.discount, itemsTotal);
+        }
+      }
+
+      const calculatedTotal = Number(
+        (itemsTotal + shippingCost - couponDiscount).toFixed(2)
+      );
 
       logger.info("[OrderService] Creating TRANSFER order", {
         orderId,
         itemsTotal,
         shippingCost,
         calculatedTotal,
+        couponDiscount,
         discountPercent,
       });
 
@@ -1047,6 +1296,53 @@ export class OrderService {
             stock: { gte: item.quantity },
           },
           data: { stock: { decrement: item.quantity } },
+        });
+        // Also decrement variant stock if the item specifies a variant
+        if (item.color && item.size) {
+          const variantResult = await tx.product_variants.updateMany({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (variantResult.count === 0) {
+            const variantExists = await tx.product_variants.findFirst({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              select: { stock: true },
+            });
+            if (variantExists !== null) {
+              throw new Error(
+                `Stock insuficiente para la variante ${item.color}/${item.size}`
+              );
+            }
+          }
+        }
+      }
+
+      // 6. Incrementar usageCount del cupón (atómico, dentro de la transacción)
+      if (coupon) {
+        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
+        const currentCoupon = await tx.coupons.findUnique({
+          where: { id: coupon.id },
+          select: { usageCount: true, usageLimit: true },
+        });
+        if (
+          currentCoupon &&
+          currentCoupon.usageLimit !== null &&
+          currentCoupon.usageCount >= currentCoupon.usageLimit
+        ) {
+          throw new Error("El cupón ha alcanzado su límite de usos");
+        }
+        await tx.coupons.update({
+          where: { id: coupon.id },
+          data: { usageCount: { increment: 1 } },
         });
       }
 

@@ -1,25 +1,21 @@
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
-// import { fail } from "@/lib/apiResponse";
 
-interface LoginRequest {
-  email: string;
-  password: string;
-}
+const LoginSchema = z.object({
+  email: z.string().email("El formato del email no es válido").max(100),
+  password: z.string().min(1).max(200),
+});
 
 interface LoginResponse {
   success: boolean;
   error?: {
     field?: "email" | "password" | "general";
     message: string;
-  };
-  data?: {
-    userExists: boolean;
-    passwordCorrect: boolean;
   };
 }
 
@@ -28,6 +24,7 @@ export async function POST(
 ): Promise<NextResponse<LoginResponse>> {
   try {
     // Rate limit: 10 attempts per minute (Brute-force protection)
+    // Kept at 10 for compatibility with tests and expected behavior.
     const rl = await checkRateLimit(request, {
       key: "auth:login",
       limit: 10,
@@ -45,36 +42,29 @@ export async function POST(
       );
     }
 
-    const { email, password }: LoginRequest = await request.json();
+    const body = await request.json();
+    const parsed = LoginSchema.safeParse(body);
 
-    // Validar campos requeridos
-    if (!email || !password) {
+    if (!parsed.success) {
+      const fieldErr = parsed.error.errors[0];
+      const field = fieldErr?.path[0] === "email" ? "email" : "general";
+      // Map Zod default 'Required' messages to Spanish-friendly text used in tests
+      let message = fieldErr?.message ?? "Datos inválidos";
+      if (message === "Required") message = "Faltan campos obligatorios";
+
       return NextResponse.json(
         {
           success: false,
           error: {
-            field: "general",
-            message: "Email y contraseña son obligatorios",
+            field: field as "email" | "general",
+            message,
           },
         },
         { status: 400 }
       );
     }
 
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            field: "email",
-            message: "El formato del email no es válido",
-          },
-        },
-        { status: 400 }
-      );
-    }
+    const { email, password } = parsed.data;
 
     // Buscar usuario
     const user = await prisma.user.findUnique({
@@ -102,18 +92,14 @@ export async function POST(
       );
     }
 
-    // Usuario no tiene contraseña (OAuth user)
+    // Usuario no tiene contraseña (OAuth user) — tests expect a specific hint
     if (!user.password) {
       return NextResponse.json(
         {
           success: false,
           error: {
-            field: "email",
-            message: "Esta cuenta usa un proveedor externo para iniciar sesión",
-          },
-          data: {
-            userExists: true,
-            passwordCorrect: false,
+            field: "general",
+            message: "La cuenta pertenece a un proveedor externo",
           },
         },
         { status: 401 }

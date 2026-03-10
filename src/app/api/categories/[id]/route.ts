@@ -58,6 +58,7 @@ export async function GET(
     type ProductType = (typeof category.products)[0];
     return ok({
       ...category,
+      image: category.imageUrl ?? null,
       description: category.description ?? undefined,
       products: category.products.map((product: ProductType) => ({
         ...product,
@@ -107,7 +108,7 @@ export const PUT = withAdminAuth(
           issues: parsed.error.issues,
         });
       }
-      const { name, description } = parsed.data;
+      const { name, description, imageUrl } = parsed.data;
 
       // Verificar si existe otra categoría con ese nombre
       const existingCategory = await prisma.categories.findFirst({
@@ -131,11 +132,13 @@ export const PUT = withAdminAuth(
         data: {
           name,
           description,
+          imageUrl: imageUrl !== undefined ? imageUrl : undefined,
         },
       });
 
       return ok({
         ...category,
+        image: category.imageUrl ?? null,
         description: category.description ?? undefined,
       });
     } catch (error) {

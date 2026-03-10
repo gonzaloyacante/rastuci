@@ -35,8 +35,6 @@ model products {
   height                 Int?                     @default(10)
   width                  Int?                     @default(20)
   length                 Int?                     @default(30)
-  sizeGuide              Json?
-  colorImages            Json?
   isActive               Boolean                  @default(true)
   cart_abandonment_items cart_abandonment_items[]
   order_items            order_items[]

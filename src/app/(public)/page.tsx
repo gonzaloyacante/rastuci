@@ -70,14 +70,8 @@ async function getHomeData() {
         }
       }
 
-      // Destructure out Json fields & relational includes to avoid type conflicts
-
-      const {
-        sizeGuide: _sg,
-        colorImages: _ci,
-        product_color_images,
-        ...rest
-      } = p;
+      // Destructure out relational includes to avoid type conflicts
+      const { product_color_images, ...rest } = p;
 
       return {
         ...rest,

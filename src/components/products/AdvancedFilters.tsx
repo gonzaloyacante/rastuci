@@ -2,7 +2,7 @@
 
 import { DollarSign, Filter, Palette, Ruler, Star, Tag } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
 import {
@@ -44,7 +44,7 @@ const fetcher = async (url: string) => {
 // ==============================================================================
 // MAIN COMPONENT
 // ==============================================================================
-export default function AdvancedFilters({
+function AdvancedFiltersContent({
   onFiltersChange,
   onSortChange,
   totalResults,
@@ -317,5 +317,13 @@ export default function AdvancedFilters({
         onClearFilters={clearFilters}
       />
     </>
+  );
+}
+
+export default function AdvancedFilters(props: AdvancedFiltersProps) {
+  return (
+    <Suspense fallback={null}>
+      <AdvancedFiltersContent {...props} />
+    </Suspense>
   );
 }

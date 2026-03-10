@@ -15,10 +15,10 @@ import prisma from "@/lib/prisma";
 export const PATCH = withAdminAuth(
   async (
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
   ): Promise<NextResponse> => {
     try {
-      const orderId = params.id;
+      const { id: orderId } = await params;
 
       // Buscar la orden
       const order = await prisma.orders.findUnique({

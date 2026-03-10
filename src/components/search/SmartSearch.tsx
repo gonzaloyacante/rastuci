@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
 import { LoadingSpinner } from "@/components/ui/LoadingStates";
@@ -42,7 +42,7 @@ interface SmartSearchProps {
   onSearch?: (query: string) => void;
 }
 
-export default function SmartSearch({
+function SmartSearchContent({
   placeholder = "Buscar productos...",
   showTrending = true,
   showRecent = true,
@@ -516,5 +516,13 @@ export default function SmartSearch({
         />
       )}
     </div>
+  );
+}
+
+export default function SmartSearch(props: SmartSearchProps) {
+  return (
+    <Suspense fallback={null}>
+      <SmartSearchContent {...props} />
+    </Suspense>
   );
 }

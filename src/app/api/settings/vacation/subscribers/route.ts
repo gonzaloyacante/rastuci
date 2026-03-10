@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
-export async function GET(request: Request) {
+export const GET = withAdminAuth(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const periodId = searchParams.get("periodId");
@@ -25,4 +26,4 @@ export async function GET(request: Request) {
     logger.error("[Subscribers API] Error fetching list:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
-}
+});

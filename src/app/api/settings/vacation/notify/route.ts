@@ -1,15 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
-import { emailService } from "@/lib/resend"; // We will add sendVacationReopening here
+import { emailService } from "@/lib/resend";
 
 const NotifySchema = z.object({
   periodId: z.string().min(1),
 });
 
-export async function POST(request: Request) {
+export const POST = withAdminAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const parsed = NotifySchema.safeParse(body);
@@ -75,4 +76,4 @@ export async function POST(request: Request) {
     logger.error("[Notify API] Error sending notifications:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
-}
+});

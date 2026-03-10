@@ -272,8 +272,6 @@ export const PUT = withAdminAuth(
           width: width ?? null,
           length: length ?? null,
           updatedAt: new Date(),
-          // Dual-write: keep Json fields during grace period
-          colorImages: colorImages ?? undefined,
         },
         include: {
           categories: true,

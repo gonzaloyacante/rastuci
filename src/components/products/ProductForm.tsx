@@ -7,6 +7,7 @@ import {
   DollarSign,
   Eye,
   FileText,
+  Image as ImageIcon,
   Info,
   List,
   Package,
@@ -39,6 +40,7 @@ import { Product, ProductVariant } from "@/types";
 import { getColorHex } from "@/utils/colors";
 import { formatPriceARS } from "@/utils/formatters";
 
+import ImageUploadZone from "./ImageUploadZone";
 import {
   ColorPicker,
   FeatureManager,
@@ -727,6 +729,27 @@ export default function ProductForm({
                   </p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Imágenes del Producto */}
+          <Card className="shadow-xl border-0">
+            <CardHeader className="border-b bg-surface-secondary p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
+                <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                Imágenes del Producto
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Sube las fotos principales del producto. También podés subir
+                imágenes por color en la sección &quot;Variantes&quot;.
+              </p>
+              <ImageUploadZone
+                existingImages={productImages}
+                onImagesChange={setProductImages}
+                maxImages={10}
+              />
             </CardContent>
           </Card>
 

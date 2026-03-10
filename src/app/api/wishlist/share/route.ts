@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const validIds = products.map((p) => p.id);
-    const token = nanoid(10); // Unique 10-char token
+    const token = nanoid(21); // 21 chars ≈ 126-bit entropy (safe against brute-force)
     const expiresAt = add(new Date(), { days: 30 }); // Link valid for 30 days
 
     // Create Snapshot

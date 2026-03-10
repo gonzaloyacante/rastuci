@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
-export async function GET() {
+export const GET = withAdminAuth(async () => {
   try {
     const periods = await prisma.vacation_period.findMany({
       orderBy: { startAt: "desc" },
@@ -19,4 +20,4 @@ export async function GET() {
     logger.error("[Periods API] Error fetching history:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
-}
+});

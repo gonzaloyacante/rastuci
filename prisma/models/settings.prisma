@@ -247,15 +247,28 @@ model vacation_period {
 
 /// Vacation mode subscribers
 model vacation_subscriber {
-  id           String          @id @default(cuid())
-  email        String
-  periodId     String
-  cartSnapshot Json?
-  notified     Boolean         @default(false)
-  createdAt    DateTime        @default(now())
-  period       vacation_period @relation(fields: [periodId], references: [id])
+  id        String                @id @default(cuid())
+  email     String
+  periodId  String
+  notified  Boolean               @default(false)
+  createdAt DateTime              @default(now())
+  period    vacation_period       @relation(fields: [periodId], references: [id])
+  cartItems vacation_cart_item[]
 
   @@index([periodId])
+}
+
+/// Cart items snapshot for vacation subscribers (replaces Json cartSnapshot)
+model vacation_cart_item {
+  id           String              @id @default(cuid())
+  subscriberId String
+  productId    String
+  quantity     Int
+  color        String?
+  size         String?
+  subscriber   vacation_subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  @@index([subscriberId])
 }
 
 /// Contact form messages from customers

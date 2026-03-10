@@ -104,6 +104,14 @@ export const DELETE = withAdminAuth(async (request: NextRequest) => {
       );
     }
 
+    // Validate prefix to prevent deleting resources outside this project
+    if (!publicId.startsWith("Rastuci/") && !publicId.startsWith("rastuci/")) {
+      return NextResponse.json(
+        { success: false, error: "ID de imagen inválido" },
+        { status: 400 }
+      );
+    }
+
     await cloudinary.uploader.destroy(publicId);
 
     return NextResponse.json({

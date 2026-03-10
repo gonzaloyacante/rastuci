@@ -53,6 +53,10 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(Date.now() + 3600000); // 1 hora
 
     // Guardar token en la base de datos (usando tabla VerificationToken)
+    // Primero invalidar cualquier token anterior para este email
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: user.email },
+    });
     await prisma.verificationToken.create({
       data: {
         identifier: user.email,
