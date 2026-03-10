@@ -83,6 +83,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     customer: CheckoutCustomerSchema,
     shippingMethod: CheckoutShippingMethodSchema.optional(),
     paymentMethod: z.string().min(1, "Método de pago requerido"),
+    couponCode: z.string().min(1).max(50).toUpperCase().optional(),
     orderData: z.object({
       total: z.number().nonnegative(),
       subtotal: z.number().nonnegative().default(0),
@@ -133,6 +134,53 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // 2.5. Validar cupón server-side (si fue enviado — el descuento del cliente NUNCA se confía)
+    let appliedCoupon:
+      | {
+          id: string;
+          discount: number;
+          discountType: string;
+          minOrderTotal: number | null;
+        }
+      | undefined;
+    if (body.couponCode) {
+      const coupon = await prisma.coupons.findFirst({
+        where: { code: body.couponCode, isActive: true },
+      });
+      if (!coupon) {
+        return NextResponse.json(
+          { success: false, error: "Cupón inválido o expirado" },
+          { status: 400 }
+        );
+      }
+      if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+        return NextResponse.json(
+          { success: false, error: "El cupón ha expirado" },
+          { status: 400 }
+        );
+      }
+      if (
+        coupon.usageLimit !== null &&
+        coupon.usageCount >= coupon.usageLimit
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "El cupón ha alcanzado su límite de usos",
+          },
+          { status: 400 }
+        );
+      }
+      appliedCoupon = {
+        id: coupon.id,
+        discount: Number(coupon.discount),
+        discountType: coupon.discountType,
+        minOrderTotal: coupon.minOrderTotal
+          ? Number(coupon.minOrderTotal)
+          : null,
+      };
+    }
+
     // 3. Process Payment Logic (Split by Method)
 
     // 3. Process Payment Logic (Split by Method)
@@ -152,7 +200,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { ...customer, phone: customer.phone || "" },
         items,
         orderData.total,
-        shippingData
+        shippingData,
+        appliedCoupon
       );
 
       // Handle CA Shipment (If applicable)
@@ -187,7 +236,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const order = await orderService.createTransferOrder(
         { ...customer, phone: customer.phone || "" },
         items,
-        shippingData
+        shippingData,
+        appliedCoupon
       );
 
       return NextResponse.json({
@@ -206,7 +256,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { ...customer, phone: customer.phone || "" },
       items,
       shippingData,
-      paymentMethod
+      paymentMethod,
+      appliedCoupon
     );
 
     if (paymentMethod === PAYMENT_METHODS.MERCADOPAGO) {

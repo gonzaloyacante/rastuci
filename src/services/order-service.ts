@@ -472,7 +472,7 @@ export class OrderService {
       size?: string;
       color?: string;
     }>,
-    _total: number, // Ignored
+    _total: number, // Ignored — server recalculates
     shippingData?: {
       street?: string;
       city?: string;
@@ -481,6 +481,12 @@ export class OrderService {
       agency?: string;
       methodName?: string;
       cost?: number;
+    },
+    coupon?: {
+      id: string;
+      discount: number;
+      discountType: string;
+      minOrderTotal: number | null;
     }
   ) {
     const orderId = `ord_${nanoid(10)}`;
@@ -568,12 +574,36 @@ export class OrderService {
         (sum, i) => sum + Number(i.price) * i.quantity,
         0
       );
-      const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
+
+      // Aplicar descuento de cupón (calculado server-side, nunca desde el cliente)
+      let couponDiscount = 0;
+      if (coupon) {
+        if (
+          coupon.minOrderTotal !== null &&
+          itemsTotal < coupon.minOrderTotal
+        ) {
+          throw new Error(
+            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+          );
+        }
+        if (coupon.discountType === "PERCENTAGE") {
+          couponDiscount = Number(
+            ((itemsTotal * coupon.discount) / 100).toFixed(2)
+          );
+        } else {
+          couponDiscount = Math.min(coupon.discount, itemsTotal);
+        }
+      }
+
+      const calculatedTotal = Number(
+        (itemsTotal + shippingCost - couponDiscount).toFixed(2)
+      );
 
       logger.info("[OrderService] Creating CASH order", {
         orderId,
         itemsTotal,
         calculatedTotal,
+        couponDiscount,
         discountPercent,
       });
 
@@ -654,13 +684,21 @@ export class OrderService {
         }
       }
 
+      // 5. Incrementar usageCount del cupón (atómico, dentro de la transacción)
+      if (coupon) {
+        await tx.coupons.update({
+          where: { id: coupon.id },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
+
       return { newOrder, emailContext };
     });
 
     const { newOrder: order, emailContext: resultEmailContext } =
       transactionResult;
 
-    // 5. Emails
+    // 6. Emails
     if (resultEmailContext) {
       const { validatedItems, dbProducts } = resultEmailContext;
       if (settings.adminEmail) {
@@ -787,7 +825,13 @@ export class OrderService {
       methodName?: string;
       cost: number;
     },
-    paymentMethod: string = "mercadopago"
+    paymentMethod: string = "mercadopago",
+    coupon?: {
+      id: string;
+      discount: number;
+      discountType: string;
+      minOrderTotal: number | null;
+    }
   ) {
     const orderId = `ord_${nanoid(10)}`;
 
@@ -852,7 +896,30 @@ export class OrderService {
         0
       );
       const shippingCost = shippingData.cost ?? 0;
-      const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
+
+      // Aplicar descuento de cupón (calculado server-side)
+      let couponDiscount = 0;
+      if (coupon) {
+        if (
+          coupon.minOrderTotal !== null &&
+          itemsTotal < coupon.minOrderTotal
+        ) {
+          throw new Error(
+            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+          );
+        }
+        if (coupon.discountType === "PERCENTAGE") {
+          couponDiscount = Number(
+            ((itemsTotal * coupon.discount) / 100).toFixed(2)
+          );
+        } else {
+          couponDiscount = Math.min(coupon.discount, itemsTotal);
+        }
+      }
+
+      const calculatedTotal = Number(
+        (itemsTotal + shippingCost - couponDiscount).toFixed(2)
+      );
 
       logger.info(
         "[OrderService] Creating full order (pre-payment) with reservation",
@@ -861,6 +928,7 @@ export class OrderService {
           itemsTotal,
           shippingCost,
           calculatedTotal,
+          couponDiscount,
           paymentMethod,
           discountPercent,
         }
@@ -971,6 +1039,14 @@ export class OrderService {
         }
       }
 
+      // 6. Incrementar usageCount del cupón (atómico, dentro de la transacción)
+      if (coupon) {
+        await tx.coupons.update({
+          where: { id: coupon.id },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
+
       return newOrder;
     });
 
@@ -1001,6 +1077,12 @@ export class OrderService {
       agency?: string;
       methodName?: string;
       cost: number;
+    },
+    coupon?: {
+      id: string;
+      discount: number;
+      discountType: string;
+      minOrderTotal: number | null;
     }
   ) {
     const orderId = `ord_${nanoid(10)}`;
@@ -1065,13 +1147,37 @@ export class OrderService {
         0
       );
       const shippingCost = shippingData.cost ?? 0;
-      const calculatedTotal = Number((itemsTotal + shippingCost).toFixed(2));
+
+      // Aplicar descuento de cupón (calculado server-side)
+      let couponDiscount = 0;
+      if (coupon) {
+        if (
+          coupon.minOrderTotal !== null &&
+          itemsTotal < coupon.minOrderTotal
+        ) {
+          throw new Error(
+            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+          );
+        }
+        if (coupon.discountType === "PERCENTAGE") {
+          couponDiscount = Number(
+            ((itemsTotal * coupon.discount) / 100).toFixed(2)
+          );
+        } else {
+          couponDiscount = Math.min(coupon.discount, itemsTotal);
+        }
+      }
+
+      const calculatedTotal = Number(
+        (itemsTotal + shippingCost - couponDiscount).toFixed(2)
+      );
 
       logger.info("[OrderService] Creating TRANSFER order", {
         orderId,
         itemsTotal,
         shippingCost,
         calculatedTotal,
+        couponDiscount,
         discountPercent,
       });
 
@@ -1177,6 +1283,14 @@ export class OrderService {
             }
           }
         }
+      }
+
+      // 6. Incrementar usageCount del cupón (atómico, dentro de la transacción)
+      if (coupon) {
+        await tx.coupons.update({
+          where: { id: coupon.id },
+          data: { usageCount: { increment: 1 } },
+        });
       }
 
       return newOrder;

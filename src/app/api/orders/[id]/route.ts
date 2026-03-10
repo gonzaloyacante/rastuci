@@ -104,6 +104,17 @@ export async function GET(
 
     const responseOrder: Order = mapOrderToDTO(order);
 
+    // Para solicitudes no autenticadas (guest), omitir PII sensible.
+    // El UUID es el token de acceso, pero puede filtrarse vía historial del navegador,
+    // encabezados de email o logs. Defensivamente, ocultamos email y teléfono.
+    if (!session?.user) {
+      return ok({
+        ...responseOrder,
+        customerEmail: undefined,
+        customerPhone: "",
+      } as Order);
+    }
+
     return ok(responseOrder);
   } catch (error) {
     const _requestId = getRequestId(request.headers);
