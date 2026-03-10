@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -25,6 +24,9 @@ export const GET = withAdminAuth(
     return apiHandler(async () => {
       const policy = await prisma.legalPolicy.findUnique({
         where: { id },
+        include: {
+          sections: { orderBy: { sortOrder: "asc" } },
+        },
       });
 
       if (!policy) {
@@ -59,23 +61,43 @@ export const PUT = withAdminAuth(
         }
       }
 
-      const policy = await prisma.legalPolicy.update({
-        where: { id },
-        data: {
-          ...(title && { title }),
-          ...(slug && { slug }),
-          ...(description !== undefined && { description }),
-          ...(sections && {
-            content: { sections } as unknown as Prisma.InputJsonValue,
-            htmlContent: generateHtmlContent(
-              sections as unknown as import("@/lib/policy-utils").PolicySection[]
-            ),
-          }),
-          ...(isActive !== undefined && { isActive }),
-        },
-      });
+      // All operations are wrapped in a single transaction so that if section
+      // replace fails, the policy metadata update is also rolled back.
+      return prisma.$transaction(async (tx) => {
+        await tx.legalPolicy.update({
+          where: { id },
+          data: {
+            ...(title && { title }),
+            ...(slug && { slug }),
+            ...(description !== undefined && { description }),
+            ...(sections && {
+              htmlContent: generateHtmlContent(
+                sections as unknown as import("@/lib/policy-utils").PolicySection[]
+              ),
+            }),
+            ...(isActive !== undefined && { isActive }),
+          },
+        });
 
-      return policy;
+        if (sections) {
+          await tx.legal_policy_section.deleteMany({ where: { policyId: id } });
+          if (sections.length > 0) {
+            await tx.legal_policy_section.createMany({
+              data: sections.map((s, i) => ({
+                policyId: id,
+                title: (s as { title?: string }).title ?? "",
+                content: (s as { content: string }).content,
+                sortOrder: i,
+              })),
+            });
+          }
+        }
+
+        return tx.legalPolicy.findUnique({
+          where: { id },
+          include: { sections: { orderBy: { sortOrder: "asc" } } },
+        });
+      });
     }, "PUT /api/admin/policies/[id]");
   }
 );

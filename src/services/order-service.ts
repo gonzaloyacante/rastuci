@@ -73,6 +73,13 @@ export class OrderService {
       const shouldDecrement =
         data.mappedStatus === ORDER_STATUS.PROCESSED && !isStockAlreadyReserved;
 
+      // Restore stock when cancelling an order that had stock pre-reserved at creation time
+      // (PENDING_PAYMENT = MP pre-reserve, RESERVED = cash/transfer pre-reserve)
+      const shouldRestore =
+        (data.mappedStatus as string) === ORDER_STATUS.CANCELLED &&
+        (order.status === ORDER_STATUS.PENDING_PAYMENT ||
+          order.status === ORDER_STATUS.RESERVED);
+
       // Ship/notify on last transition to PROCESSED (independent of stock action)
       const isFirstApproval =
         data.mappedStatus === ORDER_STATUS.PROCESSED &&
@@ -125,6 +132,26 @@ export class OrderService {
                 stock: { gte: item.quantity },
               },
               data: { stock: { decrement: item.quantity } },
+            });
+          }
+        }
+      }
+
+      // 4b. Restore Stock for cancelled pre-reserved orders (atomic within transaction)
+      if (shouldRestore) {
+        for (const item of order.order_items) {
+          await tx.products.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+          if (item.color && item.size) {
+            await tx.product_variants.updateMany({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              data: { stock: { increment: item.quantity } },
             });
           }
         }
@@ -600,7 +627,7 @@ export class OrderService {
         });
         // Also decrement variant stock if the item specifies a variant
         if (item.color && item.size) {
-          await tx.product_variants.updateMany({
+          const variantResult = await tx.product_variants.updateMany({
             where: {
               productId: item.productId,
               color: item.color,
@@ -609,6 +636,21 @@ export class OrderService {
             },
             data: { stock: { decrement: item.quantity } },
           });
+          if (variantResult.count === 0) {
+            const variantExists = await tx.product_variants.findFirst({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              select: { stock: true },
+            });
+            if (variantExists !== null) {
+              throw new Error(
+                `Stock insuficiente para la variante ${item.color}/${item.size}`
+              );
+            }
+          }
         }
       }
 
@@ -902,7 +944,7 @@ export class OrderService {
         });
         // Also decrement variant stock if the item specifies a variant
         if (item.color && item.size) {
-          await tx.product_variants.updateMany({
+          const variantResult = await tx.product_variants.updateMany({
             where: {
               productId: item.productId,
               color: item.color,
@@ -911,6 +953,21 @@ export class OrderService {
             },
             data: { stock: { decrement: item.quantity } },
           });
+          if (variantResult.count === 0) {
+            const variantExists = await tx.product_variants.findFirst({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              select: { stock: true },
+            });
+            if (variantExists !== null) {
+              throw new Error(
+                `Stock insuficiente para la variante ${item.color}/${item.size}`
+              );
+            }
+          }
         }
       }
 
@@ -1095,7 +1152,7 @@ export class OrderService {
         });
         // Also decrement variant stock if the item specifies a variant
         if (item.color && item.size) {
-          await tx.product_variants.updateMany({
+          const variantResult = await tx.product_variants.updateMany({
             where: {
               productId: item.productId,
               color: item.color,
@@ -1104,6 +1161,21 @@ export class OrderService {
             },
             data: { stock: { decrement: item.quantity } },
           });
+          if (variantResult.count === 0) {
+            const variantExists = await tx.product_variants.findFirst({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              select: { stock: true },
+            });
+            if (variantExists !== null) {
+              throw new Error(
+                `Stock insuficiente para la variante ${item.color}/${item.size}`
+              );
+            }
+          }
         }
       }
 

@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }
 
-    const { email, cartSnapshot } = parsed.data;
+    const { email, cartItems } = parsed.data;
 
     // 1. Find active period
     // We assume the LATEST open period is the active one.
@@ -69,9 +69,17 @@ export async function POST(request: NextRequest) {
       data: {
         email,
         periodId: activePeriod.id,
-        cartSnapshot: cartSnapshot
-          ? (cartSnapshot as unknown as import("@prisma/client").Prisma.InputJsonValue)
-          : undefined,
+        ...(cartItems &&
+          cartItems.length > 0 && {
+            cartItems: {
+              create: cartItems.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                color: item.color,
+                size: item.size,
+              })),
+            },
+          }),
       },
     });
 

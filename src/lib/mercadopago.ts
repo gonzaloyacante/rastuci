@@ -252,6 +252,23 @@ export function validateWebhookSignature(
     return false;
   }
 
+  // Replay-attack protection: reject webhooks with ts outside ±5-minute window
+  const tsSeconds = parseInt(ts, 10);
+  if (isNaN(tsSeconds)) {
+    logger.warn("[mercadopago] Webhook ts header is not a valid integer", {
+      ts,
+    });
+    return false;
+  }
+  const ageMs = Date.now() - tsSeconds * 1000;
+  if (ageMs > 5 * 60 * 1000 || ageMs < -60 * 1000) {
+    logger.warn("[mercadopago] Webhook timestamp outside acceptable window", {
+      ts,
+      ageMs,
+    });
+    return false;
+  }
+
   try {
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
     const h = crypto.createHmac("sha256", secret);

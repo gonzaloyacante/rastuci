@@ -1,13 +1,26 @@
 model LegalPolicy {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String                 @id @default(cuid())
+  slug        String                 @unique
   title       String
   description String?
-  content     Json?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
   htmlContent String?
+  sections    legal_policy_section[]
 
   @@index([isActive])
+}
+
+/// Individual sections of a legal policy (replaces Json content field)
+model legal_policy_section {
+  id        String      @id @default(cuid())
+  policyId  String
+  title     String      @default("")
+  content   String
+  sortOrder Int         @default(0)
+  policy    LegalPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+  @@index([policyId, sortOrder])
 }

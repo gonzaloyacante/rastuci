@@ -243,13 +243,7 @@ async function main() {
         categoryId: categoryId,
         stock: colors.length * SIZES.length * 10,
         images: allImages,
-        // Legacy fields (kept for compatibility)
-        colorImages: productColorImages,
-        sizeGuide: {
-          sizes: SIZES,
-          chart: SIZES.map((s) => ({ size: s, measurements: "Standard fit" })),
-        },
-        // NEW EXPLICIT RELATIONS
+        // RELATIONAL TABLES
         product_color_images: {
           create: colors.flatMap((color) =>
             productColorImages[color].map((url, idx) => ({

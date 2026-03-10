@@ -3,7 +3,7 @@ model analytics_events {
   sessionId          String
   userId             String?
   eventName          String
-  eventData          Json?
+  eventData          String?
   pageUrl            String?
   referrer           String?
   deviceType         String?

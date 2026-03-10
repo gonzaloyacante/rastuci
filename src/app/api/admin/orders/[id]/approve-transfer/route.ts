@@ -25,8 +25,21 @@ export const POST = withAdminAuth(
         );
       }
 
-      // Check logical flow
-      // Can approve from Reserved? Or Payment_Review? yes.
+      // Solo se puede aprobar desde estados que implican pago pendiente de verificación
+      const approvableStatuses = [
+        ORDER_STATUS.RESERVED,
+        ORDER_STATUS.PENDING_PAYMENT,
+        ORDER_STATUS.PAYMENT_REVIEW,
+      ] as string[];
+
+      if (!approvableStatuses.includes(order.status)) {
+        return NextResponse.json(
+          {
+            error: `No se puede aprobar una orden en estado ${order.status}`,
+          },
+          { status: 409 }
+        );
+      }
 
       // Update Status to PROCESSED
       // Stock is ALREADY reserved (decremented on creation).

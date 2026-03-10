@@ -43,11 +43,17 @@ export const VacationSettingsSchema = z
 
 export type VacationSettingsFormData = z.infer<typeof VacationSettingsSchema>;
 
-export const VacationSubscriberSchema = z.object({
-  email: z.string().email("Email inválido"),
-  cartSnapshot: z
-    .union([z.record(z.string(), z.unknown()), z.array(z.unknown())])
-    .optional(), // We accept any JSON array or object for the cart snapshot
+export const CartItemSchema = z.object({
+  productId: z.string(),
+  quantity: z.number().int().positive(),
+  color: z.string().optional(),
+  size: z.string().optional(),
 });
 
+export const VacationSubscriberSchema = z.object({
+  email: z.string().email("Email inválido"),
+  cartItems: z.array(CartItemSchema).optional(),
+});
+
+export type CartItemData = z.infer<typeof CartItemSchema>;
 export type VacationSubscriberData = z.infer<typeof VacationSubscriberSchema>;

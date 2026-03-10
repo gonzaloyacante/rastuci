@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -29,6 +28,9 @@ export const GET = withAdminAuth(async () => {
   return apiHandler(async () => {
     const policies = await prisma.legalPolicy.findMany({
       orderBy: { updatedAt: "desc" },
+      include: {
+        sections: { orderBy: { sortOrder: "asc" } },
+      },
     });
     return policies;
   }, "GET /api/admin/policies");
@@ -58,11 +60,21 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
         title,
         slug,
         description,
-        content: {
-          sections: sections || [],
-        } as unknown as Prisma.InputJsonValue,
         htmlContent: generateHtmlContent(sections),
         isActive: isActive ?? true,
+        sections:
+          sections && sections.length > 0
+            ? {
+                create: sections.map((s, i) => ({
+                  title: s.title,
+                  content: s.content,
+                  sortOrder: i,
+                })),
+              }
+            : undefined,
+      },
+      include: {
+        sections: { orderBy: { sortOrder: "asc" } },
       },
     });
 

@@ -26,7 +26,7 @@ const analyticsEventSchema = z.object({
 });
 
 const analyticsRequestSchema = z.object({
-  events: z.array(analyticsEventSchema),
+  events: z.array(analyticsEventSchema).max(50),
   session: z
     .object({
       id: z.string(),
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
           sessionId: session.id,
           userId: event.userId,
           eventName: event.name,
-          eventData: (event.properties || {}) as Prisma.InputJsonValue,
+          eventData: event.properties ? JSON.stringify(event.properties) : null,
           pageUrl: event.pageUrl,
           referrer: event.referrer,
           deviceType: event.deviceType,
