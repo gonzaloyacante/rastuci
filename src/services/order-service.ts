@@ -438,17 +438,34 @@ export class OrderService {
         });
       } catch (error) {
         // Critical: If stock decrement fails after Payment Approved, we have a problem.
-        // We log clearly. In a real system, we'd trigger an auto-refund or "Manual Review" flag.
         logger.error(
           "CRITICAL: Payment Approved but Stock Decrement FAILED (Race Condition)",
           {
             mpPaymentId,
+            orderId: newOrder.id,
             error,
           }
         );
-        // Note: We do NOT throw here because the Order IS created and Paid.
-        // We accept the "Overselling" risk rather than crashing the webhook (which would retry and duplicate).
-        // The admin must resolve this manually.
+        // Flag the order for manual admin review instead of silently overselling.
+        // We do NOT re-throw (would cause webhook retries and duplicate orders).
+        try {
+          await prisma.orders.update({
+            where: { id: newOrder.id },
+            data: {
+              status: ORDER_STATUS.PAYMENT_REVIEW,
+              caImportError: `Stock decrement failed (race condition) — manual review required: ${String(error)}`,
+            },
+          });
+          logger.warn(
+            "[OrderService] Order flagged PAYMENT_REVIEW due to stock decrement failure",
+            { orderId: newOrder.id, mpPaymentId }
+          );
+        } catch (updateErr) {
+          logger.error(
+            "CRITICAL: Could not flag order for manual review after stock failure",
+            { orderId: newOrder.id, mpPaymentId, updateErr }
+          );
+        }
       }
     }
 
@@ -686,6 +703,18 @@ export class OrderService {
 
       // 5. Incrementar usageCount del cupón (atómico, dentro de la transacción)
       if (coupon) {
+        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
+        const currentCoupon = await tx.coupons.findUnique({
+          where: { id: coupon.id },
+          select: { usageCount: true, usageLimit: true },
+        });
+        if (
+          currentCoupon &&
+          currentCoupon.usageLimit !== null &&
+          currentCoupon.usageCount >= currentCoupon.usageLimit
+        ) {
+          throw new Error("El cupón ha alcanzado su límite de usos");
+        }
         await tx.coupons.update({
           where: { id: coupon.id },
           data: { usageCount: { increment: 1 } },
@@ -1041,6 +1070,18 @@ export class OrderService {
 
       // 6. Incrementar usageCount del cupón (atómico, dentro de la transacción)
       if (coupon) {
+        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
+        const currentCoupon = await tx.coupons.findUnique({
+          where: { id: coupon.id },
+          select: { usageCount: true, usageLimit: true },
+        });
+        if (
+          currentCoupon &&
+          currentCoupon.usageLimit !== null &&
+          currentCoupon.usageCount >= currentCoupon.usageLimit
+        ) {
+          throw new Error("El cupón ha alcanzado su límite de usos");
+        }
         await tx.coupons.update({
           where: { id: coupon.id },
           data: { usageCount: { increment: 1 } },
@@ -1287,6 +1328,18 @@ export class OrderService {
 
       // 6. Incrementar usageCount del cupón (atómico, dentro de la transacción)
       if (coupon) {
+        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
+        const currentCoupon = await tx.coupons.findUnique({
+          where: { id: coupon.id },
+          select: { usageCount: true, usageLimit: true },
+        });
+        if (
+          currentCoupon &&
+          currentCoupon.usageLimit !== null &&
+          currentCoupon.usageCount >= currentCoupon.usageLimit
+        ) {
+          throw new Error("El cupón ha alcanzado su límite de usos");
+        }
         await tx.coupons.update({
           where: { id: coupon.id },
           data: { usageCount: { increment: 1 } },

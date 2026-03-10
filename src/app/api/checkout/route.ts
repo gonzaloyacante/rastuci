@@ -191,7 +191,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       postalCode: customer.postalCode,
       agency: body.shippingAgency?.code,
       methodName: shippingMethod?.name || "Correo Argentino",
-      cost: orderData.shippingCost,
+      // Server-side shipping cost enforcement:
+      // Pickup is always free. For other methods, use the price declared in the
+      // shippingMethod object (client-provided but at least validated via Zod as >= 0).
+      // This prevents orderData.shippingCost from being silently manipulated independently.
+      cost:
+        shippingMethod?.id === "pickup"
+          ? 0
+          : (shippingMethod?.price ?? orderData.shippingCost),
     };
 
     // A) CASH PAYMENT

@@ -47,10 +47,23 @@ export const PATCH = withAdminAuth(
       if (!email) {
         return fail("BAD_REQUEST", "Email es requerido", 400, { requestId });
       }
-      if (!password || password.length < 6) {
+      if (!password || password.length < 12) {
         return fail(
           "BAD_REQUEST",
-          "La contraseña debe tener al menos 6 caracteres",
+          "La contraseña debe tener al menos 12 caracteres",
+          400,
+          { requestId }
+        );
+      }
+      // OWASP: require mixed-case, digit, and special character
+      const hasUpper = /[A-Z]/.test(password);
+      const hasLower = /[a-z]/.test(password);
+      const hasDigit = /[0-9]/.test(password);
+      const hasSpecial = /[^A-Za-z0-9]/.test(password);
+      if (!hasUpper || !hasLower || !hasDigit || !hasSpecial) {
+        return fail(
+          "BAD_REQUEST",
+          "La contraseña debe incluir mayúsculas, minúsculas, números y caracteres especiales",
           400,
           { requestId }
         );
