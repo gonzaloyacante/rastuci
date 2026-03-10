@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getStorePostalCode } from "@/lib/store-settings";
+
+const ShippingCalculateSchema = z.object({
+  postalCode: z
+    .string()
+    .min(4)
+    .max(8)
+    .regex(/^\d{4}([A-Z]{3})?$/, "Código postal inválido"),
+  deliveredType: z.enum(["D", "S"]).optional(),
+  dimensions: z
+    .object({
+      weight: z.number().positive().max(30000).optional(),
+      height: z.number().positive().max(200).optional(),
+      width: z.number().positive().max(200).optional(),
+      length: z.number().positive().max(200).optional(),
+    })
+    .optional(),
+});
 
 // Opciones de envío de fallback cuando la API de CA no está disponible
 const FALLBACK_SHIPPING_OPTIONS = {
@@ -57,15 +75,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { postalCode, dimensions, deliveredType } = body;
+    const rawBody = await request.json();
+    const parseResult = ShippingCalculateSchema.safeParse(rawBody);
 
-    if (!postalCode) {
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0];
       return NextResponse.json(
-        { success: false, error: "Código postal requerido" },
+        {
+          success: false,
+          error: firstError?.message ?? "Parámetros inválidos",
+        },
         { status: 400 }
       );
     }
+
+    const { postalCode, dimensions, deliveredType } = parseResult.data;
 
     // Obtener customerId - usar env directamente si el servicio no tiene
     const customerId =

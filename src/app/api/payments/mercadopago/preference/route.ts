@@ -73,6 +73,15 @@ export async function POST(req: NextRequest) {
       shippingMethodName,
     } = body || {};
 
+    // Sanitize metadata string values to prevent log injection and overly long inputs
+    const safeStr = (v: unknown, maxLen = 200): string =>
+      typeof v === "string"
+        ? v
+            .replace(/[\r\n\t]/g, " ")
+            .trim()
+            .slice(0, maxLen)
+        : "";
+
     if (process.env.NODE_ENV === "development") {
       logger.info("Creating order + MP preference", {
         requestId,
@@ -138,23 +147,23 @@ export async function POST(req: NextRequest) {
         : Number(shippingCost) || 0;
 
       const shippingData = {
-        street: metadata.customerAddress as string,
-        city: metadata.customerCity as string,
-        province: metadata.customerProvince as string, // Might be undefined
-        postalCode: metadata.customerPostalCode as string,
-        agency: metadata.shippingAgencyCode as string,
+        street: safeStr(metadata.customerAddress),
+        city: safeStr(metadata.customerCity),
+        province: safeStr(metadata.customerProvince),
+        postalCode: safeStr(metadata.customerPostalCode, 10),
+        agency: safeStr(metadata.shippingAgencyCode, 50),
         methodName: method,
         cost: validatedShippingCost,
       };
 
       const customerData = {
-        name: customer.name || metadata.customerName,
-        email: customer.email || metadata.customerEmail,
-        phone: metadata.customerPhone as string,
-        address: metadata.customerAddress as string,
-        city: metadata.customerCity as string,
-        province: metadata.customerProvince as string,
-        postalCode: metadata.customerPostalCode as string,
+        name: safeStr(customer.name || metadata.customerName, 100),
+        email: safeStr(customer.email || metadata.customerEmail, 100),
+        phone: safeStr(metadata.customerPhone, 30),
+        address: safeStr(metadata.customerAddress),
+        city: safeStr(metadata.customerCity),
+        province: safeStr(metadata.customerProvince),
+        postalCode: safeStr(metadata.customerPostalCode, 10),
       };
 
       // CRITICAL: Validate stock before creating potential ghost order
@@ -258,13 +267,13 @@ export async function POST(req: NextRequest) {
             name: customer.name,
             email: customer.email,
             phone: metadata.customerPhone
-              ? { number: metadata.customerPhone }
+              ? { number: safeStr(metadata.customerPhone, 30) }
               : undefined,
             address: metadata.customerPostalCode
               ? {
-                  street_name: metadata.customerAddress,
-                  zip_code: metadata.customerPostalCode,
-                  city: metadata.customerCity,
+                  street_name: safeStr(metadata.customerAddress),
+                  zip_code: safeStr(metadata.customerPostalCode, 10),
+                  city: safeStr(metadata.customerCity),
                 }
               : undefined,
           }
