@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { withAdminAuth } from "@/lib/adminAuth";
 import { logger } from "@/lib/logger";
-import prisma from "@/lib/prisma"; // Adjust path if needed
+import prisma from "@/lib/prisma";
 import { VacationSettingsSchema } from "@/lib/validation/vacation";
-// import { auth } from "@/auth"; // If auth is needed, but we start with open or existing middleware protection
 
 export async function GET() {
   try {
@@ -31,12 +31,8 @@ export async function GET() {
   }
 }
 
-export async function PUT(request: Request) {
+export const PUT = withAdminAuth(async (request: NextRequest) => {
   try {
-    // Auth check should be here or middleware
-    // const session = await auth();
-    // if (!session) return new NextResponse("Unauthorized", { status: 401 });
-
     const body = await request.json();
     const parsed = VacationSettingsSchema.safeParse(body);
 
@@ -82,4 +78,4 @@ export async function PUT(request: Request) {
       { status: 500 }
     );
   }
-}
+});

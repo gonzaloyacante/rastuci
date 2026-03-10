@@ -1,6 +1,7 @@
 // import { logger } from "@/lib/logger";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { withAdminAuth } from "@/lib/adminAuth";
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 
 /**
@@ -9,7 +10,7 @@ import { correoArgentinoService } from "@/lib/correo-argentino-service";
  *
  * SOLO PARA DESARROLLO - eliminar o proteger en producción
  */
-export async function GET() {
+export const GET = withAdminAuth(async (_req: NextRequest) => {
   // Solo permitir en desarrollo
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
@@ -187,4 +188,4 @@ export async function GET() {
       : "❌ Algunos pasos fallaron - revisar detalles",
     results,
   });
-}
+});

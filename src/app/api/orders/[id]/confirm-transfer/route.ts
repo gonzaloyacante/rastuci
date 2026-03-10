@@ -9,9 +9,10 @@ import prisma from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: orderId } = await params;
     // [C-01] Require an authenticated session before processing transfer proof
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -20,8 +21,6 @@ export async function POST(
         { status: 401 }
       );
     }
-
-    const orderId = params.id;
     const body = await request.json();
     const { senderName, transactionId } = body;
 

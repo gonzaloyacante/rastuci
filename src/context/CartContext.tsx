@@ -719,14 +719,16 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         };
       }
 
-      // Si es efectivo, devolver orderId
-      if (result.paymentMethod === "cash") {
-        // Limpiar carrito después de pedido exitoso
+      // Para efectivo y transferencia, limpiar el carrito después del pedido exitoso
+      if (
+        result.paymentMethod === "cash" ||
+        result.paymentMethod === "transfer"
+      ) {
         clearCart();
         return {
           success: true,
           orderId: result.orderId,
-          paymentMethod: "cash",
+          paymentMethod: result.paymentMethod,
         };
       }
 

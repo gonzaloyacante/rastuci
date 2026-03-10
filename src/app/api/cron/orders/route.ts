@@ -54,12 +54,22 @@ export async function GET(request: NextRequest) {
             data: { status: "CANCELLED" as OrderStatus }, // Cast if enum mismatch in types, but should match
           });
 
-          // B. Restore Stock
+          // B. Restore Stock (products + variants)
           for (const item of order.order_items) {
             await tx.products.update({
               where: { id: item.productId },
               data: { stock: { increment: item.quantity } },
             });
+            if (item.color && item.size) {
+              await tx.product_variants.updateMany({
+                where: {
+                  productId: item.productId,
+                  color: item.color,
+                  size: item.size,
+                },
+                data: { stock: { increment: item.quantity } },
+              });
+            }
             results.restoredStock += item.quantity;
           }
         });

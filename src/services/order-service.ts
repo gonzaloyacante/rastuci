@@ -61,15 +61,23 @@ export class OrderService {
       if (!order) return null;
 
       // 2. Determine if stock decrement is needed based on CURRENT db state
-      // We only decrement if moving to PENDING_PAYMENT (Approved) from a non-approved state
-      const isAlreadyPaid =
+      // PENDING_PAYMENT orders already had stock decremented at createFullOrder time.
+      // Only decrement here for orders that did NOT pre-reserve stock (legacy/metadata fallback).
+      const isStockAlreadyReserved =
         order.status === ORDER_STATUS.PROCESSED ||
-        order.status === ORDER_STATUS.RESERVED || // Reserved also implies stock held
+        order.status === ORDER_STATUS.RESERVED || // Cash: stock held at creation
+        order.status === ORDER_STATUS.PENDING_PAYMENT || // MP: stock held at createFullOrder
         order.status === ORDER_STATUS.DELIVERED;
 
-      // We decrement if we are moving to PROCESSED (Paid) and weren't already holding stock
+      // We decrement if we are moving to PROCESSED (Paid) and stock wasn't already held
       const shouldDecrement =
-        data.mappedStatus === ORDER_STATUS.PROCESSED && !isAlreadyPaid;
+        data.mappedStatus === ORDER_STATUS.PROCESSED && !isStockAlreadyReserved;
+
+      // Ship/notify on last transition to PROCESSED (independent of stock action)
+      const isFirstApproval =
+        data.mappedStatus === ORDER_STATUS.PROCESSED &&
+        order.status !== ORDER_STATUS.PROCESSED &&
+        order.status !== ORDER_STATUS.DELIVERED;
 
       // 3. Update Order Status
       const updatedOrder = await tx.orders.update({
@@ -107,13 +115,26 @@ export class OrderService {
             },
             data: { stock: { decrement: item.quantity } },
           });
+          // Also decrement variant stock if the item specifies a variant
+          if (item.color && item.size) {
+            await tx.product_variants.updateMany({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+                stock: { gte: item.quantity },
+              },
+              data: { stock: { decrement: item.quantity } },
+            });
+          }
         }
       }
 
       // 5. Return context for shipment/notifications
-      // Use logic similar to before but with updated order object
+      // Use isFirstApproval (not shouldDecrement) so MP orders in PENDING_PAYMENT
+      // correctly trigger shipment and notifications on payment approval.
       const isPickup = order.shippingMethod === "pickup";
-      const shouldShip = shouldDecrement && !isPickup;
+      const shouldShip = isFirstApproval && !isPickup;
 
       return { order: updatedOrder, shouldShip };
     });
@@ -577,6 +598,18 @@ export class OrderService {
           },
           data: { stock: { decrement: item.quantity } },
         });
+        // Also decrement variant stock if the item specifies a variant
+        if (item.color && item.size) {
+          await tx.product_variants.updateMany({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
+        }
       }
 
       return { newOrder, emailContext };
@@ -867,6 +900,18 @@ export class OrderService {
           },
           data: { stock: { decrement: item.quantity } },
         });
+        // Also decrement variant stock if the item specifies a variant
+        if (item.color && item.size) {
+          await tx.product_variants.updateMany({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
+        }
       }
 
       return newOrder;
@@ -1048,6 +1093,18 @@ export class OrderService {
           },
           data: { stock: { decrement: item.quantity } },
         });
+        // Also decrement variant stock if the item specifies a variant
+        if (item.color && item.size) {
+          await tx.product_variants.updateMany({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
+        }
       }
 
       return newOrder;

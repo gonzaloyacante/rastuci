@@ -67,11 +67,12 @@ export async function POST(
     // 1. Rate Limiting
     const rl = await checkRateLimit(req, {
       key: makeKey("POST", "/api/payments/mercadopago/webhook"),
-      ...getPreset("publicReadHeavy"),
+      ...getPreset("mutatingLow"),
     });
     if (!rl.ok) {
       logger.warn("[MP webhook] rate-limited", { requestId });
-      return ok({ ok: true });
+      // Return 429 so MercadoPago retries the webhook — do NOT return 200 here
+      return new NextResponse("Too Many Requests", { status: 429 });
     }
 
     // 2. Parse basic data

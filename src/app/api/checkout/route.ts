@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { PAYMENT_METHODS } from "@/lib/constants";
-import {} from // CorreoArgentinoService,
-// type ProvinceCode,
-"@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { createPreference } from "@/lib/mercadopago";
 import { prisma } from "@/lib/prisma";

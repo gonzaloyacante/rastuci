@@ -100,6 +100,9 @@ export async function GET(request: NextRequest): Promise<
     const transformedCategories = categoriesWithCount.map(
       (category: CategoryType) => ({
         ...category,
+        image:
+          (category as unknown as { imageUrl?: string | null }).imageUrl ??
+          null,
         ...(includeProductCount
           ? {
               productCount:
@@ -165,7 +168,7 @@ export const POST = withAdminAuth(
           issues: parsed.error.issues,
         });
       }
-      const { name, description } = parsed.data;
+      const { name, description, imageUrl } = parsed.data;
 
       // Verificar si ya existe una categoría con ese nombre
       const existingCategory = await prisma.categories.findUnique({
@@ -183,12 +186,14 @@ export const POST = withAdminAuth(
           id: categoryId,
           name,
           description,
+          imageUrl: imageUrl ?? null,
           updatedAt: new Date(),
         },
       });
 
       const transformedCategory = {
         ...category,
+        image: category.imageUrl ?? null,
         description: category.description ?? undefined,
       };
 

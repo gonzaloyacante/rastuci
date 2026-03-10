@@ -20,10 +20,11 @@ const updatePolicySchema = z.object({
 });
 
 export const GET = withAdminAuth(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
     return apiHandler(async () => {
       const policy = await prisma.legalPolicy.findUnique({
-        where: { id: params.id },
+        where: { id },
       });
 
       if (!policy) {
@@ -36,7 +37,8 @@ export const GET = withAdminAuth(
 );
 
 export const PUT = withAdminAuth(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
     return apiHandler(async () => {
       const body = await req.json();
       const parsed = updatePolicySchema.safeParse(body);
@@ -52,13 +54,13 @@ export const PUT = withAdminAuth(
         const existing = await prisma.legalPolicy.findUnique({
           where: { slug },
         });
-        if (existing && existing.id !== params.id) {
+        if (existing && existing.id !== id) {
           throw new AppError("Slug already in use", 409);
         }
       }
 
       const policy = await prisma.legalPolicy.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           ...(title && { title }),
           ...(slug && { slug }),
@@ -79,10 +81,11 @@ export const PUT = withAdminAuth(
 );
 
 export const DELETE = withAdminAuth(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
     return apiHandler(async () => {
       await prisma.legalPolicy.delete({
-        where: { id: params.id },
+        where: { id },
       });
       return { success: true };
     }, "DELETE /api/admin/policies/[id]");

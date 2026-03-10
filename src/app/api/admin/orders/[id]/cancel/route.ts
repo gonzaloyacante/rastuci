@@ -48,12 +48,23 @@ export const POST = withAdminAuth(
           data: { status: ORDER_STATUS.CANCELLED as OrderStatus },
         });
 
-        // 2. Restore Stock
+        // 2. Restore Stock (products + variants)
         for (const item of order.order_items) {
           await tx.products.update({
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } },
           });
+          // Restore variant stock if the item had a specific variant
+          if (item.color && item.size) {
+            await tx.product_variants.updateMany({
+              where: {
+                productId: item.productId,
+                color: item.color,
+                size: item.size,
+              },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
         }
       });
 

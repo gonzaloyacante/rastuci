@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       } = dimensions || {};
 
       const result = await correoArgentinoService.getRates({
-        customerId: process.env.CORREO_ARGENTINO_CUSTOMER_ID || "",
+        customerId: customerId || "",
         postalCodeOrigin: storePostalCode,
         postalCodeDestination: postalCode,
         dimensions: {

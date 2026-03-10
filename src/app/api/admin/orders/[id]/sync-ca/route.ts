@@ -8,9 +8,9 @@ import prisma from "@/lib/prisma";
 import { emailService } from "@/lib/resend";
 
 export const POST = withAdminAuth(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
-      const orderId = params.id;
+      const { id: orderId } = await params;
 
       // 1. Fetch Order
       const order = await prisma.orders.findUnique({
