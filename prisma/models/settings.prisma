@@ -1,33 +1,34 @@
 /// Store identity and email configuration
 model store_settings {
-  id                       String   @id @default("default")
-  name                     String   @default("Rastuci")
-  adminEmail               String?
-  salesEmail               String?
-  supportEmail             String?
-  senderName               String?
-  addressStreet            String?
-  addressCity              String?
-  addressProvince          String?
-  addressPostalCode        String?
+  id                      String   @id @default("default")
+  name                    String   @default("Rastuci")
+  adminEmail              String?
+  salesEmail              String?
+  supportEmail            String?
+  senderName              String?
+  addressStreet           String?
+  addressStreetNumber     String?
+  addressCity             String?
+  addressProvince         String?
+  addressPostalCode       String?
   /// Payment discount percentages per method (%)
-  cashDiscount             Decimal? @db.Decimal(5, 2)
-  transferDiscount         Decimal? @db.Decimal(5, 2)
-  mpDiscount               Decimal? @db.Decimal(5, 2)
+  cashDiscount            Decimal? @db.Decimal(5, 2)
+  transferDiscount        Decimal? @db.Decimal(5, 2)
+  mpDiscount              Decimal? @db.Decimal(5, 2)
   /// Order expiration timeouts
-  cashExpirationHours      Int      @default(48)
-  transferExpirationHours  Int      @default(48)
-  mpExpirationMinutes      Int      @default(30)
+  cashExpirationHours     Int      @default(48)
+  transferExpirationHours Int      @default(48)
+  mpExpirationMinutes     Int      @default(30)
   /// Bank transfer details
-  bankName                 String?
-  bankCbu                  String?
-  bankAlias                String?
-  bankHolder               String?
-  bankCuit                 String?
+  bankName                String?
+  bankCbu                 String?
+  bankAlias               String?
+  bankHolder              String?
+  bankCuit                String?
   /// Feature flags
-  couponsEnabled           Boolean  @default(false)
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  couponsEnabled          Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 }
 
 /// Homepage visual configuration
@@ -247,12 +248,12 @@ model vacation_period {
 
 /// Vacation mode subscribers
 model vacation_subscriber {
-  id        String                @id @default(cuid())
+  id        String               @id @default(cuid())
   email     String
   periodId  String
-  notified  Boolean               @default(false)
-  createdAt DateTime              @default(now())
-  period    vacation_period       @relation(fields: [periodId], references: [id])
+  notified  Boolean              @default(false)
+  createdAt DateTime             @default(now())
+  period    vacation_period      @relation(fields: [periodId], references: [id])
   cartItems vacation_cart_item[]
 
   @@index([periodId])

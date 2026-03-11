@@ -108,9 +108,9 @@ export const StoreSettingsSchema = z.object({
       mpDiscount: z.number().min(0).max(100).default(0),
 
       // Expirations (TTL)
-      cashExpirationHours: z.number().min(1).default(72),
+      cashExpirationHours: z.number().min(1).default(48),
       transferExpirationHours: z.number().min(1).default(48),
-      mpExpirationMinutes: z.number().min(5).default(60), // Abandoned checkout
+      mpExpirationMinutes: z.number().min(5).default(30), // Abandoned checkout
 
       // Bank Details
       bankName: z.string().optional(),
@@ -120,16 +120,16 @@ export const StoreSettingsSchema = z.object({
       bankCuit: z.string().optional(),
 
       // Global Toggles
-      couponsEnabled: z.boolean().default(true),
+      couponsEnabled: z.boolean().default(false),
     })
     .default({
       cashDiscount: 15,
       transferDiscount: 10,
       mpDiscount: 0,
-      cashExpirationHours: 72,
+      cashExpirationHours: 48,
       transferExpirationHours: 48,
-      mpExpirationMinutes: 60,
-      couponsEnabled: true,
+      mpExpirationMinutes: 30,
+      couponsEnabled: false,
     }),
 });
 
@@ -194,7 +194,7 @@ export const defaultStoreSettings: StoreSettings = {
     bankAlias: "",
     bankHolder: "",
     bankCuit: "",
-    couponsEnabled: true,
+    couponsEnabled: false,
   },
 };
 

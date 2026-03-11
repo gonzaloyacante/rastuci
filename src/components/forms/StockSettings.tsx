@@ -118,6 +118,7 @@ export default function StockSettings() {
     const currentStock = settings.stock || defaultStoreSettings.stock;
 
     const result = await updateSettings({
+      ...settings, // merge all current settings to avoid overwriting unrelated fields
       stock: { ...currentStock, enableStockAlerts: enableAlerts },
       stockStatuses: validStatuses,
     });

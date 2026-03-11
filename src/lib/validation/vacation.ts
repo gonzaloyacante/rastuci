@@ -11,24 +11,6 @@ export const VacationSettingsSchema = z
   })
   .refine(
     (data) => {
-      // If enabled, start date must be present and not in the past (ignoring time)
-      if (data.enabled && data.startDate) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        // We allow starting today
-        if (data.startDate < today) {
-          return false;
-        }
-      }
-      return true;
-    },
-    {
-      message: "La fecha de inicio no puede ser en el pasado",
-      path: ["startDate"],
-    }
-  )
-  .refine(
-    (data) => {
       // If both present, end must be >= start
       if (data.startDate && data.endDate) {
         return data.endDate >= data.startDate;
