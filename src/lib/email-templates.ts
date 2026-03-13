@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/utils";
+
 /**
  * Escape HTML entities to prevent XSS in email templates.
  * User-supplied data (customerName, phone, address, product names) MUST be escaped.
@@ -203,7 +205,7 @@ export const getOrderConfirmationEmail = (params: {
       return `
     <div style="${EMAIL_STYLES.detailItem}; border-bottom: 1px solid #eee; padding-bottom: 5px;">
       <strong>${item.name}</strong>${variantInfo ? `<br><span style="color: #666; font-size: 12px;">${variantInfo}</span>` : ""}<br>
-      Cantidad: ${item.quantity} × $${item.price.toFixed(2)}
+      Cantidad: ${item.quantity} × ${formatCurrency(item.price)}
     </div>
   `;
     })
@@ -215,7 +217,7 @@ export const getOrderConfirmationEmail = (params: {
     title: "¡Gracias por tu compra!",
     color: "#ec4899", // Pink branding
     message: `Confirmamos que recibimos tu pago y tu pedido está siendo procesado.<br><br>
-    <strong>Total: $${total.toFixed(2)}</strong><br><br>
+    <strong>Total: ${formatCurrency(total)}</strong><br><br>
     ${itemsHtml}`,
     orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/orders/${orderId}`,
     customButtonText: "Ver Pedido",
@@ -259,7 +261,7 @@ export const getNewOrderAdminEmail = (params: {
       return `
     <div style="${EMAIL_STYLES.detailItem}; border-bottom: 1px solid #eee; padding-bottom: 5px;">
       <strong>${item.name}</strong>${variantInfo ? `<br><span style="color: #666; font-size: 12px;">${variantInfo}</span>` : ""}<br>
-      Cantidad: ${item.quantity} × $${item.price.toFixed(2)}
+      Cantidad: ${item.quantity} × ${formatCurrency(item.price)}
     </div>
   `;
     })
@@ -279,7 +281,7 @@ export const getNewOrderAdminEmail = (params: {
     color: "#f59e0b", // Yellow/Orange
     message: `¡Nueva venta realizada por <strong>${customerName}</strong> (${customerEmail})!<br>
     ${customerDetails ? `${customerDetails}<br><br>` : ""}
-    <strong>Total: $${total.toFixed(2)}</strong><br><br>
+    <strong>Total: ${formatCurrency(total)}</strong><br><br>
     ${itemsHtml}`,
     orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/admin/pedidos`,
     customButtonText: "Gestionar Pedido En Panel",
@@ -395,7 +397,7 @@ export const getBankTransferEmail = (params: {
     orderId,
     title: "⏳ Instrucciones de Transferencia",
     color: STATUS_COLORS.pending,
-    message: `Gracias por tu pedido. Para completarlo, por favor realiza una transferencia de <strong>$${total.toFixed(2)}</strong> a la siguiente cuenta:<br><br>
+    message: `Gracias por tu pedido. Para completarlo, por favor realiza una transferencia de <strong>${formatCurrency(total)}</strong> a la siguiente cuenta:<br><br>
     
     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; text-align: left; font-family: monospace; color: #374151;">
       <strong>Banco:</strong> ${bankDetails.bankName || "Consultar"}<br>
@@ -444,7 +446,7 @@ export const getPaymentReminderEmail = (params: {
     color: STATUS_COLORS.pending,
     message: `Vimos que dejaste tu pedido pendiente y no queremos que te lo ganen de mano.<br><br>
     Tus productos siguen reservados para vos, pero <strong>el tiempo se está agotando</strong> y el stock es limitado.<br><br>
-    👉 Total a pagar: <strong>$${total.toFixed(2)}</strong><br><br>
+    👉 Total a pagar: <strong>${formatCurrency(total)}</strong><br><br>
     Hacé clic abajo para completar tu compra seguro y rápido.`,
     orderUrl: paymentUrl,
     customButtonText: "⚡ Completar Compra Ahora",
