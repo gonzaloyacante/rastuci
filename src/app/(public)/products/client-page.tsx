@@ -1,9 +1,11 @@
 "use client";
 
+import { SlidersHorizontal, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
+import { MobileFiltersSheet } from "@/components/products/MobileFiltersSheet";
 import ProductCard from "@/components/products/ProductCard";
 import {
   ActiveFilterChips,
@@ -17,13 +19,6 @@ import {
   ViewModeToggle,
 } from "@/components/products/ProductListComponents";
 import { Button } from "@/components/ui/Button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useCategories } from "@/hooks/useCategories";
 import { SORT_OPTIONS as SORT_OPTIONS_BASE } from "@/lib/constants";
@@ -61,6 +56,7 @@ export default function ProductsPageClient({
 
   // Local states
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.buscar || "");
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.categoria || ""
@@ -331,7 +327,7 @@ export default function ProductsPageClient({
         </div>
 
         {/* Mobile & Tablet Layout */}
-        <div className="lg:hidden space-y-4">
+        <div className="lg:hidden space-y-3">
           {/* Search Bar */}
           <SearchInput
             value={searchInput}
@@ -339,61 +335,55 @@ export default function ProductsPageClient({
             onSearch={handleSearch}
           />
 
-          {/* Filters Row */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <Select
-                value={selectedCategory || "__all__"}
-                onValueChange={(value) =>
-                  handleCategoryChange(value === "__all__" ? "" : value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todas las categorías</SelectItem>
-                  {categoryOptions
-                    .filter((option) => option.value !== "")
-                    .map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <Select
-                value={sortValue}
-                onValueChange={(value) => handleSortChange(value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Ordenar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Filter & Sort Row */}
+          <div className="flex items-center gap-2">
+            {/* Filtrar button with active count badge */}
+            <button
+              onClick={() => setFiltersOpen(true)}
+              className={`flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                hasActiveFilters
+                  ? "bg-primary text-white border-primary shadow-sm"
+                  : "surface border-muted text-base-secondary hover:border-primary hover:text-primary"
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Filtrar</span>
+              {hasActiveFilters && (
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/25 text-[11px] font-bold leading-none">
+                  {filterChips.length}
+                </span>
+              )}
+            </button>
+
+            {/* Sort pills – horizontal scroll */}
+            <div className="flex gap-2 overflow-x-auto flex-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleSortChange(option.value)}
+                  className={`shrink-0 px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200 whitespace-nowrap ${
+                    sortValue === option.value
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "surface border-muted text-base-secondary hover:border-primary hover:text-primary"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Active Filters */}
+          {/* Active Filters chips */}
           {hasActiveFilters && (
             <div className="flex items-center gap-2 flex-wrap">
               <ActiveFilterChips chips={filterChips} />
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={clearFilters}
-                className="text-xs"
+                className="inline-flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors"
               >
+                <X className="w-3 h-3" />
                 Limpiar todo
-              </Button>
+              </button>
             </div>
           )}
 
@@ -406,6 +396,24 @@ export default function ProductsPageClient({
           {/* Products */}
           {renderProducts(true)}
         </div>
+
+        {/* Mobile Filters Bottom Sheet */}
+        <MobileFiltersSheet
+          isOpen={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          searchValue={searchInput}
+          onSearchChange={setSearchInput}
+          onSearch={handleSearch}
+          categoryOptions={categoryOptions}
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange}
+          sortOptions={SORT_OPTIONS}
+          sortValue={sortValue}
+          onSortChange={handleSortChange}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={clearFilters}
+          onApply={() => setCurrentPage(1)}
+        />
       </div>
     </div>
   );

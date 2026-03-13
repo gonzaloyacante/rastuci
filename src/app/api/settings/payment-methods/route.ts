@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -116,6 +117,8 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
       requiresShipping: r.requiresShipping,
     }));
 
+    revalidatePath("/checkout");
+    revalidatePath("/");
     return NextResponse.json({ success: true, data });
   } catch (error) {
     if (error instanceof z.ZodError) {

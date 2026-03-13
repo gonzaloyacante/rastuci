@@ -100,7 +100,7 @@ export function OptimizedImage({
     return (
       <div
         ref={imgRef}
-        className={`relative overflow-hidden flex flex-col items-center justify-center bg-muted/10 ${className}`}
+        className="relative overflow-hidden flex flex-col items-center justify-center bg-muted/10"
         style={
           fill
             ? { position: "absolute", inset: 0 }
@@ -132,7 +132,7 @@ export function OptimizedImage({
   return (
     <div
       ref={imgRef}
-      className={`relative overflow-hidden ${className}`}
+      className="relative overflow-hidden"
       style={fill ? { width: "100%", height: "100%" } : undefined}
     >
       {isInView && (

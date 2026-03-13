@@ -256,7 +256,7 @@ export default function ProductImageGallery({
                 variant="ghost"
                 aria-label={`Seleccionar imagen ${index + 1} de ${productName}`}
                 aria-current={index === selectedImage ? "true" : "false"}
-                className={`relative w-20 h-20 rounded-lg shrink-0 transition-all duration-200 focus:outline-none bg-neutral-100 dark:bg-neutral-800 p-0 h-auto min-h-0 min-w-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
+                className={`relative w-20 h-20 rounded-lg shrink-0 transition-all duration-200 focus:outline-none bg-neutral-100 dark:bg-neutral-800 p-0 min-h-0 min-w-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
                   index === selectedImage
                     ? "ring-2 ring-primary ring-offset-2 ring-offset-surface"
                     : "opacity-70 hover:opacity-100 hover:ring-1 hover:ring-theme"
