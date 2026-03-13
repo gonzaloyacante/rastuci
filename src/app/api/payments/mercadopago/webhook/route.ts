@@ -1,5 +1,6 @@
 // Helper to notify admin/customer - could be moved to notification-service too
 import { order_items, orders, products } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { ok } from "@/lib/apiResponse";
@@ -196,6 +197,10 @@ export async function POST(
     // 6. Post-Processing (Shipment & Notification)
     if (result && result.order) {
       const { order, shouldShip } = result;
+
+      // Invalidate admin cache so new/updated order appears immediately
+      revalidatePath("/admin/orders");
+      revalidatePath(`/admin/orders/${result.order.id}`);
 
       if (shouldShip) {
         try {
