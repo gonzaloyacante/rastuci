@@ -16,6 +16,7 @@ import { Suspense, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useCart } from "@/context/CartContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface OrderInfo {
   id: string;
@@ -171,7 +172,7 @@ function CheckoutSuccessContent() {
                   <span className="block mt-1">
                     Total:{" "}
                     <span className="font-semibold">
-                      ${orderInfo.total.toFixed(2)}
+                      {formatCurrency(orderInfo.total)}
                     </span>
                   </span>
                 )}
@@ -262,7 +263,7 @@ function CheckoutSuccessContent() {
                       Costo de envío:
                     </span>
                     <span className="muted">
-                      ${orderInfo.shippingCost.toFixed(2)}
+                      {formatCurrency(orderInfo.shippingCost)}
                     </span>
                   </div>
                 )}

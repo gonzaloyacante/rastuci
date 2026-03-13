@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Spinner } from "@/components/ui/Spinner";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/utils";
 import { OrderStatus } from "@/types";
 
 interface OrderHistoryEvent {
@@ -605,10 +606,10 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
               </div>
               <div className="text-right">
                 <p className="font-semibold">
-                  ${(item.price * item.quantity).toFixed(2)}
+                  {formatCurrency(item.price * item.quantity)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  ${item.price.toFixed(2)} c/u
+                  {formatCurrency(item.price)} c/u
                 </p>
               </div>
             </div>
@@ -616,7 +617,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
         </div>
         <div className="flex justify-between items-center pt-4 border-t">
           <span className="font-semibold">Total</span>
-          <span className="text-2xl font-bold">${order.total.toFixed(2)}</span>
+          <span className="text-2xl font-bold">
+            {formatCurrency(order.total)}
+          </span>
         </div>
       </div>
 
