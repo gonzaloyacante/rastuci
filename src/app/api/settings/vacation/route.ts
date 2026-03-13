@@ -14,14 +14,17 @@ export async function GET() {
     if (!settings) {
       // Return default disabled state if not found
       return NextResponse.json({
-        enabled: false,
-        title: "Modo Vacaciones",
-        message: "Estamos de vacaciones.",
-        showEmailCollection: true,
+        success: true,
+        data: {
+          enabled: false,
+          title: "Modo Vacaciones",
+          message: "Estamos de vacaciones.",
+          showEmailCollection: true,
+        },
       });
     }
 
-    return NextResponse.json(settings);
+    return NextResponse.json({ success: true, data: settings });
   } catch (error) {
     logger.error("[Settings API] Error fetching vacation settings:", { error });
     return NextResponse.json(
@@ -70,7 +73,7 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
     // This will be handled in a separate 'toggle' endpoint or integrated here logic later
     // For now, simple update.
 
-    return NextResponse.json(settings);
+    return NextResponse.json({ success: true, data: settings });
   } catch (error) {
     logger.error("[Settings API] Error updating vacation settings:", { error });
     return NextResponse.json(

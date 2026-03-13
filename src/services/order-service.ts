@@ -702,23 +702,18 @@ export class OrderService {
       }
 
       // 5. Incrementar usageCount del cupón (atómico, dentro de la transacción)
+      // Usa un UPDATE condicional en una sola query para evitar race conditions:
+      // dos checkouts simultáneos con el mismo cupón de un solo uso no pueden pasar ambos.
       if (coupon) {
-        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
-        const currentCoupon = await tx.coupons.findUnique({
-          where: { id: coupon.id },
-          select: { usageCount: true, usageLimit: true },
-        });
-        if (
-          currentCoupon &&
-          currentCoupon.usageLimit !== null &&
-          currentCoupon.usageCount >= currentCoupon.usageLimit
-        ) {
+        const affected = await tx.$executeRaw`
+          UPDATE coupons
+          SET "usageCount" = "usageCount" + 1
+          WHERE id = ${coupon.id}
+            AND ("usageLimit" IS NULL OR "usageCount" < "usageLimit")
+        `;
+        if (affected === 0) {
           throw new Error("El cupón ha alcanzado su límite de usos");
         }
-        await tx.coupons.update({
-          where: { id: coupon.id },
-          data: { usageCount: { increment: 1 } },
-        });
       }
 
       return { newOrder, emailContext };

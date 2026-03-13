@@ -76,6 +76,14 @@ export function useApi<T = unknown>(
         const result = await response.json();
 
         // Handle API response format
+        // If the server explicitly returned success: false, treat it as an error
+        if (result.success === false) {
+          const errorMessage = result.error ?? "Error al cargar datos";
+          setError(errorMessage);
+          onError?.(errorMessage);
+          return;
+        }
+
         let finalData: T;
         if (result.success && result.data !== undefined) {
           finalData = transform ? transform(result.data) : result.data;

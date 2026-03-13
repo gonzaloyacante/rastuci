@@ -1,19 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * Constant-time string comparison to prevent timing attacks
- */
-function timingSafeStringEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return result === 0;
-}
-
 export function applySecurityHeaders(response: NextResponse, nonce: string) {
   // Content Security Policy — nonce + strict-dynamic based
   const csp = [
@@ -62,86 +48,76 @@ export function applySecurityHeaders(response: NextResponse, nonce: string) {
 }
 
 export function csrfProtection(request: NextRequest) {
-  // Skip CSRF for GET, HEAD, OPTIONS
+  // Skip CSRF for GET, HEAD, OPTIONS (safe/idempotent methods)
   if (["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     return null;
   }
 
   const pathname = request.nextUrl.pathname;
 
-  // Rutas que SIEMPRE están exentas de CSRF y Validación de Origin (Ej: Webhooks externos)
-  const strictlyPublicRoutes = [
-    "/api/payments", // Webhooks de MercadoPago (external, signature-validated)
-    "/api/webhooks", // Webhooks externos (external)
-    "/api/auth", // Autenticación (NextAuth maneja su propio CSRF)
+  // Rutas externas/integrations: totalmente exentas de CSRF y validación de Origin.
+  // Estas rutas usan su propio mecanismo de seguridad (firmas, NextAuth CSRF, etc.)
+  const externalRoutes = [
+    "/api/payments", // Webhooks de MercadoPago (signature-validated)
+    "/api/webhooks", // Webhooks externos (firm-validated)
+    "/api/auth", // Autenticación (NextAuth maneja su propio CSRF interno)
+    "/api/mobile", // Clientes nativos (no browser, usan auth token propio)
   ];
 
-  if (strictlyPublicRoutes.some((route) => pathname.startsWith(route))) {
+  if (externalRoutes.some((route) => pathname.startsWith(route))) {
     return null;
   }
 
-  // Rutas públicas de Guest Flow o Read-Only
-  const publicApiRoutes = [
-    "/api/shipping", // Cálculo de envío (público, read-only)
-    "/api/checkout", // Proceso de checkout (guest, no session)
-    "/api/contact", // Formulario de contacto (guest)
-    "/api/products", // Catálogo de productos (público, read-only)
-    "/api/categories", // Categorías (público, read-only)
-    "/api/orders", // Creación de pedidos (guest checkout flow)
-    "/api/coupons", // Validación de cupones (guest)
-    "/api/cms", // Contenido CMS público (read-only)
-    "/api/home", // Página de inicio (read-only)
-    "/api/health", // Health check (read-only)
-    "/api/ready", // Ready check (read-only)
-    "/api/reviews", // Reseñas (guest con orderId)
-    "/api/search", // Búsqueda (público, read-only)
-  ];
+  // Todas las demás rutas API (públicas, autenticadas, admin) usan validación
+  // Origin/Referer como protección CSRF stateless.
+  // Para rutas autenticadas la seguridad adicional viene de:
+  //   - Cookie de sesión HttpOnly + SameSite (middleware + withAdminAuth)
+  //   - Validación de rol en cada handler
+  // La validación de Origin es la capa CSRF; la autenticación es la capa de autorización.
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const host = request.headers.get("host");
 
-  const isPublicRoute = publicApiRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  if (isPublicRoute) {
-    // Mitigación CSRF sin estado para rutas públicas: Validación estricta de Origin/Referer
-    const origin = request.headers.get("origin");
-    const referer = request.headers.get("referer");
-    // host will be like 'localhost:3000' or 'rastuci.com'
-    const host = request.headers.get("host");
-
-    if (origin || referer) {
-      const sourceUrl = new URL(origin || referer || "");
+  if (origin) {
+    try {
+      const sourceUrl = new URL(origin);
       if (sourceUrl.host !== host) {
         return NextResponse.json(
-          { success: false, error: "CSRF: Origin mismatch on guest flow" },
+          { success: false, error: "CSRF: Origin mismatch" },
           { status: 403 }
         );
       }
-    } else {
-      // Browsers siempre envían origin/referer en peticiones fetch/xhr mutacionales.
-      // Si no hay, bloqueamos por seguridad.
+    } catch {
       return NextResponse.json(
-        { success: false, error: "CSRF: Missing Origin header" },
+        { success: false, error: "CSRF: Invalid Origin header" },
         { status: 403 }
       );
     }
-
-    return null; // Pasó la validación de Origin
-  }
-
-  const token =
-    request.headers.get("x-csrf-token") ||
-    request.cookies.get("csrf-token")?.value;
-
-  const sessionToken = request.cookies.get("session-csrf")?.value;
-
-  if (!token || !sessionToken || !timingSafeStringEqual(token, sessionToken)) {
+  } else if (referer) {
+    try {
+      const sourceUrl = new URL(referer);
+      if (sourceUrl.host !== host) {
+        return NextResponse.json(
+          { success: false, error: "CSRF: Referer mismatch" },
+          { status: 403 }
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "CSRF: Invalid Referer header" },
+        { status: 403 }
+      );
+    }
+  } else {
+    // Los browsers siempre envían Origin o Referer en peticiones fetch/xhr mutacionales.
+    // Peticiones sin ninguno de los dos son sospechosas (no browser) o indican un bug.
     return NextResponse.json(
-      { success: false, error: "CSRF token inválido" },
+      { success: false, error: "CSRF: Missing Origin/Referer header" },
       { status: 403 }
     );
   }
 
-  return null;
+  return null; // Pasó la validación de Origin/Referer
 }
 
 export function generateCSRFToken(): string {

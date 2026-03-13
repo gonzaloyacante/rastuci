@@ -64,7 +64,8 @@ export default function VacationSettingsForm() {
     async function load() {
       try {
         const res = await fetch("/api/settings/vacation");
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.success ? json.data : json;
         // Determine proper date format or obj
         form.reset({
           ...data,
@@ -135,35 +136,63 @@ export default function VacationSettingsForm() {
   const confirmEndVacation = async () => {
     form.setValue("enabled", false);
     setShowEndDialog(false);
+    setIsSaving(true);
 
-    // Process submit immediately
-    await form.handleSubmit(onSubmit)();
+    try {
+      const formData = form.getValues();
+      const payload = {
+        ...formData,
+        enabled: false,
+        startDate: formData.startDate
+          ? new Date(formData.startDate).toISOString()
+          : null,
+        endDate: formData.endDate
+          ? new Date(formData.endDate).toISOString()
+          : null,
+      };
 
-    if (notifySubscribers) {
-      // Trigger notify endpoint
-      try {
-        // We need periodId... but API finds active period.
-        // Actually, Toggle endpoint CLOSES the period.
-        // Notify endpoint needs periodId.
-        // We might need to fetch the just-closed period ID or ask backend to do it.
-        // Backend Toggle logic closes active period.
-        // It's safer if Backend handles notification OR we fetch period ID first.
-        // Complex.
-        // Strategy: Toggle endpoint closes it. Then we call Notify API?
-        // But Notify API needs periodId.
-        // Revised: Toggle endpoint returns the periodId it closed?
-        // Or simplistic: Notify API finds "latest closed period" if no ID provided?
-        // Let's assume we implement "Notify Latest" logic or fetch history.
-        // For now, let's just toast "Recordá notificar a los usuarios desde el historial" if complicated.
-        // Or simpler: Toggle endpoint accepts "notify: true"? No, separation of concerns.
+      const res = await fetch("/api/settings/vacation/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-        toast({
-          title: "Vacaciones finalizadas",
-          message:
-            "No olvides notificar a los suscriptores desde el Historial.",
-          type: "info",
+      if (!res.ok) throw new Error("Error al guardar");
+
+      const json = await res.json();
+      const closedPeriodId: string | null = json.closedPeriodId ?? null;
+
+      if (notifySubscribers && closedPeriodId) {
+        const notifyRes = await fetch("/api/settings/vacation/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ periodId: closedPeriodId }),
         });
-      } catch (_e) {}
+        const notifyData = await notifyRes.json();
+        toast({
+          type: "success",
+          title: "Vacaciones finalizadas",
+          message: notifyData.sent
+            ? `Se notificaron ${notifyData.sent} suscriptores.`
+            : "Período finalizado. No había suscriptores pendientes.",
+        });
+      } else {
+        toast({
+          type: "success",
+          title: "Vacaciones finalizadas",
+          message: "La tienda está abierta nuevamente.",
+        });
+      }
+    } catch (e) {
+      logger.error("Error ending vacation", { error: e });
+      form.setValue("enabled", true); // revert on error
+      toast({
+        type: "error",
+        title: "Error",
+        message: "No se pudo finalizar el período de vacaciones.",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -211,7 +240,7 @@ export default function VacationSettingsForm() {
                 <Input
                   {...form.register("title")}
                   placeholder="Modo Vacaciones"
-                  disabled={!isEnabled && false}
+                  disabled={!isEnabled}
                 />
                 {form.formState.errors.title && (
                   <p className="text-error text-xs">
@@ -225,7 +254,7 @@ export default function VacationSettingsForm() {
                 <Input
                   {...form.register("message")}
                   placeholder="Estamos descansando..."
-                  disabled={!isEnabled && false}
+                  disabled={!isEnabled}
                 />
                 {form.formState.errors.message && (
                   <p className="text-error text-xs">

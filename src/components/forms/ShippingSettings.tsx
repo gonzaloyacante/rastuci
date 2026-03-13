@@ -184,7 +184,7 @@ export default function ShippingSettings() {
                 handleAddressChange("postalCode", e.target.value)
               }
               placeholder="1611"
-              maxLength={4}
+              maxLength={10}
             />
           </div>
         </div>

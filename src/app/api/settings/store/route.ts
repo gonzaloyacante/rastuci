@@ -36,7 +36,10 @@ function dbToApiFormat(
     adminEmail: s?.adminEmail ?? defaultStoreSettings.adminEmail,
     address: {
       streetName: s?.addressStreet ?? defaultStoreSettings.address.streetName,
-      streetNumber: defaultStoreSettings.address.streetNumber,
+      streetNumber:
+        s?.addressStreetNumber ?? defaultStoreSettings.address.streetNumber,
+      floor: s?.addressFloor ?? defaultStoreSettings.address.floor,
+      apartment: s?.addressApartment ?? defaultStoreSettings.address.apartment,
       city: s?.addressCity ?? defaultStoreSettings.address.city,
       provinceCode:
         s?.addressProvince ?? defaultStoreSettings.address.provinceCode,
@@ -179,6 +182,9 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
           supportEmail: data.emails?.supportEmail || null,
           senderName: data.emails?.senderName || null,
           addressStreet: data.address?.streetName || null,
+          addressStreetNumber: data.address?.streetNumber || null,
+          addressFloor: data.address?.floor || null,
+          addressApartment: data.address?.apartment || null,
           addressCity: data.address?.city || null,
           addressProvince: data.address?.provinceCode || null,
           addressPostalCode: data.address?.postalCode || null,
@@ -195,7 +201,7 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
           bankAlias: data.payments?.bankAlias || null,
           bankHolder: data.payments?.bankHolder || null,
           bankCuit: data.payments?.bankCuit || null,
-          couponsEnabled: data.payments?.couponsEnabled ?? true,
+          couponsEnabled: data.payments?.couponsEnabled ?? false,
           updatedAt: new Date(),
         },
         create: {
@@ -206,6 +212,9 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
           supportEmail: data.emails?.supportEmail || null,
           senderName: data.emails?.senderName || null,
           addressStreet: data.address?.streetName || null,
+          addressStreetNumber: data.address?.streetNumber || null,
+          addressFloor: data.address?.floor || null,
+          addressApartment: data.address?.apartment || null,
           addressCity: data.address?.city || null,
           addressProvince: data.address?.provinceCode || null,
           addressPostalCode: data.address?.postalCode || null,
@@ -222,7 +231,7 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
           bankAlias: data.payments?.bankAlias || null,
           bankHolder: data.payments?.bankHolder || null,
           bankCuit: data.payments?.bankCuit || null,
-          couponsEnabled: data.payments?.couponsEnabled ?? true,
+          couponsEnabled: data.payments?.couponsEnabled ?? false,
         },
       });
 

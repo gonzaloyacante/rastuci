@@ -38,6 +38,8 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
     const { enabled, title, message, showEmailCollection, startDate, endDate } =
       parsed.data;
 
+    let closedPeriodId: string | null = null;
+
     await prisma.$transaction(async (tx) => {
       // 1. Update ALL settings (not just enabled/dates)
       await tx.vacation_settings.upsert({
@@ -76,18 +78,24 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
           },
         });
       } else {
-        // ENDING VACATION
+        // ENDING VACATION — find the open period first so we can return its ID
+        const openPeriod = await tx.vacation_period.findFirst({
+          where: { endAt: null },
+          orderBy: { startAt: "desc" },
+        });
+
         await tx.vacation_period.updateMany({
           where: { endAt: null },
           data: { endAt: new Date() },
         });
+
+        closedPeriodId = openPeriod?.id ?? null;
       }
     });
 
-    // Revalidate so the public layout picks up the change immediately
-    revalidateTag("vacation-settings", "max");
+    revalidateTag("vacation-settings", "default");
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, closedPeriodId });
   } catch (error) {
     logger.error("[Toggle API] Error toggling vacation mode:", { error });
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
