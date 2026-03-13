@@ -184,6 +184,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 3. Process Payment Logic (Split by Method)
 
     // 3. Process Payment Logic (Split by Method)
+
+    // Validate static shipping option price against DB (prevent client-side price manipulation)
+    // CA options (ca-*) use real-time pricing; pickup is always 0.
+    let resolvedShippingPrice = shippingMethod?.price ?? orderData.shippingCost;
+    if (
+      shippingMethod?.id &&
+      shippingMethod.id !== "pickup" &&
+      !shippingMethod.id.startsWith("ca-")
+    ) {
+      const dbShippingOption = await prisma.shipping_options.findFirst({
+        where: { optionId: shippingMethod.id, isActive: true },
+        select: { price: true },
+      });
+      if (dbShippingOption) {
+        const dbPrice = Number(dbShippingOption.price);
+        if (dbPrice !== shippingMethod.price) {
+          logger.warn("[Checkout] Shipping price mismatch — using DB price", {
+            clientPrice: shippingMethod.price,
+            dbPrice,
+            methodId: shippingMethod.id,
+          });
+        }
+        resolvedShippingPrice = dbPrice;
+      }
+    }
+
     const shippingData = {
       street: customer.address,
       city: customer.city,
@@ -192,13 +218,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       agency: body.shippingAgency?.code,
       methodName: shippingMethod?.name || "Correo Argentino",
       // Server-side shipping cost enforcement:
-      // Pickup is always free. For other methods, use the price declared in the
-      // shippingMethod object (client-provided but at least validated via Zod as >= 0).
-      // This prevents orderData.shippingCost from being silently manipulated independently.
-      cost:
-        shippingMethod?.id === "pickup"
-          ? 0
-          : (shippingMethod?.price ?? orderData.shippingCost),
+      // Pickup = 0, static options = validated DB price, CA = client-provided real-time quote.
+      cost: shippingMethod?.id === "pickup" ? 0 : resolvedShippingPrice,
     };
 
     // A) CASH PAYMENT

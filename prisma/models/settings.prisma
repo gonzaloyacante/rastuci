@@ -8,6 +8,8 @@ model store_settings {
   senderName              String?
   addressStreet           String?
   addressStreetNumber     String?
+  addressFloor            String?
+  addressApartment        String?
   addressCity             String?
   addressProvince         String?
   addressPostalCode       String?

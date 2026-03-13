@@ -49,7 +49,13 @@ export class CheckoutService {
       const hasVariants =
         product.product_variants && product.product_variants.length > 0;
 
-      if (hasVariants && item.color && item.size) {
+      if (hasVariants) {
+        if (!item.color || !item.size) {
+          throw new Error(
+            `El producto ${product.name} requiere seleccionar talle y color`
+          );
+        }
+
         const variant = product.product_variants.find(
           (v) => v.color === item.color && v.size === item.size
         );

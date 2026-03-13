@@ -3,7 +3,13 @@ import { z } from "zod";
 export const ContactSettingsSchema = z.object({
   headerTitle: z.string().min(1).max(100),
   headerSubtitle: z.string().min(1).max(240),
-  emails: z.array(z.string().email()).min(1).max(5),
+  emails: z
+    .array(z.string().email())
+    .min(1)
+    .max(5)
+    .refine((arr) => new Set(arr).size === arr.length, {
+      message: "Los emails no pueden estar duplicados",
+    }),
   phones: z.array(z.string().max(30)).min(0).max(5),
   address: z.object({
     lines: z.array(z.string().max(100)).min(1).max(3),
@@ -36,11 +42,26 @@ export const ContactSettingsSchema = z.object({
     .min(0)
     .max(20),
   social: z.object({
-    instagram: z.object({ username: z.string().max(50), url: z.string().max(200) }),
-    facebook: z.object({ username: z.string().max(50), url: z.string().max(200) }),
-    whatsapp: z.object({ username: z.string().max(50), url: z.string().max(200) }),
-    tiktok: z.object({ username: z.string().max(50), url: z.string().max(200) }),
-    youtube: z.object({ username: z.string().max(50), url: z.string().max(200) }),
+    instagram: z.object({
+      username: z.string().max(50),
+      url: z.string().max(200),
+    }),
+    facebook: z.object({
+      username: z.string().max(50),
+      url: z.string().max(200),
+    }),
+    whatsapp: z.object({
+      username: z.string().max(50),
+      url: z.string().max(200),
+    }),
+    tiktok: z.object({
+      username: z.string().max(50),
+      url: z.string().max(200),
+    }),
+    youtube: z.object({
+      username: z.string().max(50),
+      url: z.string().max(200),
+    }),
   }),
 });
 

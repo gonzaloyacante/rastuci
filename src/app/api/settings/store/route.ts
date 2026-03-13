@@ -38,6 +38,8 @@ function dbToApiFormat(
       streetName: s?.addressStreet ?? defaultStoreSettings.address.streetName,
       streetNumber:
         s?.addressStreetNumber ?? defaultStoreSettings.address.streetNumber,
+      floor: s?.addressFloor ?? defaultStoreSettings.address.floor,
+      apartment: s?.addressApartment ?? defaultStoreSettings.address.apartment,
       city: s?.addressCity ?? defaultStoreSettings.address.city,
       provinceCode:
         s?.addressProvince ?? defaultStoreSettings.address.provinceCode,
@@ -181,6 +183,8 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
           senderName: data.emails?.senderName || null,
           addressStreet: data.address?.streetName || null,
           addressStreetNumber: data.address?.streetNumber || null,
+          addressFloor: data.address?.floor || null,
+          addressApartment: data.address?.apartment || null,
           addressCity: data.address?.city || null,
           addressProvince: data.address?.provinceCode || null,
           addressPostalCode: data.address?.postalCode || null,
@@ -209,6 +213,8 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
           senderName: data.emails?.senderName || null,
           addressStreet: data.address?.streetName || null,
           addressStreetNumber: data.address?.streetNumber || null,
+          addressFloor: data.address?.floor || null,
+          addressApartment: data.address?.apartment || null,
           addressCity: data.address?.city || null,
           addressProvince: data.address?.provinceCode || null,
           addressPostalCode: data.address?.postalCode || null,
