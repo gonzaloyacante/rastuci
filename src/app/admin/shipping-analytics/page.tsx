@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { formatCurrency } from "@/lib/utils";
 import { escapeCsvCell } from "@/utils/formatters";
 
 // ============================================================================
@@ -284,7 +285,6 @@ function ProviderComparisonCard({ data }: { data: ShippingAnalyticsData }) {
   const caOrders = data.delivery.totalOrders;
   const caTime = data.delivery.averageDeliveryTime.toFixed(1);
   const caRate = data.delivery.onTimeDeliveryRate.toFixed(1);
-  const caCost = data.delivery.averageShippingCost.toFixed(2);
 
   return (
     <Card>
@@ -299,7 +299,7 @@ function ProviderComparisonCard({ data }: { data: ShippingAnalyticsData }) {
           orders={caOrders}
           avgTime={`${caTime} días`}
           onTimeRate={`${caRate}%`}
-          avgCost={`$${caCost}`}
+          avgCost={formatCurrency(data.delivery.averageShippingCost)}
         />
 
         <div className="mt-6 p-4 bg-primary/10 rounded-lg">

@@ -80,11 +80,9 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
     if (order.shippingAgency && order.shippingProvinceCode && !agencyDetails) {
       const fetchAgency = async () => {
         try {
-          // [H-12] Do NOT hardcode CA customer ID client-side
-          const customerId =
-            process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID ?? "";
+          // Uses server-side /api/shipping/agencies — no client-side CA credentials needed
           const res = await fetch(
-            `/api/shipping/agencies?provinceCode=${order.shippingProvinceCode}&customerId=${customerId}`
+            `/api/shipping/agencies?provinceCode=${order.shippingProvinceCode}`
           );
           if (res.ok) {
             const data = await res.json();

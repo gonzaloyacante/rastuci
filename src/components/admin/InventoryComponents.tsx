@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { formatCurrency } from "@/lib/utils";
 
 // ===== Types =====
 
@@ -249,7 +250,7 @@ export function InventoryTable({
                   {getStatusBadge(item.status)}
                 </td>
                 <td className="p-4 text-center">
-                  ${(item.currentStock * item.unitCost).toFixed(2)}
+                  {formatCurrency(item.currentStock * item.unitCost)}
                 </td>
                 <td className="p-4">
                   <div className="flex items-center justify-center gap-2">

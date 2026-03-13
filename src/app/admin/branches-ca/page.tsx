@@ -20,9 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
-import { useCorreoArgentino } from "@/hooks/useCorreoArgentino";
 import { type ProvinceCode, PROVINCIAS } from "@/lib/constants";
-// import { correoArgentinoService } from "@/lib/correo-argentino-service";
+import type { Agency } from "@/lib/correo-argentino-service";
 import { normalizeAgency, type NormalizedAgency } from "@/utils/agency-helpers";
 import { escapeCsvCell } from "@/utils/formatters";
 
@@ -41,38 +40,35 @@ export default function SucursalesCAPage() {
   );
   const [error, setError] = useState<string | null>(null);
   const { show } = useToast();
-  const { getAgencies } = useCorreoArgentino();
 
-  const loadAgencies = useCallback(
-    async (province: ProvinceCode) => {
-      if (!province) {
-        return;
+  const loadAgencies = useCallback(async (province: ProvinceCode) => {
+    if (!province) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(
+        `/api/shipping/agencies?provinceCode=${province}`
+      );
+      if (!response.ok) {
+        throw new Error(`Error al obtener sucursales: HTTP ${response.status}`);
       }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await getAgencies({
-          customerId:
-            process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID || "",
-          provinceCode: province,
-        });
-
-        if (result) {
-          const normalized = result.map(normalizeAgency);
-          setAgencies(normalized);
-          setFilteredAgencies(normalized);
-        } else {
-          setError("No se pudieron cargar las sucursales");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error desconocido");
-      } finally {
-        setLoading(false);
+      const data = await response.json();
+      if (data.success && Array.isArray(data.agencies)) {
+        const normalized = (data.agencies as Agency[]).map(normalizeAgency);
+        setAgencies(normalized);
+        setFilteredAgencies(normalized);
+      } else {
+        setError(data.error || "No se pudieron cargar las sucursales");
       }
-    },
-    [getAgencies]
-  );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const filterAgencies = useCallback(() => {
     if (searchTerm.trim() === "") {

@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { correoArgentinoService } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 const TrackingQuerySchema = z.object({
   shippingId: z
@@ -12,8 +14,19 @@ const TrackingQuerySchema = z.object({
     .regex(/^[A-Z0-9\-_]+$/i, "ID de envío inválido"),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limit: protege la CA API externa
+    const rl = await checkRateLimit(request, {
+      key: makeKey("GET", "/api/shipping/tracking"),
+      ...getPreset("mutatingLow"),
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { success: false, error: "Demasiados intentos. Intentá más tarde." },
+        { status: 429 }
+      );
+    }
     const { searchParams } = new URL(request.url);
 
     const parsed = TrackingQuerySchema.safeParse({
