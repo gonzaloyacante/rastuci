@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getToken } from "next-auth/jwt";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
@@ -43,8 +42,11 @@ export async function GET(
   try {
     const { code: trackingCode } = await params;
     // [C-02] Require authentication - endpoint exposes PII (customerAddress)
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const session = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+    if (!session) {
       return NextResponse.json<ApiResponse<null>>(
         { success: false, message: "No autorizado", data: null },
         { status: 401 }
@@ -73,6 +75,7 @@ export async function GET(
         trackingNumber: true,
         caTrackingNumber: true,
         customerAddress: true,
+        customerEmail: true,
         updatedAt: true,
       },
     });
@@ -85,6 +88,16 @@ export async function GET(
           data: null,
         },
         { status: 404 }
+      );
+    }
+
+    // [C-02] Verify ownership: only the order owner or an admin can see PII
+    const isAuthorized =
+      session.isAdmin || session.email === order.customerEmail;
+    if (!isAuthorized) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "No autorizado", data: null },
+        { status: 403 }
       );
     }
 

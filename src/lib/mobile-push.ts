@@ -1,4 +1,5 @@
 // Servicio de notificaciones push para móvil
+import { formatCurrency } from "@/lib/utils";
 
 interface PushNotificationPayload {
   title: string;
@@ -27,48 +28,49 @@ export class MobilePushService {
   ): Promise<boolean> {
     try {
       const statusEmojis: Record<string, string> = {
-        'pending': '📦',
-        'in-transit': '🚚',
-        'out-for-delivery': '🚛',
-        'delivered': '✅',
-        'delayed': '⏰',
-        'error': '❌',
+        pending: "📦",
+        "in-transit": "🚚",
+        "out-for-delivery": "🚛",
+        delivered: "✅",
+        delayed: "⏰",
+        error: "❌",
       };
 
-      const emoji = statusEmojis[status] || '📦';
+      const emoji = statusEmojis[status] || "📦";
       const title = `${emoji} Actualización de envío`;
-      const body = statusMessage || `Tu pedido #${orderId} está ${this.getStatusLabel(status)}`;
+      const body =
+        statusMessage ||
+        `Tu pedido #${orderId} está ${this.getStatusLabel(status)}`;
 
       const payload: PushNotificationPayload = {
         title,
         body,
         data: {
-          type: 'tracking_update',
+          type: "tracking_update",
           orderId,
           trackingCode,
           status,
         },
-        sound: 'default',
+        sound: "default",
         badge: 1,
       };
 
       const response = await fetch(`${this.apiUrl}/register`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...target,
           title: payload.title,
           message: payload.body,
           data: payload.data,
-          priority: 'high',
+          priority: "high",
         }),
       });
 
       const result = await response.json();
       return result.success && result.data?.sent;
-
     } catch {
       return false;
     }
@@ -82,34 +84,33 @@ export class MobilePushService {
   ): Promise<boolean> {
     try {
       const payload: PushNotificationPayload = {
-        title: '🎉 ¡Pedido confirmado!',
-        body: `Tu pedido #${orderId} por $${total.toFixed(2)} ha sido confirmado`,
+        title: "🎉 ¡Pedido confirmado!",
+        body: `Tu pedido #${orderId} por ${formatCurrency(total)} ha sido confirmado`,
         data: {
-          type: 'order_created',
+          type: "order_created",
           orderId,
           total: total.toString(),
         },
-        sound: 'default',
+        sound: "default",
         badge: 1,
       };
 
       const response = await fetch(`${this.apiUrl}/register`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...target,
           title: payload.title,
           message: payload.body,
           data: payload.data,
-          priority: 'high',
+          priority: "high",
         }),
       });
 
       const result = await response.json();
       return result.success && result.data?.sent;
-
     } catch {
       return false;
     }
@@ -127,30 +128,29 @@ export class MobilePushService {
         title: `🔥 ${title}`,
         body: message,
         data: {
-          type: 'promotion',
-          promotionId: promotionId || '',
+          type: "promotion",
+          promotionId: promotionId || "",
         },
-        sound: 'default',
+        sound: "default",
         badge: 1,
       };
 
       const response = await fetch(`${this.apiUrl}/register`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...target,
           title: payload.title,
           message: payload.body,
           data: payload.data,
-          priority: 'normal',
+          priority: "normal",
         }),
       });
 
       const result = await response.json();
       return result.success && result.data?.sent;
-
     } catch {
       return false;
     }
@@ -159,15 +159,15 @@ export class MobilePushService {
   // Registrar token de dispositivo
   async registerDevice(
     token: string,
-    platform: 'ios' | 'android' | 'web',
+    platform: "ios" | "android" | "web",
     customerEmail?: string,
     deviceId?: string
   ): Promise<boolean> {
     try {
       const response = await fetch(`${this.apiUrl}/register`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           token,
@@ -179,7 +179,6 @@ export class MobilePushService {
 
       const result = await response.json();
       return result.success && result.data?.registered;
-
     } catch {
       return false;
     }
@@ -194,22 +193,21 @@ export class MobilePushService {
     try {
       const params = new URLSearchParams();
       if (customerEmail) {
-        params.append('customerEmail', customerEmail);
+        params.append("customerEmail", customerEmail);
       }
       if (deviceId) {
-        params.append('deviceId', deviceId);
+        params.append("deviceId", deviceId);
       }
       if (token) {
-        params.append('token', token);
+        params.append("token", token);
       }
 
       const response = await fetch(`${this.apiUrl}/register?${params}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       const result = await response.json();
       return result.success && result.data?.unregistered;
-
     } catch {
       return false;
     }
@@ -223,10 +221,10 @@ export class MobilePushService {
     try {
       const params = new URLSearchParams();
       if (customerEmail) {
-        params.append('customerEmail', customerEmail);
+        params.append("customerEmail", customerEmail);
       }
       if (deviceId) {
-        params.append('deviceId', deviceId);
+        params.append("deviceId", deviceId);
       }
 
       const response = await fetch(`${this.apiUrl}/register?${params}`);
@@ -237,7 +235,6 @@ export class MobilePushService {
       }
 
       return { registered: false };
-
     } catch {
       return { registered: false };
     }
@@ -245,12 +242,12 @@ export class MobilePushService {
 
   private getStatusLabel(status: string): string {
     const statusLabels: Record<string, string> = {
-      'pending': 'siendo preparado',
-      'in-transit': 'en tránsito',
-      'out-for-delivery': 'en reparto',
-      'delivered': 'entregado',
-      'delayed': 'retrasado',
-      'error': 'con problemas',
+      pending: "siendo preparado",
+      "in-transit": "en tránsito",
+      "out-for-delivery": "en reparto",
+      delivered: "entregado",
+      delayed: "retrasado",
+      error: "con problemas",
     };
 
     return statusLabels[status] || status;
@@ -264,11 +261,16 @@ export const mobilePushService = new MobilePushService();
 export function useMobilePush() {
   const registerDevice = async (
     token: string,
-    platform: 'ios' | 'android' | 'web',
+    platform: "ios" | "android" | "web",
     customerEmail?: string,
     deviceId?: string
   ) => {
-    return mobilePushService.registerDevice(token, platform, customerEmail, deviceId);
+    return mobilePushService.registerDevice(
+      token,
+      platform,
+      customerEmail,
+      deviceId
+    );
   };
 
   const unregisterDevice = async (
