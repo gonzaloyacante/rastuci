@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import {
@@ -6,6 +6,8 @@ import {
   type ProvinceCode,
 } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimiter";
+import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 const VALID_PROVINCE_CODES = [
   "A",
@@ -42,8 +44,24 @@ const AgenciesQuerySchema = z.object({
     .optional(),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limit: protege la CA API externa
+    const rl = await checkRateLimit(request, {
+      key: makeKey("GET", "/api/shipping/agencies"),
+      ...getPreset("publicRead"),
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Demasiados intentos. Intentá más tarde.",
+          agencies: [],
+        },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const parsed = AgenciesQuerySchema.safeParse({

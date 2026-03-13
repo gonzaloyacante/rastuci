@@ -501,13 +501,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       }
 
       try {
-        const customerId =
-          // [H-12] Do NOT hardcode CA customer ID client-side. The server-side
-          // API has access to process.env.CORREO_ARGENTINO_CUSTOMER_ID (private).
-          // NEXT_PUBLIC_ vars are only set if explicitly configured in Vercel.
-          process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID ?? "";
         const response = await fetch(
-          `/api/shipping/agencies?provinceCode=${provinceCode}&customerId=${customerId}`
+          `/api/shipping/agencies?provinceCode=${provinceCode}`
         );
 
         if (!response.ok) {

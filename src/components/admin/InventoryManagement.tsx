@@ -25,6 +25,7 @@ import {
 } from "@/components/admin/InventoryComponents";
 import { useToast } from "@/components/ui/Toast";
 import useDebounce from "@/hooks/useDebounce";
+import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types";
 
 export function InventoryManagement() {
@@ -172,7 +173,7 @@ export function InventoryManagement() {
             icon={<TrendingUp className="w-8 h-8" />}
             iconColor="text-success"
             label="Valor Total"
-            value={`$${stats.totalValue.toFixed(2)}`}
+            value={formatCurrency(stats.totalValue)}
           />
           <StatCard
             icon={<AlertTriangle className="w-8 h-8" />}
