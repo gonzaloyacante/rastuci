@@ -11,6 +11,7 @@ import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { useCart } from "@/context/CartContext";
 import { useComparison } from "@/context/ComparisonContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { formatCurrency } from "@/lib/utils";
 
 // Extended product type for comparison features
 type ProductWithExtras = Record<string, unknown> & {
@@ -39,7 +40,11 @@ export function ProductComparison() {
   };
 
   const comparisonFeatures = [
-    { key: "price", label: "Precio", format: (value: number) => `$${value}` },
+    {
+      key: "price",
+      label: "Precio",
+      format: (value: number) => formatCurrency(value),
+    },
     { key: "category", label: "Categoría" },
     { key: "brand", label: "Marca" },
     {

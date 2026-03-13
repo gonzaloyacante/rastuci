@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useDocumentTitle } from "@/hooks";
 import { type Order, useOrders } from "@/hooks/useOrders";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/utils";
 import { escapeCsvCell } from "@/utils/formatters";
 
 type StatusFilter =
@@ -80,8 +81,6 @@ const timeAgo = (dateString: string) => {
   if (minutes > 0) return `hace ${minutes} min`;
   return "recién";
 };
-
-const formatCurrency = (value: number) => `$${value.toLocaleString("es-AR")}`;
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {

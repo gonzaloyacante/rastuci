@@ -8,6 +8,7 @@ import { MetricsSkeleton } from "@/components/admin/skeletons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { formatCurrency } from "@/lib/utils";
 
 // ============================================================================
 // Types
@@ -91,7 +92,7 @@ type FormatType = "currency" | "number" | "percentage" | "days";
 function formatValue(value: number, format: FormatType): string {
   switch (format) {
     case "currency":
-      return `$${value.toLocaleString("es-AR")}`;
+      return formatCurrency(value);
     case "percentage":
       return `${value}%`;
     case "days":
@@ -294,7 +295,7 @@ function RecentActivity({ activities }: RecentActivityProps) {
     if (activity.value === undefined) return null;
     if (activity.type === "review") return `${activity.value}★`;
     if (activity.type === "order")
-      return `$${activity.value.toLocaleString("es-AR")}`;
+      return formatCurrency(activity.value as number);
     return activity.value;
   };
 
@@ -439,7 +440,7 @@ export default function MetricasPage() {
           />
           <MiniStat
             label={dashboard.shippingMetrics.shippingCost.label}
-            value={`$${dashboard.shippingMetrics.shippingCost.value.toLocaleString("es-AR")}`}
+            value={formatCurrency(dashboard.shippingMetrics.shippingCost.value)}
           />
         </SectionCard>
 
@@ -455,7 +456,9 @@ export default function MetricasPage() {
           />
           <MiniStat
             label={dashboard.customerMetrics.customerLifetimeValue.label}
-            value={`$${dashboard.customerMetrics.customerLifetimeValue.value.toLocaleString("es-AR")}`}
+            value={formatCurrency(
+              dashboard.customerMetrics.customerLifetimeValue.value
+            )}
           />
         </SectionCard>
 

@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { DURATION, SLIDE_IN_LEFT } from "@/lib/animations";
+import { formatCurrency } from "@/lib/utils";
 
 // ==============================================================================
 // TYPES
@@ -486,7 +487,7 @@ export function ActiveFiltersBadges({
           let displayValue = "";
           if (Array.isArray(value)) {
             if (typeof value[0] === "number") {
-              displayValue = `$${value[0].toLocaleString()} - $${value[1].toLocaleString()}`;
+              displayValue = `${formatCurrency(value[0])} - ${formatCurrency(value[1] as number)}`;
             } else {
               displayValue = value.join(", ");
             }

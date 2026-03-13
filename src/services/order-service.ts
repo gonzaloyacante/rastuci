@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { emailService } from "@/lib/resend";
 import { getStoreSettings } from "@/lib/store-settings";
+import { formatCurrency } from "@/lib/utils";
 import { MercadoPagoPayer, OrderItemInput } from "@/types";
 
 export interface OrderMetadata {
@@ -600,7 +601,7 @@ export class OrderService {
           itemsTotal < coupon.minOrderTotal
         ) {
           throw new Error(
-            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+            `El monto mínimo para usar este cupón es ${formatCurrency(Number(coupon.minOrderTotal))}`
           );
         }
         if (coupon.discountType === "PERCENTAGE") {
@@ -929,7 +930,7 @@ export class OrderService {
           itemsTotal < coupon.minOrderTotal
         ) {
           throw new Error(
-            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+            `El monto mínimo para usar este cupón es ${formatCurrency(Number(coupon.minOrderTotal))}`
           );
         }
         if (coupon.discountType === "PERCENTAGE") {
@@ -1192,7 +1193,7 @@ export class OrderService {
           itemsTotal < coupon.minOrderTotal
         ) {
           throw new Error(
-            `El monto mínimo para usar este cupón es $${coupon.minOrderTotal}`
+            `El monto mínimo para usar este cupón es ${formatCurrency(Number(coupon.minOrderTotal))}`
           );
         }
         if (coupon.discountType === "PERCENTAGE") {
