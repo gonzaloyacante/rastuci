@@ -103,6 +103,31 @@
 
 ## 6. 🤖 Flujo de Trabajo para el Agente
 
+### 🚨 REGLA DE ORO — FLUJO DE RAMAS (NUNCA VIOLAR)
+
+> **JAMÁS** hacer commits de bugfixes, features o cambios de código directamente en `main`. `main` =
+> producción. Solo recibe merges desde `develop` tras verificación completa.
+
+```
+Flujo obligatorio:
+  1. git checkout develop          # Siempre trabajar en develop
+  2. git pull origin develop       # Sincronizar antes de empezar
+  3. [hacer cambios + commits]
+  4. pnpm verify                   # Verificar ANTES del merge
+  5. git checkout main && git merge develop --no-ff
+  6. git push origin main
+  7. git push origin develop       # Mantener develop sincronizado
+```
+
+**Reglas adicionales:**
+
+- Cada tarea nueva = nueva rama feature si es grande: `git checkout -b feat/nombre`
+- Hotfixes críticos de producción = rama `hotfix/nombre` desde `main`, merge en `main` Y `develop`
+- `pnpm prisma db push` en develop primero, luego en producción (`.env.production`)
+- **Migraciones de DB**: Aplicar SIEMPRE en ambos entornos (dev + prod) para evitar discrepancias
+
+### Workflow estándar
+
 1.  **Seguridad Primero**:
     - Si tocas lógica de pagos o checkout, pide revisión doble.
     - Verifica que tus cambios no rompan la calculadora de envíos.

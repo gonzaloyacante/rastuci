@@ -1,4 +1,5 @@
 import { OrderStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
@@ -51,6 +52,9 @@ export const POST = withAdminAuth(
       });
 
       logger.info(`[Admin] Approved transfer for order ${orderId}`);
+
+      revalidatePath("/admin/orders");
+      revalidatePath(`/admin/orders/${orderId}`);
 
       // TODO: Send Email "Payment Received"
 

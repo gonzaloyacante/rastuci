@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
@@ -101,6 +102,9 @@ export const PATCH = withAdminAuth(
           logger.error("[Admin] Failed to send shipped email", { emailError });
         }
       }
+      revalidatePath("/admin/orders");
+      revalidatePath(`/admin/orders/${orderId}`);
+
       return ok({
         order: updatedOrder,
         message: "Pedido marcado como procesado exitosamente",

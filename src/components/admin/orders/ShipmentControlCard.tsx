@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import { useCorreoArgentino } from "@/hooks/useCorreoArgentino";
 import type {
-  ProvinceCode,
   TrackingErrorResponse,
   TrackingInfo,
 } from "@/lib/correo-argentino-service";
@@ -25,13 +24,10 @@ export function ShipmentControlCard({
   onOrderUpdate,
 }: ShipmentControlCardProps) {
   const { show } = useToast();
-  const {
-    getTracking,
-    importShipment,
-    loading: caLoading,
-  } = useCorreoArgentino();
+  const { getTracking } = useCorreoArgentino();
   const [loadingTracking, setLoadingTracking] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [trackingInfo, setTrackingInfo] = useState<
     TrackingInfo | TrackingInfo[] | TrackingErrorResponse | null
   >(null);
@@ -130,88 +126,22 @@ export function ShipmentControlCard({
 
     if (!confirm("¿Confirmar creación de envío en Correo Argentino?")) return;
 
+    setImporting(true);
     try {
-      // Calculate dynamic weight and dimensions from products if available, fallback to defaults
-      // Uses 1kg / 10x20x30 as maximum fallback if absolutely nothing was set.
-      const totalWeight =
-        (order.items || []).reduce(
-          (sum, item) => sum + item.quantity * (item.product?.weight || 1000),
-          0
-        ) || 1000;
-
-      const height = Math.max(
-        10,
-        ...(order.items || []).map((i) => i.product?.height || 10)
-      );
-      const width = Math.max(
-        20,
-        ...(order.items || []).map((i) => i.product?.width || 20)
-      );
-      const lengthAccum = (order.items || []).reduce(
-        (sum, item) => sum + item.quantity * (item.product?.length || 30),
-        0
-      );
-      const finalLength = Math.max(lengthAccum, 30); // Minimum sum length 30cm
-
-      const shipmentData = {
-        customerId: process.env.NEXT_PUBLIC_CORREO_ARGENTINO_CUSTOMER_ID || "",
-        extOrderId: order.id,
-        recipient: {
-          name: order.customerName,
-          phone: order.customerPhone,
-          // Evitamos mandar data hardcodeada falsa (M-27)
-          email:
-            order.customerEmail ||
-            process.env.NEXT_PUBLIC_STORE_SUPPORT_EMAIL ||
-            "info@rastuci.com",
-        },
-        shipping: {
-          deliveryType:
-            order.shippingMethod === "S" ? ("S" as const) : ("D" as const),
-          productType: "CP",
-          agency: order.shippingAgency,
-          address: {
-            streetName: order.shippingStreet ?? undefined,
-            streetNumber: order.shippingNumber || "SN",
-            floor: order.shippingFloor ?? undefined,
-            apartment: order.shippingApartment ?? undefined,
-            city: order.shippingCity ?? undefined,
-            provinceCode: (order.shippingProvince as ProvinceCode) ?? undefined,
-            postalCode: order.shippingPostalCode ?? undefined,
-          },
-          weight: totalWeight,
-          height: height,
-          width: width,
-          length: finalLength,
-          declaredValue: order.total,
-        },
-      };
-
-      const result = await importShipment(shipmentData);
-
-      if (result) {
-        const shipmentId =
-          result.shipmentId || result.id || result.trackingNumber;
-
-        await fetch(`/api/orders/${order.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            caTrackingNumber: result.trackingNumber,
-            caShipmentId: shipmentId,
-            caExtOrderId: order.id,
-          }),
-        });
-
-        onOrderUpdate({
-          caTrackingNumber: result.trackingNumber,
-          caShipmentId: shipmentId,
-          caExtOrderId: order.id,
-        });
-
+      const res = await fetch(`/api/admin/orders/${order.id}/retry-ca-import`, {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (json.success) {
         show({
           type: "success",
           message: "Envío importado correctamente en Correo Argentino",
+        });
+        onOrderUpdate(json.data.order);
+      } else {
+        show({
+          type: "error",
+          message: json.error || "Error al importar envío",
         });
       }
     } catch (err) {
@@ -220,12 +150,15 @@ export function ShipmentControlCard({
         type: "error",
         message: "Error al importar envío en Correo Argentino",
       });
+    } finally {
+      setImporting(false);
     }
   };
 
   // Logic needed for retrying
   const handleRetryImport = async () => {
     if (!confirm("¿Reintentar envío a Correo Argentino?")) return;
+    setImporting(true);
     try {
       const res = await fetch(`/api/admin/orders/${order.id}/retry-ca-import`, {
         method: "POST",
@@ -239,6 +172,8 @@ export function ShipmentControlCard({
       }
     } catch (_e) {
       show({ type: "error", message: "Error de conexión" });
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -335,9 +270,9 @@ export function ShipmentControlCard({
                     ? handleRetryImport
                     : handleImportShipment
                 }
-                disabled={caLoading}
+                disabled={importing}
               >
-                {caLoading ? (
+                {importing ? (
                   <RefreshCw size={16} className="mr-2 animate-spin" />
                 ) : (
                   <Send size={16} className="mr-2" />

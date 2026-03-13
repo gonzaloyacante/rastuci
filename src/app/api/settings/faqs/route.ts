@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -97,6 +98,7 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
       },
     });
 
+    revalidatePath("/contacto");
     return NextResponse.json({ success: true, data: faqs });
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -110,6 +111,7 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
       estimatedDays: r.estimatedDays,
     }));
 
+    revalidatePath("/checkout");
     return NextResponse.json({ success: true, data });
   } catch (error) {
     if (error instanceof z.ZodError) {

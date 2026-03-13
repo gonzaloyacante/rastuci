@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
@@ -93,6 +94,9 @@ export const PATCH = withAdminAuth(
           });
         }
       }
+
+      revalidatePath("/admin/orders");
+      revalidatePath(`/admin/orders/${orderId}`);
 
       return ok({
         order: updatedOrder,

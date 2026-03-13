@@ -1,4 +1,5 @@
 import { OrderStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -81,6 +82,9 @@ export async function POST(
       transactionId,
       userId: session.user.id,
     });
+
+    revalidatePath("/admin/orders");
+    revalidatePath(`/admin/orders/${orderId}`);
 
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error) {
