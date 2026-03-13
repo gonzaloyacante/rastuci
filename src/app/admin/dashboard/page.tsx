@@ -27,6 +27,7 @@ import {
 import { DashboardSkeleton } from "@/components/admin/skeletons";
 import { useDashboard } from "@/hooks";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { formatCurrency } from "@/lib/utils";
 
 const quickActions: QuickAction[] = [
   {
@@ -89,7 +90,7 @@ export default function AdminDashboard() {
     {
       icon: DollarSign,
       label: "Ingresos",
-      value: `$${(stats?.totalRevenue || 0).toLocaleString("es-AR")}`,
+      value: formatCurrency(stats?.totalRevenue || 0),
       change: stats?.changes?.revenue,
       color: "amber",
     },

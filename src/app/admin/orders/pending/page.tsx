@@ -7,6 +7,7 @@ import { OrdersSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/utils";
 import { Order } from "@/types";
 
 export default function PendingOrdersPage() {
@@ -55,10 +56,6 @@ export default function PendingOrdersPage() {
     } catch (error) {
       logger.error("Error al actualizar pedido:", { error: error });
     }
-  };
-
-  const formatCurrency = (value: number) => {
-    return `$${value.toLocaleString("es-AR")}`;
   };
 
   const formatDate = (dateString: string | Date) => {

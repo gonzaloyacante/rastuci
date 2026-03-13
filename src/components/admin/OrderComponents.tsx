@@ -2,7 +2,7 @@
 
 // import { Badge } from "@/components/ui/Badge";
 // import { cn } from "@/lib/utils";
-// import { formatCurrency, formatDate } from "@/utils/formatters";
+// import { formatDate } from "@/utils/formatters";
 import {
   LucideIcon,
   // Calendar,
@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/Toast";
 // import { Card, CardContent } from "@/components/ui/Card";
 // Removed unused Select imports
 import { ORDER_STATUS } from "@/lib/constants";
+import { formatCurrency as defaultFormatCurrency } from "@/utils/formatters";
 
 // ============================================================================
 // Status Badge System
@@ -143,10 +144,6 @@ const defaultFormatDate = (dateString: string) => {
     hour: "2-digit",
     minute: "2-digit",
   });
-};
-
-const defaultFormatCurrency = (value: number) => {
-  return `$${value.toLocaleString("es-AR")}`;
 };
 
 export function OrderCard({

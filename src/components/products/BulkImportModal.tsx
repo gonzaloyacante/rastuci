@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/Label";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/utils";
 import { ProductBulkUpdateItem } from "@/lib/validation/product";
 
 interface BulkImportModalProps {
@@ -309,7 +310,9 @@ export function BulkImportModal({
                           {item.id}
                         </td>
                         <td className="p-2">
-                          {item.price !== undefined ? `$${item.price}` : "-"}
+                          {item.price !== undefined
+                            ? formatCurrency(item.price)
+                            : "-"}
                         </td>
                         <td className="p-2">
                           {item.stock !== undefined ? item.stock : "-"}

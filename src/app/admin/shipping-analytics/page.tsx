@@ -144,8 +144,8 @@ function OverviewCards({ data }: { data: ShippingAnalyticsData }) {
 
       <MetricCard
         title="Ingresos de Envío"
-        value={`$${data.delivery.totalShippingRevenue}`}
-        subtitle={`Promedio: $${data.delivery.averageShippingCost}`}
+        value={formatCurrency(data.delivery.totalShippingRevenue)}
+        subtitle={`Promedio: ${formatCurrency(data.delivery.averageShippingCost)}`}
       />
     </MetricsGrid>
   );
