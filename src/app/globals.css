@@ -211,24 +211,25 @@ input[type="number"] {
 }
 
 /* Enhanced form styling for dark mode */
-.dark input,
-.dark textarea,
-.dark select {
-  background-color: var(--color-surface) !important;
-  border-color: var(--color-border) !important;
-  color: var(--color-text) !important;
+/* Dark mode form fields - sin !important para que error states puedan sobreescribir */
+.dark input:not(.border-error),
+.dark textarea:not(.border-error),
+.dark select:not(.border-error) {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
 }
 
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-  border-color: var(--color-primary) !important;
-  background-color: var(--color-surface-hover) !important;
+.dark input:not(.border-error):focus,
+.dark textarea:not(.border-error):focus,
+.dark select:not(.border-error):focus {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-hover);
 }
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: var(--color-text-muted) !important;
+  color: var(--color-text-muted);
 }
 
 /* Fix skeleton loading in dark mode */
@@ -1005,4 +1006,25 @@ button:disabled,
 [role="button"][aria-disabled="true"],
 input:disabled {
   cursor: not-allowed;
+}
+
+/* ==========================================================================
+   ERROR STATE UTILITIES — high specificity to override cascade in TW v4
+   ========================================================================== */
+@layer utilities {
+  .border-error {
+    border-color: #dc2626 !important;
+  }
+
+  .focus\:border-error:focus {
+    border-color: #dc2626 !important;
+  }
+
+  .text-error {
+    color: #dc2626;
+  }
+
+  .ring-error-600 {
+    --tw-ring-color: #dc2626;
+  }
 }

@@ -64,10 +64,6 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       newErrors.name = "El nombre es requerido";
     }
 
-    if (!formData.description.trim()) {
-      newErrors.description = "La descripción es requerida";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -117,7 +113,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
             htmlFor="description"
             className="block text-sm font-medium text-content-primary mb-2"
           >
-            Descripción *
+            Descripción
           </label>
           <textarea
             id="description"

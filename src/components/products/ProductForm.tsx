@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
-  CheckCircle,
   DollarSign,
   Eye,
   FileText,
@@ -16,9 +15,7 @@ import {
   Ruler,
   Save,
   Tag,
-  TrendingUp,
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -35,21 +32,20 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
+import { usePriceInput } from "@/hooks/usePriceInput";
 import { logger } from "@/lib/logger";
 import { Product, ProductVariant } from "@/types";
-import { getColorHex } from "@/utils/colors";
 import { formatPriceARS } from "@/utils/formatters";
+import { validateProductData } from "@/utils/validateProductData";
 
 import ImageUploadZone from "./ImageUploadZone";
 import {
   ColorPicker,
   FeatureManager,
   HelpTooltip,
-  PlaceholderImage,
-  // ProductPreviewBadges,
   SizeManager,
-  // StockIndicator,
 } from "./ProductFormComponents";
+import ProductPreview from "./ProductPreview";
 import SizeGuideEditor, { SizeGuideData } from "./SizeGuideEditor";
 import VariantManager from "./VariantManager";
 
@@ -171,6 +167,104 @@ const numericPasteHandler = (e: React.ClipboardEvent<HTMLInputElement>) => {
 };
 
 // ==============================================================================
+// FORM HELPERS (extracted to keep component methods under complexity limits)
+// ==============================================================================
+
+function parseProductImages(images: Product["images"]): string[] {
+  if (Array.isArray(images)) return images as string[];
+  if (typeof images === "string") return JSON.parse(images) as string[];
+  return [];
+}
+
+function calcDiscountPercentage(
+  price: number,
+  salePrice: number | null | undefined
+): number | null {
+  return salePrice && price
+    ? Math.round(((price - salePrice) / price) * 100)
+    : null;
+}
+
+function buildInitialResetValues(
+  d: Product,
+  discountPercentage: number | null
+): Partial<ProductFormValues> {
+  return {
+    name: d.name,
+    description: d.description || "",
+    price: d.price,
+    discountPercentage,
+    stock: d.stock,
+    categoryId: d.categoryId,
+    onSale: d.onSale || false,
+    weight: d.weight || null,
+    height: d.height || null,
+    width: d.width || null,
+    length: d.length || null,
+    sizeGuide: d.sizeGuide as unknown as Record<string, unknown>,
+  };
+}
+
+function buildImageOptions(
+  productImages: string[],
+  colorImages: Record<string, string[]>
+) {
+  return {
+    images:
+      productImages.length > 0
+        ? productImages
+        : Object.values(colorImages).flat(),
+    colorImages: Object.keys(colorImages).length > 0 ? colorImages : undefined,
+  };
+}
+
+function buildOptionalPayloadFields(
+  sizes: string[],
+  colors: string[],
+  features: string[],
+  variants: ProductVariant[]
+) {
+  return {
+    sizes: sizes.length > 0 ? sizes : undefined,
+    colors: colors.length > 0 ? colors : undefined,
+    features: features.length > 0 ? features : undefined,
+    variants: variants.length > 0 ? variants : undefined,
+  };
+}
+
+function buildProductData(
+  data: ProductFormValues,
+  productImages: string[],
+  colorImages: Record<string, string[]>,
+  totalVariantStock: number,
+  sizes: string[],
+  colors: string[],
+  features: string[],
+  variants: ProductVariant[]
+) {
+  const salePrice =
+    data.discountPercentage && data.discountPercentage > 0
+      ? data.price * (1 - data.discountPercentage / 100)
+      : null;
+  return {
+    name: data.name.trim(),
+    description: data.description?.trim() ?? null,
+    price: Number(data.price),
+    salePrice: salePrice ? Number(salePrice) : null,
+    stock: totalVariantStock,
+    categoryId: data.categoryId.trim(),
+    ...buildImageOptions(productImages, colorImages),
+    onSale: (data.discountPercentage ?? 0) > 0,
+    ...buildOptionalPayloadFields(sizes, colors, features, variants),
+    weight: data.weight ?? null,
+    height: data.height ?? null,
+    width: data.width ?? null,
+    length: data.length ?? null,
+    sizeGuide: data.sizeGuide,
+  };
+}
+
+// ==============================================================================
 // MAIN COMPONENT
 // ==============================================================================
 export default function ProductForm({
@@ -210,6 +304,11 @@ export default function ProductForm({
     reset,
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
+    defaultValues: {
+      stock: 0,
+      categoryId: "",
+      discountPercentage: null,
+    },
   });
 
   const watchPrice = watch("price");
@@ -224,23 +323,20 @@ export default function ProductForm({
   // onSale es automático: si hay descuento > 0, está en oferta
   const isOnSale = (watchDiscountPercentage ?? 0) > 0;
 
-  // Price input state for locale formatting
-  const [priceInput, setPriceInput] = useState<string>(
-    watchPrice !== undefined && watchPrice !== null
-      ? formatPriceARS(Number(watchPrice))
-      : ""
-  );
+  // Price input con formato ARS
+  const {
+    priceInput,
+    handlePriceFocus,
+    handlePriceChange,
+    handlePriceKeyDown,
+    handlePricePaste,
+    handlePriceBlur,
+  } = usePriceInput(watchPrice, setValue, "price");
 
   // Initialize form with initial data
   useEffect(() => {
     if (initialData) {
-      const parsedImages = Array.isArray(initialData.images)
-        ? initialData.images
-        : typeof initialData.images === "string"
-          ? JSON.parse(initialData.images)
-          : [];
-
-      setProductImages(parsedImages);
+      setProductImages(parseProductImages(initialData.images));
       // Cargar imágenes por color si existen
       setColorImages(initialData.colorImages || {});
       setColors(initialData.colors || []);
@@ -248,55 +344,28 @@ export default function ProductForm({
       setFeatures(initialData.features || []);
       // Ensure variants are mapped correctly if they come from DB
       setVariants(initialData.variants || []);
-
-      const discountPercentage =
-        initialData.salePrice && initialData.price
-          ? Math.round(
-              ((initialData.price - initialData.salePrice) /
-                initialData.price) *
-                100
-            )
-          : null;
-
-      reset({
-        name: initialData.name,
-        description: initialData.description || "",
-        price: initialData.price,
-        discountPercentage,
-        stock: initialData.stock,
-        categoryId: initialData.categoryId,
-        onSale: initialData.onSale || false,
-        weight: initialData.weight || null,
-        height: initialData.height || null,
-        width: initialData.width || null,
-        length: initialData.length || null,
-        sizeGuide: initialData.sizeGuide as unknown as Record<string, unknown>,
-      });
+      setSelectedCategoryId(initialData.categoryId ?? "");
+      const discountPercentage = calcDiscountPercentage(
+        initialData.price,
+        initialData.salePrice
+      );
+      reset(buildInitialResetValues(initialData, discountPercentage));
     }
   }, [initialData, reset]);
 
-  // Sync price input when watchPrice changes
-  useEffect(() => {
-    if (watchPrice !== undefined && watchPrice !== null) {
-      setPriceInput(formatPriceARS(Number(watchPrice)));
-    }
-  }, [watchPrice]);
-
   // Auto-update total stock when variants change (optional convenience)
   useEffect(() => {
-    if (variants.length > 0) {
-      const totalVariantStock = variants.reduce(
-        (acc, v) => acc + (v.stock || 0),
-        0
-      );
-      // Auto-update main stock field when variants change
-      setValue("stock", totalVariantStock, { shouldValidate: true });
-    }
+    const totalVariantStock = variants.reduce(
+      (acc, v) => acc + (v.stock || 0),
+      0
+    );
+    // Auto-update main stock field when variants change
+    setValue("stock", totalVariantStock, { shouldValidate: true });
   }, [variants, setValue]);
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
-    setValue("categoryId", categoryId);
+    setValue("categoryId", categoryId, { shouldValidate: true });
   };
 
   const calculatedSalePrice =
@@ -308,172 +377,27 @@ export default function ProductForm({
     try {
       setLoading(true);
 
-      // ============================================================================
-      // VALIDACIONES EXHAUSTIVAS ANTES DEL SUBMIT
-      // ============================================================================
-
-      // 1. Validar nombre
-      if (!data.name || data.name.trim().length < 3) {
-        show({
-          type: "error",
-          message: "El nombre debe tener al menos 3 caracteres",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // 2. Validar precio
-      if (!data.price || data.price <= 0 || isNaN(data.price)) {
-        show({ type: "error", message: "El precio debe ser mayor a 0" });
-        setLoading(false);
-        return;
-      }
-
-      // 3. Validar que haya variantes con stock (stock se calcula automáticamente)
-      // 3. (VALIDACIÓN DE STOCK ELIMINADA POR FEEDBACK: PERMITIR STOCK 0)
-
-      // 4. Validar categoría
-      if (!data.categoryId || data.categoryId.trim() === "") {
-        show({ type: "error", message: "Debes seleccionar una categoría" });
-        setLoading(false);
-        return;
-      }
-
-      // 5. Validar imágenes - DEBE tener al menos una imagen (global o por color)
-      // Si tiene imágenes por color, no exigimos globales obligatoriamente, pero mejor si.
-      // Mantengamos validación simple: debe haber alguna imagen en total.
-      const hasGlobalImages = productImages && productImages.length > 0;
-      const hasColorImages = Object.values(colorImages).some(
-        (imgs) => imgs && imgs.length > 0
+      const validationError = validateProductData(
+        data,
+        productImages,
+        colorImages
       );
-
-      if (!hasGlobalImages && !hasColorImages) {
-        show({
-          type: "error",
-          message: "Debes subir al menos una imagen del producto",
-        });
+      if (validationError) {
+        show({ type: "error", message: validationError });
         setLoading(false);
         return;
       }
 
-      // 6. Validar que todas las imágenes sean URLs válidas
-      const invalidImages = productImages.filter(
-        (img) => !img || typeof img !== "string" || img.trim() === ""
+      const productData = buildProductData(
+        data,
+        productImages,
+        colorImages,
+        totalVariantStock,
+        sizes,
+        colors,
+        features,
+        variants
       );
-      if (invalidImages.length > 0) {
-        show({
-          type: "error",
-          message: "Hay imágenes inválidas. Por favor, vuelve a subirlas.",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // 7. Validar dimensiones si están presentes
-      if (data.weight !== null && data.weight !== undefined) {
-        if (
-          !Number.isInteger(data.weight) ||
-          data.weight < 1 ||
-          data.weight > 30000
-        ) {
-          show({
-            type: "error",
-            message: "El peso debe ser un número entero entre 1 y 30000 gramos",
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      if (data.height !== null && data.height !== undefined) {
-        if (
-          !Number.isInteger(data.height) ||
-          data.height < 1 ||
-          data.height > 150
-        ) {
-          show({
-            type: "error",
-            message: "La altura debe ser un número entero entre 1 y 150 cm",
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      if (data.width !== null && data.width !== undefined) {
-        if (
-          !Number.isInteger(data.width) ||
-          data.width < 1 ||
-          data.width > 150
-        ) {
-          show({
-            type: "error",
-            message: "El ancho debe ser un número entero entre 1 y 150 cm",
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      if (data.length !== null && data.length !== undefined) {
-        if (
-          !Number.isInteger(data.length) ||
-          data.length < 1 ||
-          data.length > 150
-        ) {
-          show({
-            type: "error",
-            message: "El largo debe ser un número entero entre 1 y 150 cm",
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      // 8. Validar descuento
-      if (
-        data.discountPercentage !== null &&
-        data.discountPercentage !== undefined
-      ) {
-        if (data.discountPercentage < 0 || data.discountPercentage > 100) {
-          show({
-            type: "error",
-            message: "El descuento debe estar entre 0 y 100%",
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      const salePrice =
-        data.discountPercentage && data.discountPercentage > 0
-          ? data.price * (1 - data.discountPercentage / 100)
-          : null;
-
-      const productData = {
-        name: data.name.trim(),
-        description: data.description?.trim() || null,
-        price: Number(data.price),
-        salePrice: salePrice ? Number(salePrice) : null,
-        stock: totalVariantStock,
-        categoryId: data.categoryId.trim(),
-        images:
-          productImages.length > 0
-            ? productImages
-            : Object.values(colorImages).flat(), // Backfill with all color images if no globals
-        colorImages:
-          Object.keys(colorImages).length > 0 ? colorImages : undefined,
-        onSale: (data.discountPercentage ?? 0) > 0,
-        sizes: sizes && sizes.length > 0 ? sizes : undefined,
-        colors: colors && colors.length > 0 ? colors : undefined,
-        features: features && features.length > 0 ? features : undefined,
-        weight: data.weight || null,
-        height: data.height || null,
-        width: data.width || null,
-        length: data.length || null,
-        variants: variants && variants.length > 0 ? variants : undefined,
-        sizeGuide: data.sizeGuide,
-      };
 
       // DEBUG: Log completo de lo que se está enviando
       logger.info("Enviando datos del producto:", {
@@ -527,56 +451,6 @@ export default function ProductForm({
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Price input handlers
-  const handlePriceFocus = () => {
-    if (watchPrice !== undefined && watchPrice !== null) {
-      setPriceInput(String(Number(watchPrice)));
-    }
-  };
-
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    const filtered = String(raw).replace(/[^0-9.,]/g, "");
-    setPriceInput(filtered);
-
-    const noThousands = filtered.replace(/\./g, "");
-    const normalized = noThousands.replace(/,/, ".");
-    const parsed = parseFloat(normalized);
-
-    if (!isNaN(parsed)) {
-      setValue("price", parsed, { shouldValidate: true, shouldDirty: true });
-    } else if (filtered.trim() === "") {
-      setValue("price", 0, { shouldValidate: false });
-    }
-  };
-
-  const handlePriceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const allowed = [
-      "Backspace",
-      "Tab",
-      "ArrowLeft",
-      "ArrowRight",
-      "Delete",
-      "Home",
-      "End",
-    ];
-    if (allowed.includes(e.key)) return;
-    if (!/^[0-9.,]$/.test(e.key)) e.preventDefault();
-  };
-
-  const handlePricePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const paste = e.clipboardData?.getData("text") || "";
-    if (!/^[0-9.,\s]+$/.test(paste)) e.preventDefault();
-  };
-
-  const handlePriceBlur = () => {
-    if (watchPrice !== undefined && watchPrice !== null) {
-      setPriceInput(formatPriceARS(Number(watchPrice)));
-    } else {
-      setPriceInput("");
     }
   };
 
@@ -683,7 +557,10 @@ export default function ProductForm({
                     onValueChange={handleCategoryChange}
                     disabled={loading}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="categoryId"
+                      className={errors.categoryId ? "border-error" : ""}
+                    >
                       <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1057,264 +934,6 @@ export default function ProductForm({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-// ==============================================================================
-// ProductPreview - Componente de vista previa extraído
-// ==============================================================================
-interface ProductPreviewProps {
-  images: string[];
-  name?: string;
-  category?: string;
-  description?: string;
-  price: number;
-  salePrice: number | null;
-  discountPercentage?: number | null;
-  onSale?: boolean;
-  stock: number;
-  features: string[];
-  sizes: string[];
-  colors: string[];
-  colorImages?: Record<string, string[]>;
-}
-
-function ProductPreview({
-  images,
-  name,
-  category,
-  description,
-  price,
-  salePrice,
-  discountPercentage,
-  onSale,
-  stock,
-  features,
-  sizes,
-  colors,
-  colorImages,
-}: ProductPreviewProps) {
-  const [selectedPreviewColor, setSelectedPreviewColor] = useState<
-    string | null
-  >(null);
-
-  // Imagen principal:
-  // 1. Si hay color seleccionado y tiene imagen, mostrar esa.
-  // 2. Si no, combinar todas las imágenes de colores y mostrar la primera.
-  const allColorImages = useMemo(() => {
-    return Object.values(colorImages || {}).flat();
-  }, [colorImages]);
-
-  const displayImages = useMemo(() => {
-    // Si hay un color seleccionado, priorizar sus imagenes
-    if (selectedPreviewColor && colorImages?.[selectedPreviewColor]?.length) {
-      return colorImages[selectedPreviewColor];
-    }
-    // Si hay imagenes globales (prop images), usarlas (fallback legado)
-    if (images && images.length > 0) return images;
-
-    // Si no, usar todas las imagenes de colores acumuladas
-    if (allColorImages.length > 0) return allColorImages;
-
-    return [];
-  }, [selectedPreviewColor, colorImages, images, allColorImages]);
-
-  const mainImageSrc = displayImages.length > 0 ? displayImages[0] : null;
-
-  return (
-    <div className="bg-surface rounded-lg p-4 sm:p-6 border">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-        {/* Galería de Imágenes */}
-        <div className="space-y-4">
-          {displayImages.length > 0 ? (
-            <>
-              <div className="aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden border-2 border-muted">
-                <Image
-                  key={mainImageSrc || "main"}
-                  src={mainImageSrc!}
-                  alt="Vista previa"
-                  width={500}
-                  height={500}
-                  className="w-full h-full object-contain rounded-lg"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              </div>
-              {displayImages.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
-                  {displayImages.slice(0, 4).map((img, idx) => (
-                    <div
-                      key={`thumb-${idx}`}
-                      className="aspect-square bg-muted rounded overflow-hidden border border-muted hover:border-primary transition-colors"
-                    >
-                      <Image
-                        src={img}
-                        alt={`Miniatura ${idx + 1}`}
-                        width={100}
-                        height={100}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <PlaceholderImage className="aspect-square" />
-          )}
-        </div>
-
-        {/* Información del Producto */}
-        <div className="space-y-5">
-          <div>
-            <p className="text-xs sm:text-sm uppercase tracking-wide text-muted-foreground mb-2">
-              Categoría: {category || "No seleccionada"}
-            </p>
-            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">
-              {name || "Nombre del producto"}
-            </h3>
-          </div>
-
-          {/* Stock - Simplificado sin validación subjetiva */}
-          <div className="flex items-center gap-2">
-            {stock > 0 ? (
-              <span className="text-sm font-semibold text-success flex items-center gap-1">
-                <CheckCircle className="h-4 w-4" />
-                En Stock ({stock})
-              </span>
-            ) : (
-              <span className="text-sm font-semibold muted flex items-center gap-1">
-                Sin Stock
-              </span>
-            )}
-
-            {onSale && (
-              <span className="text-sm font-bold text-error flex items-center gap-1">
-                <TrendingUp className="h-4 w-4" />
-                OFERTA
-              </span>
-            )}
-          </div>
-
-          {/* Precio */}
-          <div className="space-y-2 py-4 border-y border-muted">
-            {discountPercentage && discountPercentage > 0 && salePrice ? (
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-success">
-                    {formatPriceARS(Number(salePrice))}
-                  </span>
-                  <span className="bg-error text-white px-2.5 py-1 rounded-lg text-xs sm:text-sm font-bold">
-                    -{discountPercentage}% OFF
-                  </span>
-                </div>
-                <span className="text-base sm:text-lg text-muted-foreground line-through">
-                  {formatPriceARS(price)}
-                </span>
-                <p className="text-sm text-success font-medium">
-                  ¡Ahorrás {formatPriceARS(price - Number(salePrice))}!
-                </p>
-              </div>
-            ) : (
-              <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">
-                {formatPriceARS(price)}
-              </span>
-            )}
-          </div>
-
-          <p className="text-primary/90 leading-relaxed">
-            {description || "Descripción del producto aparecerá aquí..."}
-          </p>
-
-          {features.length > 0 && (
-            <div className="bg-surface-secondary p-4 rounded-lg">
-              <p className="font-semibold mb-2 flex items-center gap-2">
-                <List className="h-4 w-4" />
-                Características
-              </p>
-              <ul className="space-y-1.5">
-                {features.map((feature, index) => (
-                  <li
-                    key={`feat-${index}`}
-                    className="flex items-start gap-2 text-sm"
-                  >
-                    <span className="text-success mt-1">✓</span>
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {sizes.length > 0 && (
-            <div>
-              <p className="font-semibold mb-2 flex items-center gap-2">
-                <Ruler className="h-4 w-4" />
-                Talles Disponibles
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map((size, index) => (
-                  <span
-                    key={`size-${index}`}
-                    className="px-4 py-2 border-2 border-muted rounded-lg text-sm font-medium hover:border-primary transition-colors"
-                  >
-                    {size}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {colors.length > 0 && (
-            <div>
-              <p className="font-semibold mb-2 flex items-center gap-2">
-                <Palette className="h-4 w-4" />
-                Colores Disponibles
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {colors.map((color, index) => {
-                  const colorImg = colorImages?.[color]?.[0];
-                  return (
-                    <div
-                      key={`color-${index}`}
-                      className={`relative group w-10 h-10 rounded-lg border-2 overflow-hidden cursor-pointer transition-all ${selectedPreviewColor === color ? "border-primary ring-2 ring-primary/30" : "border-muted hover:border-primary"}`}
-                      title={`${color} (Click para ver)`}
-                      onClick={() => setSelectedPreviewColor(color)}
-                    >
-                      {colorImg ? (
-                        <Image
-                          src={colorImg}
-                          alt={color}
-                          fill
-                          sizes="40px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div
-                          className="w-full h-full"
-                          style={{ backgroundColor: getColorHex(color) }}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-        <p className="text-sm text-muted-foreground flex items-start gap-2">
-          <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-          <span>
-            Esta es una vista previa de cómo se verá el producto en la tienda.
-            Verifica que toda la información sea correcta antes de guardar.
-          </span>
-        </p>
       </div>
     </div>
   );
