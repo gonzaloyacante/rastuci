@@ -152,7 +152,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               leftPadding,
               rightPadding,
               // Error state
-              error && "border-error focus:border-error focus:ring-error/20",
+              error &&
+                "border-error focus:border-error focus:ring-error-600/20",
               // Custom classes
               className
             )}

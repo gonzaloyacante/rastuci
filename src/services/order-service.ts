@@ -34,6 +34,22 @@ export type OrderUpdateData = {
   mappedStatus: OrderStatus;
 };
 
+type ValidatedOrderItem = {
+  productId: string;
+  quantity: number;
+  price: number;
+  originalPrice: number;
+  size?: string;
+  color?: string;
+};
+
+type CouponInput = {
+  id: string;
+  discount: number;
+  discountType: string;
+  minOrderTotal: number | null;
+};
+
 export class OrderService {
   mapStatus(mpStatus: string): OrderStatus {
     if (mpStatus === "approved") return ORDER_STATUS.PROCESSED as OrderStatus; // Payment Confirmed -> PROCESSED
@@ -42,6 +58,141 @@ export class OrderService {
     if (mpStatus === "rejected" || mpStatus === "cancelled")
       return ORDER_STATUS.CANCELLED as OrderStatus;
     return ORDER_STATUS.PENDING as OrderStatus;
+  }
+
+  private resolveProvinceCode(province: string | undefined): string | null {
+    if (!province) return null;
+    const normalized = province
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const match = PROVINCIAS.find(
+      (p) =>
+        p.name
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "") === normalized
+    );
+    if (match) return match.code;
+    if (normalized.includes("capital") || normalized.includes("caba"))
+      return "C";
+    return null;
+  }
+
+  private async validateAndPriceItems(
+    tx: Prisma.TransactionClient,
+    items: Array<{
+      productId: string;
+      quantity: number;
+      size?: string;
+      color?: string;
+    }>,
+    discountPercent: number
+  ): Promise<ValidatedOrderItem[]> {
+    const productIds = items.map((i) => i.productId);
+    const dbProducts = await tx.products.findMany({
+      where: { id: { in: productIds } },
+      select: {
+        id: true,
+        price: true,
+        salePrice: true,
+        onSale: true,
+        stock: true,
+        name: true,
+      },
+    });
+    return items.map((item) => {
+      const dbProduct = dbProducts.find((p) => p.id === item.productId);
+      if (!dbProduct)
+        throw new Error(`Producto no encontrado: ${item.productId}`);
+      if (dbProduct.stock < item.quantity) {
+        throw new Error(
+          `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
+        );
+      }
+      const basePrice =
+        dbProduct.onSale && dbProduct.salePrice
+          ? Number(dbProduct.salePrice)
+          : Number(dbProduct.price);
+      const price = Number((basePrice * (1 - discountPercent)).toFixed(2));
+      return {
+        productId: item.productId,
+        quantity: item.quantity,
+        price,
+        originalPrice: basePrice,
+        size: item.size,
+        color: item.color,
+      };
+    });
+  }
+
+  private calculateCouponDiscount(
+    itemsTotal: number,
+    coupon: CouponInput | undefined
+  ): number {
+    if (!coupon) return 0;
+    if (coupon.minOrderTotal !== null && itemsTotal < coupon.minOrderTotal) {
+      throw new Error(
+        `El monto mínimo para usar este cupón es ${formatCurrency(Number(coupon.minOrderTotal))}`
+      );
+    }
+    if (coupon.discountType === "PERCENTAGE") {
+      return Number(((itemsTotal * coupon.discount) / 100).toFixed(2));
+    }
+    return Math.min(coupon.discount, itemsTotal);
+  }
+
+  private async decrementVariantStock(
+    tx: Prisma.TransactionClient,
+    items: ValidatedOrderItem[]
+  ): Promise<void> {
+    for (const item of items) {
+      await tx.products.update({
+        where: { id: item.productId, stock: { gte: item.quantity } },
+        data: { stock: { decrement: item.quantity } },
+      });
+      if (item.color && item.size) {
+        const variantResult = await tx.product_variants.updateMany({
+          where: {
+            productId: item.productId,
+            color: item.color,
+            size: item.size,
+            stock: { gte: item.quantity },
+          },
+          data: { stock: { decrement: item.quantity } },
+        });
+        if (variantResult.count === 0) {
+          const variantExists = await tx.product_variants.findFirst({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+            },
+            select: { stock: true },
+          });
+          if (variantExists !== null) {
+            throw new Error(
+              `Stock insuficiente para la variante ${item.color}/${item.size}`
+            );
+          }
+        }
+      }
+    }
+  }
+
+  private async incrementCouponUsage(
+    tx: Prisma.TransactionClient,
+    couponId: string
+  ): Promise<void> {
+    const affected = await tx.$executeRaw`
+      UPDATE coupons
+      SET "usageCount" = "usageCount" + 1
+      WHERE id = ${couponId}
+        AND ("usageLimit" IS NULL OR "usageCount" < "usageLimit")
+    `;
+    if (affected === 0) {
+      throw new Error("El cupón ha alcanzado su límite de usos");
+    }
   }
 
   async updateOrder(orderId: string, data: OrderUpdateData) {
@@ -500,12 +651,7 @@ export class OrderService {
       methodName?: string;
       cost?: number;
     },
-    coupon?: {
-      id: string;
-      discount: number;
-      discountType: string;
-      minOrderTotal: number | null;
-    }
+    coupon?: CouponInput
   ) {
     const orderId = `ord_${nanoid(10)}`;
     const shippingCost = shippingData?.cost ?? 0;
@@ -515,104 +661,20 @@ export class OrderService {
       hours: settings.payments?.cashExpirationHours || 72,
     });
 
-    interface ValidatedItem {
-      productId: string;
-      quantity: number;
-      price: number;
-      originalPrice: number;
-      size?: string;
-      color?: string;
-    }
-
-    interface EmailContext {
-      validatedItems: ValidatedItem[];
-      dbProducts: Array<{
-        id: string;
-        name: string;
-        price: Prisma.Decimal;
-        salePrice: Prisma.Decimal | null;
-        onSale: boolean;
-        stock: number;
-      }>;
-    }
-
-    let emailContext: EmailContext | null = null;
-
-    const transactionResult = await prisma.$transaction(async (tx) => {
-      // 1. Fetch products
-      const productIds = items.map((i) => i.productId);
-      const dbProducts = await tx.products.findMany({
-        where: { id: { in: productIds } },
-        select: {
-          id: true,
-          price: true,
-          salePrice: true,
-          onSale: true,
-          name: true,
-          stock: true,
-        },
-      });
-
-      // 2. Validate Items & Stock & Apply Discount
-      const validatedItems = items.map((item) => {
-        const dbProduct = dbProducts.find((p) => p.id === item.productId);
-        if (!dbProduct) {
-          throw new Error(`Producto no encontrado: ${item.productId}`);
-        }
-
-        if (dbProduct.stock < item.quantity) {
-          throw new Error(
-            `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
-          );
-        }
-
-        // Price Logic: Base Price -> Apply Discount
-        const basePrice =
-          dbProduct.onSale && dbProduct.salePrice
-            ? Number(dbProduct.salePrice)
-            : Number(dbProduct.price);
-
-        const discountPrice = Number(
-          (basePrice * (1 - discountPercent)).toFixed(2)
-        );
-
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price: discountPrice, // Discounted Price
-          originalPrice: basePrice, // Keep track if possible, but schema doesn't have it on item level explicitly yet (optional)
-          size: item.size,
-          color: item.color,
-        };
-      });
-
-      emailContext = { validatedItems, dbProducts };
+    const order = await prisma.$transaction(async (tx) => {
+      // 1+2. Fetch & validate items (price + stock check)
+      const validatedItems = await this.validateAndPriceItems(
+        tx,
+        items,
+        discountPercent
+      );
 
       const itemsTotal = validatedItems.reduce(
         (sum, i) => sum + Number(i.price) * i.quantity,
         0
       );
 
-      // Aplicar descuento de cupón (calculado server-side, nunca desde el cliente)
-      let couponDiscount = 0;
-      if (coupon) {
-        if (
-          coupon.minOrderTotal !== null &&
-          itemsTotal < coupon.minOrderTotal
-        ) {
-          throw new Error(
-            `El monto mínimo para usar este cupón es ${formatCurrency(Number(coupon.minOrderTotal))}`
-          );
-        }
-        if (coupon.discountType === "PERCENTAGE") {
-          couponDiscount = Number(
-            ((itemsTotal * coupon.discount) / 100).toFixed(2)
-          );
-        } else {
-          couponDiscount = Math.min(coupon.discount, itemsTotal);
-        }
-      }
-
+      const couponDiscount = this.calculateCouponDiscount(itemsTotal, coupon);
       const calculatedTotal = Number(
         (itemsTotal + shippingCost - couponDiscount).toFixed(2)
       );
@@ -638,8 +700,8 @@ export class OrderService {
           total: calculatedTotal,
           shippingCost: shippingCost,
           status: ORDER_STATUS.RESERVED as OrderStatus,
-          paymentMethod: "cash", // Explicit
-          expiresAt: expiresAt, // Expiration
+          paymentMethod: "cash",
+          expiresAt: expiresAt,
           mpPaymentId: null,
           mpPreferenceId: null,
           mpStatus: "cash",
@@ -664,105 +726,34 @@ export class OrderService {
         include: { order_items: { include: { products: true } } },
       });
 
-      // 4. Decrement Stock (Immediate)
-      for (const item of validatedItems) {
-        await tx.products.update({
-          where: {
-            id: item.productId,
-            stock: { gte: item.quantity },
-          },
-          data: { stock: { decrement: item.quantity } },
-        });
-        // Also decrement variant stock if the item specifies a variant
-        if (item.color && item.size) {
-          const variantResult = await tx.product_variants.updateMany({
-            where: {
-              productId: item.productId,
-              color: item.color,
-              size: item.size,
-              stock: { gte: item.quantity },
-            },
-            data: { stock: { decrement: item.quantity } },
-          });
-          if (variantResult.count === 0) {
-            const variantExists = await tx.product_variants.findFirst({
-              where: {
-                productId: item.productId,
-                color: item.color,
-                size: item.size,
-              },
-              select: { stock: true },
-            });
-            if (variantExists !== null) {
-              throw new Error(
-                `Stock insuficiente para la variante ${item.color}/${item.size}`
-              );
-            }
-          }
-        }
-      }
+      // 4. Decrement stock (products + variants)
+      await this.decrementVariantStock(tx, validatedItems);
 
-      // 5. Incrementar usageCount del cupón (atómico, dentro de la transacción)
-      // Usa un UPDATE condicional en una sola query para evitar race conditions:
-      // dos checkouts simultáneos con el mismo cupón de un solo uso no pueden pasar ambos.
-      if (coupon) {
-        const affected = await tx.$executeRaw`
-          UPDATE coupons
-          SET "usageCount" = "usageCount" + 1
-          WHERE id = ${coupon.id}
-            AND ("usageLimit" IS NULL OR "usageCount" < "usageLimit")
-        `;
-        if (affected === 0) {
-          throw new Error("El cupón ha alcanzado su límite de usos");
-        }
-      }
+      // 5. Incrementar usageCount del cupón (atómico)
+      if (coupon) await this.incrementCouponUsage(tx, coupon.id);
 
-      return { newOrder, emailContext };
+      return newOrder;
     });
 
-    const { newOrder: order, emailContext: resultEmailContext } =
-      transactionResult;
-
-    // 6. Emails
-    if (resultEmailContext) {
-      const { validatedItems, dbProducts } = resultEmailContext;
-      if (settings.adminEmail) {
-        // Send alert - could add admin-specific email
-      }
-      // Send Customer Email
-      const emailItems = validatedItems.map(
-        (item: {
-          productId: string;
-          quantity: number;
-          price: number;
-          size?: string;
-          color?: string;
-        }) => {
-          const dbProduct = dbProducts.find(
-            (p: { id: string; name: string }) => p.id === item.productId
-          );
-          return {
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            name: dbProduct?.name || "Producto",
-            size: item.size,
-            color: item.color,
-          };
-        }
-      );
-      // TODO: Use waitUntil() when available in Next.js to ensure email
-      // completes in serverless. For now, void prefix marks this as intentional.
-      void emailService.sendOrderConfirmation(
-        {
-          id: order.id,
-          customerName: order.customerName,
-          customerEmail: order.customerEmail || "",
-          total: Number(order.total),
-        },
-        emailItems
-      );
-    }
+    // 6. Send Customer Email (async, non-blocking)
+    const emailItems = order.order_items.map((oi) => ({
+      productId: oi.productId,
+      quantity: oi.quantity,
+      price: Number(oi.price),
+      name: oi.products?.name ?? "Producto",
+      size: oi.size ?? undefined,
+      color: oi.color ?? undefined,
+    }));
+    // TODO: Use waitUntil() for serverless reliability
+    void emailService.sendOrderConfirmation(
+      {
+        id: order.id,
+        customerName: order.customerName,
+        customerEmail: order.customerEmail || "",
+        total: Number(order.total),
+      },
+      emailItems
+    );
 
     return order;
   }
@@ -851,15 +842,9 @@ export class OrderService {
       cost: number;
     },
     paymentMethod: string = "mercadopago",
-    coupon?: {
-      id: string;
-      discount: number;
-      discountType: string;
-      minOrderTotal: number | null;
-    }
+    coupon?: CouponInput
   ) {
     const orderId = `ord_${nanoid(10)}`;
-
     const settings = await getStoreSettings();
     const discountPercent = (settings.payments?.mpDiscount || 0) / 100;
     const expiresAt = add(new Date(), {
@@ -867,81 +852,19 @@ export class OrderService {
     });
 
     const order = await prisma.$transaction(async (tx) => {
-      // 1. Fetch products
-      const productIds = items.map((i) => i.productId);
-      const dbProducts = await tx.products.findMany({
-        where: { id: { in: productIds } },
-        select: {
-          id: true,
-          price: true,
-          salePrice: true,
-          onSale: true,
-          stock: true,
-          name: true,
-        },
-      });
+      // 1+2. Fetch & validate items (price + stock check)
+      const validatedItems = await this.validateAndPriceItems(
+        tx,
+        items,
+        discountPercent
+      );
 
-      // 2. Validate Items & Apply Discount
-      const validatedItems = items.map((item) => {
-        const dbProduct = dbProducts.find((p) => p.id === item.productId);
-        if (!dbProduct) {
-          throw new Error(`Product not found: ${item.productId}`);
-        }
-
-        // Stock Check (Immediate Reservation)
-        if (dbProduct.stock < item.quantity) {
-          throw new Error(
-            `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
-          );
-        }
-
-        // Price Logic
-        const basePrice =
-          dbProduct.onSale && dbProduct.salePrice
-            ? Number(dbProduct.salePrice)
-            : Number(dbProduct.price);
-
-        const discountPrice = Number(
-          (basePrice * (1 - discountPercent)).toFixed(2)
-        );
-
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price: discountPrice,
-          originalPrice: basePrice,
-          size: item.size,
-          color: item.color,
-        };
-      });
-
-      // 3. Calculate total
       const itemsTotal = validatedItems.reduce(
         (sum, i) => sum + i.price * i.quantity,
         0
       );
       const shippingCost = shippingData.cost ?? 0;
-
-      // Aplicar descuento de cupón (calculado server-side)
-      let couponDiscount = 0;
-      if (coupon) {
-        if (
-          coupon.minOrderTotal !== null &&
-          itemsTotal < coupon.minOrderTotal
-        ) {
-          throw new Error(
-            `El monto mínimo para usar este cupón es ${formatCurrency(Number(coupon.minOrderTotal))}`
-          );
-        }
-        if (coupon.discountType === "PERCENTAGE") {
-          couponDiscount = Number(
-            ((itemsTotal * coupon.discount) / 100).toFixed(2)
-          );
-        } else {
-          couponDiscount = Math.min(coupon.discount, itemsTotal);
-        }
-      }
-
+      const couponDiscount = this.calculateCouponDiscount(itemsTotal, coupon);
       const calculatedTotal = Number(
         (itemsTotal + shippingCost - couponDiscount).toFixed(2)
       );
@@ -959,7 +882,7 @@ export class OrderService {
         }
       );
 
-      // 4. Create Order
+      // 3. Create Order
       const newOrder = await tx.orders.create({
         data: {
           id: orderId,
@@ -971,7 +894,6 @@ export class OrderService {
             : "",
           total: calculatedTotal,
           shippingCost: shippingCost,
-          // Status: PENDING_PAYMENT but Stock Reserved
           status: ORDER_STATUS.PENDING_PAYMENT as OrderStatus,
           paymentMethod: "mercadopago",
           expiresAt: expiresAt,
@@ -982,24 +904,7 @@ export class OrderService {
           shippingStreet: shippingData.street,
           shippingCity: shippingData.city,
           shippingProvince: shippingData.province,
-          shippingProvinceCode: (() => {
-            if (!shippingData.province) return null;
-            const normalized = shippingData.province
-              .toLowerCase()
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "");
-            const match = PROVINCIAS.find(
-              (p) =>
-                p.name
-                  .toLowerCase()
-                  .normalize("NFD")
-                  .replace(/[\u0300-\u036f]/g, "") === normalized
-            );
-            if (match) return match.code;
-            if (normalized.includes("capital") || normalized.includes("caba"))
-              return "C";
-            return null;
-          })(),
+          shippingProvinceCode: this.resolveProvinceCode(shippingData.province),
           shippingPostalCode: shippingData.postalCode,
           shippingAgency: shippingData.agency,
           shippingMethod: shippingData.methodName,
@@ -1011,78 +916,18 @@ export class OrderService {
               price: item.price,
               size: item.size || null,
               color: item.color || null,
-              products: {
-                connect: { id: item.productId },
-              },
+              products: { connect: { id: item.productId } },
             })),
           },
         },
-        include: {
-          order_items: {
-            include: {
-              products: true,
-            },
-          },
-        },
+        include: { order_items: { include: { products: true } } },
       });
 
-      // 5. Decrement Stock
-      for (const item of validatedItems) {
-        await tx.products.update({
-          where: {
-            id: item.productId,
-            stock: { gte: item.quantity },
-          },
-          data: { stock: { decrement: item.quantity } },
-        });
-        // Also decrement variant stock if the item specifies a variant
-        if (item.color && item.size) {
-          const variantResult = await tx.product_variants.updateMany({
-            where: {
-              productId: item.productId,
-              color: item.color,
-              size: item.size,
-              stock: { gte: item.quantity },
-            },
-            data: { stock: { decrement: item.quantity } },
-          });
-          if (variantResult.count === 0) {
-            const variantExists = await tx.product_variants.findFirst({
-              where: {
-                productId: item.productId,
-                color: item.color,
-                size: item.size,
-              },
-              select: { stock: true },
-            });
-            if (variantExists !== null) {
-              throw new Error(
-                `Stock insuficiente para la variante ${item.color}/${item.size}`
-              );
-            }
-          }
-        }
-      }
+      // 4. Decrement stock (products + variants)
+      await this.decrementVariantStock(tx, validatedItems);
 
-      // 6. Incrementar usageCount del cupón (atómico, dentro de la transacción)
-      if (coupon) {
-        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
-        const currentCoupon = await tx.coupons.findUnique({
-          where: { id: coupon.id },
-          select: { usageCount: true, usageLimit: true },
-        });
-        if (
-          currentCoupon &&
-          currentCoupon.usageLimit !== null &&
-          currentCoupon.usageCount >= currentCoupon.usageLimit
-        ) {
-          throw new Error("El cupón ha alcanzado su límite de usos");
-        }
-        await tx.coupons.update({
-          where: { id: coupon.id },
-          data: { usageCount: { increment: 1 } },
-        });
-      }
+      // 5. Incrementar usageCount del cupón (atómico)
+      if (coupon) await this.incrementCouponUsage(tx, coupon.id);
 
       return newOrder;
     });
@@ -1115,12 +960,7 @@ export class OrderService {
       methodName?: string;
       cost: number;
     },
-    coupon?: {
-      id: string;
-      discount: number;
-      discountType: string;
-      minOrderTotal: number | null;
-    }
+    coupon?: CouponInput
   ) {
     const orderId = `ord_${nanoid(10)}`;
     const settings = await getStoreSettings();
@@ -1130,81 +970,19 @@ export class OrderService {
     });
 
     const order = await prisma.$transaction(async (tx) => {
-      // 1. Fetch products
-      const productIds = items.map((i) => i.productId);
-      const dbProducts = await tx.products.findMany({
-        where: { id: { in: productIds } },
-        select: {
-          id: true,
-          price: true,
-          salePrice: true,
-          onSale: true,
-          stock: true,
-          name: true,
-        },
-      });
+      // 1+2. Fetch & validate items (price + stock check)
+      const validatedItems = await this.validateAndPriceItems(
+        tx,
+        items,
+        discountPercent
+      );
 
-      // 2. Validate Items & Apply Discount
-      const validatedItems = items.map((item) => {
-        const dbProduct = dbProducts.find((p) => p.id === item.productId);
-        if (!dbProduct) {
-          throw new Error(`Product not found: ${item.productId}`);
-        }
-
-        // Stock Check (Immediate Reservation)
-        if (dbProduct.stock < item.quantity) {
-          throw new Error(
-            `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
-          );
-        }
-
-        // Price Logic
-        const basePrice =
-          dbProduct.onSale && dbProduct.salePrice
-            ? Number(dbProduct.salePrice)
-            : Number(dbProduct.price);
-
-        const discountPrice = Number(
-          (basePrice * (1 - discountPercent)).toFixed(2)
-        );
-
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price: discountPrice,
-          originalPrice: basePrice,
-          size: item.size,
-          color: item.color,
-        };
-      });
-
-      // 3. Calculate total
       const itemsTotal = validatedItems.reduce(
         (sum, i) => sum + i.price * i.quantity,
         0
       );
       const shippingCost = shippingData.cost ?? 0;
-
-      // Aplicar descuento de cupón (calculado server-side)
-      let couponDiscount = 0;
-      if (coupon) {
-        if (
-          coupon.minOrderTotal !== null &&
-          itemsTotal < coupon.minOrderTotal
-        ) {
-          throw new Error(
-            `El monto mínimo para usar este cupón es ${formatCurrency(Number(coupon.minOrderTotal))}`
-          );
-        }
-        if (coupon.discountType === "PERCENTAGE") {
-          couponDiscount = Number(
-            ((itemsTotal * coupon.discount) / 100).toFixed(2)
-          );
-        } else {
-          couponDiscount = Math.min(coupon.discount, itemsTotal);
-        }
-      }
-
+      const couponDiscount = this.calculateCouponDiscount(itemsTotal, coupon);
       const calculatedTotal = Number(
         (itemsTotal + shippingCost - couponDiscount).toFixed(2)
       );
@@ -1218,7 +996,7 @@ export class OrderService {
         discountPercent,
       });
 
-      // 4. Create Order
+      // 3. Create Order
       const newOrder = await tx.orders.create({
         data: {
           id: orderId,
@@ -1230,7 +1008,6 @@ export class OrderService {
             : "",
           total: calculatedTotal,
           shippingCost: shippingCost,
-          // Status: WAITING_TRANSFER_PROOF
           status: ORDER_STATUS.WAITING_TRANSFER_PROOF as OrderStatus,
           paymentMethod: "transfer",
           expiresAt: expiresAt,
@@ -1240,24 +1017,7 @@ export class OrderService {
           shippingStreet: shippingData.street,
           shippingCity: shippingData.city,
           shippingProvince: shippingData.province,
-          shippingProvinceCode: (() => {
-            if (!shippingData.province) return null;
-            const normalized = shippingData.province
-              .toLowerCase()
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "");
-            const match = PROVINCIAS.find(
-              (p) =>
-                p.name
-                  .toLowerCase()
-                  .normalize("NFD")
-                  .replace(/[\u0300-\u036f]/g, "") === normalized
-            );
-            if (match) return match.code;
-            if (normalized.includes("capital") || normalized.includes("caba"))
-              return "C";
-            return null;
-          })(),
+          shippingProvinceCode: this.resolveProvinceCode(shippingData.province),
           shippingPostalCode: shippingData.postalCode,
           shippingAgency: shippingData.agency,
           shippingMethod: shippingData.methodName,
@@ -1269,83 +1029,23 @@ export class OrderService {
               price: item.price,
               size: item.size || null,
               color: item.color || null,
-              products: {
-                connect: { id: item.productId },
-              },
+              products: { connect: { id: item.productId } },
             })),
           },
         },
-        include: {
-          order_items: {
-            include: {
-              products: true,
-            },
-          },
-        },
+        include: { order_items: { include: { products: true } } },
       });
 
-      // 5. Decrement Stock
-      for (const item of validatedItems) {
-        await tx.products.update({
-          where: {
-            id: item.productId,
-            stock: { gte: item.quantity },
-          },
-          data: { stock: { decrement: item.quantity } },
-        });
-        // Also decrement variant stock if the item specifies a variant
-        if (item.color && item.size) {
-          const variantResult = await tx.product_variants.updateMany({
-            where: {
-              productId: item.productId,
-              color: item.color,
-              size: item.size,
-              stock: { gte: item.quantity },
-            },
-            data: { stock: { decrement: item.quantity } },
-          });
-          if (variantResult.count === 0) {
-            const variantExists = await tx.product_variants.findFirst({
-              where: {
-                productId: item.productId,
-                color: item.color,
-                size: item.size,
-              },
-              select: { stock: true },
-            });
-            if (variantExists !== null) {
-              throw new Error(
-                `Stock insuficiente para la variante ${item.color}/${item.size}`
-              );
-            }
-          }
-        }
-      }
+      // 4. Decrement stock (products + variants)
+      await this.decrementVariantStock(tx, validatedItems);
 
-      // 6. Incrementar usageCount del cupón (atómico, dentro de la transacción)
-      if (coupon) {
-        // Re-verify within transaction to prevent race conditions (two simultaneous checkouts)
-        const currentCoupon = await tx.coupons.findUnique({
-          where: { id: coupon.id },
-          select: { usageCount: true, usageLimit: true },
-        });
-        if (
-          currentCoupon &&
-          currentCoupon.usageLimit !== null &&
-          currentCoupon.usageCount >= currentCoupon.usageLimit
-        ) {
-          throw new Error("El cupón ha alcanzado su límite de usos");
-        }
-        await tx.coupons.update({
-          where: { id: coupon.id },
-          data: { usageCount: { increment: 1 } },
-        });
-      }
+      // 5. Incrementar usageCount del cupón (atómico)
+      if (coupon) await this.incrementCouponUsage(tx, coupon.id);
 
       return newOrder;
     });
 
-    // 5. Emails (Async)
+    // Send bank transfer email (async, non-blocking)
     if (order.customerEmail) {
       // TODO: Use waitUntil() for serverless reliability
       void emailService.sendBankTransferInstructions({
@@ -1354,10 +1054,6 @@ export class OrderService {
         customerEmail: order.customerEmail,
         total: Number(order.total),
       });
-
-      if (settings.adminEmail) {
-        // Optional: Notify admin of new pending transfer order
-      }
     }
 
     return order;
