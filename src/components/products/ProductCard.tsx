@@ -1,14 +1,17 @@
 "use client";
 
 import {
+  Check,
   Edit,
   Eye,
   Heart,
+  Pencil,
   Power,
   ShoppingCart,
   Star,
   Trash2,
   TrendingUp,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
@@ -105,6 +108,123 @@ const StarRating = ({
 };
 
 // ============================================================================
+// InlineStockEditor - Edición de stock sin abrir el formulario completo
+// ============================================================================
+
+interface InlineStockEditorProps {
+  productId: string;
+  stock: number;
+  onUpdateStock?: (id: string, stock: number) => Promise<void>;
+}
+
+function InlineStockEditor({
+  productId,
+  stock,
+  onUpdateStock,
+}: InlineStockEditorProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(String(stock));
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleStartEdit = (e: React.MouseEvent) => {
+    if (!onUpdateStock) return;
+    e.stopPropagation();
+    setInputValue(String(stock));
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const handleCancel = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    e?.stopPropagation();
+    setIsEditing(false);
+    setInputValue(String(stock));
+  };
+
+  const handleSave = async (e?: React.MouseEvent | React.KeyboardEvent) => {
+    e?.stopPropagation();
+    if (!onUpdateStock) return;
+    const newStock = parseInt(inputValue, 10);
+    if (isNaN(newStock) || newStock < 0) {
+      handleCancel();
+      return;
+    }
+    if (newStock === stock) {
+      setIsEditing(false);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onUpdateStock(productId, newStock);
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") void handleSave(e);
+    if (e.key === "Escape") handleCancel(e);
+  };
+
+  if (isEditing) {
+    return (
+      <div
+        className="flex items-center gap-1"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          ref={inputRef}
+          type="number"
+          min={0}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isSaving}
+          className="w-16 h-7 text-sm text-center border border-primary rounded focus:outline-none focus:ring-1 focus:ring-primary bg-surface px-1"
+          aria-label="Nuevo stock"
+        />
+        <button
+          type="button"
+          onClick={(e) => void handleSave(e)}
+          disabled={isSaving}
+          className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
+          title="Guardar"
+        >
+          <Check className="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={isSaving}
+          className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+          title="Cancelar"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <StockBadge stock={stock} />
+      <span className="text-xs text-muted-foreground font-mono">({stock})</span>
+      {onUpdateStock && (
+        <button
+          type="button"
+          onClick={handleStartEdit}
+          className="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
+          title="Editar stock"
+        >
+          <Pencil className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // Tipos e interfaces
 // ============================================================================
 
@@ -124,6 +244,7 @@ interface AdminProductCardProps extends ProductCardBaseProps {
   onView?: (id: string) => void;
   onToggleActive?: (id: string, isActive: boolean) => void;
   onDelete?: (id: string) => void;
+  onUpdateStock?: (id: string, stock: number) => Promise<void>;
 }
 
 export type ProductCardProps = PublicProductCardProps | AdminProductCardProps;
@@ -232,7 +353,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   // VARIANTE ADMIN
   // =========================================================================
   if (isAdmin) {
-    const { onEdit, onView, onToggleActive, onDelete } =
+    const { onEdit, onView, onToggleActive, onDelete, onUpdateStock } =
       props as AdminProductCardProps;
 
     return (
@@ -371,7 +492,11 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             )}
 
             <div className="pt-2">
-              <StockBadge stock={effectiveStock} />
+              <InlineStockEditor
+                productId={product.id}
+                stock={effectiveStock}
+                onUpdateStock={onUpdateStock}
+              />
             </div>
           </div>
 

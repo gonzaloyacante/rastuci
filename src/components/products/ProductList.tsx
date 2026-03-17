@@ -154,6 +154,27 @@ export default function ProductList() {
     }
   };
 
+  const handleUpdateStock = async (id: string, stock: number) => {
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update stock");
+      }
+
+      show({ type: "success", message: `Stock actualizado a ${stock}` });
+      void mutate();
+      void mutateStats();
+    } catch (err) {
+      logger.error("Error updating product stock", { error: err });
+      show({ type: "error", message: "No se pudo actualizar el stock." });
+    }
+  };
+
   const handleDelete = async (id: string) => {
     const product = products.find((p: Product) => p.id === id);
     const confirmed = await new Promise<boolean>((resolve) => {
@@ -430,6 +451,7 @@ export default function ProductList() {
                       handleToggleActive(product.id, product.isActive)
                     }
                     onDelete={() => handleDelete(product.id)}
+                    onUpdateStock={handleUpdateStock}
                   />
                 </div>
               );

@@ -353,17 +353,28 @@ export const PATCH = withAdminAuth(
       const { id } = await params;
       const body = await request.json();
 
-      // Solo permitimos actualización de isActive por ahora para este método rápido
-      if (typeof body.isActive !== "boolean") {
-        return fail("BAD_REQUEST", "Solo se permite actualizar isActive", 400);
+      // Permitimos actualización parcial de isActive y/o stock
+      const hasIsActive = typeof body.isActive === "boolean";
+      const hasStock =
+        typeof body.stock === "number" &&
+        body.stock >= 0 &&
+        Number.isInteger(body.stock);
+
+      if (!hasIsActive && !hasStock) {
+        return fail(
+          "BAD_REQUEST",
+          "Se requiere 'isActive' (boolean) o 'stock' (integer ≥ 0)",
+          400
+        );
       }
+
+      const updateData: Record<string, unknown> = { updatedAt: new Date() };
+      if (hasIsActive) updateData.isActive = body.isActive;
+      if (hasStock) updateData.stock = body.stock;
 
       const updatedPrismaProduct = await prisma.products.update({
         where: { id },
-        data: {
-          isActive: body.isActive,
-          updatedAt: new Date(),
-        },
+        data: updateData,
         include: {
           categories: true,
           product_variants: true,
@@ -407,7 +418,7 @@ export const PATCH = withAdminAuth(
       };
 
       revalidatePath("/products");
-      return ok(updatedProduct, "Estado actualizado correctamente");
+      return ok(updatedProduct, "Producto actualizado correctamente");
     } catch (error) {
       logger.error("Error patching product:", { error });
       const e = normalizeApiError(
