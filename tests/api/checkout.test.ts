@@ -1,7 +1,8 @@
-import { POST } from "../../src/app/api/checkout/route";
-import { prisma } from "../../src/lib/prisma";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { POST } from "../../src/app/api/checkout/route";
+import { prisma } from "../../src/lib/prisma";
 
 // Mock Prisma
 // Mock Prisma
@@ -44,6 +45,22 @@ vi.mock("@/lib/prisma", () => {
     prisma: mockClient,
   };
 });
+
+// Mock store settings (used by createCashOrder to fetch cashDiscount + expiration hours)
+vi.mock("@/lib/store-settings", () => ({
+  getStoreSettings: vi.fn(() =>
+    Promise.resolve({
+      payments: { cashDiscount: 0, cashExpirationHours: 72 },
+      stock: { enableStockAlerts: false },
+      stockStatuses: [],
+      name: "Test Store",
+      adminEmail: "admin@test.com",
+      address: {},
+      emails: {},
+      shipping: { freeShipping: false },
+    })
+  ),
+}));
 
 // Mock MercadoPago
 vi.mock("@/lib/mercadopago", () => ({
@@ -324,7 +341,7 @@ describe("Checkout API - POST /api/checkout", () => {
         customerName: "Juan Pérez",
         total: 200,
         items: [],
-      } as any);
+      } as unknown);
 
       const request = new NextRequest("http://localhost:3000/api/checkout", {
         method: "POST",
@@ -367,7 +384,7 @@ describe("Checkout API - POST /api/checkout", () => {
         customerEmail: "juan@example.com",
         total: 200,
         items: [],
-      } as any);
+      } as unknown);
 
       const request = new NextRequest("http://localhost:3000/api/checkout", {
         method: "POST",
@@ -409,7 +426,7 @@ describe("Checkout API - POST /api/checkout", () => {
         id: "order-1",
         total: 200,
         items: [],
-      } as any);
+      } as unknown);
 
       const request = new NextRequest("http://localhost:3000/api/checkout", {
         method: "POST",
@@ -451,7 +468,7 @@ describe("Checkout API - POST /api/checkout", () => {
         id: "order-1",
         total: 500,
         items: [],
-      } as any);
+      } as unknown);
 
       const request = new NextRequest("http://localhost:3000/api/checkout", {
         method: "POST",

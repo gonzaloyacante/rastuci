@@ -736,7 +736,7 @@ export class OrderService {
     });
 
     // 6. Send Customer Email (async, non-blocking)
-    const emailItems = order.order_items.map((oi) => ({
+    const emailItems = (order.order_items ?? []).map((oi) => ({
       productId: oi.productId,
       quantity: oi.quantity,
       price: Number(oi.price),
