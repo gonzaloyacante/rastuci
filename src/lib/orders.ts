@@ -44,6 +44,8 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
     ...order,
     // Convert Decimal to number for API compatibility
     total: Number(order.total),
+    subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+    discount: order.discount ? Number(order.discount) : undefined,
     shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
     customerAddress: order.customerAddress ?? undefined,
     customerEmail: order.customerEmail ?? undefined,

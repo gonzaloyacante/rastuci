@@ -82,6 +82,8 @@ export interface Order {
   customerPostalCode?: string | null;
   customerEmail?: string | null;
   total: number;
+  subtotal?: number | null;
+  discount?: number | null;
   status: OrderStatus;
   createdAt: Date | string;
   updatedAt: Date | string;

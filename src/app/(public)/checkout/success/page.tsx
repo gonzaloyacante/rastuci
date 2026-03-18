@@ -22,6 +22,8 @@ interface OrderInfo {
   id: string;
   orderNumber: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
   status: string;
   customerName: string;
   customerPhone: string;
@@ -388,6 +390,15 @@ function CheckoutSuccessContent() {
           )}
         </div>
 
+        {/* Banner de ahorro */}
+        {orderInfo?.discount != null && orderInfo.discount > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-center">
+            <p className="text-green-700 font-bold text-lg">
+              🎉 ¡Ahorraste {formatCurrency(orderInfo.discount)} en este pedido!
+            </p>
+          </div>
+        )}
+
         {/* Información adicional del pedido */}
         {loadingOrder ? (
           <div className="surface border border-muted rounded-lg p-6 mb-6">
@@ -415,6 +426,22 @@ function CheckoutSuccessContent() {
                   <div className="col-span-2">
                     <span className="muted">Email:</span>
                     <p className="font-medium">{orderInfo.customerEmail}</p>
+                  </div>
+                )}
+                {orderInfo.subtotal != null && (
+                  <div>
+                    <span className="muted">Subtotal:</span>
+                    <p className="font-medium">
+                      {formatCurrency(orderInfo.subtotal)}
+                    </p>
+                  </div>
+                )}
+                {orderInfo.discount != null && orderInfo.discount > 0 && (
+                  <div>
+                    <span className="muted">Descuento:</span>
+                    <p className="font-medium text-green-600">
+                      -{formatCurrency(orderInfo.discount)}
+                    </p>
                   </div>
                 )}
               </div>

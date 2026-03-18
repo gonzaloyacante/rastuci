@@ -53,6 +53,9 @@ interface Order {
   status: OrderStatus;
   items: OrderItem[];
   total: number;
+  subtotal?: number;
+  discount?: number;
+  shippingCost?: number;
   shippingAddress: {
     name: string;
     street: string;
@@ -615,11 +618,35 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
             </div>
           ))}
         </div>
-        <div className="flex justify-between items-center pt-4 border-t">
-          <span className="font-semibold">Total</span>
-          <span className="text-2xl font-bold">
-            {formatCurrency(order.total)}
-          </span>
+        <div className="border-t pt-4 space-y-2 text-sm">
+          {order.subtotal != null && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span>{formatCurrency(order.subtotal)}</span>
+            </div>
+          )}
+          {order.shippingCost != null && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>Envío</span>
+              <span>
+                {order.shippingCost === 0
+                  ? "Gratis"
+                  : formatCurrency(order.shippingCost)}
+              </span>
+            </div>
+          )}
+          {order.discount != null && order.discount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Descuento</span>
+              <span>-{formatCurrency(order.discount)}</span>
+            </div>
+          )}
+          <div className="flex justify-between items-center pt-2 border-t">
+            <span className="font-semibold">Total</span>
+            <span className="text-2xl font-bold">
+              {formatCurrency(order.total)}
+            </span>
+          </div>
         </div>
       </div>
 
