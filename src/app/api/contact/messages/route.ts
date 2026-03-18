@@ -7,6 +7,7 @@ import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import { emailService } from "@/lib/resend";
 
 // Schema de validación para mensajes de contacto
 const ContactMessageSchema = z.object({
@@ -70,6 +71,19 @@ export async function POST(req: NextRequest) {
       email,
       responsePreference,
     });
+
+    // Notificar al admin por email (no bloquea la respuesta si falla)
+    emailService
+      .sendContactNotification({
+        name,
+        email,
+        phone,
+        message,
+        responsePreference,
+      })
+      .catch((emailErr) =>
+        logger.warn("Failed to send contact notification email", { emailErr })
+      );
 
     return NextResponse.json(
       ok({

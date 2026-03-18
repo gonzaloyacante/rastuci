@@ -549,6 +549,141 @@ export default function ProductDetailClient({
                     );
                   })}
                 </div>
+
+                {/* Tabla de talles - referencia visual */}
+                {product.sizeGuide && product.sizeGuide.length > 0 ? (
+                  <div className="mt-3 overflow-x-auto rounded-lg border border-muted/50">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted/20 text-left">
+                          <th className="px-3 py-2 font-semibold text-muted-foreground">
+                            Talle
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-muted-foreground">
+                            Medidas
+                          </th>
+                          {product.sizeGuide.some((s) => s.ageRange) && (
+                            <th className="px-3 py-2 font-semibold text-muted-foreground">
+                              Edad ref.
+                            </th>
+                          )}
+                          {hasVariants && (
+                            <th className="px-3 py-2 font-semibold text-muted-foreground text-center">
+                              Stock
+                            </th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {product.sizeGuide.map((entry, idx) => {
+                          const variantStock = hasVariants
+                            ? (product.variants
+                                ?.filter(
+                                  (v) =>
+                                    v.size === entry.size &&
+                                    (!selectedColor ||
+                                      v.color === selectedColor)
+                                )
+                                .reduce((sum, v) => sum + v.stock, 0) ?? 0)
+                            : null;
+                          const isSelected = selectedSize === entry.size;
+                          const isUnavailable =
+                            variantStock !== null && variantStock === 0;
+                          return (
+                            <tr
+                              key={idx}
+                              onClick={() => {
+                                if (!isUnavailable) setSelectedSize(entry.size);
+                              }}
+                              className={`border-t border-muted/30 transition-colors ${
+                                isUnavailable
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "cursor-pointer"
+                              } ${
+                                isSelected
+                                  ? "bg-primary/10"
+                                  : "hover:bg-muted/10"
+                              }`}
+                            >
+                              <td className="px-3 py-2 font-semibold">
+                                {entry.size}
+                              </td>
+                              <td className="px-3 py-2 text-muted-foreground">
+                                {entry.measurements}
+                              </td>
+                              {product.sizeGuide!.some((s) => s.ageRange) && (
+                                <td className="px-3 py-2 text-muted-foreground">
+                                  {entry.ageRange || "—"}
+                                </td>
+                              )}
+                              {variantStock !== null && (
+                                <td className="px-3 py-2 text-center">
+                                  {variantStock > 0 ? (
+                                    <span className="text-xs font-medium text-emerald-600">
+                                      ✓ Disponible
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs font-medium text-red-500">
+                                      Sin stock
+                                    </span>
+                                  )}
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : allSizes.length > 1 && hasVariants ? (
+                  <div className="mt-3 overflow-x-auto rounded-lg border border-muted/50">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted/20 text-left">
+                          <th className="px-3 py-2 font-semibold text-muted-foreground">
+                            Talle
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-muted-foreground text-center">
+                            Disponibilidad
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allSizes.map((size, idx) => {
+                          const totalStock =
+                            product.variants
+                              ?.filter(
+                                (v) =>
+                                  v.size === size &&
+                                  (!selectedColor || v.color === selectedColor)
+                              )
+                              .reduce((sum, v) => sum + v.stock, 0) ?? 0;
+                          return (
+                            <tr
+                              key={idx}
+                              className="border-t border-muted/30 hover:bg-muted/10 transition-colors"
+                            >
+                              <td className="px-3 py-2 font-semibold">
+                                {size}
+                              </td>
+                              <td className="px-3 py-2 text-center">
+                                {totalStock > 0 ? (
+                                  <span className="text-xs font-medium text-emerald-600">
+                                    ✓ Disponible
+                                  </span>
+                                ) : (
+                                  <span className="text-xs font-medium text-red-500">
+                                    Agotado
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
               </div>
             )}
 

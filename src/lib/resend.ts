@@ -4,6 +4,7 @@ import { OrderEmailItem, OrderEmailSummary } from "@/types";
 
 import {
   getBankTransferEmail,
+  getContactNotificationEmail,
   getLowStockAlertEmail,
   getNewOrderAdminEmail,
   getOrderConfirmationEmail,
@@ -293,6 +294,27 @@ export const emailService = {
       subject: "¡Volvimos! La tienda está abierta de nuevo",
       html: getVacationReopeningEmail({ customerEmail: email }),
       type: "DEFAULT",
+    });
+  },
+
+  async sendContactNotification(params: {
+    name: string;
+    email: string;
+    phone?: string;
+    message: string;
+    responsePreference: string;
+    adminEmail?: string;
+  }) {
+    const { adminEmail, ...templateParams } = params;
+    const settings = await getStoreSettings().catch(() => null);
+    const to =
+      adminEmail || settings?.emails?.supportEmail || "soporte@rastuci.com";
+    return sendEmail({
+      to,
+      subject: `📬 Nuevo mensaje de contacto de ${params.name}`,
+      html: getContactNotificationEmail(templateParams),
+      type: "ADMIN",
+      replyTo: params.email,
     });
   },
 };
