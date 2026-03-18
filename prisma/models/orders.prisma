@@ -82,6 +82,8 @@ model orders {
   transferProofUrl      String?
   transferSenderName    String?
   transferTransactionId String?
+  couponId              String?
+  coupons               coupons?             @relation(fields: [couponId], references: [id])
   status_history        OrderStatusHistory[]
   order_items           order_items[]
   ca_customers          ca_customers?        @relation(fields: [caCustomerId], references: [customerId])
@@ -90,6 +92,7 @@ model orders {
   @@index([caCustomerId])
   @@index([caExtOrderId])
   @@index([caTrackingNumber])
+  @@index([couponId])
   @@index([createdAt])
   @@index([mpPaymentId])
   @@index([mpPreferenceId])

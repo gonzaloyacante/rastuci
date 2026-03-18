@@ -195,6 +195,17 @@ export class OrderService {
     }
   }
 
+  private async decrementCouponUsage(
+    tx: Prisma.TransactionClient,
+    couponId: string
+  ): Promise<void> {
+    await tx.$executeRaw`
+      UPDATE coupons
+      SET "usageCount" = GREATEST("usageCount" - 1, 0)
+      WHERE id = ${couponId}
+    `;
+  }
+
   async updateOrder(orderId: string, data: OrderUpdateData) {
     // Transactional consistency: Fetch and update to prevent race conditions (double decrement)
     return await prisma.$transaction(async (tx) => {
@@ -211,8 +222,6 @@ export class OrderService {
       });
 
       if (!order) return null;
-
-      // 2. Determine if stock decrement is needed based on CURRENT db state
       // PENDING_PAYMENT orders already had stock decremented at createFullOrder time.
       // Only decrement here for orders that did NOT pre-reserve stock (legacy/metadata fallback).
       const isStockAlreadyReserved =
@@ -306,6 +315,11 @@ export class OrderService {
               data: { stock: { increment: item.quantity } },
             });
           }
+        }
+
+        // 4c. Restore coupon usage if order had a coupon applied
+        if (order.couponId) {
+          await this.decrementCouponUsage(tx, order.couponId);
         }
       }
 
@@ -722,6 +736,7 @@ export class OrderService {
           shippingPostalCode: shippingData?.postalCode,
           shippingAgency: shippingData?.agency,
           shippingMethod: shippingData?.methodName,
+          couponId: coupon?.id ?? null,
         },
         include: { order_items: { include: { products: true } } },
       });
@@ -916,6 +931,7 @@ export class OrderService {
           shippingAgency: shippingData.agency,
           shippingMethod: shippingData.methodName,
           updatedAt: new Date(),
+          couponId: coupon?.id ?? null,
           order_items: {
             create: validatedItems.map((item) => ({
               id: `${orderId}_${item.productId}_${nanoid(8)}`,
@@ -1029,6 +1045,7 @@ export class OrderService {
           shippingAgency: shippingData.agency,
           shippingMethod: shippingData.methodName,
           updatedAt: new Date(),
+          couponId: coupon?.id ?? null,
           order_items: {
             create: validatedItems.map((item) => ({
               id: `${orderId}_${item.productId}_${nanoid(8)}`,
