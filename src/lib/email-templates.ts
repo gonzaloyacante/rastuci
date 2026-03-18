@@ -183,6 +183,10 @@ export const getOrderConfirmationEmail = (params: {
   customerName: string;
   orderId: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  shippingCost?: number;
+  couponCode?: string;
   items: Array<{
     name: string;
     quantity: number;
@@ -191,7 +195,16 @@ export const getOrderConfirmationEmail = (params: {
     size?: string;
   }>;
 }): string => {
-  const { customerName, orderId, total, items } = params;
+  const {
+    customerName,
+    orderId,
+    total,
+    subtotal,
+    discount,
+    shippingCost,
+    couponCode,
+    items,
+  } = params;
 
   const itemsHtml = items
     .map((item) => {
@@ -211,13 +224,50 @@ export const getOrderConfirmationEmail = (params: {
     })
     .join("");
 
+  const hasBreakdown =
+    subtotal !== undefined &&
+    (discount !== undefined || shippingCost !== undefined);
+
+  const breakdownHtml = hasBreakdown
+    ? `
+    <div style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin: 15px 0; border: 1px solid #e9ecef;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #555;">
+        <tr>
+          <td style="padding: 6px 0;">Subtotal</td>
+          <td style="padding: 6px 0; text-align: right;">${formatCurrency(subtotal!)}</td>
+        </tr>
+        ${
+          shippingCost !== undefined
+            ? `<tr>
+          <td style="padding: 6px 0;">Envío</td>
+          <td style="padding: 6px 0; text-align: right;">${shippingCost === 0 ? "<span style='color:#16a34a;font-weight:bold;'>GRATIS</span>" : formatCurrency(shippingCost)}</td>
+        </tr>`
+            : ""
+        }
+        ${
+          discount !== undefined && discount > 0
+            ? `<tr>
+          <td style="padding: 6px 0; color: #16a34a;">${couponCode ? `🏷️ Cupón (${escapeHtml(couponCode)})` : "Descuento"}</td>
+          <td style="padding: 6px 0; text-align: right; color: #16a34a; font-weight: bold;">-${formatCurrency(discount)}</td>
+        </tr>`
+            : ""
+        }
+        <tr style="border-top: 2px solid #333;">
+          <td style="padding: 10px 0 4px; font-weight: bold; color: #333; font-size: 16px;">Total</td>
+          <td style="padding: 10px 0 4px; text-align: right; font-weight: bold; color: #333; font-size: 16px;">${formatCurrency(total)}</td>
+        </tr>
+      </table>
+    </div>
+    ${discount !== undefined && discount > 0 ? `<p style="color: #16a34a; font-weight: bold; text-align: center; font-size: 14px;">🎉 ¡Ahorraste ${formatCurrency(discount)} en este pedido!</p>` : ""}`
+    : `<strong>Total: ${formatCurrency(total)}</strong>`;
+
   return generateEmailHtml({
     customerName,
     orderId,
     title: "¡Gracias por tu compra!",
     color: "#ec4899", // Pink branding
     message: `Confirmamos que recibimos tu pago y tu pedido está siendo procesado.<br><br>
-    <strong>Total: ${formatCurrency(total)}</strong><br><br>
+    ${breakdownHtml}<br><br>
     ${itemsHtml}`,
     orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/orders/${orderId}`,
     customButtonText: "Ver Pedido",

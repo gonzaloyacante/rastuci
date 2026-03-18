@@ -41,8 +41,22 @@ async function notifyParties(
     }));
 
     // Customer Email
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await emailService.sendOrderConfirmation(order as any, items);
+    await emailService.sendOrderConfirmation(
+      {
+        id: order.id,
+        customerName: order.customerName,
+        customerEmail: order.customerEmail!,
+        customerPhone: order.customerPhone ?? undefined,
+        customerAddress: order.customerAddress ?? undefined,
+        total: Number(order.total),
+        subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+        discount: order.discount ? Number(order.discount) : undefined,
+        shippingCost: order.shippingCost
+          ? Number(order.shippingCost)
+          : undefined,
+      },
+      items
+    );
 
     // Admin Email
     const adminEmail = await getAdminEmail();

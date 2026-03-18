@@ -712,6 +712,8 @@ export class OrderService {
             ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
             : "",
           total: calculatedTotal,
+          subtotal: itemsTotal,
+          discount: couponDiscount,
           shippingCost: shippingCost,
           status: ORDER_STATUS.RESERVED as OrderStatus,
           paymentMethod: "cash",
@@ -767,6 +769,11 @@ export class OrderService {
           customerName: order.customerName,
           customerEmail: order.customerEmail || "",
           total: Number(order.total),
+          subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+          discount: order.discount ? Number(order.discount) : undefined,
+          shippingCost: order.shippingCost
+            ? Number(order.shippingCost)
+            : undefined,
         },
         emailItems
       )
@@ -915,6 +922,8 @@ export class OrderService {
             ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
             : "",
           total: calculatedTotal,
+          subtotal: itemsTotal,
+          discount: couponDiscount,
           shippingCost: shippingCost,
           status: ORDER_STATUS.PENDING_PAYMENT as OrderStatus,
           paymentMethod: "mercadopago",
@@ -1030,6 +1039,8 @@ export class OrderService {
             ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
             : "",
           total: calculatedTotal,
+          subtotal: itemsTotal,
+          discount: couponDiscount,
           shippingCost: shippingCost,
           status: ORDER_STATUS.WAITING_TRANSFER_PROOF as OrderStatus,
           paymentMethod: "transfer",

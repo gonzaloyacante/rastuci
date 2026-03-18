@@ -18,6 +18,8 @@ model orders {
   customerName          String
   customerPhone         String
   customerAddress       String?
+  subtotal              Decimal?             @db.Decimal(10, 2)
+  discount              Decimal?             @db.Decimal(10, 2)
   total                 Decimal              @db.Decimal(10, 2)
   status                OrderStatus          @default(PENDING)
   createdAt             DateTime             @default(now())

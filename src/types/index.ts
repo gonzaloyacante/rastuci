@@ -278,6 +278,10 @@ export interface OrderEmailSummary {
   customerPhone?: string;
   customerAddress?: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  shippingCost?: number;
+  couponCode?: string;
 }
 
 export interface OrderEmailItem {
