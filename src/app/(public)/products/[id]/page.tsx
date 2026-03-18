@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
 import { logger } from "@/lib/logger";
@@ -13,6 +13,14 @@ interface ProductPageProps {
   params: Promise<{ id: string }>;
 }
 
+// Cache deduplicado: evita N+1 — generateMetadata y ProductPage comparten el mismo resultado
+const getProduct = cache(async (id: string) => {
+  return prisma.products.findUnique({
+    where: { id, isActive: true },
+    include: { categories: true },
+  });
+});
+
 // Generate metadata para SEO
 export async function generateMetadata({
   params,
@@ -20,13 +28,8 @@ export async function generateMetadata({
   const { id } = await params;
 
   try {
-    // Consultar directamente a Prisma en lugar de fetch (mejor para build time)
-    const product = await prisma.products.findUnique({
-      where: { id, isActive: true },
-      include: {
-        categories: true,
-      },
-    });
+    // Cache deduplicado — comparte resultado con ProductPage
+    const product = await getProduct(id);
 
     if (!product) {
       return {
@@ -84,10 +87,7 @@ export async function generateStaticParams() {
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
-  const product = await prisma.products.findUnique({
-    where: { id, isActive: true },
-    include: { categories: true },
-  });
+  const product = await getProduct(id);
 
   if (!product) {
     return (

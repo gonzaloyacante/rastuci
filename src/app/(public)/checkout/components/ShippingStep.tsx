@@ -294,7 +294,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
         {shippingOptions.map((option) => {
           const disabled =
-            String(selectedPaymentMethod) === "cash" && option.id !== "pickup";
+            selectedPaymentMethod?.id === "cash" && option.id !== "pickup";
           const isSelected = selectedShippingOption?.id === option.id;
 
           return (
@@ -456,14 +456,13 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         )}
 
         {/* Aviso: si el pago es en efectivo, solo retiro está disponible */}
-        {String(selectedPaymentMethod) === "cash" &&
-          deliveryMode !== "pickup" && (
-            <div className="mb-4 p-3 rounded-md surface-secondary border border-muted text-primary text-sm">
-              Has seleccionado <strong>Pago en efectivo</strong>. El envío a
-              domicilio no está disponible para este método de pago. Solo está
-              disponible la opción de <strong>Retiro en local</strong>.
-            </div>
-          )}
+        {selectedPaymentMethod?.id === "cash" && deliveryMode !== "pickup" && (
+          <div className="mb-4 p-3 rounded-md surface-secondary border border-muted text-primary text-sm">
+            Has seleccionado <strong>Pago en efectivo</strong>. El envío a
+            domicilio no está disponible para este método de pago. Solo está
+            disponible la opción de <strong>Retiro en local</strong>.
+          </div>
+        )}
 
         {/* Mensaje de error */}
         {error && (

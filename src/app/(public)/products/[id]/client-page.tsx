@@ -226,10 +226,8 @@ export default function ProductDetailClient({
   const handleAddToCart = () => {
     if (!product) return;
 
-    // Validar talle solo si el producto tiene talles disponibles
-    const availableSizesList = Array.isArray(product.sizes)
-      ? product.sizes
-      : [];
+    // Validar talle solo si el producto tiene talles disponibles (usa el memo que unifica product.sizes y variants)
+    const availableSizesList = allSizes;
     if (availableSizesList.length > 0 && selectedSize === "") {
       show({
         type: "error",
@@ -239,13 +237,8 @@ export default function ProductDetailClient({
       return;
     }
 
-    // Validar color si hay colores disponibles
-    const availableColorsList =
-      Array.isArray(product.colors) && product.colors.length > 0
-        ? product.colors
-        : [];
-
-    if (availableColorsList.length > 0 && selectedColor === "") {
+    // Validar color si hay colores disponibles (usa el memo que unifica product.colors y variants)
+    if (availableColors.length > 0 && selectedColor === "") {
       show({
         type: "error",
         title: "Color",
@@ -255,10 +248,9 @@ export default function ProductDetailClient({
     }
 
     // Usar el color seleccionado o "Sin color" si no hay colores disponibles
-    const colorToUse =
-      availableColorsList.length > 0 ? selectedColor : "Sin color";
+    const colorToUse = availableColors.length > 0 ? selectedColor : "Sin color";
     // Usar el talle seleccionado o "Único" si no hay talles disponibles
-    const sizeToUse = availableSizesList.length > 0 ? selectedSize : "Único";
+    const sizeToUse = allSizes.length > 0 ? selectedSize : "Único";
 
     addToCart(product, quantity, sizeToUse, colorToUse);
     show({
