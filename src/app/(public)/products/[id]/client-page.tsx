@@ -739,12 +739,14 @@ export default function ProductDetailClient({
 
             {/* Stock */}
             <div className="text-sm">
-              {currentStock > 0 ? (
-                <span className="text-success font-medium">
-                  ✓ {currentStock} disponibles
+              {currentStock <= 0 ? (
+                <span className="text-error font-medium">✗ Agotado</span>
+              ) : currentStock <= 5 ? (
+                <span className="text-warning font-semibold animate-pulse">
+                  ⚡ ¡Últimas {currentStock} unidades!
                 </span>
               ) : (
-                <span className="text-error font-medium">✗ Agotado</span>
+                <span className="text-success font-medium">✓ Disponible</span>
               )}
             </div>
 

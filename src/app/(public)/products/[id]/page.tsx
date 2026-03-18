@@ -22,7 +22,7 @@ export async function generateMetadata({
   try {
     // Consultar directamente a Prisma en lugar de fetch (mejor para build time)
     const product = await prisma.products.findUnique({
-      where: { id },
+      where: { id, isActive: true },
       include: {
         categories: true,
       },
