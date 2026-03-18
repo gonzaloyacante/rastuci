@@ -60,6 +60,14 @@ export default function OrderConfirmation({ orderId }: OrderConfirmationProps) {
             </Button>
           </Link>
 
+          {orderId && (
+            <Link href={`/orders/${orderId}`}>
+              <Button variant="outline" className="w-full md:w-auto">
+                Seguir mi pedido →
+              </Button>
+            </Link>
+          )}
+
           <Link href="/productos">
             <Button variant="hero" fullWidth className="md:w-auto">
               <ShoppingCart size={16} className="mr-2" />

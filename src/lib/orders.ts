@@ -54,7 +54,9 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
     customerProvince: order.shippingProvince ?? undefined,
     customerPostalCode: order.shippingPostalCode ?? undefined,
     status: order.status as OrderStatus,
-    paymentMethod: order.mpPaymentId ? "mercadopago" : "cash",
+    paymentMethod: order.mpPaymentId
+      ? "mercadopago"
+      : (order.paymentMethod ?? "cash"),
     items: order.order_items.map((item: OrderItem) => ({
       id: item.id,
       quantity: item.quantity,

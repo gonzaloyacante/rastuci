@@ -395,6 +395,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
+    setAppliedCoupon(null);
   }, []);
 
   const getCartTotal = useCallback(() => {
@@ -424,6 +425,12 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           setCartItems(parsed);
         }
       }
+      // Restaurar cupón aplicado
+      const savedCoupon = localStorage.getItem("rastuci-coupon");
+      if (savedCoupon) {
+        const parsedCoupon: Coupon = JSON.parse(savedCoupon);
+        setAppliedCoupon(parsedCoupon);
+      }
     } catch {
       // noop
     }
@@ -440,6 +447,20 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       // noop
     }
   }, [cartItems, hasLoadedStorage]);
+
+  // Persistir cupón aplicado
+  useEffect(() => {
+    if (!hasLoadedStorage || typeof window === "undefined") return;
+    try {
+      if (appliedCoupon) {
+        localStorage.setItem("rastuci-coupon", JSON.stringify(appliedCoupon));
+      } else {
+        localStorage.removeItem("rastuci-coupon");
+      }
+    } catch {
+      // noop
+    }
+  }, [appliedCoupon, hasLoadedStorage]);
 
   const calculateShippingCost = useCallback(
     async (
@@ -668,7 +689,11 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           productId: item.product.id,
           name: item.product.name,
           quantity: item.quantity,
-          price: item.product.price,
+          // Precio efectivo (salePrice si está en oferta); el servidor lo valida igualmente
+          price:
+            item.product.onSale && item.product.salePrice
+              ? item.product.salePrice
+              : item.product.price,
           size: item.size,
           color: item.color,
         })),
