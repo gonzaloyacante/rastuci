@@ -72,6 +72,15 @@ export async function GET(request: NextRequest) {
             }
             results.restoredStock += item.quantity;
           }
+
+          // C. Restore coupon usage if the order had a coupon applied
+          if (order.couponId) {
+            await tx.$executeRaw`
+              UPDATE coupons
+              SET "usageCount" = GREATEST("usageCount" - 1, 0)
+              WHERE id = ${order.couponId}
+            `;
+          }
         });
 
         // C. Send Notification (Non-blocking)
