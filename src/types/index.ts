@@ -232,11 +232,14 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface ProductReview {
   id: string;
   rating: number;
   comment?: string | null;
   customerName: string;
+  status: ReviewStatus;
   createdAt: Date;
   productId: string;
 }
@@ -246,6 +249,7 @@ export interface SerializedProductReview {
   rating: number;
   comment?: string | null;
   customerName: string;
+  status: ReviewStatus;
   createdAt: string;
   productId: string;
 }

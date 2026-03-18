@@ -65,6 +65,7 @@ export async function generateStaticParams() {
   try {
     const products = await prisma.products.findMany({
       take: 20, // Pre-renderizar los 20 primeros productos
+      where: { isActive: true },
       select: { id: true },
       orderBy: { createdAt: "desc" },
     });
@@ -84,7 +85,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
   const product = await prisma.products.findUnique({
-    where: { id },
+    where: { id, isActive: true },
     include: { categories: true },
   });
 
@@ -92,6 +93,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return (
       <div className="container py-20 text-center">
         <h1 className="text-2xl font-bold">Producto no encontrado</h1>
+        <p className="text-muted-foreground mt-2">
+          Es posible que el producto ya no esté disponible.
+        </p>
       </div>
     );
   }
