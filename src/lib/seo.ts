@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import { Metadata } from "next";
 
 // SEO configuration and utilities
 export interface SEOConfig {
@@ -12,13 +12,14 @@ export interface SEOConfig {
 }
 
 export const seoConfig: SEOConfig = {
-  siteName: 'Rastuci',
-  siteUrl: 'https://rastuci.com',
-  defaultTitle: 'Rastuci - Ropa Infantil de Calidad',
-  defaultDescription: 'Descubre la mejor ropa infantil de calidad, comodidad y estilo para los más pequeños. Envíos a todo el país.',
-  defaultImage: '/og-image.jpg',
-  twitterHandle: '@rastuci',
-  locale: 'es_AR',
+  siteName: "Rastuci",
+  siteUrl: "https://rastuci.com",
+  defaultTitle: "Rastuci - Ropa Infantil de Calidad",
+  defaultDescription:
+    "Descubre la mejor ropa infantil de calidad, comodidad y estilo para los más pequeños. Envíos a todo el país.",
+  defaultImage: "/og-image.jpg",
+  twitterHandle: "@rastuci",
+  locale: "es_AR",
 };
 
 // Generate metadata for pages
@@ -28,14 +29,14 @@ export function generateMetadata({
   image,
   url,
   noIndex = false,
-  type = 'website',
+  type = "website",
 }: {
   title?: string;
   description?: string;
   image?: string;
   url?: string;
   noIndex?: boolean;
-  type?: 'website' | 'article' | 'product';
+  type?: "website" | "article" | "product";
 }): Metadata {
   const fullTitle = title
     ? `${title} | ${seoConfig.siteName}`
@@ -45,12 +46,13 @@ export function generateMetadata({
   const fullImage = image || seoConfig.defaultImage;
   const fullUrl = url ? `${seoConfig.siteUrl}${url}` : seoConfig.siteUrl;
   // Next.js OpenGraph type is limited; map 'product' to 'website'
-  const ogType: 'website' | 'article' = type === 'article' ? 'article' : 'website';
+  const ogType: "website" | "article" =
+    type === "article" ? "article" : "website";
 
   return {
     title: fullTitle,
     description: fullDescription,
-    robots: noIndex ? 'noindex,nofollow' : 'index,follow',
+    robots: noIndex ? "noindex,nofollow" : "index,follow",
     openGraph: {
       type: ogType,
       title: fullTitle,
@@ -68,7 +70,7 @@ export function generateMetadata({
       locale: seoConfig.locale,
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
       title: fullTitle,
       description: fullDescription,
       images: [fullImage],
@@ -95,39 +97,39 @@ export function generateProductMetadata({
   };
 }): Metadata {
   const title = `${product.name} - ${product.category}`;
-  const description = `${(product.description || 'Producto sin descripción disponible').substring(0, 155)}... Precio: $${product.price}. ${product.inStock ? 'En stock' : 'Agotado'}.`;
+  const description = `${(product.description || "Producto sin descripción disponible").substring(0, 155)}... Precio: $${product.price}. ${product.inStock ? "En stock" : "Agotado"}.`;
   const image = product.images[0];
-  const url = `/productos/${product.id}`;
+  const url = `/products/${product.id}`;
 
   const metadata = generateMetadata({
     title,
     description,
     image,
     url,
-    type: 'product',
+    type: "product",
   });
 
   // Add structured data for products
   const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+    "@context": "https://schema.org",
+    "@type": "Product",
     name: product.name,
-    description: product.description || 'Producto sin descripción disponible',
+    description: product.description || "Producto sin descripción disponible",
     image: product.images,
     offers: {
-      '@type': 'Offer',
+      "@type": "Offer",
       price: product.price,
-      priceCurrency: 'USD',
+      priceCurrency: "ARS",
       availability: product.inStock
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
       seller: {
-        '@type': 'Organization',
+        "@type": "Organization",
         name: seoConfig.siteName,
       },
     },
     brand: {
-      '@type': 'Brand',
+      "@type": "Brand",
       name: seoConfig.siteName,
     },
     category: product.category,
@@ -136,7 +138,7 @@ export function generateProductMetadata({
   return {
     ...metadata,
     other: {
-      'application/ld+json': JSON.stringify(structuredData),
+      "application/ld+json": JSON.stringify(structuredData),
     },
   };
 }
@@ -151,7 +153,7 @@ export function generateCategoryMetadata({
 }): Metadata {
   const title = `${category} - Productos de Moda`;
   const description = `Explora nuestra colección de ${category.toLowerCase()} con ${productCount} productos disponibles. Encuentra las últimas tendencias en ${category.toLowerCase()}.`;
-  const url = `/productos?categoria=${encodeURIComponent(category)}`;
+  const url = `/products?categoria=${encodeURIComponent(category)}`;
 
   return generateMetadata({
     title,
@@ -170,7 +172,7 @@ export function generateSearchMetadata({
 }): Metadata {
   const title = `Búsqueda: "${query}"`;
   const description = `${resultCount} resultados encontrados para "${query}". Encuentra productos de moda y lifestyle en Rastuci.`;
-  const url = `/productos?buscar=${encodeURIComponent(query)}`;
+  const url = `/products?buscar=${encodeURIComponent(query)}`;
 
   return generateMetadata({
     title,
@@ -181,15 +183,17 @@ export function generateSearchMetadata({
 }
 
 // Generate breadcrumb structured data
-export function generateBreadcrumbStructuredData(items: Array<{
-  name: string;
-  url: string;
-}>) {
+export function generateBreadcrumbStructuredData(
+  items: Array<{
+    name: string;
+    url: string;
+  }>
+) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: index + 1,
       name: item.name,
       item: `${seoConfig.siteUrl}${item.url}`,
@@ -200,21 +204,21 @@ export function generateBreadcrumbStructuredData(items: Array<{
 // Generate organization structured data
 export function generateOrganizationStructuredData() {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
+    "@context": "https://schema.org",
+    "@type": "Organization",
     name: seoConfig.siteName,
     url: seoConfig.siteUrl,
     logo: `${seoConfig.siteUrl}/logo.png`,
     sameAs: [
-      'https://twitter.com/rastuci',
-      'https://instagram.com/rastuci',
-      'https://facebook.com/rastuci',
+      "https://twitter.com/rastuci",
+      "https://instagram.com/rastuci",
+      "https://facebook.com/rastuci",
     ],
     contactPoint: {
-      '@type': 'ContactPoint',
-      telephone: '+1-555-0123',
-      contactType: 'customer service',
-      email: 'support@rastuci.com',
+      "@type": "ContactPoint",
+      telephone: "+1-555-0123",
+      contactType: "customer service",
+      email: "support@rastuci.com",
     },
   };
 }
@@ -222,14 +226,14 @@ export function generateOrganizationStructuredData() {
 // Generate website structured data
 export function generateWebsiteStructuredData() {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
+    "@context": "https://schema.org",
+    "@type": "WebSite",
     name: seoConfig.siteName,
     url: seoConfig.siteUrl,
     potentialAction: {
-      '@type': 'SearchAction',
+      "@type": "SearchAction",
       target: `${seoConfig.siteUrl}/productos?buscar={search_term_string}`,
-      'query-input': 'required name=search_term_string',
+      "query-input": "required name=search_term_string",
     },
   };
 }
@@ -240,7 +244,7 @@ export function generateCanonicalUrl(path: string): string {
 }
 
 export function generateHreflangTags(path: string, locales: string[]) {
-  return locales.map(locale => ({
+  return locales.map((locale) => ({
     hreflang: locale,
     href: `${seoConfig.siteUrl}/${locale}${path}`,
   }));
@@ -248,40 +252,50 @@ export function generateHreflangTags(path: string, locales: string[]) {
 
 // Meta tags for specific pages
 export const homePageMetadata = generateMetadata({
-  title: 'Inicio',
-  description: 'Descubre la mejor moda y lifestyle en Rastuci. Productos premium, envío rápido y atención al cliente excepcional.',
-  url: '/',
+  title: "Inicio",
+  description:
+    "Descubre la mejor moda y lifestyle en Rastuci. Productos premium, envío rápido y atención al cliente excepcional.",
+  url: "/",
 });
 
 export const aboutPageMetadata = generateMetadata({
-  title: 'Acerca de Nosotros',
-  description: 'Conoce la historia de Rastuci, nuestra misión y valores. Comprometidos con la moda sostenible y la calidad.',
-  url: '/acerca',
+  title: "Acerca de Nosotros",
+  description:
+    "Conoce la historia de Rastuci, nuestra misión y valores. Comprometidos con la moda sostenible y la calidad.",
+  url: "/acerca",
 });
 
 export const contactPageMetadata = generateMetadata({
-  title: 'Contacto',
-  description: 'Ponte en contacto con el equipo de Rastuci. Estamos aquí para ayudarte con cualquier pregunta o consulta.',
-  url: '/contacto',
+  title: "Contacto",
+  description:
+    "Ponte en contacto con el equipo de Rastuci. Estamos aquí para ayudarte con cualquier pregunta o consulta.",
+  url: "/contacto",
 });
 
 // Sitemap generation utilities
 export interface SitemapEntry {
   url: string;
   lastModified: Date;
-  changeFrequency: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+  changeFrequency:
+    | "always"
+    | "hourly"
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "yearly"
+    | "never";
   priority: number;
 }
 
 export function generateSitemapEntry({
   path,
   lastModified = new Date(),
-  changeFrequency = 'weekly',
+  changeFrequency = "weekly",
   priority = 0.5,
 }: {
   path: string;
   lastModified?: Date;
-  changeFrequency?: SitemapEntry['changeFrequency'];
+  changeFrequency?: SitemapEntry["changeFrequency"];
   priority?: number;
 }): SitemapEntry {
   return {

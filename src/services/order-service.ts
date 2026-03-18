@@ -744,16 +744,23 @@ export class OrderService {
       size: oi.size ?? undefined,
       color: oi.color ?? undefined,
     }));
-    // TODO: Use waitUntil() for serverless reliability
-    void emailService.sendOrderConfirmation(
-      {
-        id: order.id,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail || "",
-        total: Number(order.total),
-      },
-      emailItems
-    );
+    // Email al cliente (async, non-blocking - errores se loguean pero no bloquean la respuesta)
+    emailService
+      .sendOrderConfirmation(
+        {
+          id: order.id,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail || "",
+          total: Number(order.total),
+        },
+        emailItems
+      )
+      .catch((err: unknown) =>
+        logger.error(
+          "[OrderService] Error enviando email de confirmación de orden:",
+          { err, orderId: order.id }
+        )
+      );
 
     return order;
   }
@@ -1045,15 +1052,21 @@ export class OrderService {
       return newOrder;
     });
 
-    // Send bank transfer email (async, non-blocking)
+    // Email de instrucciones de transferencia (async, non-blocking)
     if (order.customerEmail) {
-      // TODO: Use waitUntil() for serverless reliability
-      void emailService.sendBankTransferInstructions({
-        id: order.id,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail,
-        total: Number(order.total),
-      });
+      emailService
+        .sendBankTransferInstructions({
+          id: order.id,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          total: Number(order.total),
+        })
+        .catch((err: unknown) =>
+          logger.error(
+            "[OrderService] Error enviando instrucciones de transferencia:",
+            { err, orderId: order.id }
+          )
+        );
     }
 
     return order;

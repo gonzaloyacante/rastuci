@@ -101,7 +101,7 @@ export function generateProductJsonLd(product: {
     },
     offers: {
       "@type": "Offer",
-      url: `${baseUrl}/productos/${product.id}`,
+      url: `${baseUrl}/products/${product.id}`,
       priceCurrency: product.currency || "ARS",
       price: product.salePrice || product.price,
       availability: `https://schema.org/${product.availability === "instock" ? "InStock" : product.availability === "outofstock" ? "OutOfStock" : "PreOrder"}`,

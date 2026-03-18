@@ -69,9 +69,8 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
       },
     });
 
-    // TODO: Handle History Logic (Create vacation_period when enabled=true)
-    // This will be handled in a separate 'toggle' endpoint or integrated here logic later
-    // For now, simple update.
+    // El historial de vacation_period se gestiona en /api/settings/vacation/toggle
+    // Este endpoint solo actualiza los metadatos (título, mensaje, fechas, emailCollection)
 
     return NextResponse.json({ success: true, data: settings });
   } catch (error) {

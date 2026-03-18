@@ -399,7 +399,6 @@ export default function ProductForm({
         variants
       );
 
-      // DEBUG: Log completo de lo que se está enviando
       logger.info("Enviando datos del producto:", {
         productData,
         method: initialData ? "PUT" : "POST",
