@@ -41,8 +41,10 @@ export interface BillingOption {
 }
 
 export interface Coupon {
+  id: string;
   code: string;
-  discount: number; // Porcentaje de descuento
+  discount: number;
+  discountType: "PERCENTAGE" | "FIXED";
   isValid: boolean;
 }
 
@@ -574,7 +576,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     const subtotal = getCartTotal();
     const shippingCost = selectedShippingOption?.price || 0;
     const discount = appliedCoupon
-      ? (subtotal * appliedCoupon.discount) / 100
+      ? appliedCoupon.discountType === "FIXED"
+        ? Math.min(appliedCoupon.discount, subtotal)
+        : (subtotal * appliedCoupon.discount) / 100
       : 0;
     const total = subtotal + shippingCost - discount;
 
@@ -656,6 +660,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         shippingMethod: selectedShippingOption,
         shippingAgency: selectedAgency, // Add selected agency to order data
         paymentMethod: selectedPaymentMethod.id,
+        couponCode: appliedCoupon?.code,
         orderData: {
           subtotal: orderSummary.subtotal,
           shippingCost: orderSummary.shippingCost,

@@ -50,7 +50,9 @@ export default function ReviewStep({
   const subtotal = getCartTotal();
   const shippingCost = selectedShippingOption?.price || 0;
   const discount = appliedCoupon
-    ? (subtotal * appliedCoupon.discount) / 100
+    ? appliedCoupon.discountType === "FIXED"
+      ? Math.min(appliedCoupon.discount, subtotal)
+      : (subtotal * appliedCoupon.discount) / 100
     : 0;
   const total = subtotal + shippingCost - discount;
 
@@ -169,7 +171,9 @@ export default function ReviewStep({
                     <Tag className="text-primary" size={16} />
                     <span className="font-medium">{appliedCoupon.code}</span>
                     <span className="text-sm text-primary">
-                      -{appliedCoupon.discount}%
+                      {appliedCoupon.discountType === "FIXED"
+                        ? `-${formatPriceARS(appliedCoupon.discount)}`
+                        : `-${appliedCoupon.discount}%`}
                     </span>
                   </div>
                   <Button
