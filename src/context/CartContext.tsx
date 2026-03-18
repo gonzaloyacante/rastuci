@@ -14,6 +14,7 @@ import { analytics } from "@/lib/analytics"; // Import analytics singleton
 import { Agency } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
+import { formatCurrency } from "@/utils/formatters";
 
 // Interfaces para el checkout
 export interface ShippingOption {
@@ -532,37 +533,52 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   );
 
   // Checkout - Cupones
-  const applyCoupon = useCallback(async (code: string): Promise<boolean> => {
-    try {
-      const response = await fetch("/api/coupons/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code }),
-      });
+  const applyCoupon = useCallback(
+    async (code: string): Promise<boolean> => {
+      try {
+        const response = await fetch("/api/coupons/validate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code }),
+        });
 
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Error validando cupón`);
+        if (!response.ok) {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error validando cupón`);
+          }
+          throw new Error(`Error validando cupón: HTTP ${response.status}`);
         }
-        throw new Error(`Error validando cupón: HTTP ${response.status}`);
-      }
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (result.success && result.coupon) {
-        setAppliedCoupon(result.coupon);
-        return true;
+        if (result.success && result.coupon) {
+          // Validar minOrderTotal antes de aplicar
+          if (
+            result.coupon.minOrderTotal !== null &&
+            result.coupon.minOrderTotal !== undefined
+          ) {
+            const currentSubtotal = getCartTotal();
+            if (currentSubtotal < result.coupon.minOrderTotal) {
+              throw new Error(
+                `El monto mínimo para usar este cupón es ${formatCurrency(result.coupon.minOrderTotal)}`
+              );
+            }
+          }
+          setAppliedCoupon(result.coupon);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        logger.error("Error al aplicar cupón:", { error });
+        throw error;
       }
-      return false;
-    } catch (error) {
-      logger.error("Error saving customer info:", { error });
-      return false;
-    }
-  }, []);
+    },
+    [getCartTotal]
+  );
 
   const removeCoupon = useCallback(() => {
     setAppliedCoupon(null);

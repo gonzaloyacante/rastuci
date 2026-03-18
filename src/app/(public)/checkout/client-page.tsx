@@ -36,8 +36,14 @@ const stepLabels = [
 export default function CheckoutPageClient() {
   const { show } = useToast();
   const router = useRouter();
-  const { cartItems, placeOrder, getCartTotal, loadCheckoutSettings } =
-    useCart();
+  const {
+    cartItems,
+    placeOrder,
+    getCartTotal,
+    loadCheckoutSettings,
+    selectedShippingOption,
+    appliedCoupon,
+  } = useCart();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(
     CheckoutStep.CUSTOMER_INFO
   );
@@ -47,10 +53,16 @@ export default function CheckoutPageClient() {
 
   // Calculate totals
   const subtotal = useMemo(() => getCartTotal(), [getCartTotal]);
-  const shippingCost = 0; // El costo de envío se calcula en el paso de envío
+  const shippingCost = selectedShippingOption?.price ?? 0;
+  const discount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    return appliedCoupon.discountType === "FIXED"
+      ? Math.min(appliedCoupon.discount, subtotal)
+      : (subtotal * appliedCoupon.discount) / 100;
+  }, [appliedCoupon, subtotal]);
   const total = useMemo(
-    () => subtotal + shippingCost,
-    [subtotal, shippingCost]
+    () => subtotal + shippingCost - discount,
+    [subtotal, shippingCost, discount]
   );
 
   const { isVacationMode } = useVacationSettings();

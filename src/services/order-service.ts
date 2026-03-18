@@ -101,29 +101,47 @@ export class OrderService {
         name: true,
       },
     });
-    return items.map((item) => {
-      const dbProduct = dbProducts.find((p) => p.id === item.productId);
-      if (!dbProduct)
-        throw new Error(`Producto no encontrado: ${item.productId}`);
-      if (dbProduct.stock < item.quantity) {
-        throw new Error(
-          `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
-        );
-      }
-      const basePrice =
-        dbProduct.onSale && dbProduct.salePrice
-          ? Number(dbProduct.salePrice)
-          : Number(dbProduct.price);
-      const price = Number((basePrice * (1 - discountPercent)).toFixed(2));
-      return {
-        productId: item.productId,
-        quantity: item.quantity,
-        price,
-        originalPrice: basePrice,
-        size: item.size,
-        color: item.color,
-      };
-    });
+    return Promise.all(
+      items.map(async (item) => {
+        const dbProduct = dbProducts.find((p) => p.id === item.productId);
+        if (!dbProduct)
+          throw new Error(`Producto no encontrado: ${item.productId}`);
+        if (dbProduct.stock < item.quantity) {
+          throw new Error(
+            `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
+          );
+        }
+        // Verificar stock de variante específica si aplica
+        if (item.color && item.size) {
+          const variant = await tx.product_variants.findFirst({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+            },
+            select: { stock: true },
+          });
+          if (variant !== null && variant.stock < item.quantity) {
+            throw new Error(
+              `Stock insuficiente para ${dbProduct.name} talle ${item.size} color ${item.color}`
+            );
+          }
+        }
+        const basePrice =
+          dbProduct.onSale && dbProduct.salePrice
+            ? Number(dbProduct.salePrice)
+            : Number(dbProduct.price);
+        const price = Number((basePrice * (1 - discountPercent)).toFixed(2));
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          price,
+          originalPrice: basePrice,
+          size: item.size,
+          color: item.color,
+        };
+      })
+    );
   }
 
   private calculateCouponDiscount(
@@ -504,17 +522,14 @@ export class OrderService {
     // 1. Try to get explicit shipping cost from metadata (passed from checkout)
     if (metadata.shippingCost !== undefined && metadata.shippingCost !== null) {
       shippingCost = Number(metadata.shippingCost);
-    } else {
+    } else if (shippingId) {
       // 2. Fallback to old ID-based lookup if cost not provided
-      const shippingId = metadata.shipping as string | undefined;
-      if (shippingId) {
-        const shippingMap: Record<string, { name: string; price: number }> = {
-          pickup: { name: "Retiro en tienda", price: 0 },
-          standard: { name: "Envío estándar", price: 1500 },
-          express: { name: "Envío express", price: 2500 },
-        };
-        shippingCost = shippingMap[shippingId]?.price ?? 0;
-      }
+      const shippingMap: Record<string, { name: string; price: number }> = {
+        pickup: { name: "Retiro en tienda", price: 0 },
+        standard: { name: "Envío estándar", price: 1500 },
+        express: { name: "Envío express", price: 2500 },
+      };
+      shippingCost = shippingMap[shippingId]?.price ?? 0;
     }
 
     const itemsTotal = orderItemsData.reduce(

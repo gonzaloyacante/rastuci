@@ -147,18 +147,19 @@ export default function CustomerInfoStep({ onNext }: CustomerInfoStepProps) {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateForm()) {
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length === 0) {
       updateCustomerInfo(formData);
       onNext();
     } else {
-      // Scroll al primer error
-      const firstErrorField = Object.keys(errors)[0] as keyof CustomerInfo;
+      // Scroll al primer error (usa newErrors para evitar cierre de estado asíncrono)
+      const firstErrorField = Object.keys(newErrors)[0] as keyof CustomerInfo;
       const element = document.getElementsByName(firstErrorField)[0];
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "center" });

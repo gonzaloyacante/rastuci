@@ -71,8 +71,10 @@ export default function ReviewStep({
       } else {
         setCouponError("Cupón inválido o expirado");
       }
-    } catch {
-      setCouponError("Error al aplicar el cupón");
+    } catch (err) {
+      setCouponError(
+        err instanceof Error ? err.message : "Error al aplicar el cupón"
+      );
     } finally {
       setCouponLoading(false);
     }
@@ -153,7 +155,11 @@ export default function ReviewStep({
                           {item.size} - {item.color} x {item.quantity}
                         </p>
                         <span className="font-semibold ml-3 whitespace-nowrap">
-                          {formatPriceARS(item.product.price * item.quantity)}
+                          {formatPriceARS(
+                            (item.product.onSale && item.product.salePrice
+                              ? item.product.salePrice
+                              : item.product.price) * item.quantity
+                          )}
                         </span>
                       </div>
                     </div>
