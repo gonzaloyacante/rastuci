@@ -278,6 +278,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // C) MERCADO PAGO
+    // Validar método antes de crear la orden y decrementar stock
+    if (paymentMethod !== PAYMENT_METHODS.MERCADOPAGO) {
+      return NextResponse.json(
+        { success: false, error: "Método de pago no válido" },
+        { status: 400 }
+      );
+    }
+
     // Note: Stock IS decremented immediately by createFullOrder to reserve items.
     // If payment fails/cancels, we must ensure it's restored (via Cron or Webhook).
     const order = await orderService.createFullOrder(
@@ -288,63 +296,55 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       appliedCoupon
     );
 
-    if (paymentMethod === PAYMENT_METHODS.MERCADOPAGO) {
-      const tempOrderId = order.id;
+    const tempOrderId = order.id;
 
-      // Use the server-calculated order total for the payment preference
-      // This ensures that the amount to pay matches exactly what is stored in the database,
-      // including all server-side discounts and shipping costs.
-      const mpItems = [
-        {
-          id: "purchase_summary",
-          title: `Compra en Rastuci (Pedido #${tempOrderId.slice(0, 8)})`,
-          quantity: 1,
-          unit_price: Number(order.total),
-          currency_id: "ARS",
-        },
-      ];
+    // Use the server-calculated order total for the payment preference
+    // This ensures that the amount to pay matches exactly what is stored in the database,
+    // including all server-side discounts and shipping costs.
+    const mpItems = [
+      {
+        id: "purchase_summary",
+        title: `Compra en Rastuci (Pedido #${tempOrderId.slice(0, 8)})`,
+        quantity: 1,
+        unit_price: Number(order.total),
+        currency_id: "ARS",
+      },
+    ];
 
-      const payer = {
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone ? { number: customer.phone } : undefined,
-        address: {
-          street_name: customer.address,
-          zip_code: customer.postalCode,
-        },
-      };
+    const payer = {
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone ? { number: customer.phone } : undefined,
+      address: {
+        street_name: customer.address,
+        zip_code: customer.postalCode,
+      },
+    };
 
-      const metadata = {
-        tempOrderId,
-        customerEmail: customer.email, // Backup
-      };
+    const metadata = {
+      tempOrderId,
+      customerEmail: customer.email, // Backup
+    };
 
-      const preference = await createPreference(mpItems, payer, {
-        external_reference: tempOrderId,
-        metadata: metadata,
-        // Ensure auto_return if desired? Not strictly needed if webhook works, but good for UX.
-      });
+    const preference = await createPreference(mpItems, payer, {
+      external_reference: tempOrderId,
+      metadata: metadata,
+      // Ensure auto_return if desired? Not strictly needed if webhook works, but good for UX.
+    });
 
-      // Update order with preference ID logic
-      const prisma = (await import("@/lib/prisma")).default;
-      await prisma.orders.update({
-        where: { id: order.id },
-        data: { mpPreferenceId: preference.id },
-      });
+    // Update order with preference ID
+    await prisma.orders.update({
+      where: { id: order.id },
+      data: { mpPreferenceId: preference.id },
+    });
 
-      return NextResponse.json({
-        success: true,
-        orderId: order.id,
-        preferenceId: preference.id,
-        initPoint: preference.init_point,
-        paymentMethod: PAYMENT_METHODS.MERCADOPAGO,
-      });
-    }
-
-    return NextResponse.json(
-      { success: false, error: "Método de pago no válido" },
-      { status: 400 }
-    );
+    return NextResponse.json({
+      success: true,
+      orderId: order.id,
+      preferenceId: preference.id,
+      initPoint: preference.init_point,
+      paymentMethod: PAYMENT_METHODS.MERCADOPAGO,
+    });
   } catch (error) {
     logger.error("Error processing checkout:", { error });
     return NextResponse.json(

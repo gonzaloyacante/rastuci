@@ -91,7 +91,7 @@ export class OrderService {
   ): Promise<ValidatedOrderItem[]> {
     const productIds = items.map((i) => i.productId);
     const dbProducts = await tx.products.findMany({
-      where: { id: { in: productIds } },
+      where: { id: { in: productIds }, isActive: true },
       select: {
         id: true,
         price: true,
@@ -103,7 +103,6 @@ export class OrderService {
     });
     return Promise.all(
       items.map(async (item) => {
-        const dbProduct = dbProducts.find((p) => p.id === item.productId);
         if (!dbProduct)
           throw new Error(`Producto no encontrado: ${item.productId}`);
         if (dbProduct.stock < item.quantity) {
@@ -121,7 +120,12 @@ export class OrderService {
             },
             select: { stock: true },
           });
-          if (variant !== null && variant.stock < item.quantity) {
+          if (!variant) {
+            throw new Error(
+              `La variante ${item.color}/${item.size} de ${dbProduct.name} ya no está disponible`
+            );
+          }
+          if (variant.stock < item.quantity) {
             throw new Error(
               `Stock insuficiente para ${dbProduct.name} talle ${item.size} color ${item.color}`
             );
@@ -265,15 +269,26 @@ export class OrderService {
         order.status !== ORDER_STATUS.PROCESSED &&
         order.status !== ORDER_STATUS.DELIVERED;
 
-      // 3. Update Order Status
-      const updatedOrder = await tx.orders.update({
-        where: { id: orderId },
+      // 3. Update Order Status — guard de idempotencia: solo actualiza si el estado cambió
+      const { count: updatedCount } = await tx.orders.updateMany({
+        where: { id: orderId, status: { not: data.mappedStatus } },
         data: {
           mpPaymentId: data.mpPaymentId,
           mpStatus: data.mpStatus,
           status: data.mappedStatus,
           updatedAt: new Date(),
         },
+      });
+
+      // Si no se actualizó, ya estaba en este estado (webhook duplicado) — retornar sin efecto
+      if (updatedCount === 0) {
+        const existing = await tx.orders.findUnique({ where: { id: orderId } });
+        return existing ? { order: existing, shouldShip: false } : null;
+      }
+
+      // Recargar para tener el registro actualizado
+      const updatedOrder = await tx.orders.findUniqueOrThrow({
+        where: { id: orderId },
       });
 
       // 4. Handle Stock Decrement (Atomic within transaction)
