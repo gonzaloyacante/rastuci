@@ -52,6 +52,10 @@ export const analyticsService = {
         this.fetchDeviceStats(currentStart, currentEnd),
       ]);
 
+      // Extraer sparklines de los últimos 7 días del trend
+      const sparkRevenue = revenueTrend.slice(-7).map((d) => d.revenue);
+      const sparkOrders = revenueTrend.slice(-7).map((d) => d.orders);
+
       return {
         kpi: {
           revenue: {
@@ -60,7 +64,7 @@ export const analyticsService = {
               currentKPIs.revenue,
               previousKPIs.revenue
             ),
-            trend: [], // TODO: Add sparkline data if needed later
+            trend: sparkRevenue,
           },
           orders: {
             value: currentKPIs.orders,
@@ -68,15 +72,15 @@ export const analyticsService = {
               currentKPIs.orders,
               previousKPIs.orders
             ),
-            trend: [],
+            trend: sparkOrders,
           },
           aov: {
             value: currentKPIs.aov,
             change: this.calculateChange(currentKPIs.aov, previousKPIs.aov),
-            trend: [],
+            trend: sparkRevenue,
           },
           conversion: {
-            value: currentKPIs.conversion, // Placeholder until Session tracking is robust
+            value: 0, // Sin datos de sesión reales; ocultar en UI
             change: 0,
             trend: [],
           },
@@ -146,10 +150,7 @@ export const analyticsService = {
 
     const aov = orders > 0 ? revenue / orders : 0;
 
-    // Mock conversion
-    const conversion = 2.5;
-
-    return { revenue, orders, aov, conversion };
+    return { revenue, orders, aov, conversion: 0 };
   },
 
   async fetchRevenueTrend(start: Date, end: Date, _range: DateRange) {
@@ -244,20 +245,17 @@ export const analyticsService = {
 
     const emails = customers.map((c) => c.customerEmail!);
 
-    const namesMap = new Map<string, string>();
-
-    // Fetch latest name for each email (only 5, so efficient enough)
-    await Promise.all(
-      emails.map(async (email) => {
-        const order = await prisma.orders.findFirst({
-          where: { customerEmail: email },
-          select: { customerName: true },
-          orderBy: { createdAt: "desc" },
-        });
-        if (order?.customerName) {
-          namesMap.set(email, order.customerName);
-        }
-      })
+    // Una sola query para obtener el nombre más reciente por email
+    const nameOrders = await prisma.orders.findMany({
+      where: { customerEmail: { in: emails } },
+      select: { customerEmail: true, customerName: true },
+      distinct: ["customerEmail"],
+      orderBy: { createdAt: "desc" },
+    });
+    const namesMap = new Map(
+      nameOrders
+        .filter((o) => o.customerEmail && o.customerName)
+        .map((o) => [o.customerEmail!, o.customerName!])
     );
 
     return customers.map((c) => {
@@ -278,11 +276,8 @@ export const analyticsService = {
   },
 
   async fetchDeviceStats(_start: Date, _end: Date) {
-    return [
-      { name: "Mobile", value: 65, color: "#ef4444" },
-      { name: "Desktop", value: 30, color: "#3b82f6" },
-      { name: "Tablet", value: 5, color: "#eab308" },
-    ];
+    // Sin datos de sesión reales disponibles aún; retornar vacío
+    return [];
   },
 
   calculateChange(current: number, previous: number): number {

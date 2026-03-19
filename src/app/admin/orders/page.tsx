@@ -130,8 +130,9 @@ export default function OrdersPage() {
       limit: 10,
       status: statusFilter === "ALL" ? undefined : statusFilter,
       search: searchTerm || undefined,
+      shippingMethod: shippingFilter === "ALL" ? undefined : shippingFilter,
     });
-  }, [statusFilter, searchTerm, currentPage, fetchOrders]);
+  }, [statusFilter, shippingFilter, searchTerm, currentPage, fetchOrders]);
 
   // Handlers
   const handleFilterChange = useCallback(

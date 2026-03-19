@@ -45,13 +45,26 @@ export class VariantService {
    * Update stock for a variant and sync parent product total stock
    */
   async updateStock(variantId: string, quantityChange: number) {
-    // 1. Update variant stock
-    const variant = await prisma.product_variants.update({
+    // 1. Validate we won't go negative before updating
+    const current = await prisma.product_variants.findUniqueOrThrow({
       where: { id: variantId },
-      data: { stock: { increment: quantityChange } }, // use increment for atomic updates if possible, or direct set
+      select: { stock: true, productId: true },
     });
 
-    // 2. Recalculate total product stock
+    const newStock = current.stock + quantityChange;
+    if (newStock < 0) {
+      throw new Error(
+        `Stock insuficiente: stock actual ${current.stock}, cambio solicitado ${quantityChange}`
+      );
+    }
+
+    // 2. Update variant stock
+    const variant = await prisma.product_variants.update({
+      where: { id: variantId },
+      data: { stock: newStock },
+    });
+
+    // 3. Recalculate total product stock
     await this.syncProductTotalStock(variant.productId);
   }
 

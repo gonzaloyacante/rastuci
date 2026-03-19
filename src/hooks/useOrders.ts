@@ -43,6 +43,7 @@ interface UseOrdersParams {
   limit?: number;
   status?: OrderStatus | string;
   search?: string;
+  shippingMethod?: string;
 }
 
 interface OrdersResponse {
@@ -74,6 +75,8 @@ export const useOrders = (initialParams?: UseOrdersParams) => {
     if (params.limit) urlParams.append("limit", params.limit.toString());
     if (params.status) urlParams.append("status", params.status);
     if (params.search) urlParams.append("search", params.search);
+    if (params.shippingMethod)
+      urlParams.append("shippingMethod", params.shippingMethod);
 
     return `/api/orders?${urlParams.toString()}`;
   }, [params]);

@@ -44,11 +44,15 @@ export const GET = withAdminAuth(
 
       // Soporte para buscar por mpPaymentId (usado por página de success)
       const mpPaymentId = searchParams.get("mpPaymentId");
+      const shippingMethod = searchParams.get("shippingMethod");
 
       // Construir filtros
       const where: Record<string, unknown> = {};
       if (status) {
         where.status = status;
+      }
+      if (shippingMethod) {
+        where.shippingMethod = shippingMethod;
       }
       if (mpPaymentId) {
         // Búsqueda directa por payment ID de MercadoPago

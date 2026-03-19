@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -39,11 +39,13 @@ function CheckoutSuccessContent() {
   const { clearCart } = useCart();
 
   const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [mpStatus, setMpStatus] = useState<string>("");
   const [orderId, setOrderId] = useState<string>("");
   const [orderInfo, setOrderInfo] = useState<OrderInfo | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(true);
   const [trackingStatus, setTrackingStatus] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const cartCleared = useRef(false);
 
   useEffect(() => {
     // MercadoPago redirige con estos parámetros:
@@ -54,20 +56,21 @@ function CheckoutSuccessContent() {
     // - merchant_order_id: ID de la orden en MP
     const method = searchParams.get("method") || "mercadopago";
     const externalRef = searchParams.get("external_reference") || "";
-    const _paymentId = searchParams.get("payment_id") || "";
-    const _mpStatus =
+    const status =
       searchParams.get("status") || searchParams.get("payment_status") || "";
 
     // Priorizar external_reference que tiene nuestro ID
     const id = searchParams.get("order_id") || externalRef || "";
 
     setPaymentMethod(method);
+    setMpStatus(status);
     setOrderId(id);
 
-    // Log para debugging
-
-    // Limpiar carrito después de compra exitosa
-    clearCart();
+    // Limpiar carrito sólo una vez
+    if (!cartCleared.current) {
+      cartCleared.current = true;
+      clearCart();
+    }
   }, [searchParams, clearCart]);
 
   // Cargar información del pedido con retry (el webhook puede tardar unos segundos)
@@ -153,15 +156,37 @@ function CheckoutSuccessContent() {
 
   const isCashPayment = paymentMethod === "cash";
   const hasTracking = orderInfo?.trackingNumber;
+  const isRejected = mpStatus === "rejected" || mpStatus === "cancelled";
+  const isPending = mpStatus === "pending" || mpStatus === "in_process";
 
   return (
     <div className="py-12 px-6">
       <div className="max-w-2xl mx-auto">
+        {/* Banner de estado de pago MP */}
+        {isRejected && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+            <p className="font-semibold">Pago rechazado o cancelado</p>
+            <p className="text-sm mt-1">
+              Tu pago no fue procesado. Por favor intentá de nuevo o elegí otro
+              método de pago.
+            </p>
+          </div>
+        )}
+        {isPending && !isRejected && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+            <p className="font-semibold">Pago en proceso</p>
+            <p className="text-sm mt-1">
+              Tu pago está siendo procesado. Te avisaremos por email cuando se
+              confirme.
+            </p>
+          </div>
+        )}
+
         {/* Ícono de éxito */}
         <div className="text-center mb-8">
           <CheckCircle className="w-20 h-20 text-success mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-primary mb-2">
-            ¡Pedido Confirmado!
+            {isRejected ? "Pedido recibido" : "¡Pedido Confirmado!"}
           </h1>
           <p className="muted">
             {orderInfo ? (
