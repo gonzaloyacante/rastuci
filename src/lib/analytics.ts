@@ -329,7 +329,7 @@ class AnalyticsManager {
   trackPurchase(
     orderId: string,
     value: number,
-    currency = "EUR",
+    currency = "ARS",
     items?: Array<Record<string, unknown>>
   ) {
     this.trackEvent("purchase", {
@@ -340,7 +340,7 @@ class AnalyticsManager {
     });
   }
 
-  trackAddToCart(productId: string, value: number, currency = "EUR") {
+  trackAddToCart(productId: string, value: number, currency = "ARS") {
     this.trackEvent("add_to_cart", {
       productId,
       value,

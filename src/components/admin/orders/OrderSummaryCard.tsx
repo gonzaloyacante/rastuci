@@ -140,7 +140,11 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
               <p className="text-sm capitalize">
                 {order.paymentMethod === "mercadopago"
                   ? "Mercado Pago"
-                  : order.paymentMethod}
+                  : order.paymentMethod === "cash"
+                    ? "Efectivo"
+                    : order.paymentMethod === "transfer"
+                      ? "Transferencia Bancaria"
+                      : order.paymentMethod}
               </p>
             </div>
           </div>

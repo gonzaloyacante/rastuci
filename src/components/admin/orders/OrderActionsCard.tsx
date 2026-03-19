@@ -1,6 +1,15 @@
 "use client";
 
-import { CheckCircle, Clock, CreditCard, Package, Truck } from "lucide-react";
+import {
+  Ban,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Eye,
+  Package,
+  ShieldCheck,
+  Truck,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -77,6 +86,56 @@ export function OrderActionsCard({
             </Button>
           )}
 
+          {/* RESERVED -> WAITING_TRANSFER_PROOF (Admin confirma reserva) */}
+          {order.status === OrderStatus.RESERVED && (
+            <Button
+              className="w-full flex items-center justify-center space-x-2"
+              onClick={() =>
+                updateOrderStatus(OrderStatus.WAITING_TRANSFER_PROOF)
+              }
+              disabled={updating}
+            >
+              {updating ? (
+                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+              ) : (
+                <CreditCard size={16} />
+              )}
+              Solicitar Comprobante de Transferencia
+            </Button>
+          )}
+
+          {/* WAITING_TRANSFER_PROOF -> PAYMENT_REVIEW (Comprobante recibido) */}
+          {order.status === OrderStatus.WAITING_TRANSFER_PROOF && (
+            <Button
+              className="w-full flex items-center justify-center space-x-2"
+              onClick={() => updateOrderStatus(OrderStatus.PAYMENT_REVIEW)}
+              disabled={updating}
+            >
+              {updating ? (
+                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+              ) : (
+                <Eye size={16} />
+              )}
+              Marcar Comprobante Recibido
+            </Button>
+          )}
+
+          {/* PAYMENT_REVIEW -> PENDING_PAYMENT (Pago verificado) */}
+          {order.status === OrderStatus.PAYMENT_REVIEW && (
+            <Button
+              className="w-full flex items-center justify-center space-x-2"
+              onClick={() => updateOrderStatus(OrderStatus.PENDING_PAYMENT)}
+              disabled={updating}
+            >
+              {updating ? (
+                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+              ) : (
+                <ShieldCheck size={16} />
+              )}
+              Aprobar Pago por Transferencia
+            </Button>
+          )}
+
           {/* PENDING_PAYMENT -> PROCESSED (Admin pagó envío) */}
           {order.status === OrderStatus.PENDING_PAYMENT && (
             <Button
@@ -117,12 +176,35 @@ export function OrderActionsCard({
             </div>
           )}
 
-          {/* Botón para volver a PENDING (si no está en PENDING ni DELIVERED) */}
-          {order.status !== ORDER_STATUS.PENDING &&
-            order.status !== ORDER_STATUS.DELIVERED && (
+          {/* CANCELLED - Cancelado */}
+          {order.status === ORDER_STATUS.CANCELLED && (
+            <div className="p-4 surface text-error border border-error rounded-lg flex items-center justify-center gap-2">
+              <Ban size={16} />
+              Pedido cancelado
+            </div>
+          )}
+
+          {/* Botón Cancelar — disponible en cualquier estado activo */}
+          {order.status !== ORDER_STATUS.DELIVERED &&
+            order.status !== ORDER_STATUS.CANCELLED && (
               <Button
                 variant="outline"
-                className="w-full mt-3 flex items-center justify-center gap-2"
+                className="w-full mt-1 flex items-center justify-center gap-2 border-error text-error hover:bg-error hover:text-white"
+                onClick={() => updateOrderStatus(OrderStatus.CANCELLED)}
+                disabled={updating}
+              >
+                <Ban size={16} />
+                Cancelar Pedido
+              </Button>
+            )}
+
+          {/* Botón para volver a PENDING (si no está en PENDING, DELIVERED ni CANCELLED) */}
+          {order.status !== ORDER_STATUS.PENDING &&
+            order.status !== ORDER_STATUS.DELIVERED &&
+            order.status !== ORDER_STATUS.CANCELLED && (
+              <Button
+                variant="outline"
+                className="w-full mt-1 flex items-center justify-center gap-2"
                 onClick={() => updateOrderStatus(OrderStatus.PENDING)}
                 disabled={updating}
               >

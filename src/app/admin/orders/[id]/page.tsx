@@ -1,8 +1,7 @@
 "use client";
 
 import { ArrowLeft, Printer } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { CustomerInfoCard } from "@/components/admin/orders/CustomerInfoCard";
@@ -17,6 +16,7 @@ import { Order, OrderItem } from "@/types";
 
 export default function OrderDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,9 +104,9 @@ export default function OrderDetailPage() {
           </svg>
           {error}
         </div>
-        <Link href="/admin/pedidos/pendientes">
-          <Button className="btn-hero">Volver a Pedidos Pendientes</Button>
-        </Link>
+        <Button className="btn-hero" onClick={() => router.back()}>
+          Volver
+        </Button>
       </div>
     );
   }
@@ -115,9 +115,9 @@ export default function OrderDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="muted text-2xl mb-4">Pedido no encontrado</div>
-        <Link href="/admin/pedidos/pendientes">
-          <Button className="btn-hero">Volver a Pedidos Pendientes</Button>
-        </Link>
+        <Button className="btn-hero" onClick={() => router.back()}>
+          Volver
+        </Button>
       </div>
     );
   }
@@ -126,13 +126,13 @@ export default function OrderDetailPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <Link
-            href="/admin/pedidos/pendientes"
+          <button
+            onClick={() => router.back()}
             className="inline-flex items-center muted hover:text-primary mb-2"
           >
             <ArrowLeft size={16} className="mr-2" />
-            Volver a Pedidos Pendientes
-          </Link>
+            Volver
+          </button>
           <h1 className="text-2xl font-bold text-primary">
             Detalles del Pedido #{order.id.substring(0, 8)}
           </h1>

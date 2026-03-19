@@ -314,8 +314,12 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         return;
       } // evitar inserciones inválidas (color puede ser opcional)
 
-      // Track Add To Cart Event
-      analytics.trackAddToCart(product.id, product.price * quantity);
+      // Track Add To Cart Event (usar salePrice si el producto está en oferta)
+      const effectivePrice =
+        product.onSale && product.salePrice != null
+          ? product.salePrice
+          : product.price;
+      analytics.trackAddToCart(product.id, effectivePrice * quantity);
 
       setCartItems((prevItems) => {
         const existingItemIndex = prevItems.findIndex(
