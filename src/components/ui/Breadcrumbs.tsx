@@ -292,7 +292,8 @@ export const BreadcrumbsWithSchema: React.FC<BreadcrumbsProps> = (props) => {
         type="application/ld+json"
         nonce={props.nonce}
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData),
+          // [XSS] replace < with \u003c to prevent </script> injection in JSON-LD blocks
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
         }}
       />
     </>
