@@ -169,9 +169,7 @@ export const PATCH = withAdminAuth(
 
       // Fire-and-forget email notification (do not block response)
       void emailService.sendTrackingUpdate({
-        to:
-          ((order as unknown as Record<string, unknown>)
-            .customerEmail as string) ?? "",
+        to: order.customerEmail ?? "",
         orderId: order.id,
         trackingCode: order.trackingNumber || "N/A",
         status: order.status,
@@ -234,9 +232,7 @@ export const PUT = withAdminAuth(
 
       // Fire-and-forget email notification (do not block response)
       void emailService.sendTrackingUpdate({
-        to:
-          ((order as unknown as Record<string, unknown>)
-            .customerEmail as string) ?? "",
+        to: order.customerEmail ?? "",
         orderId: order.id,
         trackingCode: order.trackingNumber || "N/A",
         status: order.status,
