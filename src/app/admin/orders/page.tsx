@@ -104,11 +104,10 @@ const toOrderCardData = (order: Order): OrderCardData => ({
   total: order.total,
   createdAt: order.createdAt,
   itemsCount: order.items.length,
-  shippingMethod: (order as { shippingMethod?: string }).shippingMethod,
-  caTrackingNumber: (order as { caTrackingNumber?: string }).caTrackingNumber,
+  shippingMethod: order.shippingMethod,
+  caTrackingNumber: order.caTrackingNumber,
   paymentMethod:
-    (order as unknown as { paymentMethod?: string }).paymentMethod ||
-    (order.mpPaymentId ? "mercadopago" : "cash"), // Fallback deduction
+    order.paymentMethod || (order.mpPaymentId ? "mercadopago" : "cash"),
 });
 
 export default function OrdersPage() {

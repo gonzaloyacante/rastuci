@@ -26,7 +26,13 @@ export default async function DefensaConsumidorPage() {
   }
 
   const content = {
-    sections: policy.sections as unknown as PolicySection[],
+    sections: policy.sections.map(
+      (s) =>
+        ({
+          title: s.title,
+          content: s.content,
+        }) satisfies PolicySection
+    ),
   };
 
   return (
