@@ -103,6 +103,7 @@ export class OrderService {
     });
     return Promise.all(
       items.map(async (item) => {
+        const dbProduct = dbProducts.find((p) => p.id === item.productId);
         if (!dbProduct)
           throw new Error(`Producto no encontrado: ${item.productId}`);
         if (dbProduct.stock < item.quantity) {

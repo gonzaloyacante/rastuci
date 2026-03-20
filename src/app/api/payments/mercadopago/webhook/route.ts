@@ -1,5 +1,5 @@
 // Helper to notify admin/customer - could be moved to notification-service too
-import { order_items, orders, products } from "@prisma/client";
+import { orders } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -14,14 +14,8 @@ import { mpWebhookService } from "@/services/notification-service";
 import { orderService } from "@/services/order-service";
 import { shipmentService } from "@/services/shipment-service";
 
-type OrderWithItems = orders & {
-  order_items: (order_items & {
-    products: products;
-  })[];
-};
-
 async function notifyParties(
-  order: OrderWithItems,
+  order: orders,
   orderId: string,
   _mpPaymentId: string
 ) {
@@ -32,36 +26,42 @@ async function notifyParties(
     const { emailService } = await import("@/lib/resend");
     const { getAdminEmail } = await import("@/lib/store-settings");
 
-    const items = order.order_items.map((item) => ({
+    // Load order items from DB (order passed in may not include them)
+    const orderWithItems = await prisma.orders.findUnique({
+      where: { id: order.id },
+      include: {
+        order_items: {
+          include: { products: true },
+        },
+      },
+    });
+
+    const items = (orderWithItems?.order_items ?? []).map((item) => ({
       name: item.products.name,
       quantity: item.quantity,
-      price: Number(item.price), // Convert Decimal to number
+      price: Number(item.price),
       color: item.color ?? undefined,
       size: item.size ?? undefined,
     }));
 
+    const orderSummary = {
+      id: order.id,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail!,
+      customerPhone: order.customerPhone ?? undefined,
+      customerAddress: order.customerAddress ?? undefined,
+      total: Number(order.total),
+      subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+      discount: order.discount ? Number(order.discount) : undefined,
+      shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
+    };
+
     // Customer Email
-    await emailService.sendOrderConfirmation(
-      {
-        id: order.id,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail!,
-        customerPhone: order.customerPhone ?? undefined,
-        customerAddress: order.customerAddress ?? undefined,
-        total: Number(order.total),
-        subtotal: order.subtotal ? Number(order.subtotal) : undefined,
-        discount: order.discount ? Number(order.discount) : undefined,
-        shippingCost: order.shippingCost
-          ? Number(order.shippingCost)
-          : undefined,
-      },
-      items
-    );
+    await emailService.sendOrderConfirmation(orderSummary, items);
 
     // Admin Email
     const adminEmail = await getAdminEmail();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await emailService.sendAdminNewOrderAlert(order as any, items, adminEmail);
+    await emailService.sendAdminNewOrderAlert(orderSummary, items, adminEmail);
 
     logger.info("[Webhook] Notifications sent", { orderId });
   } catch (e) {
@@ -203,8 +203,14 @@ export async function POST(
         mappedStatus,
         preferenceId,
         metadata,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        payment.payer as any // Payer structure might not perfectly match between MP versions
+        {
+          first_name: payment.payer?.first_name ?? undefined,
+          last_name: payment.payer?.last_name ?? undefined,
+          email: payment.payer?.email ?? undefined,
+          phone: payment.payer?.phone?.number
+            ? { number: payment.payer.phone.number }
+            : undefined,
+        }
       );
     }
 
@@ -238,8 +244,7 @@ export async function POST(
 
         try {
           // Await notifications too
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await notifyParties(order as any, order.id, mpPaymentId);
+          await notifyParties(order, order.id, mpPaymentId);
         } catch (err) {
           logger.error("[Webhook] Notification failed", {
             orderId: order.id,

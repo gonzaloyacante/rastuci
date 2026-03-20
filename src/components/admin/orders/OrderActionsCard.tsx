@@ -30,33 +30,75 @@ export function OrderActionsCard({
   const { show } = useToast();
   const [updating, setUpdating] = useState(false);
 
+  const callAdminEndpoint = async (
+    endpoint: string,
+    method: "POST" | "PATCH" | "DELETE" = "POST"
+  ) => {
+    const response = await fetch(`/api/admin/orders/${order.id}/${endpoint}`, {
+      method,
+      headers: { "Content-Type": "application/json" },
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Error al actualizar el pedido");
+    }
+    return data;
+  };
+
   const updateOrderStatus = async (newStatus: OrderStatus) => {
     try {
       setUpdating(true);
-      const response = await fetch(`/api/orders/${order.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
 
-      if (!response.ok) {
-        throw new Error("Error al actualizar pedido");
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        onOrderUpdate({ status: newStatus });
-        show({ type: "success", message: `Pedido actualizado a ${newStatus}` });
+      // Usar endpoints específicos con lógica de negocio (emails, stock, envío CA)
+      if (newStatus === OrderStatus.PROCESSED) {
+        // Desde PAYMENT_REVIEW → approve-transfer (email de confirmación incluido)
+        // Desde PENDING_PAYMENT → mark-processed (email de envío)
+        const endpoint =
+          order.status === OrderStatus.PAYMENT_REVIEW
+            ? "approve-transfer"
+            : "mark-processed";
+        const method = endpoint === "approve-transfer" ? "POST" : "PATCH";
+        await callAdminEndpoint(endpoint, method);
+      } else if (newStatus === OrderStatus.DELIVERED) {
+        await callAdminEndpoint("mark-delivered", "PATCH");
+      } else if (newStatus === OrderStatus.CANCELLED) {
+        await callAdminEndpoint("cancel");
       } else {
-        throw new Error(data.error || "Error al actualizar el pedido");
+        // Para transiciones de estado de transferencia (RESERVED→WAITING, etc.),
+        // usar el endpoint genérico de órdenes (admin autenticado)
+        const response = await fetch(`/api/orders/${order.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "Error al actualizar el pedido");
+        }
       }
-    } catch (_error) {
+
+      onOrderUpdate({ status: newStatus });
+      const statusLabels: Partial<Record<OrderStatus, string>> = {
+        [OrderStatus.PROCESSED]: "Procesado",
+        [OrderStatus.DELIVERED]: "Entregado",
+        [OrderStatus.CANCELLED]: "Cancelado",
+        [OrderStatus.PENDING]: "Pendiente",
+        [OrderStatus.PENDING_PAYMENT]: "Pago aprobado",
+        [OrderStatus.PAYMENT_REVIEW]: "Comprobante recibido",
+        [OrderStatus.WAITING_TRANSFER_PROOF]: "Comprobante solicitado",
+        [OrderStatus.RESERVED]: "Reservado",
+      };
+      show({
+        type: "success",
+        message: `Pedido: ${statusLabels[newStatus] ?? newStatus}`,
+      });
+    } catch (error) {
       show({
         type: "error",
-        message: "No se pudo actualizar el estado del pedido",
+        message:
+          error instanceof Error
+            ? error.message
+            : "No se pudo actualizar el estado del pedido",
       });
     } finally {
       setUpdating(false);
@@ -120,11 +162,11 @@ export function OrderActionsCard({
             </Button>
           )}
 
-          {/* PAYMENT_REVIEW -> PENDING_PAYMENT (Pago verificado) */}
+          {/* PAYMENT_REVIEW -> PROCESSED (Pago verificado + aprobado) */}
           {order.status === OrderStatus.PAYMENT_REVIEW && (
             <Button
               className="w-full flex items-center justify-center space-x-2"
-              onClick={() => updateOrderStatus(OrderStatus.PENDING_PAYMENT)}
+              onClick={() => updateOrderStatus(OrderStatus.PROCESSED)}
               disabled={updating}
             >
               {updating ? (

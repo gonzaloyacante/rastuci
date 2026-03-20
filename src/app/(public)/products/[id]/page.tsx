@@ -37,11 +37,16 @@ export async function generateMetadata({
         description: "El producto que buscas no está disponible.",
       };
     }
-    const images = Array.isArray(product.images)
-      ? product.images
-      : typeof product.images === "string"
-        ? JSON.parse(product.images)
-        : [];
+    let images: string[] = [];
+    try {
+      images = Array.isArray(product.images)
+        ? (product.images as string[])
+        : typeof product.images === "string"
+          ? (JSON.parse(product.images) as string[])
+          : [];
+    } catch {
+      images = [];
+    }
 
     return generateProductMetadata({
       product: {
@@ -82,8 +87,6 @@ export async function generateStaticParams() {
   }
 }
 
-// ... existing imports
-
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
@@ -100,30 +103,35 @@ export default async function ProductPage({ params }: ProductPageProps) {
     );
   }
 
+  let parsedImages: string[] = [];
+  try {
+    parsedImages = Array.isArray(product.images)
+      ? (product.images as string[])
+      : typeof product.images === "string"
+        ? (JSON.parse(product.images) as string[])
+        : [];
+  } catch {
+    parsedImages = [];
+  }
+
   const serializedProduct = {
     ...product,
     price: Number(product.price),
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
-    images: Array.isArray(product.images)
-      ? product.images
-      : typeof product.images === "string"
-        ? JSON.parse(product.images)
-        : [],
+    images: parsedImages,
   };
 
   // Generate JSON-LD structured data
-  const jsonLd = serializedProduct
-    ? generateProductJsonLd({
-        id: serializedProduct.id,
-        name: serializedProduct.name,
-        description: serializedProduct.description || "",
-        image: serializedProduct.images,
-        price: serializedProduct.price,
-        availability: serializedProduct.stock > 0 ? "instock" : "outofstock",
-        brand: "Rastuci",
-      })
-    : null;
+  const jsonLd = generateProductJsonLd({
+    id: serializedProduct.id,
+    name: serializedProduct.name,
+    description: serializedProduct.description || "",
+    image: serializedProduct.images,
+    price: serializedProduct.price,
+    availability: serializedProduct.stock > 0 ? "instock" : "outofstock",
+    brand: "Rastuci",
+  });
 
   return (
     <>

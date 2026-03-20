@@ -84,7 +84,7 @@ export default function ProductList() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // UI helpers
-  const { ConfirmDialog } = useConfirmDialog();
+  const { ConfirmDialog, confirm } = useConfirmDialog();
 
   // Datos con scroll infinito
   const {
@@ -128,7 +128,7 @@ export default function ProductList() {
     id: string,
     currentStatus: boolean | undefined
   ) => {
-    const newStatus = !(currentStatus !== false); // Toggle
+    const newStatus = !currentStatus; // Toggle: undefined/false → true, true → false
 
     try {
       const response = await fetch(`/api/products/${id}`, {
@@ -177,13 +177,11 @@ export default function ProductList() {
 
   const handleDelete = async (id: string) => {
     const product = products.find((p: Product) => p.id === id);
-    const confirmed = await new Promise<boolean>((resolve) => {
-      // Use browser confirm as fallback since ConfirmDialog hook may not expose a promise API
-      resolve(
-        window.confirm(
-          `¿Estás seguro de que querés eliminar "${product?.name || "este producto"}"? Esta acción no se puede deshacer.`
-        )
-      );
+    const confirmed = await confirm({
+      title: "Eliminar producto",
+      message: `¿Estás seguro de que querés eliminar "${product?.name || "este producto"}"? Esta acción no se puede deshacer.`,
+      confirmText: "Eliminar",
+      variant: "danger",
     });
 
     if (!confirmed) return;
@@ -232,7 +230,9 @@ export default function ProductList() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `productos_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   }, [products]);
 

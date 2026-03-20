@@ -64,8 +64,8 @@ export const POST = withAdminAuth(
 
       // Notificar al cliente que el pago fue recibido y la orden está procesada
       if (order.customerEmail) {
-        emailService
-          .sendOrderConfirmation(
+        try {
+          await emailService.sendOrderConfirmation(
             {
               id: order.id,
               customerName: order.customerName,
@@ -86,13 +86,13 @@ export const POST = withAdminAuth(
               color: item.color ?? undefined,
               size: item.size ?? undefined,
             }))
-          )
-          .catch((emailErr) =>
-            logger.warn("[Admin] Failed to send payment confirmation email", {
-              emailErr,
-              orderId,
-            })
           );
+        } catch (emailErr) {
+          logger.warn("[Admin] Failed to send payment confirmation email", {
+            emailErr,
+            orderId,
+          });
+        }
       }
 
       return NextResponse.json({
