@@ -18,6 +18,7 @@ import Link from "next/link";
 import React, { ReactNode } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pagination as UIPagination } from "@/components/ui/Pagination";
 import { useToast } from "@/components/ui/Toast";
 // import { Card, CardContent } from "@/components/ui/Card";
@@ -160,9 +161,16 @@ export function OrderCard({
 }: OrderCardProps) {
   const [isUpdating, setIsUpdating] = React.useState(false);
   const { show } = useToast();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const handleMarkProcessed = async () => {
-    if (!confirm("¿Confirmas que ya pagaste el envío en MiCorreo?")) return;
+    const confirmed = await confirm({
+      title: "Marcar como procesado",
+      message: "¿Confirmas que ya pagaste el envío en MiCorreo?",
+      confirmText: "Confirmar",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setIsUpdating(true);
     try {
@@ -195,8 +203,13 @@ export function OrderCard({
   };
 
   const handleMarkDelivered = async () => {
-    if (!confirm("¿Confirmas que este pedido fue entregado al cliente?"))
-      return;
+    const confirmed = await confirm({
+      title: "Marcar como entregado",
+      message: "¿Confirmas que este pedido fue entregado al cliente?",
+      confirmText: "Confirmar entrega",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setIsUpdating(true);
     try {
@@ -229,8 +242,13 @@ export function OrderCard({
   };
 
   const handleApproveTransfer = async () => {
-    if (!confirm("¿Confirmas que recibiste el pago de esta transferencia?"))
-      return;
+    const confirmed = await confirm({
+      title: "Aprobar transferencia",
+      message: "¿Confirmas que recibiste el pago de esta transferencia?",
+      confirmText: "Aprobar",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setIsUpdating(true);
     try {
@@ -263,12 +281,14 @@ export function OrderCard({
   };
 
   const handleCancelOrder = async () => {
-    if (
-      !confirm(
-        "¿Seguro que quieres CANCELAR esta orden? Se restaurará el stock."
-      )
-    )
-      return;
+    const confirmed = await confirm({
+      title: "Cancelar orden",
+      message:
+        "¿Seguro que querés CANCELAR esta orden? Se restaurará el stock.",
+      confirmText: "Cancelar orden",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setIsUpdating(true);
     try {
@@ -465,6 +485,7 @@ export function OrderCard({
           </Button>
         </Link>
       </div>
+      {ConfirmDialog}
     </div>
   );
 }
