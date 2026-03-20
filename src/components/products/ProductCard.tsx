@@ -214,7 +214,7 @@ function InlineStockEditor({
         <button
           type="button"
           onClick={handleStartEdit}
-          className="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
+          className="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           title="Editar stock"
         >
           <Pencil className="w-3 h-3" />
@@ -240,6 +240,7 @@ interface PublicProductCardProps extends ProductCardBaseProps {
 
 interface AdminProductCardProps extends ProductCardBaseProps {
   variant: "admin";
+  layout?: "card" | "row";
   onEdit: (id: string) => void;
   onView?: (id: string) => void;
   onToggleActive?: (id: string, isActive: boolean) => void;
@@ -261,10 +262,12 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
   const isAdmin = props.variant === "admin";
 
-  const layout: "grid" | "list" = !isAdmin
+  const layout: "grid" | "list" | "row" = !isAdmin
     ? (props as PublicProductCardProps).layout ||
       (props.variant === "list" ? "list" : "grid")
-    : "grid";
+    : (props as AdminProductCardProps).layout === "row"
+      ? "row"
+      : "grid";
 
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -356,6 +359,130 @@ const ProductCard = React.memo((props: ProductCardProps) => {
     const { onEdit, onView, onToggleActive, onDelete, onUpdateStock } =
       props as AdminProductCardProps;
 
+    // -------------------------------------------------------------------------
+    // ADMIN - Vista de lista (fila horizontal compacta)
+    // -------------------------------------------------------------------------
+    if (layout === "row") {
+      return (
+        <div
+          className={`group relative flex items-center gap-3 surface border border-theme rounded-xl px-3 py-2 shadow-sm hover:shadow-md transition-all duration-200 ${product.isActive === false ? "opacity-60" : ""}`}
+        >
+          {/* Imagen miniatura */}
+          <div className="shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-surface-secondary border border-theme">
+            {imageError || !mainImage ? (
+              <ProductImagePlaceholder className="w-full h-full" />
+            ) : (
+              <OptimizedImage
+                src={mainImage}
+                alt={product.name}
+                width={56}
+                height={56}
+                className="object-cover w-full h-full"
+                sizes="56px"
+                priority={priority}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+              />
+            )}
+          </div>
+
+          {/* Nombre + categoría */}
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-sm text-base-primary truncate max-w-50">
+                {product.name}
+              </span>
+              {product.isActive === false && (
+                <span className="text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-semibold shrink-0">
+                  DESACTIVADO
+                </span>
+              )}
+              {product.onSale && (
+                <span className="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 px-1.5 py-0.5 rounded-full font-semibold shrink-0">
+                  OFERTA
+                </span>
+              )}
+            </div>
+            {product.categories && (
+              <span className="text-xs text-muted-foreground truncate block">
+                {product.categories.name}
+              </span>
+            )}
+          </div>
+
+          {/* Precio */}
+          <div className="shrink-0 hidden sm:block text-sm font-bold text-base-primary whitespace-nowrap min-w-18 text-right">
+            <PriceBadge
+              price={product.price}
+              salePrice={product.salePrice}
+              onSale={product.onSale}
+            />
+          </div>
+
+          {/* Stock editor inline */}
+          <div className="shrink-0 hidden md:flex items-center min-w-30">
+            <InlineStockEditor
+              productId={product.id}
+              stock={effectiveStock}
+              onUpdateStock={onUpdateStock}
+            />
+          </div>
+
+          {/* Acciones */}
+          <div className="shrink-0 flex items-center gap-1">
+            {onView && (
+              <button
+                type="button"
+                onClick={() => onView(product.id)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                title="Ver producto"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onEdit(product.id)}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              title="Editar"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            {onToggleActive && (
+              <button
+                type="button"
+                onClick={() =>
+                  onToggleActive(product.id, !(product.isActive !== false))
+                }
+                className={`p-1.5 rounded-lg transition-colors ${
+                  product.isActive !== false
+                    ? "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    : "text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                }`}
+                title={
+                  product.isActive !== false
+                    ? "Desactivar producto"
+                    : "Activar producto"
+                }
+              >
+                <Power className="w-4 h-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(product.id)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                title="Eliminar"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="group relative surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden h-full flex flex-col">
         {/* Image Section */}
@@ -378,7 +505,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   }`}
                   onLoad={handleImageLoad}
                   onError={handleImageError}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
               </div>
             )}

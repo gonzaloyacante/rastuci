@@ -429,7 +429,7 @@ export default function ProductList() {
             className={
               viewMode === "grid"
                 ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-6"
-                : "space-y-4"
+                : "space-y-2"
             }
           >
             {products.map((product: Product, index: number) => {
@@ -438,11 +438,12 @@ export default function ProductList() {
                 <div
                   key={product.id}
                   ref={isLast ? lastElementRef : undefined}
-                  className="h-full"
+                  className={viewMode === "grid" ? "h-full" : undefined}
                 >
                   <ProductCard
                     product={product}
                     variant="admin"
+                    layout={viewMode === "list" ? "row" : "card"}
                     priority={index < 6}
                     onEdit={() =>
                       router.push(`/admin/productos/${product.id}/editar`)

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-import { cloudinaryLoader } from "@/lib/cloudinaryLoader";
+import { cloudinaryLoader, getCloudinaryBlurUrl } from "@/lib/cloudinaryLoader";
 
 const PRODUCT_IMAGE_SIZES =
   "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
@@ -53,6 +53,12 @@ export function OptimizedImage({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority || !lazy);
   const imgRef = useRef<HTMLDivElement>(null);
+
+  // Auto-generate blur placeholder from Cloudinary src when not provided
+  const autoBlurDataURL = blurDataURL ?? (src ? getCloudinaryBlurUrl(src) : "");
+  const resolvedPlaceholder =
+    placeholder === "empty" && autoBlurDataURL ? "blur" : placeholder;
+  const resolvedBlurDataURL = autoBlurDataURL || blurDataURL;
 
   // Reset error state when src changes
   useEffect(() => {
@@ -146,8 +152,8 @@ export function OptimizedImage({
             quality={quality}
             sizes={sizes}
             priority={priority}
-            placeholder={placeholder}
-            blurDataURL={blurDataURL}
+            placeholder={resolvedPlaceholder}
+            blurDataURL={resolvedBlurDataURL}
             loader={cloudinaryLoader}
             className={`${enableFade ? `transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}` : ""} ${className}`}
             onLoad={handleLoad}
