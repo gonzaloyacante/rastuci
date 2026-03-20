@@ -84,8 +84,14 @@ function SmartSearchContent({
   // Cargar búsquedas recientes del localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const recent = JSON.parse(localStorage.getItem("recentSearches") || "[]");
-      setRecentSearches(recent.slice(0, 5));
+      try {
+        const recent = JSON.parse(
+          localStorage.getItem("recentSearches") || "[]"
+        );
+        setRecentSearches(recent.slice(0, 5));
+      } catch {
+        setRecentSearches([]);
+      }
     }
   }, []);
 
@@ -175,7 +181,11 @@ function SmartSearchContent({
         ...recentSearches.filter((s) => s !== searchQuery),
       ].slice(0, 5);
       setRecentSearches(newRecent);
-      localStorage.setItem("recentSearches", JSON.stringify(newRecent));
+      try {
+        localStorage.setItem("recentSearches", JSON.stringify(newRecent));
+      } catch {
+        // noop — QuotaExceededError possible in iOS private mode
+      }
 
       // Ejecutar búsqueda
       if (onSearch) {
@@ -271,7 +281,11 @@ function SmartSearchContent({
   const removeRecentSearch = (searchToRemove: string) => {
     const newRecent = recentSearches.filter((s) => s !== searchToRemove);
     setRecentSearches(newRecent);
-    localStorage.setItem("recentSearches", JSON.stringify(newRecent));
+    try {
+      localStorage.setItem("recentSearches", JSON.stringify(newRecent));
+    } catch {
+      // noop — QuotaExceededError possible in iOS private mode
+    }
   };
 
   // Tamaños
