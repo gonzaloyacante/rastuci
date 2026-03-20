@@ -44,7 +44,14 @@ export function NotificationManager({
 
   const savePreferences = (newPrefs: typeof preferences) => {
     setPreferences(newPrefs);
-    localStorage.setItem("notification-preferences", JSON.stringify(newPrefs));
+    try {
+      localStorage.setItem(
+        "notification-preferences",
+        JSON.stringify(newPrefs)
+      );
+    } catch {
+      // noop — QuotaExceededError possible in iOS private mode
+    }
   };
 
   const handleRequestPermission = async () => {

@@ -50,7 +50,11 @@ export function ComparisonProvider({ children }: ComparisonProviderProps) {
 
   // Save to localStorage whenever comparison items change
   useEffect(() => {
-    localStorage.setItem("comparison-items", JSON.stringify(comparisonItems));
+    try {
+      localStorage.setItem("comparison-items", JSON.stringify(comparisonItems));
+    } catch {
+      // noop — QuotaExceededError possible in iOS private mode
+    }
   }, [comparisonItems]);
 
   const addToComparison = (product: Product) => {
