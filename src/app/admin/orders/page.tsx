@@ -226,10 +226,7 @@ export default function OrdersPage() {
             escapeCsvCell(getStatusLabel(order.status)),
             escapeCsvCell(order.mpStatus || "N/A"),
             escapeCsvCell(order.shippingMethod || "No especificado"),
-            escapeCsvCell(
-              (order as Order & { shippingAgency?: string }).shippingAgency ||
-                "-"
-            ),
+            escapeCsvCell(order.shippingAgency || "-"),
             escapeCsvCell(order.caTrackingNumber || "Sin tracking"),
             escapeCsvCell(formatDate(order.createdAt)),
             escapeCsvCell(products),
