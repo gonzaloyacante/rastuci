@@ -32,9 +32,13 @@ export function NotificationManager({
 
   useEffect(() => {
     // Load preferences from localStorage
-    const saved = localStorage.getItem("notification-preferences");
-    if (saved) {
-      setPreferences(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem("notification-preferences");
+      if (saved) {
+        setPreferences(JSON.parse(saved));
+      }
+    } catch {
+      // noop — use defaults if stored preferences are corrupted
     }
   }, []);
 
