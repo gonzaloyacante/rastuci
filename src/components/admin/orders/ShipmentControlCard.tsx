@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { useCorreoArgentino } from "@/hooks/useCorreoArgentino";
 import type {
@@ -25,6 +26,7 @@ export function ShipmentControlCard({
 }: ShipmentControlCardProps) {
   const { show } = useToast();
   const { getTracking } = useCorreoArgentino();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [loadingTracking, setLoadingTracking] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -124,7 +126,13 @@ export function ShipmentControlCard({
       return;
     }
 
-    if (!confirm("¿Confirmar creación de envío en Correo Argentino?")) return;
+    const confirmed = await confirm({
+      title: "Crear envío en Correo Argentino",
+      message: "¿Confirmar creación de envío en Correo Argentino?",
+      confirmText: "Confirmar",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setImporting(true);
     try {
@@ -157,7 +165,13 @@ export function ShipmentControlCard({
 
   // Logic needed for retrying
   const handleRetryImport = async () => {
-    if (!confirm("¿Reintentar envío a Correo Argentino?")) return;
+    const confirmed = await confirm({
+      title: "Reintentar envío",
+      message: "¿Reintentar envío a Correo Argentino?",
+      confirmText: "Reintentar",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setImporting(true);
     try {
       const res = await fetch(`/api/admin/orders/${order.id}/retry-ca-import`, {
@@ -182,132 +196,135 @@ export function ShipmentControlCard({
   }
 
   return (
-    <Card>
-      <CardHeader className="surface border-b border-muted">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Truck size={18} />
-          Correo Argentino
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
-        <div className="space-y-3">
-          {/* Status de Importación CA (si hubo error) */}
-          {order.caImportStatus === "ERROR" && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm mb-3">
-              <p className="font-bold flex items-center gap-2">
-                <span className="text-lg">⚠️</span> Error al enviar a CA
-              </p>
-              <p className="mt-1">{order.caImportError}</p>
-            </div>
-          )}
-
-          {order.caTrackingNumber && (
-            <div>
-              <h3 className="text-sm font-medium muted">Tracking</h3>
-              <p className="text-sm font-mono">{order.caTrackingNumber}</p>
-              <Button
-                variant="outline"
-                className="w-full mt-2"
-                onClick={handleGetTracking}
-                disabled={loadingTracking}
-              >
-                {loadingTracking ? (
-                  <RefreshCw size={16} className="mr-2 animate-spin" />
-                ) : (
-                  <MapPin size={16} className="mr-2" />
-                )}
-                Rastrear Envío
-              </Button>
-            </div>
-          )}
-          {trackingInfo &&
-            !Array.isArray(trackingInfo) &&
-            "events" in trackingInfo && (
-              <div className="p-3 surface-secondary rounded text-sm">
-                <p>
-                  <strong>Tracking:</strong> {trackingInfo.shippingId}
+    <>
+      <Card>
+        <CardHeader className="surface border-b border-muted">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Truck size={18} />
+            Correo Argentino
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="space-y-3">
+            {/* Status de Importación CA (si hubo error) */}
+            {order.caImportStatus === "ERROR" && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm mb-3">
+                <p className="font-bold flex items-center gap-2">
+                  <span className="text-lg">⚠️</span> Error al enviar a CA
                 </p>
-                {trackingInfo.events && trackingInfo.events.length > 0 && (
-                  <>
-                    <p>
-                      <strong>Estado:</strong>{" "}
-                      {trackingInfo.events[0].eventDescription}
-                    </p>
-                    <p>
-                      <strong>Ubicación:</strong>{" "}
-                      {trackingInfo.events[0].branchName}
-                    </p>
-                    <p>
-                      <strong>Fecha:</strong>{" "}
-                      {new Date(
-                        trackingInfo.events[0].eventDate
-                      ).toLocaleString("es-AR")}
-                    </p>
-                  </>
-                )}
+                <p className="mt-1">{order.caImportError}</p>
               </div>
             )}
-          {!order.caShipmentId && order.shippingStreet && (
-            <div>
-              <h3 className="text-sm font-medium muted mb-2">
-                Dirección de Envío
-              </h3>
-              <p className="text-sm">
-                {order.shippingStreet} {order.shippingNumber}
-                {order.shippingFloor && `, Piso ${order.shippingFloor}`}
-                {order.shippingApartment &&
-                  `, Depto ${order.shippingApartment}`}
-              </p>
-              <p className="text-sm">
-                {order.shippingCity}, {order.shippingProvince}
-              </p>
-              <p className="text-sm">CP: {order.shippingPostalCode}</p>
 
-              <Button
-                className="w-full mt-3 btn-hero"
-                onClick={
-                  order.caImportStatus === "ERROR"
-                    ? handleRetryImport
-                    : handleImportShipment
-                }
-                disabled={importing}
-              >
-                {importing ? (
-                  <RefreshCw size={16} className="mr-2 animate-spin" />
-                ) : (
-                  <Send size={16} className="mr-2" />
-                )}
-                {order.caImportStatus === "ERROR"
-                  ? "Reintentar envío a CA"
-                  : "Importar a Correo Argentino"}
-              </Button>
-            </div>
-          )}
-          {order.caShipmentId && (
-            <div className="p-3 surface text-success border border-success rounded-lg text-sm">
-              <p>
-                <strong>ID Envío:</strong> {order.caShipmentId}
-              </p>
-              <p className="text-xs mt-1">
-                Envío registrado en Correo Argentino
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-2 bg-white text-black border-gray-300 hover:bg-gray-50"
-                onClick={handleSyncCA}
-                disabled={syncing}
-              >
-                <RefreshCw
-                  size={14}
-                  className={`mr-2 ${syncing ? "animate-spin" : ""}`}
-                />
-                Sincronizar Estado (Check Pago)
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            {order.caTrackingNumber && (
+              <div>
+                <h3 className="text-sm font-medium muted">Tracking</h3>
+                <p className="text-sm font-mono">{order.caTrackingNumber}</p>
+                <Button
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={handleGetTracking}
+                  disabled={loadingTracking}
+                >
+                  {loadingTracking ? (
+                    <RefreshCw size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <MapPin size={16} className="mr-2" />
+                  )}
+                  Rastrear Envío
+                </Button>
+              </div>
+            )}
+            {trackingInfo &&
+              !Array.isArray(trackingInfo) &&
+              "events" in trackingInfo && (
+                <div className="p-3 surface-secondary rounded text-sm">
+                  <p>
+                    <strong>Tracking:</strong> {trackingInfo.shippingId}
+                  </p>
+                  {trackingInfo.events && trackingInfo.events.length > 0 && (
+                    <>
+                      <p>
+                        <strong>Estado:</strong>{" "}
+                        {trackingInfo.events[0].eventDescription}
+                      </p>
+                      <p>
+                        <strong>Ubicación:</strong>{" "}
+                        {trackingInfo.events[0].branchName}
+                      </p>
+                      <p>
+                        <strong>Fecha:</strong>{" "}
+                        {new Date(
+                          trackingInfo.events[0].eventDate
+                        ).toLocaleString("es-AR")}
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+            {!order.caShipmentId && order.shippingStreet && (
+              <div>
+                <h3 className="text-sm font-medium muted mb-2">
+                  Dirección de Envío
+                </h3>
+                <p className="text-sm">
+                  {order.shippingStreet} {order.shippingNumber}
+                  {order.shippingFloor && `, Piso ${order.shippingFloor}`}
+                  {order.shippingApartment &&
+                    `, Depto ${order.shippingApartment}`}
+                </p>
+                <p className="text-sm">
+                  {order.shippingCity}, {order.shippingProvince}
+                </p>
+                <p className="text-sm">CP: {order.shippingPostalCode}</p>
+
+                <Button
+                  className="w-full mt-3 btn-hero"
+                  onClick={
+                    order.caImportStatus === "ERROR"
+                      ? handleRetryImport
+                      : handleImportShipment
+                  }
+                  disabled={importing}
+                >
+                  {importing ? (
+                    <RefreshCw size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <Send size={16} className="mr-2" />
+                  )}
+                  {order.caImportStatus === "ERROR"
+                    ? "Reintentar envío a CA"
+                    : "Importar a Correo Argentino"}
+                </Button>
+              </div>
+            )}
+            {order.caShipmentId && (
+              <div className="p-3 surface text-success border border-success rounded-lg text-sm">
+                <p>
+                  <strong>ID Envío:</strong> {order.caShipmentId}
+                </p>
+                <p className="text-xs mt-1">
+                  Envío registrado en Correo Argentino
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2 bg-white text-black border-gray-300 hover:bg-gray-50"
+                  onClick={handleSyncCA}
+                  disabled={syncing}
+                >
+                  <RefreshCw
+                    size={14}
+                    className={`mr-2 ${syncing ? "animate-spin" : ""}`}
+                  />
+                  Sincronizar Estado (Check Pago)
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      {ConfirmDialog}
+    </>
   );
 }
