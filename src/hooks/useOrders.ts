@@ -66,7 +66,11 @@ const fetcher = async (url: string) => {
 
 export const useOrders = (initialParams?: UseOrdersParams) => {
   // Estado interno para manejar filtros y paginación
-  const [params, setParams] = useState<UseOrdersParams>(initialParams || {});
+  const [params, setParams] = useState<UseOrdersParams>({
+    page: 1,
+    limit: 20,
+    ...initialParams,
+  });
 
   // Construir key dinámicamente
   const buildKey = useCallback(() => {
@@ -100,6 +104,6 @@ export const useOrders = (initialParams?: UseOrdersParams) => {
     totalPages: data?.data?.totalPages || 1,
     currentPage: data?.data?.page || 1,
     fetchOrders, // Compatibility wrapper
-    mutate, // Expose mutate for direct cache invadlidation
+    mutate, // Expose mutate for direct cache invalidation
   };
 };

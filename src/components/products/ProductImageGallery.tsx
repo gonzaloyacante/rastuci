@@ -46,10 +46,12 @@ export default function ProductImageGallery({
     return images.indexOf(a) - images.indexOf(b);
   });
 
-  // Prevent index out of bounds
-  if (sortedImages.length > 0 && selectedImage >= sortedImages.length) {
-    setSelectedImage(0);
-  }
+  // Prevent index out of bounds (in effect to avoid setState during render)
+  useEffect(() => {
+    if (sortedImages.length > 0 && selectedImage >= sortedImages.length) {
+      setSelectedImage(0);
+    }
+  }, [sortedImages.length, selectedImage]);
 
   const handleImageError = useCallback((src: string) => {
     setFailedImages((prev) => {
@@ -139,7 +141,7 @@ export default function ProductImageGallery({
       {/* Main image container */}
       <div
         ref={imageContainerRef}
-        className="relative aspect-square md:aspect-[4/3] lg:aspect-square w-full max-h-[500px] md:max-h-[60vh] lg:max-h-none mx-auto bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
+        className="relative aspect-square md:aspect-4/3 lg:aspect-square w-full max-h-125 md:max-h-[60vh] lg:max-h-none mx-auto bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -219,7 +221,7 @@ export default function ProductImageGallery({
       {/* Zoom preview - fixed overlay on right side (MercadoLibre style) */}
       {isZooming && (
         <div
-          className="hidden lg:block fixed z-50 w-[500px] h-[500px] bg-white dark:bg-neutral-900 border border-muted rounded-lg shadow-2xl overflow-hidden pointer-events-none"
+          className="hidden lg:block fixed z-50 w-125 h-125 bg-white dark:bg-neutral-900 border border-muted rounded-lg shadow-2xl overflow-hidden pointer-events-none"
           style={{
             top: imageContainerRef.current?.getBoundingClientRect().top ?? 100,
             left:

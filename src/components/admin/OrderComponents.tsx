@@ -30,8 +30,6 @@ import { formatCurrency as defaultFormatCurrency } from "@/utils/formatters";
 // ============================================================================
 
 // Configuración de visualización por estado
-// Configuración de visualización por estado
-// Configuración de visualización por estado
 export const STATUS_CONFIG = {
   [ORDER_STATUS.PENDING]: { label: "⚠️ Incompleto", variant: "warning" },
   [ORDER_STATUS.PENDING_PAYMENT]: {
@@ -48,6 +46,14 @@ export const STATUS_CONFIG = {
   },
   [ORDER_STATUS.DELIVERED]: { label: "Entregado", variant: "default" },
   [ORDER_STATUS.CANCELLED]: { label: "Cancelado", variant: "error" },
+  [ORDER_STATUS.WAITING_TRANSFER_PROOF]: {
+    label: "📎 Esperando comprobante",
+    variant: "warning",
+  },
+  [ORDER_STATUS.PAYMENT_REVIEW]: {
+    label: "🔍 Revisando comprobante",
+    variant: "info",
+  },
 } as const;
 
 export function OrderStatusBadge({ status }: { status: string }) {

@@ -76,9 +76,8 @@ export default function AdminLoginPage() {
     register: registerLogin,
     handleSubmit: handleLoginSubmit,
     formState: { errors: loginErrors },
-  } = useForm<LoginFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(loginSchema) as any,
+  } = useForm<LoginFormValues, unknown, LoginFormValues>({
+    resolver: zodResolver(loginSchema),
   });
 
   // Form para recuperación de contraseña
@@ -87,9 +86,8 @@ export default function AdminLoginPage() {
     handleSubmit: handleForgotPasswordSubmit,
     formState: { errors: forgotPasswordErrors },
     reset: resetForgotPasswordForm,
-  } = useForm<ForgotPasswordFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(forgotPasswordSchema) as any,
+  } = useForm<ForgotPasswordFormValues, unknown, ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
   });
 
   // Manejo de inicio de sesión
