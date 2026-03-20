@@ -6,6 +6,7 @@ import { withAdminAuth } from "@/lib/adminAuth";
 import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { emailService } from "@/lib/resend";
 
 export const POST = withAdminAuth(
   async (
@@ -17,6 +18,11 @@ export const POST = withAdminAuth(
 
       const order = await prisma.orders.findUnique({
         where: { id: orderId },
+        include: {
+          order_items: {
+            include: { products: { select: { name: true } } },
+          },
+        },
       });
 
       if (!order) {
@@ -56,7 +62,38 @@ export const POST = withAdminAuth(
       revalidatePath("/admin/orders");
       revalidatePath(`/admin/orders/${orderId}`);
 
-      // TODO: Send Email "Payment Received"
+      // Notificar al cliente que el pago fue recibido y la orden está procesada
+      if (order.customerEmail) {
+        try {
+          await emailService.sendOrderConfirmation(
+            {
+              id: order.id,
+              customerName: order.customerName,
+              customerEmail: order.customerEmail,
+              customerPhone: order.customerPhone ?? undefined,
+              customerAddress: order.customerAddress ?? undefined,
+              total: Number(order.total),
+              subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+              discount: order.discount ? Number(order.discount) : undefined,
+              shippingCost: order.shippingCost
+                ? Number(order.shippingCost)
+                : undefined,
+            },
+            order.order_items.map((item) => ({
+              name: item.products?.name ?? "Producto",
+              quantity: item.quantity,
+              price: Number(item.price),
+              color: item.color ?? undefined,
+              size: item.size ?? undefined,
+            }))
+          );
+        } catch (emailErr) {
+          logger.warn("[Admin] Failed to send payment confirmation email", {
+            emailErr,
+            orderId,
+          });
+        }
+      }
 
       return NextResponse.json({
         success: true,

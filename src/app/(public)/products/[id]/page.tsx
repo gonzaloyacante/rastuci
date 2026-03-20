@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
 import { logger } from "@/lib/logger";
@@ -13,6 +13,14 @@ interface ProductPageProps {
   params: Promise<{ id: string }>;
 }
 
+// Cache deduplicado: evita N+1 — generateMetadata y ProductPage comparten el mismo resultado
+const getProduct = cache(async (id: string) => {
+  return prisma.products.findUnique({
+    where: { id, isActive: true },
+    include: { categories: true },
+  });
+});
+
 // Generate metadata para SEO
 export async function generateMetadata({
   params,
@@ -20,13 +28,8 @@ export async function generateMetadata({
   const { id } = await params;
 
   try {
-    // Consultar directamente a Prisma en lugar de fetch (mejor para build time)
-    const product = await prisma.products.findUnique({
-      where: { id },
-      include: {
-        categories: true,
-      },
-    });
+    // Cache deduplicado — comparte resultado con ProductPage
+    const product = await getProduct(id);
 
     if (!product) {
       return {
@@ -34,11 +37,16 @@ export async function generateMetadata({
         description: "El producto que buscas no está disponible.",
       };
     }
-    const images = Array.isArray(product.images)
-      ? product.images
-      : typeof product.images === "string"
-        ? JSON.parse(product.images)
-        : [];
+    let images: string[] = [];
+    try {
+      images = Array.isArray(product.images)
+        ? (product.images as string[])
+        : typeof product.images === "string"
+          ? (JSON.parse(product.images) as string[])
+          : [];
+    } catch {
+      images = [];
+    }
 
     return generateProductMetadata({
       product: {
@@ -65,6 +73,7 @@ export async function generateStaticParams() {
   try {
     const products = await prisma.products.findMany({
       take: 20, // Pre-renderizar los 20 primeros productos
+      where: { isActive: true },
       select: { id: true },
       orderBy: { createdAt: "desc" },
     });
@@ -78,22 +87,31 @@ export async function generateStaticParams() {
   }
 }
 
-// ... existing imports
-
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
-  const product = await prisma.products.findUnique({
-    where: { id },
-    include: { categories: true },
-  });
+  const product = await getProduct(id);
 
   if (!product) {
     return (
       <div className="container py-20 text-center">
         <h1 className="text-2xl font-bold">Producto no encontrado</h1>
+        <p className="text-muted-foreground mt-2">
+          Es posible que el producto ya no esté disponible.
+        </p>
       </div>
     );
+  }
+
+  let parsedImages: string[] = [];
+  try {
+    parsedImages = Array.isArray(product.images)
+      ? (product.images as string[])
+      : typeof product.images === "string"
+        ? (JSON.parse(product.images) as string[])
+        : [];
+  } catch {
+    parsedImages = [];
   }
 
   const serializedProduct = {
@@ -101,25 +119,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
     price: Number(product.price),
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
-    images: Array.isArray(product.images)
-      ? product.images
-      : typeof product.images === "string"
-        ? JSON.parse(product.images)
-        : [],
+    images: parsedImages,
   };
 
   // Generate JSON-LD structured data
-  const jsonLd = serializedProduct
-    ? generateProductJsonLd({
-        id: serializedProduct.id,
-        name: serializedProduct.name,
-        description: serializedProduct.description || "",
-        image: serializedProduct.images,
-        price: serializedProduct.price,
-        availability: serializedProduct.stock > 0 ? "instock" : "outofstock",
-        brand: "Rastuci",
-      })
-    : null;
+  const jsonLd = generateProductJsonLd({
+    id: serializedProduct.id,
+    name: serializedProduct.name,
+    description: serializedProduct.description || "",
+    image: serializedProduct.images,
+    price: serializedProduct.price,
+    availability: serializedProduct.stock > 0 ? "instock" : "outofstock",
+    brand: "Rastuci",
+  });
 
   return (
     <>

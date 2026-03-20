@@ -23,7 +23,7 @@ export class CheckoutService {
     const productIds = items.map((item) => item.productId);
     // Optimización: Traer variantes también
     const products = await prisma.products.findMany({
-      where: { id: { in: productIds } },
+      where: { id: { in: productIds }, isActive: true },
       select: {
         id: true,
         name: true,

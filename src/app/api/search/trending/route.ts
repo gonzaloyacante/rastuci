@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { fail, ok } from "@/lib/apiResponse";
+import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { ApiResponse } from "@/types";
+
+// Órdenes en estados "exitosos" — excluye canceladas y pendientes sin pago
+const SUCCESSFUL_STATUSES = [
+  ORDER_STATUS.PROCESSED,
+  ORDER_STATUS.DELIVERED,
+  ORDER_STATUS.PAYMENT_REVIEW,
+  ORDER_STATUS.WAITING_TRANSFER_PROOF,
+  ORDER_STATUS.RESERVED,
+] as const;
 
 // GET /api/search/trending - Devuelve búsquedas trending basadas en ventas
 export async function GET(
@@ -21,9 +31,14 @@ export async function GET(
       return fail("RATE_LIMITED", "Too many requests", 429);
     }
 
-    // Top products by number of orderItems (proxy de ventas)
+    // Top products por cantidad vendida — solo en órdenes exitosas (excluir canceladas)
     const topProducts = await prisma.order_items.groupBy({
       by: ["productId"],
+      where: {
+        orders: {
+          status: { in: [...SUCCESSFUL_STATUSES] },
+        },
+      },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: "desc" } },
       take: 10,
@@ -34,7 +49,7 @@ export async function GET(
     const products =
       productIds.length > 0
         ? await prisma.products.findMany({
-            where: { id: { in: productIds } },
+            where: { id: { in: productIds }, isActive: true },
             select: { id: true, name: true },
           })
         : [];

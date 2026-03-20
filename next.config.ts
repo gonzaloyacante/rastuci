@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Configuración de Turbopack (silencia advertencia de compatibilidad webpack en Next.js 16)
@@ -100,6 +100,8 @@ const nextConfig: NextConfig = {
 
       { source: "/admin/soporte", destination: "/admin/support" },
       { source: "/admin/sucursales-ca", destination: "/admin/branches-ca" },
+      { source: "/admin/resenas", destination: "/admin/reviews" },
+      { source: "/admin/resenas/:path*", destination: "/admin/reviews/:path*" },
 
       { source: "/admin/usuarios", destination: "/admin/users" },
       { source: "/admin/usuarios/nuevo", destination: "/admin/users/new" },

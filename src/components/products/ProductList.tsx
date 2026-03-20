@@ -84,7 +84,7 @@ export default function ProductList() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // UI helpers
-  const { ConfirmDialog } = useConfirmDialog();
+  const { ConfirmDialog, confirm } = useConfirmDialog();
 
   // Datos con scroll infinito
   const {
@@ -128,7 +128,7 @@ export default function ProductList() {
     id: string,
     currentStatus: boolean | undefined
   ) => {
-    const newStatus = !(currentStatus !== false); // Toggle
+    const newStatus = !currentStatus; // Toggle: undefined/false → true, true → false
 
     try {
       const response = await fetch(`/api/products/${id}`, {
@@ -154,15 +154,34 @@ export default function ProductList() {
     }
   };
 
+  const handleUpdateStock = async (id: string, stock: number) => {
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update stock");
+      }
+
+      show({ type: "success", message: `Stock actualizado a ${stock}` });
+      void mutate();
+      void mutateStats();
+    } catch (err) {
+      logger.error("Error updating product stock", { error: err });
+      show({ type: "error", message: "No se pudo actualizar el stock." });
+    }
+  };
+
   const handleDelete = async (id: string) => {
     const product = products.find((p: Product) => p.id === id);
-    const confirmed = await new Promise<boolean>((resolve) => {
-      // Use browser confirm as fallback since ConfirmDialog hook may not expose a promise API
-      resolve(
-        window.confirm(
-          `¿Estás seguro de que querés eliminar "${product?.name || "este producto"}"? Esta acción no se puede deshacer.`
-        )
-      );
+    const confirmed = await confirm({
+      title: "Eliminar producto",
+      message: `¿Estás seguro de que querés eliminar "${product?.name || "este producto"}"? Esta acción no se puede deshacer.`,
+      confirmText: "Eliminar",
+      variant: "danger",
     });
 
     if (!confirmed) return;
@@ -211,7 +230,9 @@ export default function ProductList() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `productos_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   }, [products]);
 
@@ -408,7 +429,7 @@ export default function ProductList() {
             className={
               viewMode === "grid"
                 ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-6"
-                : "space-y-4"
+                : "space-y-2"
             }
           >
             {products.map((product: Product, index: number) => {
@@ -417,11 +438,12 @@ export default function ProductList() {
                 <div
                   key={product.id}
                   ref={isLast ? lastElementRef : undefined}
-                  className="h-full"
+                  className={viewMode === "grid" ? "h-full" : undefined}
                 >
                   <ProductCard
                     product={product}
                     variant="admin"
+                    layout={viewMode === "list" ? "row" : "card"}
                     priority={index < 6}
                     onEdit={() =>
                       router.push(`/admin/productos/${product.id}/editar`)
@@ -430,6 +452,7 @@ export default function ProductList() {
                       handleToggleActive(product.id, product.isActive)
                     }
                     onDelete={() => handleDelete(product.id)}
+                    onUpdateStock={handleUpdateStock}
                   />
                 </div>
               );

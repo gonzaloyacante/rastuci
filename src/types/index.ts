@@ -82,6 +82,8 @@ export interface Order {
   customerPostalCode?: string | null;
   customerEmail?: string | null;
   total: number;
+  subtotal?: number | null;
+  discount?: number | null;
   status: OrderStatus;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -232,11 +234,14 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface ProductReview {
   id: string;
   rating: number;
   comment?: string | null;
   customerName: string;
+  status: ReviewStatus;
   createdAt: Date;
   productId: string;
 }
@@ -246,6 +251,7 @@ export interface SerializedProductReview {
   rating: number;
   comment?: string | null;
   customerName: string;
+  status: ReviewStatus;
   createdAt: string;
   productId: string;
 }
@@ -274,6 +280,10 @@ export interface OrderEmailSummary {
   customerPhone?: string;
   customerAddress?: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  shippingCost?: number;
+  couponCode?: string;
 }
 
 export interface OrderEmailItem {

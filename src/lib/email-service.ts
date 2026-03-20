@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { emailService } from "@/lib/resend";
 
@@ -36,7 +37,11 @@ export async function handleOrderStatusChange(
         status: input.newStatus,
       });
     }
-  } catch {
-    // Error handling silencioso para no afectar la actualización del estado
+  } catch (error) {
+    logger.error("[EmailService] Error enviando email de estado de orden", {
+      error,
+      orderId: input.orderId,
+      newStatus: input.newStatus,
+    });
   }
 }

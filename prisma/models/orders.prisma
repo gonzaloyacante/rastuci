@@ -18,6 +18,8 @@ model orders {
   customerName          String
   customerPhone         String
   customerAddress       String?
+  subtotal              Decimal?             @db.Decimal(10, 2)
+  discount              Decimal?             @db.Decimal(10, 2)
   total                 Decimal              @db.Decimal(10, 2)
   status                OrderStatus          @default(PENDING)
   createdAt             DateTime             @default(now())
@@ -82,6 +84,8 @@ model orders {
   transferProofUrl      String?
   transferSenderName    String?
   transferTransactionId String?
+  couponId              String?
+  coupons               coupons?             @relation(fields: [couponId], references: [id])
   status_history        OrderStatusHistory[]
   order_items           order_items[]
   ca_customers          ca_customers?        @relation(fields: [caCustomerId], references: [customerId])
@@ -90,6 +94,7 @@ model orders {
   @@index([caCustomerId])
   @@index([caExtOrderId])
   @@index([caTrackingNumber])
+  @@index([couponId])
   @@index([createdAt])
   @@index([mpPaymentId])
   @@index([mpPreferenceId])

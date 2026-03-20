@@ -111,8 +111,10 @@ export async function GET(
       return ok({
         ...responseOrder,
         customerEmail: undefined,
-        customerPhone: "",
-      } as Order);
+        customerPhone: undefined,
+        customerName: undefined,
+        customerAddress: undefined,
+      } as unknown as Order);
     }
 
     return ok(responseOrder);
@@ -317,10 +319,15 @@ export const DELETE = withAdminAuth(
           });
         }
 
-        // Eliminar el pedido (los items se eliminan en cascada)
-        await tx.orders.delete({
-          where: { id },
+        // Eliminar solo si sigue en PENDING — previene race condition TOCTOU
+        const deleted = await tx.orders.deleteMany({
+          where: { id, status: ORDER_STATUS.PENDING },
         });
+        if (deleted.count === 0) {
+          throw new Error(
+            "El pedido fue modificado concurrentemente. Inténtalo nuevamente."
+          );
+        }
       });
 
       return ok(null, "Pedido cancelado exitosamente");

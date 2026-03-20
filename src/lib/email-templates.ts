@@ -183,6 +183,10 @@ export const getOrderConfirmationEmail = (params: {
   customerName: string;
   orderId: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  shippingCost?: number;
+  couponCode?: string;
   items: Array<{
     name: string;
     quantity: number;
@@ -191,7 +195,16 @@ export const getOrderConfirmationEmail = (params: {
     size?: string;
   }>;
 }): string => {
-  const { customerName, orderId, total, items } = params;
+  const {
+    customerName,
+    orderId,
+    total,
+    subtotal,
+    discount,
+    shippingCost,
+    couponCode,
+    items,
+  } = params;
 
   const itemsHtml = items
     .map((item) => {
@@ -211,13 +224,50 @@ export const getOrderConfirmationEmail = (params: {
     })
     .join("");
 
+  const hasBreakdown =
+    subtotal !== undefined &&
+    (discount !== undefined || shippingCost !== undefined);
+
+  const breakdownHtml = hasBreakdown
+    ? `
+    <div style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin: 15px 0; border: 1px solid #e9ecef;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #555;">
+        <tr>
+          <td style="padding: 6px 0;">Subtotal</td>
+          <td style="padding: 6px 0; text-align: right;">${formatCurrency(subtotal!)}</td>
+        </tr>
+        ${
+          shippingCost !== undefined
+            ? `<tr>
+          <td style="padding: 6px 0;">Envío</td>
+          <td style="padding: 6px 0; text-align: right;">${shippingCost === 0 ? "<span style='color:#16a34a;font-weight:bold;'>GRATIS</span>" : formatCurrency(shippingCost)}</td>
+        </tr>`
+            : ""
+        }
+        ${
+          discount !== undefined && discount > 0
+            ? `<tr>
+          <td style="padding: 6px 0; color: #16a34a;">${couponCode ? `🏷️ Cupón (${escapeHtml(couponCode)})` : "Descuento"}</td>
+          <td style="padding: 6px 0; text-align: right; color: #16a34a; font-weight: bold;">-${formatCurrency(discount)}</td>
+        </tr>`
+            : ""
+        }
+        <tr style="border-top: 2px solid #333;">
+          <td style="padding: 10px 0 4px; font-weight: bold; color: #333; font-size: 16px;">Total</td>
+          <td style="padding: 10px 0 4px; text-align: right; font-weight: bold; color: #333; font-size: 16px;">${formatCurrency(total)}</td>
+        </tr>
+      </table>
+    </div>
+    ${discount !== undefined && discount > 0 ? `<p style="color: #16a34a; font-weight: bold; text-align: center; font-size: 14px;">🎉 ¡Ahorraste ${formatCurrency(discount)} en este pedido!</p>` : ""}`
+    : `<strong>Total: ${formatCurrency(total)}</strong>`;
+
   return generateEmailHtml({
     customerName,
     orderId,
     title: "¡Gracias por tu compra!",
     color: "#ec4899", // Pink branding
     message: `Confirmamos que recibimos tu pago y tu pedido está siendo procesado.<br><br>
-    <strong>Total: ${formatCurrency(total)}</strong><br><br>
+    ${breakdownHtml}<br><br>
     ${itemsHtml}`,
     orderUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/orders/${orderId}`,
     customButtonText: "Ver Pedido",
@@ -467,4 +517,55 @@ export const getVacationReopeningEmail = (_params: {
     orderUrl: process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com",
     customButtonText: "🛍️ Ir a la Tienda",
   });
+};
+
+export const getContactNotificationEmail = (params: {
+  name: string;
+  email: string;
+  phone?: string;
+  message: string;
+  responsePreference: string;
+}): string => {
+  const { name, email, phone, message, responsePreference } = params;
+  const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/admin/contacts`;
+  const preferenceLabel: Record<string, string> = {
+    EMAIL: "📧 Email",
+    PHONE: "📞 Teléfono",
+    WHATSAPP: "💬 WhatsApp",
+  };
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Nuevo mensaje de contacto</title></head>
+<body style="${EMAIL_STYLES.body}">
+  <div style="${EMAIL_STYLES.container}">
+    <div style="${EMAIL_STYLES.header}">
+      <h1 style="${EMAIL_STYLES.logo}">Rastuci</h1>
+      <p style="${EMAIL_STYLES.subhead}">Panel de Administración</p>
+    </div>
+    <div style="${EMAIL_STYLES.content}">
+      <div style="background-color:#6366f1;color:white;padding:16px 20px;margin:20px 0;border-radius:8px;text-align:center;">
+        <h2 style="margin:0;font-size:18px;font-weight:bold;">📬 Nuevo mensaje de contacto</h2>
+      </div>
+      <div style="${EMAIL_STYLES.detailsBox}">
+        <h3 style="${EMAIL_STYLES.detailsTitle}">Datos del remitente</h3>
+        <p style="${EMAIL_STYLES.detailItem}"><strong>Nombre:</strong> ${escapeHtml(name)}</p>
+        <p style="${EMAIL_STYLES.detailItem}"><strong>Email:</strong> ${escapeHtml(email)}</p>
+        ${phone ? `<p style="${EMAIL_STYLES.detailItem}"><strong>Teléfono:</strong> ${escapeHtml(phone)}</p>` : ""}
+        <p style="${EMAIL_STYLES.detailItem}"><strong>Preferencia de respuesta:</strong> ${preferenceLabel[responsePreference] ?? responsePreference}</p>
+      </div>
+      <div style="${EMAIL_STYLES.detailsBox}">
+        <h3 style="${EMAIL_STYLES.detailsTitle}">Mensaje</h3>
+        <p style="font-size:15px;color:#333;line-height:1.7;white-space:pre-wrap;">${escapeHtml(message)}</p>
+      </div>
+      <div style="${EMAIL_STYLES.buttonContainer}">
+        <a href="${adminUrl}" style="${EMAIL_STYLES.button("#6366f1")}">Ver en panel de admin</a>
+      </div>
+    </div>
+    <div style="${EMAIL_STYLES.footer}">
+      <p>Este es un email automático del sistema Rastuci. No responder a este correo.</p>
+    </div>
+  </div>
+</body>
+</html>`;
 };

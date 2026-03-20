@@ -29,34 +29,37 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
       return;
     }
 
-    // Solo permitir continuar si se seleccionó MercadoPago o Efectivo
-    if (
-      !(
-        selectedPaymentMethodLocal === "mercadopago" ||
-        selectedPaymentMethodLocal === "cash"
-      )
-    ) {
-      setError("Por favor, selecciona MercadoPago o Efectivo para continuar");
-      return;
-    }
-
     // Guardar datos de pago en el contexto si es necesario
     // Persistir en contexto
-    setSelectedPaymentMethod(
-      selectedPaymentMethodLocal === "mercadopago"
-        ? {
-            id: "mercadopago",
-            name: "MercadoPago",
-            icon: "wallet",
-            description: "Paga con MercadoPago",
-          }
-        : {
-            id: "cash",
-            name: "Efectivo - Retiro en Local",
-            icon: "dollar-sign",
-            description: "Retiro y pago en efectivo",
-          }
-    );
+    const methodMap: Record<
+      string,
+      { id: string; name: string; icon: string; description: string }
+    > = {
+      mercadopago: {
+        id: "mercadopago",
+        name: "MercadoPago",
+        icon: "wallet",
+        description: "Paga con MercadoPago",
+      },
+      cash: {
+        id: "cash",
+        name: "Efectivo - Retiro en Local",
+        icon: "dollar-sign",
+        description: "Retiro y pago en efectivo",
+      },
+      transfer: {
+        id: "transfer",
+        name: "Transferencia Bancaria",
+        icon: "building",
+        description: "Paga por transferencia bancaria",
+      },
+    };
+    const method = methodMap[selectedPaymentMethodLocal];
+    if (!method) {
+      setError("Método de pago no válido");
+      return;
+    }
+    setSelectedPaymentMethod(method);
 
     onNext();
   };
@@ -73,11 +76,11 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
           </div>
         )}
 
-        {/* Selector de método de pago (solo MercadoPago y Efectivo) */}
+        {/* Selector de método de pago */}
         <PaymentMethodSelector
           selectedMethod={selectedPaymentMethodLocal}
           onMethodChange={setSelectedPaymentMethodLocal}
-          allowedMethods={["mercadopago", "cash"]}
+          allowedMethods={["mercadopago", "cash", "transfer"]}
         />
 
         {/* Información de efectivo */}
@@ -85,11 +88,24 @@ export default function PaymentStep({ onNext, onBack }: PaymentStepProps) {
           <div className="mt-6 p-4 surface rounded-lg border border-muted">
             <h4 className="font-medium mb-2">Pago en efectivo</h4>
             <p className="text-sm muted mb-3">
-              Podrás pagar en Rapipago, Pago Fácil y otros centros de pago.
+              Pagarás en efectivo cuando retires tu pedido en nuestro local.
             </p>
             <p className="text-sm muted">
-              Te enviaremos las instrucciones por email después de confirmar la
-              compra.
+              Te confirmaremos la disponibilidad por email o WhatsApp.
+            </p>
+          </div>
+        )}
+
+        {/* Información de transferencia */}
+        {selectedPaymentMethodLocal === "transfer" && (
+          <div className="mt-6 p-4 surface rounded-lg border border-muted">
+            <h4 className="font-medium mb-2">Transferencia Bancaria</h4>
+            <p className="text-sm muted mb-3">
+              Te enviaremos los datos bancarios por email para que realices la
+              transferencia.
+            </p>
+            <p className="text-sm muted">
+              Una vez acreditado el pago, tu pedido será confirmado.
             </p>
           </div>
         )}

@@ -50,7 +50,9 @@ export default function ReviewStep({
   const subtotal = getCartTotal();
   const shippingCost = selectedShippingOption?.price || 0;
   const discount = appliedCoupon
-    ? (subtotal * appliedCoupon.discount) / 100
+    ? appliedCoupon.discountType === "FIXED"
+      ? Math.min(appliedCoupon.discount, subtotal)
+      : (subtotal * appliedCoupon.discount) / 100
     : 0;
   const total = subtotal + shippingCost - discount;
 
@@ -69,8 +71,10 @@ export default function ReviewStep({
       } else {
         setCouponError("Cupón inválido o expirado");
       }
-    } catch {
-      setCouponError("Error al aplicar el cupón");
+    } catch (err) {
+      setCouponError(
+        err instanceof Error ? err.message : "Error al aplicar el cupón"
+      );
     } finally {
       setCouponLoading(false);
     }
@@ -151,7 +155,11 @@ export default function ReviewStep({
                           {item.size} - {item.color} x {item.quantity}
                         </p>
                         <span className="font-semibold ml-3 whitespace-nowrap">
-                          {formatPriceARS(item.product.price * item.quantity)}
+                          {formatPriceARS(
+                            (item.product.onSale && item.product.salePrice
+                              ? item.product.salePrice
+                              : item.product.price) * item.quantity
+                          )}
                         </span>
                       </div>
                     </div>
@@ -169,7 +177,9 @@ export default function ReviewStep({
                     <Tag className="text-primary" size={16} />
                     <span className="font-medium">{appliedCoupon.code}</span>
                     <span className="text-sm text-primary">
-                      -{appliedCoupon.discount}%
+                      {appliedCoupon.discountType === "FIXED"
+                        ? `-${formatPriceARS(appliedCoupon.discount)}`
+                        : `-${appliedCoupon.discount}%`}
                     </span>
                   </div>
                   <Button

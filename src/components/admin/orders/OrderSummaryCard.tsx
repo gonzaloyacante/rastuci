@@ -140,7 +140,11 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
               <p className="text-sm capitalize">
                 {order.paymentMethod === "mercadopago"
                   ? "Mercado Pago"
-                  : order.paymentMethod}
+                  : order.paymentMethod === "cash"
+                    ? "Efectivo"
+                    : order.paymentMethod === "transfer"
+                      ? "Transferencia Bancaria"
+                      : order.paymentMethod}
               </p>
             </div>
           </div>
@@ -279,11 +283,35 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
               </tbody>
             </table>
           </div>
-          <div className="p-4 surface flex justify-between items-center border-t border-muted">
-            <span className="font-medium">Total:</span>
-            <span className="font-bold text-primary">
-              {formatCurrency(order.total)}
-            </span>
+          <div className="p-4 surface border-t border-muted space-y-1">
+            {order.subtotal != null && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Subtotal:</span>
+                <span>{formatCurrency(order.subtotal)}</span>
+              </div>
+            )}
+            {order.shippingCost != null && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Envío:</span>
+                <span>
+                  {order.shippingCost === 0
+                    ? "Gratis"
+                    : formatCurrency(order.shippingCost)}
+                </span>
+              </div>
+            )}
+            {order.discount != null && order.discount > 0 && (
+              <div className="flex justify-between text-sm text-green-600">
+                <span>Descuento:</span>
+                <span>-{formatCurrency(order.discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center pt-1 border-t border-muted">
+              <span className="font-medium">Total:</span>
+              <span className="font-bold text-primary">
+                {formatCurrency(order.total)}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>

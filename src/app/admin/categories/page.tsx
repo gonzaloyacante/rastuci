@@ -539,7 +539,7 @@ export default function AdminCategoriasPage() {
                                           align: "center",
                                           render: (
                                             _: unknown,
-                                            row: Product // Fix type from any to Product
+                                            row: Product
                                           ) => (
                                             <span className="text-xs text-base-secondary">
                                               {row.sizes && row.sizes.length > 0
@@ -554,7 +554,7 @@ export default function AdminCategoriasPage() {
                                           align: "center",
                                           render: (
                                             _: unknown,
-                                            row: Product // Fix type from any to Product
+                                            row: Product
                                           ) => (
                                             <span
                                               className={`inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium bg-surface/60 border border-border`}
@@ -571,7 +571,7 @@ export default function AdminCategoriasPage() {
                                           align: "right",
                                           render: (
                                             _: unknown,
-                                            row: Product // Fix type from any to Product
+                                            row: Product
                                           ) => (
                                             <span className="text-sm font-bold text-base-primary">
                                               $

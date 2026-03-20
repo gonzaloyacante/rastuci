@@ -77,17 +77,20 @@ model product_variants {
 }
 
 model product_reviews {
-  id           String   @id @default(cuid())
-  rating       Int      @db.SmallInt
+  id           String       @id @default(cuid())
+  rating       Int          @db.SmallInt
   comment      String?
   customerName String
-  createdAt    DateTime @default(now())
+  status       ReviewStatus @default(APPROVED)
+  createdAt    DateTime     @default(now())
   productId    String
-  products     products @relation(fields: [productId], references: [id], onDelete: Cascade)
+  products     products     @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
+  @@index([productId, status])
   @@index([createdAt])
   @@index([rating])
+  @@index([status])
 }
 
 model stock_reservations {

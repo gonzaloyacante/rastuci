@@ -266,7 +266,6 @@ export const POST = withAdminAuth(
             ? validation.error
             : JSON.stringify(validation.error);
 
-        // DEBUG: Log del error de validación
         logger.error("POST /api/products - Error de validación:", {
           error: validation.error,
           body,

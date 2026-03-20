@@ -44,6 +44,8 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
     ...order,
     // Convert Decimal to number for API compatibility
     total: Number(order.total),
+    subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+    discount: order.discount ? Number(order.discount) : undefined,
     shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
     customerAddress: order.customerAddress ?? undefined,
     customerEmail: order.customerEmail ?? undefined,
@@ -52,7 +54,9 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
     customerProvince: order.shippingProvince ?? undefined,
     customerPostalCode: order.shippingPostalCode ?? undefined,
     status: order.status as OrderStatus,
-    paymentMethod: order.mpPaymentId ? "mercadopago" : "cash",
+    paymentMethod: order.mpPaymentId
+      ? "mercadopago"
+      : (order.paymentMethod ?? "cash"),
     items: order.order_items.map((item: OrderItem) => ({
       id: item.id,
       quantity: item.quantity,

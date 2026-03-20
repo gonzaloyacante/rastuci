@@ -105,4 +105,39 @@ export function getCloudinaryUrl(
   return `https://res.cloudinary.com/${cloudName}/image/upload/${transformString}/${publicId}`;
 }
 
+/**
+ * Generate a tiny Cloudinary blur placeholder URL (LQIP).
+ * Returns a ~10px wide, very low quality image URL for use as blurDataURL.
+ */
+export function getCloudinaryBlurUrl(src: string): string {
+  if (!src || !src.includes("res.cloudinary.com")) return "";
+
+  try {
+    const url = new URL(src);
+    const pathParts = url.pathname.split("/");
+    const uploadIndex = pathParts.findIndex((part) => part === "upload");
+
+    if (uploadIndex === -1) return "";
+
+    const blurTransforms = "w_10,q_1,f_auto,e_blur:200";
+
+    // Remove any existing transform segments (between upload and version/public_id)
+    const nextPart = pathParts[uploadIndex + 1];
+    const hasVersion = nextPart && /^v\d+$/.test(nextPart);
+    const hasExistingTransforms =
+      nextPart && !hasVersion && nextPart.includes("_");
+
+    if (hasExistingTransforms) {
+      pathParts[uploadIndex + 1] = blurTransforms;
+    } else {
+      pathParts.splice(uploadIndex + 1, 0, blurTransforms);
+    }
+
+    url.pathname = pathParts.join("/");
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
 export default cloudinaryLoader;

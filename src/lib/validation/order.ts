@@ -21,6 +21,7 @@ export const OrdersQuerySchema = z.object({
 
 export const OrderCreateSchema = z.object({
   customerName: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
+  customerEmail: z.string().email("Email inválido").optional(),
   customerPhone: z.string().min(8, "Teléfono inválido"),
   customerAddress: z.string().min(5, "Dirección inválida"),
   items: z.array(

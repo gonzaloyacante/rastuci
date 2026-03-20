@@ -43,6 +43,7 @@ interface UseOrdersParams {
   limit?: number;
   status?: OrderStatus | string;
   search?: string;
+  shippingMethod?: string;
 }
 
 interface OrdersResponse {
@@ -65,7 +66,11 @@ const fetcher = async (url: string) => {
 
 export const useOrders = (initialParams?: UseOrdersParams) => {
   // Estado interno para manejar filtros y paginación
-  const [params, setParams] = useState<UseOrdersParams>(initialParams || {});
+  const [params, setParams] = useState<UseOrdersParams>({
+    page: 1,
+    limit: 20,
+    ...initialParams,
+  });
 
   // Construir key dinámicamente
   const buildKey = useCallback(() => {
@@ -74,6 +79,8 @@ export const useOrders = (initialParams?: UseOrdersParams) => {
     if (params.limit) urlParams.append("limit", params.limit.toString());
     if (params.status) urlParams.append("status", params.status);
     if (params.search) urlParams.append("search", params.search);
+    if (params.shippingMethod)
+      urlParams.append("shippingMethod", params.shippingMethod);
 
     return `/api/orders?${urlParams.toString()}`;
   }, [params]);
@@ -97,6 +104,6 @@ export const useOrders = (initialParams?: UseOrdersParams) => {
     totalPages: data?.data?.totalPages || 1,
     currentPage: data?.data?.page || 1,
     fetchOrders, // Compatibility wrapper
-    mutate, // Expose mutate for direct cache invadlidation
+    mutate, // Expose mutate for direct cache invalidation
   };
 };

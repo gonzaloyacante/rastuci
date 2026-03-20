@@ -14,6 +14,7 @@ import { analytics } from "@/lib/analytics"; // Import analytics singleton
 import { Agency } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
+import { formatCurrency } from "@/utils/formatters";
 
 // Interfaces para el checkout
 export interface ShippingOption {
@@ -41,8 +42,10 @@ export interface BillingOption {
 }
 
 export interface Coupon {
+  id: string;
   code: string;
-  discount: number; // Porcentaje de descuento
+  discount: number;
+  discountType: "PERCENTAGE" | "FIXED";
   isValid: boolean;
 }
 
@@ -311,8 +314,12 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         return;
       } // evitar inserciones inválidas (color puede ser opcional)
 
-      // Track Add To Cart Event
-      analytics.trackAddToCart(product.id, product.price * quantity);
+      // Track Add To Cart Event (usar salePrice si el producto está en oferta)
+      const effectivePrice =
+        product.onSale && product.salePrice != null
+          ? product.salePrice
+          : product.price;
+      analytics.trackAddToCart(product.id, effectivePrice * quantity);
 
       setCartItems((prevItems) => {
         const existingItemIndex = prevItems.findIndex(
@@ -392,6 +399,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
+    setAppliedCoupon(null);
   }, []);
 
   const getCartTotal = useCallback(() => {
@@ -421,6 +429,12 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           setCartItems(parsed);
         }
       }
+      // Restaurar cupón aplicado
+      const savedCoupon = localStorage.getItem("rastuci-coupon");
+      if (savedCoupon) {
+        const parsedCoupon: Coupon = JSON.parse(savedCoupon);
+        setAppliedCoupon(parsedCoupon);
+      }
     } catch {
       // noop
     }
@@ -437,6 +451,20 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       // noop
     }
   }, [cartItems, hasLoadedStorage]);
+
+  // Persistir cupón aplicado
+  useEffect(() => {
+    if (!hasLoadedStorage || typeof window === "undefined") return;
+    try {
+      if (appliedCoupon) {
+        localStorage.setItem("rastuci-coupon", JSON.stringify(appliedCoupon));
+      } else {
+        localStorage.removeItem("rastuci-coupon");
+      }
+    } catch {
+      // noop
+    }
+  }, [appliedCoupon, hasLoadedStorage]);
 
   const calculateShippingCost = useCallback(
     async (
@@ -530,37 +558,52 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   );
 
   // Checkout - Cupones
-  const applyCoupon = useCallback(async (code: string): Promise<boolean> => {
-    try {
-      const response = await fetch("/api/coupons/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code }),
-      });
+  const applyCoupon = useCallback(
+    async (code: string): Promise<boolean> => {
+      try {
+        const response = await fetch("/api/coupons/validate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code }),
+        });
 
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Error validando cupón`);
+        if (!response.ok) {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error validando cupón`);
+          }
+          throw new Error(`Error validando cupón: HTTP ${response.status}`);
         }
-        throw new Error(`Error validando cupón: HTTP ${response.status}`);
-      }
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (result.success && result.coupon) {
-        setAppliedCoupon(result.coupon);
-        return true;
+        if (result.success && result.coupon) {
+          // Validar minOrderTotal antes de aplicar
+          if (
+            result.coupon.minOrderTotal !== null &&
+            result.coupon.minOrderTotal !== undefined
+          ) {
+            const currentSubtotal = getCartTotal();
+            if (currentSubtotal < result.coupon.minOrderTotal) {
+              throw new Error(
+                `El monto mínimo para usar este cupón es ${formatCurrency(result.coupon.minOrderTotal)}`
+              );
+            }
+          }
+          setAppliedCoupon(result.coupon);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        logger.error("Error al aplicar cupón:", { error });
+        throw error;
       }
-      return false;
-    } catch (error) {
-      logger.error("Error saving customer info:", { error });
-      return false;
-    }
-  }, []);
+    },
+    [getCartTotal]
+  );
 
   const removeCoupon = useCallback(() => {
     setAppliedCoupon(null);
@@ -574,7 +617,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     const subtotal = getCartTotal();
     const shippingCost = selectedShippingOption?.price || 0;
     const discount = appliedCoupon
-      ? (subtotal * appliedCoupon.discount) / 100
+      ? appliedCoupon.discountType === "FIXED"
+        ? Math.min(appliedCoupon.discount, subtotal)
+        : (subtotal * appliedCoupon.discount) / 100
       : 0;
     const total = subtotal + shippingCost - discount;
 
@@ -648,7 +693,11 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           productId: item.product.id,
           name: item.product.name,
           quantity: item.quantity,
-          price: item.product.price,
+          // Precio efectivo (salePrice si está en oferta); el servidor lo valida igualmente
+          price:
+            item.product.onSale && item.product.salePrice
+              ? item.product.salePrice
+              : item.product.price,
           size: item.size,
           color: item.color,
         })),
@@ -656,6 +705,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         shippingMethod: selectedShippingOption,
         shippingAgency: selectedAgency, // Add selected agency to order data
         paymentMethod: selectedPaymentMethod.id,
+        couponCode: appliedCoupon?.code,
         orderData: {
           subtotal: orderSummary.subtotal,
           shippingCost: orderSummary.shippingCost,

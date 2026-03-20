@@ -30,7 +30,7 @@ export async function GET(
     const { id } = await params;
 
     const reviews = await prisma.product_reviews.findMany({
-      where: { productId: id },
+      where: { productId: id, status: "APPROVED" },
       orderBy: { createdAt: "desc" },
     });
 
@@ -73,7 +73,8 @@ export async function POST(
       return fail("NOT_FOUND", "Producto no encontrado", 404);
     }
 
-    // Crear la reseña y recalcular rating en una sola transacción atómica
+    // Crear la reseña en estado PENDING (requiere moderación del admin)
+    // El rating del producto NO se recalcula hasta que la reseña sea aprobada
     const review = await prisma.$transaction(async (tx) => {
       const newReview = await tx.product_reviews.create({
         data: {
@@ -82,20 +83,7 @@ export async function POST(
           comment,
           customerName,
           productId: id,
-        },
-      });
-
-      const { _avg, _count } = await tx.product_reviews.aggregate({
-        where: { productId: id },
-        _avg: { rating: true },
-        _count: { rating: true },
-      });
-
-      await tx.products.update({
-        where: { id },
-        data: {
-          rating: _avg.rating ?? rating,
-          reviewCount: _count.rating,
+          status: "PENDING",
         },
       });
 

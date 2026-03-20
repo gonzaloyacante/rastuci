@@ -19,6 +19,7 @@ import { useVacationSettings } from "@/hooks/useVacationSettings";
 import { PLACEHOLDER_IMAGE } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { ShippingSettings } from "@/lib/validation/shipping";
+import { getColorHex } from "@/utils/colors";
 import { formatPriceARS } from "@/utils/formatters";
 
 interface CartItem {
@@ -153,7 +154,7 @@ const CartItemComponent = ({
         </div>
 
         {/* Info del producto */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between h-full min-h-[96px] sm:min-h-[128px]">
+        <div className="flex-1 min-w-0 flex flex-col justify-between h-full min-h-24 sm:min-h-32">
           <div className="space-y-2">
             <Link
               href={`/productos/${item.product.id}`}
@@ -173,13 +174,8 @@ const CartItemComponent = ({
                 <span
                   className="w-3 h-3 rounded-full border border-muted-foreground/30"
                   style={{
-                    backgroundColor:
-                      item.color.toLowerCase() === "blanco"
-                        ? "#ffffff"
-                        : item.color.toLowerCase() === "negro"
-                          ? "#000000"
-                          : "gray",
-                  }} /* Fallback simple para visualización */
+                    backgroundColor: getColorHex(item.color),
+                  }} /* Hex dinámico desde utilidad de colores */
                 />
                 <span className="capitalize">{item.color}</span>
               </div>
@@ -465,7 +461,7 @@ export default function CartPageClient() {
   if (cartItems.length === 0) {
     return (
       <div className="surface text-primary min-h-screen flex flex-col">
-        <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
+        <main className="grow max-w-300 mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
           <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-6 sm:mb-8 font-montserrat">
             Mi Carrito (0 items)
           </h1>
@@ -484,7 +480,7 @@ export default function CartPageClient() {
 
   return (
     <div className="surface text-primary min-h-screen flex flex-col">
-      <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
+      <main className="grow max-w-300 mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
         {/* Header - responsive */}
         <div className="flex items-center justify-between mb-4 sm:mb-6 lg:mb-8">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary font-montserrat">

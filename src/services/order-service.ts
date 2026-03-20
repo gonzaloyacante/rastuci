@@ -91,7 +91,7 @@ export class OrderService {
   ): Promise<ValidatedOrderItem[]> {
     const productIds = items.map((i) => i.productId);
     const dbProducts = await tx.products.findMany({
-      where: { id: { in: productIds } },
+      where: { id: { in: productIds }, isActive: true },
       select: {
         id: true,
         price: true,
@@ -101,29 +101,52 @@ export class OrderService {
         name: true,
       },
     });
-    return items.map((item) => {
-      const dbProduct = dbProducts.find((p) => p.id === item.productId);
-      if (!dbProduct)
-        throw new Error(`Producto no encontrado: ${item.productId}`);
-      if (dbProduct.stock < item.quantity) {
-        throw new Error(
-          `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
-        );
-      }
-      const basePrice =
-        dbProduct.onSale && dbProduct.salePrice
-          ? Number(dbProduct.salePrice)
-          : Number(dbProduct.price);
-      const price = Number((basePrice * (1 - discountPercent)).toFixed(2));
-      return {
-        productId: item.productId,
-        quantity: item.quantity,
-        price,
-        originalPrice: basePrice,
-        size: item.size,
-        color: item.color,
-      };
-    });
+    return Promise.all(
+      items.map(async (item) => {
+        const dbProduct = dbProducts.find((p) => p.id === item.productId);
+        if (!dbProduct)
+          throw new Error(`Producto no encontrado: ${item.productId}`);
+        if (dbProduct.stock < item.quantity) {
+          throw new Error(
+            `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
+          );
+        }
+        // Verificar stock de variante específica si aplica
+        if (item.color && item.size) {
+          const variant = await tx.product_variants.findFirst({
+            where: {
+              productId: item.productId,
+              color: item.color,
+              size: item.size,
+            },
+            select: { stock: true },
+          });
+          if (!variant) {
+            throw new Error(
+              `La variante ${item.color}/${item.size} de ${dbProduct.name} ya no está disponible`
+            );
+          }
+          if (variant.stock < item.quantity) {
+            throw new Error(
+              `Stock insuficiente para ${dbProduct.name} talle ${item.size} color ${item.color}`
+            );
+          }
+        }
+        const basePrice =
+          dbProduct.onSale && dbProduct.salePrice
+            ? Number(dbProduct.salePrice)
+            : Number(dbProduct.price);
+        const price = Number((basePrice * (1 - discountPercent)).toFixed(2));
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          price,
+          originalPrice: basePrice,
+          size: item.size,
+          color: item.color,
+        };
+      })
+    );
   }
 
   private calculateCouponDiscount(
@@ -195,6 +218,17 @@ export class OrderService {
     }
   }
 
+  private async decrementCouponUsage(
+    tx: Prisma.TransactionClient,
+    couponId: string
+  ): Promise<void> {
+    await tx.$executeRaw`
+      UPDATE coupons
+      SET "usageCount" = GREATEST("usageCount" - 1, 0)
+      WHERE id = ${couponId}
+    `;
+  }
+
   async updateOrder(orderId: string, data: OrderUpdateData) {
     // Transactional consistency: Fetch and update to prevent race conditions (double decrement)
     return await prisma.$transaction(async (tx) => {
@@ -211,8 +245,6 @@ export class OrderService {
       });
 
       if (!order) return null;
-
-      // 2. Determine if stock decrement is needed based on CURRENT db state
       // PENDING_PAYMENT orders already had stock decremented at createFullOrder time.
       // Only decrement here for orders that did NOT pre-reserve stock (legacy/metadata fallback).
       const isStockAlreadyReserved =
@@ -238,15 +270,26 @@ export class OrderService {
         order.status !== ORDER_STATUS.PROCESSED &&
         order.status !== ORDER_STATUS.DELIVERED;
 
-      // 3. Update Order Status
-      const updatedOrder = await tx.orders.update({
-        where: { id: orderId },
+      // 3. Update Order Status — guard de idempotencia: solo actualiza si el estado cambió
+      const { count: updatedCount } = await tx.orders.updateMany({
+        where: { id: orderId, status: { not: data.mappedStatus } },
         data: {
           mpPaymentId: data.mpPaymentId,
           mpStatus: data.mpStatus,
           status: data.mappedStatus,
           updatedAt: new Date(),
         },
+      });
+
+      // Si no se actualizó, ya estaba en este estado (webhook duplicado) — retornar sin efecto
+      if (updatedCount === 0) {
+        const existing = await tx.orders.findUnique({ where: { id: orderId } });
+        return existing ? { order: existing, shouldShip: false } : null;
+      }
+
+      // Recargar para tener el registro actualizado
+      const updatedOrder = await tx.orders.findUniqueOrThrow({
+        where: { id: orderId },
       });
 
       // 4. Handle Stock Decrement (Atomic within transaction)
@@ -306,6 +349,11 @@ export class OrderService {
               data: { stock: { increment: item.quantity } },
             });
           }
+        }
+
+        // 4c. Restore coupon usage if order had a coupon applied
+        if (order.couponId) {
+          await this.decrementCouponUsage(tx, order.couponId);
         }
       }
 
@@ -490,17 +538,14 @@ export class OrderService {
     // 1. Try to get explicit shipping cost from metadata (passed from checkout)
     if (metadata.shippingCost !== undefined && metadata.shippingCost !== null) {
       shippingCost = Number(metadata.shippingCost);
-    } else {
+    } else if (shippingId) {
       // 2. Fallback to old ID-based lookup if cost not provided
-      const shippingId = metadata.shipping as string | undefined;
-      if (shippingId) {
-        const shippingMap: Record<string, { name: string; price: number }> = {
-          pickup: { name: "Retiro en tienda", price: 0 },
-          standard: { name: "Envío estándar", price: 1500 },
-          express: { name: "Envío express", price: 2500 },
-        };
-        shippingCost = shippingMap[shippingId]?.price ?? 0;
-      }
+      const shippingMap: Record<string, { name: string; price: number }> = {
+        pickup: { name: "Retiro en tienda", price: 0 },
+        standard: { name: "Envío estándar", price: 1500 },
+        express: { name: "Envío express", price: 2500 },
+      };
+      shippingCost = shippingMap[shippingId]?.price ?? 0;
     }
 
     const itemsTotal = orderItemsData.reduce(
@@ -698,6 +743,8 @@ export class OrderService {
             ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
             : "",
           total: calculatedTotal,
+          subtotal: itemsTotal,
+          discount: couponDiscount,
           shippingCost: shippingCost,
           status: ORDER_STATUS.RESERVED as OrderStatus,
           paymentMethod: "cash",
@@ -722,6 +769,7 @@ export class OrderService {
           shippingPostalCode: shippingData?.postalCode,
           shippingAgency: shippingData?.agency,
           shippingMethod: shippingData?.methodName,
+          couponId: coupon?.id ?? null,
         },
         include: { order_items: { include: { products: true } } },
       });
@@ -744,16 +792,28 @@ export class OrderService {
       size: oi.size ?? undefined,
       color: oi.color ?? undefined,
     }));
-    // TODO: Use waitUntil() for serverless reliability
-    void emailService.sendOrderConfirmation(
-      {
-        id: order.id,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail || "",
-        total: Number(order.total),
-      },
-      emailItems
-    );
+    // Email al cliente (async, non-blocking - errores se loguean pero no bloquean la respuesta)
+    emailService
+      .sendOrderConfirmation(
+        {
+          id: order.id,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail || "",
+          total: Number(order.total),
+          subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+          discount: order.discount ? Number(order.discount) : undefined,
+          shippingCost: order.shippingCost
+            ? Number(order.shippingCost)
+            : undefined,
+        },
+        emailItems
+      )
+      .catch((err: unknown) =>
+        logger.error(
+          "[OrderService] Error enviando email de confirmación de orden:",
+          { err, orderId: order.id }
+        )
+      );
 
     return order;
   }
@@ -893,6 +953,8 @@ export class OrderService {
             ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
             : "",
           total: calculatedTotal,
+          subtotal: itemsTotal,
+          discount: couponDiscount,
           shippingCost: shippingCost,
           status: ORDER_STATUS.PENDING_PAYMENT as OrderStatus,
           paymentMethod: "mercadopago",
@@ -909,6 +971,7 @@ export class OrderService {
           shippingAgency: shippingData.agency,
           shippingMethod: shippingData.methodName,
           updatedAt: new Date(),
+          couponId: coupon?.id ?? null,
           order_items: {
             create: validatedItems.map((item) => ({
               id: `${orderId}_${item.productId}_${nanoid(8)}`,
@@ -1007,6 +1070,8 @@ export class OrderService {
             ? `${customer.address}, ${customer.city}, ${customer.province || ""}`
             : "",
           total: calculatedTotal,
+          subtotal: itemsTotal,
+          discount: couponDiscount,
           shippingCost: shippingCost,
           status: ORDER_STATUS.WAITING_TRANSFER_PROOF as OrderStatus,
           paymentMethod: "transfer",
@@ -1022,6 +1087,7 @@ export class OrderService {
           shippingAgency: shippingData.agency,
           shippingMethod: shippingData.methodName,
           updatedAt: new Date(),
+          couponId: coupon?.id ?? null,
           order_items: {
             create: validatedItems.map((item) => ({
               id: `${orderId}_${item.productId}_${nanoid(8)}`,
@@ -1045,15 +1111,21 @@ export class OrderService {
       return newOrder;
     });
 
-    // Send bank transfer email (async, non-blocking)
+    // Email de instrucciones de transferencia (async, non-blocking)
     if (order.customerEmail) {
-      // TODO: Use waitUntil() for serverless reliability
-      void emailService.sendBankTransferInstructions({
-        id: order.id,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail,
-        total: Number(order.total),
-      });
+      emailService
+        .sendBankTransferInstructions({
+          id: order.id,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          total: Number(order.total),
+        })
+        .catch((err: unknown) =>
+          logger.error(
+            "[OrderService] Error enviando instrucciones de transferencia:",
+            { err, orderId: order.id }
+          )
+        );
     }
 
     return order;

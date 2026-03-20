@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { ProductGridSkeleton } from "@/components/products/ProductListComponents";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
 import ProductsPageClient from "./client-page";
@@ -31,8 +32,11 @@ export async function generateMetadata({
         title = `${category.name} - Rastuci`;
         description = `Compra ${category.name} para niños en Rastuci. Calidad y diseño para tus hijos.`;
       }
-    } catch {
-      // Fallback
+    } catch (e) {
+      logger.warn("generateMetadata: no se pudo obtener la categoría", {
+        id: categoria,
+        error: e,
+      });
     }
   } else if (buscar) {
     title = `Resultados para "${buscar}" - Rastuci`;

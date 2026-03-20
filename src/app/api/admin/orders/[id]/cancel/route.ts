@@ -101,6 +101,15 @@ export const POST = withAdminAuth(
             });
           }
         }
+
+        // 3. Restore coupon usage if the order had a coupon applied
+        if (order.couponId) {
+          await tx.$executeRaw`
+            UPDATE coupons
+            SET "usageCount" = GREATEST("usageCount" - 1, 0)
+            WHERE id = ${order.couponId}
+          `;
+        }
       });
 
       logger.info(`[Admin] Cancelled order ${orderId} and restored stock`);

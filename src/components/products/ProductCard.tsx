@@ -1,14 +1,17 @@
 "use client";
 
 import {
+  Check,
   Edit,
   Eye,
   Heart,
+  Pencil,
   Power,
   ShoppingCart,
   Star,
   Trash2,
   TrendingUp,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
@@ -105,6 +108,123 @@ const StarRating = ({
 };
 
 // ============================================================================
+// InlineStockEditor - Edición de stock sin abrir el formulario completo
+// ============================================================================
+
+interface InlineStockEditorProps {
+  productId: string;
+  stock: number;
+  onUpdateStock?: (id: string, stock: number) => Promise<void>;
+}
+
+function InlineStockEditor({
+  productId,
+  stock,
+  onUpdateStock,
+}: InlineStockEditorProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(String(stock));
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleStartEdit = (e: React.MouseEvent) => {
+    if (!onUpdateStock) return;
+    e.stopPropagation();
+    setInputValue(String(stock));
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const handleCancel = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    e?.stopPropagation();
+    setIsEditing(false);
+    setInputValue(String(stock));
+  };
+
+  const handleSave = async (e?: React.MouseEvent | React.KeyboardEvent) => {
+    e?.stopPropagation();
+    if (!onUpdateStock) return;
+    const newStock = parseInt(inputValue, 10);
+    if (isNaN(newStock) || newStock < 0) {
+      handleCancel();
+      return;
+    }
+    if (newStock === stock) {
+      setIsEditing(false);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onUpdateStock(productId, newStock);
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") void handleSave(e);
+    if (e.key === "Escape") handleCancel(e);
+  };
+
+  if (isEditing) {
+    return (
+      <div
+        className="flex items-center gap-1"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          ref={inputRef}
+          type="number"
+          min={0}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isSaving}
+          className="w-16 h-7 text-sm text-center border border-primary rounded focus:outline-none focus:ring-1 focus:ring-primary bg-surface px-1"
+          aria-label="Nuevo stock"
+        />
+        <button
+          type="button"
+          onClick={(e) => void handleSave(e)}
+          disabled={isSaving}
+          className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
+          title="Guardar"
+        >
+          <Check className="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={isSaving}
+          className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+          title="Cancelar"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <StockBadge stock={stock} />
+      <span className="text-xs text-muted-foreground font-mono">({stock})</span>
+      {onUpdateStock && (
+        <button
+          type="button"
+          onClick={handleStartEdit}
+          className="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+          title="Editar stock"
+        >
+          <Pencil className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // Tipos e interfaces
 // ============================================================================
 
@@ -120,10 +240,12 @@ interface PublicProductCardProps extends ProductCardBaseProps {
 
 interface AdminProductCardProps extends ProductCardBaseProps {
   variant: "admin";
+  layout?: "card" | "row";
   onEdit: (id: string) => void;
   onView?: (id: string) => void;
   onToggleActive?: (id: string, isActive: boolean) => void;
   onDelete?: (id: string) => void;
+  onUpdateStock?: (id: string, stock: number) => Promise<void>;
 }
 
 export type ProductCardProps = PublicProductCardProps | AdminProductCardProps;
@@ -140,10 +262,12 @@ const ProductCard = React.memo((props: ProductCardProps) => {
 
   const isAdmin = props.variant === "admin";
 
-  const layout: "grid" | "list" = !isAdmin
+  const layout: "grid" | "list" | "row" = !isAdmin
     ? (props as PublicProductCardProps).layout ||
       (props.variant === "list" ? "list" : "grid")
-    : "grid";
+    : (props as AdminProductCardProps).layout === "row"
+      ? "row"
+      : "grid";
 
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -232,8 +356,132 @@ const ProductCard = React.memo((props: ProductCardProps) => {
   // VARIANTE ADMIN
   // =========================================================================
   if (isAdmin) {
-    const { onEdit, onView, onToggleActive, onDelete } =
+    const { onEdit, onView, onToggleActive, onDelete, onUpdateStock } =
       props as AdminProductCardProps;
+
+    // -------------------------------------------------------------------------
+    // ADMIN - Vista de lista (fila horizontal compacta)
+    // -------------------------------------------------------------------------
+    if (layout === "row") {
+      return (
+        <div
+          className={`group relative flex items-center gap-3 surface border border-theme rounded-xl px-3 py-2 shadow-sm hover:shadow-md transition-all duration-200 ${product.isActive === false ? "opacity-60" : ""}`}
+        >
+          {/* Imagen miniatura */}
+          <div className="shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-surface-secondary border border-theme">
+            {imageError || !mainImage ? (
+              <ProductImagePlaceholder className="w-full h-full" />
+            ) : (
+              <OptimizedImage
+                src={mainImage}
+                alt={product.name}
+                width={56}
+                height={56}
+                className="object-cover w-full h-full"
+                sizes="56px"
+                priority={priority}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+              />
+            )}
+          </div>
+
+          {/* Nombre + categoría */}
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-sm text-base-primary truncate max-w-50">
+                {product.name}
+              </span>
+              {product.isActive === false && (
+                <span className="text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-semibold shrink-0">
+                  DESACTIVADO
+                </span>
+              )}
+              {product.onSale && (
+                <span className="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 px-1.5 py-0.5 rounded-full font-semibold shrink-0">
+                  OFERTA
+                </span>
+              )}
+            </div>
+            {product.categories && (
+              <span className="text-xs text-muted-foreground truncate block">
+                {product.categories.name}
+              </span>
+            )}
+          </div>
+
+          {/* Precio */}
+          <div className="shrink-0 hidden sm:block text-sm font-bold text-base-primary whitespace-nowrap min-w-18 text-right">
+            <PriceBadge
+              price={product.price}
+              salePrice={product.salePrice}
+              onSale={product.onSale}
+            />
+          </div>
+
+          {/* Stock editor inline */}
+          <div className="shrink-0 hidden md:flex items-center min-w-30">
+            <InlineStockEditor
+              productId={product.id}
+              stock={effectiveStock}
+              onUpdateStock={onUpdateStock}
+            />
+          </div>
+
+          {/* Acciones */}
+          <div className="shrink-0 flex items-center gap-1">
+            {onView && (
+              <button
+                type="button"
+                onClick={() => onView(product.id)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                title="Ver producto"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onEdit(product.id)}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              title="Editar"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            {onToggleActive && (
+              <button
+                type="button"
+                onClick={() =>
+                  onToggleActive(product.id, !(product.isActive !== false))
+                }
+                className={`p-1.5 rounded-lg transition-colors ${
+                  product.isActive !== false
+                    ? "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    : "text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                }`}
+                title={
+                  product.isActive !== false
+                    ? "Desactivar producto"
+                    : "Activar producto"
+                }
+              >
+                <Power className="w-4 h-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(product.id)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                title="Eliminar"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="group relative surface border border-theme rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden h-full flex flex-col">
@@ -257,7 +505,7 @@ const ProductCard = React.memo((props: ProductCardProps) => {
                   }`}
                   onLoad={handleImageLoad}
                   onError={handleImageError}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
               </div>
             )}
@@ -371,7 +619,11 @@ const ProductCard = React.memo((props: ProductCardProps) => {
             )}
 
             <div className="pt-2">
-              <StockBadge stock={effectiveStock} />
+              <InlineStockEditor
+                productId={product.id}
+                stock={effectiveStock}
+                onUpdateStock={onUpdateStock}
+              />
             </div>
           </div>
 

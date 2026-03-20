@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, FileText } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -11,7 +11,7 @@ interface BillingStepProps {
   onBack: () => void;
 }
 
-export default function BillingStep({ onNext }: BillingStepProps) {
+export default function BillingStep({ onNext, onBack }: BillingStepProps) {
   const {
     selectedBillingOption,
     setSelectedBillingOption,
@@ -78,6 +78,19 @@ export default function BillingStep({ onNext }: BillingStepProps) {
       if (!documentInfo.documentType || !documentInfo.documentNumber) {
         setError("Por favor, completa la información de documento fiscal");
         return;
+      }
+      // Validar formato CUIT/CUIL para Factura A
+      if (
+        selectedBillingOption.id === "invoiceA" &&
+        documentInfo.documentType === "CUIT"
+      ) {
+        const cuitRegex = /^\d{2}-\d{8}-\d{1}$/;
+        if (!cuitRegex.test(documentInfo.documentNumber)) {
+          setError(
+            "Formato CUIT inválido. Use XX-XXXXXXXX-X (ej: 30-12345678-9)"
+          );
+          return;
+        }
       }
     }
 
@@ -192,8 +205,15 @@ export default function BillingStep({ onNext }: BillingStepProps) {
           </div>
         )}
 
-        {/* Botón para continuar */}
-        <div className="flex justify-end mt-8">
+        {/* Botones de navegación */}
+        <div className="flex justify-between mt-8">
+          <Button
+            variant="outline"
+            onClick={onBack}
+            leftIcon={<ChevronLeft size={16} />}
+          >
+            Volver
+          </Button>
           <Button
             onClick={handleContinue}
             disabled={!selectedBillingOption}

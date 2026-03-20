@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       coupon: {
+        id: coupon.id,
         code: coupon.code,
         discount: Number(coupon.discount),
         discountType: coupon.discountType,
