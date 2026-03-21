@@ -91,7 +91,7 @@ export const PATCH = withAdminAuth(
         .object({
           name: z.string().min(2).max(100).optional(),
           email: z.string().email().optional(),
-          password: z.string().min(6).max(100).optional(),
+          password: z.string().min(8).max(100).optional(),
           isAdmin: z.boolean().optional(),
         })
         .strict();

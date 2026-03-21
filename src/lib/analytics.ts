@@ -99,7 +99,11 @@ class AnalyticsManager {
     let sessionId = sessionStorage.getItem("analytics_session_id");
     if (!sessionId) {
       sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      sessionStorage.setItem("analytics_session_id", sessionId);
+      try {
+        sessionStorage.setItem("analytics_session_id", sessionId);
+      } catch {
+        /* noop — QuotaExceededError */
+      }
     }
     return sessionId;
   }
@@ -263,7 +267,11 @@ class AnalyticsManager {
 
   // Public methods
   setUserId(userId: string) {
-    localStorage.setItem("user_id", userId);
+    try {
+      localStorage.setItem("user_id", userId);
+    } catch {
+      /* noop — QuotaExceededError */
+    }
     if (this.session) {
       this.session.userId = userId;
     }
@@ -441,7 +449,11 @@ class AnalyticsManager {
 
     if (!variant) {
       variant = variants[Math.floor(Math.random() * variants.length)];
-      localStorage.setItem(key, variant);
+      try {
+        localStorage.setItem(key, variant);
+      } catch {
+        /* noop — QuotaExceededError */
+      }
 
       this.trackEvent("experiment_assignment", {
         experimentId,
@@ -455,7 +467,11 @@ class AnalyticsManager {
   // Privacy controls
   setEnabled(enabled: boolean) {
     this.isEnabled = enabled;
-    localStorage.setItem("analytics_enabled", enabled.toString());
+    try {
+      localStorage.setItem("analytics_enabled", enabled.toString());
+    } catch {
+      /* noop — QuotaExceededError */
+    }
   }
 
   isAnalyticsEnabled(): boolean {
