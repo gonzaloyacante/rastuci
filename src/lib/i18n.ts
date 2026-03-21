@@ -370,7 +370,11 @@ class I18nManager {
     this.currentLocale = locale;
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("locale", locale);
+      try {
+        localStorage.setItem("locale", locale);
+      } catch {
+        /* noop — QuotaExceededError */
+      }
       document.documentElement.lang = locale;
 
       // Update RTL direction if needed
