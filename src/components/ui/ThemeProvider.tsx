@@ -77,7 +77,11 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
+      try {
+        localStorage.setItem(storageKey, theme);
+      } catch {
+        /* noop — QuotaExceededError */
+      }
       setTheme(theme);
     },
     actualTheme,

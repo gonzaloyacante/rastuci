@@ -61,7 +61,11 @@ export function PWAInstallPrompt({
   const handleDismiss = () => {
     setIsVisible(false);
     setIsDismissed(true);
-    localStorage.setItem("pwa-install-dismissed", "true");
+    try {
+      localStorage.setItem("pwa-install-dismissed", "true");
+    } catch {
+      /* noop — QuotaExceededError */
+    }
   };
 
   if (!canInstall || isDismissed || !isVisible) {
