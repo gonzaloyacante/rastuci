@@ -5,78 +5,51 @@ import {
   ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
 
-import { analytics } from "@/lib/analytics"; // Import analytics singleton
+import { useCartPersistence } from "@/hooks/useCartPersistence";
+import { useCheckoutSettings } from "@/hooks/useCheckoutSettings";
+import { useShippingCache } from "@/hooks/useShippingCache";
+import { analytics } from "@/lib/analytics";
 import { Agency } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
+import {
+  AVAILABLE_BILLING_OPTIONS,
+  BillingOption,
+  CartItem,
+  Coupon,
+  CustomerInfo,
+  DEFAULT_PAYMENT_METHOD,
+  PaymentMethod,
+  ShippingOption,
+} from "@/types/cart";
 import { formatCurrency } from "@/utils/formatters";
 
-// Interfaces para el checkout
-export interface ShippingOption {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  estimatedDays: string;
-  originalRate?: Record<string, unknown>; // Para guardar datos crudos de la API
-  isFallback?: boolean; // Indica si es dato de fallback o de la API real
-}
+// Re-exportar todos los tipos desde @/types/cart para compatibilidad hacia atrás
+export type {
+  BillingOption,
+  CartItem,
+  Coupon,
+  CustomerInfo,
+  PaymentMethod,
+  PlaceOrderResult,
+  ShippingOption,
+} from "@/types/cart";
+export {
+  AVAILABLE_BILLING_OPTIONS,
+  DEFAULT_PAYMENT_METHOD,
+} from "@/types/cart";
 
-export interface PaymentMethod {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  requiresShipping?: boolean; // Nueva propiedad para determinar si requiere envío
-}
-
-export interface BillingOption {
-  id: string;
-  name: string;
-  requiresDocument: boolean;
-}
-
-export interface Coupon {
-  id: string;
-  code: string;
-  discount: number;
-  discountType: "PERCENTAGE" | "FIXED";
-  isValid: boolean;
-}
-
-export interface CustomerInfo {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  notes?: string;
-  documentType?: string;
-  documentNumber?: string;
-}
-
-export interface CartItem {
-  product: Product;
-  quantity: number;
-  size: string;
-  color: string;
-  variantId?: string;
-  sku?: string;
-}
+// ─── Tipo del contexto ───────────────────────────────────────────────────────
 
 interface CartContextType {
-  // Carrito y productos
   cartItems: CartItem[];
   addToCart: {
     (product: Product, quantity: number, size: string, color: string): void;
-    (product: Product, size: string, color: string): void; // cantidad por defecto = 1
+    (product: Product, size: string, color: string): void;
   };
   removeFromCart: (productId: string, size: string, color: string) => void;
   updateQuantity: (
@@ -89,7 +62,6 @@ interface CartContextType {
   getCartTotal: () => number;
   getItemCount: () => number;
 
-  // Checkout - Envío
   availableShippingOptions: ShippingOption[];
   selectedShippingOption: ShippingOption | null;
   setSelectedShippingOption: (option: ShippingOption) => void;
@@ -98,31 +70,25 @@ interface CartContextType {
     deliveredType?: "D" | "S"
   ) => Promise<ShippingOption[]>;
 
-  // Checkout - Sucursal
   selectedAgency: Agency | null;
   setSelectedAgency: (agency: Agency | null) => void;
   getAgencies: (provinceCode: string) => Promise<Agency[]>;
 
-  // Checkout - Pago
   availablePaymentMethods: PaymentMethod[];
   selectedPaymentMethod: PaymentMethod | null;
   setSelectedPaymentMethod: (method: PaymentMethod) => void;
 
-  // Checkout - Facturación
   availableBillingOptions: BillingOption[];
   selectedBillingOption: BillingOption | null;
   setSelectedBillingOption: (option: BillingOption) => void;
 
-  // Checkout - Cupones
   appliedCoupon: Coupon | null;
   applyCoupon: (code: string) => Promise<boolean>;
   removeCoupon: () => void;
 
-  // Checkout - Información del cliente
   customerInfo: CustomerInfo | null;
   updateCustomerInfo: (info: CustomerInfo) => void;
 
-  // Checkout - Finalización
   getOrderSummary: () => {
     items: CartItem[];
     subtotal: number;
@@ -144,9 +110,10 @@ interface CartContextType {
   loadCheckoutSettings: () => Promise<void>;
 }
 
+// ─── Fallback seguro (fuera del Provider) ────────────────────────────────────
+
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Fallback seguro para usar los hooks fuera de un provider (no lanzar)
 const _defaultCart: CartContextType = {
   cartItems: [],
   addToCart: (() => {}) as unknown as CartContextType["addToCart"],
@@ -155,31 +122,24 @@ const _defaultCart: CartContextType = {
   clearCart: () => {},
   getCartTotal: () => 0,
   getItemCount: () => 0,
-
   availableShippingOptions: [],
   selectedShippingOption: null,
   setSelectedShippingOption: () => {},
   calculateShippingCost: async () => [],
-
   selectedAgency: null,
   setSelectedAgency: () => {},
   getAgencies: async () => [],
-
   availablePaymentMethods: [],
   selectedPaymentMethod: null,
   setSelectedPaymentMethod: () => {},
-
   availableBillingOptions: [],
   selectedBillingOption: null,
   setSelectedBillingOption: () => {},
-
   appliedCoupon: null,
   applyCoupon: async () => false,
   removeCoupon: () => {},
-
   customerInfo: null,
   updateCustomerInfo: () => {},
-
   getOrderSummary: () => ({
     items: [],
     subtotal: 0,
@@ -191,180 +151,151 @@ const _defaultCart: CartContextType = {
     payment: null,
     billing: null,
   }),
-
   placeOrder: async () => ({ success: false, error: "CartProvider missing" }),
   loadCheckoutSettings: async () => {},
 };
-
-const AVAILABLE_BILLING_OPTIONS: BillingOption[] = [
-  {
-    id: "consumer",
-    name: "Consumidor Final",
-    requiresDocument: false,
-  },
-  {
-    id: "invoiceA",
-    name: "Factura A",
-    requiresDocument: true,
-  },
-  {
-    id: "invoiceB",
-    name: "Factura B",
-    requiresDocument: true,
-  },
-];
 
 export const useCart = () => {
   const context = useContext(CartContext);
   return context === undefined ? _defaultCart : context;
 };
 
+// ─── Helpers fuera del componente (bajan complejidad ciclomática) ─────────────
+
+function getEffectivePrice(product: Product): number {
+  return product.onSale && product.salePrice != null
+    ? product.salePrice
+    : product.price;
+}
+
+function upsertCartItem(
+  prevItems: CartItem[],
+  product: Product,
+  quantity: number,
+  size: string,
+  color: string
+): CartItem[] {
+  const existingIdx = prevItems.findIndex(
+    (item) =>
+      item.product.id === product.id &&
+      item.size === size &&
+      item.color === color
+  );
+
+  if (existingIdx > -1) {
+    const updated = [...prevItems];
+    updated[existingIdx] = {
+      ...updated[existingIdx],
+      quantity: updated[existingIdx].quantity + quantity,
+    };
+    return updated;
+  }
+
+  const variant = product.variants?.find(
+    (v) => v.color === color && v.size === size
+  );
+  return [
+    ...prevItems,
+    { product, quantity, size, color, variantId: variant?.id, sku: variant?.sku ?? undefined },
+  ];
+}
+
+function validatePlaceOrder(
+  customerInfo: CustomerInfo | null,
+  selectedPaymentMethod: PaymentMethod | null,
+  selectedShippingOption: ShippingOption | null
+): string | null {
+  if (!customerInfo) return "Falta información del cliente";
+  if (!selectedPaymentMethod) return "Por favor selecciona un método de pago";
+  if (selectedPaymentMethod.id === "cash") {
+    if (!selectedShippingOption || selectedShippingOption.id !== "pickup") {
+      return "Para pago en efectivo debe seleccionar retiro en tienda";
+    }
+  } else if (!selectedShippingOption) {
+    return "Por favor selecciona un método de envío";
+  }
+  return null;
+}
+
+async function validateCouponResponse(
+  result: { success: boolean; coupon?: Record<string, unknown> },
+  getCurrentTotal: () => number
+): Promise<Coupon | null> {
+  if (!result.success || !result.coupon) return null;
+  const coupon = result.coupon as unknown as Coupon & { minOrderTotal?: number };
+  if (coupon.minOrderTotal != null && getCurrentTotal() < coupon.minOrderTotal) {
+    throw new Error(
+      `El monto mínimo para este cupón es ${formatCurrency(coupon.minOrderTotal)}`
+    );
+  }
+  return coupon;
+}
+
+async function fetchCheckout(body: unknown): Promise<Response> {
+  return fetch("/api/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+
+
 interface CartProviderProps {
   children: ReactNode;
 }
 
 export const CartProvider = ({ children }: CartProviderProps) => {
-  // Estados del carrito
+  // Carrito
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
 
-  // Estados del checkout - Envío
+  // Checkout — estado local mínimo
   const [selectedShippingOption, setSelectedShippingOption] =
     useState<ShippingOption | null>(null);
   const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null);
-
-  // Estados del checkout - Pago (Mercado Pago por defecto)
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod | null>({
-      id: "mercadopago",
-      name: "MercadoPago",
-      icon: "wallet",
-      description: "Paga con Mercado Pago usando tu cuenta o billetera",
-    });
-
-  // Estados del checkout - Facturación
+    useState<PaymentMethod | null>(DEFAULT_PAYMENT_METHOD);
   const [selectedBillingOption, setSelectedBillingOption] =
     useState<BillingOption | null>(null);
-
-  // Estados del checkout - Cupones
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
-
-  // Estados del checkout - Información del cliente
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
-  // Caches para mejorar performance
-  const [shippingCache, setShippingCache] = useState<
-    Record<string, ShippingOption[]>
-  >({});
-  const [agencyCache, setAgencyCache] = useState<Record<string, Agency[]>>({});
+  // Hooks extraídos
+  const { hasLoadedStorage } = useCartPersistence(
+    cartItems,
+    appliedCoupon,
+    setCartItems,
+    setAppliedCoupon
+  );
+  const {
+    availableShippingOptions,
+    calculateShippingCost,
+    getAgencies,
+  } = useShippingCache();
+  const { availablePaymentMethods, loadCheckoutSettings } =
+    useCheckoutSettings();
 
-  // Opciones dinámicas desde API
-  const [availableShippingOptions, setAvailableShippingOptions] = useState<
-    ShippingOption[]
-  >([]);
-  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<
-    PaymentMethod[]
-  >([]);
+  // ─── Operaciones del carrito ──────────────────────────────────────────────
 
-  // Cargar opciones desde la API bajo demanda
-  const loadCheckoutSettings = useCallback(async () => {
-    try {
-      // Cargar opciones de envío si no están cargadas
-      if (availableShippingOptions.length === 0) {
-        const shippingRes = await fetch("/api/settings/shipping-options");
-        if (shippingRes.ok) {
-          const shippingData = await shippingRes.json();
-          if (shippingData.success && shippingData.data) {
-            setAvailableShippingOptions(shippingData.data);
-          }
-        }
-      }
-
-      // Cargar métodos de pago si no están cargados
-      if (availablePaymentMethods.length === 0) {
-        const paymentRes = await fetch("/api/settings/payment-methods");
-        if (paymentRes.ok) {
-          const paymentData = await paymentRes.json();
-          if (paymentData.success && paymentData.data) {
-            setAvailablePaymentMethods(paymentData.data);
-          }
-        }
-      }
-    } catch (error) {
-      logger.error("Error loading checkout settings:", { error });
-    }
-  }, [availableShippingOptions.length, availablePaymentMethods.length]);
-
-  useEffect(() => {
-    // No operation - removed auto load
-  }, []);
-
-  const availableBillingOptions = AVAILABLE_BILLING_OPTIONS;
-
-  // Funciones del carrito memoizadas
   const addToCart = useCallback(
     (product: Product, a: number | string, b?: string, c?: string) => {
-      // Normalizar argumentos: permitir (product, quantity, size, color) o (product, size, color)
       const isQuantityForm = typeof a === "number";
       const quantity = isQuantityForm ? (a as number) : 1;
       const size = isQuantityForm ? (b as string) : (a as string);
       const color = isQuantityForm ? (c as string) : (b as string);
 
-      if (!size) {
-        return;
-      } // evitar inserciones inválidas (color puede ser opcional)
+      if (!size) return;
 
-      // Track Add To Cart Event (usar salePrice si el producto está en oferta)
-      const effectivePrice =
-        product.onSale && product.salePrice != null
-          ? product.salePrice
-          : product.price;
-      analytics.trackAddToCart(product.id, effectivePrice * quantity);
-
-      setCartItems((prevItems) => {
-        const existingItemIndex = prevItems.findIndex(
-          (item) =>
-            item.product.id === product.id &&
-            item.size === size &&
-            item.color === color
-        );
-
-        if (existingItemIndex > -1) {
-          // Actualizar cantidad del item existente
-          const updatedItems = [...prevItems];
-          updatedItems[existingItemIndex] = {
-            ...updatedItems[existingItemIndex],
-            quantity: updatedItems[existingItemIndex].quantity + quantity,
-          };
-          return updatedItems;
-        } else {
-          // Buscar variante específica si existe
-          const variant = product.variants?.find(
-            (v) => v.color === color && v.size === size
-          );
-
-          // Agregar nuevo item
-          return [
-            ...prevItems,
-            {
-              product,
-              quantity,
-              size,
-              color,
-              variantId: variant?.id,
-              sku: variant?.sku || undefined,
-            },
-          ];
-        }
-      });
+      analytics.trackAddToCart(product.id, getEffectivePrice(product) * quantity);
+      setCartItems((prev) => upsertCartItem(prev, product, quantity, size, color));
     },
     []
   ) as unknown as CartContextType["addToCart"];
 
   const removeFromCart = useCallback(
     (productId: string, size: string, color: string) => {
-      setCartItems((prevItems) =>
-        prevItems.filter(
+      setCartItems((prev) =>
+        prev.filter(
           (item) =>
             !(
               item.product.id === productId &&
@@ -383,9 +314,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         removeFromCart(productId, size, color);
         return;
       }
-
-      setCartItems((prevItems) =>
-        prevItems.map((item) =>
+      setCartItems((prev) =>
+        prev.map((item) =>
           item.product.id === productId &&
           item.size === size &&
           item.color === color
@@ -402,198 +332,44 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     setAppliedCoupon(null);
   }, []);
 
-  const getCartTotal = useCallback(() => {
-    return cartItems.reduce((total, item) => {
-      // Usar salePrice si existe y el producto está en oferta, sino usar price normal
-      const effectivePrice =
-        item.product.onSale && item.product.salePrice
-          ? item.product.salePrice
-          : item.product.price;
-      return total + effectivePrice * item.quantity;
-    }, 0);
-  }, [cartItems]);
-
-  const getItemCount = useCallback(() => {
-    return cartItems.reduce((count, item) => count + item.quantity, 0);
-  }, [cartItems]);
-
-  // Persistencia en localStorage
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const saved = localStorage.getItem("rastuci-cart");
-      if (saved) {
-        const parsed: CartItem[] = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setCartItems(parsed);
-        }
-      }
-      // Restaurar cupón aplicado
-      const savedCoupon = localStorage.getItem("rastuci-coupon");
-      if (savedCoupon) {
-        const parsedCoupon: Coupon = JSON.parse(savedCoupon);
-        setAppliedCoupon(parsedCoupon);
-      }
-    } catch {
-      // noop
-    }
-    setHasLoadedStorage(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hasLoadedStorage || typeof window === "undefined") {
-      return;
-    }
-    try {
-      localStorage.setItem("rastuci-cart", JSON.stringify(cartItems));
-    } catch {
-      // noop
-    }
-  }, [cartItems, hasLoadedStorage]);
-
-  // Persistir cupón aplicado
-  useEffect(() => {
-    if (!hasLoadedStorage || typeof window === "undefined") return;
-    try {
-      if (appliedCoupon) {
-        localStorage.setItem("rastuci-coupon", JSON.stringify(appliedCoupon));
-      } else {
-        localStorage.removeItem("rastuci-coupon");
-      }
-    } catch {
-      // noop
-    }
-  }, [appliedCoupon, hasLoadedStorage]);
-
-  const calculateShippingCost = useCallback(
-    async (
-      postalCode: string,
-      deliveredType?: "D" | "S"
-    ): Promise<ShippingOption[]> => {
-      const cacheKey = `${postalCode}-${deliveredType || "D"}`;
-
-      // Consultar cache antes de ir a la API
-      if (shippingCache[cacheKey]) {
-        logger.info("[CartContext] Usando cache para costo de envío", {
-          cacheKey,
-        });
-        return shippingCache[cacheKey];
-      }
-
-      try {
-        const response = await fetch("/api/shipping/calculate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ postalCode, deliveredType }),
-        });
-
-        if (!response.ok) {
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            const errorData = await response.json();
-            throw new Error(
-              errorData.error ||
-                `Error calculando envío (HTTP ${response.status})`
-            );
-          }
-          throw new Error(`Error calculando envío: HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.success && result.options) {
-          // Guardar en cache para la próxima vez
-          setShippingCache((prev) => ({ ...prev, [cacheKey]: result.options }));
-          return result.options;
-        }
-        throw new Error(result.error || "Error calculando envío");
-      } catch (error) {
-        logger.error("Error calculando costo de envío:", { error });
-        throw error;
-      }
-    },
-    [shippingCache]
+  const getCartTotal = useCallback(
+    () =>
+      cartItems.reduce(
+        (total, item) => total + getEffectivePrice(item.product) * item.quantity,
+        0
+      ),
+    [cartItems]
   );
 
-  // Checkout - Sucursal: Obtener con cache
-  const getAgencies = useCallback(
-    async (provinceCode: string): Promise<Agency[]> => {
-      if (agencyCache[provinceCode]) {
-        logger.info("[CartContext] Usando cache para sucursales", {
-          provinceCode,
-        });
-        return agencyCache[provinceCode];
-      }
-
-      try {
-        const response = await fetch(
-          `/api/shipping/agencies?provinceCode=${provinceCode}`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Error obteniendo sucursales: HTTP ${response.status}`
-          );
-        }
-
-        const result = await response.json();
-
-        if (result.success && result.agencies) {
-          setAgencyCache((prev) => ({
-            ...prev,
-            [provinceCode]: result.agencies,
-          }));
-          return result.agencies;
-        }
-        return [];
-      } catch (error) {
-        logger.error("Error obteniendo sucursales:", { error });
-        return [];
-      }
-    },
-    [agencyCache]
+  const getItemCount = useCallback(
+    () => cartItems.reduce((count, item) => count + item.quantity, 0),
+    [cartItems]
   );
 
-  // Checkout - Cupones
+  // ─── Cupones ──────────────────────────────────────────────────────────────
+
   const applyCoupon = useCallback(
     async (code: string): Promise<boolean> => {
       try {
         const response = await fetch("/api/coupons/validate", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code }),
         });
 
         if (!response.ok) {
           const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `Error validando cupón`);
+          if (contentType?.includes("application/json")) {
+            const err = await response.json();
+            throw new Error(err.error || "Error validando cupón");
           }
           throw new Error(`Error validando cupón: HTTP ${response.status}`);
         }
 
         const result = await response.json();
-
-        if (result.success && result.coupon) {
-          // Validar minOrderTotal antes de aplicar
-          if (
-            result.coupon.minOrderTotal !== null &&
-            result.coupon.minOrderTotal !== undefined
-          ) {
-            const currentSubtotal = getCartTotal();
-            if (currentSubtotal < result.coupon.minOrderTotal) {
-              throw new Error(
-                `El monto mínimo para usar este cupón es ${formatCurrency(result.coupon.minOrderTotal)}`
-              );
-            }
-          }
-          setAppliedCoupon(result.coupon);
+        const coupon = await validateCouponResponse(result, getCartTotal);
+        if (coupon) {
+          setAppliedCoupon(coupon);
           return true;
         }
         return false;
@@ -605,30 +381,29 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     [getCartTotal]
   );
 
-  const removeCoupon = useCallback(() => {
-    setAppliedCoupon(null);
-  }, []);
+  const removeCoupon = useCallback(() => setAppliedCoupon(null), []);
 
-  const updateCustomerInfo = useCallback((info: CustomerInfo) => {
-    setCustomerInfo(info);
-  }, []);
+  // ─── Resumen y finalización ───────────────────────────────────────────────
+
+  const updateCustomerInfo = useCallback(
+    (info: CustomerInfo) => setCustomerInfo(info),
+    []
+  );
 
   const getOrderSummary = useCallback(() => {
     const subtotal = getCartTotal();
-    const shippingCost = selectedShippingOption?.price || 0;
+    const shippingCost = selectedShippingOption?.price ?? 0;
     const discount = appliedCoupon
       ? appliedCoupon.discountType === "FIXED"
         ? Math.min(appliedCoupon.discount, subtotal)
         : (subtotal * appliedCoupon.discount) / 100
       : 0;
-    const total = subtotal + shippingCost - discount;
-
     return {
       items: cartItems,
       subtotal,
       shippingCost,
       discount,
-      total,
+      total: subtotal + shippingCost - discount,
       customer: customerInfo,
       shippingOption: selectedShippingOption,
       payment: selectedPaymentMethod,
@@ -644,67 +419,30 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     selectedBillingOption,
   ]);
 
-  const placeOrder = useCallback(async (): Promise<{
-    success: boolean;
-    orderId?: string;
-    error?: string;
-    redirectUrl?: string;
-    paymentMethod?: string;
-  }> => {
+  const placeOrder = useCallback(async () => {
+    const validationError = validatePlaceOrder(
+      customerInfo,
+      selectedPaymentMethod,
+      selectedShippingOption
+    );
+    if (validationError) return { success: false, error: validationError };
+
+    const orderSummary = getOrderSummary();
+
     try {
-      // Validar que tengamos toda la información necesaria
-      if (!customerInfo) {
-        return {
-          success: false,
-          error: "Falta información del cliente",
-        };
-      }
-
-      if (!selectedPaymentMethod) {
-        return {
-          success: false,
-          error: "Por favor selecciona un método de pago",
-        };
-      }
-
-      // Si es pago en efectivo, solo requiere pickup
-      if (selectedPaymentMethod.id === "cash") {
-        if (!selectedShippingOption || selectedShippingOption.id !== "pickup") {
-          return {
-            success: false,
-            error: "Para pago en efectivo debe seleccionar retiro en tienda",
-          };
-        }
-      } else {
-        // Para otros métodos, requiere método de envío
-        if (!selectedShippingOption) {
-          return {
-            success: false,
-            error: "Por favor selecciona un método de envío",
-          };
-        }
-      }
-
-      const orderSummary = getOrderSummary();
-
-      // Preparar datos para el API
-      const orderData = {
+      const response = await fetchCheckout({
         items: cartItems.map((item) => ({
           productId: item.product.id,
           name: item.product.name,
           quantity: item.quantity,
-          // Precio efectivo (salePrice si está en oferta); el servidor lo valida igualmente
-          price:
-            item.product.onSale && item.product.salePrice
-              ? item.product.salePrice
-              : item.product.price,
+          price: getEffectivePrice(item.product),
           size: item.size,
           color: item.color,
         })),
         customer: customerInfo,
         shippingMethod: selectedShippingOption,
-        shippingAgency: selectedAgency, // Add selected agency to order data
-        paymentMethod: selectedPaymentMethod.id,
+        shippingAgency: selectedAgency,
+        paymentMethod: selectedPaymentMethod!.id,
         couponCode: appliedCoupon?.code,
         orderData: {
           subtotal: orderSummary.subtotal,
@@ -712,81 +450,37 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           discount: orderSummary.discount,
           total: orderSummary.total,
         },
-      };
-
-      // Llamar al API de checkout
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderData),
       });
 
       if (!response.ok) {
         const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          return {
-            success: false,
-            error: errorData.error || "Error al procesar el pedido",
-          };
+        if (contentType?.includes("application/json")) {
+          const err = await response.json();
+          return { success: false, error: err.error || "Error al procesar el pedido" };
         }
-        return {
-          success: false,
-          error: `Error de red: HTTP ${response.status}`,
-        };
+        return { success: false, error: `Error de red: HTTP ${response.status}` };
       }
 
       const result = await response.json();
-
       if (!result.success) {
-        return {
-          success: false,
-          error: result.error || "Error al procesar el pedido",
-        };
+        return { success: false, error: result.error || "Error al procesar el pedido" };
       }
 
-      // Track purchase event
-      analytics.trackPurchase(
-        result.orderId || "temp_id",
-        orderSummary.total,
-        "ARS",
-        result.items
-      );
+      analytics.trackPurchase(result.orderId || "temp_id", orderSummary.total, "ARS", result.items);
 
-      // Si es MercadoPago, devolver URL de redirección
       if (result.paymentMethod === "mercadopago" && result.initPoint) {
-        return {
-          success: true,
-          redirectUrl: result.initPoint,
-          paymentMethod: "mercadopago",
-        };
+        return { success: true, redirectUrl: result.initPoint, paymentMethod: "mercadopago" };
       }
 
-      // Para efectivo y transferencia, limpiar el carrito después del pedido exitoso
-      if (
-        result.paymentMethod === "cash" ||
-        result.paymentMethod === "transfer"
-      ) {
+      if (result.paymentMethod === "cash" || result.paymentMethod === "transfer") {
         clearCart();
-        return {
-          success: true,
-          orderId: result.orderId,
-          paymentMethod: result.paymentMethod,
-        };
+        return { success: true, orderId: result.orderId, paymentMethod: result.paymentMethod };
       }
 
-      return {
-        success: true,
-        orderId: result.orderId,
-      };
+      return { success: true, orderId: result.orderId };
     } catch (error) {
       logger.error("Error al procesar pedido", { error });
-      return {
-        success: false,
-        error: "Error de conexión. Por favor intenta nuevamente.",
-      };
+      return { success: false, error: "Error de conexión. Por favor intenta nuevamente." };
     }
   }, [
     customerInfo,
@@ -796,11 +490,13 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     getOrderSummary,
     clearCart,
     selectedAgency,
+    appliedCoupon,
   ]);
+
+  // ─── Contexto ─────────────────────────────────────────────────────────────
 
   const value: CartContextType = useMemo(
     () => ({
-      // Carrito y productos
       cartItems,
       addToCart,
       removeFromCart,
@@ -808,38 +504,24 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       clearCart,
       getCartTotal,
       getItemCount,
-
-      // Checkout - Envío
       availableShippingOptions,
       selectedShippingOption,
       setSelectedShippingOption,
       calculateShippingCost,
-
-      // Checkout - Sucursal
       selectedAgency,
       setSelectedAgency,
       getAgencies,
-
-      // Checkout - Pago
       availablePaymentMethods,
       selectedPaymentMethod,
       setSelectedPaymentMethod,
-
-      // Checkout - Facturación
-      availableBillingOptions,
+      availableBillingOptions: AVAILABLE_BILLING_OPTIONS,
       selectedBillingOption,
       setSelectedBillingOption,
-
-      // Checkout - Cupones
       appliedCoupon,
       applyCoupon,
       removeCoupon,
-
-      // Checkout - Información del cliente
       customerInfo,
       updateCustomerInfo,
-
-      // Checkout - Finalización
       getOrderSummary,
       placeOrder,
       loadCheckoutSettings,
@@ -859,7 +541,6 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       getAgencies,
       availablePaymentMethods,
       selectedPaymentMethod,
-      availableBillingOptions,
       selectedBillingOption,
       appliedCoupon,
       applyCoupon,
@@ -871,6 +552,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       loadCheckoutSettings,
     ]
   );
+
+  // Suprimir warning de hydration durante la carga inicial de localStorage
+  if (!hasLoadedStorage) return null;
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
