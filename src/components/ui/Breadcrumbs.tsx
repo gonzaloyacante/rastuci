@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 
+import { safeJsonLd } from "@/lib/json-ld";
+
 export interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -291,10 +293,7 @@ export const BreadcrumbsWithSchema: React.FC<BreadcrumbsProps> = (props) => {
       <script
         type="application/ld+json"
         nonce={props.nonce}
-        dangerouslySetInnerHTML={{
-          // [XSS] replace < with \u003c to prevent </script> injection in JSON-LD blocks
-          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
-        }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(structuredData) }}
       />
     </>
   );

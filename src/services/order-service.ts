@@ -2,13 +2,22 @@ import { OrderStatus, Prisma } from "@prisma/client";
 import { add } from "date-fns";
 import { nanoid } from "nanoid";
 
-import { ORDER_STATUS, PROVINCIAS } from "@/lib/constants";
+import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { emailService } from "@/lib/resend";
 import { getStoreSettings } from "@/lib/store-settings";
-import { formatCurrency } from "@/lib/utils";
 import { MercadoPagoPayer, OrderItemInput } from "@/types";
+
+import {
+  calculateCouponDiscount,
+  type CouponInput,
+  decrementCouponUsage,
+  decrementVariantStock,
+  incrementCouponUsage,
+  resolveProvinceCode,
+  validateAndPriceItems,
+} from "./order-helpers";
 
 export interface OrderMetadata {
   tempOrderId?: string;
@@ -34,22 +43,6 @@ export type OrderUpdateData = {
   mappedStatus: OrderStatus;
 };
 
-type ValidatedOrderItem = {
-  productId: string;
-  quantity: number;
-  price: number;
-  originalPrice: number;
-  size?: string;
-  color?: string;
-};
-
-type CouponInput = {
-  id: string;
-  discount: number;
-  discountType: string;
-  minOrderTotal: number | null;
-};
-
 export class OrderService {
   mapStatus(mpStatus: string): OrderStatus {
     if (mpStatus === "approved") return ORDER_STATUS.PROCESSED as OrderStatus; // Payment Confirmed -> PROCESSED
@@ -58,175 +51,6 @@ export class OrderService {
     if (mpStatus === "rejected" || mpStatus === "cancelled")
       return ORDER_STATUS.CANCELLED as OrderStatus;
     return ORDER_STATUS.PENDING as OrderStatus;
-  }
-
-  private resolveProvinceCode(province: string | undefined): string | null {
-    if (!province) return null;
-    const normalized = province
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-    const match = PROVINCIAS.find(
-      (p) =>
-        p.name
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "") === normalized
-    );
-    if (match) return match.code;
-    if (normalized.includes("capital") || normalized.includes("caba"))
-      return "C";
-    return null;
-  }
-
-  private async validateAndPriceItems(
-    tx: Prisma.TransactionClient,
-    items: Array<{
-      productId: string;
-      quantity: number;
-      size?: string;
-      color?: string;
-    }>,
-    discountPercent: number
-  ): Promise<ValidatedOrderItem[]> {
-    const productIds = items.map((i) => i.productId);
-    const dbProducts = await tx.products.findMany({
-      where: { id: { in: productIds }, isActive: true },
-      select: {
-        id: true,
-        price: true,
-        salePrice: true,
-        onSale: true,
-        stock: true,
-        name: true,
-      },
-    });
-    return Promise.all(
-      items.map(async (item) => {
-        const dbProduct = dbProducts.find((p) => p.id === item.productId);
-        if (!dbProduct)
-          throw new Error(`Producto no encontrado: ${item.productId}`);
-        if (dbProduct.stock < item.quantity) {
-          throw new Error(
-            `Stock insuficiente para ${dbProduct.name} (Disponible: ${dbProduct.stock})`
-          );
-        }
-        // Verificar stock de variante específica si aplica
-        if (item.color && item.size) {
-          const variant = await tx.product_variants.findFirst({
-            where: {
-              productId: item.productId,
-              color: item.color,
-              size: item.size,
-            },
-            select: { stock: true },
-          });
-          if (!variant) {
-            throw new Error(
-              `La variante ${item.color}/${item.size} de ${dbProduct.name} ya no está disponible`
-            );
-          }
-          if (variant.stock < item.quantity) {
-            throw new Error(
-              `Stock insuficiente para ${dbProduct.name} talle ${item.size} color ${item.color}`
-            );
-          }
-        }
-        const basePrice =
-          dbProduct.onSale && dbProduct.salePrice
-            ? Number(dbProduct.salePrice)
-            : Number(dbProduct.price);
-        const price = Number((basePrice * (1 - discountPercent)).toFixed(2));
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price,
-          originalPrice: basePrice,
-          size: item.size,
-          color: item.color,
-        };
-      })
-    );
-  }
-
-  private calculateCouponDiscount(
-    itemsTotal: number,
-    coupon: CouponInput | undefined
-  ): number {
-    if (!coupon) return 0;
-    if (coupon.minOrderTotal !== null && itemsTotal < coupon.minOrderTotal) {
-      throw new Error(
-        `El monto mínimo para usar este cupón es ${formatCurrency(Number(coupon.minOrderTotal))}`
-      );
-    }
-    if (coupon.discountType === "PERCENTAGE") {
-      return Number(((itemsTotal * coupon.discount) / 100).toFixed(2));
-    }
-    return Math.min(coupon.discount, itemsTotal);
-  }
-
-  private async decrementVariantStock(
-    tx: Prisma.TransactionClient,
-    items: ValidatedOrderItem[]
-  ): Promise<void> {
-    for (const item of items) {
-      await tx.products.update({
-        where: { id: item.productId, stock: { gte: item.quantity } },
-        data: { stock: { decrement: item.quantity } },
-      });
-      if (item.color && item.size) {
-        const variantResult = await tx.product_variants.updateMany({
-          where: {
-            productId: item.productId,
-            color: item.color,
-            size: item.size,
-            stock: { gte: item.quantity },
-          },
-          data: { stock: { decrement: item.quantity } },
-        });
-        if (variantResult.count === 0) {
-          const variantExists = await tx.product_variants.findFirst({
-            where: {
-              productId: item.productId,
-              color: item.color,
-              size: item.size,
-            },
-            select: { stock: true },
-          });
-          if (variantExists !== null) {
-            throw new Error(
-              `Stock insuficiente para la variante ${item.color}/${item.size}`
-            );
-          }
-        }
-      }
-    }
-  }
-
-  private async incrementCouponUsage(
-    tx: Prisma.TransactionClient,
-    couponId: string
-  ): Promise<void> {
-    const affected = await tx.$executeRaw`
-      UPDATE coupons
-      SET "usageCount" = "usageCount" + 1
-      WHERE id = ${couponId}
-        AND ("usageLimit" IS NULL OR "usageCount" < "usageLimit")
-    `;
-    if (affected === 0) {
-      throw new Error("El cupón ha alcanzado su límite de usos");
-    }
-  }
-
-  private async decrementCouponUsage(
-    tx: Prisma.TransactionClient,
-    couponId: string
-  ): Promise<void> {
-    await tx.$executeRaw`
-      UPDATE coupons
-      SET "usageCount" = GREATEST("usageCount" - 1, 0)
-      WHERE id = ${couponId}
-    `;
   }
 
   async updateOrder(orderId: string, data: OrderUpdateData) {
@@ -353,7 +177,7 @@ export class OrderService {
 
         // 4c. Restore coupon usage if order had a coupon applied
         if (order.couponId) {
-          await this.decrementCouponUsage(tx, order.couponId);
+          await decrementCouponUsage(tx, order.couponId);
         }
       }
 
@@ -572,27 +396,7 @@ export class OrderService {
         shippingStreet,
         shippingCity,
         shippingProvince: shippingProvince,
-        shippingProvinceCode: (() => {
-          if (!shippingProvince) return null;
-          const normalized = shippingProvince
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "");
-          // Check strict match first
-          const match = PROVINCIAS.find(
-            (p) =>
-              p.name
-                .toLowerCase()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "") === normalized
-          );
-          if (match) return match.code;
-          // Heuristic for CABA
-          if (normalized.includes("capital") || normalized.includes("caba"))
-            return "C";
-          // If no match, return null and let ShipmentService guess by CP
-          return null;
-        })(),
+        shippingProvinceCode: resolveProvinceCode(shippingProvince),
         shippingPostalCode: shippingPostalCode,
         shippingAgency: shippingAgencyCode,
         shippingMethod: shippingMethodId, // Saved correctly now
@@ -708,7 +512,7 @@ export class OrderService {
 
     const order = await prisma.$transaction(async (tx) => {
       // 1+2. Fetch & validate items (price + stock check)
-      const validatedItems = await this.validateAndPriceItems(
+      const validatedItems = await validateAndPriceItems(
         tx,
         items,
         discountPercent
@@ -719,7 +523,7 @@ export class OrderService {
         0
       );
 
-      const couponDiscount = this.calculateCouponDiscount(itemsTotal, coupon);
+      const couponDiscount = calculateCouponDiscount(itemsTotal, coupon);
       const calculatedTotal = Number(
         (itemsTotal + shippingCost - couponDiscount).toFixed(2)
       );
@@ -775,10 +579,10 @@ export class OrderService {
       });
 
       // 4. Decrement stock (products + variants)
-      await this.decrementVariantStock(tx, validatedItems);
+      await decrementVariantStock(tx, validatedItems);
 
       // 5. Incrementar usageCount del cupón (atómico)
-      if (coupon) await this.incrementCouponUsage(tx, coupon.id);
+      if (coupon) await incrementCouponUsage(tx, coupon.id);
 
       return newOrder;
     });
@@ -818,59 +622,6 @@ export class OrderService {
     return order;
   }
 
-  /**
-   * Check if any item in the order has triggered a low stock alert
-   */
-  private async checkStockAlerts(
-    items: Array<{ productId: string; products?: { id: string } }>
-  ) {
-    try {
-      const settings = await getStoreSettings();
-      if (!settings.stock.enableStockAlerts) return;
-
-      // Dynamic Stock Alerts Logic
-      // We check if the product falls into a status configured as 'error' or 'warning'
-      const { stockStatuses } = settings;
-
-      // Get distinct product IDs
-      const productIds = [
-        ...new Set(items.map((i) => i.productId || i.products?.id)),
-      ].filter(Boolean);
-
-      const products = await prisma.products.findMany({
-        where: { id: { in: productIds as string[] } },
-        select: { id: true, name: true, stock: true },
-      });
-
-      for (const p of products) {
-        // Find matching rule
-        const status = stockStatuses.find(
-          (s) =>
-            p.stock >= s.min &&
-            (s.max === null || s.max === undefined || p.stock <= s.max)
-        );
-
-        // If status exists and indicates a warning/error (low stock), send alert
-        if (
-          status &&
-          (status.color === "error" || status.color === "warning")
-        ) {
-          // Prevent spamming if already alerted? (Currently system doesn't track alert state per product, relies on trigger event)
-          await emailService.sendLowStockAlert(
-            p.name,
-            p.stock,
-            p.id,
-            settings.adminEmail || "admin@rastuci.com"
-          );
-          logger.info(
-            `[StockAlert] Sent alert for ${p.name} (Stock: ${p.stock}, Status: ${status.label})`
-          );
-        }
-      }
-    } catch (error) {
-      logger.error("[StockAlert] Error processing alerts", { error });
-    }
-  }
   /**
    * Creates a full order record in the database before payment processing.
    * This ensures faithful data persistence (customer details, shipping name, etc.)
@@ -913,7 +664,7 @@ export class OrderService {
 
     const order = await prisma.$transaction(async (tx) => {
       // 1+2. Fetch & validate items (price + stock check)
-      const validatedItems = await this.validateAndPriceItems(
+      const validatedItems = await validateAndPriceItems(
         tx,
         items,
         discountPercent
@@ -924,7 +675,7 @@ export class OrderService {
         0
       );
       const shippingCost = shippingData.cost ?? 0;
-      const couponDiscount = this.calculateCouponDiscount(itemsTotal, coupon);
+      const couponDiscount = calculateCouponDiscount(itemsTotal, coupon);
       const calculatedTotal = Number(
         (itemsTotal + shippingCost - couponDiscount).toFixed(2)
       );
@@ -966,7 +717,7 @@ export class OrderService {
           shippingStreet: shippingData.street,
           shippingCity: shippingData.city,
           shippingProvince: shippingData.province,
-          shippingProvinceCode: this.resolveProvinceCode(shippingData.province),
+          shippingProvinceCode: resolveProvinceCode(shippingData.province),
           shippingPostalCode: shippingData.postalCode,
           shippingAgency: shippingData.agency,
           shippingMethod: shippingData.methodName,
@@ -987,10 +738,10 @@ export class OrderService {
       });
 
       // 4. Decrement stock (products + variants)
-      await this.decrementVariantStock(tx, validatedItems);
+      await decrementVariantStock(tx, validatedItems);
 
       // 5. Incrementar usageCount del cupón (atómico)
-      if (coupon) await this.incrementCouponUsage(tx, coupon.id);
+      if (coupon) await incrementCouponUsage(tx, coupon.id);
 
       return newOrder;
     });
@@ -1034,7 +785,7 @@ export class OrderService {
 
     const order = await prisma.$transaction(async (tx) => {
       // 1+2. Fetch & validate items (price + stock check)
-      const validatedItems = await this.validateAndPriceItems(
+      const validatedItems = await validateAndPriceItems(
         tx,
         items,
         discountPercent
@@ -1045,7 +796,7 @@ export class OrderService {
         0
       );
       const shippingCost = shippingData.cost ?? 0;
-      const couponDiscount = this.calculateCouponDiscount(itemsTotal, coupon);
+      const couponDiscount = calculateCouponDiscount(itemsTotal, coupon);
       const calculatedTotal = Number(
         (itemsTotal + shippingCost - couponDiscount).toFixed(2)
       );
@@ -1082,7 +833,7 @@ export class OrderService {
           shippingStreet: shippingData.street,
           shippingCity: shippingData.city,
           shippingProvince: shippingData.province,
-          shippingProvinceCode: this.resolveProvinceCode(shippingData.province),
+          shippingProvinceCode: resolveProvinceCode(shippingData.province),
           shippingPostalCode: shippingData.postalCode,
           shippingAgency: shippingData.agency,
           shippingMethod: shippingData.methodName,
@@ -1103,10 +854,10 @@ export class OrderService {
       });
 
       // 4. Decrement stock (products + variants)
-      await this.decrementVariantStock(tx, validatedItems);
+      await decrementVariantStock(tx, validatedItems);
 
       // 5. Incrementar usageCount del cupón (atómico)
-      if (coupon) await this.incrementCouponUsage(tx, coupon.id);
+      if (coupon) await incrementCouponUsage(tx, coupon.id);
 
       return newOrder;
     });

@@ -4,6 +4,7 @@ import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
 import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
 import { HeroSection } from "@/components/home/HeroSection";
+import { safeJsonLd } from "@/lib/json-ld";
 import { logger } from "@/lib/logger";
 import { generateStoreJsonLd } from "@/lib/metadata";
 import { prisma } from "@/lib/prisma";
@@ -157,9 +158,7 @@ export default async function HomePage() {
     <main className="min-h-screen">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-        }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
 
       <HeroSection home={settings} shipping={shipping} />

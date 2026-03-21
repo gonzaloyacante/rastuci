@@ -6,127 +6,12 @@ import SiteChrome from "@/components/layout/SiteChrome";
 import { VacationProvider } from "@/components/providers/VacationProvider";
 import { SkipLink } from "@/components/ui/SkipLink";
 import VacationBanner from "@/components/vacation/VacationBanner";
-import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { safeJsonLd } from "@/lib/json-ld";
+import {
+  getContactSettings,
+  getHomeSettings,
+} from "@/lib/server/layout-settings";
 import { getVacationSettings, isVacationActive } from "@/lib/vacation";
-import { defaultContactSettings } from "@/lib/validation/contact";
-import { defaultHomeSettings } from "@/lib/validation/home";
-
-async function getHomeSettings() {
-  try {
-    const settings = await prisma.home_settings.findUnique({
-      where: { id: "default" },
-      include: { benefits: { orderBy: { sortOrder: "asc" } } },
-    });
-
-    if (!settings) return defaultHomeSettings;
-
-    // Map to application format
-    return {
-      heroTitle: settings.heroTitle,
-      heroSubtitle: settings.heroSubtitle,
-      heroLogoUrl: settings.heroLogoUrl ?? undefined,
-      heroImage: settings.heroImage ?? undefined,
-      headerLogoUrl: settings.headerLogoUrl ?? undefined,
-      ctaPrimaryLabel: settings.ctaPrimaryLabel,
-      ctaSecondaryLabel: settings.ctaSecondaryLabel,
-      categoriesTitle: settings.categoriesTitle,
-      featuredTitle: settings.featuredTitle,
-      featuredSubtitle: settings.featuredSubtitle,
-      showHeroLogo: settings.showHeroLogo,
-      showHeroTitle: settings.showHeroTitle,
-      showHeroSubtitle: settings.showHeroSubtitle,
-      showCtaPrimary: settings.showCtaPrimary,
-      showCtaSecondary: settings.showCtaSecondary,
-      showCategoriesTitle: settings.showCategoriesTitle,
-      showFeaturedTitle: settings.showFeaturedTitle,
-      showFeaturedSubtitle: settings.showFeaturedSubtitle,
-      categoriesSubtitle: settings.categoriesSubtitle,
-      categoriesDisplay: settings.categoriesDisplay as "image" | "icon",
-      showCategoriesSubtitle: settings.showCategoriesSubtitle,
-      benefits: settings.benefits.map((b) => ({
-        icon: b.icon,
-        title: b.title,
-        description: b.description,
-      })),
-      footer: {
-        logoUrl: settings.footerLogoUrl ?? undefined,
-        brand: settings.footerBrand,
-        tagline: settings.footerTagline,
-        showLogo: settings.showFooterLogo,
-        showBrand: settings.showFooterBrand,
-        showTagline: settings.showFooterTagline,
-      },
-    };
-  } catch (err) {
-    logger.error("Error fetching home settings in layout:", { error: err });
-    return defaultHomeSettings;
-  }
-}
-
-async function getContactSettings() {
-  try {
-    const settings = await prisma.contact_settings.findUnique({
-      where: { id: "default" },
-    });
-
-    if (!settings) return defaultContactSettings;
-
-    return {
-      headerTitle: settings.headerTitle,
-      headerSubtitle: settings.headerSubtitle,
-      emails: settings.emails,
-      phones: settings.phones,
-      address: {
-        lines: [settings.addressLine1 ?? "", settings.addressLine2 ?? ""],
-        cityCountry: settings.addressCityCountry ?? "",
-      },
-      hours: {
-        title: settings.hoursTitle,
-        weekdays: settings.hoursWeekdays,
-        saturday: settings.hoursSaturday,
-        sunday: settings.hoursSunday,
-      },
-      form: {
-        title: settings.formTitle,
-        nameLabel: settings.formNameLabel,
-        emailLabel: settings.formEmailLabel,
-        phoneLabel: settings.formPhoneLabel,
-        messageLabel: settings.formMessageLabel,
-        submitLabel: settings.formSubmitLabel,
-        successTitle: settings.formSuccessTitle,
-        successMessage: settings.formSuccessMessage,
-        sendAnotherLabel: settings.formSendAnother,
-      },
-      faqs: [],
-      social: {
-        instagram: {
-          url: settings.instagramUrl ?? "",
-          username: settings.instagramUsername ?? "",
-        },
-        facebook: {
-          url: settings.facebookUrl ?? "",
-          username: settings.facebookUsername ?? "",
-        },
-        whatsapp: {
-          url: settings.whatsappUrl ?? "",
-          username: settings.whatsappUsername ?? "",
-        },
-        tiktok: {
-          url: settings.tiktokUrl ?? "",
-          username: settings.tiktokUsername ?? "",
-        },
-        youtube: {
-          url: settings.youtubeUrl ?? "",
-          username: settings.youtubeUsername ?? "",
-        },
-      },
-    };
-  } catch (err) {
-    logger.error("Error fetching contact settings in layout:", { error: err });
-    return defaultContactSettings;
-  }
-}
 
 export default async function PublicLayout({
   children,
@@ -170,9 +55,7 @@ export default async function PublicLayout({
           type="application/ld+json"
           nonce={nonce || undefined}
           // [XSS] replace < with \u003c to prevent </script> injection in JSON-LD blocks
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-          }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
       )}
       <VacationProvider
