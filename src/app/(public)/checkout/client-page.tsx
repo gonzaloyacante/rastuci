@@ -33,6 +33,11 @@ const stepLabels = [
   "Confirmación",
 ];
 
+function getPlaceOrderErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return "Ocurrió un error inesperado. Por favor intenta nuevamente.";
+}
+
 export default function CheckoutPageClient() {
   const { show } = useToast();
   const router = useRouter();
@@ -148,10 +153,7 @@ export default function CheckoutPageClient() {
         show({ type: "error", message: errorMessage });
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Ocurrió un error inesperado. Por favor intenta nuevamente.";
+      const errorMessage = getPlaceOrderErrorMessage(error);
       setError(errorMessage);
       show({ type: "error", message: errorMessage });
       logger.error("Error al finalizar la compra:", { error: error });
@@ -188,8 +190,8 @@ export default function CheckoutPageClient() {
   if (cartItems.length === 0 && currentStep !== CheckoutStep.CONFIRMATION) {
     return (
       <div className="surface text-primary min-h-screen flex flex-col">
-        <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
-          <div className="flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
+        <main className="grow max-w-300 mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
+          <div className="flex items-center justify-center min-h-75 sm:min-h-100">
             <div className="text-center">
               <Spinner size="lg" className="mx-auto mb-4" />
               <p className="muted text-sm sm:text-base">
@@ -204,7 +206,7 @@ export default function CheckoutPageClient() {
 
   return (
     <div className="surface text-primary min-h-screen flex flex-col">
-      <main className="grow max-w-[1200px] mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
+      <main className="grow max-w-300 mx-auto py-6 sm:py-8 px-4 sm:px-6 w-full">
         {/* Header - responsive con total abajo en mobile */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-primary font-montserrat">

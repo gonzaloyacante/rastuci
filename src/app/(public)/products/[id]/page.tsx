@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { cache, Suspense } from "react";
 
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
+import { safeJsonLd } from "@/lib/json-ld";
 import { logger } from "@/lib/logger";
 import { generateProductJsonLd } from "@/lib/metadata";
 import prisma from "@/lib/prisma";
@@ -138,9 +139,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {jsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-          }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
       )}
       <Suspense fallback={<ProductDetailSkeleton />}>
