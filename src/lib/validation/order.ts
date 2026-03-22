@@ -28,6 +28,8 @@ export const OrderCreateSchema = z.object({
     z.object({
       productId: z.string(),
       quantity: z.number().int().positive(),
+      color: z.string().optional(),
+      size: z.string().optional(),
     })
   ),
   status: OrderStatusSchema.optional(),

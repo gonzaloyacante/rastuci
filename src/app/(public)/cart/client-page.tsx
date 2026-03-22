@@ -31,10 +31,19 @@ interface CartItem {
     stock: number;
     onSale?: boolean;
     salePrice?: number | null;
+    variants?: { color: string; size: string; stock: number }[];
   };
   quantity: number;
   size: string;
   color: string;
+}
+
+function getItemVariantStock(item: CartItem): number {
+  return (
+    item.product.variants?.find(
+      (v) => v.color === item.color && v.size === item.size
+    )?.stock ?? item.product.stock
+  );
 }
 
 const CartItemComponent = ({
@@ -86,10 +95,11 @@ const CartItemComponent = ({
         return;
       }
 
-      if (newQuantity > item.product.stock) {
+      const variantStock = getItemVariantStock(item);
+      if (newQuantity > variantStock) {
         show({
           type: "error",
-          message: `Stock máximo disponible: ${item.product.stock}`,
+          message: `Stock máximo disponible: ${variantStock}`,
         });
         return;
       }
@@ -115,7 +125,7 @@ const CartItemComponent = ({
       : PLACEHOLDER_IMAGE;
   }, [item.product.images]);
 
-  const isLowStock = item.product.stock < 5;
+  const isLowStock = getItemVariantStock(item) < 5;
   // Usar salePrice si el producto está en oferta y tiene precio de oferta válido
   const hasSale = !!(
     item.product.onSale && typeof item.product.salePrice === "number"
@@ -235,7 +245,7 @@ const CartItemComponent = ({
           {isLowStock ? (
             <p className="text-xs text-warning flex items-center gap-1.5 font-medium">
               <AlertCircle size={14} />
-              ¡Últimas {item.product.stock} unidades!
+              ¡Últimas {getItemVariantStock(item)} unidades!
             </p>
           ) : (
             <span className="hidden sm:block text-xs text-muted-foreground/50">
@@ -420,10 +430,14 @@ export default function CartPageClient() {
     setIsCheckingOut(true);
 
     try {
-      // Validar stock antes del checkout
-      const outOfStockItems = cartItems.filter(
-        (item) => item.quantity > item.product.stock
-      );
+      // Validar stock antes del checkout usando stock de variante si aplica
+      const outOfStockItems = cartItems.filter((item) => {
+        const stock =
+          item.product.variants?.find(
+            (v) => v.color === item.color && v.size === item.size
+          )?.stock ?? item.product.stock;
+        return item.quantity > stock;
+      });
 
       if (outOfStockItems.length > 0) {
         show({

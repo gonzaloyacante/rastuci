@@ -205,6 +205,7 @@ export async function POST(
     for (const item of items) {
       const product = await prisma.products.findUnique({
         where: { id: item.productId },
+        include: { product_variants: true },
       });
 
       if (!product) {
@@ -215,10 +216,19 @@ export async function POST(
         );
       }
 
-      if (product.stock < item.quantity) {
+      // Chequear stock de variante si corresponde, si no usar stock global
+      const variant =
+        item.color && item.size
+          ? product.product_variants.find(
+              (v) => v.color === item.color && v.size === item.size
+            )
+          : undefined;
+      const availableStock = variant?.stock ?? product.stock;
+
+      if (availableStock < item.quantity) {
         return fail(
           "CONFLICT",
-          `Stock insuficiente para el producto ${product.name}. Stock disponible: ${product.stock}`,
+          `Stock insuficiente para el producto ${product.name}. Stock disponible: ${availableStock}`,
           400
         );
       }
