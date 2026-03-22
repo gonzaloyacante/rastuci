@@ -28,6 +28,60 @@ import useDebounce from "@/hooks/useDebounce";
 import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types";
 
+const PLACEHOLDER = "https://placehold.co/800x800.png";
+
+function productToInventoryItems(p: Product): InventoryItem[] {
+  const images = Array.isArray(p.images)
+    ? p.images
+    : typeof p.images === "string"
+      ? JSON.parse(p.images || "[]")
+      : [];
+  const img: string = (images[0] as string | undefined) ?? PLACEHOLDER;
+  const unitCost = typeof p.price === "number" ? p.price : 0;
+  const base = {
+    productId: p.id,
+    productName: p.name,
+    productImage: img,
+    category: p.categories?.name ?? "Sin categoría",
+    minStock: 5,
+    reservedStock: 0,
+    unitCost,
+    unitPrice: unitCost,
+    supplier: "—",
+    location: "—",
+    lastRestocked: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+    movements: [],
+  };
+
+  if (p.variants && p.variants.length > 0) {
+    return p.variants.map((v) => ({
+      ...base,
+      id: v.id,
+      variantId: v.id,
+      color: v.color,
+      size: v.size,
+      sku: v.sku ?? `${p.id}-${v.color}-${v.size}`,
+      currentStock: v.stock,
+      maxStock: Math.max(100, v.stock),
+      availableStock: v.stock,
+      status: (v.stock > 0 ? "in_stock" : "out_of_stock") as InventoryItem["status"],
+    }));
+  }
+
+  const currentStock = typeof p.stock === "number" ? p.stock : 0;
+  return [
+    {
+      ...base,
+      id: p.id,
+      sku: p.id,
+      currentStock,
+      maxStock: Math.max(100, currentStock),
+      availableStock: currentStock,
+      status: (currentStock > 0 ? "in_stock" : "out_of_stock") as InventoryItem["status"],
+    },
+  ];
+}
+
 export function InventoryManagement() {
   const { show } = useToast();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -47,54 +101,19 @@ export function InventoryManagement() {
       const res = await fetch(
         `/api/products?page=1&limit=50&search=${encodeURIComponent(debouncedSearch)}`
       );
-      if (!res.ok) {
-        throw new Error("Error fetching products");
-      }
+      if (!res.ok) throw new Error("Error fetching products");
       const json = await res.json();
-      const products = Array.isArray(json?.data?.data) ? json.data.data : [];
+      const products: Product[] = Array.isArray(json?.data?.data) ? json.data.data : [];
 
-      const mapped: InventoryItem[] = products.map((p: Product) => {
-        const images = Array.isArray(p.images)
-          ? p.images
-          : typeof p.images === "string"
-            ? JSON.parse(p.images || "[]")
-            : [];
-        const img = images?.[0] ?? "https://placehold.co/800x800.png";
-        const currentStock = typeof p.stock === "number" ? p.stock : 0;
-
-        return {
-          id: p.id,
-          productId: p.id,
-          productName: p.name,
-          productImage: img,
-          sku: p.id,
-          category: p.categories?.name ?? "Sin categoría",
-          currentStock,
-          minStock: 5,
-          maxStock: Math.max(100, currentStock),
-          reservedStock: 0,
-          availableStock: currentStock,
-          unitCost: typeof p.price === "number" ? p.price : 0,
-          unitPrice: typeof p.price === "number" ? p.price : 0,
-          supplier: "Desconocido",
-          location: "Desconocido",
-          lastRestocked: p.updatedAt ? new Date(p.updatedAt) : new Date(),
-          status: currentStock > 0 ? "in_stock" : "out_of_stock",
-          movements: [],
-        } as InventoryItem;
-      });
+      const mapped = products.flatMap(productToInventoryItems);
 
       const computedStats: InventoryStats = {
         totalProducts: mapped.length,
-        totalValue: mapped.reduce(
-          (sum, it) => sum + it.currentStock * (it.unitPrice ?? 0),
-          0
-        ),
+        totalValue: mapped.reduce((sum, it) => sum + it.currentStock * it.unitPrice, 0),
         lowStockItems: mapped.filter(
           (item) => item.currentStock > 0 && item.currentStock <= item.minStock
         ).length,
-        outOfStockItems: mapped.filter((item) => item.currentStock === 0)
-          .length,
+        outOfStockItems: mapped.filter((item) => item.currentStock === 0).length,
         topMovingProducts: mapped.slice(0, 5),
         slowMovingProducts: mapped.slice(-5),
       };
@@ -116,26 +135,33 @@ export function InventoryManagement() {
     if (!selectedItem) return;
 
     try {
-      const resp = await fetch(`/api/products/${selectedItem.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        // Adjust product stock in BD overriding completely with new calculated value.
-        body: JSON.stringify({
-          stock: selectedItem.currentStock + data.quantity,
-        }),
-      });
-
-      if (!resp.ok) {
-        throw new Error("Error HTTP al actualizar inventario");
+      let resp: Response;
+      if (selectedItem.variantId) {
+        // Product with variants → update variant stock via dedicated endpoint
+        resp = await fetch(
+          `/api/products/${selectedItem.productId}/variants/${selectedItem.variantId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quantityChange: data.quantity }),
+          }
+        );
+      } else {
+        // Product without variants → update product stock directly
+        const newStock = Math.max(0, selectedItem.currentStock + data.quantity);
+        resp = await fetch(`/api/products/${selectedItem.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stock: newStock }),
+        });
       }
+
+      if (!resp.ok) throw new Error("Error HTTP al actualizar inventario");
 
       await loadInventoryData();
       setShowAdjustmentForm(false);
       setSelectedItem(null);
-      show({
-        type: "success",
-        message: "Ajuste de stock realizado correctamente en Base de Datos",
-      });
+      show({ type: "success", message: "Ajuste de stock realizado correctamente" });
     } catch {
       show({ type: "error", message: "Error al realizar el ajuste de stock" });
     }
@@ -166,7 +192,7 @@ export function InventoryManagement() {
           <StatCard
             icon={<Package className="w-8 h-8" />}
             iconColor="text-primary"
-            label="Total Productos"
+            label="Total Variantes"
             value={stats.totalProducts}
           />
           <StatCard

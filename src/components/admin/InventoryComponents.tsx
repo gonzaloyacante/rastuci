@@ -32,6 +32,10 @@ export interface InventoryItem {
   lastRestocked: Date;
   status: "in_stock" | "low_stock" | "out_of_stock" | "discontinued";
   movements: StockMovement[];
+  /** Populated when the item represents a specific product variant */
+  variantId?: string;
+  color?: string;
+  size?: string;
 }
 
 export interface StockMovement {
@@ -229,7 +233,11 @@ export function InventoryTable({
                     />
                     <div>
                       <p className="font-medium">{item.productName}</p>
-                      <p className="text-sm muted">{item.supplier}</p>
+                      {item.color && item.size ? (
+                        <p className="text-xs muted">{item.color} · Talle {item.size}</p>
+                      ) : (
+                        <p className="text-sm muted">{item.supplier}</p>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -294,7 +302,12 @@ export function StockAdjustmentModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="surface rounded-lg max-w-md w-full p-6">
         <h3 className="text-lg font-semibold mb-4">
-          Ajustar Stock - {item.productName}
+          Ajustar Stock — {item.productName}
+          {item.color && item.size && (
+            <span className="block text-sm font-normal muted">
+              {item.color} · Talle {item.size}
+            </span>
+          )}
         </h3>
 
         <div className="mb-4 p-3 surface border border-muted rounded">
