@@ -18,7 +18,7 @@ interface ProductPageProps {
 const getProduct = cache(async (id: string) => {
   return prisma.products.findUnique({
     where: { id, isActive: true },
-    include: { categories: true },
+    include: { categories: true, product_variants: true },
   });
 });
 
@@ -57,7 +57,10 @@ export async function generateMetadata({
         price: Number(product.price),
         images,
         category: product.categories?.name || "General",
-        inStock: product.stock > 0,
+        inStock:
+          product.product_variants && product.product_variants.length > 0
+            ? product.product_variants.some((v) => v.stock > 0)
+            : product.stock > 0,
       },
     });
   } catch (error) {
@@ -130,7 +133,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
     description: serializedProduct.description || "",
     image: serializedProduct.images,
     price: serializedProduct.price,
-    availability: serializedProduct.stock > 0 ? "instock" : "outofstock",
+    availability:
+      serializedProduct.product_variants &&
+      serializedProduct.product_variants.length > 0
+        ? serializedProduct.product_variants.some((v) => v.stock > 0)
+          ? "instock"
+          : "outofstock"
+        : serializedProduct.stock > 0
+          ? "instock"
+          : "outofstock",
     brand: "Rastuci",
   });
 
