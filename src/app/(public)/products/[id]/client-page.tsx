@@ -1,41 +1,25 @@
 "use client";
 
-import {
-  AlertTriangle,
-  ArrowLeft,
-  CreditCard,
-  Heart,
-  Share2,
-  ShieldCheck,
-  ShoppingCart,
-  Truck,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, Heart, Share2, ShoppingCart, Truck } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { Suspense, useState } from "react";
-import useSWR from "swr";
+import React, { Suspense } from "react";
 
-import { ColorSwatch } from "@/components/products/ProductHelpers";
-// Dynamic imports para componentes no críticos
 import ProductImageGallery from "@/components/products/ProductImageGallery";
-import { SizeGuide, SizeGuideData } from "@/components/products/SizeGuide";
+import {
+  ColorSelectorSection,
+  ImageGallerySkeleton,
+  ProductBenefitsRow,
+  ProductPriceDisplay,
+  QuantityStepper,
+  RelatedProductsSkeleton,
+  ReviewsSkeleton,
+  SizeSelectorSection,
+  StockBadge,
+} from "@/components/products/ProductDetailSections";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import {
-  ProductCardSkeleton,
-  ProductDetailSkeleton,
-  Skeleton,
-} from "@/components/ui/Skeleton";
-import { useToast } from "@/components/ui/Toast";
-import { useCart } from "@/context/CartContext";
-import { useWishlist } from "@/context/WishlistContext";
-import { useShippingSettings } from "@/hooks/useShippingSettings";
-import { useVacationSettings } from "@/hooks/useVacationSettings";
-import { PLACEHOLDER_IMAGE } from "@/lib/constants";
-import { logger } from "@/lib/logger";
-import { Product } from "@/types";
-import { getColorHex } from "@/utils/colors";
-import { formatPriceARS } from "@/utils/formatters";
+import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
+import { useProductDetail } from "@/hooks/useProductDetail";
 
 const ProductReviews = React.lazy(
   () => import("@/components/products/ProductReviews")
@@ -46,269 +30,38 @@ const RelatedProducts = React.lazy(
 
 interface ProductDetailClientProps {
   productId: string;
-  // Server components serialize Date to string; kept as Record to avoid complex
-  // type gymnastics. SWR re-validates immediately, so this is only an initial hint.
   initialProduct?: Record<string, unknown>;
 }
-
-// Loading components usando componentes reutilizables
-const ImageGallerySkeleton = () => (
-  <Skeleton className="w-full h-96" rounded="lg" />
-);
-
-const ReviewsSkeleton = () => (
-  <div className="space-y-4">
-    <Skeleton className="h-8 w-1/3" />
-    <div className="space-y-3">
-      {[...Array(3)].map((_, i) => (
-        <div key={`skeleton-review-${i}`} className="p-4 surface rounded-lg">
-          <Skeleton className="h-4 w-1/4 mb-2" />
-          <Skeleton className="h-3 w-full mb-1" />
-          <Skeleton className="h-3 w-3/4" />
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const RelatedProductsSkeleton = () => (
-  <div className="space-y-4">
-    <Skeleton className="h-8 w-1/3" />
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-      {[...Array(4)].map((_, i) => (
-        <ProductCardSkeleton key={`skeleton-related-${i}`} />
-      ))}
-    </div>
-  </div>
-);
 
 export default function ProductDetailClient({
   productId,
   initialProduct,
 }: ProductDetailClientProps) {
-  const router = useRouter();
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("");
-  const [quantity, setQuantity] = useState(1);
-  // displayedImages is now derived state
-
-  const { addToCart } = useCart();
-  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
-  const { show } = useToast();
-  const { shipping } = useShippingSettings();
-  const { isVacationMode } = useVacationSettings();
-
-  // SWR para fetch del producto
-  const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Error loading product: HTTP ${res.status}`);
-    }
-    const json = await res.json();
-    if (!json.success) {
-      throw new Error(json.error || "Error from server payload");
-    }
-    return json;
-  };
-  const { data, isLoading, error } = useSWR(
-    productId ? `/api/products/${productId}` : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000, // 1 minuto
-      fallbackData: initialProduct
-        ? { success: true, data: initialProduct }
-        : undefined,
-    }
-  );
-
-  const product: Product | null = data?.success ? data.data : null;
-
-  // --- DERIVED STATE (SAFE) ---
-  const productImages = React.useMemo(() => {
-    if (!product) return [];
-    return Array.isArray(product.images)
-      ? product.images
-      : typeof product.images === "string"
-        ? JSON.parse(product.images)
-        : [];
-  }, [product]);
-
-  const colorImagesMap = React.useMemo(() => {
-    if (!product?.colorImages) return {};
-    if (typeof product.colorImages === "string") {
-      try {
-        return JSON.parse(product.colorImages);
-      } catch (e) {
-        logger.error("Error parsing colorImages", { error: e });
-        return {};
-      }
-    }
-    return product.colorImages;
-  }, [product]);
-
-  const hasVariants = !!(product?.variants && product.variants.length > 0);
-
-  const availableColors = React.useMemo(() => {
-    if (!product) return [];
-    return hasVariants
-      ? Array.from(new Set(product.variants!.map((v) => v.color)))
-      : Array.isArray(product.colors)
-        ? product.colors
-        : [];
-  }, [product, hasVariants]);
-
-  const allSizes = React.useMemo(() => {
-    if (!product) return [];
-    return hasVariants
-      ? Array.from(new Set(product.variants!.map((v) => v.size)))
-      : Array.isArray(product.sizes)
-        ? product.sizes
-        : [];
-  }, [product, hasVariants]);
-
-  const currentVariant =
-    hasVariants && selectedColor && selectedSize && product
-      ? product.variants!.find(
-          (v) => v.color === selectedColor && v.size === selectedSize
-        )
-      : null;
-
-  const currentStock = product
-    ? hasVariants
-      ? currentVariant
-        ? currentVariant.stock
-        : selectedColor && selectedSize
-          ? 0 // Combinación inválida
-          : product.stock // Mostrar total si no ha seleccionado completo
-      : product.stock
-    : 0;
-
-  const isProductFavorite = product ? isInWishlist(product.id) : false;
-
-  // --- EFFECTS ---
-
-  // --- DERIVED STATE (SAFE) ---
-
-  // 1. Sync Images - Derived State to prevent race conditions
-  const displayedImages = React.useMemo(() => {
-    if (selectedColor && colorImagesMap[selectedColor]?.length > 0) {
-      return colorImagesMap[selectedColor];
-    }
-    return productImages;
-  }, [selectedColor, colorImagesMap, productImages]);
-
-  /* 
-     Removed useEffect for image syncing to avoid race conditions. 
-     Now displayedImages is calculated during render.
-  */
-
-  // 2. Validate Selection
-  React.useEffect(() => {
-    if (hasVariants && selectedColor && selectedSize && product) {
-      const variant = product.variants?.find(
-        (v) => v.color === selectedColor && v.size === selectedSize
-      );
-      if (!variant || variant.stock <= 0) {
-        setSelectedSize(""); // Deseleccionar si no hay stock
-      }
-    }
-  }, [selectedColor, hasVariants, selectedSize, product]);
-
-  // 3. Clamp Quantity to Stock
-  React.useEffect(() => {
-    if (quantity > currentStock) {
-      setQuantity(Math.max(1, currentStock));
-    }
-  }, [currentStock, quantity]);
-
-  // --- HANDLERS ---
-  const handleAddToCart = () => {
-    if (!product) return;
-
-    // Validar talle solo si el producto tiene talles disponibles (usa el memo que unifica product.sizes y variants)
-    const availableSizesList = allSizes;
-    if (availableSizesList.length > 0 && selectedSize === "") {
-      show({
-        type: "error",
-        title: "Talle",
-        message: "Por favor selecciona un talle",
-      });
-      return;
-    }
-
-    // Validar color si hay colores disponibles (usa el memo que unifica product.colors y variants)
-    if (availableColors.length > 0 && selectedColor === "") {
-      show({
-        type: "error",
-        title: "Color",
-        message: "Por favor selecciona un color",
-      });
-      return;
-    }
-
-    // Usar el color seleccionado o "Sin color" si no hay colores disponibles
-    const colorToUse = availableColors.length > 0 ? selectedColor : "Sin color";
-    // Usar el talle seleccionado o "Único" si no hay talles disponibles
-    const sizeToUse = allSizes.length > 0 ? selectedSize : "Único";
-
-    addToCart(product, quantity, sizeToUse, colorToUse);
-    show({
-      type: "success",
-      title: "Carrito",
-      message: "Producto agregado al carrito",
-    });
-  };
-
-  const handleToggleFavorite = () => {
-    if (!product) return;
-
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
-      show({
-        type: "success",
-        title: "Favoritos",
-        message: "Eliminado de favoritos",
-      });
-    } else {
-      addToWishlist({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[0] || PLACEHOLDER_IMAGE,
-      });
-      show({
-        type: "success",
-        title: "Favoritos",
-        message: "Agregado a favoritos",
-      });
-    }
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product?.name,
-          text: `Mira este producto: ${product?.name}`,
-          url: window.location.href,
-        });
-      } catch (err) {
-        logger.error("Error sharing:", { error: err });
-      }
-    } else {
-      await navigator.clipboard.writeText(window.location.href);
-      show({
-        type: "success",
-        title: "Compartir",
-        message: "Enlace copiado al portapapeles",
-      });
-    }
-  };
-
-  const goBack = () => {
-    router.back();
-  };
+  const {
+    product,
+    isLoading,
+    error,
+    selectedSize,
+    setSelectedSize,
+    selectedColor,
+    setSelectedColor,
+    quantity,
+    setQuantity,
+    colorImagesMap,
+    hasVariants,
+    availableColors,
+    allSizes,
+    currentStock,
+    isProductFavorite,
+    displayedImages,
+    productImages,
+    shipping,
+    isVacationMode,
+    handleAddToCart,
+    handleToggleFavorite,
+    handleShare,
+    goBack,
+  } = useProductDetail(productId, initialProduct);
 
   // --- CONDITIONAL RETURNS ---
   if (isLoading) {
@@ -414,30 +167,11 @@ export default function ProductDetailClient({
             <h1 className="text-3xl font-bold text-primary">{product.name}</h1>
 
             {/* Precio */}
-            <div className="flex items-center space-x-4">
-              {product.onSale && product.salePrice ? (
-                <>
-                  <span className="text-3xl font-bold text-success">
-                    {formatPriceARS(product.salePrice)}
-                  </span>
-                  <span className="text-lg muted line-through">
-                    {formatPriceARS(product.price)}
-                  </span>
-                  <span className="text-sm bg-error text-white px-2 py-1 rounded">
-                    -
-                    {Math.round(
-                      ((product.price - product.salePrice) / product.price) *
-                        100
-                    )}
-                    %
-                  </span>
-                </>
-              ) : (
-                <span className="text-3xl font-bold text-primary">
-                  {formatPriceARS(product.price)}
-                </span>
-              )}
-            </div>
+            <ProductPriceDisplay
+              price={product.price}
+              salePrice={product.salePrice}
+              onSale={product.onSale}
+            />
 
             {/* Free Shipping Badge Prominente */}
             {shipping.freeShipping && (
@@ -452,294 +186,44 @@ export default function ProductDetailClient({
               </div>
             )}
 
-            {/* Selector de Colores (Thumbnail Style) */}
-            {availableColors.length > 0 && (
-              <div>
-                <h2 className="text-lg font-semibold text-primary mt-2 mb-3">
-                  Color:{" "}
-                  <span className="font-normal text-base">
-                    {selectedColor || "Elegí uno"}
-                  </span>
-                </h2>
-                <div className="flex items-center gap-3 flex-wrap">
-                  {availableColors.map((color: string, idx: number) => {
-                    const isSelected = selectedColor === color;
-                    // Obtenemos TODAS las imágenes para este color
-                    const colorImages = colorImagesMap?.[color] || [];
-                    const colorHex = getColorHex(color);
+            {/* Selector de Colores */}
+            <ColorSelectorSection
+              availableColors={availableColors}
+              selectedColor={selectedColor}
+              colorImagesMap={colorImagesMap}
+              onSelectColor={setSelectedColor}
+            />
 
-                    return (
-                      <ColorSwatch
-                        key={`color-${color}-${idx}`}
-                        color={color}
-                        images={colorImages}
-                        isSelected={isSelected}
-                        onClick={() => setSelectedColor(color)}
-                        colorHex={colorHex}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Selector de Talles (Smart Filtering) */}
-            {allSizes.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-lg font-semibold text-primary">
-                    Talle:{" "}
-                    <span className="font-normal text-base">
-                      {selectedSize || "Elegí uno"}
-                    </span>
-                  </h2>
-                  <SizeGuide data={product.sizeGuide as SizeGuideData} />
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {allSizes.map((size) => {
-                    let isDisabled = false;
-                    let isOOS = false;
-
-                    if (hasVariants) {
-                      if (selectedColor) {
-                        const v = product.variants?.find(
-                          (v) => v.color === selectedColor && v.size === size
-                        );
-                        if (!v || v.stock <= 0) {
-                          isDisabled = true;
-                          isOOS = true;
-                        }
-                      } else {
-                        const totalStockForSize =
-                          product.variants
-                            ?.filter((v) => v.size === size)
-                            .reduce((acc, v) => acc + v.stock, 0) || 0;
-                        if (totalStockForSize <= 0) isOOS = true;
-                      }
-                    }
-
-                    return (
-                      <Button
-                        key={size}
-                        onClick={() => !isDisabled && setSelectedSize(size)}
-                        disabled={isDisabled}
-                        variant="ghost"
-                        className={`
-                          min-w-12 px-3 py-2 border rounded-lg text-sm font-medium transition-all h-auto
-                          ${
-                            selectedSize === size
-                              ? "border-primary bg-primary text-white shadow-md hover:bg-primary hover:text-white"
-                              : isDisabled
-                                ? "border-muted bg-muted/10 text-muted-foreground cursor-not-allowed opacity-50 box-decoration-slice"
-                                : "border-muted hover:border-primary text-primary bg-surface hover:bg-muted/10"
-                          }
-                          ${isOOS && !isDisabled ? "border-dashed" : ""} 
-                        `}
-                      >
-                        {size}
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                {/* Tabla de talles - referencia visual */}
-                {product.sizeGuide && product.sizeGuide.length > 0 ? (
-                  <div className="mt-3 overflow-x-auto rounded-lg border border-muted/50">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-muted/20 text-left">
-                          <th className="px-3 py-2 font-semibold text-muted-foreground">
-                            Talle
-                          </th>
-                          <th className="px-3 py-2 font-semibold text-muted-foreground">
-                            Medidas
-                          </th>
-                          {product.sizeGuide.some((s) => s.ageRange) && (
-                            <th className="px-3 py-2 font-semibold text-muted-foreground">
-                              Edad ref.
-                            </th>
-                          )}
-                          {hasVariants && (
-                            <th className="px-3 py-2 font-semibold text-muted-foreground text-center">
-                              Stock
-                            </th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {product.sizeGuide.map((entry, idx) => {
-                          const variantStock = hasVariants
-                            ? (product.variants
-                                ?.filter(
-                                  (v) =>
-                                    v.size === entry.size &&
-                                    (!selectedColor ||
-                                      v.color === selectedColor)
-                                )
-                                .reduce((sum, v) => sum + v.stock, 0) ?? 0)
-                            : null;
-                          const isSelected = selectedSize === entry.size;
-                          const isUnavailable =
-                            variantStock !== null && variantStock === 0;
-                          return (
-                            <tr
-                              key={idx}
-                              onClick={() => {
-                                if (!isUnavailable) setSelectedSize(entry.size);
-                              }}
-                              className={`border-t border-muted/30 transition-colors ${
-                                isUnavailable
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : "cursor-pointer"
-                              } ${
-                                isSelected
-                                  ? "bg-primary/10"
-                                  : "hover:bg-muted/10"
-                              }`}
-                            >
-                              <td className="px-3 py-2 font-semibold">
-                                {entry.size}
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground">
-                                {entry.measurements}
-                              </td>
-                              {product.sizeGuide!.some((s) => s.ageRange) && (
-                                <td className="px-3 py-2 text-muted-foreground">
-                                  {entry.ageRange || "—"}
-                                </td>
-                              )}
-                              {variantStock !== null && (
-                                <td className="px-3 py-2 text-center">
-                                  {variantStock > 0 ? (
-                                    <span className="text-xs font-medium text-emerald-600">
-                                      ✓ Disponible
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs font-medium text-red-500">
-                                      Sin stock
-                                    </span>
-                                  )}
-                                </td>
-                              )}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : allSizes.length > 1 && hasVariants ? (
-                  <div className="mt-3 overflow-x-auto rounded-lg border border-muted/50">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-muted/20 text-left">
-                          <th className="px-3 py-2 font-semibold text-muted-foreground">
-                            Talle
-                          </th>
-                          <th className="px-3 py-2 font-semibold text-muted-foreground text-center">
-                            Disponibilidad
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allSizes.map((size, idx) => {
-                          const totalStock =
-                            product.variants
-                              ?.filter(
-                                (v) =>
-                                  v.size === size &&
-                                  (!selectedColor || v.color === selectedColor)
-                              )
-                              .reduce((sum, v) => sum + v.stock, 0) ?? 0;
-                          return (
-                            <tr
-                              key={idx}
-                              className="border-t border-muted/30 hover:bg-muted/10 transition-colors"
-                            >
-                              <td className="px-3 py-2 font-semibold">
-                                {size}
-                              </td>
-                              <td className="px-3 py-2 text-center">
-                                {totalStock > 0 ? (
-                                  <span className="text-xs font-medium text-emerald-600">
-                                    ✓ Disponible
-                                  </span>
-                                ) : (
-                                  <span className="text-xs font-medium text-red-500">
-                                    Agotado
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : null}
-              </div>
-            )}
+            {/* Selector de Talles */}
+            <SizeSelectorSection
+              allSizes={allSizes}
+              hasVariants={hasVariants}
+              variants={product.variants}
+              selectedColor={selectedColor}
+              selectedSize={selectedSize}
+              sizeGuide={
+                product.sizeGuide as
+                  | { size: string; measurements: string; ageRange?: string }[]
+                  | null
+              }
+              onSelectSize={setSelectedSize}
+            />
 
             {/* Cantidad */}
             <div>
               <label className="block text-sm font-medium text-primary mb-2">
                 Cantidad
               </label>
-              <div className="flex items-center space-x-2">
-                <Button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                  variant="outline"
-                  className={`w-8 h-8 p-0 border border-muted rounded flex items-center justify-center ${quantity <= 1 ? "opacity-50 cursor-not-allowed" : "hover:surface-secondary"}`}
-                >
-                  -
-                </Button>
-                <input
-                  type="number"
-                  min="1"
-                  max={currentStock}
-                  value={quantity}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    if (isNaN(val)) {
-                      setQuantity(1);
-                    } else if (val > currentStock) {
-                      setQuantity(currentStock);
-                    } else if (val < 1) {
-                      setQuantity(1);
-                    } else {
-                      setQuantity(val);
-                    }
-                  }}
-                  className="w-16 h-8 text-center border border-muted rounded bg-surface text-primary"
-                />
-                <Button
-                  onClick={() =>
-                    setQuantity(Math.min(currentStock, quantity + 1))
-                  }
-                  disabled={quantity >= currentStock}
-                  variant="outline"
-                  className={`w-8 h-8 p-0 border border-muted rounded flex items-center justify-center ${
-                    quantity >= currentStock
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:surface-secondary"
-                  }`}
-                >
-                  +
-                </Button>
-              </div>
+              <QuantityStepper
+                quantity={quantity}
+                maxStock={currentStock}
+                onChange={setQuantity}
+              />
             </div>
 
             {/* Stock */}
             <div className="text-sm">
-              {currentStock <= 0 ? (
-                <span className="text-error font-medium">✗ Agotado</span>
-              ) : currentStock <= 5 ? (
-                <span className="text-warning font-semibold animate-pulse">
-                  ⚡ ¡Últimas {currentStock} unidades!
-                </span>
-              ) : (
-                <span className="text-success font-medium">✓ Disponible</span>
-              )}
+              <StockBadge stock={currentStock} />
             </div>
 
             {/* Botones de acción */}
@@ -792,28 +276,7 @@ export default function ProductDetailClient({
           </div>
 
           {/* Beneficios */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-muted">
-            <div className="flex items-center space-x-2">
-              <Truck className="w-5 h-5 text-primary" />
-              <span className="text-sm">
-                {shipping.freeShipping ? (
-                  <span className="text-success font-semibold">
-                    {shipping.freeShippingLabel || "Envío Gratis"}
-                  </span>
-                ) : (
-                  shipping.estimatedDelivery || "Envío a todo el país"
-                )}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-5 h-5 text-primary" />
-              <span className="text-sm">Garantía</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <CreditCard className="w-5 h-5 text-primary" />
-              <span className="text-sm">Múltiples medios de pago</span>
-            </div>
-          </div>
+          <ProductBenefitsRow shipping={shipping} />
         </div>
       </div>
 
