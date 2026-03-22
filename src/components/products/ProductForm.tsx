@@ -1,6 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
   DollarSign,
@@ -16,10 +15,6 @@ import {
   Save,
   Tag,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -31,12 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { useToast } from "@/components/ui/Toast";
-import { usePriceInput } from "@/hooks/usePriceInput";
-import { logger } from "@/lib/logger";
-import { Product, ProductVariant } from "@/types";
+import { useProductForm } from "@/hooks/useProductForm";
 import { formatPriceARS } from "@/utils/formatters";
-import { validateProductData } from "@/utils/validateProductData";
 
 import ImageUploadZone from "./ImageUploadZone";
 import {
@@ -45,224 +36,14 @@ import {
   HelpTooltip,
   SizeManager,
 } from "./ProductFormComponents";
+import {
+  numericKeyHandler,
+  numericPasteHandler,
+  type ProductFormProps,
+} from "./productFormSchema";
 import ProductPreview from "./ProductPreview";
 import SizeGuideEditor, { SizeGuideData } from "./SizeGuideEditor";
 import VariantManager from "./VariantManager";
-
-// ==============================================================================
-// TYPES & SCHEMA
-// ==============================================================================
-interface Category {
-  id: string;
-  name: string;
-  description?: string | null;
-}
-
-const productSchema = z.object({
-  name: z
-    .string()
-    .min(3, "El nombre debe tener al menos 3 caracteres")
-    .max(100, "El nombre no puede exceder 100 caracteres"),
-  description: z
-    .string()
-    .max(1000, "La descripción no puede exceder 1000 caracteres")
-    .optional(),
-  price: z.preprocess(
-    (val) => (val === "" ? undefined : Number(val)),
-    z
-      .number({ invalid_type_error: "Ingresa un precio válido" })
-      .min(0.01, "El precio debe ser mayor a 0")
-  ),
-  discountPercentage: z.preprocess(
-    (val) => (val === "" ? null : Number(val)),
-    z
-      .number({ invalid_type_error: "Ingresa un porcentaje válido" })
-      .min(0, "El descuento no puede ser negativo")
-      .max(100, "El descuento no puede ser mayor a 100%")
-      .optional()
-      .nullable()
-  ),
-  stock: z.preprocess(
-    (val) => (val === "" ? 0 : Number(val)),
-    z
-      .number({ invalid_type_error: "Ingresa un stock válido" })
-      .int("El stock debe ser un número entero")
-      .min(0, "El stock no puede ser negativo")
-  ),
-  categoryId: z.string().nonempty("Debes seleccionar una categoría"),
-  onSale: z.coerce.boolean().optional(),
-  weight: z.preprocess(
-    (val) => (val === "" ? null : Number(val)),
-    z
-      .number({ invalid_type_error: "Ingresa un peso válido" })
-      .int()
-      .min(1)
-      .max(30000)
-      .optional()
-      .nullable()
-  ),
-  height: z.preprocess(
-    (val) => (val === "" ? null : Number(val)),
-    z
-      .number({ invalid_type_error: "Ingresa una altura válida" })
-      .int()
-      .min(1)
-      .max(150)
-      .optional()
-      .nullable()
-  ),
-  width: z.preprocess(
-    (val) => (val === "" ? null : Number(val)),
-    z
-      .number({ invalid_type_error: "Ingresa un ancho válido" })
-      .int()
-      .min(1)
-      .max(150)
-      .optional()
-      .nullable()
-  ),
-  length: z.preprocess(
-    (val) => (val === "" ? null : Number(val)),
-    z
-      .number({ invalid_type_error: "Ingresa un largo válido" })
-      .int()
-      .min(1)
-      .max(150)
-      .optional()
-      .nullable()
-  ),
-  sizesInput: z.string().optional(),
-  colorsInput: z.string().optional(),
-  featuresInput: z.string().optional(),
-  sizeGuide: z.record(z.string(), z.unknown()).optional(),
-});
-
-type ProductFormValues = z.infer<typeof productSchema>;
-
-interface ProductFormProps {
-  initialData?: Product | null;
-  categories: Category[];
-}
-
-// ==============================================================================
-// NUMERIC INPUT HANDLERS (para reutilizar lógica de validación de inputs)
-// ==============================================================================
-const numericKeyHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  const allowed = [
-    "Backspace",
-    "Tab",
-    "ArrowLeft",
-    "ArrowRight",
-    "Delete",
-    "Home",
-    "End",
-  ];
-  if (allowed.includes(e.key)) return;
-  if (!/^[0-9]$/.test(e.key)) e.preventDefault();
-};
-
-const numericPasteHandler = (e: React.ClipboardEvent<HTMLInputElement>) => {
-  const paste = e.clipboardData?.getData("text") || "";
-  if (!/^\d+$/.test(paste)) e.preventDefault();
-};
-
-// ==============================================================================
-// FORM HELPERS (extracted to keep component methods under complexity limits)
-// ==============================================================================
-
-function parseProductImages(images: Product["images"]): string[] {
-  if (Array.isArray(images)) return images as string[];
-  if (typeof images === "string") return JSON.parse(images) as string[];
-  return [];
-}
-
-function calcDiscountPercentage(
-  price: number,
-  salePrice: number | null | undefined
-): number | null {
-  return salePrice && price
-    ? Math.round(((price - salePrice) / price) * 100)
-    : null;
-}
-
-function buildInitialResetValues(
-  d: Product,
-  discountPercentage: number | null
-): Partial<ProductFormValues> {
-  return {
-    name: d.name,
-    description: d.description || "",
-    price: d.price,
-    discountPercentage,
-    stock: d.stock,
-    categoryId: d.categoryId,
-    onSale: d.onSale || false,
-    weight: d.weight || null,
-    height: d.height || null,
-    width: d.width || null,
-    length: d.length || null,
-    sizeGuide: d.sizeGuide as unknown as Record<string, unknown>,
-  };
-}
-
-function buildImageOptions(
-  productImages: string[],
-  colorImages: Record<string, string[]>
-) {
-  return {
-    images:
-      productImages.length > 0
-        ? productImages
-        : Object.values(colorImages).flat(),
-    colorImages: Object.keys(colorImages).length > 0 ? colorImages : undefined,
-  };
-}
-
-function buildOptionalPayloadFields(
-  sizes: string[],
-  colors: string[],
-  features: string[],
-  variants: ProductVariant[]
-) {
-  return {
-    sizes: sizes.length > 0 ? sizes : undefined,
-    colors: colors.length > 0 ? colors : undefined,
-    features: features.length > 0 ? features : undefined,
-    variants: variants.length > 0 ? variants : undefined,
-  };
-}
-
-function buildProductData(
-  data: ProductFormValues,
-  productImages: string[],
-  colorImages: Record<string, string[]>,
-  totalVariantStock: number,
-  sizes: string[],
-  colors: string[],
-  features: string[],
-  variants: ProductVariant[]
-) {
-  const salePrice =
-    data.discountPercentage && data.discountPercentage > 0
-      ? data.price * (1 - data.discountPercentage / 100)
-      : null;
-  return {
-    name: data.name.trim(),
-    description: data.description?.trim() ?? null,
-    price: Number(data.price),
-    salePrice: salePrice ? Number(salePrice) : null,
-    stock: totalVariantStock,
-    categoryId: data.categoryId.trim(),
-    ...buildImageOptions(productImages, colorImages),
-    onSale: (data.discountPercentage ?? 0) > 0,
-    ...buildOptionalPayloadFields(sizes, colors, features, variants),
-    weight: data.weight ?? null,
-    height: data.height ?? null,
-    width: data.width ?? null,
-    length: data.length ?? null,
-    sizeGuide: data.sizeGuide,
-  };
-}
 
 // ==============================================================================
 // MAIN COMPONENT
@@ -271,196 +52,15 @@ export default function ProductForm({
   initialData,
   categories,
 }: ProductFormProps) {
-  const router = useRouter();
-  const { show } = useToast();
-
-  // Mount logger to verifying hydration
-  useEffect(() => {
-    logger.info("ProductForm mounted and interactive");
-  }, []);
-  const [loading, setLoading] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
-    initialData?.categoryId || ""
-  );
-  const [productImages, setProductImages] = useState<string[]>([]);
-  const [colorImages, setColorImages] = useState<Record<string, string[]>>({});
-  const [colors, setColors] = useState<string[]>([]);
-  const [sizes, setSizes] = useState<string[]>([]);
-  const [features, setFeatures] = useState<string[]>([]);
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
-
-  const title = initialData ? "Editar Producto" : "Crear Nuevo Producto";
-  const toastMessage = initialData
-    ? "Producto actualizado exitosamente"
-    : "Producto creado exitosamente";
-  const action = initialData ? "Guardar Cambios" : "Crear Producto";
-
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    reset,
-  } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      stock: 0,
-      categoryId: "",
-      discountPercentage: null,
-    },
-  });
-
-  const watchPrice = watch("price");
-  const watchDiscountPercentage = watch("discountPercentage");
-
-  // Stock calculado automáticamente desde variantes
-  const totalVariantStock = useMemo(
-    () => variants.reduce((acc, v) => acc + (v.stock || 0), 0),
-    [variants]
-  );
-
-  // onSale es automático: si hay descuento > 0, está en oferta
-  const isOnSale = (watchDiscountPercentage ?? 0) > 0;
-
-  // Price input con formato ARS
-  const {
-    priceInput,
-    handlePriceFocus,
-    handlePriceChange,
-    handlePriceKeyDown,
-    handlePricePaste,
-    handlePriceBlur,
-  } = usePriceInput(watchPrice, setValue, "price");
-
-  // Initialize form with initial data
-  useEffect(() => {
-    if (initialData) {
-      setProductImages(parseProductImages(initialData.images));
-      // Cargar imágenes por color si existen
-      setColorImages(initialData.colorImages || {});
-      setColors(initialData.colors || []);
-      setSizes(initialData.sizes || []);
-      setFeatures(initialData.features || []);
-      // Ensure variants are mapped correctly if they come from DB
-      setVariants(initialData.variants || []);
-      setSelectedCategoryId(initialData.categoryId ?? "");
-      const discountPercentage = calcDiscountPercentage(
-        initialData.price,
-        initialData.salePrice
-      );
-      reset(buildInitialResetValues(initialData, discountPercentage));
-    }
-  }, [initialData, reset]);
-
-  // Auto-update total stock when variants change (optional convenience)
-  useEffect(() => {
-    const totalVariantStock = variants.reduce(
-      (acc, v) => acc + (v.stock || 0),
-      0
-    );
-    // Auto-update main stock field when variants change
-    setValue("stock", totalVariantStock, { shouldValidate: true });
-  }, [variants, setValue]);
-
-  const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategoryId(categoryId);
-    setValue("categoryId", categoryId, { shouldValidate: true });
-  };
-
-  const calculatedSalePrice =
-    watchPrice && watchDiscountPercentage && watchDiscountPercentage > 0
-      ? watchPrice * (1 - watchDiscountPercentage / 100)
-      : null;
-
-  const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
-    try {
-      setLoading(true);
-
-      const validationError = validateProductData(
-        data,
-        productImages,
-        colorImages
-      );
-      if (validationError) {
-        show({ type: "error", message: validationError });
-        setLoading(false);
-        return;
-      }
-
-      const productData = buildProductData(
-        data,
-        productImages,
-        colorImages,
-        totalVariantStock,
-        sizes,
-        colors,
-        features,
-        variants
-      );
-
-      logger.info("Enviando datos del producto:", {
-        productData,
-        method: initialData ? "PUT" : "POST",
-        url: initialData ? `/api/products/${initialData.id}` : "/api/products",
-      });
-
-      const url = initialData
-        ? `/api/products/${initialData.id}`
-        : "/api/products";
-      const method = initialData ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Error response del servidor:", {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText,
-        });
-
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { error: { message: errorText } };
-        }
-
-        const errorMsg =
-          errorData.error?.message ||
-          errorData.message ||
-          `Error ${response.status}`;
-        show({ type: "error", message: errorMsg });
-        throw new Error(errorMsg);
-      }
-
-      router.push("/admin/productos");
-      router.refresh();
-      show({ type: "success", message: toastMessage });
-    } catch (error) {
-      logger.error("Error al guardar el producto:", { error });
-      show({
-        type: "error",
-        message: "Error al procesar la solicitud. Intenta nuevamente.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSizeGuideChange = useCallback(
-    (data: SizeGuideData | null) => {
-      setValue("sizeGuide", data as unknown as Record<string, unknown>, {
-        shouldDirty: true,
-      });
-    },
-    [setValue]
-  );
+    register, handleSubmit, errors, watch, loading, title, action,
+    selectedCategoryId, productImages, setProductImages, colorImages, setColorImages,
+    colors, setColors, sizes, setSizes, features, setFeatures, variants, setVariants,
+    totalVariantStock, isOnSale, watchPrice, watchDiscountPercentage, calculatedSalePrice,
+    priceInput, handlePriceFocus, handlePriceChange, handlePriceKeyDown, handlePricePaste,
+    handlePriceBlur, handleCategoryChange, handleSizeGuideChange, handleCancel,
+    handleFormError, onSubmit,
+  } = useProductForm({ initialData, categories });
 
   return (
     <div className="min-h-screen surface py-8 px-4 relative">
@@ -481,33 +81,7 @@ export default function ProductForm({
         </div>
 
         <form
-          onSubmit={handleSubmit(onSubmit, (errors) => {
-            // Sanitize errors for logging (avoid circular refs from DOM nodes)
-            const sanitizedErrors = Object.keys(errors).reduce(
-              (acc, key) => ({
-                ...acc,
-                [key]: errors[key as keyof typeof errors]?.message,
-              }),
-              {}
-            );
-            logger.warn("Form validation errors:", sanitizedErrors);
-
-            show({
-              type: "error",
-              message:
-                "Hay errores en el formulario. Por favor revisa los campos en rojo.",
-            });
-
-            // Slight delay to allow UI to expand with error messages before scrolling
-            setTimeout(() => {
-              const firstError = Object.keys(errors)[0];
-              const element = document.getElementById(firstError);
-              if (element) {
-                element.scrollIntoView({ behavior: "smooth", block: "center" });
-                element.focus();
-              }
-            }, 100);
-          })}
+          onSubmit={handleSubmit(onSubmit, handleFormError)}
           className="space-y-4 sm:space-y-6 lg:space-y-8"
         >
           {/* Información Básica */}
@@ -853,7 +427,7 @@ export default function ProductForm({
                     <Input
                       id={id}
                       type="number"
-                      {...register(id as keyof ProductFormValues)}
+                      {...register(id as "weight" | "height" | "width" | "length")}
                       placeholder={placeholder}
                       className={
                         errors[id as keyof typeof errors] ? "border-error" : ""
@@ -915,7 +489,7 @@ export default function ProductForm({
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.back()}
+              onClick={handleCancel}
               disabled={loading}
               className="bg-surface/90 backdrop-blur-sm shadow-md hover:bg-surface-secondary flex-1 sm:flex-none"
             >
