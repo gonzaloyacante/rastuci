@@ -5,334 +5,28 @@ import React, { useCallback, useEffect, useState } from "react";
 import { PageHeaderWithActions } from "@/components/admin";
 import LazyAdvancedCharts from "@/components/admin/dashboard/LazyAdvancedCharts";
 import { MetricsSkeleton } from "@/components/admin/skeletons";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/utils";
 
-// ============================================================================
-// Types
-// ============================================================================
-
-interface MetricData {
-  label: string;
-  value: number;
-  previousValue: number;
-  change: number;
-  changePercent: number;
-  trend: "up" | "down" | "stable";
-}
-
-interface MetricsDashboard {
-  overview: {
-    totalSales: MetricData;
-    totalOrders: MetricData;
-    averageOrderValue: MetricData;
-    customerCount: MetricData;
-    conversionRate: MetricData;
-    returnRate: MetricData;
-  };
-  topProducts: Array<{
-    id: string;
-    name: string;
-    sales: number;
-    orders: number;
-    revenue: number;
-  }>;
-  shippingMetrics: {
-    averageDeliveryTime: MetricData;
-    onTimeDeliveryRate: MetricData;
-    shippingCost: MetricData;
-  };
-  customerMetrics: {
-    newCustomers: MetricData;
-    returningCustomers: MetricData;
-    customerLifetimeValue: MetricData;
-  };
-  productMetrics: {
-    totalProducts: MetricData;
-    lowStockProducts: number;
-    outOfStockProducts: number;
-    averageRating: MetricData;
-  };
-  recentActivity: Array<{
-    id: string;
-    type: "order" | "customer" | "product" | "review";
-    description: string;
-    timestamp: string;
-    value?: number;
-  }>;
-  ordersPerDay?: Array<{ day: string; orders: number }>;
-  topCustomers?: Array<{ name: string; totalSpent: number }>;
-  orderStatus?: Array<{ status: string; count: number }>;
-  hourlyOrders?: Array<{ hour: string; orders: number }>;
-  productPerformance?: Array<{
-    product: string;
-    sales: number;
-    revenue: number;
-    rating: number;
-  }>;
-}
-
-type Period = "week" | "month" | "quarter" | "year";
-
-const periodLabels: Record<Period, string> = {
-  week: "Semana",
-  month: "Mes",
-  quarter: "Trimestre",
-  year: "Año",
-};
+import {
+  MetricCard,
+  MiniStat,
+  RecentActivity,
+  SectionCard,
+  TopProducts,
+} from "./MetricsComponents";
+import { MetricsDashboard, Period, periodLabels } from "./metricsTypes";
 
 // ============================================================================
-// Format Helpers
+// Data Fetching Helper
 // ============================================================================
 
-type FormatType = "currency" | "number" | "percentage" | "days";
-
-function formatValue(value: number, format: FormatType): string {
-  switch (format) {
-    case "currency":
-      return formatCurrency(value);
-    case "percentage":
-      return `${value}%`;
-    case "days":
-      return `${value} días`;
-    default:
-      return value.toLocaleString("es-AR");
-  }
-}
-
-// ============================================================================
-// Metric Card Component
-// ============================================================================
-
-interface MetricCardProps {
-  metric: MetricData;
-  format?: FormatType;
-}
-
-function MetricCard({ metric, format = "number" }: MetricCardProps) {
-  const trendIcon =
-    metric.trend === "up" ? "↑" : metric.trend === "down" ? "↓" : "→";
-  const isPositiveTrend =
-    metric.label === "Tasa de Devolución"
-      ? metric.trend === "down"
-      : metric.trend === "up";
-  const trendColor = isPositiveTrend
-    ? "text-success"
-    : metric.trend === "stable"
-      ? "text-content-secondary"
-      : "text-error";
-  const bgColor = isPositiveTrend
-    ? "badge-success"
-    : metric.trend === "stable"
-      ? "badge-default"
-      : "badge-error";
-
-  return (
-    <Card className="p-3 sm:p-4">
-      <div className="space-y-2">
-        <h3 className="text-xs sm:text-sm font-medium text-content-secondary">
-          {metric.label}
-        </h3>
-        <div className="flex items-end justify-between gap-2">
-          <span className="text-lg sm:text-xl lg:text-2xl font-bold">
-            {formatValue(metric.value, format)}
-          </span>
-          <Badge className={bgColor}>
-            <span className={trendColor}>{trendIcon}</span>
-            <span className="ml-1 text-xs">
-              {Math.abs(metric.changePercent).toFixed(1)}%
-            </span>
-          </Badge>
-        </div>
-        <p className="text-xs text-content-tertiary">
-          {metric.change >= 0 ? "+" : "-"}
-          {formatValue(Math.abs(metric.change), format)} vs anterior
-        </p>
-      </div>
-    </Card>
-  );
-}
-
-// ============================================================================
-// Mini Stat Component
-// ============================================================================
-
-interface MiniStatProps {
-  label: string;
-  value: string | number;
-  color?: "default" | "success" | "warning" | "error";
-}
-
-function MiniStat({ label, value, color = "default" }: MiniStatProps) {
-  const colorClass = {
-    default: "",
-    success: "text-success",
-    warning: "text-warning",
-    error: "text-error",
-  };
-
-  return (
-    <div className="p-2 sm:p-3 surface-secondary rounded">
-      <p className="text-xs sm:text-sm text-content-secondary truncate">
-        {label}
-      </p>
-      <p
-        className={`text-base sm:text-lg lg:text-xl font-bold ${colorClass[color]}`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-// ============================================================================
-// Section Card Component
-// ============================================================================
-
-interface SectionCardProps {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
-}
-
-function SectionCard({ title, icon, children }: SectionCardProps) {
-  return (
-    <Card className="p-4">
-      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <span>{icon}</span> {title}
-      </h3>
-      <div className="space-y-4">{children}</div>
-    </Card>
-  );
-}
-
-// ============================================================================
-// Top Products Component
-// ============================================================================
-
-interface TopProductsProps {
-  products: MetricsDashboard["topProducts"];
-}
-
-function TopProducts({ products }: TopProductsProps) {
-  if (products.length === 0) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-4">Top Productos Vendidos</h3>
-        <div className="text-center py-8 text-content-secondary">
-          <p>No hay ventas en este período</p>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="p-3 sm:p-4">
-      <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-        Top Productos
-      </h3>
-      <div className="space-y-2 sm:space-y-3">
-        {products.map((product, index) => (
-          <div
-            key={product.id}
-            className="flex items-center justify-between p-2 sm:p-3 surface-secondary rounded gap-2"
-          >
-            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-primary/10 text-primary rounded-full text-xs sm:text-sm font-bold shrink-0">
-                {index + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm sm:text-base truncate">
-                  {product.name}
-                </h4>
-                <p className="text-xs sm:text-sm text-content-secondary truncate">
-                  {product.sales} unids • {product.orders} ord.
-                </p>
-              </div>
-            </div>
-            <span className="font-semibold text-success text-xs sm:text-sm whitespace-nowrap">
-              ${product.revenue.toLocaleString("es-AR")}
-            </span>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-// ============================================================================
-// Recent Activity Component
-// ============================================================================
-
-interface RecentActivityProps {
-  activities: MetricsDashboard["recentActivity"];
-}
-
-const activityIcons: Record<string, string> = {
-  order: "🛍️",
-  customer: "👤",
-  review: "⭐",
-  product: "📦",
-};
-
-function RecentActivity({ activities }: RecentActivityProps) {
-  if (activities.length === 0) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-4">Actividad Reciente</h3>
-        <div className="text-center py-8 text-content-secondary">
-          <p>No hay actividad reciente</p>
-        </div>
-      </Card>
-    );
-  }
-
-  const formatActivityValue = (
-    activity: MetricsDashboard["recentActivity"][0]
-  ) => {
-    if (activity.value === undefined) return null;
-    if (activity.type === "review") return `${activity.value}★`;
-    if (activity.type === "order")
-      return formatCurrency(activity.value as number);
-    return activity.value;
-  };
-
-  return (
-    <Card className="p-4">
-      <h3 className="text-lg font-semibold mb-4">Actividad Reciente</h3>
-      <div className="space-y-3">
-        {activities.map((activity) => (
-          <div
-            key={activity.id}
-            className="flex items-center gap-3 p-3 surface-secondary rounded"
-          >
-            <span className="text-primary text-xl">
-              {activityIcons[activity.type]}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm truncate">{activity.description}</p>
-              <p className="text-xs text-content-tertiary">
-                {new Date(activity.timestamp).toLocaleString("es-AR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
-            </div>
-            {formatActivityValue(activity) && (
-              <Badge className="badge-default shrink-0">
-                {formatActivityValue(activity)}
-              </Badge>
-            )}
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
+async function loadDashboard(period: Period): Promise<MetricsDashboard> {
+  const response = await fetch(`/api/admin/dashboard?period=${period}`);
+  if (!response.ok) throw new Error(`Error ${response.status}`);
+  const data = await response.json();
+  if (!data.success) throw new Error(data.error || "Error al cargar métricas");
+  return data.data as MetricsDashboard;
 }
 
 // ============================================================================
@@ -349,12 +43,7 @@ export default function MetricasPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/admin/dashboard?period=${period}`);
-      if (!response.ok) throw new Error(`Error ${response.status}`);
-      const data = await response.json();
-      if (!data.success)
-        throw new Error(data.error || "Error al cargar métricas");
-      setDashboard(data.data);
+      setDashboard(await loadDashboard(period));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
