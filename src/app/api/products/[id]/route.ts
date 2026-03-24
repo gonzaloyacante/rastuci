@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -27,6 +28,93 @@ interface RouteParams {
   }>;
 }
 
+// ---------------------------------------------------------------------------
+// Module-level helpers  — keep route handlers below 50 NLOC
+// ---------------------------------------------------------------------------
+
+function safelyParseImages(images: unknown): string[] {
+  if (Array.isArray(images)) return images as string[];
+  if (typeof images === "string" && images.length > 0) return [images];
+  return [];
+}
+
+type PrismaProductWithRelations = Prisma.productsGetPayload<{
+  include: {
+    categories: true;
+    product_variants: true;
+    product_color_images: true;
+    product_size_guides: true;
+  };
+}>;
+
+function mapPrismaProductToResponse(p: PrismaProductWithRelations): Product {
+  return {
+    ...p,
+    price: Number(p.price),
+    salePrice: p.salePrice ? Number(p.salePrice) : undefined,
+    description: p.description ?? undefined,
+    images: safelyParseImages(p.images),
+    colorImages: colorImageRowsToRecord(p.product_color_images),
+    sizeGuide: sizeGuideRowsToArray(p.product_size_guides),
+    categories: {
+      ...p.categories,
+      description: p.categories.description ?? undefined,
+    },
+    variants: (p.product_variants ?? []).map((v) => ({
+      ...v,
+      sku: v.sku ?? undefined,
+    })),
+  };
+}
+
+async function deleteRemovedCloudinaryImages(
+  productId: string,
+  newImages: string[]
+): Promise<void> {
+  const current = await prisma.products.findUnique({
+    where: { id: productId },
+    select: { images: true },
+  });
+  if (!current?.images) return;
+  const oldImages: string[] = safelyParseImages(current.images);
+  const toDelete = oldImages.filter((img) => !newImages.includes(img));
+  if (toDelete.length === 0) return;
+  logger.info(`Deleting ${toDelete.length} removed images from Cloudinary`);
+  void Promise.allSettled(
+    toDelete.map(async (url) => {
+      const publicId = extractPublicId(url);
+      if (publicId) await deleteImage(publicId);
+    })
+  ).then((results) => {
+    logger.info("Image deletion results", { results });
+  });
+}
+
+async function syncRelationalData(
+  productId: string,
+  colorImages: Record<string, string[]> | null | undefined,
+  sizeGuideData: unknown
+): Promise<void> {
+  const colorImageRows = colorImages
+    ? colorImageRecordToRows(colorImages)
+    : null;
+  const sizeGuideRows = sizeGuideToRows(sizeGuideData);
+  if (colorImageRows !== null) {
+    await prisma.product_color_images.deleteMany({ where: { productId } });
+    if (colorImageRows.length > 0) {
+      await prisma.product_color_images.createMany({
+        data: colorImageRows.map((row) => ({ ...row, productId })),
+      });
+    }
+  }
+  if (sizeGuideRows.length > 0) {
+    await prisma.product_size_guides.deleteMany({ where: { productId } });
+    await prisma.product_size_guides.createMany({
+      data: sizeGuideRows.map((row) => ({ ...row, productId })),
+    });
+  }
+}
+
 // GET /api/products/[id] - Obtener producto por ID
 export async function GET(
   request: NextRequest,
@@ -37,11 +125,9 @@ export async function GET(
       key: makeKey("GET", "/api/products/[id]"),
       ...getPreset("publicRead"),
     });
-    if (!rl.ok) {
-      return fail("RATE_LIMITED", "Too many requests", 429);
-    }
-    const { id } = await params;
+    if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429);
 
+    const { id } = await params;
     const product = await prisma.products.findUnique({
       where: { id },
       include: {
@@ -57,44 +143,16 @@ export async function GET(
       },
     });
 
-    if (!product) {
-      return fail("NOT_FOUND", "Producto no encontrado", 404);
-    }
+    if (!product) return fail("NOT_FOUND", "Producto no encontrado", 404);
 
     const session = await getServerSession(authOptions);
-    const isAdmin = session?.user?.isAdmin;
-
-    if (!product.isActive && !isAdmin) {
+    if (!product.isActive && !session?.user?.isAdmin) {
       return fail("NOT_FOUND", "Producto no encontrado", 404);
     }
 
-    const safelyParseImages = (images: string | string[]): string[] => {
-      if (Array.isArray(images)) return images;
-      // Backward compat: if somehow still a string (during migration grace period)
-      if (typeof images === "string" && images.length > 0) return [images];
-      return [];
-    };
-
-    const responseProduct: Product = {
-      ...product,
-      price: Number(product.price), // Convert Decimal
-      salePrice: product.salePrice ? Number(product.salePrice) : undefined,
-      description: product.description ?? undefined,
-      images: safelyParseImages(product.images),
-      // Source from relational tables
-      colorImages: colorImageRowsToRecord(product.product_color_images),
-      sizeGuide: sizeGuideRowsToArray(product.product_size_guides),
-      categories: {
-        ...product.categories,
-        description: product.categories.description ?? undefined,
-      },
-      variants: product.product_variants.map((v) => ({
-        ...v,
-        sku: v.sku ?? undefined,
-      })),
-    };
-
-    return ok(responseProduct);
+    return ok(
+      mapPrismaProductToResponse(product as PrismaProductWithRelations)
+    );
   } catch (error) {
     logger.error("Error fetching product:", { error });
     const e = normalizeApiError(
@@ -123,9 +181,8 @@ export const PUT = withAdminAuth(
         key: makeKey("PUT", "/api/products/[id]"),
         ...getPreset("mutatingMedium"),
       });
-      if (!rl.ok) {
-        return fail("RATE_LIMITED", "Too many requests", 429);
-      }
+      if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429);
+
       const { id } = await params;
       const body = await request.json();
 
@@ -134,11 +191,11 @@ export const PUT = withAdminAuth(
         logger.warn(`PUT /api/products/${id} - Error de validación:`, {
           error: parsed.error.issues,
         });
-
         return fail("BAD_REQUEST", "Datos inválidos", 400, {
           issues: parsed.error.issues,
         });
       }
+
       const {
         name,
         description,
@@ -156,101 +213,35 @@ export const PUT = withAdminAuth(
         height,
         width,
         length,
-        variants: inputVariants, // Rename to avoid conflict if necessary or just variants
+        variants: inputVariants,
         colorImages,
       } = parsed.data;
 
-      // Verificar que la categoría existe
       const category = await prisma.categories.findUnique({
         where: { id: categoryId },
       });
-
-      if (!category) {
+      if (!category)
         return fail("BAD_REQUEST", "La categoría especificada no existe", 400);
-      }
 
       if (inputVariants) {
         try {
-          // Sync variants (create, update, delete)
           await variantService.syncVariants(
             id,
-            inputVariants.map((v) => ({
-              ...v,
-              productId: id,
-              id: "", // Service/DB handles IDs
-            }))
+            inputVariants.map((v) => ({ ...v, productId: id, id: "" }))
           );
         } catch (error) {
           logger.error("Error syncing variants", { error });
-          // We could fail or continue. Let's fail because data integrity matters.
           throw error;
         }
       }
 
-      // Obtener producto actual para comparar imágenes
-      const currentProduct = await prisma.products.findUnique({
-        where: { id },
-      });
-
-      if (currentProduct && currentProduct.images) {
-        const oldImages: string[] =
-          typeof currentProduct.images === "string"
-            ? JSON.parse(currentProduct.images)
-            : currentProduct.images;
-
-        const newImages = Array.isArray(images) ? images : [];
-
-        // Identificar imágenes eliminadas
-        const imagesToDelete = oldImages.filter(
-          (img) => !newImages.includes(img)
-        );
-
-        if (imagesToDelete.length > 0) {
-          logger.info(
-            `Deleting ${imagesToDelete.length} removed images from Cloudinary`
-          );
-          // Eliminar en segundo plano para no bloquear la respuesta
-          void Promise.allSettled(
-            imagesToDelete.map(async (url) => {
-              const publicId = extractPublicId(url);
-              if (publicId) {
-                await deleteImage(publicId);
-              }
-            })
-          ).then((results) => {
-            logger.info("Image deletion results", { results });
-          });
-        }
-      }
-
-      // Prepare relational data for color images and size guide
-      const colorImageRows = colorImages
-        ? colorImageRecordToRows(colorImages)
-        : null;
-      const sizeGuideRows = sizeGuideToRows(
+      const newImages = Array.isArray(images) ? images : [];
+      await deleteRemovedCloudinaryImages(id, newImages);
+      await syncRelationalData(
+        id,
+        colorImages,
         (parsed.data as { sizeGuide?: unknown }).sizeGuide
       );
-
-      // Sync relational tables: delete old rows, create new ones
-      if (colorImageRows !== null) {
-        await prisma.product_color_images.deleteMany({
-          where: { productId: id },
-        });
-        if (colorImageRows.length > 0) {
-          await prisma.product_color_images.createMany({
-            data: colorImageRows.map((row) => ({ ...row, productId: id })),
-          });
-        }
-      }
-
-      if (sizeGuideRows.length > 0) {
-        await prisma.product_size_guides.deleteMany({
-          where: { productId: id },
-        });
-        await prisma.product_size_guides.createMany({
-          data: sizeGuideRows.map((row) => ({ ...row, productId: id })),
-        });
-      }
 
       const updatedPrismaProduct = await prisma.products.update({
         where: { id },
@@ -261,7 +252,7 @@ export const PUT = withAdminAuth(
           salePrice: salePrice ? Number(salePrice) : null,
           stock: Number(stock),
           categoryId,
-          images: Array.isArray(images) ? images : [],
+          images: newImages,
           onSale: onSale ?? false,
           isActive: isActive ?? true,
           sizes: sizes ?? undefined,
@@ -286,38 +277,14 @@ export const PUT = withAdminAuth(
         },
       });
 
-      const updatedProduct: Product = {
-        ...updatedPrismaProduct,
-        price: Number(updatedPrismaProduct.price), // Convert Decimal
-        salePrice: updatedPrismaProduct.salePrice
-          ? Number(updatedPrismaProduct.salePrice)
-          : undefined,
-        description: updatedPrismaProduct.description ?? undefined,
-        images: Array.isArray(updatedPrismaProduct.images)
-          ? updatedPrismaProduct.images
-          : [],
-        // Source from relational tables
-        colorImages: colorImageRowsToRecord(
-          updatedPrismaProduct.product_color_images
-        ),
-        sizeGuide: sizeGuideRowsToArray(
-          updatedPrismaProduct.product_size_guides
-        ),
-        categories: {
-          ...updatedPrismaProduct.categories,
-          description: updatedPrismaProduct.categories.description ?? undefined,
-        },
-        variants: updatedPrismaProduct.product_variants
-          ? updatedPrismaProduct.product_variants.map((v) => ({
-              ...v,
-              sku: v.sku ?? undefined,
-            }))
-          : [],
-      };
-
       revalidatePath("/products");
       revalidatePath(`/products/${(await params).id}`);
-      return ok(updatedProduct, "Producto actualizado exitosamente");
+      return ok(
+        mapPrismaProductToResponse(
+          updatedPrismaProduct as PrismaProductWithRelations
+        ),
+        "Producto actualizado exitosamente"
+      );
     } catch (error) {
       logger.error("Error updating product:", { error });
       const e = normalizeApiError(
@@ -347,19 +314,16 @@ export const PATCH = withAdminAuth(
         key: makeKey("PATCH", "/api/products/[id]"),
         ...getPreset("mutatingMedium"),
       });
-      if (!rl.ok) {
-        return fail("RATE_LIMITED", "Too many requests", 429);
-      }
+      if (!rl.ok) return fail("RATE_LIMITED", "Too many requests", 429);
+
       const { id } = await params;
       const body = await request.json();
 
-      // Permitimos actualización parcial de isActive y/o stock
       const hasIsActive = typeof body.isActive === "boolean";
       const hasStock =
         typeof body.stock === "number" &&
         body.stock >= 0 &&
         Number.isInteger(body.stock);
-
       if (!hasIsActive && !hasStock) {
         return fail(
           "BAD_REQUEST",
@@ -388,37 +352,13 @@ export const PATCH = withAdminAuth(
         },
       });
 
-      const updatedProduct: Product = {
-        ...updatedPrismaProduct,
-        price: Number(updatedPrismaProduct.price),
-        salePrice: updatedPrismaProduct.salePrice
-          ? Number(updatedPrismaProduct.salePrice)
-          : undefined,
-        description: updatedPrismaProduct.description ?? undefined,
-        images: Array.isArray(updatedPrismaProduct.images)
-          ? updatedPrismaProduct.images
-          : [],
-        // Source from relational tables
-        colorImages: colorImageRowsToRecord(
-          updatedPrismaProduct.product_color_images
-        ),
-        sizeGuide: sizeGuideRowsToArray(
-          updatedPrismaProduct.product_size_guides
-        ),
-        categories: {
-          ...updatedPrismaProduct.categories,
-          description: updatedPrismaProduct.categories.description ?? undefined,
-        },
-        variants: updatedPrismaProduct.product_variants
-          ? updatedPrismaProduct.product_variants.map((v) => ({
-              ...v,
-              sku: v.sku ?? undefined,
-            }))
-          : [],
-      };
-
       revalidatePath("/products");
-      return ok(updatedProduct, "Producto actualizado correctamente");
+      return ok(
+        mapPrismaProductToResponse(
+          updatedPrismaProduct as PrismaProductWithRelations
+        ),
+        "Producto actualizado correctamente"
+      );
     } catch (error) {
       logger.error("Error patching product:", { error });
       const e = normalizeApiError(
@@ -445,38 +385,23 @@ export const DELETE = withAdminAuth(
   ): Promise<NextResponse<ApiResponse<{ deleted: boolean }>>> => {
     try {
       const { id } = await params;
-
-      // Fetch product to get images for cleanup
       const product = await prisma.products.findUnique({
         where: { id },
         select: { id: true, images: true },
       });
+      if (!product) return fail("NOT_FOUND", "Producto no encontrado", 404);
 
-      if (!product) {
-        return fail("NOT_FOUND", "Producto no encontrado", 404);
-      }
-
-      // Delete product (cascades to variants, color images, size guides via DB relations)
       await prisma.products.delete({ where: { id } });
 
-      // Fix #109: await Cloudinary cleanup — in serverless the fn exits after response,
-      // so fire-and-forget Promises never execute. Must complete before returning.
-      if (product.images) {
-        const images: string[] = Array.isArray(product.images)
-          ? product.images
-          : [];
-
-        if (images.length > 0) {
-          const results = await Promise.allSettled(
-            images.map(async (url) => {
-              const publicId = extractPublicId(url);
-              if (publicId) {
-                await deleteImage(publicId);
-              }
-            })
-          );
-          logger.info("Product image deletion results", { results });
-        }
+      const images: string[] = safelyParseImages(product.images);
+      if (images.length > 0) {
+        const results = await Promise.allSettled(
+          images.map(async (url) => {
+            const publicId = extractPublicId(url);
+            if (publicId) await deleteImage(publicId);
+          })
+        );
+        logger.info("Product image deletion results", { results });
       }
 
       logger.info(`[Admin] Deleted product ${id}`);

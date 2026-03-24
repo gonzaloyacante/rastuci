@@ -21,29 +21,15 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useCategories } from "@/hooks/useCategories";
-import { SORT_OPTIONS as SORT_OPTIONS_BASE } from "@/lib/constants";
 import { Product } from "@/types";
 
-// ==============================================================================
-// TYPES & CONSTANTS
-// ==============================================================================
-interface ProductsPageClientProps {
-  searchParams: {
-    categoria?: string;
-    buscar?: string;
-    pagina?: string;
-    sortBy?: string;
-    sortOrder?: "asc" | "desc";
-  };
-}
-
-// SORT_OPTIONS imported from constants - adapting format for this component
-const SORT_OPTIONS = SORT_OPTIONS_BASE.map((opt) => ({
-  value: opt.id,
-  label: opt.label,
-}));
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import {
+  buildProductsApiUrl,
+  buildProductsPageUrl,
+  fetcher,
+  ProductsPageClientProps,
+  SORT_OPTIONS,
+} from "./productsUtils";
 
 // ==============================================================================
 // MAIN COMPONENT
@@ -78,29 +64,27 @@ export default function ProductsPageClient({
   }, [searchInput]);
 
   // Build API URL
-  const apiUrl = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("page", currentPage.toString());
-    params.set("limit", "12");
-    params.set("sortBy", sortBy);
-    params.set("sortOrder", sortOrder);
-    if (debouncedSearch) params.set("search", debouncedSearch);
-    if (selectedCategory) params.set("categoryId", selectedCategory);
-    return `/api/products?${params.toString()}`;
-  }, [currentPage, sortBy, sortOrder, debouncedSearch, selectedCategory]);
+  const apiUrl = useMemo(
+    () =>
+      buildProductsApiUrl({
+        page: currentPage,
+        sortBy,
+        sortOrder,
+        search: debouncedSearch,
+        categoryId: selectedCategory,
+      }),
+    [currentPage, sortBy, sortOrder, debouncedSearch, selectedCategory]
+  );
 
   // Update URL when filters change
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (debouncedSearch) params.set("buscar", debouncedSearch);
-    if (selectedCategory) params.set("categoria", selectedCategory);
-    if (sortBy !== "createdAt") params.set("sortBy", sortBy);
-    if (sortOrder !== "desc") params.set("sortOrder", sortOrder);
-    if (currentPage > 1) params.set("pagina", currentPage.toString());
-
-    const newUrl = params.toString()
-      ? `/productos?${params.toString()}`
-      : "/productos";
+    const newUrl = buildProductsPageUrl({
+      search: debouncedSearch,
+      category: selectedCategory,
+      sortBy,
+      sortOrder,
+      page: currentPage,
+    });
 
     // If this navigation was triggered by a page change, perform the
     // router.replace without scrolling and then animate a smooth scroll

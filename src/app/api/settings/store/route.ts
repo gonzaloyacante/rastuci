@@ -11,6 +11,32 @@ import {
   StoreSettingsSchema,
 } from "@/lib/validation/store";
 
+type StockStatusColorKey =
+  | "success"
+  | "warning"
+  | "error"
+  | "info"
+  | "muted"
+  | "primary"
+  | "secondary"
+  | "accent";
+
+function mapStockStatus(status: {
+  id: string;
+  min: number;
+  max: number | null;
+  label: string;
+  color: StockStatusColor;
+}) {
+  return {
+    id: status.id,
+    min: status.min,
+    max: status.max,
+    label: status.label,
+    color: status.color as unknown as StockStatusColorKey,
+  };
+}
+
 function dbToApiFormat(
   store: store_settings | null,
   shipping: {
@@ -62,21 +88,7 @@ function dbToApiFormat(
         defaultStoreSettings.stock.enableStockAlerts,
     },
     stockStatuses:
-      st?.statuses.map((status) => ({
-        id: status.id,
-        min: status.min,
-        max: status.max,
-        label: status.label,
-        color: status.color as string as
-          | "success"
-          | "warning"
-          | "error"
-          | "info"
-          | "muted"
-          | "primary"
-          | "secondary"
-          | "accent",
-      })) ?? defaultStoreSettings.stockStatuses,
+      st?.statuses.map(mapStockStatus) ?? defaultStoreSettings.stockStatuses,
     payments: {
       cashDiscount:
         s?.cashDiscount !== null && s?.cashDiscount !== undefined

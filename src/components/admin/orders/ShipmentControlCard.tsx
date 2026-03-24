@@ -20,6 +20,15 @@ interface ShipmentControlCardProps {
   onOrderUpdate: (updates: Partial<Order>) => void; // Pass partial order updates
 }
 
+function isShippingAddressComplete(order: Order): boolean {
+  return !!(
+    order.shippingStreet &&
+    order.shippingCity &&
+    order.shippingProvince &&
+    order.shippingPostalCode
+  );
+}
+
 export function ShipmentControlCard({
   order,
   onOrderUpdate,
@@ -112,20 +121,13 @@ export function ShipmentControlCard({
       });
       return;
     }
-
-    if (
-      !order.shippingStreet ||
-      !order.shippingCity ||
-      !order.shippingProvince ||
-      !order.shippingPostalCode
-    ) {
+    if (!isShippingAddressComplete(order)) {
       show({
         type: "error",
         message: "El pedido no tiene dirección completa de envío",
       });
       return;
     }
-
     const confirmed = await confirm({
       title: "Crear envío en Correo Argentino",
       message: "¿Confirmar creación de envío en Correo Argentino?",
@@ -133,7 +135,6 @@ export function ShipmentControlCard({
       variant: "danger",
     });
     if (!confirmed) return;
-
     setImporting(true);
     try {
       const res = await fetch(`/api/admin/orders/${order.id}/retry-ca-import`, {

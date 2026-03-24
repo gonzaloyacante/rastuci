@@ -3,7 +3,9 @@ import Link from "next/link";
 import React from "react";
 
 import CartWidget from "@/components/header/CartWidget.client";
+import HeaderSearch from "@/components/header/HeaderSearch.client";
 import MobileMenuClient from "@/components/header/MobileMenu.client";
+import NavLinks from "@/components/header/NavLinks.client";
 import WishlistWidget from "@/components/header/WishlistWidget.client";
 import { type HomeSettings } from "@/lib/validation/home";
 
@@ -49,29 +51,14 @@ export default function HeaderShell({
             className="hidden md:flex items-center space-x-8"
             role="navigation"
             aria-label="Navegación principal"
+            id="navigation"
           >
-            <Link
-              href="/"
-              className="text-sm font-medium muted hover:text-primary"
-            >
-              Inicio
-            </Link>
-            <Link
-              href="/productos"
-              className="text-sm font-medium muted hover:text-primary"
-            >
-              Productos
-            </Link>
-            <Link
-              href="/contacto"
-              className="text-sm font-medium muted hover:text-primary"
-            >
-              Contacto
-            </Link>
+            <NavLinks />
           </nav>
 
           {/* Widgets: each widget is a client component and will hydrate individually */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
+            <HeaderSearch />
             <WishlistWidget />
             <CartWidget />
           </div>

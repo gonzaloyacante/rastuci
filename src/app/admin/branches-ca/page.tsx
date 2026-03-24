@@ -27,6 +27,24 @@ import { escapeCsvCell } from "@/utils/formatters";
 
 // PROVINCIAS imported from @/lib/constants
 
+async function fetchAgenciesByProvince(
+  province: ProvinceCode
+): Promise<NormalizedAgency[]> {
+  const response = await fetch(
+    `/api/shipping/agencies?provinceCode=${province}`
+  );
+  if (!response.ok)
+    throw new Error(`Error al obtener sucursales: HTTP ${response.status}`);
+  const data = (await response.json()) as {
+    success: boolean;
+    agencies?: Agency[];
+    error?: string;
+  };
+  if (data.success && Array.isArray(data.agencies))
+    return data.agencies.map(normalizeAgency);
+  throw new Error(data.error || "No se pudieron cargar las sucursales");
+}
+
 export default function SucursalesCAPage() {
   const [agencies, setAgencies] = useState<NormalizedAgency[]>([]);
   const [filteredAgencies, setFilteredAgencies] = useState<NormalizedAgency[]>(
@@ -42,27 +60,13 @@ export default function SucursalesCAPage() {
   const { show } = useToast();
 
   const loadAgencies = useCallback(async (province: ProvinceCode) => {
-    if (!province) {
-      return;
-    }
-
+    if (!province) return;
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(
-        `/api/shipping/agencies?provinceCode=${province}`
-      );
-      if (!response.ok) {
-        throw new Error(`Error al obtener sucursales: HTTP ${response.status}`);
-      }
-      const data = await response.json();
-      if (data.success && Array.isArray(data.agencies)) {
-        const normalized = (data.agencies as Agency[]).map(normalizeAgency);
-        setAgencies(normalized);
-        setFilteredAgencies(normalized);
-      } else {
-        setError(data.error || "No se pudieron cargar las sucursales");
-      }
+      const normalized = await fetchAgenciesByProvince(province);
+      setAgencies(normalized);
+      setFilteredAgencies(normalized);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {

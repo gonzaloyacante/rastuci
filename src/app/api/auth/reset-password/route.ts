@@ -6,100 +6,73 @@ import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
+function resetErr(error: string, status = 400) {
+  return NextResponse.json({ success: false, error }, { status });
+}
+
+async function validateResetToken(token: string) {
+  const verificationToken = await prisma.verificationToken.findUnique({
+    where: { token },
+  });
+  if (!verificationToken) return { error: "Token inválido o expirado" };
+  if (new Date() > verificationToken.expires) {
+    await prisma.verificationToken.delete({ where: { token } });
+    return { error: "El token ha expirado. Solicita uno nuevo" };
+  }
+  return { verificationToken };
+}
+
+async function updatePasswordAndCleanToken(
+  userId: string,
+  password: string,
+  token: string
+) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
+  await prisma.verificationToken.delete({ where: { token } });
+}
+
+function validatePasswordInput(
+  token: unknown,
+  password: unknown
+): string | null {
+  if (!token || !password) return "Token y contraseña requeridos";
+  if (typeof password === "string" && password.length < 8)
+    return "La contraseña debe tener al menos 8 caracteres";
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting: prevent brute force on reset tokens
     const rl = await checkRateLimit(req, {
       key: makeKey("POST", "/api/auth/reset-password"),
       ...getPreset("mutatingLow"),
     });
-    if (!rl.ok) {
-      return NextResponse.json(
-        { success: false, error: "Demasiados intentos, intenta más tarde" },
-        { status: 429 }
-      );
-    }
+    if (!rl.ok) return resetErr("Demasiados intentos, intenta más tarde", 429);
 
     const { token, password } = await req.json();
+    const inputError = validatePasswordInput(token, password);
+    if (inputError) return resetErr(inputError);
 
-    if (!token || !password) {
-      return NextResponse.json(
-        { success: false, error: "Token y contraseña requeridos" },
-        { status: 400 }
-      );
-    }
+    const tokenResult = await validateResetToken(token);
+    if (tokenResult.error) return resetErr(tokenResult.error);
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "La contraseña debe tener al menos 8 caracteres",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Buscar token válido
-    const verificationToken = await prisma.verificationToken.findUnique({
-      where: { token },
-    });
-
-    if (!verificationToken) {
-      return NextResponse.json(
-        { success: false, error: "Token inválido o expirado" },
-        { status: 400 }
-      );
-    }
-
-    // Verificar que no esté expirado
-    if (new Date() > verificationToken.expires) {
-      // Eliminar token expirado
-      await prisma.verificationToken.delete({
-        where: { token },
-      });
-
-      return NextResponse.json(
-        { success: false, error: "El token ha expirado. Solicita uno nuevo" },
-        { status: 400 }
-      );
-    }
-
-    // Buscar usuario
     const user = await prisma.user.findUnique({
-      where: { email: verificationToken.identifier },
+      where: { email: tokenResult.verificationToken!.identifier },
       select: { id: true, email: true, isAdmin: true },
     });
+    if (!user || !user.isAdmin) return resetErr("Usuario no encontrado", 404);
 
-    if (!user || !user.isAdmin) {
-      return NextResponse.json(
-        { success: false, error: "Usuario no encontrado" },
-        { status: 404 }
-      );
-    }
-
-    // Hash de la nueva contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Actualizar contraseña
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { password: hashedPassword },
-    });
-
-    // Eliminar token usado
-    await prisma.verificationToken.delete({
-      where: { token },
-    });
-
+    await updatePasswordAndCleanToken(user.id, password, token);
     return NextResponse.json({
       success: true,
       message: "Contraseña actualizada exitosamente",
     });
   } catch (error) {
     logger.error("Error en reset-password:", { error });
-    return NextResponse.json(
-      { success: false, error: "Error al procesar la solicitud" },
-      { status: 500 }
-    );
+    return resetErr("Error al procesar la solicitud", 500);
   }
 }

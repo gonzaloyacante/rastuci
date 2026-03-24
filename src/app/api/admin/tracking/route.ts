@@ -29,44 +29,21 @@ interface TrackingData {
 }
 
 // Mapeo de estados de Correo Argentino a estados internos
+const SHIPPING_STATUS_MAP: [string[], ReturnType<typeof mapShippingStatus>][] =
+  [
+    [["entregado", "delivered", "finalizado"], "delivered"],
+    [["tránsito", "transito", "enviado", "camino"], "in-transit"],
+    [["demorado", "retenido", "problema"], "delayed"],
+    [["error", "fallido", "rechazado"], "error"],
+  ];
+
 function mapShippingStatus(
   externalStatus: string
 ): "pending" | "in-transit" | "delivered" | "delayed" | "error" {
   const statusLower = externalStatus.toLowerCase();
-
-  if (
-    statusLower.includes("entregado") ||
-    statusLower.includes("delivered") ||
-    statusLower.includes("finalizado")
-  ) {
-    return "delivered";
+  for (const [keywords, result] of SHIPPING_STATUS_MAP) {
+    if (keywords.some((kw) => statusLower.includes(kw))) return result;
   }
-
-  if (
-    statusLower.includes("tránsito") ||
-    statusLower.includes("transito") ||
-    statusLower.includes("enviado") ||
-    statusLower.includes("camino")
-  ) {
-    return "in-transit";
-  }
-
-  if (
-    statusLower.includes("demorado") ||
-    statusLower.includes("retenido") ||
-    statusLower.includes("problema")
-  ) {
-    return "delayed";
-  }
-
-  if (
-    statusLower.includes("error") ||
-    statusLower.includes("fallido") ||
-    statusLower.includes("rechazado")
-  ) {
-    return "error";
-  }
-
   return "pending";
 }
 

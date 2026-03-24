@@ -36,6 +36,94 @@ interface FAQ {
   answer: string;
 }
 
+interface FaqsPanelProps {
+  faqs: FAQ[];
+  loading: boolean;
+  loadingFaqs: boolean;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  onUpdateQuestion: (index: number, value: string) => void;
+  onUpdateAnswer: (index: number, value: string) => void;
+  onSave: () => void;
+}
+
+function FaqsPanel({
+  faqs,
+  loading,
+  loadingFaqs,
+  onAdd,
+  onRemove,
+  onUpdateQuestion,
+  onUpdateAnswer,
+  onSave,
+}: FaqsPanelProps) {
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Preguntas Frecuentes</h3>
+        <Button size="sm" onClick={onAdd}>
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar FAQ
+        </Button>
+      </div>
+
+      {loadingFaqs ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+      ) : faqs.length === 0 ? (
+        <p className="text-muted text-center py-8">
+          No hay FAQs. Agrega la primera pregunta frecuente.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div
+              key={index}
+              className="p-4 border border-muted rounded-lg space-y-3"
+            >
+              <div className="flex justify-between items-start">
+                <h4 className="font-medium">FAQ #{index + 1}</h4>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onRemove(index)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+              <Input
+                label="Pregunta"
+                value={faq.question}
+                onChange={(e) => onUpdateQuestion(index, e.target.value)}
+                placeholder="¿Cuál es el tiempo de entrega?"
+              />
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Respuesta
+                </label>
+                <textarea
+                  value={faq.answer}
+                  onChange={(e) => onUpdateAnswer(index, e.target.value)}
+                  placeholder="Los envíos tardan entre 3 a 7 días hábiles..."
+                  className="w-full min-h-25 p-3 surface border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Button onClick={onSave} disabled={loading} className="w-full">
+        <Save className="w-4 h-4 mr-2" />
+        {loading ? "Guardando..." : "Guardar FAQs"}
+      </Button>
+    </div>
+  );
+}
+
 export default function ConfiguracionPage() {
   useDocumentTitle({ title: "Configuración del Sitio" });
   const [activeTab, setActiveTab] = useTabWithUrl("tienda");
@@ -174,90 +262,26 @@ export default function ConfiguracionPage() {
         <TabPanel id="faqs" activeTab={activeTab}>
           <Card>
             <CardContent className="p-4 md:p-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">
-                    Preguntas Frecuentes
-                  </h3>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      setFaqs([...faqs, { question: "", answer: "" }])
-                    }
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Agregar FAQ
-                  </Button>
-                </div>
-
-                {loadingFaqs ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-32" />
-                    ))}
-                  </div>
-                ) : faqs.length === 0 ? (
-                  <p className="text-muted text-center py-8">
-                    No hay FAQs. Agrega la primera pregunta frecuente.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {faqs.map((faq, index) => (
-                      <div
-                        key={index}
-                        className="p-4 border border-muted rounded-lg space-y-3"
-                      >
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-medium">FAQ #{index + 1}</h4>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              setFaqs(faqs.filter((_, i) => i !== index))
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <Input
-                          label="Pregunta"
-                          value={faq.question}
-                          onChange={(e) => {
-                            const newFaqs = [...faqs];
-                            newFaqs[index].question = e.target.value;
-                            setFaqs(newFaqs);
-                          }}
-                          placeholder="¿Cuál es el tiempo de entrega?"
-                        />
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Respuesta
-                          </label>
-                          <textarea
-                            value={faq.answer}
-                            onChange={(e) => {
-                              const newFaqs = [...faqs];
-                              newFaqs[index].answer = e.target.value;
-                              setFaqs(newFaqs);
-                            }}
-                            placeholder="Los envíos tardan entre 3 a 7 días hábiles..."
-                            className="w-full min-h-[100px] p-3 surface border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <Button
-                  onClick={saveFaqs}
-                  disabled={loading}
-                  className="w-full"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {loading ? "Guardando..." : "Guardar FAQs"}
-                </Button>
-              </div>
+              <FaqsPanel
+                faqs={faqs}
+                loading={loading}
+                loadingFaqs={loadingFaqs}
+                onAdd={() => setFaqs([...faqs, { question: "", answer: "" }])}
+                onRemove={(index) =>
+                  setFaqs(faqs.filter((_, i) => i !== index))
+                }
+                onUpdateQuestion={(index, value) => {
+                  const newFaqs = [...faqs];
+                  newFaqs[index].question = value;
+                  setFaqs(newFaqs);
+                }}
+                onUpdateAnswer={(index, value) => {
+                  const newFaqs = [...faqs];
+                  newFaqs[index].answer = value;
+                  setFaqs(newFaqs);
+                }}
+                onSave={saveFaqs}
+              />
             </CardContent>
           </Card>
         </TabPanel>

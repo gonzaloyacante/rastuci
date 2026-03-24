@@ -48,7 +48,6 @@ const reviewSchema = z.object({
 });
 
 export default function ReviewSystem({
-  productId: _productId,
   reviews,
   averageRating,
   totalReviews,

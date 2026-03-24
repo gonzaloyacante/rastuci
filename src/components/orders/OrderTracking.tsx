@@ -6,18 +6,18 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { generateInvoiceHTML } from "@/lib/invoiceGenerator";
 import { logger } from "@/lib/logger";
 
 import {
-  generateInvoiceHTML,
   Order,
+  OrderItemsCard,
   OrderTrackingHeader,
   ShippingAddressCard,
   StatusHistoryCard,
   TrackingData,
   TrackingEventsCard,
   TrackingNumberCard,
-  OrderItemsCard,
 } from "./OrderTrackingSections";
 
 interface OrderTrackingProps {
@@ -130,7 +130,10 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       URL.revokeObjectURL(url);
       logger.info("Invoice downloaded successfully", { orderId: order.id });
     } catch (err) {
-      logger.error("Error downloading invoice", { orderId: order.id, error: err });
+      logger.error("Error downloading invoice", {
+        orderId: order.id,
+        error: err,
+      });
     }
   };
 
@@ -202,4 +205,3 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     </div>
   );
 }
-

@@ -23,6 +23,36 @@ const ShippingCalculateSchema = z.object({
     .optional(),
 });
 
+type DeliveredType = "D" | "S";
+
+function fallbackResponse(deliveredType?: DeliveredType) {
+  const type = deliveredType === "S" ? "agency" : "home";
+  return NextResponse.json({
+    success: true,
+    options: FALLBACK_SHIPPING_OPTIONS[type],
+    isFallback: true,
+  });
+}
+
+function mapRate(rate: {
+  productType: string;
+  deliveredType: string;
+  productName: string;
+  deliveryTimeMin: number;
+  deliveryTimeMax: number;
+  price: number;
+}) {
+  return {
+    id: `ca-${rate.productType}-${rate.deliveredType}`,
+    name: `${rate.productName} (${rate.deliveredType === "D" ? "Domicilio" : "Sucursal"})`,
+    description: `Entrega en ${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días hábiles`,
+    price: rate.price,
+    estimatedDays: `${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días`,
+    originalRate: rate,
+    isFallback: false,
+  };
+}
+
 // Opciones de envío de fallback cuando la API de CA no está disponible
 const FALLBACK_SHIPPING_OPTIONS = {
   home: [
@@ -145,7 +175,6 @@ export async function POST(request: NextRequest) {
         result.data?.rates &&
         result.data.rates.length > 0
       ) {
-        // Filtrar por tipo de entrega si se especificó (D=Domicilio, S=Sucursal)
         let filteredRates = result.data.rates;
         if (deliveredType) {
           filteredRates = result.data.rates.filter(
@@ -158,29 +187,9 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Si no hay rates después del filtro, usar fallback
-        if (filteredRates.length === 0) {
-          const type = deliveredType === "S" ? "agency" : "home";
-          return NextResponse.json({
-            success: true,
-            options: FALLBACK_SHIPPING_OPTIONS[type],
-            isFallback: true,
-          });
-        }
+        if (filteredRates.length === 0) return fallbackResponse(deliveredType);
 
-        // Mapear respuesta al formato que espera el frontend
-        const options = filteredRates.map((rate) => ({
-          id: `ca-${rate.productType}-${rate.deliveredType}`,
-          name: `${rate.productName} (${
-            rate.deliveredType === "D" ? "Domicilio" : "Sucursal"
-          })`,
-          description: `Entrega en ${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días hábiles`,
-          price: rate.price,
-          estimatedDays: `${rate.deliveryTimeMin}-${rate.deliveryTimeMax} días`,
-          originalRate: rate,
-          isFallback: false, // Datos reales de la API
-        }));
-
+        const options = filteredRates.map(mapRate);
         return NextResponse.json({
           success: true,
           options,
@@ -190,27 +199,14 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Si la API no devolvió rates, usar fallback
       logger.warn("[Shipping] CA API returned no rates, using fallback");
-      const type = deliveredType === "S" ? "agency" : "home";
-      return NextResponse.json({
-        success: true,
-        options: FALLBACK_SHIPPING_OPTIONS[type],
-        isFallback: true,
-      });
+      return fallbackResponse(deliveredType);
     } catch (apiError) {
-      // Error al comunicarse con CA, usar fallback
       logger.error("[Shipping] CA API error, using fallback:", { apiError });
-      const type = deliveredType === "S" ? "agency" : "home";
-      return NextResponse.json({
-        success: true,
-        options: FALLBACK_SHIPPING_OPTIONS[type],
-        isFallback: true,
-      });
+      return fallbackResponse(deliveredType);
     }
   } catch (error) {
     logger.error("Error calculating shipping:", { error });
-    // En caso de error general, devolver fallback de domicilio
     return NextResponse.json({
       success: true,
       options: FALLBACK_SHIPPING_OPTIONS.home,

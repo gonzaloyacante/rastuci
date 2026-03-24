@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { useCart } from "@/context/CartContext";
+import { scoreAgency } from "@/lib/agencyScoring";
 import {
   PROVINCE_CODE_MAP as PROVINCE_NAMES,
   WEEKDAY_NAMES_SHORT,
@@ -129,46 +130,10 @@ export function AgencySelector({
     const termNumeric = term.replace(/\D/g, "");
 
     // Dar puntaje de relevancia para ordenar resultados
-    const scored = agencies.map((agency) => {
-      let score = 0;
-      const cp = agency.location.address.postalCode?.toLowerCase() || "";
-      const cpNumeric = cp.replace(/\D/g, "");
-
-      const city = (
-        agency.location.address.city ||
-        agency.location.address.locality ||
-        ""
-      ).toLowerCase();
-      const name = agency.name.toLowerCase();
-      const street = agency.location.address.streetName?.toLowerCase() || "";
-
-      // Código postal: Prioridad máxima
-      // Coincidencia exacta de string
-      if (cp === term) score += 100;
-      // Coincidencia exacta numérica (ej: busco 1611 y encuentro B1611ABC)
-      else if (termNumeric.length >= 4 && cpNumeric === termNumeric)
-        score += 90;
-      // Comienza con (ej: busco 1611 y encuentro 16110)
-      else if (cp.startsWith(term)) score += 50;
-      // Contiene el término numerico (si es suficientemente largo)
-      else if (termNumeric.length >= 3 && cpNumeric.includes(termNumeric))
-        score += 40;
-      // Contiene el string
-      else if (cp.includes(term)) score += 25;
-
-      // Ciudad/Localidad
-      if (city === term) score += 80;
-      else if (city.startsWith(term)) score += 40;
-      else if (city.includes(term)) score += 20;
-
-      // Nombre de sucursal
-      if (name.includes(term)) score += 15;
-
-      // Calle
-      if (street.includes(term)) score += 10;
-
-      return { agency, score };
-    });
+    const scored = agencies.map((agency) => ({
+      agency,
+      score: scoreAgency(agency, term, termNumeric),
+    }));
 
     // Filtrar solo los que tienen puntaje > 0 y ordenar por score descendente
     return scored

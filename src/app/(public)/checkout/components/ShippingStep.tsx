@@ -1,84 +1,20 @@
 "use client";
 
-import {
-  AlertCircle,
-  Check,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-  Store,
-  Truck,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Store } from "lucide-react";
+import { useState } from "react";
 
 import { AgencySelector } from "@/components/checkout/AgencySelector";
-import {
-  DeliveryMode,
-  ShippingMethodSelector,
-} from "@/components/checkout/ShippingMethodSelector";
+import { ShippingMethodSelector } from "@/components/checkout/ShippingMethodSelector";
 import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui/Spinner";
 import { ShippingOption, useCart } from "@/context/CartContext";
 import { useShippingSettings } from "@/hooks/useShippingSettings";
-import { logger } from "@/lib/logger";
-import { formatPriceARS } from "@/utils/formatters";
 
-// ============================================================================
-// HELPER FUNCTIONS (fuera del componente)
-// ============================================================================
-
-/** Crear opciones de envío de fallback */
-function createFallbackShippingOptions(type: "D" | "S"): ShippingOption[] {
-  if (type === "D") {
-    return [
-      {
-        id: "standard-home",
-        name: "Envío Estándar a Domicilio",
-        description:
-          "Correo Argentino - Entrega en tu domicilio (precio estimado)",
-        price: 4500,
-        estimatedDays: "5-7 días hábiles",
-        isFallback: true,
-      },
-      {
-        id: "express-home",
-        name: "Envío Express a Domicilio",
-        description: "Correo Argentino - Entrega rápida (precio estimado)",
-        price: 7000,
-        estimatedDays: "2-3 días hábiles",
-        isFallback: true,
-      },
-    ];
-  }
-  return [
-    {
-      id: "standard-agency",
-      name: "Envío a Sucursal",
-      description:
-        "Retirá en la sucursal de Correo Argentino (precio estimado)",
-      price: 3500,
-      estimatedDays: "5-7 días hábiles",
-      isFallback: true,
-    },
-  ];
-}
-
-/** Crear opción de retiro en local */
-function createPickupOption(): ShippingOption {
-  return {
-    id: "pickup",
-    name: "Retiro en Local",
-    description: "Sin cargo",
-    price: 0,
-    estimatedDays: "Inmediato",
-    isFallback: false,
-  };
-}
-
-// ============================================================================
-// COMPONENTE PRINCIPAL
-// ============================================================================
+import {
+  CustomerAddressSummary,
+  PickupLocationCard,
+  ShippingOptionsPanel,
+} from "./shippingStepComponents";
+import { useShippingOptions } from "./shippingStepUtils";
 
 interface ShippingStepProps {
   onNext: () => void;
@@ -91,128 +27,15 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     customerInfo,
     selectedShippingOption,
     setSelectedShippingOption,
-    calculateShippingCost,
     selectedPaymentMethod,
     selectedAgency,
     setSelectedAgency,
   } = useCart();
 
-  // Estado local
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
-  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("home");
+  const { shippingOptions, loading, error, deliveryMode, setDeliveryMode } =
+    useShippingOptions();
 
-  // ============================================================================
-  // EFECTOS
-  // ============================================================================
-
-  // Limpiar agencia seleccionada si cambia el modo
-  useEffect(() => {
-    if (deliveryMode !== "agency") {
-      setSelectedAgency(null);
-    }
-  }, [deliveryMode, setSelectedAgency]);
-
-  // Autoseleccionar opción de pickup cuando se selecciona ese modo
-  useEffect(() => {
-    if (deliveryMode === "pickup") {
-      const pickupOption = createPickupOption();
-      setShippingOptions([pickupOption]);
-      setSelectedShippingOption(pickupOption);
-      setError(null);
-    }
-  }, [deliveryMode, setSelectedShippingOption]);
-
-  // Calcular costos de envío - CON CACHÉ GLOBAL EN CONTEXT
-  useEffect(() => {
-    // Si es retiro en tienda (local), ya se maneja en otro useEffect
-    if (deliveryMode === "pickup") {
-      return;
-    }
-
-    // Si no hay código postal, no calcular
-    if (!customerInfo?.postalCode) {
-      setError("Se requiere código postal para calcular el envío");
-      return;
-    }
-
-    // Si es agencia pero no hay agencia seleccionada, no calcular aún
-    if (deliveryMode === "agency" && !selectedAgency) {
-      setShippingOptions([]);
-      setError(null);
-      return;
-    }
-
-    const fetchShippingOptions = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const type = deliveryMode === "agency" ? "S" : "D";
-        // Use agency postal code for agency mode, customer postal code for home delivery
-        const destinationPostalCode =
-          deliveryMode === "agency" &&
-          selectedAgency?.location?.address?.postalCode
-            ? selectedAgency.location.address.postalCode
-            : customerInfo.postalCode;
-
-        const options = await calculateShippingCost(
-          destinationPostalCode,
-          type
-        );
-
-        if (options && options.length > 0) {
-          // Filtrar por tipo (D=Domicilio, S=Sucursal) para evitar mezclas
-          const modeFiltered = options.filter((o) => {
-            if (deliveryMode === "agency")
-              return o.id.includes("-S") || o.name.includes("Sucursal");
-            if (deliveryMode === "home")
-              return o.id.includes("-D") || o.name.includes("Domicilio");
-            return true;
-          });
-
-          setShippingOptions(modeFiltered);
-
-          // Seleccionar la primera automáticamente si es necesario
-          if (
-            modeFiltered.length > 0 &&
-            (!selectedShippingOption ||
-              !modeFiltered.find((o) => o.id === selectedShippingOption.id))
-          ) {
-            setSelectedShippingOption(modeFiltered[0]);
-          }
-        } else {
-          // Usar fallback si no hay opciones
-          const fallbackOptions = createFallbackShippingOptions(type);
-          setShippingOptions(fallbackOptions);
-          setSelectedShippingOption(fallbackOptions[0]);
-        }
-      } catch (err) {
-        logger.error("Error al calcular envío:", { err });
-        // En caso de error, usar opciones de fallback
-        const type = deliveryMode === "agency" ? "S" : "D";
-        const fallbackOptions = createFallbackShippingOptions(type);
-        setShippingOptions(fallbackOptions);
-        setSelectedShippingOption(fallbackOptions[0]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchShippingOptions();
-  }, [
-    customerInfo?.postalCode,
-    deliveryMode,
-    selectedAgency,
-    calculateShippingCost,
-    selectedShippingOption,
-    setSelectedShippingOption,
-  ]);
-
-  // ============================================================================
-  // HANDLERS
-  // ============================================================================
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSelectOption = (option: ShippingOption) => {
     setSelectedShippingOption(option);
@@ -222,148 +45,9 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
     if (selectedShippingOption) {
       onNext();
     } else {
-      setError("Por favor, selecciona una opción de envío para continuar");
+      setLocalError("Por favor, selecciona una opción de envío para continuar");
     }
   };
-
-  // ============================================================================
-  // RENDER HELPERS
-  // ============================================================================
-
-  const renderShippingOptions = () => {
-    if (loading) {
-      return (
-        <div className="flex flex-col items-center justify-center py-8 sm:py-10">
-          <Spinner size="lg" className="mb-3 sm:mb-4" />
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Calculando opciones de envío...
-          </p>
-        </div>
-      );
-    }
-
-    // Si es modo agencia y no hay agencia seleccionada
-    if (deliveryMode === "agency" && !selectedAgency) {
-      return (
-        <div className="text-center py-6 sm:py-8 text-muted-foreground border border-dashed border-muted rounded-lg text-sm sm:text-base">
-          <MapPin className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 opacity-50" />
-          Selecciona una sucursal para ver los costos de envío.
-        </div>
-      );
-    }
-
-    // Si no hay opciones (solo para home/agency, pickup siempre tiene)
-    if (shippingOptions.length === 0 && deliveryMode !== "pickup") {
-      return (
-        <div className="text-center py-6 sm:py-8 text-muted-foreground border border-dashed border-muted rounded-lg text-sm sm:text-base">
-          <Truck className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 opacity-50" />
-          {deliveryMode === "home"
-            ? "No hay opciones de envío a domicilio disponibles."
-            : "No hay opciones de envío a sucursal disponibles."}
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-3 mt-4 sm:mt-6">
-        {/* Indicador de origen de datos */}
-        {shippingOptions.length > 0 && (
-          <div
-            className={`inline-flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full ${
-              shippingOptions[0]?.isFallback
-                ? "bg-amber-100 text-amber-700"
-                : "bg-green-100 text-green-700"
-            }`}
-          >
-            {shippingOptions[0]?.isFallback ? (
-              <>
-                <AlertCircle size={12} className="sm:w-3.5 sm:h-3.5" />
-                <span>Precios estimados</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={12} className="sm:w-3.5 sm:h-3.5" />
-                <span className="hidden xs:inline">
-                  Precios actualizados de Correo Argentino
-                </span>
-                <span className="xs:hidden">Precios actualizados</span>
-              </>
-            )}
-          </div>
-        )}
-
-        {shippingOptions.map((option) => {
-          const disabled =
-            selectedPaymentMethod?.id === "cash" && option.id !== "pickup";
-          const isSelected = selectedShippingOption?.id === option.id;
-
-          return (
-            <div
-              key={option.id}
-              className={`border rounded-lg p-3 sm:p-4 transition-all cursor-pointer ${
-                isSelected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-muted surface hover:border-primary/50 hover:bg-muted/30"
-              } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={() => !disabled && handleSelectOption(option)}
-            >
-              {/* Layout mobile: stack vertical */}
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                <div className="flex items-start gap-2.5 sm:gap-3">
-                  {option.id === "pickup" ? (
-                    <Store
-                      size={20}
-                      className={`mt-2.5 shrink-0 sm:w-10 sm:h-10 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
-                    />
-                  ) : deliveryMode === "agency" ? (
-                    <MapPin
-                      size={20}
-                      className={`mt-2.5 shrink-0 sm:w-10 sm:h-10 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
-                    />
-                  ) : (
-                    <Truck
-                      size={20}
-                      className={`mt-2.5 shrink-0 sm:w-10 sm:h-10 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-md sm:text-base leading-tight">
-                      {option.name}
-                    </h3>
-                    <p className="text-muted-foreground text-sm sm:text-sm line-clamp-2 sm:line-clamp-none">
-                      {option.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Precio y check - en mobile va abajo a la derecha */}
-                <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pl-7 sm:pl-0">
-                  <span className="font-bold text-base sm:text-lg">
-                    {option.price === 0 && shippingSettings.freeShipping ? (
-                      <span className="text-green-600">Sin cargo</span>
-                    ) : option.price === 0 ? (
-                      <span className="text-muted-foreground">Gratis</span>
-                    ) : (
-                      formatPriceARS(option.price)
-                    )}
-                  </span>
-                  {isSelected && (
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
-                      <Check size={14} className="text-white sm:w-4 sm:h-4" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // ============================================================================
-  // RENDER
-  // ============================================================================
 
   return (
     <div className="max-w-3xl mx-auto px-0 sm:px-4">
@@ -374,29 +58,14 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
 
         {/* Resumen de dirección - más compacto en mobile */}
         {customerInfo && (
-          <div className="surface p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 border border-muted">
-            <div className="flex items-start gap-2 sm:gap-3">
-              <MapPin
-                size={18}
-                className="text-muted-foreground mt-0.5 shrink-0 hidden sm:block"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm sm:text-base truncate">
-                  {customerInfo.name}
-                </p>
-                <p className="text-muted-foreground text-xs sm:text-sm truncate">
-                  {customerInfo.address}
-                </p>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                  {customerInfo.city}, {customerInfo.province}, CP:{" "}
-                  {customerInfo.postalCode}
-                </p>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                  {customerInfo.phone}
-                </p>
-              </div>
-            </div>
-          </div>
+          <CustomerAddressSummary
+            name={customerInfo.name}
+            address={customerInfo.address}
+            city={customerInfo.city}
+            province={customerInfo.province}
+            postalCode={customerInfo.postalCode}
+            phone={customerInfo.phone}
+          />
         )}
 
         {/* Selector de Método de Entrega */}
@@ -429,29 +98,7 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
               <Store className="h-5 w-5 text-primary" />
               Ubicación del local
             </h3>
-            <div className="rounded-lg border border-muted overflow-hidden">
-              <div className="p-6 bg-muted/20 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                  <MapPin className="h-6 w-6 text-primary" />
-                </div>
-                <h4 className="font-medium text-lg mb-1">
-                  {shippingSettings?.storeCity || "Don Torcuato, Buenos Aires"}
-                </h4>
-                <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-                  Coordinaremos la dirección exacta por WhatsApp después de
-                  confirmar tu pedido
-                </p>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shippingSettings?.storeCity || "Don Torcuato, Buenos Aires, Argentina")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-muted hover:border-primary/50 text-sm font-medium rounded-full transition-all shadow-sm hover:shadow-md"
-                >
-                  <MapPin className="h-4 w-4 text-primary" />
-                  Ver ubicación en Google Maps
-                </a>
-              </div>
-            </div>
+            <PickupLocationCard storeCity={shippingSettings?.storeCity} />
           </div>
         )}
 
@@ -465,14 +112,23 @@ export default function ShippingStep({ onNext, onBack }: ShippingStepProps) {
         )}
 
         {/* Mensaje de error */}
-        {error && (
+        {(error ?? localError) && (
           <div className="surface border border-error text-error p-3 rounded-md mb-4 text-sm">
-            {error}
+            {error ?? localError}
           </div>
         )}
 
         {/* Opciones de envío calculadas */}
-        {renderShippingOptions()}
+        <ShippingOptionsPanel
+          loading={loading}
+          shippingOptions={shippingOptions}
+          deliveryMode={deliveryMode}
+          selectedAgency={selectedAgency}
+          selectedShippingOption={selectedShippingOption}
+          selectedPaymentMethodId={selectedPaymentMethod?.id}
+          freeShipping={shippingSettings.freeShipping}
+          onSelect={handleSelectOption}
+        />
 
         {/* Botones de navegación - full width en mobile */}
         <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 mt-6 sm:mt-8">

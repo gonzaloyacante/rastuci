@@ -13,6 +13,27 @@ import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 import { OrderCreateSchema, OrdersQuerySchema } from "@/lib/validation/order";
 import { ApiResponse, Order, PaginatedResponse } from "@/types";
 
+function buildOrdersFilter(params: {
+  status?: string;
+  shippingMethod?: string;
+  mpPaymentId?: string | null;
+  search?: string;
+}): Record<string, unknown> {
+  const where: Record<string, unknown> = {};
+  if (params.status) where.status = params.status;
+  if (params.shippingMethod) where.shippingMethod = params.shippingMethod;
+  if (params.mpPaymentId) {
+    where.mpPaymentId = params.mpPaymentId;
+  } else if (params.search) {
+    where.OR = [
+      { customerName: { contains: params.search, mode: "insensitive" } },
+      { customerEmail: { contains: params.search, mode: "insensitive" } },
+      { id: params.search },
+    ];
+  }
+  return where;
+}
+
 // GET /api/orders - Obtener todos los pedidos con paginación (ADMIN ONLY)
 export const GET = withAdminAuth(
   async (
@@ -42,29 +63,15 @@ export const GET = withAdminAuth(
       }
       const { page, limit, status, search } = parsedQuery.data;
 
-      // Soporte para buscar por mpPaymentId (usado por página de success)
       const mpPaymentId = searchParams.get("mpPaymentId");
       const shippingMethod = searchParams.get("shippingMethod");
 
-      // Construir filtros
-      const where: Record<string, unknown> = {};
-      if (status) {
-        where.status = status;
-      }
-      if (shippingMethod) {
-        where.shippingMethod = shippingMethod;
-      }
-      if (mpPaymentId) {
-        // Búsqueda directa por payment ID de MercadoPago
-        where.mpPaymentId = mpPaymentId;
-      } else if (search) {
-        // Buscar por nombre, email o ID exacto
-        where.OR = [
-          { customerName: { contains: search, mode: "insensitive" } },
-          { customerEmail: { contains: search, mode: "insensitive" } },
-          { id: search },
-        ];
-      }
+      const where = buildOrdersFilter({
+        status,
+        shippingMethod,
+        mpPaymentId,
+        search,
+      });
 
       // Calcular offset para paginación
       const offset = (page - 1) * limit;
@@ -170,6 +177,65 @@ export const GET = withAdminAuth(
   }
 );
 
+type ValidatedOrderItem = {
+  id: string;
+  productId: string;
+  quantity: number;
+  price: number;
+};
+type OrderItemInput = {
+  productId: string;
+  quantity: number;
+  color?: string;
+  size?: string;
+};
+
+async function validateAndPriceItems(
+  items: OrderItemInput[]
+): Promise<
+  | { validatedItems: ValidatedOrderItem[]; total: number }
+  | { error: string; status: number; code: string }
+> {
+  let total = 0;
+  const validatedItems: ValidatedOrderItem[] = [];
+
+  for (const item of items) {
+    const product = await prisma.products.findUnique({
+      where: { id: item.productId },
+      include: { product_variants: true },
+    });
+    if (!product) {
+      return {
+        error: `Producto con ID ${item.productId} no encontrado`,
+        status: 400,
+        code: "BAD_REQUEST",
+      };
+    }
+    const variant =
+      item.color && item.size
+        ? product.product_variants.find(
+            (v) => v.color === item.color && v.size === item.size
+          )
+        : undefined;
+    const availableStock = variant?.stock ?? product.stock;
+    if (availableStock < item.quantity) {
+      return {
+        error: `Stock insuficiente para el producto ${product.name}. Stock disponible: ${availableStock}`,
+        status: 400,
+        code: "CONFLICT",
+      };
+    }
+    total += Number(product.price) * item.quantity;
+    validatedItems.push({
+      id: `item-${nanoid()}`,
+      productId: item.productId,
+      quantity: item.quantity,
+      price: Number(product.price),
+    });
+  }
+  return { validatedItems, total };
+}
+
 // POST /api/orders - Crear nuevo pedido
 export async function POST(
   request: NextRequest
@@ -193,56 +259,15 @@ export async function POST(
     }
     const { customerName, customerPhone, customerAddress, items } = parsed.data;
 
-    // Validar y calcular el total
-    let total = 0;
-    const validatedItems: {
-      id: string;
-      productId: string;
-      quantity: number;
-      price: number;
-    }[] = [];
-
-    for (const item of items) {
-      const product = await prisma.products.findUnique({
-        where: { id: item.productId },
-        include: { product_variants: true },
-      });
-
-      if (!product) {
-        return fail(
-          "BAD_REQUEST",
-          `Producto con ID ${item.productId} no encontrado`,
-          400
-        );
-      }
-
-      // Chequear stock de variante si corresponde, si no usar stock global
-      const variant =
-        item.color && item.size
-          ? product.product_variants.find(
-              (v) => v.color === item.color && v.size === item.size
-            )
-          : undefined;
-      const availableStock = variant?.stock ?? product.stock;
-
-      if (availableStock < item.quantity) {
-        return fail(
-          "CONFLICT",
-          `Stock insuficiente para el producto ${product.name}. Stock disponible: ${availableStock}`,
-          400
-        );
-      }
-
-      const itemTotal = Number(product.price) * item.quantity;
-      total += itemTotal;
-
-      validatedItems.push({
-        id: `item-${nanoid()}`,
-        productId: item.productId,
-        quantity: item.quantity,
-        price: Number(product.price), // Precio al momento de la compra
-      });
+    const itemsResult = await validateAndPriceItems(items);
+    if ("error" in itemsResult) {
+      return fail(
+        itemsResult.code as ApiErrorCode,
+        itemsResult.error,
+        itemsResult.status
+      );
     }
+    const { validatedItems, total } = itemsResult;
 
     // Crear el pedido con transacción
     const order = await prisma.$transaction(

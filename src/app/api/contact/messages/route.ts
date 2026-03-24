@@ -24,10 +24,42 @@ const ContactMessageSchema = z.object({
   responsePreference: z.enum(["EMAIL", "PHONE", "WHATSAPP"]).default("EMAIL"),
 });
 
+function mapContactError(err: unknown, endpoint: string) {
+  const e = normalizeApiError(err);
+  logger.error(`${endpoint} failed`, e);
+  const code: ApiErrorCode =
+    e.code === "INTERNAL" ? "INTERNAL_ERROR" : (e.code as ApiErrorCode);
+  return NextResponse.json(fail(code, e.message, e.status ?? 500));
+}
+
+async function saveContactMessage(data: z.infer<typeof ContactMessageSchema>) {
+  const { name, email, phone, message, responsePreference } = data;
+  const phone_val = phone ? phone : null;
+  const contactMessage = await prisma.contact_messages.create({
+    data: { name, email, phone: phone_val, message, responsePreference },
+  });
+  logger.info("New contact message saved", {
+    id: contactMessage.id,
+    email,
+    responsePreference,
+  });
+  emailService
+    .sendContactNotification({
+      name,
+      email,
+      phone,
+      message,
+      responsePreference,
+    })
+    .catch((emailErr) =>
+      logger.warn("Failed to send contact notification email", { emailErr })
+    );
+  return contactMessage;
+}
+
 // POST - Crear nuevo mensaje de contacto
 export async function POST(req: NextRequest) {
   try {
-    // Rate limit más estricto para evitar spam
     const rl = await checkRateLimit(req, {
       key: "contact:message",
       limit: 5,
@@ -43,61 +75,19 @@ export async function POST(req: NextRequest) {
         )
       );
     }
-
     const body = await req.json();
-
     const parsed = ContactMessageSchema.safeParse(body);
-
     if (!parsed.success) {
-      const errorDetails = parsed.error.issues[0]?.message || "Datos inválidos";
-      return NextResponse.json(fail("BAD_REQUEST", errorDetails, 400));
+      const msg = parsed.error.issues[0]?.message || "Datos inválidos";
+      return NextResponse.json(fail("BAD_REQUEST", msg, 400));
     }
-
-    const { name, email, phone, message, responsePreference } = parsed.data;
-
-    // Persist contact message to DB (#28 fix)
-    const contactMessage = await prisma.contact_messages.create({
-      data: {
-        name,
-        email,
-        phone: phone ?? null,
-        message,
-        responsePreference,
-      },
-    });
-
-    logger.info("New contact message saved", {
-      id: contactMessage.id,
-      email,
-      responsePreference,
-    });
-
-    // Notificar al admin por email (no bloquea la respuesta si falla)
-    emailService
-      .sendContactNotification({
-        name,
-        email,
-        phone,
-        message,
-        responsePreference,
-      })
-      .catch((emailErr) =>
-        logger.warn("Failed to send contact notification email", { emailErr })
-      );
-
+    const contactMessage = await saveContactMessage(parsed.data);
     return NextResponse.json(
-      ok({
-        id: contactMessage.id,
-        message: "Mensaje enviado exitosamente",
-      }),
+      ok({ id: contactMessage.id, message: "Mensaje enviado exitosamente" }),
       { status: 201 }
     );
   } catch (err) {
-    const e = normalizeApiError(err);
-    logger.error("POST /api/contact/messages failed", e);
-    const code: ApiErrorCode =
-      e.code === "INTERNAL" ? "INTERNAL_ERROR" : (e.code as ApiErrorCode);
-    return NextResponse.json(fail(code, e.message, e.status ?? 500));
+    return mapContactError(err, "POST /api/contact/messages");
   }
 }
 
@@ -151,10 +141,6 @@ export const GET = withAdminAuth(async (req: NextRequest) => {
       })
     );
   } catch (err) {
-    const e = normalizeApiError(err);
-    logger.error("GET /api/contact/messages failed", e);
-    const code: ApiErrorCode =
-      e.code === "INTERNAL" ? "INTERNAL_ERROR" : (e.code as ApiErrorCode);
-    return NextResponse.json(fail(code, e.message, e.status ?? 500));
+    return mapContactError(err, "GET /api/contact/messages");
   }
 });

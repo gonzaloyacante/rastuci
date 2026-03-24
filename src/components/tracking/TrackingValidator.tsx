@@ -19,6 +19,16 @@ import {
   useTrackingValidation,
 } from "@/hooks/useTrackingValidation";
 
+const STATUS_COLORS: Record<string, string> = {
+  ENTREGADO: "text-success",
+  EN_TRANSITO: "text-primary",
+  EN_DISTRIBUCION: "text-primary",
+  PENDIENTE: "text-warning",
+  PREPARACION: "text-warning",
+  RETENIDO: "text-error",
+  DEVUELTO: "text-error",
+};
+
 interface TrackingValidatorProps {
   onValidationSuccess?: (result: TrackingValidationResponse) => void;
   onValidationError?: (error: string) => void;
@@ -86,25 +96,8 @@ export function TrackingValidator({
   };
 
   const getStatusColor = (status?: string) => {
-    if (!status) {
-      return "text-muted";
-    }
-
-    switch (status.toUpperCase()) {
-      case "ENTREGADO":
-        return "text-success";
-      case "EN_TRANSITO":
-      case "EN_DISTRIBUCION":
-        return "text-primary";
-      case "PENDIENTE":
-      case "PREPARACION":
-        return "text-warning";
-      case "RETENIDO":
-      case "DEVUELTO":
-        return "text-error";
-      default:
-        return "text-muted";
-    }
+    if (!status) return "text-muted";
+    return STATUS_COLORS[status.toUpperCase()] ?? "text-muted";
   };
 
   return (
