@@ -30,8 +30,47 @@ export const AVAILABLE_SHIPPING_OPTIONS: ShippingOption[] = [
   },
 ];
 
+type ZoneOverrides = Record<string, Partial<ShippingOption>>;
+
+const ZONE_OVERRIDES: ZoneOverrides[] = [
+  // CABA (1000-1499)
+  {
+    standard: { price: 800, estimatedDays: "2-3 días" },
+    express: { price: 1500, estimatedDays: "24 horas" },
+  },
+  // GBA (1500-1999)
+  {
+    standard: { price: 1200, estimatedDays: "2-4 días" },
+    express: { price: 2000, estimatedDays: "24-48 horas" },
+  },
+  // Provincias cercanas (Santa Fe, Córdoba, Entre Ríos)
+  {
+    standard: { price: 1800, estimatedDays: "3-5 días" },
+    express: { price: 3000, estimatedDays: "48-72 horas" },
+  },
+  // Resto del país
+  {
+    standard: { price: 2500, estimatedDays: "5-7 días" },
+    express: { price: 4000, estimatedDays: "72-96 horas" },
+  },
+];
+
+const ZONE_RANGES: { min: number; max: number; zone: number }[] = [
+  { min: 1000, max: 1499, zone: 0 }, // CABA
+  { min: 1500, max: 1999, zone: 1 }, // GBA
+  { min: 2000, max: 2999, zone: 2 }, // Provincias cercanas (Santa Fe)
+  { min: 3000, max: 3599, zone: 2 }, // Provincias cercanas (Entre Ríos)
+  { min: 5000, max: 5999, zone: 2 }, // Provincias cercanas (Córdoba)
+];
+
+function getZoneIndex(numericCode: number): number {
+  const match = ZONE_RANGES.find(
+    (r) => numericCode >= r.min && numericCode <= r.max
+  );
+  return match?.zone ?? 3; // 3 = Resto del país
+}
+
 export function calculateShippingOptions(postalCode: string): ShippingOption[] {
-  // Validar el código postal de Argentina (formato general 4 dígitos o 1 letra + 4 dígitos)
   const postalCodeRegex = /^[A-Z]?\d{4}$/i;
   if (!postalCodeRegex.test(postalCode)) {
     throw new Error(
@@ -39,61 +78,11 @@ export function calculateShippingOptions(postalCode: string): ShippingOption[] {
     );
   }
 
-  const numericCode = parseInt(postalCode.replace(/[A-Z]/i, ""));
-  let options = [...AVAILABLE_SHIPPING_OPTIONS];
+  const numericCode = parseInt(postalCode.replace(/[A-Z]/i, ""), 10);
+  const zoneOverrides = ZONE_OVERRIDES[getZoneIndex(numericCode)];
 
-  // CABA
-  if (numericCode >= 1000 && numericCode <= 1499) {
-    options = options.map((option) => {
-      if (option.id === "standard") {
-        return { ...option, price: 800, estimatedDays: "2-3 días" };
-      }
-      if (option.id === "express") {
-        return { ...option, price: 1500, estimatedDays: "24 horas" };
-      }
-      return option;
-    });
-  }
-  // GBA
-  else if (numericCode >= 1500 && numericCode <= 1999) {
-    options = options.map((option) => {
-      if (option.id === "standard") {
-        return { ...option, price: 1200, estimatedDays: "2-4 días" };
-      }
-      if (option.id === "express") {
-        return { ...option, price: 2000, estimatedDays: "24-48 horas" };
-      }
-      return option;
-    });
-  }
-  // Provincias cercanas (Santa Fe, Córdoba, Entre Ríos)
-  else if (
-    (numericCode >= 2000 && numericCode <= 2999) ||
-    (numericCode >= 3000 && numericCode <= 3599) ||
-    (numericCode >= 5000 && numericCode <= 5999)
-  ) {
-    options = options.map((option) => {
-      if (option.id === "standard") {
-        return { ...option, price: 1800, estimatedDays: "3-5 días" };
-      }
-      if (option.id === "express") {
-        return { ...option, price: 3000, estimatedDays: "48-72 horas" };
-      }
-      return option;
-    });
-  }
-  // Resto del país
-  else {
-    options = options.map((option) => {
-      if (option.id === "standard") {
-        return { ...option, price: 2500, estimatedDays: "5-7 días" };
-      }
-      if (option.id === "express") {
-        return { ...option, price: 4000, estimatedDays: "72-96 horas" };
-      }
-      return option;
-    });
-  }
-
-  return options;
+  return AVAILABLE_SHIPPING_OPTIONS.map((option) => {
+    const override = zoneOverrides[option.id];
+    return override ? { ...option, ...override } : option;
+  });
 }

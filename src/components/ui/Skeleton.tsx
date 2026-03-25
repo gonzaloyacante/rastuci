@@ -158,11 +158,8 @@ export const ProductDetailSkeleton = () => (
       <div className="space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="space-y-4">
-          {[...Array(3)].map(() => (
-            <div
-              key={`review-${Math.random()}`}
-              className="border-b border-muted pb-4"
-            >
+          {[...Array(3)].map((_, i) => (
+            <div key={`review-${i}`} className="border-b border-muted pb-4">
               <div className="flex items-center justify-between mb-2">
                 <Skeleton className="h-4 w-24" />
                 <div className="flex space-x-1">
