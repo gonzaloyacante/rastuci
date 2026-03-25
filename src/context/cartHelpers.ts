@@ -1,8 +1,14 @@
-import { analytics } from "@/lib/analytics";
+import { analytics } from "@/lib/analytics/index";
 import { Agency } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
-import { CartItem, Coupon, CustomerInfo, PaymentMethod, ShippingOption } from "@/types/cart";
+import {
+  CartItem,
+  Coupon,
+  CustomerInfo,
+  PaymentMethod,
+  ShippingOption,
+} from "@/types/cart";
 import { formatCurrency } from "@/utils/formatters";
 
 export function getEffectivePrice(product: Product): number {
@@ -39,7 +45,14 @@ export function upsertCartItem(
   );
   return [
     ...prevItems,
-    { product, quantity, size, color, variantId: variant?.id, sku: variant?.sku ?? undefined },
+    {
+      product,
+      quantity,
+      size,
+      color,
+      variantId: variant?.id,
+      sku: variant?.sku ?? undefined,
+    },
   ];
 }
 
@@ -65,8 +78,13 @@ export async function validateCouponResponse(
   getCurrentTotal: () => number
 ): Promise<Coupon | null> {
   if (!result.success || !result.coupon) return null;
-  const coupon = result.coupon as unknown as Coupon & { minOrderTotal?: number };
-  if (coupon.minOrderTotal != null && getCurrentTotal() < coupon.minOrderTotal) {
+  const coupon = result.coupon as unknown as Coupon & {
+    minOrderTotal?: number;
+  };
+  if (
+    coupon.minOrderTotal != null &&
+    getCurrentTotal() < coupon.minOrderTotal
+  ) {
     throw new Error(
       `El monto mínimo para este cupón es ${formatCurrency(coupon.minOrderTotal)}`
     );
@@ -106,12 +124,17 @@ export type CartPlaceOrderResult = {
   paymentMethod?: string;
 };
 
-async function parseCheckoutResponse(response: Response): Promise<CartPlaceOrderResult | null> {
+async function parseCheckoutResponse(
+  response: Response
+): Promise<CartPlaceOrderResult | null> {
   if (response.ok) return null;
   const contentType = response.headers.get("content-type");
   if (contentType?.includes("application/json")) {
     const err = await response.json();
-    return { success: false, error: err.error || "Error al procesar el pedido" };
+    return {
+      success: false,
+      error: err.error || "Error al procesar el pedido",
+    };
   }
   return { success: false, error: `Error de red: HTTP ${response.status}` };
 }
@@ -121,22 +144,43 @@ function resolveOrderResult(
   total: number,
   clearCart: () => void
 ): CartPlaceOrderResult {
-  analytics.trackPurchase(result.orderId as string || "temp_id", total, "ARS", result.items as Record<string, unknown>[]);
+  analytics.trackPurchase(
+    (result.orderId as string) || "temp_id",
+    total,
+    "ARS",
+    result.items as Record<string, unknown>[]
+  );
 
   if (result.paymentMethod === "mercadopago" && result.initPoint) {
-    return { success: true, redirectUrl: result.initPoint as string, paymentMethod: "mercadopago" };
+    return {
+      success: true,
+      redirectUrl: result.initPoint as string,
+      paymentMethod: "mercadopago",
+    };
   }
   if (result.paymentMethod === "cash" || result.paymentMethod === "transfer") {
     clearCart();
-    return { success: true, orderId: result.orderId as string, paymentMethod: result.paymentMethod as string };
+    return {
+      success: true,
+      orderId: result.orderId as string,
+      paymentMethod: result.paymentMethod as string,
+    };
   }
   return { success: true, orderId: result.orderId as string };
 }
 
-export async function executePlaceOrder(deps: PlaceOrderDeps): Promise<CartPlaceOrderResult> {
+export async function executePlaceOrder(
+  deps: PlaceOrderDeps
+): Promise<CartPlaceOrderResult> {
   const {
-    cartItems, customerInfo, selectedPaymentMethod, selectedShippingOption,
-    selectedAgency, appliedCoupon, orderSummary, clearCart,
+    cartItems,
+    customerInfo,
+    selectedPaymentMethod,
+    selectedShippingOption,
+    selectedAgency,
+    appliedCoupon,
+    orderSummary,
+    clearCart,
   } = deps;
 
   try {
@@ -162,12 +206,18 @@ export async function executePlaceOrder(deps: PlaceOrderDeps): Promise<CartPlace
 
     const result = await response.json();
     if (!result.success) {
-      return { success: false, error: result.error || "Error al procesar el pedido" };
+      return {
+        success: false,
+        error: result.error || "Error al procesar el pedido",
+      };
     }
 
     return resolveOrderResult(result, orderSummary.total, clearCart);
   } catch (error) {
     logger.error("Error al procesar pedido", { error });
-    return { success: false, error: "Error de conexión. Por favor intenta nuevamente." };
+    return {
+      success: false,
+      error: "Error de conexión. Por favor intenta nuevamente.",
+    };
   }
 }

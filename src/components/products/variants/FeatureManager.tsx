@@ -1,12 +1,12 @@
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { ToggleButton } from "@/components/products/list/ProductHelpers";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
 
-import { FEATURE_CATEGORIES } from "./constants";
-import { ToggleButton } from "./ProductHelpers";
+import { FEATURE_CATEGORIES } from "../constants";
 
 // ==============================================================================
 // FeatureManager - Gestor de características

@@ -110,7 +110,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-sm font-medium mb-2 text-[var(--color-text)]"
+            className="block text-sm font-medium mb-2 text-(--color-text)"
           >
             {label}
             {required && <span className="text-error ml-1">*</span>}
@@ -119,7 +119,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative">
           {/* Left Icon */}
           {hasLeftIcon && (
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--color-text-muted)] pointer-events-none">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-(--color-text-muted) pointer-events-none">
               {leftIcon || <i className={`icon-${icon}`} />}
             </span>
           )}
@@ -142,7 +142,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               // Base styles
               "w-full rounded-lg outline-none transition-all duration-200",
-              "placeholder:text-[var(--color-text-muted)]",
+              "placeholder:text-(--color-text-muted)",
               "disabled:opacity-50 disabled:cursor-not-allowed",
               // Size
               sizeClasses[inputSize],
@@ -162,7 +162,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           {/* Right Icon (static) */}
           {hasRightIcon && !showClearButton && !showToggle && (
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--color-text-muted)] pointer-events-none">
+            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-(--color-text-muted) pointer-events-none">
               {rightIcon || <i className={`icon-${icon}`} />}
             </span>
           )}
@@ -176,7 +176,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               variant="ghost"
               className={cn(
                 "absolute inset-y-0 flex items-center justify-center p-0 h-auto min-h-0 min-w-0 bg-transparent hover:bg-transparent",
-                "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
+                "text-(--color-text-muted) hover:text-(--color-text)",
                 "focus:outline-none transition-colors",
                 showToggle ? "right-10" : "right-3"
               )}
@@ -194,7 +194,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
               }
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-3 flex items-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus:outline-none transition-colors p-0 h-auto min-h-0 min-w-0 bg-transparent hover:bg-transparent"
+              className="absolute inset-y-0 right-3 flex items-center text-(--color-text-muted) hover:text-(--color-text) focus:outline-none transition-colors p-0 h-auto min-h-0 min-w-0 bg-transparent hover:bg-transparent"
             >
               {showPassword ? (
                 <svg
@@ -239,7 +239,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {helpText && !error && (
           <p
             id={`${id}-help`}
-            className="mt-1.5 text-xs text-[var(--color-text-muted)]"
+            className="mt-1.5 text-xs text-(--color-text-muted)"
           >
             {helpText}
           </p>

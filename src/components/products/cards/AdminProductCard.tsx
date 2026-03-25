@@ -12,9 +12,8 @@ import {
 } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 
-import { DynamicTags } from "@/components/products/DynamicTags";
-import { PriceBadge } from "@/components/products/PriceBadge";
-import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
+import { COMMON_COLORS } from "@/components/products/forms/ProductFormComponents";
+import { DynamicTags } from "@/components/products/variants/DynamicTags";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { LoadingSkeleton } from "@/components/ui/LoadingStates";
@@ -23,6 +22,8 @@ import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder
 import { StockBadge } from "@/components/ui/StockBadge";
 import { Product } from "@/types";
 import { sortSizes } from "@/utils/sizes";
+
+import { PriceBadge } from "./PriceBadge";
 
 // ============================================================================
 // InlineStockEditor — edición rápida de stock sin abrir el formulario completo

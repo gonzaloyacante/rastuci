@@ -20,6 +20,26 @@ import { logger } from "@/lib/logger";
 import { formatCurrency } from "@/lib/utils";
 import { ProductBulkUpdateItem } from "@/lib/validation/product";
 
+// ============================================================================
+// Module-level helpers (defined outside component for lower complexity)
+// ============================================================================
+const TRUTHY_VALUES = new Set(["SI", "YES", "TRUE", "1"]);
+const FALSY_VALUES = new Set(["NO", "FALSE", "0"]);
+
+function parseNum(val: unknown): number | undefined {
+  if (!val || val === "") return undefined;
+  const num = Number(val);
+  return isNaN(num) ? undefined : num;
+}
+
+function parseBool(val: unknown): boolean | undefined {
+  if (!val) return undefined;
+  const s = String(val).toUpperCase();
+  if (TRUTHY_VALUES.has(s)) return true;
+  if (FALSY_VALUES.has(s)) return false;
+  return undefined;
+}
+
 interface BulkImportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -111,23 +131,6 @@ export function BulkImportModal({
 
       const item: ProductBulkUpdateItem = {
         id,
-      };
-
-      // Helper to parse numbers safely
-      const parseNum = (val: unknown): number | undefined => {
-        if (!val || val === "") return undefined;
-        const num = Number(val);
-        return isNaN(num) ? undefined : num;
-      };
-
-      // Helper to parse booleans safely (YES/NO from export)
-      const parseBool = (val: unknown): boolean | undefined => {
-        if (!val) return undefined;
-        const s = String(val).toUpperCase();
-        if (s === "SI" || s === "YES" || s === "TRUE" || s === "1") return true;
-        if (s === "NO" || s === "NO" || s === "FALSE" || s === "0")
-          return false;
-        return undefined;
       };
 
       // Map optional fields if present in CSV

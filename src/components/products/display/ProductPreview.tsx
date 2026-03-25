@@ -11,10 +11,9 @@ import {
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
+import { PlaceholderImage } from "@/components/products/forms/ProductFormComponents";
 import { getColorHex } from "@/utils/colors";
 import { formatPriceARS } from "@/utils/formatters";
-
-import { PlaceholderImage } from "./ProductFormComponents";
 
 // ==============================================================================
 // TYPES

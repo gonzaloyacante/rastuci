@@ -4,7 +4,7 @@ import { Heart, ShoppingCart, Star } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { DynamicTags } from "@/components/products/DynamicTags";
+import { DynamicTags } from "@/components/products/variants/DynamicTags";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Product } from "@/types";

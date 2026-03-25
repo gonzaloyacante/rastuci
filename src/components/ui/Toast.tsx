@@ -129,6 +129,20 @@ const borderColors: Record<ToastType, string> = {
   info: "border-l-blue-500",
 };
 
+function toastClassName(
+  type: ToastType,
+  isExiting: boolean | undefined
+): string {
+  return cn(
+    "surface border border-theme rounded-lg shadow-lg p-3 flex items-start gap-3 pointer-events-auto",
+    "border-l-4",
+    borderColors[type],
+    "translate-x-0 opacity-100",
+    !isExiting && "animate-in slide-in-from-right-full fade-in duration-300",
+    isExiting && "animate-out slide-out-to-right-full fade-out duration-200"
+  );
+}
+
 function ToastItem({
   toast,
   onDismiss,
@@ -142,17 +156,7 @@ function ToastItem({
     <div
       role="status"
       aria-live="polite"
-      className={cn(
-        "surface border border-theme rounded-lg shadow-lg p-3 flex items-start gap-3 pointer-events-auto",
-        "border-l-4",
-        borderColors[type],
-        // Animación de entrada
-        "translate-x-0 opacity-100",
-        !isExiting &&
-          "animate-in slide-in-from-right-full fade-in duration-300",
-        // Animación de salida
-        isExiting && "animate-out slide-out-to-right-full fade-out duration-200"
-      )}
+      className={toastClassName(type, isExiting)}
     >
       <div className="shrink-0 mt-0.5">{icons[type]}</div>
       <div className="flex-1 min-w-0">

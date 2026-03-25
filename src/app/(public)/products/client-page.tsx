@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
-import { MobileFiltersSheet } from "@/components/products/MobileFiltersSheet";
-import ProductCard from "@/components/products/ProductCard";
+import ProductCard from "@/components/products/cards/ProductCard";
+import { MobileFiltersSheet } from "@/components/products/filters/MobileFiltersSheet";
 import {
   ActiveFilterChips,
   EmptyProductsState,
@@ -17,7 +17,7 @@ import {
   ProductsCountLabel,
   SearchInput,
   ViewModeToggle,
-} from "@/components/products/ProductListComponents";
+} from "@/components/products/list/ProductListComponents";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useCategories } from "@/hooks/useCategories";

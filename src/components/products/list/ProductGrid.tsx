@@ -3,13 +3,12 @@
 import { Grid, List } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import ProductCard from "@/components/products/cards/ProductCard";
+import { Button } from "@/components/ui/Button";
+import { LoadingSkeleton, LoadingSpinner } from "@/components/ui/LoadingStates";
+import { Pagination, PaginationInfo } from "@/components/ui/Pagination";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { Product } from "@/types";
-
-import { Button } from "../ui/Button";
-import { LoadingSkeleton, LoadingSpinner } from "../ui/LoadingStates";
-import { Pagination, PaginationInfo } from "../ui/Pagination";
-import ProductCard from "./ProductCard";
 
 interface ProductGridProps {
   products: Product[];

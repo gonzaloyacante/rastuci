@@ -153,7 +153,7 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 w-screen h-screen">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 w-screen h-screen">
       <div
         className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col relative overflow-hidden"
         onClick={(e) => e.stopPropagation()}

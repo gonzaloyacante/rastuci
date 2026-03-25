@@ -9,13 +9,13 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import ImageUploadZone from "@/components/products/media/ImageUploadZone";
 import { Button } from "@/components/ui/Button";
 import { ColorChip } from "@/components/ui/ColorChip";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
 
-import { COLOR_CATEGORIES } from "./constants";
-import ImageUploadZone from "./ImageUploadZone";
+import { COLOR_CATEGORIES } from "../constants";
 
 // ==============================================================================
 // ColorPicker - Selector de colores

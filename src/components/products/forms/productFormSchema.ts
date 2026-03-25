@@ -49,19 +49,43 @@ export const productSchema = z.object({
   onSale: z.coerce.boolean().optional(),
   weight: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un peso válido" }).int().min(1).max(30000).optional().nullable()
+    z
+      .number({ invalid_type_error: "Ingresa un peso válido" })
+      .int()
+      .min(1)
+      .max(30000)
+      .optional()
+      .nullable()
   ),
   height: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa una altura válida" }).int().min(1).max(150).optional().nullable()
+    z
+      .number({ invalid_type_error: "Ingresa una altura válida" })
+      .int()
+      .min(1)
+      .max(150)
+      .optional()
+      .nullable()
   ),
   width: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un ancho válido" }).int().min(1).max(150).optional().nullable()
+    z
+      .number({ invalid_type_error: "Ingresa un ancho válido" })
+      .int()
+      .min(1)
+      .max(150)
+      .optional()
+      .nullable()
   ),
   length: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number({ invalid_type_error: "Ingresa un largo válido" }).int().min(1).max(150).optional().nullable()
+    z
+      .number({ invalid_type_error: "Ingresa un largo válido" })
+      .int()
+      .min(1)
+      .max(150)
+      .optional()
+      .nullable()
   ),
   sizesInput: z.string().optional(),
   colorsInput: z.string().optional(),
@@ -90,7 +114,9 @@ export function calcDiscountPercentage(
   price: number,
   salePrice: number | null | undefined
 ): number | null {
-  return salePrice && price ? Math.round(((price - salePrice) / price) * 100) : null;
+  return salePrice && price
+    ? Math.round(((price - salePrice) / price) * 100)
+    : null;
 }
 
 export function buildInitialResetValues(
@@ -118,7 +144,10 @@ export function buildImageOptions(
   colorImages: Record<string, string[]>
 ) {
   return {
-    images: productImages.length > 0 ? productImages : Object.values(colorImages).flat(),
+    images:
+      productImages.length > 0
+        ? productImages
+        : Object.values(colorImages).flat(),
     colorImages: Object.keys(colorImages).length > 0 ? colorImages : undefined,
   };
 }
@@ -149,8 +178,16 @@ export function buildProductData(
   variants: ProductVariant[]
 ) {
   const discountPct = data.discountPercentage;
-  const salePrice = discountPct && discountPct > 0 ? data.price * (1 - discountPct / 100) : null;
-  const dimensions = { weight: data.weight ?? null, height: data.height ?? null, width: data.width ?? null, length: data.length ?? null };
+  const salePrice =
+    discountPct && discountPct > 0
+      ? data.price * (1 - discountPct / 100)
+      : null;
+  const dimensions = {
+    weight: data.weight ?? null,
+    height: data.height ?? null,
+    width: data.width ?? null,
+    length: data.length ?? null,
+  };
   return {
     name: data.name.trim(),
     description: data.description?.trim() ?? null,
@@ -167,12 +204,22 @@ export function buildProductData(
 }
 
 export const numericKeyHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  const allowed = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
+  const allowed = [
+    "Backspace",
+    "Tab",
+    "ArrowLeft",
+    "ArrowRight",
+    "Delete",
+    "Home",
+    "End",
+  ];
   if (allowed.includes(e.key)) return;
   if (!/^[0-9]$/.test(e.key)) e.preventDefault();
 };
 
-export const numericPasteHandler = (e: React.ClipboardEvent<HTMLInputElement>) => {
+export const numericPasteHandler = (
+  e: React.ClipboardEvent<HTMLInputElement>
+) => {
   const paste = e.clipboardData?.getData("text") || "";
   if (!/^\d+$/.test(paste)) e.preventDefault();
 };

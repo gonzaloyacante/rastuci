@@ -16,6 +16,12 @@ import {
   Tag,
 } from "lucide-react";
 
+import ProductPreview from "@/components/products/display/ProductPreview";
+import ImageUploadZone from "@/components/products/media/ImageUploadZone";
+import SizeGuideEditor, {
+  SizeGuideData,
+} from "@/components/products/variants/SizeGuideEditor";
+import VariantManager from "@/components/products/variants/VariantManager";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -29,7 +35,6 @@ import {
 import { useProductForm } from "@/hooks/useProductForm";
 import { formatPriceARS } from "@/utils/formatters";
 
-import ImageUploadZone from "./ImageUploadZone";
 import {
   ColorPicker,
   FeatureManager,
@@ -41,9 +46,6 @@ import {
   numericPasteHandler,
   type ProductFormProps,
 } from "./productFormSchema";
-import ProductPreview from "./ProductPreview";
-import SizeGuideEditor, { SizeGuideData } from "./SizeGuideEditor";
-import VariantManager from "./VariantManager";
 
 // ==============================================================================
 // MAIN COMPONENT
@@ -53,13 +55,42 @@ export default function ProductForm({
   categories,
 }: ProductFormProps) {
   const {
-    register, handleSubmit, errors, watch, loading, title, action,
-    selectedCategoryId, productImages, setProductImages, colorImages, setColorImages,
-    colors, setColors, sizes, setSizes, features, setFeatures, variants, setVariants,
-    totalVariantStock, isOnSale, watchPrice, watchDiscountPercentage, calculatedSalePrice,
-    priceInput, handlePriceFocus, handlePriceChange, handlePriceKeyDown, handlePricePaste,
-    handlePriceBlur, handleCategoryChange, handleSizeGuideChange, handleCancel,
-    handleFormError, onSubmit,
+    register,
+    handleSubmit,
+    errors,
+    watch,
+    loading,
+    title,
+    action,
+    selectedCategoryId,
+    productImages,
+    setProductImages,
+    colorImages,
+    setColorImages,
+    colors,
+    setColors,
+    sizes,
+    setSizes,
+    features,
+    setFeatures,
+    variants,
+    setVariants,
+    totalVariantStock,
+    isOnSale,
+    watchPrice,
+    watchDiscountPercentage,
+    calculatedSalePrice,
+    priceInput,
+    handlePriceFocus,
+    handlePriceChange,
+    handlePriceKeyDown,
+    handlePricePaste,
+    handlePriceBlur,
+    handleCategoryChange,
+    handleSizeGuideChange,
+    handleCancel,
+    handleFormError,
+    onSubmit,
   } = useProductForm({ initialData, categories });
 
   return (
@@ -427,7 +458,9 @@ export default function ProductForm({
                     <Input
                       id={id}
                       type="number"
-                      {...register(id as "weight" | "height" | "width" | "length")}
+                      {...register(
+                        id as "weight" | "height" | "width" | "length"
+                      )}
                       placeholder={placeholder}
                       className={
                         errors[id as keyof typeof errors] ? "border-error" : ""

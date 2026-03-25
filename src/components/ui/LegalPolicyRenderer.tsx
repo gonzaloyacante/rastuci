@@ -14,7 +14,7 @@ export function LegalPolicyRenderer({
     return (
       <div
         className="prose prose-sm sm:prose lg:prose-lg max-w-none text-content-secondary"
-        // [C-05] Sanitized to prevent stored XSS from malicious CMS content
+        // [C-05] Sanitized — nosemgrep: react-dangerouslysetinnerhtml
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }}
       />
     );
@@ -30,7 +30,7 @@ export function LegalPolicyRenderer({
             </h2>
             {section.content && (
               <div
-                // [C-05] Sanitized before rendering
+                // [C-05] nosemgrep: react-dangerouslysetinnerhtml
                 dangerouslySetInnerHTML={{
                   __html: sanitizeHtml(section.content.replace(/\n/g, "<br/>")),
                 }}
@@ -42,7 +42,7 @@ export function LegalPolicyRenderer({
                 {section.items.map((item, i) => (
                   <li
                     key={i}
-                    // [C-05] Sanitized before rendering
+                    // nosemgrep: react-dangerouslysetinnerhtml
                     dangerouslySetInnerHTML={{
                       __html: sanitizeHtml(item),
                     }}
@@ -55,7 +55,7 @@ export function LegalPolicyRenderer({
                 {section.bullets.map((b, i) => (
                   <li
                     key={i}
-                    // [C-05] Sanitized before rendering
+                    // nosemgrep: react-dangerouslysetinnerhtml
                     dangerouslySetInnerHTML={{
                       __html: sanitizeHtml(b.text),
                     }}

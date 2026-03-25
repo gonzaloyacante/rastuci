@@ -1,9 +1,8 @@
 "use client";
 
+import { FilterSidebar } from "@/components/products/list/ProductListComponents";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
-
-import { FilterSidebar } from "./ProductListComponents";
 
 interface MobileFiltersSheetProps {
   isOpen: boolean;

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { analytics } from "@/lib/analytics";
+import { analytics } from "@/lib/analytics/index";
 import { Product } from "@/types";
 import { CartItem, Coupon } from "@/types/cart";
 

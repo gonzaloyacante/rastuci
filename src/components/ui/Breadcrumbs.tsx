@@ -293,6 +293,7 @@ export const BreadcrumbsWithSchema: React.FC<BreadcrumbsProps> = (props) => {
       <script
         type="application/ld+json"
         nonce={props.nonce}
+        // nosemgrep: react-dangerouslysetinnerhtml — JSON-LD serializado con safeJsonLd, no HTML de usuario
         dangerouslySetInnerHTML={{ __html: safeJsonLd(structuredData) }}
       />
     </>

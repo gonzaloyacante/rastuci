@@ -21,8 +21,8 @@ import {
   ReviewsSkeleton,
   SizeSelectorSection,
   StockBadge,
-} from "@/components/products/ProductDetailSections";
-import ProductImageGallery from "@/components/products/ProductImageGallery";
+} from "@/components/products/display/ProductDetailSections";
+import ProductImageGallery from "@/components/products/media/ProductImageGallery";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
@@ -30,10 +30,10 @@ import { useProductDetail } from "@/hooks/useProductDetail";
 import type { ProductVariant } from "@/types";
 
 const ProductReviews = React.lazy(
-  () => import("@/components/products/ProductReviews")
+  () => import("@/components/products/display/ProductReviews")
 );
 const RelatedProducts = React.lazy(
-  () => import("@/components/products/RelatedProducts")
+  () => import("@/components/products/display/RelatedProducts")
 );
 
 interface ProductDetailClientProps {

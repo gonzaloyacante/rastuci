@@ -2,8 +2,11 @@
 
 import { CreditCard, ShieldCheck, Truck } from "lucide-react";
 
-import { ColorSwatch } from "@/components/products/ProductHelpers";
-import { SizeGuide, SizeGuideData } from "@/components/products/SizeGuide";
+import { ColorSwatch } from "@/components/products/list/ProductHelpers";
+import {
+  SizeGuide,
+  SizeGuideData,
+} from "@/components/products/variants/SizeGuide";
 import { Button } from "@/components/ui/Button";
 import { ProductCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { getColorHex } from "@/utils/colors";

@@ -42,6 +42,100 @@ const fetcher = async (url: string) => {
 };
 
 // ==============================================================================
+// FILTER GROUP BUILDERS (module-level to reduce component complexity)
+// ==============================================================================
+interface FilterStats {
+  minPrice?: number;
+  maxPrice?: number;
+  availableSizes?: string[];
+  sizeCounts?: Record<string, number>;
+  availableColors?: string[];
+  colorCounts?: Record<string, number>;
+  categoryCounts?: Record<string, number>;
+  hasRatings?: boolean;
+  ratingCounts?: Record<string, number>;
+}
+
+function buildPriceGroup(stats: FilterStats): FilterGroup {
+  return {
+    id: "price",
+    label: "Precio",
+    type: "range",
+    icon: <DollarSign className="w-4 h-4" />,
+    min: stats.minPrice ?? 0,
+    max: stats.maxPrice ?? 100000,
+    step: 1000,
+  };
+}
+
+function buildCategoryGroup(
+  categories: Category[],
+  stats: FilterStats
+): FilterGroup {
+  return {
+    id: "category",
+    label: "Categoría",
+    type: "checkbox",
+    icon: <Tag className="w-4 h-4" />,
+    options: categories.map((cat) => ({
+      id: cat.id,
+      label: cat.name,
+      count: cat.count ?? stats.categoryCounts?.[cat.id] ?? 0,
+    })),
+  };
+}
+
+function buildSizeGroup(stats: FilterStats): FilterGroup {
+  return {
+    id: "size",
+    label: "Talla",
+    type: "checkbox",
+    icon: <Ruler className="w-4 h-4" />,
+    options: (stats.availableSizes ?? []).map((size) => ({
+      id: size,
+      label: size,
+      count: stats.sizeCounts?.[size] ?? 0,
+    })),
+  };
+}
+
+function buildColorGroup(stats: FilterStats): FilterGroup {
+  return {
+    id: "color",
+    label: "Color",
+    type: "color",
+    icon: <Palette className="w-4 h-4" />,
+    options: (stats.availableColors ?? []).map((color) => ({
+      id: color.toLowerCase(),
+      label: color,
+      count: stats.colorCounts?.[color] ?? 0,
+      color: getColorHex(color),
+    })),
+  };
+}
+
+const RATING_LEVELS = [
+  { id: "5", label: "5 estrellas", key: "5" },
+  { id: "4", label: "4+ estrellas", key: "4+" },
+  { id: "3", label: "3+ estrellas", key: "3+" },
+  { id: "2", label: "2+ estrellas", key: "2+" },
+] as const;
+
+function buildRatingGroup(stats: FilterStats): FilterGroup {
+  return {
+    id: "rating",
+    label: "Calificación",
+    type: "radio",
+    icon: <Star className="w-4 h-4" />,
+    options: RATING_LEVELS.map((r) => ({
+      id: r.id,
+      label: r.label,
+      count: stats.ratingCounts?.[r.key] ?? 0,
+    })),
+  };
+}
+
+// ==============================================================================
 // MAIN COMPONENT
 // ==============================================================================
 function AdvancedFiltersContent({
@@ -68,92 +162,15 @@ function AdvancedFiltersContent({
 
   // Build dynamic filter groups
   const filterGroups = useMemo((): FilterGroup[] => {
-    const groups: FilterGroup[] = [
-      {
-        id: "price",
-        label: "Precio",
-        type: "range",
-        icon: <DollarSign className="w-4 h-4" />,
-        min: stats.minPrice || 0,
-        max: stats.maxPrice || 100000,
-        step: 1000,
-      },
-    ];
-
-    if (categories.length > 0) {
-      groups.push({
-        id: "category",
-        label: "Categoría",
-        type: "checkbox",
-        icon: <Tag className="w-4 h-4" />,
-        options: categories.map((cat: Category) => ({
-          id: cat.id,
-          label: cat.name,
-          count: cat.count || stats.categoryCounts?.[cat.id] || 0,
-        })),
-      });
-    }
-
-    if (stats.availableSizes?.length > 0) {
-      groups.push({
-        id: "size",
-        label: "Talla",
-        type: "checkbox",
-        icon: <Ruler className="w-4 h-4" />,
-        options: stats.availableSizes.map((size: string) => ({
-          id: size,
-          label: size,
-          count: stats.sizeCounts?.[size] || 0,
-        })),
-      });
-    }
-
-    if (stats.availableColors?.length > 0) {
-      groups.push({
-        id: "color",
-        label: "Color",
-        type: "color",
-        icon: <Palette className="w-4 h-4" />,
-        options: stats.availableColors.map((color: string) => ({
-          id: color.toLowerCase(),
-          label: color,
-          count: stats.colorCounts?.[color] || 0,
-          color: getColorHex(color),
-        })),
-      });
-    }
-
-    if (stats.hasRatings) {
-      groups.push({
-        id: "rating",
-        label: "Calificación",
-        type: "radio",
-        icon: <Star className="w-4 h-4" />,
-        options: [
-          {
-            id: "5",
-            label: "5 estrellas",
-            count: stats.ratingCounts?.["5"] || 0,
-          },
-          {
-            id: "4",
-            label: "4+ estrellas",
-            count: stats.ratingCounts?.["4+"] || 0,
-          },
-          {
-            id: "3",
-            label: "3+ estrellas",
-            count: stats.ratingCounts?.["3+"] || 0,
-          },
-          {
-            id: "2",
-            label: "2+ estrellas",
-            count: stats.ratingCounts?.["2+"] || 0,
-          },
-        ],
-      });
-    }
-
+    const groups: FilterGroup[] = [buildPriceGroup(stats as FilterStats)];
+    if (categories.length > 0)
+      groups.push(buildCategoryGroup(categories, stats as FilterStats));
+    if ((stats as FilterStats).availableSizes?.length)
+      groups.push(buildSizeGroup(stats as FilterStats));
+    if ((stats as FilterStats).availableColors?.length)
+      groups.push(buildColorGroup(stats as FilterStats));
+    if ((stats as FilterStats).hasRatings)
+      groups.push(buildRatingGroup(stats as FilterStats));
     return groups;
   }, [categories, stats]);
 

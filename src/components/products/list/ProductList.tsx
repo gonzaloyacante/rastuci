@@ -25,7 +25,8 @@ import {
 } from "@/components/admin";
 import { StatCardData, StatsGrid } from "@/components/admin/AdminCards";
 import { ProductsAdminSkeleton } from "@/components/admin/skeletons";
-import ProductCard from "@/components/products/ProductCard";
+import ProductCard from "@/components/products/cards/ProductCard";
+import { BulkImportModal } from "@/components/products/forms/BulkImportModal";
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
@@ -46,8 +47,6 @@ import {
 } from "@/hooks";
 import { useProductActions } from "@/hooks/useProductActions";
 import { Product } from "@/types";
-
-import { BulkImportModal } from "./BulkImportModal";
 
 type ViewMode = "grid" | "list";
 type SortField = "name" | "price" | "stock" | "createdAt";

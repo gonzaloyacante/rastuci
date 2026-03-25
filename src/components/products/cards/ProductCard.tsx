@@ -2,9 +2,10 @@
 
 import React from "react";
 
-import { AdminProductCard } from "@/components/products/AdminProductCard";
-import { PublicProductCard } from "@/components/products/PublicProductCard";
 import { Product } from "@/types";
+
+import { AdminProductCard } from "./AdminProductCard";
+import { PublicProductCard } from "./PublicProductCard";
 
 // ============================================================================
 // Tipos

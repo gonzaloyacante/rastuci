@@ -1,12 +1,12 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
+import { ToggleButton } from "@/components/products/list/ProductHelpers";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { sortSizes } from "@/utils/sizes";
 
-import { COMMON_SIZES } from "./constants";
-import { ToggleButton } from "./ProductHelpers";
+import { COMMON_SIZES } from "../constants";
 
 // ==============================================================================
 // SizeManager - Gestor de talles

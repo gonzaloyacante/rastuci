@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { HelpTooltip } from "@/components/products/forms/ProductFormComponents";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -24,7 +25,10 @@ import { ProductVariant } from "@/types";
 import { getColorHex } from "@/utils/colors";
 import { sortVariantsBySize } from "@/utils/sizes";
 
-import { HelpTooltip } from "./ProductFormComponents";
+import {
+  createNewVariant,
+  generateVariantCombinations,
+} from "./variantHelpers";
 
 interface VariantManagerProps {
   variants: ProductVariant[];
@@ -57,28 +61,11 @@ export default function VariantManager({
       return;
     }
 
-    const newVariants: ProductVariant[] = [...variants];
-    let addedCount = 0;
-
-    availableColors.forEach((color) => {
-      availableSizes.forEach((size) => {
-        const exists = newVariants.some(
-          (v) => v.color === color && v.size === size
-        );
-
-        if (!exists) {
-          newVariants.push({
-            id: `temp-${Date.now()}-${Math.random()}`,
-            productId: "",
-            color,
-            size,
-            stock: 0,
-            sku: `${color.substring(0, 3).toUpperCase()}-${size}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-          });
-          addedCount++;
-        }
-      });
-    });
+    const { newVariants, addedCount } = generateVariantCombinations(
+      variants,
+      availableColors,
+      availableSizes
+    );
 
     if (addedCount > 0) {
       onChange(sortVariantsBySize(newVariants));
@@ -117,14 +104,11 @@ export default function VariantManager({
       return;
     }
 
-    const newVariant: ProductVariant = {
-      id: `temp-${Date.now()}`,
-      productId: "",
-      color: selectedColor,
-      size: selectedSize,
-      stock: stockInput === "" ? 0 : stockInput,
-      sku: `${selectedColor.substring(0, 3).toUpperCase()}-${selectedSize}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-    };
+    const newVariant = createNewVariant(
+      selectedColor,
+      selectedSize,
+      stockInput === "" ? 0 : stockInput
+    );
 
     onChange(sortVariantsBySize([...variants, newVariant]));
     setStockInput("");

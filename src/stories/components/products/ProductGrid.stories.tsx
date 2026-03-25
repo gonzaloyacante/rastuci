@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 
-import { ProductGrid } from "../../../components/products/ProductGrid";
+import { ProductGrid } from "../../../components/products/list/ProductGrid";
 import { Product } from "../../../types";
 
 const meta: Meta<typeof ProductGrid> = {

@@ -6,7 +6,7 @@ import React from "react";
 
 import { AdminTable } from "@/components/admin/AdminTable";
 import { TableSkeleton } from "@/components/admin/skeletons";
-import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
+import { COMMON_COLORS } from "@/components/products/forms/ProductFormComponents";
 import { Button } from "@/components/ui/Button";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import { Product } from "@/types";
