@@ -96,9 +96,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     couponCode: z.string().min(1).max(50).toUpperCase().optional(),
     orderData: z.object({
       total: z.number().nonnegative().max(100_000_000),
-      subtotal: z.number().nonnegative().default(0).max(100_000_000),
-      shippingCost: z.number().nonnegative().default(0).max(10_000_000),
-      discount: z.number().nonnegative().default(0).max(100_000_000),
+      subtotal: z.number().nonnegative().max(100_000_000).default(0),
+      shippingCost: z.number().nonnegative().max(10_000_000).default(0),
+      discount: z.number().nonnegative().max(100_000_000).default(0),
     }),
     shippingAgency: z.object({ code: z.string().max(20) }).optional(),
   });
