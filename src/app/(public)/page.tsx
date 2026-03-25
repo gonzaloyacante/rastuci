@@ -158,6 +158,7 @@ export default async function HomePage() {
     <main className="min-h-screen">
       <script
         type="application/ld+json"
+        // nosemgrep: react-dangerouslysetinnerhtml — JSON-LD serializado con safeJsonLd, no HTML de usuario
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
 

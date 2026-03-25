@@ -55,7 +55,7 @@ export default async function PublicLayout({
           id="org-schema"
           type="application/ld+json"
           nonce={nonce || undefined}
-          // [XSS] replace < with \u003c to prevent </script> injection in JSON-LD blocks
+          // [XSS] nosemgrep: react-dangerouslysetinnerhtml — JSON-LD serializado con safeJsonLd, no HTML de usuario
           dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
       )}
