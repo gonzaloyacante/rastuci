@@ -6,39 +6,39 @@ import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 
 const analyticsEventSchema = z.object({
-  name: z.string(),
-  properties: z.record(z.string(), z.unknown()).optional(),
-  userId: z.string().optional(),
-  sessionId: z.string(),
+  name: z.string().max(100),
+  properties: z.record(z.string().max(64), z.unknown()).optional(),
+  userId: z.string().max(128).optional(),
+  sessionId: z.string().max(128),
   timestamp: z.string().transform((str) => new Date(str)),
   // Extended fields for better tracking
-  pageUrl: z.string().optional(),
-  referrer: z.string().optional(),
-  deviceType: z.string().optional(),
-  browser: z.string().optional(),
-  os: z.string().optional(),
-  country: z.string().optional(),
-  city: z.string().optional(),
+  pageUrl: z.string().max(2048).optional(),
+  referrer: z.string().max(2048).optional(),
+  deviceType: z.string().max(32).optional(),
+  browser: z.string().max(64).optional(),
+  os: z.string().max(64).optional(),
+  country: z.string().max(64).optional(),
+  city: z.string().max(64).optional(),
   screenWidth: z.number().optional(),
   screenHeight: z.number().optional(),
-  timezone: z.string().optional(),
+  timezone: z.string().max(64).optional(),
 });
 
 const analyticsRequestSchema = z.object({
   events: z.array(analyticsEventSchema).max(50),
   session: z
     .object({
-      id: z.string(),
-      userId: z.string().optional(),
-      deviceType: z.string().optional(),
-      browser: z.string().optional(),
-      os: z.string().optional(),
+      id: z.string().max(128),
+      userId: z.string().max(128).optional(),
+      deviceType: z.string().max(32).optional(),
+      browser: z.string().max(64).optional(),
+      os: z.string().max(64).optional(),
       screenWidth: z.number().optional(),
       screenHeight: z.number().optional(),
-      country: z.string().optional(),
-      city: z.string().optional(),
-      timezone: z.string().optional(),
-      entryPage: z.string().optional(),
+      country: z.string().max(64).optional(),
+      city: z.string().max(64).optional(),
+      timezone: z.string().max(64).optional(),
+      entryPage: z.string().max(2048).optional(),
     })
     .optional(),
 });
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
             data: {
               sessionId: session.id,
               userId: event.userId,
-              query: String(props.query || ""),
+              query: String(props.query || "").slice(0, 512),
               resultsCount:
                 typeof props.results === "number" ? props.results : null,
             },

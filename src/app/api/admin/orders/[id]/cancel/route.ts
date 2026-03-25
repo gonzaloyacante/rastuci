@@ -65,8 +65,17 @@ async function performCancellation(
   }
 ) {
   await prisma.$transaction(async (tx) => {
+    // Atomic: only cancel if not already cancelled/delivered (prevents TOCTOU race condition)
     await tx.orders.update({
-      where: { id: orderId },
+      where: {
+        id: orderId,
+        status: {
+          notIn: [
+            ORDER_STATUS.CANCELLED as OrderStatus,
+            ORDER_STATUS.DELIVERED as OrderStatus,
+          ],
+        },
+      },
       data: { status: ORDER_STATUS.CANCELLED as OrderStatus },
     });
     for (const item of order.order_items) {

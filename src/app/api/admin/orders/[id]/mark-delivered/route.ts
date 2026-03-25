@@ -46,9 +46,9 @@ export const PATCH = withAdminAuth(
         );
       }
 
-      // Actualizar estado a DELIVERED
+      // Atomic update: only if still PROCESSED (prevents TOCTOU race condition)
       const updatedOrder = await prisma.orders.update({
-        where: { id: orderId },
+        where: { id: orderId, status: "PROCESSED" },
         data: {
           status: "DELIVERED",
           estimatedDelivery: new Date(), // Fecha de entrega

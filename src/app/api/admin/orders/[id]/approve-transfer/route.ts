@@ -51,9 +51,12 @@ export const POST = withAdminAuth(
       // Update Status to PROCESSED
       // Stock is ALREADY reserved (decremented on creation).
       // So we just update status.
-
+      // Atomic: only update if still in an approvable status (prevents TOCTOU race condition)
       await prisma.orders.update({
-        where: { id: orderId },
+        where: {
+          id: orderId,
+          status: { in: approvableStatuses as OrderStatus[] },
+        },
         data: { status: ORDER_STATUS.PROCESSED as OrderStatus },
       });
 
