@@ -473,6 +473,31 @@ export default function ContactForm({ initial }: Props) {
         </div>
       </section>
 
+      {/* Datos Fiscales - Ley 24.240 Argentina */}
+      <section className="space-y-4">
+        <div>
+          <h3 className="font-semibold text-lg">Datos Fiscales (Obligatorio - Ley 24.240)</h3>
+          <p className="text-sm text-muted mt-1">
+            La Ley 24.240 de Defensa del Consumidor exige que el vendedor muestre su razón social y
+            CUIT en el sitio. Estos datos aparecerán en el pie de página.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Input
+            label="Razón Social"
+            placeholder="Ej: Juan Pérez / Rastući S.R.L."
+            value={values.razonSocial || ""}
+            onChange={(e) => update("razonSocial", e.target.value || undefined)}
+          />
+          <Input
+            label="CUIT / CUIL"
+            placeholder="Ej: 20-12345678-9"
+            value={values.businessCuit || ""}
+            onChange={(e) => update("businessCuit", e.target.value || undefined)}
+          />
+        </div>
+      </section>
+
       <div className="flex justify-end pt-4 border-t">
         <Button
           type="submit"

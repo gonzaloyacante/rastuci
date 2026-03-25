@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import Script from "next/script";
 
 import HeaderShell from "@/components/header/HeaderShell";
+import CookieBanner from "@/components/legal/CookieBanner";
 import SiteChrome from "@/components/layout/SiteChrome";
 import { VacationProvider } from "@/components/providers/VacationProvider";
 import { SkipLink } from "@/components/ui/SkipLink";
@@ -73,6 +74,7 @@ export default async function PublicLayout({
             {children}
           </main>
         </SiteChrome>
+        <CookieBanner />
       </VacationProvider>
     </div>
   );

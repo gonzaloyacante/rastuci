@@ -4,6 +4,7 @@ import { AlertCircle, Download, Mail } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import RepentanceButton from "@/components/legal/RepentanceButton";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { generateInvoiceHTML } from "@/lib/invoiceGenerator";
@@ -119,7 +120,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `factura_${order.id}.html`;
+      link.download = `comprobante_${order.id}.html`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -189,7 +190,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       <div className="flex gap-4">
         <Button onClick={downloadInvoice} variant="outline" className="flex-1">
           <Download className="h-4 w-4 mr-2" />
-          Descargar Factura
+          Descargar Comprobante
         </Button>
         <Button variant="outline" className="flex-1" asChild>
           <Link href="/contacto">
@@ -197,6 +198,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
             Contactar Soporte
           </Link>
         </Button>
+      </div>
+      <div className="flex justify-center pt-2">
+        <RepentanceButton />
       </div>
     </div>
   );
