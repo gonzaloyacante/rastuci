@@ -7,14 +7,14 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const PaymentMethodSchema = z.object({
-  methodId: z.string(),
-  name: z.string(),
-  icon: z.string().default("wallet"),
-  description: z.string(),
+  methodId: z.string().max(50),
+  name: z.string().max(100),
+  icon: z.string().max(50).default("wallet"),
+  description: z.string().max(300),
   requiresShipping: z.boolean().optional().default(true),
 });
 
-const PaymentMethodsSchema = z.array(PaymentMethodSchema).min(1);
+const PaymentMethodsSchema = z.array(PaymentMethodSchema).min(1).max(20);
 
 // GET /api/settings/payment-methods - Obtener métodos de pago
 export async function GET() {

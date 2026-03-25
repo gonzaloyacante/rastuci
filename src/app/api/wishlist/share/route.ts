@@ -9,7 +9,7 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 
 const ShareWishlistSchema = z.object({
-  productIds: z.array(z.string()),
+  productIds: z.array(z.string().max(36)).max(50),
 });
 
 export async function POST(req: NextRequest) {

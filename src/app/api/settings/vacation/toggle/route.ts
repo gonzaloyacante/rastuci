@@ -8,8 +8,8 @@ import prisma from "@/lib/prisma";
 
 const ToggleSchema = z.object({
   enabled: z.boolean(),
-  title: z.string().optional().default("Modo Vacaciones"),
-  message: z.string().optional().default("Estamos de vacaciones."),
+  title: z.string().max(200).optional().default("Modo Vacaciones"),
+  message: z.string().max(2000).optional().default("Estamos de vacaciones."),
   showEmailCollection: z.boolean().optional().default(true),
   startDate: z
     .string()

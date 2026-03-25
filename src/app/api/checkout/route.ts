@@ -50,12 +50,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Zod Schemas para Validación Estricta (H-19)
   const CheckoutItemSchema = z.object({
-    productId: z.string().min(1, "ID de producto requerido"),
-    quantity: z.number().int().positive("La cantidad debe ser positiva"),
-    price: z.number().nonnegative("El precio no puede ser negativo"),
-    name: z.string().min(1, "Nombre del producto requerido"),
-    size: z.string().optional(),
-    color: z.string().optional(),
+    productId: z.string().min(1, "ID de producto requerido").max(36),
+    quantity: z
+      .number()
+      .int()
+      .positive("La cantidad debe ser positiva")
+      .max(100),
+    price: z
+      .number()
+      .nonnegative("El precio no puede ser negativo")
+      .max(10_000_000),
+    name: z.string().min(1, "Nombre del producto requerido").max(200),
+    size: z.string().max(20).optional(),
+    color: z.string().max(50).optional(),
   });
 
   const CheckoutCustomerSchema = z.object({
@@ -73,24 +80,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   const CheckoutShippingMethodSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    price: z.number().nonnegative(),
+    id: z.string().max(50),
+    name: z.string().max(100),
+    price: z.number().nonnegative().max(10_000_000),
   });
 
   const CheckoutRequestSchema = z.object({
-    items: z.array(CheckoutItemSchema).min(1, "No hay productos en el carrito"),
+    items: z
+      .array(CheckoutItemSchema)
+      .min(1, "No hay productos en el carrito")
+      .max(50),
     customer: CheckoutCustomerSchema,
     shippingMethod: CheckoutShippingMethodSchema.optional(),
-    paymentMethod: z.string().min(1, "Método de pago requerido"),
+    paymentMethod: z.string().min(1, "Método de pago requerido").max(50),
     couponCode: z.string().min(1).max(50).toUpperCase().optional(),
     orderData: z.object({
-      total: z.number().nonnegative(),
-      subtotal: z.number().nonnegative().default(0),
-      shippingCost: z.number().nonnegative().default(0),
-      discount: z.number().nonnegative().default(0),
+      total: z.number().nonnegative().max(100_000_000),
+      subtotal: z.number().nonnegative().max(100_000_000).default(0),
+      shippingCost: z.number().nonnegative().max(10_000_000).default(0),
+      discount: z.number().nonnegative().max(100_000_000).default(0),
     }),
-    shippingAgency: z.object({ code: z.string() }).optional(),
+    shippingAgency: z.object({ code: z.string().max(20) }).optional(),
   });
 
   try {

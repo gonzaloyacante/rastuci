@@ -7,7 +7,7 @@ import prisma from "@/lib/prisma";
 import { emailService } from "@/lib/resend";
 
 const NotifySchema = z.object({
-  periodId: z.string().min(1),
+  periodId: z.string().min(1).max(36),
 });
 
 export const POST = withAdminAuth(async (request: NextRequest) => {

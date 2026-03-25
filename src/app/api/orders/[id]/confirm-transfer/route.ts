@@ -32,6 +32,15 @@ export async function POST(
       );
     }
 
+    if (
+      typeof senderName !== "string" ||
+      senderName.length > 200 ||
+      typeof transactionId !== "string" ||
+      transactionId.length > 200
+    ) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    }
+
     // 1. Fetch Order to validate status AND ownership
     const order = await prisma.orders.findUnique({
       where: { id: orderId },
@@ -66,9 +75,12 @@ export async function POST(
       );
     }
 
-    // 2. Update Order
+    // 2. Update Order — atomic: only update if still WAITING_TRANSFER_PROOF (prevents TOCTOU race condition)
     const updatedOrder = await prisma.orders.update({
-      where: { id: orderId },
+      where: {
+        id: orderId,
+        status: ORDER_STATUS.WAITING_TRANSFER_PROOF as OrderStatus,
+      },
       data: {
         status: ORDER_STATUS.PAYMENT_REVIEW as OrderStatus,
         transferSenderName: senderName,

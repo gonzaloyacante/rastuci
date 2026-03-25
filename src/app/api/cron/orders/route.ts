@@ -48,10 +48,21 @@ export async function GET(request: NextRequest) {
     for (const order of expiredOrders) {
       try {
         await prisma.$transaction(async (tx) => {
-          // A. Mark Cancelled
+          // A. Mark Cancelled — atomic: only if still in an expirable status (prevents TOCTOU).
+          // If the order was paid between findMany and this update, Prisma throws P2025
+          // and the transaction rolls back — preventing stock restoration for a paid order.
           await tx.orders.update({
-            where: { id: order.id },
-            data: { status: "CANCELLED" as OrderStatus }, // Cast if enum mismatch in types, but should match
+            where: {
+              id: order.id,
+              status: {
+                in: [
+                  ORDER_STATUS.PENDING_PAYMENT,
+                  ORDER_STATUS.WAITING_TRANSFER_PROOF,
+                  ORDER_STATUS.RESERVED,
+                ] as OrderStatus[],
+              },
+            },
+            data: { status: "CANCELLED" as OrderStatus },
           });
 
           // B. Restore Stock (products + variants)

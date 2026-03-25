@@ -7,14 +7,15 @@ import { generateHtmlContent } from "@/lib/policy-utils";
 import { prisma } from "@/lib/prisma";
 
 const updatePolicySchema = z.object({
-  title: z.string().min(1).optional(),
+  title: z.string().min(1).max(200).optional(),
   slug: z
     .string()
     .min(3)
+    .max(100)
     .regex(/^[a-z0-9-]+$/)
     .optional(),
-  description: z.string().optional(),
-  sections: z.array(z.record(z.string(), z.unknown())).optional(),
+  description: z.string().max(500).optional(),
+  sections: z.array(z.record(z.string(), z.unknown())).max(50).optional(),
   isActive: z.boolean().optional(),
 });
 

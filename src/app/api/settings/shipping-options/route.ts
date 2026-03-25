@@ -7,14 +7,14 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const ShippingOptionSchema = z.object({
-  optionId: z.string(),
-  name: z.string(),
-  description: z.string(),
+  optionId: z.string().max(50),
+  name: z.string().max(100),
+  description: z.string().max(300),
   price: z.number().min(0),
-  estimatedDays: z.string(),
+  estimatedDays: z.string().max(50),
 });
 
-const ShippingOptionsSchema = z.array(ShippingOptionSchema).min(1);
+const ShippingOptionsSchema = z.array(ShippingOptionSchema).min(1).max(20);
 
 // GET /api/settings/shipping-options - Obtener opciones de envío
 export async function GET() {
