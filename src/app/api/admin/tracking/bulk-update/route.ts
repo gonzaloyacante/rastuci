@@ -5,7 +5,10 @@ import { withAdminAuth } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 
 const BulkUpdateSchema = z.object({
-  trackingIds: z.array(z.string()).min(1, "Debe especificar al menos un ID"),
+  trackingIds: z
+    .array(z.string().max(36))
+    .min(1, "Debe especificar al menos un ID")
+    .max(100, "No se pueden actualizar más de 100 órdenes a la vez"),
   status: z.enum(["pending", "in-transit", "delivered", "delayed", "error"]),
 });
 

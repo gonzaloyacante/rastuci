@@ -7,19 +7,21 @@ import { generateHtmlContent } from "@/lib/policy-utils";
 import { prisma } from "@/lib/prisma";
 
 const createPolicySchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Title is required").max(200),
   slug: z
     .string()
     .min(3)
+    .max(100)
     .regex(/^[a-z0-9-]+$/, "Invalid slug format"),
-  description: z.string().optional(),
+  description: z.string().max(500).optional(),
   sections: z
     .array(
       z.object({
-        title: z.string().default(""),
-        content: z.string(),
+        title: z.string().max(200).default(""),
+        content: z.string().max(50000),
       })
     )
+    .max(50)
     .optional(),
   isActive: z.boolean().optional(),
 });

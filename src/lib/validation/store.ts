@@ -37,10 +37,10 @@ export const StoreSettingsSchema = z.object({
   // Email Configuration
   emails: z
     .object({
-      salesEmail: z.string().email().optional(),
-      supportEmail: z.string().email().optional(),
-      senderName: z.string().min(1).default("Rastuci"),
-      footerText: z.string().optional(),
+      salesEmail: z.string().email().max(254).optional(),
+      supportEmail: z.string().email().max(254).optional(),
+      senderName: z.string().min(1).max(100).default("Rastuci"),
+      footerText: z.string().max(500).optional(),
     })
     .default({
       senderName: "Rastuci",
@@ -50,10 +50,10 @@ export const StoreSettingsSchema = z.object({
   stockStatuses: z
     .array(
       z.object({
-        id: z.string(),
+        id: z.string().max(50),
         min: z.number().min(0),
         max: z.number().nullable().optional(), // null or undefined means "Up to Infinity"
-        label: z.string().min(1),
+        label: z.string().min(1).max(50),
         color: z.enum([
           "success",
           "warning",
@@ -113,11 +113,11 @@ export const StoreSettingsSchema = z.object({
       mpExpirationMinutes: z.number().min(5).default(30), // Abandoned checkout
 
       // Bank Details
-      bankName: z.string().optional(),
-      bankCbu: z.string().optional(),
-      bankAlias: z.string().optional(),
-      bankHolder: z.string().optional(),
-      bankCuit: z.string().optional(),
+      bankName: z.string().max(100).optional(),
+      bankCbu: z.string().max(22).optional(),
+      bankAlias: z.string().max(50).optional(),
+      bankHolder: z.string().max(100).optional(),
+      bankCuit: z.string().max(13).optional(),
 
       // Global Toggles
       couponsEnabled: z.boolean().default(false),
