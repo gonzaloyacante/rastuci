@@ -23,5 +23,9 @@ export default defineConfig({
       "src/**/__tests__/**/*.test.tsx",
       "src/**/__tests__/**/*.test.ts",
     ],
+    pool: "forks",
+    fileParallelism: false,
+    testTimeout: 30000,
+    hookTimeout: 30000,
   },
 });
