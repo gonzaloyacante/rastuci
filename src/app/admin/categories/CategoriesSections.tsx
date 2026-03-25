@@ -1,5 +1,6 @@
 "use client";
 
+import { Edit3, Trash2 } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 
@@ -9,7 +10,6 @@ import { COMMON_COLORS } from "@/components/products/ProductFormComponents";
 import { Button } from "@/components/ui/Button";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import { Product } from "@/types";
-import { Edit3, Trash2 } from "lucide-react";
 
 // ============================================================================
 // Shared Types
@@ -157,12 +157,37 @@ function renderProductPrice(_: unknown, row: Product) {
 }
 
 const PRODUCT_COLUMNS = [
-  { key: "image", label: "Imagen", align: "center" as const, render: renderProductImage },
+  {
+    key: "image",
+    label: "Imagen",
+    align: "center" as const,
+    render: renderProductImage,
+  },
   { key: "name", label: "Producto", render: renderProductName },
-  { key: "colors", label: "Colores", align: "center" as const, render: renderProductColors },
-  { key: "sizes", label: "Talles", align: "center" as const, render: renderProductSizes },
-  { key: "stock", label: "Stock", align: "center" as const, render: renderProductStock },
-  { key: "price", label: "Precio", align: "right" as const, render: renderProductPrice },
+  {
+    key: "colors",
+    label: "Colores",
+    align: "center" as const,
+    render: renderProductColors,
+  },
+  {
+    key: "sizes",
+    label: "Talles",
+    align: "center" as const,
+    render: renderProductSizes,
+  },
+  {
+    key: "stock",
+    label: "Stock",
+    align: "center" as const,
+    render: renderProductStock,
+  },
+  {
+    key: "price",
+    label: "Precio",
+    align: "right" as const,
+    render: renderProductPrice,
+  },
 ];
 
 // ============================================================================
@@ -281,7 +306,10 @@ export function CategoryTableRow({
         {/* Icon */}
         <td className="text-center p-2 sm:p-4 align-middle text-xs sm:text-sm">
           <div className="flex items-center justify-center">
-            <CategoryIcon categoryName={category.name} className="w-6 h-6 text-muted" />
+            <CategoryIcon
+              categoryName={category.name}
+              className="w-6 h-6 text-muted"
+            />
           </div>
         </td>
 
@@ -298,7 +326,8 @@ export function CategoryTableRow({
         {/* Product count */}
         <td className="text-center p-2 sm:p-4 align-middle text-xs sm:text-sm">
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium bg-surface/60 border border-border">
-            <strong className="mr-1">{category.productCount ?? 0}</strong> productos
+            <strong className="mr-1">{category.productCount ?? 0}</strong>{" "}
+            productos
           </span>
         </td>
 
@@ -334,14 +363,22 @@ export function CategoryTableRow({
       </tr>
 
       {/* Expanded products row */}
-      <tr className={`transition-all duration-300 ease-in-out ${isExpanded ? "opacity-100" : "opacity-0"}`}>
+      <tr
+        className={`transition-all duration-300 ease-in-out ${isExpanded ? "opacity-100" : "opacity-0"}`}
+      >
         <td colSpan={6} className="p-0 overflow-hidden">
           <div
             className="transition-all duration-300 ease-in-out bg-surface-secondary/30"
-            style={{ maxHeight: isExpanded ? "2000px" : "0px", opacity: isExpanded ? 1 : 0 }}
+            style={{
+              maxHeight: isExpanded ? "2000px" : "0px",
+              opacity: isExpanded ? 1 : 0,
+            }}
           >
             <div className="p-4">
-              <CategoryProductsTable products={products} isLoading={isLoadingProducts} />
+              <CategoryProductsTable
+                products={products}
+                isLoading={isLoadingProducts}
+              />
             </div>
           </div>
         </td>
@@ -395,11 +432,20 @@ export function CategoriesTable({
           <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="border-b border-muted surface">
-                <th className="text-center p-2 sm:p-4 font-semibold muted tracking-wide text-xs sm:text-sm" style={{ width: "60px" }} />
-                <th className="text-center p-2 sm:p-4 font-semibold muted tracking-wide text-xs sm:text-sm" style={{ width: "120px" }}>
+                <th
+                  className="text-center p-2 sm:p-4 font-semibold muted tracking-wide text-xs sm:text-sm"
+                  style={{ width: "60px" }}
+                />
+                <th
+                  className="text-center p-2 sm:p-4 font-semibold muted tracking-wide text-xs sm:text-sm"
+                  style={{ width: "120px" }}
+                >
                   Imagen
                 </th>
-                <th className="text-center p-2 sm:p-4 font-semibold muted tracking-wide text-xs sm:text-sm" style={{ width: "96px" }}>
+                <th
+                  className="text-center p-2 sm:p-4 font-semibold muted tracking-wide text-xs sm:text-sm"
+                  style={{ width: "96px" }}
+                >
                   Icono
                 </th>
                 <th className="text-left p-2 sm:p-4 font-semibold muted tracking-wide text-xs sm:text-sm">

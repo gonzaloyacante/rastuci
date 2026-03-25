@@ -7,11 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { CustomerInfo, useCart } from "@/context/CartContext";
 import { ARGENTINA_PROVINCES } from "@/lib/constants";
 
-import {
-  formatArgPhone,
-  FormErrors,
-  validateCustomerInfo,
-} from "./customerInfoUtils";
+import { formatArgPhone, validateCustomerInfo } from "./customerInfoUtils";
 
 interface CustomerInfoStepProps {
   onNext: () => void;

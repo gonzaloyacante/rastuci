@@ -11,8 +11,6 @@ import {
 import Link from "next/link";
 import React, { Suspense } from "react";
 
-import type { ProductVariant } from "@/types";
-
 import {
   ColorSelectorSection,
   ImageGallerySkeleton,
@@ -29,6 +27,7 @@ import { Alert, AlertDescription } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
 import { useProductDetail } from "@/hooks/useProductDetail";
+import type { ProductVariant } from "@/types";
 
 const ProductReviews = React.lazy(
   () => import("@/components/products/ProductReviews")

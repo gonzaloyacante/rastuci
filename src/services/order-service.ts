@@ -1,4 +1,4 @@
-import { OrderStatus, Prisma } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
 import { add } from "date-fns";
 import { nanoid } from "nanoid";
 
@@ -6,7 +6,7 @@ import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { getStoreSettings } from "@/lib/store-settings";
-import { MercadoPagoPayer, OrderItemInput } from "@/types";
+import { MercadoPagoPayer } from "@/types";
 
 import {
   buildOrderItemsCreate,
@@ -260,7 +260,9 @@ export class OrderService {
       await decrementLegacyOrderStock(newOrder.id, orderItemsData, mpPaymentId);
     }
 
-    const isPickup = shippingMethodId === "pickup" || (metadata.shipping as string) === "pickup";
+    const isPickup =
+      shippingMethodId === "pickup" ||
+      (metadata.shipping as string) === "pickup";
     return {
       order: newOrder,
       shouldShip: mappedStatus === ORDER_STATUS.PROCESSED && !isPickup,
@@ -305,7 +307,11 @@ export class OrderService {
 
     const order = await prisma.$transaction(async (tx) => {
       // 1+2. Fetch & validate items (price + stock check)
-      const validatedItems = await validateAndPriceItems(tx, items, discountPercent);
+      const validatedItems = await validateAndPriceItems(
+        tx,
+        items,
+        discountPercent
+      );
 
       const { itemsTotal, couponDiscount, calculatedTotal } =
         calculateOrderTotals(validatedItems, shippingCost, coupon);
@@ -410,7 +416,11 @@ export class OrderService {
 
     const order = await prisma.$transaction(async (tx) => {
       // 1+2. Fetch & validate items (price + stock check)
-      const validatedItems = await validateAndPriceItems(tx, items, discountPercent);
+      const validatedItems = await validateAndPriceItems(
+        tx,
+        items,
+        discountPercent
+      );
 
       const shippingCost = shippingData.cost ?? 0;
       const { itemsTotal, couponDiscount, calculatedTotal } =
@@ -514,7 +524,11 @@ export class OrderService {
 
     const order = await prisma.$transaction(async (tx) => {
       // 1+2. Fetch & validate items (price + stock check)
-      const validatedItems = await validateAndPriceItems(tx, items, discountPercent);
+      const validatedItems = await validateAndPriceItems(
+        tx,
+        items,
+        discountPercent
+      );
 
       const shippingCost = shippingData.cost ?? 0;
       const { itemsTotal, couponDiscount, calculatedTotal } =

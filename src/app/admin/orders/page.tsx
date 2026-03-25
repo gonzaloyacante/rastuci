@@ -60,17 +60,37 @@ const FILTER_FIELDS = [
   },
 ];
 
+const CSV_HEADERS = [
+  "ID",
+  "Cliente",
+  "Email",
+  "Teléfono",
+  "Dirección",
+  "Total",
+  "Subtotal Productos",
+  "Costo Envío",
+  "Estado",
+  "Estado Pago MP",
+  "Método de Envío",
+  "Agencia / Sucursal",
+  "Tracking",
+  "Fecha Creación",
+  "Productos",
+  "Tallas/Colores",
+];
+
 // Helpers
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("es-AR", {
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString("es-AR", {
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+}
 
-const timeAgo = (dateString: string) => {
+function timeAgo(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);
@@ -80,9 +100,9 @@ const timeAgo = (dateString: string) => {
   if (hours > 0) return `hace ${hours} hora${hours > 1 ? "s" : ""}`;
   if (minutes > 0) return `hace ${minutes} min`;
   return "recién";
-};
+}
 
-const getStatusLabel = (status: string) => {
+function getStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     PENDING: "incompleto",
     PENDING_PAYMENT: "aguardando pago",
@@ -92,23 +112,62 @@ const getStatusLabel = (status: string) => {
     CANCELLED: "cancelado",
   };
   return labels[status] || status;
-};
+}
+
+function buildItemVariantLabel(item: Order["items"][number]): string {
+  const parts: string[] = [];
+  if (item.size) parts.push(`Talla: ${item.size}`);
+  if (item.color) parts.push(`Color: ${item.color}`);
+  return parts.length > 0 ? parts.join(", ") : "-";
+}
+
+function orderToCsvRow(order: Order): string {
+  const subtotalProducts = order.items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const products = order.items
+    .map((item) => `${item.quantity}x ${item.product.name}`)
+    .join("; ");
+  const variants = order.items.map(buildItemVariantLabel).join("; ");
+
+  return [
+    escapeCsvCell(order.id),
+    escapeCsvCell(order.customerName),
+    escapeCsvCell(order.customerEmail || "No especificado"),
+    escapeCsvCell(order.customerPhone),
+    escapeCsvCell(order.customerAddress || "No especificada"),
+    escapeCsvCell(order.total),
+    escapeCsvCell(subtotalProducts),
+    escapeCsvCell(order.shippingCost || 0),
+    escapeCsvCell(getStatusLabel(order.status)),
+    escapeCsvCell(order.mpStatus || "N/A"),
+    escapeCsvCell(order.shippingMethod || "No especificado"),
+    escapeCsvCell(order.shippingAgency || "-"),
+    escapeCsvCell(order.caTrackingNumber || "Sin tracking"),
+    escapeCsvCell(formatDate(order.createdAt)),
+    escapeCsvCell(products),
+    escapeCsvCell(variants),
+  ].join(",");
+}
 
 // Transform Order to OrderCardData
-const toOrderCardData = (order: Order): OrderCardData => ({
-  id: order.id,
-  customerName: order.customerName,
-  customerPhone: order.customerPhone,
-  customerAddress: order.customerAddress,
-  status: order.status,
-  total: order.total,
-  createdAt: order.createdAt,
-  itemsCount: order.items.length,
-  shippingMethod: order.shippingMethod,
-  caTrackingNumber: order.caTrackingNumber,
-  paymentMethod:
-    order.paymentMethod || (order.mpPaymentId ? "mercadopago" : "cash"),
-});
+function toOrderCardData(order: Order): OrderCardData {
+  return {
+    id: order.id,
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    customerAddress: order.customerAddress,
+    status: order.status,
+    total: order.total,
+    createdAt: order.createdAt,
+    itemsCount: order.items.length,
+    shippingMethod: order.shippingMethod,
+    caTrackingNumber: order.caTrackingNumber,
+    paymentMethod:
+      order.paymentMethod || (order.mpPaymentId ? "mercadopago" : "cash"),
+  };
+}
 
 export default function OrdersPage() {
   const { show } = useToast();
@@ -170,69 +229,9 @@ export default function OrdersPage() {
         return;
       }
 
-      // Cabeceras completas con toda la información relevante
-      const headers = [
-        "ID",
-        "Cliente",
-        "Email",
-        "Teléfono",
-        "Dirección",
-        "Total",
-        "Subtotal Productos",
-        "Costo Envío",
-        "Estado",
-        "Estado Pago MP",
-        "Método de Envío",
-        "Agencia / Sucursal",
-        "Tracking",
-        "Fecha Creación",
-        "Productos",
-        "Tallas/Colores",
-      ];
-
       const csvContent = [
-        headers.join(","),
-        ...orders.map((order: Order) => {
-          // Calcular subtotal de productos
-          const subtotalProducts = order.items.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0
-          );
-
-          // Productos con detalle
-          const products = order.items
-            .map((item) => `${item.quantity}x ${item.product.name}`)
-            .join("; ");
-
-          // Tallas y colores
-          const variants = order.items
-            .map((item) => {
-              const parts = [];
-              if (item.size) parts.push(`Talla: ${item.size}`);
-              if (item.color) parts.push(`Color: ${item.color}`);
-              return parts.length > 0 ? parts.join(", ") : "-";
-            })
-            .join("; ");
-
-          return [
-            escapeCsvCell(order.id),
-            escapeCsvCell(order.customerName),
-            escapeCsvCell(order.customerEmail || "No especificado"),
-            escapeCsvCell(order.customerPhone),
-            escapeCsvCell(order.customerAddress || "No especificada"),
-            escapeCsvCell(order.total),
-            escapeCsvCell(subtotalProducts),
-            escapeCsvCell(order.shippingCost || 0),
-            escapeCsvCell(getStatusLabel(order.status)),
-            escapeCsvCell(order.mpStatus || "N/A"),
-            escapeCsvCell(order.shippingMethod || "No especificado"),
-            escapeCsvCell(order.shippingAgency || "-"),
-            escapeCsvCell(order.caTrackingNumber || "Sin tracking"),
-            escapeCsvCell(formatDate(order.createdAt)),
-            escapeCsvCell(products),
-            escapeCsvCell(variants),
-          ].join(",");
-        }),
+        CSV_HEADERS.join(","),
+        ...orders.map(orderToCsvRow),
       ].join("\n");
 
       // Agregar BOM para UTF-8 y que Excel lo lea bien

@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Spinner } from "@/components/ui/Spinner";
-import { generateInvoiceHTML } from "@/lib/invoiceGenerator";
 import { formatCurrency } from "@/lib/utils";
 import { OrderStatus } from "@/types";
 

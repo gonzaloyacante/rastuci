@@ -226,7 +226,7 @@ function validateWebhookHeaders(
   return null;
 }
 
-async function processPaymentWebhook(id: string, mpPaymentId_unused?: string) {
+async function processPaymentWebhook(id: string, _mpPaymentId?: string) {
   const payment = await fetchPaymentWithRetry(id);
   if (!payment) return null;
   const mpPaymentId = String(payment.id);

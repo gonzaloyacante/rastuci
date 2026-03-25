@@ -3,10 +3,7 @@
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  AnalyticsPageHeader,
-  BulkActionsBar,
-} from "@/components/admin";
+import { AnalyticsPageHeader, BulkActionsBar } from "@/components/admin";
 import { TrackingSkeleton } from "@/components/admin/skeletons";
 import { Input } from "@/components/ui/Input";
 import {
@@ -24,8 +21,8 @@ import {
   alertOptions,
   AlertsPanel,
   AnalyticsPanel,
-  statusOptions,
   StatsCards,
+  statusOptions,
   TrackingData,
   TrackingStats,
   TrackingTable,
@@ -44,7 +41,8 @@ function filterItem(
   if (statusFilter !== "all" && item.status !== statusFilter) return false;
   const q = searchTerm.toLowerCase();
   const fields = [item.trackingCode, item.orderId, item.customerName];
-  if (searchTerm && !fields.some((f) => f.toLowerCase().includes(q))) return false;
+  if (searchTerm && !fields.some((f) => f.toLowerCase().includes(q)))
+    return false;
   if (alertFilter === "alerts") return item.alertLevel !== "none";
   return alertFilter === "all" || item.alertLevel === alertFilter;
 }
