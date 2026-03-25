@@ -82,7 +82,7 @@ export const POST = withAdminAuth(
         const postalCodeMatch = order.customerAddress.match(/\b(\d{4})\b/);
         postalCode = postalCodeMatch ? postalCodeMatch[1] : "1611";
 
-        const cpNum = parseInt(postalCode);
+        const cpNum = parseInt(postalCode, 10);
         provinceCode = cpNum >= 1000 && cpNum <= 1439 ? "C" : "B";
       }
 

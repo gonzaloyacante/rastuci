@@ -54,19 +54,21 @@ export async function POST(req: NextRequest) {
 
     // Guardar token en la base de datos (usando tabla VerificationToken)
     // Primero invalidar cualquier token anterior para este email
-    await prisma.verificationToken.deleteMany({
-      where: { identifier: user.email },
-    });
-    await prisma.verificationToken.create({
-      data: {
-        identifier: user.email,
-        token,
-        expires: expiresAt,
-      },
-    });
+    await prisma.$transaction([
+      prisma.verificationToken.deleteMany({
+        where: { identifier: user.email },
+      }),
+      prisma.verificationToken.create({
+        data: {
+          identifier: user.email,
+          token,
+          expires: expiresAt,
+        },
+      }),
+    ]);
 
     // Enviar email con link de recuperación
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://rastuci.com"}/admin/auth/reset-password?token=${token}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/admin/auth/reset-password?token=${token}`;
 
     const emailHtml = `
       <!DOCTYPE html>

@@ -137,7 +137,7 @@ export function useCheckoutAutoSave(
       const timestamp = localStorage.getItem(`${key}-timestamp`);
 
       if (savedData && timestamp) {
-        const savedTime = parseInt(timestamp);
+        const savedTime = parseInt(timestamp, 10);
         const now = Date.now();
         const hourInMs = 60 * 60 * 1000;
 
@@ -165,7 +165,7 @@ export function useCheckoutAutoSave(
       const timestamp = localStorage.getItem(`${key}-timestamp`);
 
       if (savedData && timestamp) {
-        const savedTime = parseInt(timestamp);
+        const savedTime = parseInt(timestamp, 10);
         const now = Date.now();
         const hourInMs = 60 * 60 * 1000;
 

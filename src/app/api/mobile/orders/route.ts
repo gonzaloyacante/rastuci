@@ -40,9 +40,9 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const customerEmail = searchParams.get("customerEmail");
-    const page = parseInt(searchParams.get("page") || "1");
+    const page = parseInt(searchParams.get("page") || "1", 10);
     // [H-10] Clamp limit to max 50 to prevent unbounded queries
-    const requestedLimit = parseInt(searchParams.get("limit") || "10");
+    const requestedLimit = parseInt(searchParams.get("limit") || "10", 10);
     const limit = Math.min(Math.max(1, requestedLimit), 50);
     const status = searchParams.get("status");
 

@@ -99,20 +99,23 @@ async function syncRelationalData(
     ? colorImageRecordToRows(colorImages)
     : null;
   const sizeGuideRows = sizeGuideToRows(sizeGuideData);
-  if (colorImageRows !== null) {
-    await prisma.product_color_images.deleteMany({ where: { productId } });
-    if (colorImageRows.length > 0) {
-      await prisma.product_color_images.createMany({
-        data: colorImageRows.map((row) => ({ ...row, productId })),
+
+  await prisma.$transaction(async (tx) => {
+    if (colorImageRows !== null) {
+      await tx.product_color_images.deleteMany({ where: { productId } });
+      if (colorImageRows.length > 0) {
+        await tx.product_color_images.createMany({
+          data: colorImageRows.map((row) => ({ ...row, productId })),
+        });
+      }
+    }
+    if (sizeGuideRows.length > 0) {
+      await tx.product_size_guides.deleteMany({ where: { productId } });
+      await tx.product_size_guides.createMany({
+        data: sizeGuideRows.map((row) => ({ ...row, productId })),
       });
     }
-  }
-  if (sizeGuideRows.length > 0) {
-    await prisma.product_size_guides.deleteMany({ where: { productId } });
-    await prisma.product_size_guides.createMany({
-      data: sizeGuideRows.map((row) => ({ ...row, productId })),
-    });
-  }
+  });
 }
 
 // GET /api/products/[id] - Obtener producto por ID

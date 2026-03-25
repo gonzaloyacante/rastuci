@@ -10,11 +10,11 @@ export const OrdersQuerySchema = z.object({
   page: z
     .string()
     .optional()
-    .transform((val) => (val ? parseInt(val) : 1)),
+    .transform((val) => (val ? parseInt(val, 10) : 1)),
   limit: z
     .string()
     .optional()
-    .transform((val) => (val ? parseInt(val) : 10)),
+    .transform((val) => (val ? parseInt(val, 10) : 10)),
   status: OrderStatusSchema.optional(),
   search: z.string().optional(),
 });
