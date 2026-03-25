@@ -1,1 +1,16 @@
-npx vitest run
+#!/usr/bin/env sh
+
+echo ""
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║              🚀 RASTUCI PRE-PUSH CHECK                      ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo ""
+echo "🔍 Verificando tipos TypeScript..."
+if ! npx tsc --noEmit; then
+  echo "❌ Error en TypeScript. Corregí los errores antes de hacer push."
+  exit 1
+fi
+echo "✅ TypeScript OK"
+echo ""
+echo "✅ Pre-push completado. ¡Push en camino!"
+echo ""
