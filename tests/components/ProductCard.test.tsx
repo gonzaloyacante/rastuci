@@ -1,7 +1,8 @@
-import ProductCard from "@/components/products/ProductCard";
+import { render, screen } from "@testing-library/react";
+
+import ProductCard from "@/components/products/cards/ProductCard";
 import { CartProvider } from "@/context/CartContext";
 import type { Product } from "@/types";
-import { render, screen } from "@testing-library/react";
 
 // Mock del componente Image de Next.js
 vi.mock("next/image", () => ({

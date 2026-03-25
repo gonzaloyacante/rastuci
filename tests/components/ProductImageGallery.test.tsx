@@ -1,11 +1,20 @@
 /// <reference types="jest" />
-import ProductImageGallery from "@/components/products/ProductImageGallery";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 
+import ProductImageGallery from "@/components/products/media/ProductImageGallery";
+
 // Mock Next.js Image component
 vi.mock("next/image", () => ({
-  default: ({ src, alt, ...props }: any) => <img src={src} alt={alt} {...props} />,
+  default: ({
+    src,
+    alt,
+    ...props
+  }: {
+    src: string;
+    alt: string;
+    [key: string]: unknown;
+  }) => <img src={src} alt={alt} />,
 }));
 
 describe("ProductImageGallery Component", () => {
