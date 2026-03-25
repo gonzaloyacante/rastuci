@@ -179,7 +179,7 @@ export const POST = withAdminAuth(
         return fail("CONFLICT", "Ya existe una categoría con ese nombre", 409);
       }
 
-      const categoryId = `cat-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      const categoryId = `cat-${crypto.randomUUID()}`;
 
       const category = await prisma.categories.create({
         data: {

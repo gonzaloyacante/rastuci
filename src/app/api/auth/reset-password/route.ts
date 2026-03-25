@@ -28,11 +28,13 @@ async function updatePasswordAndCleanToken(
   token: string
 ) {
   const hashedPassword = await bcrypt.hash(password, 10);
-  await prisma.user.update({
-    where: { id: userId },
-    data: { password: hashedPassword },
-  });
-  await prisma.verificationToken.delete({ where: { token } });
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    }),
+    prisma.verificationToken.delete({ where: { token } }),
+  ]);
 }
 
 function validatePasswordInput(
