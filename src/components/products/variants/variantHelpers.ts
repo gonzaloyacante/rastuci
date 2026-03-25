@@ -5,13 +5,14 @@ export function createNewVariant(
   size: string,
   stock: number
 ): ProductVariant {
+  const uid = crypto.randomUUID().slice(0, 8).toUpperCase();
   return {
-    id: `temp-${Date.now()}-${Math.random()}`,
+    id: `temp-${Date.now()}-${uid}`,
     productId: "",
     color,
     size,
     stock,
-    sku: `${color.substring(0, 3).toUpperCase()}-${size}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+    sku: `${color.substring(0, 3).toUpperCase()}-${size}-${uid.slice(0, 4)}`,
   };
 }
 

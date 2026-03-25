@@ -91,7 +91,7 @@ export class ShipmentService {
 
       // 3. Fallback: Parse CP (Naive but handle major cases better)
       if (!provinceCode) {
-        const cpNum = parseInt(postalCode.replace(/\D/g, ""));
+        const cpNum = parseInt(postalCode.replace(/\D/g, ""), 10);
         if (cpNum >= 1000 && cpNum <= 1499)
           provinceCode = "C"; // CABA
         else if (cpNum >= 5000 && cpNum <= 5999)

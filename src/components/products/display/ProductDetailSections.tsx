@@ -87,7 +87,7 @@ export function QuantityStepper({
         max={maxStock}
         value={quantity}
         onChange={(e) => {
-          const val = parseInt(e.target.value);
+          const val = parseInt(e.target.value, 10);
           if (isNaN(val)) onChange(1);
           else if (val > maxStock) onChange(maxStock);
           else if (val < 1) onChange(1);

@@ -123,7 +123,7 @@ export default function VariantManager({
   };
 
   const handleUpdateStock = (index: number, val: string) => {
-    const num = parseInt(val);
+    const num = parseInt(val, 10);
     if (isNaN(num) || num < 0) return;
 
     const updated = [...variants];
@@ -233,7 +233,7 @@ export default function VariantManager({
               value={stockInput}
               onChange={(e) =>
                 setStockInput(
-                  e.target.value === "" ? "" : parseInt(e.target.value)
+                  e.target.value === "" ? "" : parseInt(e.target.value, 10)
                 )
               }
             />

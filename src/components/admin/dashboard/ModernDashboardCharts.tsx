@@ -58,7 +58,7 @@ export default function ModernDashboardCharts({
   // Datos de ventas mensuales
   const salesChartData = {
     labels: monthlySales.map(
-      (item) => monthNames[parseInt(item.month) - 1] || item.month
+      (item) => monthNames[parseInt(item.month, 10) - 1] || item.month
     ),
     datasets: [
       {
