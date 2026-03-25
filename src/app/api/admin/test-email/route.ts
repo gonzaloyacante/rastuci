@@ -20,15 +20,10 @@ import { sendEmail } from "@/lib/resend";
 export const GET = withAdminAuth(
   async (request: NextRequest): Promise<NextResponse> => {
     try {
-      // Verificar configuración de Resend
       const resendApiKey = process.env.RESEND_API_KEY;
       const adminEmail = process.env.ADMIN_EMAIL || "contacto@rastuci.com";
-
-      // Obtener destinatario de query params
       const { searchParams } = new URL(request.url);
       const toEmail = searchParams.get("to") || adminEmail;
-
-      // Información de diagnóstico
       const diagnostics = {
         resendConfigured: !!resendApiKey,
         resendKeyPrefix: resendApiKey ? "re_***" : "(no configurada)",
@@ -47,7 +42,6 @@ export const GET = withAdminAuth(
         );
       }
 
-      // Generar email de prueba
       const testOrderId = `test_${Date.now()}`;
       const testItems = [
         { name: "Producto de Prueba 1", quantity: 2, price: 1500 },
@@ -66,7 +60,6 @@ export const GET = withAdminAuth(
         testOrderId,
       });
 
-      // Enviar email
       const sent = await sendEmail({
         to: toEmail,
         subject: `🧪 Email de Prueba - Rastuci (${new Date().toLocaleTimeString("es-AR")})`,
@@ -78,7 +71,6 @@ export const GET = withAdminAuth(
           to: toEmail,
           testOrderId,
         });
-
         return ok({
           success: true,
           message: `Email de prueba enviado exitosamente a ${toEmail}`,
@@ -90,7 +82,6 @@ export const GET = withAdminAuth(
           to: toEmail,
           testOrderId,
         });
-
         return fail(
           "INTERNAL_ERROR",
           "El email no se pudo enviar. Verifica los logs y la configuración de Resend.",
@@ -99,13 +90,11 @@ export const GET = withAdminAuth(
       }
     } catch (error) {
       logger.error("[Test Email] Error", { error });
-      return fail(
-        "INTERNAL_ERROR",
+      const msg =
         error instanceof Error
           ? error.message
-          : "Error al enviar email de prueba",
-        500
-      );
+          : "Error al enviar email de prueba";
+      return fail("INTERNAL_ERROR", msg, 500);
     }
   }
 );

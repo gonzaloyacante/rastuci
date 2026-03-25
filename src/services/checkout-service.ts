@@ -11,6 +11,46 @@ interface OrderItem {
   name?: string;
 }
 
+type ProductVariant = {
+  color: string;
+  size: string;
+  stock: number;
+};
+
+type ValidatedProduct = {
+  id: string;
+  name: string;
+  stock: number;
+  price: unknown;
+  salePrice: unknown;
+  onSale: boolean;
+  product_variants: ProductVariant[];
+};
+
+function validateVariantStock(
+  item: OrderItem,
+  product: ValidatedProduct
+): void {
+  if (!item.color || !item.size) {
+    throw new Error(
+      `El producto ${product.name} requiere seleccionar talle y color`
+    );
+  }
+  const variant = product.product_variants.find(
+    (v) => v.color === item.color && v.size === item.size
+  );
+  if (!variant) {
+    throw new Error(
+      `La variante ${item.color} - ${item.size} de ${product.name} ya no está disponible.`
+    );
+  }
+  if (variant.stock < item.quantity) {
+    throw new Error(
+      `Stock insuficiente para ${product.name} (${item.color} ${item.size}). Disponible: ${variant.stock}`
+    );
+  }
+}
+
 export class CheckoutService {
   /**
    * Valida que los productos existan y tengan stock suficiente
@@ -21,7 +61,6 @@ export class CheckoutService {
     }
 
     const productIds = items.map((item) => item.productId);
-    // Optimización: Traer variantes también
     const products = await prisma.products.findMany({
       where: { id: { in: productIds }, isActive: true },
       select: {
@@ -37,47 +76,17 @@ export class CheckoutService {
 
     for (const item of items) {
       const product = products.find((p) => p.id === item.productId);
-
       if (!product) {
         throw new Error(`Producto no encontrado: ${item.productId}`);
       }
 
-      // Lógica de Stock:
-      // 1. Si el producto tiene variantes y el item especifica Color+Size -> Chequear stock de variante
-      // 2. Si no tiene variantes (legacy) -> Chequear stock global
-
-      const hasVariants =
-        product.product_variants && product.product_variants.length > 0;
-
+      const hasVariants = product.product_variants?.length > 0;
       if (hasVariants) {
-        if (!item.color || !item.size) {
-          throw new Error(
-            `El producto ${product.name} requiere seleccionar talle y color`
-          );
-        }
-
-        const variant = product.product_variants.find(
-          (v) => v.color === item.color && v.size === item.size
+        validateVariantStock(item, product);
+      } else if (product.stock < item.quantity) {
+        throw new Error(
+          `Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${item.quantity}`
         );
-
-        if (!variant) {
-          throw new Error(
-            `La variante ${item.color} - ${item.size} de ${product.name} ya no está disponible.`
-          );
-        }
-
-        if (variant.stock < item.quantity) {
-          throw new Error(
-            `Stock insuficiente para ${product.name} (${item.color} ${item.size}). Disponible: ${variant.stock}`
-          );
-        }
-      } else {
-        // Fallback Legacy o producto simple
-        if (product.stock < item.quantity) {
-          throw new Error(
-            `Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${item.quantity}`
-          );
-        }
       }
     }
 

@@ -332,6 +332,29 @@ export default function ReviewStep({
                 : "Finalizar compra (Pago en efectivo y retiro)"}
           </Button>
         </div>
+
+        {/* Aviso legal - Ley 24.240 */}
+        <p className="text-xs text-center text-muted mt-4">
+          Al finalizar tu compra aceptás nuestros{" "}
+          <a
+            href="/legal/terminos"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-primary"
+          >
+            Términos y Condiciones
+          </a>
+          , incluyendo nuestra{" "}
+          <a
+            href="/legal/terminos#devoluciones"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-primary"
+          >
+            Política de Devoluciones
+          </a>
+          . Tenés 10 días hábiles desde la recepción para ejercer tu derecho de arrepentimiento (Ley 24.240).
+        </p>
       </div>
     </div>
   );

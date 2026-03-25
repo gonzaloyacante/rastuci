@@ -44,9 +44,35 @@ const AgenciesQuerySchema = z.object({
     .optional(),
 });
 
+type Agency = {
+  location?: { address?: { postalCode?: string } };
+  name?: string;
+};
+
+function filterAgenciesByPostalCode(
+  agencies: Agency[],
+  postalCode?: string
+): Agency[] {
+  if (!postalCode || agencies.length === 0) return agencies;
+  const cleanSearchCP = postalCode.replace(/\D/g, "");
+  const filtered = agencies.filter((agency) => {
+    const rawCP = agency.location?.address?.postalCode || "";
+    const cleanAgencyCP = rawCP.replace(/\D/g, "");
+    return (
+      cleanAgencyCP === cleanSearchCP ||
+      cleanAgencyCP.startsWith(cleanSearchCP) ||
+      cleanSearchCP.startsWith(cleanAgencyCP) ||
+      rawCP === postalCode
+    );
+  });
+  logger.info(`[Agencies] Filtered by postalCode ${postalCode}`, {
+    filtered: filtered.length,
+  });
+  return filtered;
+}
+
 export async function GET(request: NextRequest) {
   try {
-    // Rate limit: protege la CA API externa
     const rl = await checkRateLimit(request, {
       key: makeKey("GET", "/api/shipping/agencies"),
       ...getPreset("publicRead"),
@@ -63,27 +89,18 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-
     const parsed = AgenciesQuerySchema.safeParse({
-      provinceCode: searchParams.get("provinceCode") ?? undefined,
-      postalCode: searchParams.get("postalCode") ?? undefined,
+      provinceCode: searchParams.get("provinceCode") || undefined,
+      postalCode: searchParams.get("postalCode") || undefined,
     });
 
     if (!parsed.success) {
-      const firstError = parsed.error.errors[0];
-      return NextResponse.json(
-        {
-          success: false,
-          error: firstError?.message ?? "Parámetros inválidos",
-        },
-        { status: 400 }
-      );
+      const msg = parsed.error.errors[0]?.message || "Parámetros inválidos";
+      return NextResponse.json({ success: false, error: msg }, { status: 400 });
     }
 
     const { provinceCode, postalCode } = parsed.data;
-
     const customerId = process.env.CORREO_ARGENTINO_CUSTOMER_ID;
-
     if (!customerId) {
       logger.error("[Agencies] CORREO_ARGENTINO_CUSTOMER_ID not configured");
       return NextResponse.json(
@@ -102,11 +119,8 @@ export async function GET(request: NextRequest) {
       customerId,
       provinceCode: provinceCode as ProvinceCode,
     });
-
     if (!result.success) {
-      logger.error("[Agencies] CA API failed", {
-        error: result.error,
-      });
+      logger.error("[Agencies] CA API failed", { error: result.error });
       return NextResponse.json({
         success: false,
         error: result.error?.message || "Error al obtener sucursales",
@@ -114,52 +128,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    let agencies = result.data || [];
-
-    logger.info("[Agencies] CA API returned", {
-      count: agencies.length,
-      firstAgency: agencies[0]?.name || "none",
-    });
-
-    // Filtrar por código postal si se proporciona
-    if (postalCode && agencies.length > 0) {
-      const cleanSearchCP = postalCode.replace(/\D/g, "");
-
-      agencies = agencies.filter((agency) => {
-        const rawCP = agency.location?.address?.postalCode || "";
-        const cleanAgencyCP = rawCP.replace(/\D/g, "");
-
-        return (
-          cleanAgencyCP === cleanSearchCP ||
-          cleanAgencyCP.startsWith(cleanSearchCP) ||
-          cleanSearchCP.startsWith(cleanAgencyCP) ||
-          rawCP === postalCode
-        );
-      });
-
-      logger.info(`[Agencies] Filtered by postalCode ${postalCode}`, {
-        filtered: agencies.length,
-      });
-    }
-
-    return NextResponse.json({
-      success: true,
-      agencies,
-      isFallback: false,
-    });
+    const agencies = filterAgenciesByPostalCode(result.data || [], postalCode);
+    return NextResponse.json({ success: true, agencies, isFallback: false });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Error inesperado";
-    const stack = error instanceof Error ? error.stack : undefined;
-
     logger.error("[Agencies] Unexpected error", {
       message,
-      stack: stack?.substring(0, 500),
+      stack:
+        error instanceof Error ? error.stack?.substring(0, 500) : undefined,
     });
-
-    return NextResponse.json({
-      success: false,
-      error: message,
-      agencies: [],
-    });
+    return NextResponse.json({ success: false, error: message, agencies: [] });
   }
 }

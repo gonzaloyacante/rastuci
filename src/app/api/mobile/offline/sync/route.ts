@@ -16,18 +16,20 @@ interface ApiResponse<T> {
   data: T;
 }
 
+function errResp(message: string, status: number) {
+  return NextResponse.json<ApiResponse<null>>(
+    { success: false, message, data: null },
+    { status }
+  );
+}
+
 // GET /api/mobile/offline/sync - Sincronizar datos para modo offline
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const customerEmail = searchParams.get("customerEmail");
 
-    if (!customerEmail) {
-      return NextResponse.json<ApiResponse<null>>(
-        { success: false, message: "Email del cliente requerido", data: null },
-        { status: 400 }
-      );
-    }
+    if (!customerEmail) return errResp("Email del cliente requerido", 400);
 
     // SECURITY: Auth Check
     const session = await getToken({
@@ -36,13 +38,7 @@ export async function GET(request: NextRequest) {
     });
     const isAuthorized =
       session && (session.isAdmin || session.email === customerEmail);
-
-    if (!isAuthorized) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized", data: null },
-        { status: 401 }
-      );
-    }
+    if (!isAuthorized) return errResp("Unauthorized", 401);
 
     // Buscar pedidos del cliente desde la base de datos
     const orders = await prisma.orders.findMany({
@@ -108,14 +104,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     logger.error("Error en offline sync:", { error });
-    return NextResponse.json<ApiResponse<null>>(
-      {
-        success: false,
-        message: "Error interno del servidor",
-        data: null,
-      },
-      { status: 500 }
-    );
+    return errResp("Error interno del servidor", 500);
   }
 }
 
@@ -125,16 +114,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { customerEmail } = body;
 
-    if (!customerEmail) {
-      return NextResponse.json<ApiResponse<null>>(
-        {
-          success: false,
-          message: "Email del cliente requerido",
-          data: null,
-        },
-        { status: 400 }
-      );
-    }
+    if (!customerEmail) return errResp("Email del cliente requerido", 400);
 
     // [H-07] SECURITY: Require auth for offline sync POST
     const session = await getToken({
@@ -143,13 +123,7 @@ export async function POST(request: NextRequest) {
     });
     const isAuthorized =
       session && (session.isAdmin || session.email === customerEmail);
-
-    if (!isAuthorized) {
-      return NextResponse.json<ApiResponse<null>>(
-        { success: false, message: "No autorizado", data: null },
-        { status: 401 }
-      );
-    }
+    if (!isAuthorized) return errResp("No autorizado", 401);
 
     // Por ahora solo confirmamos la sincronización
     // Las acciones pendientes como favoritos/carrito
@@ -172,13 +146,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     logger.error("Error en offline sync POST:", { error });
-    return NextResponse.json<ApiResponse<null>>(
-      {
-        success: false,
-        message: "Error interno del servidor",
-        data: null,
-      },
-      { status: 500 }
-    );
+    return errResp("Error interno del servidor", 500);
   }
 }

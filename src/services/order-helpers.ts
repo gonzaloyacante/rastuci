@@ -13,36 +13,22 @@ import { emailService } from "@/lib/resend";
 import { getStoreSettings } from "@/lib/store-settings";
 import { formatCurrency } from "@/lib/utils";
 
-export type ValidatedOrderItem = {
-  productId: string;
-  quantity: number;
-  price: number;
-  originalPrice: number;
-  size?: string;
-  color?: string;
-};
+import type {
+  CouponInput,
+  OrderMetadata,
+  ShippingFields,
+  ValidatedOrderItem,
+} from "./order-service.types";
 
-export type CouponInput = {
-  id: string;
-  discount: number;
-  discountType: string;
-  minOrderTotal: number | null;
-};
+export type { CouponInput, ValidatedOrderItem } from "./order-service.types";
 
 export function resolveProvinceCode(
   province: string | undefined
 ): string | null {
   if (!province) return null;
-  const normalized = province
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+  const normalized = province.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const match = PROVINCIAS.find(
-    (p) =>
-      p.name
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") === normalized
+    (p) => p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalized
   );
   if (match) return match.code;
   if (normalized.includes("capital") || normalized.includes("caba")) return "C";
@@ -204,9 +190,7 @@ function isLowStockStatus(
   stockStatuses: Array<{ min: number; max?: number | null; color: string }>
 ): boolean {
   const status = stockStatuses.find(
-    (s) =>
-      productStock >= s.min &&
-      (s.max == null || productStock <= s.max)
+    (s) => productStock >= s.min && (s.max == null || productStock <= s.max)
   );
   return !!status && (status.color === "error" || status.color === "warning");
 }
@@ -239,9 +223,7 @@ export async function checkStockAlerts(
         p.id,
         settings.adminEmail || "admin@rastuci.com"
       );
-      logger.info(
-        `[StockAlert] Sent alert for ${p.name} (Stock: ${p.stock})`
-      );
+      logger.info(`[StockAlert] Sent alert for ${p.name} (Stock: ${p.stock})`);
     }
   } catch (error) {
     logger.error("[StockAlert] Error processing alerts", { error });
@@ -356,7 +338,12 @@ export function determineUpdateActions(
     !STOCK_RESERVED.has(order.status);
 
   const isPickup = order.shippingMethod === "pickup";
-  return { shouldDecrement, shouldRestore, isFirstApproval, shouldShip: isFirstApproval && !isPickup };
+  return {
+    shouldDecrement,
+    shouldRestore,
+    isFirstApproval,
+    shouldShip: isFirstApproval && !isPickup,
+  };
 }
 
 /**
@@ -373,9 +360,7 @@ export async function decrementOrderItemsStock(
       select: { stock: true, name: true },
     });
     if (!product || product.stock < item.quantity) {
-      throw new Error(
-        `Stock insuficiente para ${product?.name ?? "producto"}`
-      );
+      throw new Error(`Stock insuficiente para ${product?.name ?? "producto"}`);
     }
     await tx.products.update({
       where: { id: item.productId, stock: { gte: item.quantity } },
@@ -429,7 +414,8 @@ export async function restoreOrderItemsStock(
 export function parseLegacyItems(metadata: {
   items: unknown;
 }): LegacyOrderItemInput[] {
-  if (Array.isArray(metadata.items)) return metadata.items as LegacyOrderItemInput[];
+  if (Array.isArray(metadata.items))
+    return metadata.items as LegacyOrderItemInput[];
   if (typeof metadata.items !== "string") return [];
   try {
     const parsed: unknown = JSON.parse(metadata.items);
@@ -532,7 +518,9 @@ export function sendCashOrderEmailAsync(order: EmailableOrder): void {
         total: Number(order.total),
         subtotal: order.subtotal ? Number(order.subtotal) : undefined,
         discount: order.discount ? Number(order.discount) : undefined,
-        shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
+        shippingCost: order.shippingCost
+          ? Number(order.shippingCost)
+          : undefined,
       },
       emailItems
     )
@@ -567,4 +555,20 @@ export function sendTransferOrderEmailAsync(order: {
         { err, orderId: order.id }
       )
     );
+}
+
+export function extractShippingFromOrderMetadata(
+  metadata: OrderMetadata
+): ShippingFields {
+  const s = (v: unknown): string | undefined =>
+    typeof v === "string" ? v : undefined;
+  return {
+    shippingStreet: s(metadata.customerAddress),
+    shippingCity: s(metadata.customerCity),
+    shippingProvince: s(metadata.customerProvince),
+    shippingPostalCode: s(metadata.customerPostalCode),
+    shippingAgencyCode: s(metadata.shippingAgencyCode),
+    shippingMethodId:
+      s(metadata.shippingMethodName) ?? s(metadata.shippingMethodId),
+  };
 }

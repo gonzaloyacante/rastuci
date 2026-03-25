@@ -23,6 +23,47 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: React.ReactNode;
 }
 
+const BUTTON_BASE =
+  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transform hover:scale-105 hover:shadow-lg";
+
+const BUTTON_VARIANTS = {
+  primary: "btn-primary hover:bg-primary/90 hover:shadow-primary/30",
+  secondary:
+    "surface border border-primary/20 text-primary hover-surface hover:shadow-md hover:border-primary/50",
+  outline:
+    "surface border border-primary text-primary hover-surface btn-outline hover:bg-primary/5 hover:shadow-md",
+  ghost:
+    "bg-transparent text-primary hover-surface btn-ghost hover:bg-primary/10",
+  destructive:
+    "surface border border-error text-error hover-surface btn-destructive hover:bg-error/5 hover:shadow-error/30",
+  hero: "btn-hero uppercase hover:shadow-primary/40",
+  product: "btn-product uppercase hover:shadow-primary/30",
+  category:
+    "surface text-primary border border-muted hover-surface hover:border-primary/50 hover:shadow-md",
+} as const;
+
+const BUTTON_SIZES = {
+  sm: "px-3 py-1.5 text-xs btn-sm",
+  md: "px-5 py-2 text-sm",
+  lg: "px-7 py-3 text-base btn-lg",
+  xl: "px-8 py-4 text-lg",
+} as const;
+
+function renderAsChild(
+  children: React.ReactNode,
+  combinedClassName: string,
+  disabled: boolean | undefined,
+  onClick: React.MouseEventHandler<HTMLButtonElement> | undefined
+): React.ReactElement | null {
+  if (!React.isValidElement(children)) return null;
+  const child = children as React.ReactElement<Record<string, unknown>>;
+  return React.cloneElement(child, {
+    className: cn(child.props.className as string, combinedClassName),
+    "aria-disabled": disabled ? "true" : undefined,
+    ...("onClick" in child.props ? {} : { onClick }),
+  });
+}
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -39,48 +80,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const base =
-      "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transform hover:scale-105 hover:shadow-lg";
-
-    const variants = {
-      primary: "btn-primary hover:bg-primary/90 hover:shadow-primary/30", // uses var(--color-primary)
-      secondary:
-        "surface border border-primary/20 text-primary hover-surface hover:shadow-md hover:border-primary/50",
-      // Include btn-* aliases to satisfy tests expecting utility classes
-      outline:
-        "surface border border-primary text-primary hover-surface btn-outline hover:bg-primary/5 hover:shadow-md",
-      ghost:
-        "bg-transparent text-primary hover-surface btn-ghost hover:bg-primary/10",
-      destructive:
-        "surface border border-error text-error hover-surface btn-destructive hover:bg-error/5 hover:shadow-error/30",
-      hero: "btn-hero uppercase hover:shadow-primary/40",
-      product: "btn-product uppercase hover:shadow-primary/30",
-      category:
-        "surface text-primary border border-muted hover-surface hover:border-primary/50 hover:shadow-md",
-    } as const;
-
-    const sizes = {
-      sm: "px-3 py-1.5 text-xs btn-sm",
-      md: "px-5 py-2 text-sm",
-      lg: "px-7 py-3 text-base btn-lg",
-      xl: "px-8 py-4 text-lg",
-    };
     const combinedClassName = cn(
-      base,
-      variants[variant],
-      sizes[size],
+      BUTTON_BASE,
+      BUTTON_VARIANTS[variant],
+      BUTTON_SIZES[size],
       fullWidth ? "w-full" : "",
       className
     );
 
-    // Render as child element (e.g., <a>) while applying classes and aria-disabled
-    if (asChild && React.isValidElement(children)) {
-      const child = children as React.ReactElement<Record<string, unknown>>;
-      return React.cloneElement(child, {
-        className: cn(child.props.className as string, combinedClassName),
-        "aria-disabled": props.disabled ? "true" : undefined,
-        ...("onClick" in child.props ? {} : { onClick: props.onClick }),
-      });
+    if (asChild) {
+      return renderAsChild(
+        children,
+        combinedClassName,
+        props.disabled,
+        props.onClick
+      );
     }
 
     return (

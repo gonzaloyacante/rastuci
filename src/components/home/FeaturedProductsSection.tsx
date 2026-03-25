@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-import ProductCard from "@/components/products/ProductCard";
+import ProductCard from "@/components/products/cards/ProductCard";
 import { ProductCardSkeleton as UISkeletonProductCard } from "@/components/ui/Skeleton";
 import { defaultHomeSettings, type HomeSettings } from "@/lib/validation/home";
 import { Product } from "@/types";

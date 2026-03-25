@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 
 import { AdminError } from "@/components/admin";
 import { FormSkeleton } from "@/components/admin/skeletons";
-import ProductForm from "@/components/products/ProductForm";
+import ProductForm from "@/components/products/forms/ProductForm";
 import { useCategories, useProduct } from "@/hooks";
 
 export default function EditProductPage() {

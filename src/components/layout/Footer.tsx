@@ -2,6 +2,7 @@ import { Facebook, Instagram, Youtube } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import RepentanceButton from "@/components/legal/RepentanceButton";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { type ContactSettings } from "@/lib/validation/contact";
 import { defaultHomeSettings, type HomeSettings } from "@/lib/validation/home";
@@ -24,6 +25,10 @@ export default function Footer({ home, contact }: FooterProps) {
   const instagram = contact?.social?.instagram?.url;
   const facebook = contact?.social?.facebook?.url;
   const youtube = contact?.social?.youtube?.url;
+
+  // Datos fiscales (Ley 24.240 - obligatorio para e-commerce en Argentina)
+  const businessCuit = contact?.businessCuit;
+  const razonSocial = contact?.razonSocial;
 
   return (
     <footer className="surface pt-10 pb-6 px-4 border-t border-muted overflow-hidden">
@@ -113,6 +118,9 @@ export default function Footer({ home, contact }: FooterProps) {
                 Defensa del Consumidor
               </a>
             </li>
+            <li>
+              <RepentanceButton />
+            </li>
           </ul>
         </div>
 
@@ -164,11 +172,36 @@ export default function Footer({ home, contact }: FooterProps) {
           <ThemeToggle variant="full" />
         </div>
       </div>
-      <div className="border-t border-muted mt-6 pt-4 text-center text-xs muted">
+      <div className="border-t border-muted mt-6 pt-4 text-center text-xs muted space-y-2">
+        {/* Datos fiscales obligatorios - Ley 24.240 Argentina */}
+        {(razonSocial || businessCuit) && (
+          <p className="text-xs muted">
+            {razonSocial && <span>{razonSocial}</span>}
+            {razonSocial && businessCuit && <span> &mdash; </span>}
+            {businessCuit && <span>CUIT: {businessCuit}</span>}
+          </p>
+        )}
         <p>
           &copy; {new Date().getFullYear()} Rastući. Todos los derechos
           reservados.
         </p>
+        {/* Logo obligatorio Defensa del Consumidor - Resolución Secretaría de Comercio */}
+        <div className="flex justify-center mt-2">
+          <a
+            href="https://www.argentina.gob.ar/produccion/defensadelconsumidor/formulario"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Defensa del Consumidor - Gobierno de Argentina"
+            className="inline-flex items-center gap-2 text-xs muted hover:text-primary transition-colors border border-muted rounded px-3 py-1.5"
+          >
+            <span className="text-base" aria-hidden="true">🛡️</span>
+            <span>
+              Defensa del Consumidor &mdash; Si no quedás satisfecho podés
+              ingresar tu queja{" "}
+              <span className="underline">aquí</span>
+            </span>
+          </a>
+        </div>
       </div>
     </footer>
   );

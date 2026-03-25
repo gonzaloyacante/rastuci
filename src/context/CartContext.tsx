@@ -1,6 +1,8 @@
 "use client";
 
 // Re-exportar tipos y constantes para compatibilidad hacia atrás
+export { useCart } from "./cartContextDef";
+export { CartProvider } from "./CartProvider";
 export type {
   BillingOption,
   CartItem,
@@ -14,5 +16,3 @@ export {
   AVAILABLE_BILLING_OPTIONS,
   DEFAULT_PAYMENT_METHOD,
 } from "@/types/cart";
-export { useCart } from "./cartContextDef";
-export { CartProvider } from "./CartProvider";

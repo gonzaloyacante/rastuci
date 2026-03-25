@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
 import { Product } from "@/types";
-import React from "react";
 
 interface UseCategoryActionsReturn {
   expandedCategories: Set<string>;
@@ -20,9 +19,15 @@ interface UseCategoryActionsReturn {
 export function useCategoryActions(
   mutate?: (() => Promise<unknown>) | null
 ): UseCategoryActionsReturn {
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [categoryProducts, setCategoryProducts] = useState<Record<string, Product[]>>({});
-  const [loadingProducts, setLoadingProducts] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set()
+  );
+  const [categoryProducts, setCategoryProducts] = useState<
+    Record<string, Product[]>
+  >({});
+  const [loadingProducts, setLoadingProducts] = useState<Set<string>>(
+    new Set()
+  );
   const { show } = useToast();
   const { confirm: confirmDialog, ConfirmDialog } = useConfirmDialog();
 
@@ -38,9 +43,14 @@ export function useCategoryActions(
 
     setLoadingProducts((prev) => new Set(prev).add(categoryId));
     try {
-      const res = await fetch(`/api/products?categoryId=${categoryId}&limit=50`);
+      const res = await fetch(
+        `/api/products?categoryId=${categoryId}&limit=50`
+      );
       const data = (await res.json()) as { data?: { data?: Product[] } };
-      setCategoryProducts((prev) => ({ ...prev, [categoryId]: data.data?.data ?? [] }));
+      setCategoryProducts((prev) => ({
+        ...prev,
+        [categoryId]: data.data?.data ?? [],
+      }));
     } catch (err) {
       logger.error("Error fetching category products", { error: err });
     } finally {

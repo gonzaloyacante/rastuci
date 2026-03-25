@@ -1,5 +1,5 @@
 // Helper to notify admin/customer - could be moved to notification-service too
-import { orders } from "@prisma/client";
+import { orders, OrderStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,6 +12,7 @@ import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 // ...
 import { mpWebhookService } from "@/services/notification-service";
 import { orderService } from "@/services/order-service";
+import type { OrderMetadata } from "@/services/order-service.types";
 import { shipmentService } from "@/services/shipment-service";
 
 async function notifyParties(
@@ -72,191 +73,227 @@ async function notifyParties(
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params: _params }: { params: { mpPaymentId: string } }
-) {
-  const requestId = getRequestId(req.headers);
+interface WebhookPaymentData {
+  id: string;
+  topic: string | null;
+  xSignature: string;
+  xRequestId: string;
+  ts: string;
+}
 
+function extractWebhookPaymentData(
+  req: NextRequest,
+  data: Record<string, unknown>
+): WebhookPaymentData | null {
+  const topic =
+    req.nextUrl.searchParams.get("type") ||
+    req.nextUrl.searchParams.get("topic");
+  const dataObj =
+    typeof data?.data === "object" && data.data !== null
+      ? (data.data as Record<string, unknown>)
+      : null;
+  const id =
+    req.nextUrl.searchParams.get("data.id") ||
+    (dataObj?.id as string | undefined) ||
+    (data?.id as string | undefined);
+  if (!id) return null;
+  return {
+    id,
+    topic,
+    xSignature: req.headers.get("x-signature") || "",
+    xRequestId: req.headers.get("x-request-id") || "",
+    ts: req.headers.get("ts") || "",
+  };
+}
+
+async function fetchPaymentWithRetry(id: string) {
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      return await mpWebhookService.getPayment(id);
+    } catch (e) {
+      retries--;
+      if (retries === 0) {
+        logger.error("[MP webhook] Failed to fetch payment", { id, error: e });
+        return null;
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+  return null;
+}
+
+async function resolveOrderFromPayment(
+  externalRef: string | undefined,
+  preferenceId: string | undefined,
+  mpPaymentId: string,
+  mpStatus: string,
+  mappedStatus: OrderStatus,
+  metadata: Record<string, unknown>,
+  payer: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: { number: string };
+  }
+) {
+  if (externalRef) {
+    const result = await orderService.updateOrder(externalRef, {
+      mpPaymentId,
+      mpStatus,
+      mappedStatus,
+    });
+    if (result) return result;
+  }
+  if (preferenceId) {
+    const existing = await prisma.orders.findFirst({
+      where: { mpPreferenceId: preferenceId },
+    });
+    if (existing) {
+      const result = await orderService.updateOrder(existing.id, {
+        mpPaymentId,
+        mpStatus,
+        mappedStatus,
+      });
+      if (result) return result;
+    }
+  }
+  logger.info("[MP webhook] Creating order from metadata", { mpPaymentId });
+  return orderService.createFromMetadata(
+    mpPaymentId,
+    mpStatus,
+    mappedStatus,
+    preferenceId,
+    metadata as unknown as OrderMetadata,
+    payer
+  );
+}
+
+async function handleShipmentAndNotification(
+  orderId: string,
+  order: orders,
+  mpPaymentId: string
+) {
   try {
-    // 1. Rate Limiting
+    const shipmentCreated = await shipmentService.createCAShipment(orderId);
+    if (!shipmentCreated) {
+      logger.warn(
+        "[Webhook] CA Shipment creation returned false (check logs)",
+        { orderId }
+      );
+    }
+  } catch (err) {
+    logger.error("[Webhook] Shipment creation failed", { orderId, error: err });
+  }
+  try {
+    await notifyParties(order, orderId, mpPaymentId);
+  } catch (err) {
+    logger.error("[Webhook] Notification failed", { orderId, error: err });
+  }
+}
+
+function buildPayerFromPayment(
+  payment: Awaited<ReturnType<typeof mpWebhookService.getPayment>>
+) {
+  return {
+    first_name: payment?.payer?.first_name ?? undefined,
+    last_name: payment?.payer?.last_name ?? undefined,
+    email: payment?.payer?.email ?? undefined,
+    phone: payment?.payer?.phone?.number
+      ? { number: payment.payer.phone.number }
+      : undefined,
+  };
+}
+
+function validateWebhookHeaders(
+  webhookData: WebhookPaymentData,
+  requestId: string
+): NextResponse | null {
+  const { xSignature, xRequestId, ts, id } = webhookData;
+  if (!xSignature || !xRequestId || !ts) {
+    logger.warn("[MP webhook] Missing signature headers — rejected", {
+      requestId,
+      hasSignature: !!xSignature,
+      hasRequestId: !!xRequestId,
+      hasTs: !!ts,
+    });
+    return new NextResponse("Missing signature headers", { status: 401 });
+  }
+  if (!mpWebhookService.validateSignature(xSignature, xRequestId, id, ts)) {
+    logger.warn("[MP webhook] Invalid signature", { requestId });
+    return new NextResponse("Invalid signature", { status: 401 });
+  }
+  return null;
+}
+
+async function processPaymentWebhook(id: string, _mpPaymentId?: string) {
+  const payment = await fetchPaymentWithRetry(id);
+  if (!payment) return null;
+  const mpPaymentId = String(payment.id);
+  const mpStatus = payment.status || "unknown";
+  const mappedStatus = orderService.mapStatus(mpStatus);
+  const metadata = (payment.metadata || {}) as Record<string, unknown>;
+  const preferenceId =
+    (metadata.preference_id as string | undefined) ||
+    (payment.order?.id as string | undefined);
+  const payer = buildPayerFromPayment(payment);
+  const result = await resolveOrderFromPayment(
+    payment.external_reference || undefined,
+    preferenceId,
+    mpPaymentId,
+    mpStatus,
+    mappedStatus,
+    metadata,
+    payer
+  );
+  return { result, mpPaymentId };
+}
+
+async function finalizeOrder(
+  result: Awaited<ReturnType<typeof resolveOrderFromPayment>>,
+  mpPaymentId: string
+) {
+  if (!result?.order) return;
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${result.order.id}`);
+  if (result.shouldShip) {
+    await handleShipmentAndNotification(
+      result.order.id,
+      result.order,
+      mpPaymentId
+    );
+  }
+}
+
+function isPaymentTopic(topic: string | null): boolean {
+  return !topic || topic === "payment";
+}
+
+export async function POST(req: NextRequest) {
+  const requestId = getRequestId(req.headers);
+  try {
     const rl = await checkRateLimit(req, {
       key: makeKey("POST", "/api/payments/mercadopago/webhook"),
       ...getPreset("mutatingLow"),
     });
     if (!rl.ok) {
       logger.warn("[MP webhook] rate-limited", { requestId });
-      // Return 429 so MercadoPago retries the webhook — do NOT return 200 here
       return new NextResponse("Too Many Requests", { status: 429 });
     }
-
-    // 2. Parse basic data
-    const data = await req.json().catch(() => ({}));
-    const topic =
-      req.nextUrl.searchParams.get("type") ||
-      req.nextUrl.searchParams.get("topic");
-    const id =
-      req.nextUrl.searchParams.get("data.id") ||
-      (data && (data.data?.id || data.id));
-
-    if (!id) {
-      // Ping or invalid
-      return ok({ ok: true });
-    }
-
-    // 3. Validate Signature (MANDATORY — fail-closed)
-    const xSignature = req.headers.get("x-signature") || "";
-    const xRequestId = req.headers.get("x-request-id") || "";
-    const ts = req.headers.get("ts") || "";
-
-    if (!xSignature || !xRequestId || !ts) {
-      logger.warn("[MP webhook] Missing signature headers — rejected", {
-        requestId,
-        hasSignature: !!xSignature,
-        hasRequestId: !!xRequestId,
-        hasTs: !!ts,
-      });
-      return new NextResponse("Missing signature headers", { status: 401 });
-    }
-
-    if (!mpWebhookService.validateSignature(xSignature, xRequestId, id, ts)) {
-      logger.warn("[MP webhook] Invalid signature", { requestId });
-      return new NextResponse("Invalid signature", { status: 401 });
-    }
-
-    if (topic && topic !== "payment") {
-      // Only payments
-      return ok({ ok: true });
-    }
-
-    // 4. Fetch Payment Details
-    // Using simple retry loop here or inside service? Service has simple get.
-    // Let's implement retry here as it was before, or move it to service.
-    // Moving retry logic to service would be cleaner but let's keep it robust here for now or assume service handles it.
-    // The service I wrote `getPayment` just does `this.payment.get`. I should have added retries there.
-    // I will add a simple retry loop here.
-    let payment;
-    let retries = 3;
-    while (retries > 0) {
-      try {
-        payment = await mpWebhookService.getPayment(id);
-        break;
-      } catch (e) {
-        retries--;
-        if (retries === 0) {
-          logger.error("[MP webhook] Failed to fetch payment", {
-            id,
-            error: e,
-          });
-          return ok({ ok: true });
-        }
-        await new Promise((r) => setTimeout(r, 1000));
-      }
-    }
-
-    if (!payment) return ok({ ok: true });
-
-    const mpPaymentId = String(payment.id);
-    const mpStatus = payment.status;
-    const mappedStatus = orderService.mapStatus(mpStatus || "");
-    const metadata = payment.metadata || {};
-    const preferenceId = metadata.preference_id || payment.order?.id;
-
-    // 5. Update or Create Order
-    let result;
-
-    // A. Try by External Reference (ID) - Preferred for Order First pattern
-    if (payment.external_reference) {
-      // Logic for Idempotency check:
-      // If we find the order, checks if we really need to update it.
-      // This is a "read-before-write" optimization but the real lock is in updateOrder transaction.
-      // However, we can skip the DB call if mappedStatus is equal to current status?
-      // Safest is to just call updateOrder which handles logic.
-
-      result = await orderService.updateOrder(payment.external_reference, {
-        mpPaymentId,
-        mpStatus: mpStatus || "unknown",
-        mappedStatus,
-      });
-    }
-
-    // B. Try by Preference ID
-    if (!result && preferenceId) {
-      const existing = await prisma.orders.findFirst({
-        where: { mpPreferenceId: preferenceId },
-      });
-      if (existing) {
-        result = await orderService.updateOrder(existing.id, {
-          mpPaymentId,
-          mpStatus: mpStatus || "unknown",
-          mappedStatus,
-        });
-      }
-    }
-
-    // C. Create from Metadata (Fallback)
-    if (!result) {
-      logger.info("[MP webhook] Creating order from metadata", { mpPaymentId });
-      result = await orderService.createFromMetadata(
-        mpPaymentId,
-        mpStatus || "unknown",
-        mappedStatus,
-        preferenceId,
-        metadata,
-        {
-          first_name: payment.payer?.first_name ?? undefined,
-          last_name: payment.payer?.last_name ?? undefined,
-          email: payment.payer?.email ?? undefined,
-          phone: payment.payer?.phone?.number
-            ? { number: payment.payer.phone.number }
-            : undefined,
-        }
-      );
-    }
-
-    // 6. Post-Processing (Shipment & Notification)
-    if (result && result.order) {
-      const { order, shouldShip } = result;
-
-      // Invalidate admin cache so new/updated order appears immediately
-      revalidatePath("/admin/orders");
-      revalidatePath(`/admin/orders/${result.order.id}`);
-
-      if (shouldShip) {
-        try {
-          // CRITICAL: Await this to ensure execution in Serverless environment (Vercel)
-          // Do NOT fire-and-forget, or the lambda might terminate before completion.
-          const shipmentCreated = await shipmentService.createCAShipment(
-            order.id
-          );
-          if (!shipmentCreated) {
-            logger.warn(
-              "[Webhook] CA Shipment creation returned false (check logs)",
-              { orderId: order.id }
-            );
-          }
-        } catch (err) {
-          logger.error("[Webhook] Shipment creation failed", {
-            orderId: order.id,
-            error: err,
-          });
-        }
-
-        try {
-          // Await notifications too
-          await notifyParties(order, order.id, mpPaymentId);
-        } catch (err) {
-          logger.error("[Webhook] Notification failed", {
-            orderId: order.id,
-            error: err,
-          });
-        }
-      }
-    }
-
+    const data = (await req.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >;
+    const webhookData = extractWebhookPaymentData(req, data);
+    if (!webhookData) return ok({ ok: true });
+    const headerErr = validateWebhookHeaders(webhookData, requestId);
+    if (headerErr) return headerErr;
+    if (!isPaymentTopic(webhookData.topic)) return ok({ ok: true });
+    const processed = await processPaymentWebhook(webhookData.id);
+    if (processed) await finalizeOrder(processed.result, processed.mpPaymentId);
     return ok({ ok: true });
   } catch (error) {
     logger.error("[MP webhook] Global error", { error });
-    return ok({ ok: true }); // Always return 200 to MP to avoid retries on logic errors
+    return ok({ ok: true });
   }
 }

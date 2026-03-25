@@ -1,8 +1,9 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+
+import { MobileNavLinks } from "@/components/header/NavLinks.client";
 
 export default function MobileMenuClient() {
   const [open, setOpen] = useState(false);
@@ -47,41 +48,7 @@ export default function MobileMenuClient() {
               role="menu"
               aria-labelledby="mobile-menu-title"
             >
-              <Link
-                href="/"
-                onClick={() => setOpen(false)}
-                className="block py-2 text-sm font-medium muted hover:text-primary transition-colors"
-              >
-                Inicio
-              </Link>
-              <Link
-                href="/productos"
-                onClick={() => setOpen(false)}
-                className="block py-2 text-sm font-medium muted hover:text-primary transition-colors"
-              >
-                Productos
-              </Link>
-              <Link
-                href="/contacto"
-                onClick={() => setOpen(false)}
-                className="block py-2 text-sm font-medium muted hover:text-primary transition-colors"
-              >
-                Contacto
-              </Link>
-              <Link
-                href="/favoritos"
-                onClick={() => setOpen(false)}
-                className="block py-2 text-sm font-medium muted hover:text-primary transition-colors"
-              >
-                Favoritos
-              </Link>
-              <Link
-                href="/carrito"
-                onClick={() => setOpen(false)}
-                className="block py-2 text-sm font-medium muted hover:text-primary transition-colors"
-              >
-                Carrito
-              </Link>
+              <MobileNavLinks onClose={() => setOpen(false)} />
             </div>
           </nav>
         </div>

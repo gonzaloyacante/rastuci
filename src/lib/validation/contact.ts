@@ -63,6 +63,9 @@ export const ContactSettingsSchema = z.object({
       url: z.string().max(200),
     }),
   }),
+  // Datos fiscales obligatorios para mostrar en el sitio (Ley 24.240 Argentina)
+  businessCuit: z.string().max(20).optional(),
+  razonSocial: z.string().max(120).optional(),
 });
 
 export type ContactSettings = z.infer<typeof ContactSettingsSchema>;
@@ -103,4 +106,6 @@ export const defaultContactSettings: ContactSettings = {
     tiktok: { username: "", url: "" },
     youtube: { username: "", url: "" },
   },
+  businessCuit: undefined,
+  razonSocial: undefined,
 };

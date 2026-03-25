@@ -11,8 +11,8 @@ import {
   type ProductFormCategory,
   type ProductFormValues,
   productSchema,
-} from "@/components/products/productFormSchema";
-import type { SizeGuideData } from "@/components/products/SizeGuideEditor";
+} from "@/components/products/forms/productFormSchema";
+import type { SizeGuideData } from "@/components/products/variants/SizeGuideEditor";
 import { useToast } from "@/components/ui/Toast";
 import { usePriceInput } from "@/hooks/usePriceInput";
 import { logger } from "@/lib/logger";
@@ -37,8 +37,20 @@ interface InitSetters {
   reset: (values: Partial<ProductFormValues>) => void;
 }
 
-function initializeFromData(data: NonNullable<Product | null>, setters: InitSetters) {
-  const { setProductImages, setColorImages, setColors, setSizes, setFeatures, setVariants, setSelectedCategoryId, reset } = setters;
+function initializeFromData(
+  data: NonNullable<Product | null>,
+  setters: InitSetters
+) {
+  const {
+    setProductImages,
+    setColorImages,
+    setColors,
+    setSizes,
+    setFeatures,
+    setVariants,
+    setSelectedCategoryId,
+    reset,
+  } = setters;
   const normalized = normalizeProductData(data);
   setProductImages(normalized.images);
   setColorImages(normalized.colorImages);
@@ -55,7 +67,9 @@ export function useProductForm({ initialData }: UseProductFormProps) {
   const { show } = useToast();
 
   const [loading, setLoading] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(initialData?.categoryId || "");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    initialData?.categoryId || ""
+  );
   const [productImages, setProductImages] = useState<string[]>([]);
   const [colorImages, setColorImages] = useState<Record<string, string[]>>({});
   const [colors, setColors] = useState<string[]>([]);
@@ -64,7 +78,9 @@ export function useProductForm({ initialData }: UseProductFormProps) {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
 
   const title = initialData ? "Editar Producto" : "Crear Nuevo Producto";
-  const toastMessage = initialData ? "Producto actualizado exitosamente" : "Producto creado exitosamente";
+  const toastMessage = initialData
+    ? "Producto actualizado exitosamente"
+    : "Producto creado exitosamente";
   const action = initialData ? "Guardar Cambios" : "Crear Producto";
 
   const form = useForm<ProductFormValues>({
@@ -72,7 +88,14 @@ export function useProductForm({ initialData }: UseProductFormProps) {
     defaultValues: { stock: 0, categoryId: "", discountPercentage: null },
   });
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = form;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    reset,
+  } = form;
 
   const watchPrice = watch("price");
   const watchDiscountPercentage = watch("discountPercentage");
@@ -98,7 +121,14 @@ export function useProductForm({ initialData }: UseProductFormProps) {
   useEffect(() => {
     if (initialData) {
       initializeFromData(initialData, {
-        setProductImages, setColorImages, setColors, setSizes, setFeatures, setVariants, setSelectedCategoryId, reset,
+        setProductImages,
+        setColorImages,
+        setColors,
+        setSizes,
+        setFeatures,
+        setVariants,
+        setSelectedCategoryId,
+        reset,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -116,18 +146,30 @@ export function useProductForm({ initialData }: UseProductFormProps) {
 
   const handleSizeGuideChange = useCallback(
     (data: SizeGuideData | null) => {
-      setValue("sizeGuide", data as unknown as Record<string, unknown>, { shouldDirty: true });
+      setValue("sizeGuide", data as unknown as Record<string, unknown>, {
+        shouldDirty: true,
+      });
     },
     [setValue]
   );
 
   async function handleResponseError(response: Response): Promise<never> {
     const errorText = await response.text();
-    logger.error("Error response del servidor:", { status: response.status, statusText: response.statusText, body: errorText });
+    logger.error("Error response del servidor:", {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorText,
+    });
     let errorData: { error?: { message?: string }; message?: string };
-    try { errorData = JSON.parse(errorText) as typeof errorData; }
-    catch { errorData = { error: { message: errorText } }; }
-    const errorMsg = errorData.error?.message ?? errorData.message ?? `Error ${response.status}`;
+    try {
+      errorData = JSON.parse(errorText) as typeof errorData;
+    } catch {
+      errorData = { error: { message: errorText } };
+    }
+    const errorMsg =
+      errorData.error?.message ??
+      errorData.message ??
+      `Error ${response.status}`;
     show({ type: "error", message: errorMsg });
     throw new Error(errorMsg);
   }
@@ -135,15 +177,30 @@ export function useProductForm({ initialData }: UseProductFormProps) {
   const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
     try {
       setLoading(true);
-      const validationError = validateProductData(data, productImages, colorImages);
+      const validationError = validateProductData(
+        data,
+        productImages,
+        colorImages
+      );
       if (validationError) {
         show({ type: "error", message: validationError });
         setLoading(false);
         return;
       }
 
-      const productData = buildProductData(data, productImages, colorImages, totalVariantStock, sizes, colors, features, variants);
-      const url = initialData ? `/api/products/${initialData.id}` : "/api/products";
+      const productData = buildProductData(
+        data,
+        productImages,
+        colorImages,
+        totalVariantStock,
+        sizes,
+        colors,
+        features,
+        variants
+      );
+      const url = initialData
+        ? `/api/products/${initialData.id}`
+        : "/api/products";
       const method = initialData ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -159,7 +216,10 @@ export function useProductForm({ initialData }: UseProductFormProps) {
       show({ type: "success", message: toastMessage });
     } catch (error) {
       logger.error("Error al guardar el producto:", { error });
-      show({ type: "error", message: "Error al procesar la solicitud. Intenta nuevamente." });
+      show({
+        type: "error",
+        message: "Error al procesar la solicitud. Intenta nuevamente.",
+      });
     } finally {
       setLoading(false);
     }
@@ -172,11 +232,18 @@ export function useProductForm({ initialData }: UseProductFormProps) {
         {}
       );
       logger.warn("Form validation errors:", sanitized);
-      show({ type: "error", message: "Hay errores en el formulario. Por favor revisa los campos en rojo." });
+      show({
+        type: "error",
+        message:
+          "Hay errores en el formulario. Por favor revisa los campos en rojo.",
+      });
       setTimeout(() => {
         const firstError = Object.keys(formErrors)[0];
         const el = document.getElementById(firstError);
-        if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus(); }
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus();
+        }
       }, 100);
     },
     [show]

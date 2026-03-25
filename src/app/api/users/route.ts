@@ -24,6 +24,19 @@ interface SafeUser {
   activeSessions?: number;
 }
 
+function validatePassword(password: string): string | null {
+  if (!password || password.length < 12)
+    return "La contraseña debe tener al menos 12 caracteres";
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  if (!hasUpper || !hasLower || !hasDigit || !hasSpecial) {
+    return "La contraseña debe incluir mayúsculas, minúsculas, números y caracteres especiales";
+  }
+  return null;
+}
+
 // PATCH /api/users - Actualizar password/isAdmin por email (ADMIN ONLY)
 export const PATCH = withAdminAuth(
   async (
@@ -47,29 +60,12 @@ export const PATCH = withAdminAuth(
       if (!email) {
         return fail("BAD_REQUEST", "Email es requerido", 400, { requestId });
       }
-      if (!password || password.length < 12) {
-        return fail(
-          "BAD_REQUEST",
-          "La contraseña debe tener al menos 12 caracteres",
-          400,
-          { requestId }
-        );
-      }
-      // OWASP: require mixed-case, digit, and special character
-      const hasUpper = /[A-Z]/.test(password);
-      const hasLower = /[a-z]/.test(password);
-      const hasDigit = /[0-9]/.test(password);
-      const hasSpecial = /[^A-Za-z0-9]/.test(password);
-      if (!hasUpper || !hasLower || !hasDigit || !hasSpecial) {
-        return fail(
-          "BAD_REQUEST",
-          "La contraseña debe incluir mayúsculas, minúsculas, números y caracteres especiales",
-          400,
-          { requestId }
-        );
+      const passwordError = validatePassword(password as string);
+      if (passwordError) {
+        return fail("BAD_REQUEST", passwordError, 400, { requestId });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password!, 10);
 
       // Intentar actualizar si existe, si no crear
       const existing = await prisma.user.findUnique({ where: { email } });
@@ -217,6 +213,12 @@ export const GET = withAdminAuth(
   }
 );
 
+function validateNewUserFields(body: Record<string, unknown>): string | null {
+  const { name, email, password } = body;
+  if (!name || !email || !password) return "Todos los campos son requeridos";
+  return null;
+}
+
 // POST /api/users - Crear nuevo usuario (ADMIN ONLY)
 export const POST = withAdminAuth(
   async (
@@ -234,11 +236,9 @@ export const POST = withAdminAuth(
       const body = await request.json();
       const { name, email, password, isAdmin } = body;
 
-      // Validaciones
-      if (!name || !email || !password) {
-        return fail("BAD_REQUEST", "Todos los campos son requeridos", 400, {
-          requestId,
-        });
+      const fieldError = validateNewUserFields(body);
+      if (fieldError) {
+        return fail("BAD_REQUEST", fieldError, 400, { requestId });
       }
 
       // Verificar si el email ya existe
@@ -253,7 +253,7 @@ export const POST = withAdminAuth(
       }
 
       // Encriptar la contraseña
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password as string, 10);
 
       // Crear el usuario
       const user = await prisma.user.create({

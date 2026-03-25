@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 
-import ProductForm from "../../../components/products/ProductForm";
+import ProductForm from "../../../components/products/forms/ProductForm";
 
 const meta: Meta<typeof ProductForm> = {
   title: "Admin/Products/ProductForm",

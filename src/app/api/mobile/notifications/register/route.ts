@@ -10,6 +10,28 @@ interface ApiResponse<T> {
   data: T;
 }
 
+function errResponse<T = null>(
+  message: string,
+  status: number,
+  data: T = null as T
+): ReturnType<typeof NextResponse.json> {
+  return NextResponse.json<ApiResponse<T>>(
+    { success: false, message, data },
+    { status }
+  );
+}
+
+function okResponse<T>(
+  message: string,
+  data: T,
+  status = 200
+): ReturnType<typeof NextResponse.json> {
+  return NextResponse.json<ApiResponse<T>>(
+    { success: true, message, data },
+    { status }
+  );
+}
+
 // GET - Obtener estado de registro
 export async function GET(request: NextRequest) {
   try {
@@ -68,58 +90,30 @@ export async function GET(request: NextRequest) {
 // POST - Registrar token para push notifications
 export async function POST(request: NextRequest) {
   try {
-    // [C-02] Require authentication to register push tokens
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json<ApiResponse<null>>(
-        { success: false, message: "No autorizado", data: null },
-        { status: 401 }
-      );
+      return errResponse("No autorizado", 401);
     }
 
     const body = await request.json();
     const { token, platform } = body;
 
     if (!token || !platform) {
-      return NextResponse.json<ApiResponse<null>>(
-        {
-          success: false,
-          message: "Token y platform son requeridos",
-          data: null,
-        },
-        { status: 400 }
-      );
+      return errResponse("Token y platform son requeridos", 400);
     }
 
     if (!["ios", "android", "web"].includes(platform)) {
-      return NextResponse.json<ApiResponse<null>>(
-        {
-          success: false,
-          message: "Platform debe ser ios, android o web",
-          data: null,
-        },
-        { status: 400 }
-      );
+      return errResponse("Platform debe ser ios, android o web", 400);
     }
 
-    return NextResponse.json<ApiResponse<{ registered: boolean }>>(
-      {
-        success: false,
-        message: "Servicio de push notifications no configurado actualmente",
-        data: { registered: false },
-      },
-      { status: 501 }
+    return errResponse<{ registered: boolean }>(
+      "Servicio de push notifications no configurado actualmente",
+      501,
+      { registered: false }
     );
   } catch (error) {
     logger.error("Error en notifications POST:", { error });
-    return NextResponse.json<ApiResponse<null>>(
-      {
-        success: false,
-        message: "Error interno del servidor",
-        data: null,
-      },
-      { status: 500 }
-    );
+    return errResponse("Error interno del servidor", 500);
   }
 }
 
@@ -178,16 +172,23 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+function isUnauthorizedEmailAccess(
+  session: { user: { isAdmin?: boolean; email?: string | null } },
+  customerEmail: string | null
+): boolean {
+  return (
+    !session.user.isAdmin &&
+    !!customerEmail &&
+    customerEmail !== session.user.email
+  );
+}
+
 // DELETE - Desregistrar token
 export async function DELETE(request: NextRequest) {
   try {
-    // [H-06] SECURITY: Require auth to unregister notification tokens
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json<ApiResponse<null>>(
-        { success: false, message: "No autorizado", data: null },
-        { status: 401 }
-      );
+      return errResponse("No autorizado", 401);
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -195,43 +196,18 @@ export async function DELETE(request: NextRequest) {
     const deviceId = searchParams.get("deviceId");
     const token = searchParams.get("token");
 
-    // Non-admin users can only unregister their own tokens
-    if (
-      !session.user.isAdmin &&
-      customerEmail &&
-      customerEmail !== session.user.email
-    ) {
-      return NextResponse.json<ApiResponse<null>>(
-        { success: false, message: "No autorizado", data: null },
-        { status: 403 }
-      );
+    if (isUnauthorizedEmailAccess(session, customerEmail)) {
+      return errResponse("No autorizado", 403);
     }
 
-    if (!customerEmail && !deviceId && !token) {
-      return NextResponse.json<ApiResponse<null>>(
-        {
-          success: false,
-          message: "customerEmail, deviceId o token requerido",
-          data: null,
-        },
-        { status: 400 }
-      );
+    const hasIdentifier = customerEmail || deviceId || token;
+    if (!hasIdentifier) {
+      return errResponse("customerEmail, deviceId o token requerido", 400);
     }
 
-    return NextResponse.json<ApiResponse<{ unregistered: boolean }>>({
-      success: true,
-      message: "Token desregistrado",
-      data: { unregistered: true },
-    });
+    return okResponse("Token desregistrado", { unregistered: true });
   } catch (error) {
     logger.error("Error en notifications DELETE:", { error });
-    return NextResponse.json<ApiResponse<null>>(
-      {
-        success: false,
-        message: "Error interno del servidor",
-        data: null,
-      },
-      { status: 500 }
-    );
+    return errResponse("Error interno del servidor", 500);
   }
 }

@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useMemo } from "react";
 
-import { useShippingCache } from "@/hooks/useShippingCache";
 import { useCheckoutSettings } from "@/hooks/useCheckoutSettings";
+import { useShippingCache } from "@/hooks/useShippingCache";
 import { Agency } from "@/lib/correo-argentino-service";
 import {
   AVAILABLE_BILLING_OPTIONS,
@@ -19,7 +19,12 @@ interface UseCartValueParams {
   cartItems: CartItem[];
   addToCart: CartContextType["addToCart"];
   removeFromCart: (productId: string, size: string, color: string) => void;
-  updateQuantity: (productId: string, size: string, color: string, qty: number) => void;
+  updateQuantity: (
+    productId: string,
+    size: string,
+    color: string,
+    qty: number
+  ) => void;
   clearCart: () => void;
   getCartTotal: () => number;
   getItemCount: () => number;
@@ -37,7 +42,11 @@ interface UseCartValueParams {
   customerInfo: CustomerInfo | null;
   updateCustomerInfo: (info: CustomerInfo) => void;
   getOrderSummary: () => unknown;
-  placeOrder: () => Promise<{ success: boolean; error?: string; redirectUrl?: string }>;
+  placeOrder: () => Promise<{
+    success: boolean;
+    error?: string;
+    redirectUrl?: string;
+  }>;
   shippingCache: ReturnType<typeof useShippingCache>;
   checkoutSettings: ReturnType<typeof useCheckoutSettings>;
 }

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { useState } from "react";
 
-import VariantManager from "../../../components/products/VariantManager";
+import VariantManager from "../../../components/products/variants/VariantManager";
 import { ProductVariant } from "../../../types";
 
 const meta: Meta<typeof VariantManager> = {

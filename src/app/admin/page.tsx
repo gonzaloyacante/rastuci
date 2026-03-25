@@ -29,6 +29,262 @@ const forgotPasswordSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
+function resolveLoginError(error: string): { code: string; msg: string } {
+  if (error === "CredentialsSignin")
+    return {
+      code: "Credenciales incorrectas",
+      msg: "Email o contraseña incorrectos. Por favor, verifica tus datos.",
+    };
+  if (error.includes("password"))
+    return {
+      code: "Contraseña incorrecta",
+      msg: "La contraseña ingresada es incorrecta",
+    };
+  if (error.includes("email") || error.includes("user"))
+    return {
+      code: "Usuario no encontrado",
+      msg: "No existe una cuenta con este email",
+    };
+  return { code: error, msg: `Error: ${error}` };
+}
+
+function LoadingSpinner({ text }: { text: string }) {
+  return (
+    <span className="flex items-center justify-center">
+      <svg
+        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        />
+      </svg>
+      {text}
+    </span>
+  );
+}
+
+interface LoginFormProps {
+  loading: boolean;
+  capsLockOn: boolean;
+  rememberMe: boolean;
+  loginErrors: Record<string, { message?: string }>;
+  onSetRememberMe: (v: boolean) => void;
+  onSetCapsLock: (v: boolean) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  registerLogin: (name: string) => Record<string, unknown>;
+}
+
+function LoginFormView({
+  loading,
+  capsLockOn,
+  rememberMe,
+  loginErrors,
+  onSetRememberMe,
+  onSetCapsLock,
+  onSubmit,
+  registerLogin,
+}: LoginFormProps) {
+  const handleCapsLock = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const caps = e.getModifierState && e.getModifierState("CapsLock");
+    if (typeof caps === "boolean") onSetCapsLock(caps);
+  };
+  return (
+    <form onSubmit={onSubmit} className="space-y-5">
+      <Input
+        label="Correo electrónico"
+        id="admin-email"
+        type="email"
+        placeholder="tu@email.com"
+        {...registerLogin("email")}
+        error={(loginErrors.email as { message?: string })?.message}
+        disabled={loading}
+        leftIcon={<Mail className="w-5 h-5" />}
+        autoComplete="username"
+        autoFocus
+        aria-invalid={!!loginErrors.email}
+      />
+      <Input
+        label="Contraseña"
+        id="admin-password"
+        type="password"
+        placeholder="••••••••"
+        {...registerLogin("password")}
+        error={(loginErrors.password as { message?: string })?.message}
+        disabled={loading}
+        leftIcon={<Lock className="w-5 h-5" />}
+        autoComplete="current-password"
+        allowPasswordToggle
+        onKeyDown={handleCapsLock}
+        onKeyUp={handleCapsLock}
+        aria-invalid={!!loginErrors.password}
+        helpText={capsLockOn ? "Bloq Mayús está activado" : undefined}
+      />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <input
+            id="remember-me"
+            name="remember-me"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => onSetRememberMe(e.target.checked)}
+            className="h-4 w-4 text-primary focus:ring-primary border-muted rounded cursor-pointer"
+            tabIndex={0}
+            aria-checked={rememberMe}
+          />
+          <label
+            htmlFor="remember-me"
+            className="ml-2 block text-sm muted cursor-pointer"
+          >
+            Recordarme por 30 días
+          </label>
+        </div>
+        <Link
+          href="/admin/auth/forgot-password"
+          className="text-sm font-medium text-primary hover:text-primary/80"
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
+      <Button
+        type="submit"
+        className="w-full bg-primary hover:brightness-90"
+        disabled={loading}
+      >
+        {loading ? (
+          <LoadingSpinner text="Iniciando sesión..." />
+        ) : (
+          "Iniciar Sesión"
+        )}
+      </Button>
+      <div className="mt-4 text-center">
+        <p className="text-sm muted">
+          * El acceso está restringido solo a administradores.
+        </p>
+      </div>
+    </form>
+  );
+}
+
+interface ForgotPasswordFormProps {
+  loading: boolean;
+  resetEmailSent: boolean;
+  forgotPasswordErrors: Record<string, { message?: string }>;
+  onCancel: () => void;
+  onBackToLogin: () => void;
+  onSubmit: (e: React.FormEvent) => void;
+  registerForgotPassword: (name: string) => Record<string, unknown>;
+}
+
+function ForgotPasswordView({
+  loading,
+  resetEmailSent,
+  forgotPasswordErrors,
+  onCancel,
+  onBackToLogin,
+  onSubmit,
+  registerForgotPassword,
+}: ForgotPasswordFormProps) {
+  if (resetEmailSent) {
+    return (
+      <div className="text-center py-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full surface text-success border border-success mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-primary">Correo enviado</h3>
+        <p className="muted mt-2">
+          Revisa tu bandeja de entrada y sigue las instrucciones para
+          restablecer tu contraseña.
+        </p>
+        <Button
+          type="button"
+          className="mt-6 w-full bg-primary hover:brightness-90"
+          onClick={onBackToLogin}
+        >
+          Volver al inicio de sesión
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <form onSubmit={onSubmit} className="space-y-5">
+      <Input
+        label="Correo electrónico"
+        type="email"
+        placeholder="tu@email.com"
+        {...registerForgotPassword("email")}
+        error={(forgotPasswordErrors.email as { message?: string })?.message}
+        disabled={loading}
+        leftIcon={<Mail className="w-5 h-5" />}
+        autoComplete="email"
+      />
+      <div className="flex space-x-3">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={onCancel}
+          disabled={loading}
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          className="flex-1 bg-primary hover:brightness-90"
+          disabled={loading}
+        >
+          {loading ? <LoadingSpinner text="Enviando..." /> : "Enviar enlace"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function LoginHeader({ showForgotPassword }: { showForgotPassword: boolean }) {
+  return (
+    <div className="text-center mb-8">
+      <div className="flex justify-center mb-4">
+        <div className="h-20 w-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
+          R
+        </div>
+      </div>
+      <h1 className="text-2xl font-bold text-primary">
+        {showForgotPassword ? "Recuperar Contraseña" : "Administración Rastući"}
+      </h1>
+      <p className="muted mt-2">
+        {showForgotPassword
+          ? "Ingresa tu correo para recibir instrucciones"
+          : "Accede al panel de administración"}
+      </p>
+    </div>
+  );
+}
+
 export default function AdminLoginPage() {
   useDocumentTitle({ title: "Iniciar Sesión" });
   const router = useRouter();
@@ -105,33 +361,9 @@ export default function AdminLoginPage() {
       });
 
       if (result?.error) {
-        // Mensajes de error detallados según el tipo
-        if (result.error === "CredentialsSignin") {
-          setAuthError("Credenciales incorrectas");
-          show({
-            type: "error",
-            message:
-              "Email o contraseña incorrectos. Por favor, verifica tus datos.",
-          });
-        } else if (result.error.includes("password")) {
-          setAuthError("Contraseña incorrecta");
-          show({
-            type: "error",
-            message: "La contraseña ingresada es incorrecta",
-          });
-        } else if (
-          result.error.includes("email") ||
-          result.error.includes("user")
-        ) {
-          setAuthError("Usuario no encontrado");
-          show({
-            type: "error",
-            message: "No existe una cuenta con este email",
-          });
-        } else {
-          setAuthError(result.error);
-          show({ type: "error", message: `Error: ${result.error}` });
-        }
+        const { code, msg } = resolveLoginError(result.error);
+        setAuthError(code);
+        show({ type: "error", message: msg });
         setLoading(false);
         return;
       }
@@ -159,8 +391,8 @@ export default function AdminLoginPage() {
   const onForgotPasswordSubmit: SubmitHandler<
     ForgotPasswordFormValues
   > = async (formData) => {
-    setLoading(true);
     try {
+      setLoading(true);
       // Aquí implementarías la lógica real para enviar el correo de recuperación
       logger.info("Enviando correo de recuperación", { email: formData.email });
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -185,240 +417,41 @@ export default function AdminLoginPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen surface-secondary">
-      {/* Toaster para notificaciones */}
-
       <div className="w-full max-w-md p-8 space-y-6 surface rounded-xl shadow-lg border border-muted">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            {/* Logo de Rastući */}
-            <div className="h-20 w-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
-              R
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold text-primary">
-            {showForgotPassword
-              ? "Recuperar Contraseña"
-              : "Administración Rastući"}
-          </h1>
-          <p className="muted mt-2">
-            {showForgotPassword
-              ? "Ingresa tu correo para recibir instrucciones"
-              : "Accede al panel de administración"}
-          </p>
-        </div>
+        <LoginHeader showForgotPassword={showForgotPassword} />
 
         {!showForgotPassword ? (
-          <form
+          <LoginFormView
+            loading={loading}
+            capsLockOn={capsLockOn}
+            rememberMe={rememberMe}
+            loginErrors={loginErrors as Record<string, { message?: string }>}
+            onSetRememberMe={setRememberMe}
+            onSetCapsLock={setCapsLockOn}
             onSubmit={handleLoginSubmit(onLoginSubmit)}
-            className="space-y-5"
-          >
-            <Input
-              label="Correo electrónico"
-              id="admin-email"
-              type="email"
-              placeholder="tu@email.com"
-              {...registerLogin("email")}
-              error={loginErrors.email?.message}
-              disabled={loading}
-              leftIcon={<Mail className="w-5 h-5" />}
-              autoComplete="username"
-              autoFocus
-              aria-invalid={!!loginErrors.email}
-            />
-            <Input
-              label="Contraseña"
-              id="admin-password"
-              type="password"
-              placeholder="••••••••"
-              {...registerLogin("password")}
-              error={loginErrors.password?.message}
-              disabled={loading}
-              leftIcon={<Lock className="w-5 h-5" />}
-              autoComplete="current-password"
-              allowPasswordToggle
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                const caps =
-                  e.getModifierState && e.getModifierState("CapsLock");
-                if (typeof caps === "boolean") {
-                  setCapsLockOn(caps);
-                }
-              }}
-              onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                const caps =
-                  e.getModifierState && e.getModifierState("CapsLock");
-                if (typeof caps === "boolean") {
-                  setCapsLockOn(caps);
-                }
-              }}
-              aria-invalid={!!loginErrors.password}
-              helpText={capsLockOn ? "Bloq Mayús está activado" : undefined}
-            />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-primary focus:ring-primary border-muted rounded cursor-pointer"
-                  tabIndex={0}
-                  aria-checked={rememberMe}
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm muted cursor-pointer"
-                >
-                  Recordarme por 30 días
-                </label>
-              </div>
-              <Link
-                href="/admin/auth/forgot-password"
-                className="text-sm font-medium text-primary hover:text-primary/80"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:brightness-90"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Iniciando sesión...
-                </span>
-              ) : (
-                "Iniciar Sesión"
-              )}
-            </Button>
-
-            <div className="mt-4 text-center">
-              <p className="text-sm muted">
-                * El acceso está restringido solo a administradores.
-              </p>
-            </div>
-          </form>
+            registerLogin={
+              registerLogin as (name: string) => Record<string, unknown>
+            }
+          />
         ) : (
-          <div className="space-y-5">
-            {resetEmailSent ? (
-              <div className="text-center py-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full surface text-success border border-success mb-4">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-primary">
-                  Correo enviado
-                </h3>
-                <p className="muted mt-2">
-                  Revisa tu bandeja de entrada y sigue las instrucciones para
-                  restablecer tu contraseña.
-                </p>
-                <Button
-                  type="button"
-                  className="mt-6 w-full bg-primary hover:brightness-90"
-                  onClick={() => {
-                    setShowForgotPassword(false);
-                    setResetEmailSent(false);
-                  }}
-                >
-                  Volver al inicio de sesión
-                </Button>
-              </div>
-            ) : (
-              <form
-                onSubmit={handleForgotPasswordSubmit(onForgotPasswordSubmit)}
-                className="space-y-5"
-              >
-                <Input
-                  label="Correo electrónico"
-                  type="email"
-                  placeholder="tu@email.com"
-                  {...registerForgotPassword("email")}
-                  error={forgotPasswordErrors.email?.message}
-                  disabled={loading}
-                  leftIcon={<Mail className="w-5 h-5" />}
-                  autoComplete="email"
-                />
-                <div className="flex space-x-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setShowForgotPassword(false)}
-                    disabled={loading}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-primary hover:brightness-90"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <span className="flex items-center justify-center">
-                        <svg
-                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Enviando...
-                      </span>
-                    ) : (
-                      "Enviar enlace"
-                    )}
-                  </Button>
-                </div>
-              </form>
-            )}
-          </div>
+          <ForgotPasswordView
+            loading={loading}
+            resetEmailSent={resetEmailSent}
+            forgotPasswordErrors={
+              forgotPasswordErrors as Record<string, { message?: string }>
+            }
+            onCancel={() => setShowForgotPassword(false)}
+            onBackToLogin={() => {
+              setShowForgotPassword(false);
+              setResetEmailSent(false);
+            }}
+            onSubmit={handleForgotPasswordSubmit(onForgotPasswordSubmit)}
+            registerForgotPassword={
+              registerForgotPassword as (
+                name: string
+              ) => Record<string, unknown>
+            }
+          />
         )}
       </div>
 

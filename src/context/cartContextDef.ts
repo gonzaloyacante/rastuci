@@ -3,12 +3,10 @@ import { createContext, useContext } from "react";
 import { Agency } from "@/lib/correo-argentino-service";
 import { Product } from "@/types";
 import {
-  AVAILABLE_BILLING_OPTIONS,
   BillingOption,
   CartItem,
   Coupon,
   CustomerInfo,
-  DEFAULT_PAYMENT_METHOD,
   PaymentMethod,
   ShippingOption,
 } from "@/types/cart";
@@ -119,7 +117,9 @@ const _defaultCart: CartContextType = {
   loadCheckoutSettings: async () => {},
 };
 
-export const CartContext = createContext<CartContextType | undefined>(undefined);
+export const CartContext = createContext<CartContextType | undefined>(
+  undefined
+);
 
 export const useCart = (): CartContextType => {
   const context = useContext(CartContext);
@@ -136,4 +136,7 @@ export type {
   ShippingOption,
 } from "@/types/cart";
 export type { PlaceOrderResult } from "@/types/cart";
-export { AVAILABLE_BILLING_OPTIONS, DEFAULT_PAYMENT_METHOD } from "@/types/cart";
+export {
+  AVAILABLE_BILLING_OPTIONS,
+  DEFAULT_PAYMENT_METHOD,
+} from "@/types/cart";

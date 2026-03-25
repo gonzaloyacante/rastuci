@@ -4,20 +4,21 @@ import { AlertCircle, Download, Mail } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import RepentanceButton from "@/components/legal/RepentanceButton";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { generateInvoiceHTML } from "@/lib/invoiceGenerator";
 import { logger } from "@/lib/logger";
 
 import {
-  generateInvoiceHTML,
   Order,
+  OrderItemsCard,
   OrderTrackingHeader,
   ShippingAddressCard,
   StatusHistoryCard,
   TrackingData,
   TrackingEventsCard,
   TrackingNumberCard,
-  OrderItemsCard,
 } from "./OrderTrackingSections";
 
 interface OrderTrackingProps {
@@ -40,9 +41,8 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     try {
       setTrackingLoading(true);
       const res = await fetch(`/api/tracking/${trackingNumber}`);
-      if (!res.ok) throw new Error(`Error obteniendo tracking: ${res.status}`);
       const data = await res.json();
-      if (data.success && data.data) {
+      if (data.data) {
         setTracking(data.data);
         setLastTrackingUpdate(new Date());
       }
@@ -66,10 +66,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
 
       const res = await fetch(`/api/orders/${orderId}`);
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        setError(
-          `No se pudo obtener el pedido (status ${res.status})${text ? `: ${text}` : ""}`
-        );
+        setError(`No se pudo obtener el pedido (status ${res.status})`);
         setOrder(null);
         return;
       }
@@ -123,14 +120,17 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `factura_${order.id}.html`;
+      link.download = `comprobante_${order.id}.html`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       logger.info("Invoice downloaded successfully", { orderId: order.id });
     } catch (err) {
-      logger.error("Error downloading invoice", { orderId: order.id, error: err });
+      logger.error("Error downloading invoice", {
+        orderId: order.id,
+        error: err,
+      });
     }
   };
 
@@ -190,7 +190,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
       <div className="flex gap-4">
         <Button onClick={downloadInvoice} variant="outline" className="flex-1">
           <Download className="h-4 w-4 mr-2" />
-          Descargar Factura
+          Descargar Comprobante
         </Button>
         <Button variant="outline" className="flex-1" asChild>
           <Link href="/contacto">
@@ -199,7 +199,9 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
           </Link>
         </Button>
       </div>
+      <div className="flex justify-center pt-2">
+        <RepentanceButton />
+      </div>
     </div>
   );
 }
-

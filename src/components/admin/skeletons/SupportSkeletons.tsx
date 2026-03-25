@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/Skeleton";
+
 import { LogisticsTabsSkeleton } from "./LogisticsSkeletons";
 
 export const TicketCardSkeleton = () => (

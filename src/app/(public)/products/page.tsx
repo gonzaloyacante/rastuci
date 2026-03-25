@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 
-import { ProductGridSkeleton } from "@/components/products/ProductListComponents";
+import { ProductGridSkeleton } from "@/components/products/list/ProductListComponents";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";

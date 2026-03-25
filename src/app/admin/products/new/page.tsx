@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 
 import { FormSkeleton } from "@/components/admin/skeletons";
-import ProductForm from "@/components/products/ProductForm";
+import ProductForm from "@/components/products/forms/ProductForm";
 import { useCategories } from "@/hooks";
 
 function CreateProductContent() {

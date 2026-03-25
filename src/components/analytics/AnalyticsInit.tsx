@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/lib/analytics/index";
 
 export default function AnalyticsInit() {
   const pathname = usePathname();

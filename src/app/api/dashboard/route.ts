@@ -41,6 +41,31 @@ function calculateChange(
   };
 }
 
+interface MonthlyOrder {
+  createdAt: Date;
+  total: { toNumber?: () => number } | number | string;
+}
+
+function buildMonthlySales(
+  now: Date,
+  monthlyOperations: MonthlyOrder[]
+): { month: string; revenue: number }[] {
+  const map = new Map<string, number>();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(now.getMonth() - i);
+    map.set(d.toLocaleDateString("es-AR", { month: "short" }), 0);
+  }
+  for (const order of monthlyOperations) {
+    const key = order.createdAt.toLocaleDateString("es-AR", { month: "short" });
+    map.set(key, (map.get(key) || 0) + Number(order.total));
+  }
+  return Array.from(map.entries()).map(([month, revenue]) => ({
+    month,
+    revenue,
+  }));
+}
+
 export const GET = withAdminAuth(async () => {
   try {
     // Fechas para comparación (este mes vs mes anterior)
@@ -110,7 +135,6 @@ export const GET = withAdminAuth(async () => {
       }),
     ]);
 
-    // Calcular ingresos totales y por período
     const [totalRevenueResult, revenueThisMonth, revenueLastMonth] =
       await Promise.all([
         prisma.orders.aggregate({ _sum: { total: true } }),
@@ -120,12 +144,7 @@ export const GET = withAdminAuth(async () => {
         }),
         prisma.orders.aggregate({
           _sum: { total: true },
-          where: {
-            createdAt: {
-              gte: startOfLastMonth,
-              lte: endOfLastMonth,
-            },
-          },
+          where: { createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
         }),
       ]);
 
@@ -133,7 +152,6 @@ export const GET = withAdminAuth(async () => {
     const revenueThisMonthValue = Number(revenueThisMonth._sum.total) || 0;
     const revenueLastMonthValue = Number(revenueLastMonth._sum.total) || 0;
 
-    // Calcular cambios porcentuales
     const productsChange = calculateChange(
       productsAddedThisMonth,
       productsAddedLastMonth
@@ -143,23 +161,14 @@ export const GET = withAdminAuth(async () => {
       revenueThisMonthValue,
       revenueLastMonthValue
     );
-    const categoriesChange = calculateChange(totalCategories, totalCategories); // Categorías no cambian mucho
+    const categoriesChange = calculateChange(totalCategories, totalCategories);
 
-    // Obtener productos con bajo stock
     const lowStockProducts = await prisma.products.findMany({
-      where: {
-        stock: {
-          lt: 10,
-        },
-      },
+      where: { stock: { lt: 10 } },
       take: 5,
-      orderBy: {
-        stock: "asc",
-      },
+      orderBy: { stock: "asc" },
     });
 
-    // Formatea las órdenes recientes para el dashboard
-    // OPTIMIZACIÓN: Mapeo ajustado a la nueva estructura de query
     const formattedRecentOrders = recentOrders.map((order: RecentOrder) => ({
       id: order.id,
       customerName: order.customerName,
@@ -169,16 +178,8 @@ export const GET = withAdminAuth(async () => {
       items: order._count.order_items,
     }));
 
-    // Obtener productos por categoría usando Prisma
     const productsByCategory = await prisma.categories.findMany({
-      select: {
-        name: true,
-        _count: {
-          select: {
-            products: true,
-          },
-        },
-      },
+      select: { name: true, _count: { select: { products: true } } },
     });
 
     const formattedProductsByCategory = productsByCategory.map(
@@ -188,61 +189,16 @@ export const GET = withAdminAuth(async () => {
       })
     );
 
-    // Ventas mensuales (últimos 6 meses) - OPTIMIZACIÓN N+1
-    // En lugar de una query por mes, traemos todo de una vez y agregamos en memoria
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1); // Inicio del mes hace 6 meses
+    sixMonthsAgo.setDate(1);
 
     const monthlyOperations = await prisma.orders.findMany({
-      where: {
-        createdAt: {
-          gte: sixMonthsAgo,
-        },
-      },
-      select: {
-        createdAt: true,
-        total: true,
-      },
+      where: { createdAt: { gte: sixMonthsAgo } },
+      select: { createdAt: true, total: true },
     });
 
-    const monthlySalesMap = new Map<string, number>();
-
-    // Inicializar mapa con 0 para los últimos 6 meses (para mantener el orden y cubrir meses sin ventas)
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(now.getMonth() - i);
-      const key = d.toLocaleDateString("es-AR", { month: "short" });
-      monthlySalesMap.set(key, 0);
-    }
-
-    // Sumar totales
-    monthlyOperations.forEach((order) => {
-      const key = order.createdAt.toLocaleDateString("es-AR", {
-        month: "short",
-      });
-      // Solo sumar si el mes está en el rango (debería estarlo por el where, pero por seguridad)
-      if (monthlySalesMap.has(key)) {
-        const current = monthlySalesMap.get(key) || 0;
-        monthlySalesMap.set(key, current + Number(order.total));
-      } else {
-        // Fallback por si acaso las fechas no coinciden exactamente con la generación de claves
-        // (ej: diferencia de timezone en borde de mes).
-        // En este caso simple, podríamos ignorarlo o agregarlo dinámicamente.
-        // Lo agregaremos dinámicamente si no existe, aunque el loop de inicialización debería cubrirlo.
-        monthlySalesMap.set(
-          key,
-          (monthlySalesMap.get(key) || 0) + Number(order.total)
-        );
-      }
-    });
-
-    const monthlySales = Array.from(monthlySalesMap.entries()).map(
-      ([month, revenue]) => ({
-        month,
-        revenue,
-      })
-    );
+    const monthlySales = buildMonthlySales(now, monthlyOperations);
 
     return NextResponse.json({
       stats: {

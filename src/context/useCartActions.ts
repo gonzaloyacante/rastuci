@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
 
-import { analytics } from "@/lib/analytics";
+import { analytics } from "@/lib/analytics/index";
 import { Product } from "@/types";
 import { CartItem, Coupon } from "@/types/cart";
 
-import { getEffectivePrice, upsertCartItem } from "./cartHelpers";
 import { CartContextType } from "./cartContextDef";
+import { getEffectivePrice, upsertCartItem } from "./cartHelpers";
 
 interface UseCartActionsReturn {
   cartItems: CartItem[];
@@ -14,7 +14,12 @@ interface UseCartActionsReturn {
   setAppliedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
   addToCart: CartContextType["addToCart"];
   removeFromCart: (productId: string, size: string, color: string) => void;
-  updateQuantity: (productId: string, size: string, color: string, newQuantity: number) => void;
+  updateQuantity: (
+    productId: string,
+    size: string,
+    color: string,
+    newQuantity: number
+  ) => void;
   clearCart: () => void;
   getCartTotal: () => number;
   getItemCount: () => number;
@@ -31,8 +36,13 @@ export function useCartActions(): UseCartActionsReturn {
       const size = isQuantityForm ? (b as string) : (a as string);
       const color = isQuantityForm ? (c as string) : (b as string);
       if (!size) return;
-      analytics.trackAddToCart(product.id, getEffectivePrice(product) * quantity);
-      setCartItems((prev) => upsertCartItem(prev, product, quantity, size, color));
+      analytics.trackAddToCart(
+        product.id,
+        getEffectivePrice(product) * quantity
+      );
+      setCartItems((prev) =>
+        upsertCartItem(prev, product, quantity, size, color)
+      );
     },
     []
   ) as unknown as CartContextType["addToCart"];
@@ -42,7 +52,11 @@ export function useCartActions(): UseCartActionsReturn {
       setCartItems((prev) =>
         prev.filter(
           (item) =>
-            !(item.product.id === productId && item.size === size && item.color === color)
+            !(
+              item.product.id === productId &&
+              item.size === size &&
+              item.color === color
+            )
         )
       );
     },
@@ -57,7 +71,9 @@ export function useCartActions(): UseCartActionsReturn {
       }
       setCartItems((prev) =>
         prev.map((item) =>
-          item.product.id === productId && item.size === size && item.color === color
+          item.product.id === productId &&
+          item.size === size &&
+          item.color === color
             ? { ...item, quantity: newQuantity }
             : item
         )
@@ -74,7 +90,8 @@ export function useCartActions(): UseCartActionsReturn {
   const getCartTotal = useCallback(
     () =>
       cartItems.reduce(
-        (total, item) => total + getEffectivePrice(item.product) * item.quantity,
+        (total, item) =>
+          total + getEffectivePrice(item.product) * item.quantity,
         0
       ),
     [cartItems]

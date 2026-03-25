@@ -1,4 +1,4 @@
-import { OrderStatus, Prisma } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
 import { add } from "date-fns";
 import { nanoid } from "nanoid";
 
@@ -6,7 +6,7 @@ import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { getStoreSettings } from "@/lib/store-settings";
-import { MercadoPagoPayer, OrderItemInput } from "@/types";
+import { MercadoPagoPayer } from "@/types";
 
 import {
   buildOrderItemsCreate,
@@ -16,6 +16,7 @@ import {
   decrementOrderItemsStock,
   decrementVariantStock,
   determineUpdateActions,
+  extractShippingFromOrderMetadata,
   getLegacyShippingCost,
   incrementCouponUsage,
   parseLegacyItems,
@@ -25,30 +26,9 @@ import {
   sendTransferOrderEmailAsync,
   validateAndPriceItems,
 } from "./order-helpers";
+import type { OrderMetadata, OrderUpdateData } from "./order-service.types";
 
-export interface OrderMetadata {
-  tempOrderId?: string;
-  customerName: string;
-  customerEmail?: string;
-  customerPhone?: string;
-  customerAddress?: string;
-  customerCity?: string;
-  customerProvince?: string;
-  customerPostalCode?: string;
-  shippingAgencyCode?: string;
-  shippingMethodId?: string;
-  shippingMethodName?: string;
-  shippingCost?: string | number;
-  items: string | OrderItemInput[];
-  discountPercent?: string | number;
-  shipping?: string;
-}
-
-export type OrderUpdateData = {
-  mpPaymentId: string;
-  mpStatus: string;
-  mappedStatus: OrderStatus;
-};
+export type { OrderMetadata, OrderUpdateData } from "./order-service.types";
 
 export class OrderService {
   mapStatus(mpStatus: string): OrderStatus {
@@ -183,39 +163,14 @@ export class OrderService {
     const customerEmail: string | undefined =
       (metadata.customerEmail as string) || paymentPayer?.email;
 
-    // ... (rest of imports/methods until createFromMetadata)
-
-    // In createFromMetadata:
-
-    // Shipping fields
-    const shippingStreet =
-      typeof metadata.customerAddress === "string"
-        ? metadata.customerAddress
-        : undefined;
-    const shippingCity =
-      typeof metadata.customerCity === "string"
-        ? metadata.customerCity
-        : undefined;
-    const shippingProvince =
-      typeof metadata.customerProvince === "string"
-        ? metadata.customerProvince
-        : undefined;
-    const shippingPostalCode =
-      typeof metadata.customerPostalCode === "string"
-        ? metadata.customerPostalCode
-        : undefined;
-    const shippingAgencyCode =
-      typeof metadata.shippingAgencyCode === "string"
-        ? metadata.shippingAgencyCode
-        : undefined;
-
-    // Fix: Prioritize shippingMethodName if available for clear display, fallback to ID
-    const shippingMethodId =
-      typeof metadata.shippingMethodName === "string"
-        ? metadata.shippingMethodName
-        : typeof metadata.shippingMethodId === "string"
-          ? metadata.shippingMethodId
-          : undefined;
+    const {
+      shippingStreet,
+      shippingCity,
+      shippingProvince,
+      shippingPostalCode,
+      shippingAgencyCode,
+      shippingMethodId,
+    } = extractShippingFromOrderMetadata(metadata);
 
     const metaItems = parseLegacyItems(metadata);
     if (metaItems.length === 0) {
@@ -390,7 +345,9 @@ export class OrderService {
           mpPreferenceId: null,
           mpStatus: "cash",
           updatedAt: new Date(),
-          order_items: { create: buildOrderItemsCreate(orderId, validatedItems) },
+          order_items: {
+            create: buildOrderItemsCreate(orderId, validatedItems),
+          },
           shippingStreet: shippingData?.street,
           shippingCity: shippingData?.city,
           shippingProvince: shippingData?.province,
@@ -512,7 +469,9 @@ export class OrderService {
           shippingMethod: shippingData.methodName,
           updatedAt: new Date(),
           couponId: coupon?.id ?? null,
-          order_items: { create: buildOrderItemsCreate(orderId, validatedItems) },
+          order_items: {
+            create: buildOrderItemsCreate(orderId, validatedItems),
+          },
         },
         include: { order_items: { include: { products: true } } },
       });
@@ -613,7 +572,9 @@ export class OrderService {
           shippingMethod: shippingData.methodName,
           updatedAt: new Date(),
           couponId: coupon?.id ?? null,
-          order_items: { create: buildOrderItemsCreate(orderId, validatedItems) },
+          order_items: {
+            create: buildOrderItemsCreate(orderId, validatedItems),
+          },
         },
         include: { order_items: { include: { products: true } } },
       });

@@ -18,6 +18,22 @@ const SUCCESSFUL_STATUSES = [
 ] as const;
 
 // GET /api/search/trending - Devuelve búsquedas trending basadas en ventas
+async function fillWithCategories(trending: string[], needed: number) {
+  const catCounts = await prisma.products.groupBy({
+    by: ["categoryId"],
+    _count: { id: true },
+    orderBy: { _count: { id: "desc" } },
+    take: needed,
+  });
+  const catIds = catCounts.map((c) => c.categoryId);
+  if (!catIds.length) return;
+  const cats = await prisma.categories.findMany({
+    where: { id: { in: catIds } },
+    select: { id: true, name: true },
+  });
+  for (const c of cats) trending.push(c.name);
+}
+
 export async function GET(
   req: NextRequest
 ): Promise<NextResponse<ApiResponse<{ trending: string[] }>>> {
@@ -57,25 +73,8 @@ export async function GET(
     type ProductNameType = (typeof products)[0];
     const trending: string[] = products.map((p: ProductNameType) => p.name);
 
-    // Completar con categorías top si hace falta
     if (trending.length < 8) {
-      const catCounts = await prisma.products.groupBy({
-        by: ["categoryId"],
-        _count: { id: true },
-        orderBy: { _count: { id: "desc" } },
-        take: 8 - trending.length,
-      });
-      type CatCountType = (typeof catCounts)[0];
-      const catIds = catCounts.map((c: CatCountType) => c.categoryId);
-      const cats =
-        catIds.length > 0
-          ? await prisma.categories.findMany({
-              where: { id: { in: catIds } },
-              select: { id: true, name: true },
-            })
-          : [];
-      type CatType = (typeof cats)[0];
-      cats.forEach((c: CatType) => trending.push(c.name));
+      await fillWithCategories(trending, 8 - trending.length);
     }
 
     return ok({ trending });
