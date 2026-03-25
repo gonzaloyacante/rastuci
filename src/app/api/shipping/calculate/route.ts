@@ -38,8 +38,8 @@ function mapRate(rate: {
   productType: string;
   deliveredType: string;
   productName: string;
-  deliveryTimeMin: number;
-  deliveryTimeMax: number;
+  deliveryTimeMin: string;
+  deliveryTimeMax: string;
   price: number;
 }) {
   return {

@@ -26,16 +26,9 @@ export function resolveProvinceCode(
   province: string | undefined
 ): string | null {
   if (!province) return null;
-  const normalized = province
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+  const normalized = province.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const match = PROVINCIAS.find(
-    (p) =>
-      p.name
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") === normalized
+    (p) => p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalized
   );
   if (match) return match.code;
   if (normalized.includes("capital") || normalized.includes("caba")) return "C";

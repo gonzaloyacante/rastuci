@@ -265,6 +265,26 @@ function ForgotPasswordView({
   );
 }
 
+function LoginHeader({ showForgotPassword }: { showForgotPassword: boolean }) {
+  return (
+    <div className="text-center mb-8">
+      <div className="flex justify-center mb-4">
+        <div className="h-20 w-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
+          R
+        </div>
+      </div>
+      <h1 className="text-2xl font-bold text-primary">
+        {showForgotPassword ? "Recuperar Contraseña" : "Administración Rastući"}
+      </h1>
+      <p className="muted mt-2">
+        {showForgotPassword
+          ? "Ingresa tu correo para recibir instrucciones"
+          : "Accede al panel de administración"}
+      </p>
+    </div>
+  );
+}
+
 export default function AdminLoginPage() {
   useDocumentTitle({ title: "Iniciar Sesión" });
   const router = useRouter();
@@ -398,23 +418,7 @@ export default function AdminLoginPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen surface-secondary">
       <div className="w-full max-w-md p-8 space-y-6 surface rounded-xl shadow-lg border border-muted">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="h-20 w-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
-              R
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold text-primary">
-            {showForgotPassword
-              ? "Recuperar Contraseña"
-              : "Administración Rastući"}
-          </h1>
-          <p className="muted mt-2">
-            {showForgotPassword
-              ? "Ingresa tu correo para recibir instrucciones"
-              : "Accede al panel de administración"}
-          </p>
-        </div>
+        <LoginHeader showForgotPassword={showForgotPassword} />
 
         {!showForgotPassword ? (
           <LoginFormView

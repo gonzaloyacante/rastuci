@@ -11,6 +11,8 @@ import {
 import Link from "next/link";
 import React, { Suspense } from "react";
 
+import type { ProductVariant } from "@/types";
+
 import {
   ColorSelectorSection,
   ImageGallerySkeleton,
@@ -109,12 +111,12 @@ interface ProductInfoPanelProps {
     salePrice?: number | null;
     onSale?: boolean;
     categories?: { name?: string; id?: string } | null;
-    variants: unknown[];
+    variants?: ProductVariant[];
     sizeGuide?: unknown;
   };
   availableColors: string[];
   selectedColor: string;
-  colorImagesMap: Record<string, unknown>;
+  colorImagesMap: Record<string, string[]>;
   allSizes: string[];
   hasVariants: boolean;
   selectedSize: string;

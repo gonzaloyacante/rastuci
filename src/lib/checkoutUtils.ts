@@ -1,10 +1,11 @@
+import type { ToastType } from "@/components/ui/Toast";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { StoreSettings } from "@/lib/validation/store";
 
 type CheckoutPayments = StoreSettings["payments"];
 export type ShowFn = (config: {
-  type: string;
+  type: ToastType;
   title?: string;
   message: string;
 }) => void;

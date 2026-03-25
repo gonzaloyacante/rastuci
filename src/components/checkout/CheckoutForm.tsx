@@ -42,15 +42,12 @@ function mapCartItemsForSummary(cartItems: CartItem[]) {
   }));
 }
 
-function PaymentMethodNotice({
-  method,
-  cashExpHours,
-  transferExpHours,
-}: {
+type PaymentMethodNoticeProps = {
   method: string;
   cashExpHours: number;
   transferExpHours: number;
-}) {
+};
+function PaymentMethodNotice({ method, cashExpHours, transferExpHours }: PaymentMethodNoticeProps) {
   if (method === PAYMENT_METHODS.CASH) {
     return (
       <div className="p-4 bg-emerald-50 text-emerald-900 rounded-lg border border-emerald-200 mt-4">

@@ -40,9 +40,8 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
     try {
       setTrackingLoading(true);
       const res = await fetch(`/api/tracking/${trackingNumber}`);
-      if (!res.ok) throw new Error(`Error obteniendo tracking: ${res.status}`);
       const data = await res.json();
-      if (data.success && data.data) {
+      if (data.data) {
         setTracking(data.data);
         setLastTrackingUpdate(new Date());
       }
@@ -66,10 +65,7 @@ export function OrderTracking({ orderId, onOrderUpdate }: OrderTrackingProps) {
 
       const res = await fetch(`/api/orders/${orderId}`);
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        setError(
-          `No se pudo obtener el pedido (status ${res.status})${text ? `: ${text}` : ""}`
-        );
+        setError(`No se pudo obtener el pedido (status ${res.status})`);
         setOrder(null);
         return;
       }

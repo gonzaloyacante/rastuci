@@ -65,7 +65,7 @@ export const PATCH = withAdminAuth(
         return fail("BAD_REQUEST", passwordError, 400, { requestId });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password!, 10);
 
       // Intentar actualizar si existe, si no crear
       const existing = await prisma.user.findUnique({ where: { email } });
@@ -253,7 +253,7 @@ export const POST = withAdminAuth(
       }
 
       // Encriptar la contraseña
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password as string, 10);
 
       // Crear el usuario
       const user = await prisma.user.create({

@@ -68,7 +68,7 @@ export const GET = withAdminAuth(
 
       const where = buildOrdersFilter({
         status,
-        shippingMethod,
+        shippingMethod: shippingMethod ?? undefined,
         mpPaymentId,
         search,
       });
