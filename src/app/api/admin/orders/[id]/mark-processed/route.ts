@@ -53,9 +53,9 @@ export const PATCH = withAdminAuth(
         );
       }
 
-      // Actualizar estado a PROCESSED
+      // Atomic update: only if still PENDING_PAYMENT (prevents TOCTOU race condition)
       const updatedOrder = await prisma.orders.update({
-        where: { id: orderId },
+        where: { id: orderId, status: "PENDING_PAYMENT" },
         data: {
           status: "PROCESSED",
           updatedAt: new Date(),

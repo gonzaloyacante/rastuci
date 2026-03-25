@@ -59,6 +59,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return fail("NOT_FOUND", "Orden no encontrada", 404);
     }
 
+    // Only DELIVERED orders can be reviewed (prevents premature reviews)
+    if (order.status !== "DELIVERED") {
+      return fail(
+        "BAD_REQUEST",
+        "Solo se pueden reseñar órdenes entregadas",
+        400
+      );
+    }
+
     // #59 Fix: Use customerName from the order, not the request body (prevent impersonation)
     const verifiedCustomerName = order.customerName || customerName;
 

@@ -145,8 +145,9 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
     );
   }
 
+  // Atomic: only update if status hasn't changed concurrently (prevents TOCTOU race condition)
   const order = await prisma.orders.update({
-    where: { id },
+    where: { id, status: current.status },
     data: { status },
     include: {
       order_items: {
