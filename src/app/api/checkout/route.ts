@@ -217,6 +217,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           });
         }
         resolvedShippingPrice = dbPrice;
+      } else {
+        logger.warn("[Checkout] Unknown shipping option — rejected", {
+          methodId: shippingMethod.id,
+        });
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "El método de envío seleccionado no es válido. Recargá la página.",
+          },
+          { status: 400 }
+        );
       }
     }
 

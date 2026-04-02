@@ -16,7 +16,7 @@ export function applySecurityHeaders(response: NextResponse, nonce: string) {
     "font-src 'self' https://fonts.gstatic.com data:",
     "connect-src 'self' https://api.mercadopago.com https://*.sentry.io https://*.google-analytics.com https://www.googletagmanager.com wss://localhost:* ws://localhost:*",
     "worker-src 'self' blob:",
-    // MercadoPago checkout and 3D-secure may open in iframes — allow their domains only
+    // MercadoPago uses redirect flow (not iframes), so frame-src 'none' is correct
     "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",
