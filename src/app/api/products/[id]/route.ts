@@ -257,7 +257,9 @@ export const PUT = withAdminAuth(
           categoryId,
           images: newImages,
           onSale: onSale ?? false,
-          isActive: isActive ?? true,
+          // Si isActive no viene en el body, Prisma no actualiza el campo (preserva el valor actual).
+          // Esto evita que editar un producto inactivo lo reactive accidentalmente.
+          isActive: isActive !== undefined ? isActive : undefined,
           sizes: sizes ?? undefined,
           colors: colors ?? undefined,
           features: features ?? undefined,
@@ -393,6 +395,24 @@ export const DELETE = withAdminAuth(
         select: { id: true, images: true },
       });
       if (!product) return fail("NOT_FOUND", "Producto no encontrado", 404);
+
+      // Verificar si el producto tiene pedidos asociados.
+      // Si los tiene, no podemos eliminarlo porque violaría la integridad referencial.
+      const orderCount = await prisma.order_items.count({
+        where: { productId: id },
+      });
+      if (orderCount > 0) {
+        return fail(
+          "CONFLICT",
+          `Este producto tiene ${orderCount} pedido(s) asociado(s) y no puede ser eliminado. Podés desactivarlo desde la lista para que no sea visible en la tienda.`,
+          409
+        );
+      }
+
+      // Eliminar primero los ítems de carrito abandonado (datos analíticos, no críticos).
+      await prisma.cart_abandonment_items.deleteMany({
+        where: { productId: id },
+      });
 
       await prisma.products.delete({ where: { id } });
 

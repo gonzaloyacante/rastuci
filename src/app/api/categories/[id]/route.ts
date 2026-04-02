@@ -108,7 +108,7 @@ export const PUT = withAdminAuth(
           issues: parsed.error.issues,
         });
       }
-      const { name, description, imageUrl } = parsed.data;
+      const { name, description, imageUrl, icon } = parsed.data;
 
       // Verificar si existe otra categoría con ese nombre
       const existingCategory = await prisma.categories.findFirst({
@@ -133,6 +133,7 @@ export const PUT = withAdminAuth(
           name,
           description,
           imageUrl: imageUrl !== undefined ? imageUrl : undefined,
+          icon: icon !== undefined ? icon : undefined,
         },
       });
 

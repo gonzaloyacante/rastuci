@@ -168,7 +168,7 @@ export const POST = withAdminAuth(
           issues: parsed.error.issues,
         });
       }
-      const { name, description, imageUrl } = parsed.data;
+      const { name, description, imageUrl, icon } = parsed.data;
 
       // Verificar si ya existe una categoría con ese nombre
       const existingCategory = await prisma.categories.findUnique({
@@ -187,6 +187,7 @@ export const POST = withAdminAuth(
           name,
           description,
           imageUrl: imageUrl ?? null,
+          icon: icon ?? null,
           updatedAt: new Date(),
         },
       });

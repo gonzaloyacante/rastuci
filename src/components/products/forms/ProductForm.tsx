@@ -4,6 +4,7 @@ import {
   AlertCircle,
   DollarSign,
   Eye,
+  EyeOff,
   FileText,
   Image as ImageIcon,
   Info,
@@ -14,6 +15,8 @@ import {
   Ruler,
   Save,
   Tag,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 
 import ProductPreview from "@/components/products/display/ProductPreview";
@@ -59,6 +62,7 @@ export default function ProductForm({
     handleSubmit,
     errors,
     watch,
+    setValue,
     loading,
     title,
     action,
@@ -184,6 +188,49 @@ export default function ProductForm({
                 </div>
               </div>
 
+              {/* Toggle Activo/Inactivo */}
+              <div className="flex items-center justify-between p-4 bg-surface-secondary/50 rounded-lg border">
+                <div>
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    {watch("isActive") !== false ? (
+                      <Eye className="h-4 w-4 text-success" />
+                    ) : (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    Estado del producto
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {watch("isActive") !== false
+                      ? "Visible para los clientes en la tienda"
+                      : "Oculto — no aparece en la tienda"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setValue(
+                      "isActive",
+                      watch("isActive") === false ? true : false
+                    )
+                  }
+                  disabled={loading}
+                  className="flex items-center gap-1.5 text-sm font-medium transition-colors"
+                  aria-label="Cambiar estado del producto"
+                >
+                  {watch("isActive") !== false ? (
+                    <>
+                      <ToggleRight className="h-7 w-7 text-success" />
+                      <span className="text-success">Activo</span>
+                    </>
+                  ) : (
+                    <>
+                      <ToggleLeft className="h-7 w-7 text-muted-foreground" />
+                      <span className="text-muted-foreground">Inactivo</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               <div>
                 <label
                   htmlFor="description"
@@ -201,7 +248,7 @@ export default function ProductForm({
                   disabled={loading}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Máximo 1000 caracteres.
+                  Máximo 2000 caracteres.
                 </p>
                 {errors.description && (
                   <p className="mt-1 text-sm text-error flex items-center gap-1">

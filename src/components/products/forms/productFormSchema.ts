@@ -21,7 +21,7 @@ export const productSchema = z.object({
     .max(100, "El nombre no puede exceder 100 caracteres"),
   description: z
     .string()
-    .max(1000, "La descripción no puede exceder 1000 caracteres")
+    .max(2000, "La descripción no puede exceder 2000 caracteres")
     .optional(),
   price: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
@@ -90,7 +90,11 @@ export const productSchema = z.object({
   sizesInput: z.string().optional(),
   colorsInput: z.string().optional(),
   featuresInput: z.string().optional(),
-  sizeGuide: z.record(z.string(), z.unknown()).optional(),
+  // isActive: gestiona el estado de publicación del producto (activo/inactivo)
+  isActive: z.boolean().optional(),
+  // sizeGuide: usa z.unknown() porque el editor produce { columns, rows } y la API devuelve
+  // SizeGuideEntry[] — ambos formatos son válidos en diferentes etapas del flujo
+  sizeGuide: z.unknown().optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
@@ -119,6 +123,10 @@ export function calcDiscountPercentage(
     : null;
 }
 
+function numOrNull(v: number | null | undefined): number | null {
+  return v ?? null;
+}
+
 export function buildInitialResetValues(
   d: Product,
   discountPercentage: number | null
@@ -131,11 +139,14 @@ export function buildInitialResetValues(
     stock: d.stock,
     categoryId: d.categoryId,
     onSale: d.onSale || false,
-    weight: d.weight || null,
-    height: d.height || null,
-    width: d.width || null,
-    length: d.length || null,
-    sizeGuide: d.sizeGuide as unknown as Record<string, unknown>,
+    isActive: d.isActive ?? true,
+    weight: numOrNull(d.weight),
+    height: numOrNull(d.height),
+    width: numOrNull(d.width),
+    length: numOrNull(d.length),
+    // No incluimos sizeGuide aquí porque la API devuelve SizeGuideEntry[]
+    // que es incompatible con el formato del editor { columns, rows }.
+    // El editor arranca vacío al editar; los datos se preservan en el servidor.
   };
 }
 
@@ -188,6 +199,9 @@ export function buildProductData(
     width: data.width ?? null,
     length: data.length ?? null,
   };
+  // Solo enviar sizeGuide si el editor produjo un objeto (SizeGuideData { columns, rows }).
+  // Si es un array (SizeGuideEntry[] que llega del API en el reset), no enviarlo.
+  const sizeGuide = Array.isArray(data.sizeGuide) ? undefined : data.sizeGuide;
   return {
     name: data.name.trim(),
     description: data.description?.trim() ?? null,
@@ -196,10 +210,11 @@ export function buildProductData(
     stock: totalVariantStock,
     categoryId: data.categoryId.trim(),
     ...buildImageOptions(productImages, colorImages),
+    isActive: data.isActive ?? true,
     onSale: (discountPct ?? 0) > 0,
     ...buildOptionalPayloadFields(sizes, colors, features, variants),
     ...dimensions,
-    sizeGuide: data.sizeGuide,
+    sizeGuide,
   };
 }
 

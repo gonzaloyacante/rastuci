@@ -5,19 +5,28 @@
  * Si CA soporta webhooks, configurar esta URL en su panel de administración.
  */
 
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
 import { trackingNotificationService } from "@/lib/tracking-notifications";
 
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Opcional: Validar autenticación/firma del webhook
-    const authHeader = request.headers.get("authorization");
+    // Validar autenticación/firma del webhook
+    const authHeader = request.headers.get("authorization") ?? "";
     const expectedSecret = process.env.CORREO_ARGENTINO_WEBHOOK_SECRET;
 
     // Fail-Closed: If secret is missing or mismatch, deny.
-    if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+    if (
+      !expectedSecret ||
+      !safeCompare(authHeader, `Bearer ${expectedSecret}`)
+    ) {
       logger.warn("[Webhook CA] Unauthorized webhook attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

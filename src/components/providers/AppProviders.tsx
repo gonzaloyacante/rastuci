@@ -4,6 +4,7 @@ import AnalyticsInit from "@/components/analytics/AnalyticsInit";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CartProvider } from "@/context/CartContext";
+import { ComparisonProvider } from "@/context/ComparisonContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 
 export default function AppProviders({
@@ -16,10 +17,12 @@ export default function AppProviders({
       <WishlistProvider>
         <CartProvider>
           <ToastProvider>
-            <Suspense fallback={null}>
-              <AnalyticsInit />
-            </Suspense>
-            {children}
+            <ComparisonProvider>
+              <Suspense fallback={null}>
+                <AnalyticsInit />
+              </Suspense>
+              {children}
+            </ComparisonProvider>
           </ToastProvider>
         </CartProvider>
       </WishlistProvider>

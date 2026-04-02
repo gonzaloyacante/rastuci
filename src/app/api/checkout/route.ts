@@ -220,6 +220,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
+    // Validate CA shipping price: must be positive (CA always charges for delivery)
+    if (shippingMethod?.id?.startsWith("ca-") && resolvedShippingPrice <= 0) {
+      logger.warn("[Checkout] Invalid CA shipping price — rejected", {
+        clientPrice: shippingMethod.price,
+        methodId: shippingMethod.id,
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "El costo de envío de Correo Argentino es inválido. Recalculá el envío.",
+        },
+        { status: 400 }
+      );
+    }
+
     const shippingData = {
       street: customer.address,
       city: customer.city,
