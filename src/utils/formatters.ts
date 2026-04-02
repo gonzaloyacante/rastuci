@@ -1,12 +1,12 @@
 /**
- * Formatear precio en pesos colombianos
+ * Formatear precio en pesos argentinos
  */
 import { customAlphabet } from "nanoid";
 
 export const formatPrice = (price: number): string => {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
-    currency: "COP",
+    currency: "ARS",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);

@@ -76,13 +76,20 @@ export class CorreoArgentinoAuth {
       // 3. Guardar token y expiración
       this.token = response.data.token;
       // Parsear fecha de expiración (formato "YYYY-MM-DD HH:mm:ss") o usar defecto 12h
-      // La API devuelve string, asumimos una validez segura si falla el parseo
-      try {
-        this.tokenExpires = new Date(response.data.expires);
-      } catch {
+      // new Date() no lanza excepción con strings inválidos, retorna Invalid Date
+      const parsed = new Date(response.data.expires);
+      if (isNaN(parsed.getTime())) {
         const now = new Date();
         now.setHours(now.getHours() + 12);
         this.tokenExpires = now;
+        logger.warn(
+          "[CorreoArgentino] Could not parse token expiry, using 12h fallback",
+          {
+            rawExpires: response.data.expires,
+          }
+        );
+      } else {
+        this.tokenExpires = parsed;
       }
 
       // 4. Configurar header Authorization para futuros requests

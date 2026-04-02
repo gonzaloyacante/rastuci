@@ -29,6 +29,7 @@ export default function CategoryEditPage() {
         setCategory(data.data);
       } catch (error) {
         logger.error("Error:", { error });
+        show({ type: "error", message: "Error al cargar la categoría" });
       } finally {
         setLoading(false);
       }
