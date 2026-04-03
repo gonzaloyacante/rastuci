@@ -252,10 +252,36 @@ export interface NormalizedProductData {
 
 export function normalizeProductData(d: Product): NormalizedProductData {
   const discount = calcDiscountPercentage(d.price, d.salePrice);
+  const images = parseProductImages(d.images);
+  const rawColorImages = (d.colorImages as Record<string, string[]>) ?? {};
+  const colors = d.colors ?? [];
+
+  // Map rawColorImages keys to the canonical colors array provided by the product
+  // This handles cases where stored color keys and the colors array have slightly
+  // different formats (e.g., "Azul" vs "Azul (#123456)"). We attempt exact
+  // matches first, then a loose includes-based match.
+  const mappedColorImages: Record<string, string[]> = {};
+  for (const color of colors) {
+    // Exact match
+    if (rawColorImages[color]) {
+      mappedColorImages[color] = rawColorImages[color];
+      continue;
+    }
+    // Loose match: find a raw key that includes the color string or vice versa
+    const foundKey = Object.keys(rawColorImages).find((k) => {
+      if (!k) return false;
+      const a = k.toLowerCase().trim();
+      const b = color.toLowerCase().trim();
+      return a === b || a.includes(b) || b.includes(a);
+    });
+    if (foundKey) mappedColorImages[color] = rawColorImages[foundKey];
+    else mappedColorImages[color] = [];
+  }
+
   return {
-    images: parseProductImages(d.images),
-    colorImages: (d.colorImages as Record<string, string[]>) ?? {},
-    colors: d.colors ?? [],
+    images,
+    colorImages: mappedColorImages,
+    colors,
     sizes: d.sizes ?? [],
     features: d.features ?? [],
     variants: d.variants ?? [],
