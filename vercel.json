@@ -4,7 +4,7 @@
       "maxDuration": 10
     }
   },
-  "installCommand": "corepack enable && corepack prepare pnpm@10.33.0 --activate && pnpm install --frozen-lockfile",
+  "installCommand": "corepack enable && corepack prepare pnpm@10.33.0 --activate && pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm prisma generate && pnpm build",
   "crons": [
     {
