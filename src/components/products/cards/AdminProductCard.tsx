@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Check,
-  Edit,
-  Eye,
-  Pencil,
-  Power,
-  Trash2,
-  TrendingUp,
-  X,
-} from "lucide-react";
+import { Edit, Eye, Power, Trash2, TrendingUp } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 
 import { COMMON_COLORS } from "@/components/products/forms/ProductFormComponents";
@@ -36,108 +27,16 @@ interface InlineStockEditorProps {
 }
 
 export function InlineStockEditor({
-  productId,
+  productId: _productId,
   stock,
-  onUpdateStock,
+  onUpdateStock: _onUpdateStock,
 }: InlineStockEditorProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(String(stock));
-  const [isSaving, setIsSaving] = useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleStartEdit = (e: React.MouseEvent) => {
-    if (!onUpdateStock) return;
-    e.stopPropagation();
-    setInputValue(String(stock));
-    setIsEditing(true);
-    setTimeout(() => inputRef.current?.select(), 0);
-  };
-
-  const handleCancel = (e?: React.MouseEvent | React.KeyboardEvent) => {
-    e?.stopPropagation();
-    setIsEditing(false);
-    setInputValue(String(stock));
-  };
-
-  const handleSave = async (e?: React.MouseEvent | React.KeyboardEvent) => {
-    e?.stopPropagation();
-    if (!onUpdateStock) return;
-    const newStock = parseInt(inputValue, 10);
-    if (isNaN(newStock) || newStock < 0) {
-      handleCancel();
-      return;
-    }
-    if (newStock === stock) {
-      setIsEditing(false);
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await onUpdateStock(productId, newStock);
-    } finally {
-      setIsSaving(false);
-      setIsEditing(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") void handleSave(e);
-    if (e.key === "Escape") handleCancel(e);
-  };
-
-  if (isEditing) {
-    return (
-      <div
-        className="flex items-center gap-1"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <input
-          ref={inputRef}
-          type="number"
-          min={0}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isSaving}
-          className="w-16 h-7 text-sm text-center border border-primary rounded focus:outline-none focus:ring-1 focus:ring-primary bg-surface px-1"
-          aria-label="Nuevo stock"
-        />
-        <button
-          type="button"
-          onClick={(e) => void handleSave(e)}
-          disabled={isSaving}
-          className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
-          title="Guardar"
-        >
-          <Check className="w-3.5 h-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={handleCancel}
-          disabled={isSaving}
-          className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
-          title="Cancelar"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    );
-  }
-
+  // Mostrar solo el badge y la cantidad total.
+  // La edición de stock debe hacerse a nivel de variantes en el formulario del producto.
   return (
     <div className="flex items-center gap-1.5">
       <StockBadge stock={stock} />
       <span className="text-xs text-muted-foreground font-mono">({stock})</span>
-      {onUpdateStock && (
-        <button
-          type="button"
-          onClick={handleStartEdit}
-          className="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-          title="Editar stock"
-        >
-          <Pencil className="w-3 h-3" />
-        </button>
-      )}
     </div>
   );
 }
@@ -400,7 +299,7 @@ export function AdminProductCard({
             </h3>
           </div>
           {product.categories && (
-            <Badge variant="outline" className="text-xs max-w-[140px] truncate">
+            <Badge variant="outline" className="text-xs max-w-35 truncate">
               {product.categories.name}
             </Badge>
           )}
@@ -469,7 +368,7 @@ export function AdminProductCard({
             <Button
               size="sm"
               variant={product.isActive !== false ? "outline" : "primary"}
-              className="flex-1 min-w-[3rem]"
+              className="flex-1 min-w-12"
               onClick={() =>
                 onToggleActive(product.id, !(product.isActive !== false))
               }
@@ -488,7 +387,7 @@ export function AdminProductCard({
           <Button
             size="sm"
             variant="outline"
-            className="flex-1 min-w-[3rem]"
+            className="flex-1 min-w-12"
             onClick={() => onEdit(product.id)}
             leftIcon={<Edit className="h-4 w-4" />}
           >
@@ -498,7 +397,7 @@ export function AdminProductCard({
             <Button
               size="sm"
               variant="ghost"
-              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 min-w-[2.5rem]"
+              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 min-w-10"
               onClick={() => onDelete(product.id)}
               leftIcon={<Trash2 className="h-4 w-4" />}
               title="Eliminar producto"
