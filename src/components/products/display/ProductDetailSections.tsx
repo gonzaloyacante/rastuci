@@ -93,6 +93,7 @@ export function QuantityStepper({
           else if (val < 1) onChange(1);
           else onChange(val);
         }}
+        aria-label="Cantidad"
         className="w-16 h-8 text-center border border-muted rounded bg-surface text-primary"
       />
       <Button

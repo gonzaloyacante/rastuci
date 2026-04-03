@@ -19,7 +19,7 @@ export default function RepentanceButton() {
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-primary underline underline-offset-2 transition-colors"
-        aria-label="Información sobre el derecho de arrepentimiento de compra"
+        aria-label="Botón de Arrepentimiento - Información sobre el derecho de arrepentimiento de compra"
       >
         <span aria-hidden="true">↩</span>
         Botón de Arrepentimiento
@@ -55,9 +55,7 @@ export default function RepentanceButton() {
                   Ley 24.240 (Art. 34)
                 </strong>{" "}
                 y la{" "}
-                <strong className="text-foreground">
-                  Resolución 424/2020
-                </strong>{" "}
+                <strong className="text-foreground">Resolución 424/2020</strong>{" "}
                 de la Secretaría de Comercio Interior, tenés derecho a
                 arrepentirte de tu compra dentro de los{" "}
                 <strong className="text-foreground">
@@ -81,7 +79,9 @@ export default function RepentanceButton() {
                     </a>{" "}
                     dentro de los 10 días hábiles de recibido el producto.
                   </li>
-                  <li>Indicá tu nombre, número de pedido y motivo (opcional).</li>
+                  <li>
+                    Indicá tu nombre, número de pedido y motivo (opcional).
+                  </li>
                   <li>
                     El producto debe estar en su estado original, sin uso y con
                     sus etiquetas.

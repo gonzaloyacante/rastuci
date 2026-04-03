@@ -191,14 +191,15 @@ export default function Footer({ home, contact }: FooterProps) {
             href="https://www.argentina.gob.ar/produccion/defensadelconsumidor/formulario"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Defensa del Consumidor - Gobierno de Argentina"
+            aria-label="Defensa del Consumidor — Si no quedás satisfecho podés ingresar tu queja aquí - Gobierno de Argentina"
             className="inline-flex items-center gap-2 text-xs muted hover:text-primary transition-colors border border-muted rounded px-3 py-1.5"
           >
-            <span className="text-base" aria-hidden="true">🛡️</span>
+            <span className="text-base" aria-hidden="true">
+              🛡️
+            </span>
             <span>
               Defensa del Consumidor &mdash; Si no quedás satisfecho podés
-              ingresar tu queja{" "}
-              <span className="underline">aquí</span>
+              ingresar tu queja <span className="underline">aquí</span>
             </span>
           </a>
         </div>
