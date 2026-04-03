@@ -304,6 +304,7 @@ export const POST = withAdminAuth(
           stock: Number(productData.stock),
           categoryId: productData.categoryId,
           onSale: productData.onSale ?? false,
+          isActive: productData.isActive ?? true,
           sizes: productData.sizes ?? undefined,
           colors: productData.colors ?? undefined,
           features: productData.features ?? undefined,
@@ -312,7 +313,11 @@ export const POST = withAdminAuth(
           width: productData.width ?? null,
           length: productData.length ?? null,
           updatedAt: new Date(),
-          images: Array.isArray(productData.images) ? productData.images : [],
+          images: Array.isArray(productData.images)
+            ? productData.images
+            : productData.images
+              ? [productData.images]
+              : [],
           product_variants:
             productData.variants && productData.variants.length > 0
               ? {

@@ -18,13 +18,13 @@ export const getVacationReopeningEmail = (_params: {
 
 export const getContactNotificationEmail = (params: {
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   message: string;
   responsePreference: string;
 }): string => {
   const { name, email, phone, message, responsePreference } = params;
-  const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/admin/contacts`;
+  const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://rastuci.com"}/admin/contact`;
   const preferenceLabel: Record<string, string> = {
     EMAIL: "📧 Email",
     PHONE: "📞 Teléfono",
@@ -47,7 +47,7 @@ export const getContactNotificationEmail = (params: {
       <div style="${EMAIL_STYLES.detailsBox}">
         <h3 style="${EMAIL_STYLES.detailsTitle}">Datos del remitente</h3>
         <p style="${EMAIL_STYLES.detailItem}"><strong>Nombre:</strong> ${escapeHtml(name)}</p>
-        <p style="${EMAIL_STYLES.detailItem}"><strong>Email:</strong> ${escapeHtml(email)}</p>
+        ${email ? `<p style="${EMAIL_STYLES.detailItem}"><strong>Email:</strong> ${escapeHtml(email)}</p>` : ""}
         ${phone ? `<p style="${EMAIL_STYLES.detailItem}"><strong>Teléfono:</strong> ${escapeHtml(phone)}</p>` : ""}
         <p style="${EMAIL_STYLES.detailItem}"><strong>Preferencia de respuesta:</strong> ${preferenceLabel[responsePreference] ?? responsePreference}</p>
       </div>

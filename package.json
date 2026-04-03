@@ -113,7 +113,7 @@
     "lucide-react": "^0.561.0",
     "mercadopago": "^2.11.0",
     "nanoid": "^5.1.6",
-    "next": "^16.1.6",
+    "next": "^16.2.2",
     "next-auth": "^4.24.13",
     "next-cloudinary": "^6.17.5",
     "next-themes": "^0.4.6",
@@ -126,7 +126,7 @@
     "react-hook-form": "^7.68.0",
     "react-is": "^19.2.4",
     "recharts": "^3.6.0",
-    "resend": "^6.6.0",
+    "resend": "^6.10.0",
     "sanitize-html": "^2.17.1",
     "swr": "^2.3.8",
     "tailwind-merge": "^3.4.0",
@@ -174,7 +174,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "prisma": "6.19",
+    "prisma": "~6.19.3",
     "storybook": "^10.2.10",
     "strip-ansi": "^7.1.2",
     "tailwindcss": "^4.1.18",
@@ -193,5 +193,14 @@
     "*.{json,md,css,scss}": [
       "prettier --write"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "flatted": ">=3.4.2",
+      "micromatch": ">=4.0.8",
+      "brace-expansion@1": ">=1.1.13",
+      "brace-expansion@2": ">=2.0.3",
+      "path-to-regexp@>=8.0.0": ">=8.4.0"
+    }
   }
 }

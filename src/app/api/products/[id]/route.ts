@@ -218,6 +218,7 @@ export const PUT = withAdminAuth(
         length,
         variants: inputVariants,
         colorImages,
+        sizeGuide,
       } = parsed.data;
 
       const category = await prisma.categories.findUnique({
@@ -230,7 +231,7 @@ export const PUT = withAdminAuth(
         try {
           await variantService.syncVariants(
             id,
-            inputVariants.map((v) => ({ ...v, productId: id, id: "" }))
+            inputVariants.map((v) => ({ ...v, productId: id }))
           );
         } catch (error) {
           logger.error("Error syncing variants", { error });
@@ -238,13 +239,9 @@ export const PUT = withAdminAuth(
         }
       }
 
-      const newImages = Array.isArray(images) ? images : [];
+      const newImages = Array.isArray(images) ? images : images ? [images] : [];
       await deleteRemovedCloudinaryImages(id, newImages);
-      await syncRelationalData(
-        id,
-        colorImages,
-        (parsed.data as { sizeGuide?: unknown }).sizeGuide
-      );
+      await syncRelationalData(id, colorImages, sizeGuide);
 
       const updatedPrismaProduct = await prisma.products.update({
         where: { id },

@@ -303,7 +303,7 @@ export const emailService = {
 
   async sendContactNotification(params: {
     name: string;
-    email: string;
+    email?: string;
     phone?: string;
     message: string;
     responsePreference: string;
@@ -320,7 +320,7 @@ export const emailService = {
       subject: `📬 Nuevo mensaje de contacto de ${safeName}`,
       html: getContactNotificationEmail(templateParams),
       type: "ADMIN",
-      replyTo: params.email,
+      ...(params.email && { replyTo: params.email }),
     });
   },
 };

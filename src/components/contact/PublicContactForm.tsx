@@ -15,34 +15,51 @@ import { type ContactSettings } from "@/lib/validation/contact";
 
 // Define schema directly or import if available.
 // Assuming we want a specific schema for this form.
+const PHONE_REGEX = /^[+\d][\d\s\-().]{5,19}$/;
+
 const contactFormSchema = z
   .object({
     name: z
       .string()
       .min(2, "Por favor, ingresa tu nombre (mínimo 2 caracteres)"),
-    email: z.string().email("Por favor, ingresa un email válido"),
-    phone: z.string().optional(),
+    email: z
+      .string()
+      .email("Por favor, ingresa un email válido")
+      .optional()
+      .or(z.literal("")),
+    phone: z
+      .string()
+      .regex(
+        PHONE_REGEX,
+        "Ingresa un número de teléfono válido (ej: +54 9 11 1234-5678)"
+      )
+      .optional()
+      .or(z.literal("")),
     message: z
       .string()
       .min(10, "Por favor, escribe un mensaje de al menos 10 caracteres"),
     responsePreference: z.enum(["EMAIL", "PHONE", "WHATSAPP"]),
   })
-  .refine(
-    (data) => {
-      if (
-        (data.responsePreference === "PHONE" ||
-          data.responsePreference === "WHATSAPP") &&
-        (!data.phone || data.phone.trim().length < 6)
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Por favor, ingresa tu teléfono para poder contactarte",
-      path: ["phone"],
+  .superRefine((data, ctx) => {
+    if (data.responsePreference === "EMAIL" && !data.email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Por favor, ingresa tu email para poder contactarte",
+        path: ["email"],
+      });
     }
-  );
+    if (
+      (data.responsePreference === "PHONE" ||
+        data.responsePreference === "WHATSAPP") &&
+      (!data.phone || data.phone.trim().length < 6)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Por favor, ingresa tu teléfono para poder contactarte",
+        path: ["phone"],
+      });
+    }
+  });
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
@@ -165,6 +182,9 @@ export const PublicContactForm = ({
                     className="block text-sm font-semibold mb-2 font-montserrat"
                   >
                     {contact.form.emailLabel}
+                    {responsePreference === "EMAIL" && (
+                      <span className="text-error ml-1">*</span>
+                    )}
                   </label>
                   <Input
                     id="email"
@@ -189,6 +209,10 @@ export const PublicContactForm = ({
                   className="block text-sm font-semibold mb-2 font-montserrat"
                 >
                   {contact.form.phoneLabel}
+                  {(responsePreference === "PHONE" ||
+                    responsePreference === "WHATSAPP") && (
+                    <span className="text-error ml-1">*</span>
+                  )}
                 </label>
                 <Input
                   id="phone"

@@ -124,7 +124,10 @@ export async function GET(request: NextRequest): Promise<
     });
 
     // Cache headers para el navegador
-    response.headers.set("Cache-Control", "public, max-age=300, s-maxage=300");
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=60, s-maxage=60, stale-while-revalidate=300"
+    );
 
     return response;
   } catch (error) {

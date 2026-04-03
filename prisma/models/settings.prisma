@@ -278,7 +278,7 @@ model vacation_cart_item {
 model contact_messages {
   id                 String   @id @default(cuid())
   name               String
-  email              String
+  email              String?
   phone              String?
   message            String
   responsePreference String   @default("EMAIL")
