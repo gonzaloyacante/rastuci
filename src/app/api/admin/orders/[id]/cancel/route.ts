@@ -115,6 +115,21 @@ export const POST = withAdminAuth(
       if (check.error) return check.error;
       await performCancellation(orderId, check.order!);
       logger.info(`[Admin] Cancelled order ${orderId} and restored stock`);
+      // Notify customer if they have an email
+      if (check.order!.customerEmail) {
+        const { emailService } = await import("@/lib/resend");
+        emailService
+          .sendOrderCancelled({
+            id: orderId,
+            customerName: check.order!.customerName,
+            customerEmail: check.order!.customerEmail,
+          })
+          .catch((emailErr) =>
+            logger.warn("[Admin] Failed to send cancellation email", {
+              emailErr,
+            })
+          );
+      }
       revalidatePath("/admin/orders");
       revalidatePath(`/admin/orders/${orderId}`);
       return NextResponse.json({

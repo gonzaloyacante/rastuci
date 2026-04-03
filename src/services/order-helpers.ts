@@ -26,9 +26,16 @@ export function resolveProvinceCode(
   province: string | undefined
 ): string | null {
   if (!province) return null;
-  const normalized = province.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalized = province
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
   const match = PROVINCIAS.find(
-    (p) => p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalized
+    (p) =>
+      p.name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") === normalized
   );
   if (match) return match.code;
   if (normalized.includes("capital") || normalized.includes("caba")) return "C";
@@ -212,17 +219,36 @@ export async function checkStockAlerts(
 
     const products = await prisma.products.findMany({
       where: { id: { in: productIds as string[] } },
-      select: { id: true, name: true, stock: true },
+      select: { id: true, name: true, stock: true, lowStockAlertedAt: true },
     });
+
+    const ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 horas
+    const now = new Date();
 
     for (const p of products) {
       if (!isLowStockStatus(p.stock, settings.stockStatuses)) continue;
+
+      // Dedup: no reenviar alerta si ya se envió dentro de las últimas 24 hs
+      if (
+        p.lowStockAlertedAt &&
+        now.getTime() - p.lowStockAlertedAt.getTime() < ALERT_COOLDOWN_MS
+      ) {
+        continue;
+      }
+
       await emailService.sendLowStockAlert(
         p.name,
         p.stock,
         p.id,
         settings.adminEmail || "admin@rastuci.com"
       );
+
+      // Registrar timestamp de alerta para cooldown
+      await prisma.products.update({
+        where: { id: p.id },
+        data: { lowStockAlertedAt: now },
+      });
+
       logger.info(`[StockAlert] Sent alert for ${p.name} (Stock: ${p.stock})`);
     }
   } catch (error) {
