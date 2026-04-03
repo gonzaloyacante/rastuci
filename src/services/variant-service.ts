@@ -1,3 +1,4 @@
+import { invalidateProductCache } from "@/lib/cache";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
@@ -71,6 +72,11 @@ export class VariantService {
 
     // Recalculate total product stock
     await this.syncProductTotalStock(variant.productId);
+    try {
+      invalidateProductCache(variant.productId);
+    } catch (e) {
+      logger.warn("invalidateProductCache failed in updateStock", { error: e });
+    }
   }
 
   /**
@@ -160,6 +166,14 @@ export class VariantService {
         where: { id: productId },
         data: { stock: totalStock },
       });
+      // Invalidate cache after transaction completes (called by caller)
+      try {
+        invalidateProductCache(productId);
+      } catch (e) {
+        logger.warn("invalidateProductCache failed in syncVariants", {
+          error: e,
+        });
+      }
     });
   }
 }

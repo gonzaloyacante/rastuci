@@ -12,6 +12,8 @@ export const getCachedProducts = unstable_cache(
   async (category?: string, featured?: boolean) => {
     return await prisma.products.findMany({
       where: {
+        // Por defecto solo devolver productos activos en helpers cacheados
+        isActive: true,
         ...(category ? { categoryId: category } : {}),
         ...(featured ? { onSale: true } : {}),
       },

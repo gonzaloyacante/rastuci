@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAdminAuth } from "@/lib/adminAuth";
+import { invalidateProductCache } from "@/lib/cache";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { ProductBulkUpdateSchema } from "@/lib/validation/product";
@@ -55,6 +56,15 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
 
     // If transaction succeeds, all were updated.
     results.success = updates.length;
+
+    // Invalidate product cache so public lists reflect updates
+    try {
+      invalidateProductCache();
+    } catch (e) {
+      logger.warn("invalidateProductCache failed after bulk update", {
+        error: e,
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -6,6 +6,7 @@
 import { OrderStatus, Prisma } from "@prisma/client";
 import { nanoid } from "nanoid";
 
+import { invalidateProductCache } from "@/lib/cache";
 import { ORDER_STATUS, PROVINCIAS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
@@ -131,11 +132,13 @@ export async function decrementVariantStock(
   tx: Prisma.TransactionClient,
   items: ValidatedOrderItem[]
 ): Promise<void> {
+  const affectedProducts = new Set<string>();
   for (const item of items) {
     await tx.products.update({
       where: { id: item.productId, stock: { gte: item.quantity } },
       data: { stock: { decrement: item.quantity } },
     });
+    affectedProducts.add(item.productId);
     if (item.color && item.size) {
       const variantResult = await tx.product_variants.updateMany({
         where: {
@@ -162,6 +165,17 @@ export async function decrementVariantStock(
         }
       }
     }
+  }
+
+  // Invalidate product cache for affected products so public lists reflect stock changes
+  try {
+    for (const pid of affectedProducts) {
+      invalidateProductCache(pid);
+    }
+  } catch (e) {
+    logger.warn("invalidateProductCache failed in decrementVariantStock", {
+      error: e,
+    });
   }
 }
 
@@ -229,9 +243,11 @@ export async function checkStockAlerts(
       if (!isLowStockStatus(p.stock, settings.stockStatuses)) continue;
 
       // Dedup: no reenviar alerta si ya se envió dentro de las últimas 24 hs
+      // Aseguramos el tipo antes de llamar `getTime` para evitar errores de TS
+      const alertedAt = p.lowStockAlertedAt as unknown as Date | null;
       if (
-        p.lowStockAlertedAt &&
-        now.getTime() - p.lowStockAlertedAt.getTime() < ALERT_COOLDOWN_MS
+        alertedAt &&
+        now.getTime() - alertedAt.getTime() < ALERT_COOLDOWN_MS
       ) {
         continue;
       }

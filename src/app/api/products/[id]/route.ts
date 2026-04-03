@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { invalidateProductCache } from "@/lib/cache";
 import { deleteImage, extractPublicId } from "@/lib/cloudinary";
 import { normalizeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
@@ -281,6 +282,12 @@ export const PUT = withAdminAuth(
 
       revalidatePath("/products");
       revalidatePath(`/products/${(await params).id}`);
+      // Invalidate in-memory cache used by server helpers to avoid serving stale data
+      try {
+        invalidateProductCache((await params).id);
+      } catch (e) {
+        logger.warn("invalidateProductCache failed", { error: e });
+      }
       return ok(
         mapPrismaProductToResponse(
           updatedPrismaProduct as PrismaProductWithRelations
@@ -353,8 +360,16 @@ export const PATCH = withAdminAuth(
           },
         },
       });
-
       revalidatePath("/products");
+      // También revalidar la página de detalle del producto para asegurar
+      // que cambios rápidos (toggle de isActive / stock) se reflejen inmediatamente
+      // en la ruta estática/dinámica del producto.
+      revalidatePath(`/products/${id}`);
+      try {
+        invalidateProductCache(id);
+      } catch (e) {
+        logger.warn("invalidateProductCache failed", { error: e });
+      }
       return ok(
         mapPrismaProductToResponse(
           updatedPrismaProduct as PrismaProductWithRelations
@@ -426,6 +441,11 @@ export const DELETE = withAdminAuth(
 
       logger.info(`[Admin] Deleted product ${id}`);
       revalidatePath("/products");
+      try {
+        invalidateProductCache(id);
+      } catch (e) {
+        logger.warn("invalidateProductCache failed on DELETE", { error: e });
+      }
       return ok({ deleted: true }, "Producto eliminado correctamente");
     } catch (error) {
       logger.error("Error deleting product:", { error });
