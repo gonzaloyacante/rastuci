@@ -102,7 +102,7 @@ export default function Footer({ home, contact }: FooterProps) {
             </li>
             <li>
               <Link
-                href="/legal/privacidad"
+                href="/legal/privacy"
                 className="muted hover:text-primary transition-colors"
               >
                 Política de Privacidad
