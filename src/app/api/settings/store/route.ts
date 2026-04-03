@@ -124,8 +124,10 @@ function dbToApiFormat(
 
 /**
  * GET /api/settings/store
+ * Public endpoint — returns display settings used by public pages (cart, product detail, checkout).
+ * No sensitive data is exposed. PUT remains admin-protected.
  */
-export const GET = withAdminAuth(async (_request: NextRequest) => {
+export async function GET(_request: NextRequest) {
   try {
     const [store, shipping, stock] = await Promise.all([
       prisma.store_settings.findUnique({ where: { id: "default" } }),
@@ -159,7 +161,7 @@ export const GET = withAdminAuth(async (_request: NextRequest) => {
       { status: 500 }
     );
   }
-});
+}
 
 /**
  * PUT /api/settings/store

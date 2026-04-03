@@ -133,7 +133,6 @@ export function PublicProductCard({
         <div className="overflow-hidden shrink-0">
           <Link
             href={`/productos/${product.id}`}
-            aria-label={`Ver detalles de ${product.name}`}
             className="block relative h-[160px] sm:h-[200px] overflow-hidden bg-neutral-100 dark:bg-neutral-800"
           >
             <OptimizedImage
@@ -283,10 +282,7 @@ export function PublicProductCard({
     <article className="group relative surface rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-theme">
       <div className="flex">
         <div className="relative w-28 sm:w-36 md:w-40 shrink-0 overflow-hidden">
-          <Link
-            href={`/productos/${product.id}`}
-            aria-label={`Ver detalles de ${product.name}`}
-          >
+          <Link href={`/productos/${product.id}`}>
             <div className="relative h-full min-h-28 sm:min-h-32">
               <OptimizedImage
                 src={mainImage || ""}
