@@ -1,5 +1,6 @@
 "use client";
 
+import { CornerDownLeft } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -18,11 +19,10 @@ export default function RepentanceButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-primary underline underline-offset-2 transition-colors"
-        aria-label="Información sobre el derecho de arrepentimiento de compra"
+        className="inline-flex items-center text-xs text-muted hover:text-primary underline underline-offset-2 transition-colors gap-1"
       >
-        <span aria-hidden="true">↩</span>
-        Botón de Arrepentimiento
+        <CornerDownLeft className="w-4 h-4" aria-hidden="true" />
+        <span>Botón de Arrepentimiento</span>
       </button>
 
       {open && (
@@ -44,7 +44,7 @@ export default function RepentanceButton() {
               id="repentance-title"
               className="text-lg font-bold flex items-center gap-2"
             >
-              <span aria-hidden="true">↩</span>
+              <CornerDownLeft className="w-4 h-4" aria-hidden="true" />
               Derecho de Arrepentimiento
             </h2>
 
@@ -55,9 +55,7 @@ export default function RepentanceButton() {
                   Ley 24.240 (Art. 34)
                 </strong>{" "}
                 y la{" "}
-                <strong className="text-foreground">
-                  Resolución 424/2020
-                </strong>{" "}
+                <strong className="text-foreground">Resolución 424/2020</strong>{" "}
                 de la Secretaría de Comercio Interior, tenés derecho a
                 arrepentirte de tu compra dentro de los{" "}
                 <strong className="text-foreground">
@@ -81,7 +79,9 @@ export default function RepentanceButton() {
                     </a>{" "}
                     dentro de los 10 días hábiles de recibido el producto.
                   </li>
-                  <li>Indicá tu nombre, número de pedido y motivo (opcional).</li>
+                  <li>
+                    Indicá tu nombre, número de pedido y motivo (opcional).
+                  </li>
                   <li>
                     El producto debe estar en su estado original, sin uso y con
                     sus etiquetas.

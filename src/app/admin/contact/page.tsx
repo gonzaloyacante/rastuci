@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { ContactMessagesList } from "@/components/admin/contact/ContactMessagesList";
 import { FormSkeleton } from "@/components/admin/skeletons";
 import ContactForm from "@/components/forms/ContactForm";
 import { ContactSettings } from "@/lib/validation/contact";
@@ -10,6 +11,9 @@ export default function AdminContactPage() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<ContactSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"messages" | "settings">(
+    "messages"
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -42,14 +46,35 @@ export default function AdminContactPage() {
   if (error) {
     return <div className="p-6 text-error">{error}</div>;
   }
-  if (!settings) {
-    return <div className="p-6">Sin datos</div>;
-  }
 
   return (
     <div className="max-w-5xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Contacto</h1>
-      <ContactForm initial={settings} />
+
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 rounded-lg surface-secondary mb-6 w-fit">
+        <button
+          onClick={() => setActiveTab("messages")}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            activeTab === "messages" ? "surface shadow-sm" : "hover:surface/50"
+          }`}
+        >
+          Mensajes
+        </button>
+        <button
+          onClick={() => setActiveTab("settings")}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            activeTab === "settings" ? "surface shadow-sm" : "hover:surface/50"
+          }`}
+        >
+          Configuración
+        </button>
+      </div>
+
+      {activeTab === "messages" && <ContactMessagesList />}
+      {activeTab === "settings" && settings && (
+        <ContactForm initial={settings} />
+      )}
     </div>
   );
 }

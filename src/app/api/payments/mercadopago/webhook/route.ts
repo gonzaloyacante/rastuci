@@ -285,7 +285,12 @@ export async function POST(req: NextRequest) {
       unknown
     >;
     const webhookData = extractWebhookPaymentData(req, data);
-    if (!webhookData) return ok({ ok: true });
+    if (!webhookData) {
+      logger.debug("[MP webhook] No payment data in webhook — ignored", {
+        requestId,
+      });
+      return ok({ ok: true });
+    }
     const headerErr = validateWebhookHeaders(webhookData, requestId);
     if (headerErr) return headerErr;
     if (!isPaymentTopic(webhookData.topic)) return ok({ ok: true });

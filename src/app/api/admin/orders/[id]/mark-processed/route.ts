@@ -75,7 +75,7 @@ export const PATCH = withAdminAuth(
         total: order.total,
       });
 
-      // Enviar email de envío si hay tracking number
+      // Enviar email de envío si hay tracking number, si no, confirmar que el pago fue procesado
       if (updatedOrder.caTrackingNumber) {
         try {
           const { sendEmail } = await import("@/lib/resend");
@@ -95,11 +95,33 @@ export const PATCH = withAdminAuth(
               subject: "📦 Tu pedido está en camino - Rastuci",
               html: emailHtml,
             });
-
-            // Note: Push notifications disabled, email is sufficient
           }
         } catch (emailError) {
           logger.error("[Admin] Failed to send shipped email", { emailError });
+        }
+      } else if (order.customerEmail) {
+        // Sin tracking aún: notificar que el pago fue confirmado y el pedido está en preparación
+        try {
+          const { emailService } = await import("@/lib/resend");
+          await emailService.sendOrderConfirmation(
+            {
+              id: orderId,
+              customerName: order.customerName,
+              customerEmail: order.customerEmail,
+              total: Number(order.total),
+            },
+            updatedOrder.order_items.map((item) => ({
+              name: item.products.name,
+              quantity: item.quantity,
+              price: Number(item.price),
+              color: item.color ?? undefined,
+              size: item.size ?? undefined,
+            }))
+          );
+        } catch (emailError) {
+          logger.error("[Admin] Failed to send order confirmation email", {
+            emailError,
+          });
         }
       }
       revalidatePath("/admin/orders");

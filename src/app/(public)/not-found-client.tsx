@@ -10,14 +10,17 @@ import ProductCard from "@/components/products/cards/ProductCard";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Product } from "@/types";
+import { ProductListSkeleton } from "@/components/ui/Skeleton";
+import { ApiResponse, PaginatedResponse, Product } from "@/types";
 
-const fetcher = async (url: string) => {
+const fetcher = async (
+  url: string
+): Promise<ApiResponse<PaginatedResponse<Product>>> => {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error("Failed to fetch");
   }
-  return res.json();
+  return (await res.json()) as ApiResponse<PaginatedResponse<Product>>;
 };
 
 export default function NotFoundClient() {
@@ -31,11 +34,25 @@ export default function NotFoundClient() {
 
   // Fetch featured/popular products ONLY after mount (lazy loading)
   // Using null key prevents SWR from fetching until mounted
-  const { data: productsData, isLoading } = useSWR<{
-    success: boolean;
-    data: Product[];
-  }>(mounted ? "/api/products?limit=8&featured=true" : null, fetcher, {
-    fallbackData: { success: false, data: [] },
+  const swrKey: string | null = mounted
+    ? "/api/products?limit=8&onSale=true"
+    : null;
+
+  const fallbackProducts: ApiResponse<PaginatedResponse<Product>> = {
+    success: false,
+    data: {
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 8,
+      totalPages: 1,
+    },
+  };
+
+  const { data: productsData, isLoading } = useSWR<
+    ApiResponse<PaginatedResponse<Product>>
+  >(swrKey, fetcher, {
+    fallbackData: fallbackProducts,
     revalidateOnFocus: false,
   });
 
@@ -48,7 +65,11 @@ export default function NotFoundClient() {
     }
   };
 
-  const products = productsData?.success ? productsData.data : [];
+  // La API devuelve un objeto paginado: { success: true, data: { data: Product[], total, ... } }
+  const products =
+    productsData?.success && productsData.data
+      ? (productsData.data as PaginatedResponse<Product>).data
+      : [];
 
   if (!mounted) {
     return null; // Avoid hydration issues
@@ -141,7 +162,22 @@ export default function NotFoundClient() {
         </div>
 
         {/* Product Recommendations */}
-        {!isLoading && products.length > 0 && (
+        {/* Product Recommendations */}
+
+        {isLoading ? (
+          <div className="mb-12">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-primary mb-2 font-montserrat flex items-center justify-center gap-2">
+                <TrendingUp size={24} />
+                Productos Populares
+              </h3>
+              <p className="muted">
+                Quizás te interese alguno de estos productos destacados
+              </p>
+            </div>
+            <ProductListSkeleton />
+          </div>
+        ) : products.length > 0 ? (
           <div className="mb-12">
             <div className="text-center mb-8">
               <h3 className="text-2xl font-bold text-primary mb-2 font-montserrat flex items-center justify-center gap-2">
@@ -167,72 +203,10 @@ export default function NotFoundClient() {
               </Link>
             </div>
           </div>
-        )}
-
-        {/* Help Section */}
-        <div className="max-w-4xl mx-auto">
-          <h3 className="text-xl font-bold text-primary mb-6 text-center font-montserrat">
-            ¿Necesitas ayuda?
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="surface border border-muted hover:shadow-md transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="pill-icon mx-auto mb-4">
-                  <Home size={24} />
-                </div>
-                <h4 className="font-semibold text-primary mb-2">
-                  Página Principal
-                </h4>
-                <p className="text-sm muted mb-4">
-                  Explora nuestras ofertas y productos destacados
-                </p>
-                <Link href="/">
-                  <Button variant="outline" size="sm">
-                    Ir al Inicio
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="surface border border-muted hover:shadow-md transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="pill-icon mx-auto mb-4">
-                  <Package size={24} />
-                </div>
-                <h4 className="font-semibold text-primary mb-2">Catálogo</h4>
-                <p className="text-sm muted mb-4">
-                  Navega por todas nuestras categorías
-                </p>
-                <Link href="/productos">
-                  <Button variant="outline" size="sm">
-                    Ver Catálogo
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="surface border border-muted hover:shadow-md transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="pill-icon mx-auto mb-4">
-                  <Search size={24} />
-                </div>
-                <h4 className="font-semibold text-primary mb-2">Contacto</h4>
-                <p className="text-sm muted mb-4">
-                  ¿Tienes preguntas? Estamos aquí para ayudarte
-                </p>
-                <Link href="/contacto">
-                  <Button variant="outline" size="sm">
-                    Contactanos
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        ) : null}
 
         {/* Footer message */}
-        <div className="text-center mt-12 py-8 border-t border-muted">
+        <div className="text-center py-8 border-t border-muted">
           <p className="text-sm muted">
             Si el problema persiste, por favor{" "}
             <Link

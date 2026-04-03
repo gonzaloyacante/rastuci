@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/utils";
+
 interface InvoiceOrderItem {
   name: string;
   quantity: number;
@@ -38,7 +40,7 @@ function buildInvoiceRows(items: InvoiceOrderItem[]): string {
     .map(
       (item) =>
         `<tr><td>${escapeHtml(item.name)}</td><td>${item.quantity}</td>` +
-        `<td>$${item.price.toFixed(2)}</td><td>$${(item.quantity * item.price).toFixed(2)}</td></tr>`
+        `<td>${formatCurrency(item.price)}</td><td>${formatCurrency(item.quantity * item.price)}</td></tr>`
     )
     .join("");
 }
@@ -66,7 +68,7 @@ export function generateInvoiceHTML(order: InvoiceOrder): string {
   ${info}
   <table><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio Unitario</th><th>Subtotal</th></tr></thead>
   <tbody>${rows}</tbody></table>
-  <div class="total"><p>TOTAL: $${order.total.toFixed(2)}</p></div>
+  <div class="total"><p>TOTAL: ${formatCurrency(order.total)}</p></div>
   <div class="legal-notice">
     <p>Este comprobante no reemplaza a la factura electrónica oficial emitida por AFIP/ARCA.</p>
     <p>Derecho de arrepentimiento: podés cancelar tu compra dentro de los 10 días corridos de recibido el producto. Contactanos en nuestro sitio web.</p>

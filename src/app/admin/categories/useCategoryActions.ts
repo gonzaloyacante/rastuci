@@ -81,7 +81,7 @@ export function useCategoryActions(
       } else {
         const errorData = await res.json().catch(() => null);
         const msg =
-          (errorData as { message?: string } | null)?.message ??
+          (errorData as { error?: string } | null)?.error ??
           "Error al eliminar la categoría";
         show({ type: "error", message: msg });
       }

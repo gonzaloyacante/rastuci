@@ -124,7 +124,10 @@ export async function GET(request: NextRequest): Promise<
     });
 
     // Cache headers para el navegador
-    response.headers.set("Cache-Control", "public, max-age=300, s-maxage=300");
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=60, s-maxage=60, stale-while-revalidate=300"
+    );
 
     return response;
   } catch (error) {
@@ -168,7 +171,7 @@ export const POST = withAdminAuth(
           issues: parsed.error.issues,
         });
       }
-      const { name, description, imageUrl } = parsed.data;
+      const { name, description, imageUrl, icon } = parsed.data;
 
       // Verificar si ya existe una categoría con ese nombre
       const existingCategory = await prisma.categories.findUnique({
@@ -187,6 +190,7 @@ export const POST = withAdminAuth(
           name,
           description,
           imageUrl: imageUrl ?? null,
+          icon: icon ?? null,
           updatedAt: new Date(),
         },
       });

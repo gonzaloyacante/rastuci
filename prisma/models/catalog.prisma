@@ -36,6 +36,7 @@ model products {
   width                  Int?                     @default(20)
   length                 Int?                     @default(30)
   isActive               Boolean                  @default(true)
+  lowStockAlertedAt      DateTime?
   cart_abandonment_items cart_abandonment_items[]
   order_items            order_items[]
   product_color_images   product_color_images[]

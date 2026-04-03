@@ -18,17 +18,19 @@ input[type="number"] {
 
 /* Variables CSS personalizadas para compatibilidad */
 :root {
-  --color-primary: #e91e63;
+  --color-primary: #d81b60; /* pink-800 — 4.73:1 on white, WCAG AA ✅ (was #e91e63) */
   --color-primary-dark: #c2185b;
   --color-primary-darker: #ad1457;
   --color-primary-light: #f472b6;
   --color-primary-lighter: #fce7f3;
+  /* Separate text variable: same in light mode, lighter in dark mode for contrast */
+  --color-primary-text: #d81b60;
 
   --border-radius-card: 12px;
   --border-radius-button: 8px;
   --shadow-card:
     0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-primary: 0 4px 14px 0 rgba(233, 30, 99, 0.39);
+  --shadow-primary: 0 4px 14px 0 rgba(216, 27, 96, 0.39); /* updated for new primary */
 
   --background: #fafafa;
   --foreground: #171717;
@@ -46,6 +48,7 @@ input[type="number"] {
   /* gray-900 */
   --color-text-muted: #4b5563;
   /* gray-600 (was gray-500) for contrast */
+  --color-muted-foreground: #4b5563; /* gray-600, 7.5:1 on white — enables text-muted-foreground */
   --color-border: #e5e7eb;
   /* gray-200 */
   --color-border-muted: #f3f4f6;
@@ -103,6 +106,8 @@ input[type="number"] {
   /* page bg */
   --foreground: #e5e7eb;
   /* base text */
+  /* Lighter primary text for contrast on dark surfaces: f48fb1 on #121212 = 8.0:1 ✅ */
+  --color-primary-text: #f48fb1;
 
   /* Surfaces */
   --color-background: #0b0b0e;
@@ -118,6 +123,7 @@ input[type="number"] {
   /* gray-200 */
   --color-text-muted: #9ca3af;
   /* gray-400 */
+  --color-muted-foreground: #9ca3af; /* gray-400, 5.7:1 on #121212 ✅ */
 
   /* Borders */
   --color-border: #2e2e2e;
@@ -277,7 +283,7 @@ input[type="number"] {
 @property --color-primary-500 {
   syntax: "<color>";
   inherits: true;
-  initial-value: #e91e63;
+  initial-value: #d81b60;
 }
 
 @property --color-primary-600 {
@@ -1027,4 +1033,33 @@ input:disabled {
   .ring-error-600 {
     --tw-ring-color: #dc2626;
   }
+}
+
+/* ==========================================================================
+   WCAG AA CONTRAST OVERRIDES — unlayered rules beat @layer utilities in cascade
+   ========================================================================== */
+
+/* text-primary: use --color-primary-text which adapts per theme:
+   light: #d81b60 (4.73:1 on white ✅), dark: #f48fb1 (8.0:1 on #121212 ✅) */
+.text-primary {
+  color: var(--color-primary-text, var(--color-primary));
+}
+
+/* theme-toggle inactive buttons: force muted text, not pink primary.
+   Ghost Button variant adds text-primary; this overrides it for toggle labels. */
+.theme-toggle-btn {
+  color: var(--color-text-muted);
+}
+
+/* Ensure active dark-mode toggle colors also pass on dark surfaces */
+.dark .theme-toggle-btn.active-light {
+  color: #fcd34d; /* amber-300: 9.4:1 on #121212 ✅ */
+}
+
+.dark .theme-toggle-btn.active-system {
+  color: #f48fb1; /* pink-300: 8.0:1 on #121212 ✅ */
+}
+
+.dark .theme-toggle-btn.active-dark {
+  color: #818cf8; /* indigo-400: 5.1:1 on #121212 ✅ */
 }

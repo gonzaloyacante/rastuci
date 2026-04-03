@@ -16,6 +16,7 @@ export const CategoryCreateSchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().max(500).optional(),
   imageUrl: z.string().url("URL de imagen inválida").nullable().optional(),
+  icon: z.string().trim().max(50).nullable().optional(),
 });
 
 export type CategoryCreate = z.infer<typeof CategoryCreateSchema>;

@@ -12,6 +12,30 @@ type Bucket = {
 
 const buckets = new Map<string, Bucket>();
 
+// Periodic cleanup of expired in-memory buckets to prevent memory leak
+const CLEANUP_INTERVAL_MS = 60_000; // 1 minute
+let cleanupTimer: ReturnType<typeof setInterval> | null = null;
+
+function ensureCleanupTimer() {
+  if (cleanupTimer) return;
+  cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [key, bucket] of buckets) {
+      if (now >= bucket.resetAt) {
+        buckets.delete(key);
+      }
+    }
+    if (buckets.size === 0 && cleanupTimer) {
+      clearInterval(cleanupTimer);
+      cleanupTimer = null;
+    }
+  }, CLEANUP_INTERVAL_MS);
+  // Allow process to exit even if timer is running
+  if (typeof cleanupTimer === "object" && "unref" in cleanupTimer) {
+    cleanupTimer.unref();
+  }
+}
+
 // Upstash Redis instance
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -87,6 +111,7 @@ export async function checkRateLimit(
   // In-memory fallback
   const now = Date.now();
   const bucket = buckets.get(compositeKey);
+  ensureCleanupTimer();
 
   if (!bucket || now >= bucket.resetAt) {
     // New window

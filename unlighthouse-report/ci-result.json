@@ -1,0 +1,314 @@
+[
+  {
+    "path": "/",
+    "score": 0.94,
+    "performance": 0.8,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/carrito",
+    "score": 0.93,
+    "performance": 0.8,
+    "accessibility": 0.96,
+    "best-practices": 0.96,
+    "seo": 1
+  },
+  {
+    "path": "/contact",
+    "score": 0.92,
+    "performance": 0.72,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/contacto",
+    "score": 0.94,
+    "performance": 0.81,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/favoritos",
+    "score": 0.94,
+    "performance": 0.81,
+    "accessibility": 0.95,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/legal/privacidad",
+    "score": 0.95,
+    "performance": 0.82,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/legal/privacy",
+    "score": 0.94,
+    "performance": 0.81,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/legal/terminos",
+    "score": 0.95,
+    "performance": 0.82,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/legal/terms",
+    "score": 0.94,
+    "performance": 0.79,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/productos",
+    "score": 0.94,
+    "performance": 0.78,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/productos?categoria=480f1959-b755-495a-851f-36abd993a920",
+    "score": 0.94,
+    "performance": 0.79,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/productos?categoria=51577c13-a6c0-4c26-afb6-8af9764be7d9",
+    "score": 0.94,
+    "performance": 0.81,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/productos?categoria=593de120-ac9a-494a-b101-a0ccc8421b2a",
+    "score": 0.94,
+    "performance": 0.8,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/productos?categoria=a5a41af7-8739-456d-aa34-157492e48c5d",
+    "score": 0.94,
+    "performance": 0.8,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/productos?categoria=b63671db-fc35-4103-9911-6013c48d1ee4",
+    "score": 0.94,
+    "performance": 0.79,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/productos?onSale=true",
+    "score": 0.94,
+    "performance": 0.78,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/productos/11a20bda-3e70-40aa-9fe2-645869a5e554",
+    "score": 0.9,
+    "performance": 0.79,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/productos/12f1780c-5d1c-4115-99bc-87c17a06ca02",
+    "score": 0.9,
+    "performance": 0.8,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/productos/20bc889a-44da-4a8c-a991-873a2a2ba350",
+    "score": 0.9,
+    "performance": 0.79,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/productos/295e732a-5ca5-4dcb-b905-840dfd669572",
+    "score": 0.89,
+    "performance": 0.78,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/productos/3684211e-0152-435a-a257-c5a6cea2bae2",
+    "score": 0.9,
+    "performance": 0.8,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/productos/585b892b-224d-4064-9197-bb2542264fe8",
+    "score": 0.9,
+    "performance": 0.8,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/productos/9e3d913f-1bc2-4a2b-a6b8-d1b4abfbf8e4",
+    "score": 0.9,
+    "performance": 0.8,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/productos/c0142f25-3d8e-476f-ac75-b277d5ba546e",
+    "score": 0.9,
+    "performance": 0.8,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/products",
+    "score": 0.93,
+    "performance": 0.77,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/products?categoryId=480f1959-b755-495a-851f-36abd993a920",
+    "score": 0.94,
+    "performance": 0.78,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/products?categoryId=51577c13-a6c0-4c26-afb6-8af9764be7d9",
+    "score": 0.94,
+    "performance": 0.78,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/products?categoryId=593de120-ac9a-494a-b101-a0ccc8421b2a",
+    "score": 0.93,
+    "performance": 0.77,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/products?categoryId=a5a41af7-8739-456d-aa34-157492e48c5d",
+    "score": 0.94,
+    "performance": 0.78,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/products?categoryId=b63671db-fc35-4103-9911-6013c48d1ee4",
+    "score": 0.94,
+    "performance": 0.78,
+    "accessibility": 0.96,
+    "best-practices": 1,
+    "seo": 1
+  },
+  {
+    "path": "/products/11a20bda-3e70-40aa-9fe2-645869a5e554",
+    "score": 0.89,
+    "performance": 0.76,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/products/20bc889a-44da-4a8c-a991-873a2a2ba350",
+    "score": 0.9,
+    "performance": 0.79,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/products/295e732a-5ca5-4dcb-b905-840dfd669572",
+    "score": 0.9,
+    "performance": 0.81,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/products/3684211e-0152-435a-a257-c5a6cea2bae2",
+    "score": 0.9,
+    "performance": 0.8,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/products/585b892b-224d-4064-9197-bb2542264fe8",
+    "score": 0.89,
+    "performance": 0.77,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/products/9e3d913f-1bc2-4a2b-a6b8-d1b4abfbf8e4",
+    "score": 0.9,
+    "performance": 0.81,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/products/c0142f25-3d8e-476f-ac75-b277d5ba546e",
+    "score": 0.89,
+    "performance": 0.77,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/products/ce59f8ab-edeb-42e4-9497-ec745f703ffa",
+    "score": 0.89,
+    "performance": 0.78,
+    "accessibility": 0.92,
+    "best-practices": 0.96,
+    "seo": 0.91
+  },
+  {
+    "path": "/tracking",
+    "score": 0.94,
+    "performance": 0.82,
+    "accessibility": 0.95,
+    "best-practices": 1,
+    "seo": 1
+  }
+]

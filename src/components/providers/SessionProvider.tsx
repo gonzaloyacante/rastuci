@@ -13,9 +13,8 @@ export default function SessionProvider({
   return (
     <NextAuthSessionProvider
       session={session}
-      // Optimized settings to reduce unnecessary API calls
-      refetchInterval={0} // Disable automatic refetching
-      refetchOnWindowFocus={false} // Don't refetch on window focus
+      refetchInterval={5 * 60} // Refetch session every 5 minutes
+      refetchOnWindowFocus={true} // Refetch when user returns to tab
       refetchWhenOffline={false} // Don't refetch when offline
     >
       {children}

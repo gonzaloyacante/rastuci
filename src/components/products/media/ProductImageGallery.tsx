@@ -141,7 +141,7 @@ export default function ProductImageGallery({
       {/* Main image container */}
       <div
         ref={imageContainerRef}
-        className="relative aspect-square md:aspect-4/3 lg:aspect-square w-full max-h-125 md:max-h-[60vh] lg:max-h-none mx-auto bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
+        className="relative aspect-square md:aspect-4/3 lg:aspect-4/3 w-full max-h-125 md:max-h-[60vh] lg:max-h-none mx-auto bg-neutral-100 dark:bg-neutral-800 border border-muted rounded-lg overflow-hidden group cursor-crosshair"
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}

@@ -19,7 +19,7 @@ const config: Config = {
           200: "#fbcfe8", // Rosa medio claro
           300: "#f9a8d4", // Rosa medio
           400: "#f472b6", // Rosa medio oscuro
-          500: "#E91E63", // Color principal - Rastuci Pink
+          500: "#d81b60", // Color principal - Rastuci Pink (WCAG AA 4.73:1 on white)
           600: "#C2185B", // Rosa oscuro principal
           700: "#AD1457", // Rosa muy oscuro
           800: "#9C1C4D", // Rosa ultra oscuro
@@ -80,8 +80,8 @@ const config: Config = {
         card: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
         "card-hover":
           "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-        primary: "0 4px 14px 0 rgba(233, 30, 99, 0.39)",
-        "primary-lg": "0 8px 30px 0 rgba(233, 30, 99, 0.3)",
+        primary: "0 4px 14px 0 rgba(216, 27, 96, 0.39)",
+        "primary-lg": "0 8px 30px 0 rgba(216, 27, 96, 0.3)",
       },
       // Animaciones personalizadas
       animation: {

@@ -31,14 +31,9 @@ export const CategoryCard = memo(function CategoryCard({
       className={`group relative flex flex-col overflow-hidden rounded-xl w-full transition-all duration-300 hover:scale-[1.02] shadow-md hover:shadow-xl
         ${
           displayMode === "image" && category.image
-            ? "aspect-[3/4] justify-end text-white bg-surface-secondary"
+            ? "aspect-3/4 justify-end text-white bg-surface-secondary"
             : "h-48 justify-center text-foreground bg-surface"
         }`}
-      aria-label={
-        href === null
-          ? undefined
-          : `Ver productos de la categoría ${category.name}`
-      }
     >
       {/* Background image and overlay (only if available) */}
       {displayMode === "image" && img ? (
@@ -58,7 +53,7 @@ export const CategoryCard = memo(function CategoryCard({
         </>
       ) : null}
 
-      <div className="relative z-10 p-3 sm:p-3 flex flex-col min-h-[110px] items-center justify-center text-center">
+      <div className="relative z-10 p-3 sm:p-3 flex flex-col min-h-27.5 items-center justify-center text-center">
         {showIcon ? (
           <div className="flex items-center justify-center mb-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center shadow-sm text-white dark:text-black">

@@ -217,7 +217,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           });
         }
         resolvedShippingPrice = dbPrice;
+      } else {
+        logger.warn("[Checkout] Unknown shipping option — rejected", {
+          methodId: shippingMethod.id,
+        });
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "El método de envío seleccionado no es válido. Recargá la página.",
+          },
+          { status: 400 }
+        );
       }
+    }
+
+    // Validate CA shipping price: must be positive (CA always charges for delivery)
+    if (shippingMethod?.id?.startsWith("ca-") && resolvedShippingPrice <= 0) {
+      logger.warn("[Checkout] Invalid CA shipping price — rejected", {
+        clientPrice: shippingMethod.price,
+        methodId: shippingMethod.id,
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "El costo de envío de Correo Argentino es inválido. Recalculá el envío.",
+        },
+        { status: 400 }
+      );
     }
 
     const shippingData = {

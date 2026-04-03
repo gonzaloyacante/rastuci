@@ -83,15 +83,50 @@ export function sizeGuideRowsToArray(rows: SizeGuideRow[]): SizeGuideEntry[] {
 }
 
 /**
- * Convert SizeGuideEntry[] or legacy JSON → Prisma create operations.
- * Handles both the new array format and legacy blob format gracefully.
+ * Convert SizeGuideEntry[], SizeGuideData, or legacy JSON → Prisma create operations.
+ *
+ * Handles three formats:
+ * 1. SizeGuideData editor format: { columns: string[], rows: string[][] }
+ *    - rows[i] = [size, measurement1, measurement2, ...]
+ *    - columns[0] = "Talle" header, columns[1..n] = measurement column names
+ * 2. SizeGuideEntry[] array: [{ size, measurements, ageRange? }]
+ * 3. Legacy flat object: { "S": "Pecho: 40cm", "M": "Pecho: 42cm" }
  */
 export function sizeGuideToRows(
   data: unknown
 ): { size: string; measurements: string; ageRange?: string }[] {
   if (!data) return [];
 
-  // Already in array format
+  // Format 1: SizeGuideData from the editor { columns: string[], rows: string[][] }
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    !Array.isArray(data) &&
+    Array.isArray((data as Record<string, unknown>).columns) &&
+    Array.isArray((data as Record<string, unknown>).rows)
+  ) {
+    const sizeGuideData = data as { columns: string[]; rows: string[][] };
+    // columns[0] is "Talle" (the size column header); measurement columns start at index 1
+    const measurementColumns = sizeGuideData.columns.slice(1);
+    return sizeGuideData.rows
+      .filter(
+        (row) =>
+          Array.isArray(row) && typeof row[0] === "string" && row[0].trim()
+      )
+      .map((row) => {
+        const size = row[0];
+        const values = row.slice(1);
+        // Serialize as "Column1: val1, Column2: val2" for readable storage
+        const measurements = measurementColumns
+          .map((col, i) => `${col}: ${values[i] ?? ""}`)
+          .filter((entry) => !entry.endsWith(": "))
+          .join(", ");
+        return { size, measurements };
+      })
+      .filter((row) => row.measurements.length > 0);
+  }
+
+  // Format 2: Array of SizeGuideEntry objects
   if (Array.isArray(data)) {
     return data
       .filter(
@@ -109,7 +144,7 @@ export function sizeGuideToRows(
       }));
   }
 
-  // Legacy object format: { "S": "Pecho: 40cm", "M": "Pecho: 42cm" }
+  // Format 3: Legacy flat object { "S": "Pecho: 40cm", "M": "Pecho: 42cm" }
   if (typeof data === "object" && data !== null) {
     return Object.entries(data as Record<string, unknown>)
       .filter(([, v]) => typeof v === "string")

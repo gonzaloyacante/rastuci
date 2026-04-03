@@ -79,9 +79,9 @@ function FavoriteGridItem({ item, onAddToCart, onRemove }: FavoriteItemProps) {
       </div>
       <div className="p-4">
         <Link href={`/productos/${item.id}`}>
-          <h3 className="font-semibold mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer">
+          <h2 className="font-semibold mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer">
             {item.name}
-          </h3>
+          </h2>
         </Link>
         <div className="flex items-center justify-between mb-4">
           <span className="text-lg font-bold text-primary">
@@ -130,9 +130,9 @@ function FavoriteListItem({ item, onAddToCart, onRemove }: FavoriteItemProps) {
         <div className="flex-1 space-y-4">
           <div>
             <Link href={`/productos/${item.id}`}>
-              <h3 className="text-xl font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer mb-2">
+              <h2 className="text-xl font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer mb-2">
                 {item.name}
-              </h3>
+              </h2>
             </Link>
             <p className="text-sm muted">
               Agregado el{" "}
