@@ -92,60 +92,6 @@ export class CheckoutService {
 
     return products;
   }
-
-  /**
-   * Prepara los items para Mercado Pago
-   */
-  prepareMPItems(
-    items: OrderItem[],
-    shippingMethod?: { name: string; price: number },
-    discountAmount: number = 0,
-    validatedProducts?: {
-      id: string;
-      price: unknown;
-      salePrice: unknown;
-      onSale: boolean;
-    }[] // Better typing than any[]
-  ) {
-    // Calculate total amount for a single summary item (requested by user to hide individual names)
-    let totalAmount = 0;
-
-    items.forEach((item) => {
-      let unitPrice = item.price;
-      if (validatedProducts) {
-        const product = validatedProducts.find((p) => p.id === item.productId);
-        if (product) {
-          if (product.onSale && product.salePrice) {
-            unitPrice = Number(product.salePrice);
-          } else {
-            unitPrice = Number(product.price);
-          }
-        }
-      }
-      totalAmount += unitPrice * item.quantity;
-    });
-
-    if (shippingMethod && shippingMethod.price > 0) {
-      totalAmount += shippingMethod.price;
-    }
-
-    if (discountAmount > 0) {
-      totalAmount -= discountAmount;
-    }
-
-    // Ensure strictly positive total (sanity check)
-    if (totalAmount < 0) totalAmount = 0;
-
-    return [
-      {
-        id: "purchase_summary",
-        title: "Compra en Rastuci",
-        quantity: 1,
-        unit_price: Number(totalAmount.toFixed(2)),
-        currency_id: "ARS",
-      },
-    ];
-  }
 }
 
 export const checkoutService = new CheckoutService();

@@ -313,9 +313,11 @@ export const emailService = {
     const settings = await getStoreSettings().catch(() => null);
     const to =
       adminEmail || settings?.emails?.supportEmail || "soporte@rastuci.com";
+    // Sanitize user-provided name to prevent any potential header injection
+    const safeName = params.name.replace(/[\r\n]/g, " ").trim();
     return sendEmail({
       to,
-      subject: `📬 Nuevo mensaje de contacto de ${params.name}`,
+      subject: `📬 Nuevo mensaje de contacto de ${safeName}`,
       html: getContactNotificationEmail(templateParams),
       type: "ADMIN",
       replyTo: params.email,
