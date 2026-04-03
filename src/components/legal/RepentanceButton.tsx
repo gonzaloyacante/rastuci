@@ -15,13 +15,14 @@ export default function RepentanceButton() {
 
   return (
     <>
+      <span aria-hidden="true" className="text-xs text-muted">
+        ↩
+      </span>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-primary underline underline-offset-2 transition-colors"
-        aria-label="Botón de Arrepentimiento - Información sobre el derecho de arrepentimiento de compra"
+        className="inline-flex items-center text-xs text-muted hover:text-primary underline underline-offset-2 transition-colors"
       >
-        <span aria-hidden="true">↩</span>
         Botón de Arrepentimiento
       </button>
 

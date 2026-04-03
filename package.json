@@ -2,6 +2,7 @@
   "name": "rastuci",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "overrides": {
       "elliptic": "^6.6.0",

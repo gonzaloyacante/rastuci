@@ -36,9 +36,9 @@ export default function TrackingPage() {
             <div className="flex items-start gap-3 mb-4">
               <Info className="w-6 h-6 text-primary mt-0.5" />
               <div>
-                <h3 className="font-semibold text-primary">
+                <h2 className="font-semibold text-primary">
                   ¿Dónde encontrar tu tracking?
-                </h3>
+                </h2>
               </div>
             </div>
             <ul className="space-y-2 text-sm muted">
@@ -53,7 +53,7 @@ export default function TrackingPage() {
             <div className="flex items-start gap-3 mb-4">
               <Search className="w-6 h-6 text-primary mt-0.5" />
               <div>
-                <h3 className="font-semibold text-primary">Estados de envío</h3>
+                <h2 className="font-semibold text-primary">Estados de envío</h2>
               </div>
             </div>
             <ul className="space-y-2 text-sm muted">
@@ -82,9 +82,9 @@ export default function TrackingPage() {
           <div className="flex items-start gap-3 mb-4">
             <Info className="w-6 h-6 text-primary mt-0.5" />
             <div>
-              <h3 className="font-semibold text-primary">
+              <h2 className="font-semibold text-primary">
                 Proveedores de envío
-              </h3>
+              </h2>
             </div>
           </div>
           <p className="text-sm muted mb-3">
@@ -92,9 +92,9 @@ export default function TrackingPage() {
             en tiempo y forma:
           </p>
           <div className="p-4 bg-primary/5 rounded-lg">
-            <h4 className="font-semibold text-primary mb-2">
+            <h3 className="font-semibold text-primary mb-2">
               Correo Argentino
-            </h4>
+            </h3>
             <p className="text-sm muted">
               Red nacional con más de 1000 sucursales. Seguimiento en tiempo
               real, entrega puerta a puerta y retiro en sucursal disponible para

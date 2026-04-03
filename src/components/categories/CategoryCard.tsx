@@ -34,11 +34,6 @@ export const CategoryCard = memo(function CategoryCard({
             ? "aspect-[3/4] justify-end text-white bg-surface-secondary"
             : "h-48 justify-center text-foreground bg-surface"
         }`}
-      aria-label={
-        href === null
-          ? undefined
-          : `Ver productos de la categoría ${category.name}`
-      }
     >
       {/* Background image and overlay (only if available) */}
       {displayMode === "image" && img ? (
