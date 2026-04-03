@@ -2,13 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function applySecurityHeaders(response: NextResponse, nonce: string) {
   // Content Security Policy — nonce + strict-dynamic based
+  // Build script-src allowing 'unsafe-eval' only in non-production (development) environments
+  const scriptSrcList = [
+    "'self'",
+    `'nonce-${nonce}'`,
+    "'strict-dynamic'",
+    "https://fonts.googleapis.com",
+    "https://va.vercel-scripts.com",
+    "https://www.googletagmanager.com",
+  ];
+
+  // React dev-mode uses eval() for some debugging features (callstack reconstruction).
+  // To avoid breaking dev ergonomics, allow 'unsafe-eval' in development only.
+  if (process.env.NODE_ENV !== "production") {
+    scriptSrcList.push("'unsafe-eval'");
+  }
+
   const csp = [
     "default-src 'self'",
-    // 'strict-dynamic' is REQUIRED for Next.js App Router: the framework injects inline bootstrap
-    // scripts (RSC payload, hydration chunks) that are trusted via the nonce, and then
-    // dynamically load additional modules. Without 'strict-dynamic' those downstream scripts
-    // are blocked, causing a blank page. URL allowlist acts as fallback for older browsers.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://fonts.googleapis.com https://va.vercel-scripts.com https://www.googletagmanager.com`,
+    `script-src ${scriptSrcList.join(" ")}`,
     // 'unsafe-inline' required for Next.js CSS-in-JS (styled-jsx, emotion, and inline style attributes).
     // Nonce-based styles would require custom Document config; tracked for future improvement.
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
