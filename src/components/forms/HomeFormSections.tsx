@@ -59,6 +59,7 @@ export const InputRow = ({
   enabled,
   onToggle,
   placeholder,
+  error,
 }: {
   label: string;
   value: string;
@@ -66,6 +67,7 @@ export const InputRow = ({
   enabled?: boolean;
   onToggle?: (val: boolean) => void;
   placeholder?: string;
+  error?: string;
 }) => (
   <div className="grid md:grid-cols-[1fr_auto] gap-4 items-start p-4 hover:bg-muted/5 rounded-lg border border-transparent hover:border-border transition-colors">
     <div className="space-y-2">
@@ -82,12 +84,14 @@ export const InputRow = ({
       <input
         className={cn(
           "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-          !enabled && onToggle && "opacity-60 bg-muted/20"
+          !enabled && onToggle && "opacity-60 bg-muted/20",
+          error && "border-destructive focus-visible:ring-destructive"
         )}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
       />
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
     {onToggle && (
       <div className="flex flex-col items-end gap-1.5 pt-6 md:pt-7">
@@ -133,9 +137,11 @@ export function HeaderSectionCard({
 export function HeroSectionCard({
   values,
   update,
+  errors,
 }: {
   values: HomeSettings;
   update: UpdateFn;
+  errors?: Record<string, string>;
 }) {
   return (
     <SettingsCard
@@ -189,6 +195,7 @@ export function HeroSectionCard({
             onChange={(v) => update("heroTitle", v)}
             enabled={values.showHeroTitle}
             onToggle={(c) => update("showHeroTitle", c)}
+            error={errors?.heroTitle}
           />
           <InputRow
             label="Subtítulo"
@@ -196,6 +203,7 @@ export function HeroSectionCard({
             onChange={(v) => update("heroSubtitle", v)}
             enabled={values.showHeroSubtitle}
             onToggle={(c) => update("showHeroSubtitle", c)}
+            error={errors?.heroSubtitle}
           />
 
           <div className="pt-2 pb-2">
@@ -229,6 +237,7 @@ export function HeroSectionCard({
               onChange={(v) => update("ctaPrimaryLabel", v)}
               enabled={values.showCtaPrimary}
               onToggle={(c) => update("showCtaPrimary", c)}
+              error={errors?.ctaPrimaryLabel}
             />
             {values.showCtaPrimary && (
               <div className="pl-4 border-l-2 border-muted ml-2">
@@ -236,11 +245,19 @@ export function HeroSectionCard({
                   Link Botón Principal
                 </label>
                 <input
-                  className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className={cn(
+                    "flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    errors?.ctaPrimaryLink && "border-destructive"
+                  )}
                   value={values.ctaPrimaryLink ?? ""}
                   placeholder="/products"
                   onChange={(e) => update("ctaPrimaryLink", e.target.value)}
                 />
+                {errors?.ctaPrimaryLink && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.ctaPrimaryLink}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -252,6 +269,7 @@ export function HeroSectionCard({
               onChange={(v) => update("ctaSecondaryLabel", v)}
               enabled={values.showCtaSecondary}
               onToggle={(c) => update("showCtaSecondary", c)}
+              error={errors?.ctaSecondaryLabel}
             />
             {values.showCtaSecondary && (
               <div className="pl-4 border-l-2 border-muted ml-2">
@@ -259,11 +277,19 @@ export function HeroSectionCard({
                   Link Botón Secundario
                 </label>
                 <input
-                  className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className={cn(
+                    "flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    errors?.ctaSecondaryLink && "border-destructive"
+                  )}
                   value={values.ctaSecondaryLink ?? ""}
                   placeholder="/about"
                   onChange={(e) => update("ctaSecondaryLink", e.target.value)}
                 />
+                {errors?.ctaSecondaryLink && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.ctaSecondaryLink}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -280,9 +306,11 @@ export function HeroSectionCard({
 export function ContentSectionCard({
   values,
   update,
+  errors,
 }: {
   values: HomeSettings;
   update: UpdateFn;
+  errors?: Record<string, string>;
 }) {
   return (
     <SettingsCard title="Secciones de Contenido">
@@ -297,6 +325,7 @@ export function ContentSectionCard({
             onChange={(v) => update("categoriesTitle", v)}
             enabled={values.showCategoriesTitle}
             onToggle={(c) => update("showCategoriesTitle", c)}
+            error={errors?.categoriesTitle}
           />
           <InputRow
             label="Subtítulo"
@@ -304,6 +333,7 @@ export function ContentSectionCard({
             onChange={(v) => update("categoriesSubtitle", v)}
             enabled={values.showCategoriesSubtitle}
             onToggle={(c) => update("showCategoriesSubtitle", c)}
+            error={errors?.categoriesSubtitle}
           />
         </div>
         <div className="space-y-4">
@@ -316,6 +346,7 @@ export function ContentSectionCard({
             onChange={(v) => update("featuredTitle", v)}
             enabled={values.showFeaturedTitle}
             onToggle={(c) => update("showFeaturedTitle", c)}
+            error={errors?.featuredTitle}
           />
           <InputRow
             label="Subtítulo"
@@ -323,6 +354,7 @@ export function ContentSectionCard({
             onChange={(v) => update("featuredSubtitle", v)}
             enabled={values.showFeaturedSubtitle}
             onToggle={(c) => update("showFeaturedSubtitle", c)}
+            error={errors?.featuredSubtitle}
           />
           <div className="px-4">
             <label className="text-sm font-medium mb-1.5 block">
@@ -371,6 +403,8 @@ interface BenefitsSectionProps {
   ) => void;
   addBenefitItem: () => void;
   removeBenefitItem: (id: string) => void;
+  titleError?: string;
+  benefitErrors?: Array<{ title?: string; description?: string } | undefined>;
 }
 
 export function BenefitsSectionCard({
@@ -382,6 +416,8 @@ export function BenefitsSectionCard({
   updateBenefitItem,
   addBenefitItem,
   removeBenefitItem,
+  titleError,
+  benefitErrors,
 }: BenefitsSectionProps) {
   return (
     <>
@@ -394,6 +430,7 @@ export function BenefitsSectionCard({
             label="Título de Sección Beneficios"
             value={values.benefitsTitle ?? "Por qué elegirnos"}
             onChange={(v) => update("benefitsTitle", v)}
+            error={titleError}
           />
         </div>
         <div className="space-y-4">
@@ -428,19 +465,33 @@ export function BenefitsSectionCard({
                     Título
                   </label>
                   <input
-                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className={cn(
+                      "flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      benefitErrors?.[benefitItems.indexOf(benefitItem)]
+                        ?.title && "border-destructive"
+                    )}
                     value={benefitItem.title}
                     onChange={(e) =>
                       updateBenefitItem(benefitItem.id, "title", e.target.value)
                     }
                   />
+                  {benefitErrors?.[benefitItems.indexOf(benefitItem)]
+                    ?.title && (
+                    <p className="text-xs text-destructive mt-1">
+                      {benefitErrors[benefitItems.indexOf(benefitItem)]?.title}
+                    </p>
+                  )}
                 </div>
                 <div className="md:col-span-5">
                   <label className="block text-xs font-medium mb-1 text-muted-foreground uppercase">
                     Descripción
                   </label>
                   <input
-                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className={cn(
+                      "flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      benefitErrors?.[benefitItems.indexOf(benefitItem)]
+                        ?.description && "border-destructive"
+                    )}
                     value={benefitItem.description}
                     onChange={(e) =>
                       updateBenefitItem(
@@ -450,6 +501,15 @@ export function BenefitsSectionCard({
                       )
                     }
                   />
+                  {benefitErrors?.[benefitItems.indexOf(benefitItem)]
+                    ?.description && (
+                    <p className="text-xs text-destructive mt-1">
+                      {
+                        benefitErrors[benefitItems.indexOf(benefitItem)]
+                          ?.description
+                      }
+                    </p>
+                  )}
                 </div>
                 <div className="md:col-span-1 flex justify-end">
                   <Button
@@ -500,9 +560,11 @@ export function BenefitsSectionCard({
 export function FooterSectionCard({
   values,
   setValues,
+  errors,
 }: {
   values: HomeSettings;
   setValues: SetValuesFn;
+  errors?: Record<string, string>;
 }) {
   return (
     <SettingsCard
@@ -561,6 +623,7 @@ export function FooterSectionCard({
                 footer: { ...v.footer!, showBrand: c },
               }))
             }
+            error={errors?.brand}
           />
           <InputRow
             label="Slogan / Tagline"
@@ -578,6 +641,7 @@ export function FooterSectionCard({
                 footer: { ...v.footer!, showTagline: c },
               }))
             }
+            error={errors?.tagline}
           />
         </div>
       </div>

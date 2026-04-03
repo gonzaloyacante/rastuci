@@ -1,6 +1,8 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
+import { FieldErrors, useFieldArray, useForm } from "react-hook-form";
 
 import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
 import { Button } from "@/components/ui/Button";
@@ -20,22 +22,63 @@ import {
   FooterSectionCard,
   HeaderSectionCard,
   HeroSectionCard,
+  SetValuesFn,
 } from "./HomeFormSections";
 
 type Props = {
   initial?: HomeSettings;
 };
 
+type BenefitFieldError = {
+  title?: { message?: string };
+  description?: { message?: string };
+};
+
+function countErrors(errs: FieldErrors<HomeSettings>): number {
+  let count = 0;
+  const walk = (obj: unknown): void => {
+    if (!obj || typeof obj !== "object") return;
+    for (const val of Object.values(obj as Record<string, unknown>)) {
+      if (val && typeof val === "object" && "message" in val) {
+        count++;
+      } else {
+        walk(val);
+      }
+    }
+  };
+  walk(errs);
+  return count;
+}
+
 export default function HomeForm({ initial }: Props) {
   const { show } = useToast();
-  const [values, setValues] = useState<HomeSettings>(
-    initial ?? defaultHomeSettings
-  );
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [iconPickerOpen, setIconPickerOpen] = useState<string | null>(null);
-  const [benefitItems, setBenefitItems] = useState<BenefitItem[]>([]);
   const [loading, setLoading] = useState(!initial);
+
+  const form = useForm<HomeSettings>({
+    resolver: zodResolver(HomeSettingsSchema),
+    defaultValues: initial ?? defaultHomeSettings,
+    mode: "onBlur",
+  });
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = form;
+
+  const {
+    fields: benefitFields,
+    append,
+    remove,
+    update: updateBenefitField,
+  } = useFieldArray({ control, name: "benefits" });
+
+  const values = watch();
 
   const {
     settings,
@@ -45,130 +88,170 @@ export default function HomeForm({ initial }: Props) {
 
   useEffect(() => {
     if (settings) {
-      setValues(settings);
-      initBenefits(settings.benefits);
+      reset(settings);
       setLoading(false);
     } else if (initial) {
-      setValues(initial);
-      initBenefits(initial.benefits);
+      reset(initial);
       setLoading(false);
     } else if (!loadingSettings) {
       logger.info("[HomeForm] Using DEFAULTS (No settings, no initial)");
-      setValues(defaultHomeSettings);
-      initBenefits(defaultHomeSettings.benefits);
+      reset(defaultHomeSettings);
       setLoading(false);
     }
-  }, [initial, settings, loadingSettings]);
-
-  const initBenefits = (benefits: HomeSettings["benefits"]) => {
-    setBenefitItems(
-      benefits.map((benefit, idx) => ({
-        id: `benefit-${Date.now()}-${idx}-${Math.random()}`,
-        icon: benefit.icon,
-        title: benefit.title,
-        description: benefit.description,
-      }))
-    );
-  };
-
-  useEffect(() => {
-    setValues((v) => ({
-      ...v,
-      benefits: benefitItems.map((item) => ({
-        icon: item.icon,
-        title: item.title,
-        description: item.description,
-      })),
-    }));
-  }, [benefitItems]);
+  }, [initial, settings, loadingSettings, reset]);
 
   const update = <K extends keyof HomeSettings>(key: K, val: HomeSettings[K]) =>
-    setValues((v) => ({ ...v, [key]: val }));
+    // setValue generics don't align with keyof + value type — cast is safe here
+    setValue(key, val as never, { shouldValidate: true, shouldDirty: true });
+
+  const setValues: SetValuesFn = (action) => {
+    const current = form.getValues();
+    const newVals = typeof action === "function" ? action(current) : action;
+    setValue("footer", newVals.footer, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
+
+  // Adapt useFieldArray fields to BenefitItem shape (add stable id from RHF)
+  const benefitItems: BenefitItem[] = benefitFields.map((f) => ({
+    id: f.id,
+    icon: f.icon,
+    title: f.title,
+    description: f.description,
+  }));
 
   const updateBenefitItem = (
     id: string,
     key: "icon" | "title" | "description",
     value: string
   ) => {
-    setBenefitItems((items) =>
-      items.map((item) => (item.id === id ? { ...item, [key]: value } : item))
-    );
+    const idx = benefitFields.findIndex((f) => f.id === id);
+    if (idx !== -1) {
+      const current = form.getValues("benefits");
+      updateBenefitField(idx, { ...current[idx], [key]: value });
+    }
   };
 
-  const addBenefitItem = () => {
-    setBenefitItems((items) => [
-      ...items,
-      {
-        id: `benefit-new-${Date.now()}-${Math.random()}`,
-        icon: "Truck",
-        title: "Nuevo",
-        description: "Descripción",
-      },
-    ]);
-  };
+  const addBenefitItem = () =>
+    append({ icon: "Truck", title: "Nuevo", description: "Descripción" });
 
   const removeBenefitItem = (id: string) => {
-    setBenefitItems((items) => items.filter((item) => item.id !== id));
-    show({ type: "success", message: "Beneficio eliminado" });
+    const idx = benefitFields.findIndex((f) => f.id === id);
+    if (idx !== -1) {
+      remove(idx);
+      show({ type: "success", message: "Beneficio eliminado" });
+    }
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ── Extract per-section errors ────────────────────────────────────────────
+  const heroErrors: Record<string, string> = {
+    ...(errors.heroTitle?.message && { heroTitle: errors.heroTitle.message }),
+    ...(errors.heroSubtitle?.message && {
+      heroSubtitle: errors.heroSubtitle.message,
+    }),
+    ...(errors.ctaPrimaryLabel?.message && {
+      ctaPrimaryLabel: errors.ctaPrimaryLabel.message,
+    }),
+    ...(errors.ctaPrimaryLink?.message && {
+      ctaPrimaryLink: errors.ctaPrimaryLink.message,
+    }),
+    ...(errors.ctaSecondaryLabel?.message && {
+      ctaSecondaryLabel: errors.ctaSecondaryLabel.message,
+    }),
+    ...(errors.ctaSecondaryLink?.message && {
+      ctaSecondaryLink: errors.ctaSecondaryLink.message,
+    }),
+  };
 
-    if (loading || loadingSettings) {
-      show({
-        type: "error",
-        message: "Espera a que carguen los datos antes de guardar",
-      });
-      return;
-    }
+  const contentErrors: Record<string, string> = {
+    ...(errors.categoriesTitle?.message && {
+      categoriesTitle: errors.categoriesTitle.message,
+    }),
+    ...(errors.categoriesSubtitle?.message && {
+      categoriesSubtitle: errors.categoriesSubtitle.message,
+    }),
+    ...(errors.featuredTitle?.message && {
+      featuredTitle: errors.featuredTitle.message,
+    }),
+    ...(errors.featuredSubtitle?.message && {
+      featuredSubtitle: errors.featuredSubtitle.message,
+    }),
+  };
 
-    setMessage(null);
-    const parsed = HomeSettingsSchema.safeParse(values);
-    if (!parsed.success) {
-      setMessage(parsed.error.issues.map((er) => er.message).join("; "));
-      return;
-    }
+  const footerErrors: Record<string, string> = {
+    ...(errors.footer?.brand?.message && {
+      brand: errors.footer.brand.message,
+    }),
+    ...(errors.footer?.tagline?.message && {
+      tagline: errors.footer.tagline.message,
+    }),
+  };
+
+  const benefitErrors = (
+    errors.benefits as BenefitFieldError[] | undefined
+  )?.map((e) => ({
+    title: e?.title?.message,
+    description: e?.description?.message,
+  }));
+
+  const titleError = errors.benefitsTitle?.message;
+
+  // ── Submit handlers ───────────────────────────────────────────────────────
+  const onSubmit = async (data: HomeSettings) => {
     setSaving(true);
     try {
       const res = await fetch("/api/home", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed.data),
+        body: JSON.stringify(data),
       });
 
       const text = await res.text();
-      let data;
+      let resData: { success?: boolean; error?: string };
       try {
-        data = text ? JSON.parse(text) : {};
+        resData = text ? (JSON.parse(text) as typeof resData) : {};
       } catch (_e) {
         throw new Error(`Error de servidor (${res.status})`);
       }
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Error al guardar");
+      if (!res.ok || !resData.success) {
+        throw new Error(resData.error ?? "Error al guardar");
       }
 
-      setMessage("Guardado correctamente");
       show({ type: "success", message: "Configuración del Home guardada" });
       void mutateSettings();
     } catch (err: unknown) {
       logger.error("HomeForm Submit Error:", { error: err });
       const msg = err instanceof Error ? err.message : "Error inesperado";
-      setMessage(msg);
       show({ type: "error", message: msg });
     } finally {
       setSaving(false);
     }
   };
 
+  const onInvalid = (formErrors: FieldErrors<HomeSettings>) => {
+    const n = countErrors(formErrors);
+    show({
+      type: "error",
+      message: `Hay ${n} campo${n !== 1 ? "s" : ""} con errores. Revisá los campos marcados en rojo.`,
+    });
+  };
+
   if (loading) return <FormSkeleton rows={4} />;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
+    <form
+      onSubmit={handleSubmit(onSubmit, onInvalid)}
+      className="space-y-8 max-w-4xl mx-auto pb-20"
+    >
       <HeaderSectionCard values={values} update={update} />
-      <HeroSectionCard values={values} update={update} />
-      <ContentSectionCard values={values} update={update} />
+      <HeroSectionCard values={values} update={update} errors={heroErrors} />
+      <ContentSectionCard
+        values={values}
+        update={update}
+        errors={contentErrors}
+      />
       <BenefitsSectionCard
         values={values}
         update={update}
@@ -178,15 +261,16 @@ export default function HomeForm({ initial }: Props) {
         updateBenefitItem={updateBenefitItem}
         addBenefitItem={addBenefitItem}
         removeBenefitItem={removeBenefitItem}
+        titleError={titleError}
+        benefitErrors={benefitErrors}
       />
-      <FooterSectionCard values={values} setValues={setValues} />
+      <FooterSectionCard
+        values={values}
+        setValues={setValues}
+        errors={footerErrors}
+      />
 
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
-        {message && (
-          <div className="bg-background/90 backdrop-blur border border-border p-3 rounded-lg shadow-lg text-sm mb-2">
-            {message}
-          </div>
-        )}
+      <div className="fixed bottom-6 right-6 z-50">
         <Button
           type="submit"
           disabled={saving}
