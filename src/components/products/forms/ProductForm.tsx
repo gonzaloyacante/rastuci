@@ -260,26 +260,7 @@ export default function ProductForm({
             </CardContent>
           </Card>
 
-          {/* Imágenes del Producto */}
-          <Card className="shadow-xl border-0">
-            <CardHeader className="border-b bg-surface-secondary p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2 text-foreground">
-                <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                Imágenes del Producto
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Sube las fotos principales del producto. También podés subir
-                imágenes por color en la sección &quot;Variantes&quot;.
-              </p>
-              <ImageUploadZone
-                existingImages={productImages}
-                onImagesChange={setProductImages}
-                maxImages={10}
-              />
-            </CardContent>
-          </Card>
+          {/* Nota: se eliminó la sección global de imágenes. Las imágenes se gestionan por color en 'Variantes'. */}
 
           {/* Precios y Stock */}
           <Card className="shadow-xl border-0">
