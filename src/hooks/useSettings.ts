@@ -33,9 +33,9 @@ export function useSettings<T>(section: string, config?: SWRConfiguration) {
     error?: string;
   }>(endpoint, fetcher, {
     revalidateOnFocus: false, // Prevent overwriting form drafts
-    revalidateOnMount: true, // Always fetch fresh data on mount
-    revalidateIfStale: true, // Re-fetch if stale
-    dedupingInterval: 2000, // Dedupe requests within 2 seconds
+    revalidateOnMount: true, // Fetch fresh data on first mount
+    revalidateIfStale: false, // Don't refetch on every tab switch — mutate() handles cache invalidation after save
+    dedupingInterval: 60000, // 1-minute dedup window to prevent repeated calls when switching tabs
     ...config,
   });
 
