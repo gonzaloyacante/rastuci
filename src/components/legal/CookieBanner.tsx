@@ -53,7 +53,10 @@ export default function CookieBanner() {
             sitio (sesión, carrito de compras) y cookies de monitoreo de errores
             (Sentry) para mejorar tu experiencia. Al continuar navegando,
             aceptás nuestra{" "}
-            <a href="/legal/privacy" className="underline hover:text-primary">
+            <a
+              href="/legal/privacidad"
+              className="underline hover:text-primary"
+            >
               Política de Privacidad
             </a>{" "}
             (Ley 25.326).

@@ -57,6 +57,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       // Rutas Admin (Español -> Inglés)
+
+      // -- Categorías
       { source: "/admin/panel", destination: "/admin/dashboard" },
       { source: "/admin/seguimiento", destination: "/admin/tracking" },
       { source: "/admin/categorias", destination: "/admin/categories" },
@@ -73,10 +75,12 @@ const nextConfig: NextConfig = {
         destination: "/admin/categories/:path*",
       },
 
+      // -- Configuración / Logística / Métricas
       { source: "/admin/configuracion", destination: "/admin/settings" },
       { source: "/admin/logistica", destination: "/admin/logistics" },
       { source: "/admin/metricas", destination: "/admin/metrics" },
 
+      // -- Pedidos
       { source: "/admin/pedidos", destination: "/admin/orders" },
       {
         source: "/admin/pedidos/pendientes",
@@ -84,6 +88,7 @@ const nextConfig: NextConfig = {
       },
       { source: "/admin/pedidos/:path*", destination: "/admin/orders/:path*" },
 
+      // -- Productos
       { source: "/admin/productos", destination: "/admin/products" },
       { source: "/admin/productos/nuevo", destination: "/admin/products/new" },
       {
@@ -95,14 +100,17 @@ const nextConfig: NextConfig = {
         destination: "/admin/products/:path*",
       },
 
+      // -- Legales (políticas / editor)
       { source: "/admin/legales", destination: "/admin/legal" },
       { source: "/admin/legales/:path*", destination: "/admin/legal/:path*" },
 
+      // -- Soporte / Sucursales / Reseñas
       { source: "/admin/soporte", destination: "/admin/support" },
       { source: "/admin/sucursales-ca", destination: "/admin/branches-ca" },
       { source: "/admin/resenas", destination: "/admin/reviews" },
       { source: "/admin/resenas/:path*", destination: "/admin/reviews/:path*" },
 
+      // -- Usuarios
       { source: "/admin/usuarios", destination: "/admin/users" },
       { source: "/admin/usuarios/nuevo", destination: "/admin/users/new" },
       {
@@ -111,11 +119,23 @@ const nextConfig: NextConfig = {
       },
       { source: "/admin/usuarios/:path*", destination: "/admin/users/:path*" },
 
+      // -- Otras utilidades (Analytics, CMS, Contacto, Shipping)
+      { source: "/admin/analiticas", destination: "/admin/analytics" },
+      { source: "/admin/gestion-contenidos", destination: "/admin/cms" },
+      { source: "/admin/contacto", destination: "/admin/contact" },
+      {
+        source: "/admin/analiticas-envio",
+        destination: "/admin/shipping-analytics",
+      },
+
       // Rutas Públicas (Español -> Inglés)
+
+      // -- Carrito / Favoritos / Contacto
       { source: "/carrito", destination: "/cart" },
       { source: "/contacto", destination: "/contact" },
       { source: "/favoritos", destination: "/favorites" },
 
+      // -- Legales
       { source: "/legal/privacidad", destination: "/legal/privacy" },
       { source: "/legal/terminos", destination: "/legal/terms" },
       {
@@ -127,11 +147,30 @@ const nextConfig: NextConfig = {
         destination: "/legal/consumer-defense",
       },
 
+      // -- Productos
       { source: "/productos", destination: "/products" },
       { source: "/productos/:path*", destination: "/products/:path*" },
 
+      // -- Checkout / Seguimiento / Pedidos
       { source: "/finalizar-compra", destination: "/checkout" },
       { source: "/finalizar-compra/:path*", destination: "/checkout/:path*" },
+      { source: "/seguimiento", destination: "/tracking" },
+      { source: "/pedidos", destination: "/orders" },
+      { source: "/pedidos/:path*", destination: "/orders/:path*" },
+
+      // -- Reviews / Wishlist / Offline (páginas públicas adicionales)
+      { source: "/reseñas", destination: "/reviews" },
+      { source: "/reseñas/valorar/:id", destination: "/reviews/rate/:id" },
+      {
+        source: "/lista-de-deseos/:token",
+        destination: "/wishlist/shared/:token",
+      },
+      { source: "/reseñas", destination: "/reviews" },
+      { source: "/reseñas/valorar/:id", destination: "/reviews/rate/:id" },
+      {
+        source: "/lista-de-deseos/:token",
+        destination: "/wishlist/shared/:token",
+      },
     ];
   },
   poweredByHeader: false,
