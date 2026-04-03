@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { withAdminAuth } from "@/lib/adminAuth";
 import { ApiErrorCode, fail, ok } from "@/lib/apiResponse";
+import { invalidateProductCache } from "@/lib/cache";
 import { normalizeApiError } from "@/lib/errors";
 import { sanitizers, validateAndSanitize } from "@/lib/input-sanitization";
 import { logger } from "@/lib/logger";
@@ -368,6 +369,13 @@ export const POST = withAdminAuth(
         colorImages: colorImageRowsToRecord(newProduct.product_color_images),
         sizeGuide: sizeGuideRowsToArray(newProduct.product_size_guides),
       };
+
+      // Invalidate server cache so the new product appears in lists immediately
+      try {
+        invalidateProductCache();
+      } catch (e) {
+        logger.warn("invalidateProductCache failed after POST", { error: e });
+      }
 
       // Devuelve 201 para creación
       return NextResponse.json(

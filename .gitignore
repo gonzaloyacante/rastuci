@@ -115,6 +115,9 @@ backups/
 playwright-report/
 test-results/
 
+# Unlighthouse report artifacts (CI/local)
+unlighthouse-report/
+
 # Compiler Cache & Locks
 .swc/
 package-lock.json
