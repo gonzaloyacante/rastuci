@@ -23,6 +23,7 @@ export default function ContactForm({ initial }: Props) {
   const { show } = useToast();
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!initial);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // SWR Hook
   const {
@@ -105,12 +106,19 @@ export default function ContactForm({ initial }: Props) {
 
     const parsed = ContactSettingsSchema.safeParse(values);
     if (!parsed.success) {
+      const errs: Record<string, string> = {};
+      parsed.error.errors.forEach((issue) => {
+        const key = issue.path.join(".");
+        if (!errs[key]) errs[key] = issue.message;
+      });
+      setFieldErrors(errs);
       logger.warn("ContactForm validation error", {
         details: parsed.error.flatten(),
       });
       show({ type: "error", message: "Por favor revisa los campos inválidos" });
       return;
     }
+    setFieldErrors({});
     setSaving(true);
     try {
       const res = await fetch("/api/contact", {
@@ -182,6 +190,7 @@ export default function ContactForm({ initial }: Props) {
                   type="email"
                   placeholder="contacto@ejemplo.com"
                   containerClassName="flex-1"
+                  error={fieldErrors[`emails.${idx}`]}
                 />
                 <Button
                   type="button"
@@ -211,6 +220,7 @@ export default function ContactForm({ initial }: Props) {
                   type="tel"
                   placeholder="+54 9 11 1234-5678"
                   containerClassName="flex-1"
+                  error={fieldErrors[`phones.${idx}`]}
                 />
                 <Button
                   type="button"
@@ -476,10 +486,13 @@ export default function ContactForm({ initial }: Props) {
       {/* Datos Fiscales - Ley 24.240 Argentina */}
       <section className="space-y-4">
         <div>
-          <h3 className="font-semibold text-lg">Datos Fiscales (Obligatorio - Ley 24.240)</h3>
+          <h3 className="font-semibold text-lg">
+            Datos Fiscales (Obligatorio - Ley 24.240)
+          </h3>
           <p className="text-sm text-muted mt-1">
-            La Ley 24.240 de Defensa del Consumidor exige que el vendedor muestre su razón social y
-            CUIT en el sitio. Estos datos aparecerán en el pie de página.
+            La Ley 24.240 de Defensa del Consumidor exige que el vendedor
+            muestre su razón social y CUIT en el sitio. Estos datos aparecerán
+            en el pie de página.
           </p>
         </div>
         <div className="grid md:grid-cols-2 gap-6">
@@ -493,7 +506,9 @@ export default function ContactForm({ initial }: Props) {
             label="CUIT / CUIL"
             placeholder="Ej: 20-12345678-9"
             value={values.businessCuit || ""}
-            onChange={(e) => update("businessCuit", e.target.value || undefined)}
+            onChange={(e) =>
+              update("businessCuit", e.target.value || undefined)
+            }
           />
         </div>
       </section>

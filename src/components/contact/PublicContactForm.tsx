@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { useScrollToError } from "@/hooks/useScrollToError";
 import { logger } from "@/lib/logger";
 import { type ContactSettings } from "@/lib/validation/contact";
 
@@ -91,6 +92,8 @@ export const PublicContactForm = ({
     mode: "onBlur",
   });
 
+  const scrollToError = useScrollToError();
+
   const responsePreference = watch("responsePreference");
 
   const onSubmit = async (data: ContactFormData) => {
@@ -153,7 +156,10 @@ export const PublicContactForm = ({
       ) : (
         <Card className="surface border border-theme rounded-xl shadow-sm">
           <CardContent className="p-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form
+              onSubmit={handleSubmit(onSubmit, scrollToError)}
+              className="space-y-6"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label

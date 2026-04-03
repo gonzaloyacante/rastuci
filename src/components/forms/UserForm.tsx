@@ -1,33 +1,75 @@
 "use client";
 
-// import { Select } from "@/components/ui/Select";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useScrollToError } from "@/hooks/useScrollToError";
+
+// ── Validation schemas ────────────────────────────────────────────────────────
+const baseSchema = z.object({
+  name: z
+    .string()
+    .min(2, "El nombre debe tener al menos 2 caracteres")
+    .max(100, "El nombre no puede exceder 100 caracteres"),
+  email: z
+    .string()
+    .email("El email no es válido")
+    .max(254, "El email no puede exceder 254 caracteres"),
+  isAdmin: z.boolean(),
+  password: z
+    .string()
+    .max(128, "La contraseña no puede exceder 128 caracteres")
+    .optional(),
+  confirmPassword: z.string().optional(),
+});
+
+const createSchema = baseSchema
+  .extend({
+    password: z
+      .string()
+      .min(8, "La contraseña debe tener al menos 8 caracteres")
+      .max(128, "La contraseña no puede exceder 128 caracteres"),
+    confirmPassword: z.string().min(1, "Debes confirmar la contraseña"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Las contraseñas no coinciden",
+  });
+
+const editSchema = baseSchema
+  .refine(
+    (data) =>
+      !data.password ||
+      !data.confirmPassword ||
+      data.password === data.confirmPassword,
+    {
+      path: ["confirmPassword"],
+      message: "Las contraseñas no coinciden",
+    }
+  )
+  .refine((data) => !data.password || data.password.length >= 8, {
+    path: ["password"],
+    message: "La contraseña debe tener al menos 8 caracteres",
+  });
+
+type UserFormData = {
+  name: string;
+  email: string;
+  isAdmin: boolean;
+  password?: string;
+  confirmPassword?: string;
+};
 
 interface AdminUser {
   id: string;
   name: string | null;
   email: string | null;
   isAdmin: boolean;
-}
-
-interface UserFormData {
-  name: string;
-  email: string;
-  isAdmin: boolean;
-  password?: string;
-  confirmPassword?: string;
-}
-
-interface UserFormErrors {
-  name?: string;
-  email?: string;
-  isAdmin?: string;
-  password?: string;
-  confirmPassword?: string;
 }
 
 interface UserFormProps {
@@ -45,82 +87,43 @@ export const UserForm: React.FC<UserFormProps> = ({
   loading = false,
   isEdit = false,
 }) => {
-  const [formData, setFormData] = useState<UserFormData>({
-    name: "",
-    email: "",
-    isAdmin: true, // Todos los usuarios del panel admin son administradores
-    password: "",
-    confirmPassword: "",
-  });
-
-  const [errors, setErrors] = useState<UserFormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const scrollToError = useScrollToError();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<UserFormData>({
+    resolver: zodResolver(isEdit ? editSchema : createSchema),
+    mode: "onTouched",
+    defaultValues: {
+      name: "",
+      email: "",
+      isAdmin: true,
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   useEffect(() => {
     if (user) {
-      setFormData({
+      reset({
         name: user.name || "",
         email: user.email || "",
-        isAdmin: true, // Todos son administradores
+        isAdmin: true,
         password: "",
         confirmPassword: "",
       });
     }
-  }, [user]);
+  }, [user, reset]);
 
-  const validateForm = (): boolean => {
-    const newErrors: UserFormErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "El nombre es requerido";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "El email es requerido";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "El email no es válido";
-    }
-
-    if (!isEdit && !formData.password) {
-      newErrors.password = "La contraseña es requerida para crear un usuario";
-    } else if (formData.password && formData.password.length < 8) {
-      newErrors.password = "La contraseña debe tener al menos 8 caracteres";
-    }
-
-    if (!isEdit && formData.password && !formData.confirmPassword) {
-      newErrors.confirmPassword = "Debes confirmar la contraseña";
-    } else if (
-      formData.password &&
-      formData.confirmPassword &&
-      formData.password !== formData.confirmPassword
-    ) {
-      newErrors.confirmPassword = "Las contraseñas no coinciden";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (validateForm()) {
-      await onSubmit(formData);
-    }
-  };
-
-  const handleChange = (field: keyof UserFormData, value: string | boolean) => {
-    setFormData((prev: UserFormData) => ({ ...prev, [field]: value }));
-
-    // Limpiar error específico cuando el usuario corrige el campo
-    if (errors[field]) {
-      setErrors((prev: UserFormErrors) => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const handleFormSubmit = handleSubmit(onSubmit, scrollToError);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleFormSubmit} className="space-y-6">
       <div className="space-y-4">
         <div>
           <label
@@ -131,10 +134,9 @@ export const UserForm: React.FC<UserFormProps> = ({
           </label>
           <Input
             id="name"
-            value={formData.name}
-            onChange={(e) => handleChange("name", e.target.value)}
+            {...register("name")}
             placeholder="Ej: Juan Pérez"
-            error={errors.name}
+            error={errors.name?.message}
             disabled={loading}
           />
         </div>
@@ -149,11 +151,10 @@ export const UserForm: React.FC<UserFormProps> = ({
           <Input
             id="email"
             type="email"
-            value={formData.email}
-            onChange={(e) => handleChange("email", e.target.value)}
+            {...register("email")}
             placeholder="Ej: juan@ejemplo.com"
-            error={errors.email}
-            disabled={loading || isEdit} // En edición, no permitir cambiar email
+            error={errors.email?.message}
+            disabled={loading || isEdit}
           />
           {isEdit && (
             <p className="mt-1 text-xs text-content-secondary">
@@ -173,12 +174,11 @@ export const UserForm: React.FC<UserFormProps> = ({
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              value={formData.password || ""}
-              onChange={(e) => handleChange("password", e.target.value)}
+              {...register("password")}
               placeholder={
                 isEdit ? "Dejar vacío para no cambiar" : "Mínimo 8 caracteres"
               }
-              error={errors.password}
+              error={errors.password?.message}
               disabled={loading}
               className="pr-10"
             />
@@ -214,12 +214,9 @@ export const UserForm: React.FC<UserFormProps> = ({
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                value={formData.confirmPassword || ""}
-                onChange={(e) =>
-                  handleChange("confirmPassword", e.target.value)
-                }
+                {...register("confirmPassword")}
                 placeholder="Repite la contraseña"
-                error={errors.confirmPassword}
+                error={errors.confirmPassword?.message}
                 disabled={loading}
                 className="pr-10"
               />

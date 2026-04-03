@@ -1,24 +1,33 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { ImageUploader } from "@/components/ui/ImageUploader";
 import { Input } from "@/components/ui/Input";
+import { useScrollToError } from "@/hooks/useScrollToError";
 import { SerializedCategory } from "@/types";
 
-interface CategoryFormData {
-  name: string;
-  description: string;
-  imageUrl: string | null;
-  icon: string | null;
-  showImage: boolean;
-  showIcon: boolean;
-}
+// ── Validation schema ─────────────────────────────────────────────────────────
+const categorySchema = z.object({
+  name: z
+    .string()
+    .min(2, "El nombre debe tener al menos 2 caracteres")
+    .max(60, "El nombre no puede exceder 60 caracteres"),
+  description: z
+    .string()
+    .max(500, "La descripción no puede exceder 500 caracteres")
+    .optional(),
+  imageUrl: z.string().nullable().optional(),
+  icon: z.string().nullable().optional(),
+  showImage: z.boolean(),
+  showIcon: z.boolean(),
+});
 
-interface CategoryFormErrors {
-  [key: string]: string | undefined;
-}
+type CategoryFormData = z.infer<typeof categorySchema>;
 
 interface CategoryFormProps {
   category?: SerializedCategory | null;
@@ -33,20 +42,36 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
   onCancel,
   loading = false,
 }) => {
-  const [formData, setFormData] = useState<CategoryFormData>({
-    name: "",
-    description: "",
-    imageUrl: null,
-    icon: null,
-    showImage: true,
-    showIcon: false,
+  const scrollToError = useScrollToError();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    reset,
+  } = useForm<CategoryFormData>({
+    resolver: zodResolver(categorySchema),
+    mode: "onTouched",
+    defaultValues: {
+      name: "",
+      description: "",
+      imageUrl: null,
+      icon: null,
+      showImage: true,
+      showIcon: false,
+    },
   });
 
-  const [errors, setErrors] = useState<CategoryFormErrors>({});
+  const showImage = watch("showImage");
+  const showIcon = watch("showIcon");
+  const imageUrl = watch("imageUrl");
+  const icon = watch("icon");
 
   useEffect(() => {
     if (category) {
-      setFormData({
+      reset({
         name: category.name || "",
         description: category.description || "",
         imageUrl: category.image ?? null,
@@ -55,41 +80,12 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         showIcon: false,
       });
     }
-  }, [category]);
+  }, [category, reset]);
 
-  const validateForm = (): boolean => {
-    const newErrors: CategoryFormErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "El nombre es requerido";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (validateForm()) {
-      await onSubmit(formData);
-    }
-  };
-
-  const handleChange = (field: keyof CategoryFormData, value: string) => {
-    setFormData((prev: CategoryFormData) => ({ ...prev, [field]: value }));
-
-    // Limpiar error específico cuando el usuario corrige el campo
-    if (errors[field as string]) {
-      setErrors((prev: CategoryFormErrors) => ({
-        ...prev,
-        [field]: undefined,
-      }));
-    }
-  };
+  const handleFormSubmit = handleSubmit(onSubmit, scrollToError);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleFormSubmit} className="space-y-6">
       <div className="space-y-4">
         <div>
           <label
@@ -100,10 +96,9 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
           </label>
           <Input
             id="name"
-            value={formData.name}
-            onChange={(e) => handleChange("name", e.target.value)}
+            {...register("name")}
             placeholder="Ej: Camisetas"
-            error={errors.name}
+            error={errors.name?.message}
             disabled={loading}
           />
         </div>
@@ -117,8 +112,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
           </label>
           <textarea
             id="description"
-            value={formData.description}
-            onChange={(e) => handleChange("description", e.target.value)}
+            {...register("description")}
             placeholder="Describe la categoría..."
             rows={4}
             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none ${
@@ -129,7 +123,9 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
             disabled={loading}
           />
           {errors.description && (
-            <p className="mt-1 text-sm text-error">{errors.description}</p>
+            <p className="mt-1 text-sm text-error">
+              {errors.description.message}
+            </p>
           )}
         </div>
 
@@ -144,17 +140,15 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
             </div>
             <button
               type="button"
-              onClick={() =>
-                setFormData((prev) => ({ ...prev, showImage: !prev.showImage }))
-              }
+              onClick={() => setValue("showImage", !showImage)}
               disabled={loading}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                formData.showImage ? "bg-primary" : "bg-gray-300"
+                showImage ? "bg-primary" : "bg-gray-300"
               }`}
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  formData.showImage ? "translate-x-6" : "translate-x-1"
+                  showImage ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
@@ -169,17 +163,15 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
             </div>
             <button
               type="button"
-              onClick={() =>
-                setFormData((prev) => ({ ...prev, showIcon: !prev.showIcon }))
-              }
+              onClick={() => setValue("showIcon", !showIcon)}
               disabled={loading}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                formData.showIcon ? "bg-primary" : "bg-gray-300"
+                showIcon ? "bg-primary" : "bg-gray-300"
               }`}
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  formData.showIcon ? "translate-x-6" : "translate-x-1"
+                  showIcon ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
@@ -187,12 +179,10 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         </div>
 
         {/* Imagen de categoría */}
-        {formData.showImage && (
+        {showImage && (
           <ImageUploader
-            value={formData.imageUrl}
-            onChange={(url) =>
-              setFormData((prev) => ({ ...prev, imageUrl: url }))
-            }
+            value={imageUrl ?? null}
+            onChange={(url) => setValue("imageUrl", url)}
             label="Imagen de la categoría"
             helpText="Imagen de fondo que se mostrará en la tarjeta de categoría (recomendado: 800x600px)"
             disabled={loading}
@@ -200,10 +190,10 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         )}
 
         {/* Ícono de categoría */}
-        {formData.showIcon && (
+        {showIcon && (
           <ImageUploader
-            value={formData.icon}
-            onChange={(url) => setFormData((prev) => ({ ...prev, icon: url }))}
+            value={icon ?? null}
+            onChange={(url) => setValue("icon", url)}
             label="Ícono de la categoría"
             helpText="Ícono que se mostrará sobre la imagen (recomendado: 256x256px, formato PNG con transparencia)"
             disabled={loading}

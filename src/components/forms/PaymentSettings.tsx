@@ -13,6 +13,7 @@ import { logger } from "@/lib/logger";
 import {
   defaultStoreSettings,
   type StoreSettings,
+  StoreSettingsSchema,
 } from "@/lib/validation/store";
 
 interface PaymentSettingsProps {
@@ -30,6 +31,7 @@ export default function PaymentSettings({
   );
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!initial);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // SWR Hook
   const {
@@ -65,6 +67,28 @@ export default function PaymentSettings({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading || loadingSettings) return;
+
+    // Client-side field validation
+    const validated = StoreSettingsSchema.safeParse(data);
+    if (!validated.success) {
+      const errs: Record<string, string> = {};
+      validated.error.errors.forEach((issue) => {
+        const key = issue.path.join(".");
+        if (!errs[key]) errs[key] = issue.message;
+      });
+      setFieldErrors(errs);
+      const firstKey = Object.keys(errs)[0];
+      if (firstKey) {
+        const id = firstKey.split(".").pop() ?? firstKey;
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          el?.focus();
+        }, 50);
+      }
+      return;
+    }
+    setFieldErrors({});
 
     setSaving(true);
     try {
@@ -121,6 +145,7 @@ export default function PaymentSettings({
                       updatePayment("cashDiscount", Number(e.target.value))
                     }
                     className="pl-8"
+                    error={fieldErrors["payments.cashDiscount"]}
                   />
                   <span className="absolute left-3 top-2.5 text-content-tertiary">
                     %
@@ -144,6 +169,7 @@ export default function PaymentSettings({
                       )
                     }
                     className="h-8 text-sm"
+                    error={fieldErrors["payments.cashExpirationHours"]}
                   />
                   <span className="absolute right-3 top-2 text-xs text-content-tertiary">
                     hs
@@ -172,6 +198,7 @@ export default function PaymentSettings({
                       updatePayment("transferDiscount", Number(e.target.value))
                     }
                     className="pl-8"
+                    error={fieldErrors["payments.transferDiscount"]}
                   />
                   <span className="absolute left-3 top-2.5 text-content-tertiary">
                     %
@@ -195,6 +222,7 @@ export default function PaymentSettings({
                       )
                     }
                     className="h-8 text-sm"
+                    error={fieldErrors["payments.transferExpirationHours"]}
                   />
                   <span className="absolute right-3 top-2 text-xs text-content-tertiary">
                     hs
@@ -223,6 +251,7 @@ export default function PaymentSettings({
                       updatePayment("mpDiscount", Number(e.target.value))
                     }
                     className="pl-8"
+                    error={fieldErrors["payments.mpDiscount"]}
                   />
                   <span className="absolute left-3 top-2.5 text-content-tertiary">
                     %
@@ -246,6 +275,7 @@ export default function PaymentSettings({
                       )
                     }
                     className="h-8 text-sm"
+                    error={fieldErrors["payments.mpExpirationMinutes"]}
                   />
                   <span className="absolute right-3 top-2 text-xs text-content-tertiary">
                     min

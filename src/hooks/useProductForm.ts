@@ -86,6 +86,7 @@ export function useProductForm({ initialData }: UseProductFormProps) {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: { stock: 0, categoryId: "", discountPercentage: null },
+    mode: "onTouched",
   });
 
   const {

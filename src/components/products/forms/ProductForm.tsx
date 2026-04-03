@@ -328,6 +328,12 @@ export default function ProductForm({
                     className={errors.discountPercentage ? "border-error" : ""}
                     disabled={loading}
                   />
+                  {errors.discountPercentage && (
+                    <p className="mt-1 text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.discountPercentage.message}
+                    </p>
+                  )}
                   {watchDiscountPercentage &&
                     watchDiscountPercentage > 0 &&
                     calculatedSalePrice && (
@@ -402,12 +408,20 @@ export default function ProductForm({
                   <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-2" />
                   Gestión de Stock por Variante
                 </label>
-                <VariantManager
-                  variants={variants}
-                  onChange={setVariants}
-                  availableColors={colors}
-                  availableSizes={sizes}
-                />
+                <div id="stock" data-field="stock">
+                  <VariantManager
+                    variants={variants}
+                    onChange={setVariants}
+                    availableColors={colors}
+                    availableSizes={sizes}
+                  />
+                </div>
+                {errors.stock && (
+                  <p className="mt-2 text-sm text-error flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.stock.message}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -490,14 +504,18 @@ export default function ProductForm({
                         id as "weight" | "height" | "width" | "length"
                       )}
                       placeholder={placeholder}
-                      className={
-                        errors[id as keyof typeof errors] ? "border-error" : ""
+                      error={
+                        errors[id as keyof typeof errors]?.message as
+                          | string
+                          | undefined
                       }
                       disabled={loading}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Mín: {min} • Máx: {max}
-                    </p>
+                    {!errors[id as keyof typeof errors] && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Mín: {min} • Máx: {max}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

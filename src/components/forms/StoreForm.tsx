@@ -12,6 +12,7 @@ import { useSettings } from "@/hooks/useSettings";
 import {
   defaultStoreSettings,
   type StoreSettings,
+  StoreSettingsSchema,
 } from "@/lib/validation/store";
 
 interface StoreFormProps {
@@ -26,6 +27,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
   );
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!initial);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Replace manual fetch with SWR hook
   const {
@@ -64,6 +66,28 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
       });
       return;
     }
+
+    // Client-side field validation
+    const validated = StoreSettingsSchema.safeParse(data);
+    if (!validated.success) {
+      const errs: Record<string, string> = {};
+      validated.error.errors.forEach((issue) => {
+        const key = issue.path.join(".");
+        if (!errs[key]) errs[key] = issue.message;
+      });
+      setFieldErrors(errs);
+      const firstKey = Object.keys(errs)[0];
+      if (firstKey) {
+        const id = firstKey.split(".").pop() ?? firstKey;
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          el?.focus();
+        }, 50);
+      }
+      return;
+    }
+    setFieldErrors({});
 
     setSaving(true);
 
@@ -124,6 +148,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
               value={data.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Rastuci"
+              error={fieldErrors.name}
             />
           </div>
           <div>
@@ -134,6 +159,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
               value={data.adminEmail}
               onChange={(e) => handleChange("adminEmail", e.target.value)}
               placeholder="admin@rastuci.com"
+              error={fieldErrors.adminEmail}
             />
             <p className="text-xs muted mt-1">
               Este email es el dueño de la cuenta.
@@ -166,6 +192,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
                 })
               }
               placeholder="pedidos@rastuci.com"
+              error={fieldErrors["emails.salesEmail"]}
             />
             <p className="text-xs muted mt-1">
               Remitente para confirmaciones de compra.
@@ -184,6 +211,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
                 })
               }
               placeholder="soporte@rastuci.com"
+              error={fieldErrors["emails.supportEmail"]}
             />
             <p className="text-xs muted mt-1">
               Remitente para respuestas y ayuda.
@@ -201,6 +229,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
                 })
               }
               placeholder="Rastuci Tienda"
+              error={fieldErrors["emails.senderName"]}
             />
           </div>
         </div>

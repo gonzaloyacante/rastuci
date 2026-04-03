@@ -2,6 +2,7 @@
 
 import { CreditCard, Lock, Shield } from "lucide-react";
 import { useState } from "react";
+import * as z from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -47,7 +48,11 @@ type PaymentMethodNoticeProps = {
   cashExpHours: number;
   transferExpHours: number;
 };
-function PaymentMethodNotice({ method, cashExpHours, transferExpHours }: PaymentMethodNoticeProps) {
+function PaymentMethodNotice({
+  method,
+  cashExpHours,
+  transferExpHours,
+}: PaymentMethodNoticeProps) {
   if (method === PAYMENT_METHODS.CASH) {
     return (
       <div className="p-4 bg-emerald-50 text-emerald-900 rounded-lg border border-emerald-200 mt-4">
@@ -100,6 +105,18 @@ interface CheckoutFormProps {
   onPaymentError?: (error: string) => void;
 }
 
+// Validation schema for customer data
+const customerSchema = z.object({
+  email: z.string().email("Email inválido"),
+  firstName: z.string().min(2, "Mínimo 2 caracteres"),
+  lastName: z.string().min(2, "Mínimo 2 caracteres"),
+  identificationType: z.string().min(1, "Selecciona un tipo"),
+  identificationNumber: z
+    .string()
+    .min(6, "El número de documento parece muy corto")
+    .regex(/^\d+$/, "Solo se permiten números"),
+});
+
 export function CheckoutForm({
   onPaymentSuccess: _onPaymentSuccess,
   onPaymentError,
@@ -119,6 +136,9 @@ export function CheckoutForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("");
+  const [customerErrors, setCustomerErrors] = useState<Record<string, string>>(
+    {}
+  );
 
   const [customerData, setCustomerData] = useState({
     email: "",
@@ -163,6 +183,25 @@ export function CheckoutForm({
       return;
     }
     if (!isCheckoutCustomerValid(customerData)) {
+      const result = customerSchema.safeParse(customerData);
+      if (!result.success) {
+        const errs: Record<string, string> = {};
+        result.error.errors.forEach((issue) => {
+          const key = String(issue.path[0] ?? "");
+          if (key && !errs[key]) errs[key] = issue.message;
+        });
+        setCustomerErrors(errs);
+        const firstKey = Object.keys(errs)[0];
+        if (firstKey) {
+          setTimeout(() => {
+            const el =
+              document.querySelector<HTMLElement>(`[name="${firstKey}"]`) ??
+              document.getElementById(`customer-${firstKey}`);
+            el?.scrollIntoView({ behavior: "smooth", block: "center" });
+            el?.focus();
+          }, 50);
+        }
+      }
       show({
         type: "error",
         title: "Error",
@@ -170,6 +209,7 @@ export function CheckoutForm({
       });
       return;
     }
+    setCustomerErrors({});
     setIsProcessing(true);
     try {
       const customer = buildCheckoutCustomer(customerData, customerInfo);
@@ -237,7 +277,11 @@ export function CheckoutForm({
           </div>
 
           {/* Datos del cliente */}
-          <CustomerForm data={customerData} onChange={setCustomerData} />
+          <CustomerForm
+            data={customerData}
+            onChange={setCustomerData}
+            errors={customerErrors}
+          />
 
           {/* Método de pago */}
           <PaymentMethodSelector

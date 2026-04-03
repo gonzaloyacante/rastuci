@@ -12,13 +12,18 @@ import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
 import { PROVINCE_CODE_MAP as provinceCodeMap } from "@/lib/constants";
 import { logger } from "@/lib/logger";
-import { defaultStoreSettings, StoreSettings } from "@/lib/validation/store";
+import {
+  defaultStoreSettings,
+  StoreSettings,
+  StoreSettingsSchema,
+} from "@/lib/validation/store";
 
 export default function ShippingSettings() {
   const { show } = useToast();
   const [data, setData] = useState<StoreSettings>(defaultStoreSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const { settings, loading: loadingSettings } =
     useSettings<StoreSettings>("store");
@@ -53,6 +58,29 @@ export default function ShippingSettings() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Client-side field validation
+    const validated = StoreSettingsSchema.safeParse(data);
+    if (!validated.success) {
+      const errs: Record<string, string> = {};
+      validated.error.errors.forEach((issue) => {
+        const key = issue.path.join(".");
+        if (!errs[key]) errs[key] = issue.message;
+      });
+      setFieldErrors(errs);
+      const firstKey = Object.keys(errs)[0];
+      if (firstKey) {
+        const id = firstKey.split(".").pop() ?? firstKey;
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          el?.focus();
+        }, 50);
+      }
+      return;
+    }
+    setFieldErrors({});
+
     setSaving(true);
     try {
       const res = await fetch("/api/settings/store", {
@@ -112,6 +140,7 @@ export default function ShippingSettings() {
                 handleAddressChange("streetName", e.target.value)
               }
               placeholder="Av. San Martín"
+              error={fieldErrors["address.streetName"]}
             />
           </div>
           <div>
@@ -123,6 +152,7 @@ export default function ShippingSettings() {
                 handleAddressChange("streetNumber", e.target.value)
               }
               placeholder="1234"
+              error={fieldErrors["address.streetNumber"]}
             />
           </div>
         </div>
@@ -156,6 +186,7 @@ export default function ShippingSettings() {
               value={data.address.city}
               onChange={(e) => handleAddressChange("city", e.target.value)}
               placeholder="Buenos Aires"
+              error={fieldErrors["address.city"]}
             />
           </div>
           <div>
@@ -185,6 +216,7 @@ export default function ShippingSettings() {
               }
               placeholder="1611"
               maxLength={10}
+              error={fieldErrors["address.postalCode"]}
             />
           </div>
         </div>

@@ -22,9 +22,10 @@ interface CustomerData {
 interface CustomerFormProps {
   data: CustomerData;
   onChange: (data: CustomerData) => void;
+  errors?: Partial<Record<keyof CustomerData, string>>;
 }
 
-export function CustomerForm({ data, onChange }: CustomerFormProps) {
+export function CustomerForm({ data, onChange, errors }: CustomerFormProps) {
   const handleChange = (field: string, value: string) => {
     onChange({ ...data, [field]: value });
   };
@@ -55,6 +56,7 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
           onChange={(e) => handleChange("email", e.target.value)}
           required
           className="text-base sm:text-sm" // text-base evita zoom en iOS
+          error={errors?.email}
         />
         <p className="text-[11px] sm:text-xs muted mt-1">
           Te enviaremos la confirmación de compra a este email
@@ -74,6 +76,7 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
             onChange={(e) => handleChange("firstName", e.target.value)}
             required
             className="text-base sm:text-sm"
+            error={errors?.firstName}
           />
         </div>
 
@@ -88,6 +91,7 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
             onChange={(e) => handleChange("lastName", e.target.value)}
             required
             className="text-base sm:text-sm"
+            error={errors?.lastName}
           />
         </div>
       </div>
@@ -102,7 +106,9 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
             value={data.identificationType}
             onValueChange={(value) => handleChange("identificationType", value)}
           >
-            <SelectTrigger>
+            <SelectTrigger
+              className={errors?.identificationType ? "border-error" : ""}
+            >
               <SelectValue placeholder="Tipo" />
             </SelectTrigger>
             <SelectContent>
@@ -113,6 +119,11 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
               ))}
             </SelectContent>
           </Select>
+          {errors?.identificationType && (
+            <p className="text-xs text-error mt-1">
+              {errors.identificationType}
+            </p>
+          )}
         </div>
 
         <div className="sm:col-span-2">
@@ -131,6 +142,7 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
               )
             }
             className="text-base sm:text-sm"
+            error={errors?.identificationNumber}
           />
         </div>
       </div>
