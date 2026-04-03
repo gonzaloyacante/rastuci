@@ -1,5 +1,6 @@
 "use client";
 
+import { CornerDownLeft } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -15,15 +16,13 @@ export default function RepentanceButton() {
 
   return (
     <>
-      <span aria-hidden="true" className="text-xs text-muted">
-        ↩
-      </span>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center text-xs text-muted hover:text-primary underline underline-offset-2 transition-colors"
+        className="inline-flex items-center text-xs text-muted hover:text-primary underline underline-offset-2 transition-colors gap-1"
       >
-        Botón de Arrepentimiento
+        <CornerDownLeft className="w-4 h-4" aria-hidden="true" />
+        <span>Botón de Arrepentimiento</span>
       </button>
 
       {open && (
@@ -45,7 +44,7 @@ export default function RepentanceButton() {
               id="repentance-title"
               className="text-lg font-bold flex items-center gap-2"
             >
-              <span aria-hidden="true">↩</span>
+              <CornerDownLeft className="w-4 h-4" aria-hidden="true" />
               Derecho de Arrepentimiento
             </h2>
 

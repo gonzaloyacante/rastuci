@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Youtube } from "lucide-react";
+import { Facebook, Instagram, Shield, Youtube } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -194,7 +194,7 @@ export default function Footer({ home, contact }: FooterProps) {
             className="inline-flex items-center gap-2 text-xs muted hover:text-primary transition-colors border border-muted rounded px-3 py-1.5"
           >
             <span className="text-base" aria-hidden="true">
-              🛡️
+              <Shield className="w-4 h-4" aria-hidden="true" />
             </span>
             <span>
               Defensa del Consumidor &mdash; Si no quedás satisfecho podés
