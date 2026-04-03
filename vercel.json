@@ -4,7 +4,8 @@
       "maxDuration": 10
     }
   },
-  "buildCommand": "pnpm prisma generate && pnpm next build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm prisma generate && pnpm build",
   "crons": [
     {
       "path": "/api/cron/tracking-notifications",

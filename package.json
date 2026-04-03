@@ -29,7 +29,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "npx prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
@@ -67,6 +67,7 @@
     "prisma:generate": "npx prisma generate",
     "test:shipping": "tsx scripts/test-shipping-options.ts",
     "prepare": "husky",
+    "postinstall": "prisma generate",
     "fix-hooks": "chmod +x .husky/* && chmod +x .husky/_/*",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
