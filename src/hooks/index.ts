@@ -1,5 +1,4 @@
 // Hooks consolidados y optimizados
-export { useApi, usePaginatedApi } from "./useApi";
 export {
   useIntersectionObserver,
   useLazyLoad,

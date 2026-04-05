@@ -1,6 +1,7 @@
 "use client";
 
 import { DownloadIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -18,8 +19,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useDocumentTitle } from "@/hooks";
 import { type Order, useOrders } from "@/hooks/useOrders";
 import { logger } from "@/lib/logger";
-import { formatCurrency } from "@/lib/utils";
-import { escapeCsvCell } from "@/utils/formatters";
+import { escapeCsvCell, formatCurrency } from "@/utils/formatters";
 
 type StatusFilter =
   | "ALL"
@@ -171,6 +171,7 @@ function toOrderCardData(order: Order): OrderCardData {
 
 export default function OrdersPage() {
   const { show } = useToast();
+  const router = useRouter();
   useDocumentTitle({ title: "Pedidos" });
 
   // State
@@ -277,8 +278,7 @@ export default function OrdersPage() {
             },
             {
               label: "Ver Pendientes",
-              onClick: () =>
-                (window.location.href = "/admin/pedidos/pendientes"),
+              onClick: () => router.push("/admin/pedidos/pendientes"),
               variant: "primary",
             },
           ]}

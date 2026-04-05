@@ -76,6 +76,7 @@ export interface MetricsDashboard {
   };
   productMetrics: {
     totalProducts: MetricData;
+    totalCategories: number;
     lowStockProducts: number;
     outOfStockProducts: number;
     averageRating: MetricData;

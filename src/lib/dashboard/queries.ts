@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
-import { generateOrdersChartFromOrders, generateSalesChartFromOrders } from "./charts";
+import {
+  generateOrdersChartFromOrders,
+  generateSalesChartFromOrders,
+} from "./charts";
 import { calculateMetric } from "./metrics";
 import type { MetricsDashboard } from "./types";
 
@@ -51,8 +54,12 @@ function computeSalesMetrics(
   const previousAOV =
     previousOrderCount > 0 ? previousTotalSales / previousOrderCount : 0;
 
-  const currentCustomerNames = new Set(currentOrders.map((o) => o.customerName));
-  const previousCustomerNames = new Set(previousOrders.map((o) => o.customerName));
+  const currentCustomerNames = new Set(
+    currentOrders.map((o) => o.customerName)
+  );
+  const previousCustomerNames = new Set(
+    previousOrders.map((o) => o.customerName)
+  );
 
   const currentPendingIssues = currentOrders.filter(
     (o) => o.status === "PENDING"
@@ -156,9 +163,11 @@ function computeTopCategories(currentOrders: OrderWithItems[]) {
 
   currentOrders.forEach((order) => {
     order.order_items.forEach((item) => {
-      const categoryName =
-        item.products?.categories?.name ?? "Sin categoría";
-      const existing = map.get(categoryName) ?? { name: categoryName, sales: 0 };
+      const categoryName = item.products?.categories?.name ?? "Sin categoría";
+      const existing = map.get(categoryName) ?? {
+        name: categoryName,
+        sales: 0,
+      };
       existing.sales += item.quantity;
       map.set(categoryName, existing);
     });
@@ -168,8 +177,7 @@ function computeTopCategories(currentOrders: OrderWithItems[]) {
   return Array.from(map.values())
     .map((c) => ({
       ...c,
-      percentage:
-        total > 0 ? Math.round((c.sales / total) * 1000) / 10 : 0,
+      percentage: total > 0 ? Math.round((c.sales / total) * 1000) / 10 : 0,
     }))
     .sort((a, b) => b.sales - a.sales)
     .slice(0, 5);
@@ -256,7 +264,10 @@ function computeOrderStatus(currentOrders: OrderWithItems[]) {
     const status = labels[o.status] ?? o.status;
     map.set(status, (map.get(status) ?? 0) + 1);
   });
-  return Array.from(map.entries()).map(([status, count]) => ({ status, count }));
+  return Array.from(map.entries()).map(([status, count]) => ({
+    status,
+    count,
+  }));
 }
 
 function computeHourlyOrders(currentOrders: OrderWithItems[]) {
@@ -271,17 +282,19 @@ function computeHourlyOrders(currentOrders: OrderWithItems[]) {
   return Array.from({ length: 24 }, (_, i) => ({
     hour: `${i}:00`,
     orders: map.get(i) ?? 0,
-  })).filter(
-    (h) => h.orders > 0 || (h.hour >= "8:00" && h.hour <= "22:00")
-  );
+  })).filter((h) => h.orders > 0 || (h.hour >= "8:00" && h.hour <= "22:00"));
 }
 
 // ─── Secondary fetcher ────────────────────────────────────────────────────────
 
-async function fetchProductAndCustomerData(previousEnd: Date, currentStart: Date) {
+async function fetchProductAndCustomerData(
+  previousEnd: Date,
+  currentStart: Date
+) {
   const [
     totalProducts,
     previousTotalProducts,
+    totalCategories,
     lowStockProducts,
     outOfStockProducts,
     productsWithRating,
@@ -290,20 +303,36 @@ async function fetchProductAndCustomerData(previousEnd: Date, currentStart: Date
   ] = await Promise.all([
     prisma.products.count(),
     prisma.products.count({ where: { createdAt: { lte: previousEnd } } }),
+    prisma.categories.count(),
     prisma.products.count({ where: { stock: { gt: 0, lte: 5 } } }),
     prisma.products.count({ where: { stock: 0 } }),
     prisma.products.aggregate({ _avg: { rating: true } }),
     prisma.orders.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
-      select: { id: true, customerName: true, total: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        customerName: true,
+        total: true,
+        status: true,
+        createdAt: true,
+      },
     }),
     prisma.orders.findMany({
       where: { createdAt: { lt: currentStart } },
       select: { customerName: true },
     }),
   ]);
-  return { totalProducts, previousTotalProducts, lowStockProducts, outOfStockProducts, productsWithRating, recentOrders, allTimeCustomers };
+  return {
+    totalProducts,
+    previousTotalProducts,
+    totalCategories,
+    lowStockProducts,
+    outOfStockProducts,
+    productsWithRating,
+    recentOrders,
+    allTimeCustomers,
+  };
 }
 
 // ─── Dashboard assembler ──────────────────────────────────────────────────────
@@ -316,20 +345,42 @@ function assembleDashboard(
   delivery: ReturnType<typeof computeDeliveryMetrics>,
   productData: Awaited<ReturnType<typeof fetchProductAndCustomerData>>
 ): MetricsDashboard {
-  const { totalProducts, previousTotalProducts, lowStockProducts, outOfStockProducts, productsWithRating, recentOrders, allTimeCustomers } = productData;
+  const {
+    totalProducts,
+    previousTotalProducts,
+    totalCategories,
+    lowStockProducts,
+    outOfStockProducts,
+    productsWithRating,
+    recentOrders,
+    allTimeCustomers,
+  } = productData;
   const topProducts = computeTopProducts(currentOrders);
   const topCategories = computeTopCategories(currentOrders);
   const shippingDistribution = computeShippingDistribution(currentOrders);
-  const { avgShippingCost, previousAvgShipping } = computeShippingCost(currentOrders, previousOrders);
+  const { avgShippingCost, previousAvgShipping } = computeShippingCost(
+    currentOrders,
+    previousOrders
+  );
 
   const averageRating = productsWithRating._avg.rating ?? 0;
-  const allTimeCustomerNames = new Set(allTimeCustomers.map((o) => o.customerName));
-  const newCustomers = Array.from(sales.currentCustomerNames).filter((name) => !allTimeCustomerNames.has(name)).length;
+  const allTimeCustomerNames = new Set(
+    allTimeCustomers.map((o) => o.customerName)
+  );
+  const newCustomers = Array.from(sales.currentCustomerNames).filter(
+    (name) => !allTimeCustomerNames.has(name)
+  ).length;
   const returningCustomers = sales.currentCustomerCount - newCustomers;
-  const onTimeDeliveryRate = sales.currentOrderCount > 0
-    ? (delivery.currentDeliveredOrders.length / sales.currentOrderCount) * 100 : 0;
-  const previousOnTimeRate = sales.previousOrderCount > 0
-    ? (previousOrders.filter((o) => o.status === "DELIVERED").length / sales.previousOrderCount) * 100 : 0;
+  const onTimeDeliveryRate =
+    sales.currentOrderCount > 0
+      ? (delivery.currentDeliveredOrders.length / sales.currentOrderCount) * 100
+      : 0;
+  const previousOnTimeRate =
+    sales.previousOrderCount > 0
+      ? (previousOrders.filter((o) => o.status === "DELIVERED").length /
+          sales.previousOrderCount) *
+        100
+      : 0;
 
   const recentActivity = recentOrders.map((order) => ({
     id: order.id,
@@ -344,37 +395,94 @@ function assembleDashboard(
 
   return {
     overview: {
-      totalSales: calculateMetric(sales.currentTotalSales, sales.previousTotalSales, "Ventas Totales"),
-      totalOrders: calculateMetric(sales.currentOrderCount, sales.previousOrderCount, "Órdenes Totales"),
-      averageOrderValue: calculateMetric(Math.round(sales.currentAOV), Math.round(sales.previousAOV), "Valor Promedio de Orden"),
-      customerCount: calculateMetric(sales.currentCustomerCount, sales.previousCustomerCount, "Clientes"),
-      conversionRate: calculateMetric(conversionRate(sales.currentOrderCount), conversionRate(sales.previousOrderCount), "Tasa de Conversión"),
-      returnRate: calculateMetric(Math.round(sales.currentReturnRate * 10) / 10, Math.round(sales.previousReturnRate * 10) / 10, "Tasa de Devolución"),
+      totalSales: calculateMetric(
+        sales.currentTotalSales,
+        sales.previousTotalSales,
+        "Ventas Totales"
+      ),
+      totalOrders: calculateMetric(
+        sales.currentOrderCount,
+        sales.previousOrderCount,
+        "Órdenes Totales"
+      ),
+      averageOrderValue: calculateMetric(
+        Math.round(sales.currentAOV),
+        Math.round(sales.previousAOV),
+        "Valor Promedio de Orden"
+      ),
+      customerCount: calculateMetric(
+        sales.currentCustomerCount,
+        sales.previousCustomerCount,
+        "Clientes"
+      ),
+      conversionRate: calculateMetric(
+        conversionRate(sales.currentOrderCount),
+        conversionRate(sales.previousOrderCount),
+        "Tasa de Conversión"
+      ),
+      returnRate: calculateMetric(
+        Math.round(sales.currentReturnRate * 10) / 10,
+        Math.round(sales.previousReturnRate * 10) / 10,
+        "Tasa de Devolución"
+      ),
     },
     salesChart: generateSalesChartFromOrders(currentOrders, period),
     ordersChart: generateOrdersChartFromOrders(currentOrders, period),
     topProducts,
     topCategories,
     shippingMetrics: {
-      averageDeliveryTime: calculateMetric(delivery.currentAvgDeliveryTime, delivery.previousAvgDeliveryTime, "Tiempo Promedio de Entrega"),
-      onTimeDeliveryRate: calculateMetric(Math.round(onTimeDeliveryRate * 10) / 10, Math.round(previousOnTimeRate * 10) / 10, "Entregas a Tiempo"),
-      shippingCost: calculateMetric(Math.round(avgShippingCost), Math.round(previousAvgShipping), "Costo de Envío Promedio"),
+      averageDeliveryTime: calculateMetric(
+        delivery.currentAvgDeliveryTime,
+        delivery.previousAvgDeliveryTime,
+        "Tiempo Promedio de Entrega"
+      ),
+      onTimeDeliveryRate: calculateMetric(
+        Math.round(onTimeDeliveryRate * 10) / 10,
+        Math.round(previousOnTimeRate * 10) / 10,
+        "Entregas a Tiempo"
+      ),
+      shippingCost: calculateMetric(
+        Math.round(avgShippingCost),
+        Math.round(previousAvgShipping),
+        "Costo de Envío Promedio"
+      ),
       shippingDistribution,
     },
     customerMetrics: {
-      newCustomers: calculateMetric(newCustomers, Math.round(sales.previousCustomerCount * 0.3), "Nuevos Clientes"),
-      returningCustomers: calculateMetric(returningCustomers, Math.round(sales.previousCustomerCount * 0.7), "Clientes Recurrentes"),
+      newCustomers: calculateMetric(
+        newCustomers,
+        Math.round(sales.previousCustomerCount * 0.3),
+        "Nuevos Clientes"
+      ),
+      returningCustomers: calculateMetric(
+        returningCustomers,
+        Math.round(sales.previousCustomerCount * 0.7),
+        "Clientes Recurrentes"
+      ),
       customerLifetimeValue: calculateMetric(
-        sales.currentCustomerCount > 0 ? Math.round(sales.currentTotalSales / sales.currentCustomerCount) : 0,
-        sales.previousCustomerCount > 0 ? Math.round(sales.previousTotalSales / sales.previousCustomerCount) : 0,
+        sales.currentCustomerCount > 0
+          ? Math.round(sales.currentTotalSales / sales.currentCustomerCount)
+          : 0,
+        sales.previousCustomerCount > 0
+          ? Math.round(sales.previousTotalSales / sales.previousCustomerCount)
+          : 0,
         "Valor de Vida del Cliente"
       ),
     },
     productMetrics: {
-      totalProducts: calculateMetric(totalProducts, previousTotalProducts, "Productos Totales"),
+      totalProducts: calculateMetric(
+        totalProducts,
+        previousTotalProducts,
+        "Productos Totales"
+      ),
+      totalCategories,
       lowStockProducts,
       outOfStockProducts,
-      averageRating: calculateMetric(Math.round(averageRating * 10) / 10, Math.round(averageRating * 10) / 10, "Calificación Promedio"),
+      averageRating: calculateMetric(
+        Math.round(averageRating * 10) / 10,
+        Math.round(averageRating * 10) / 10,
+        "Calificación Promedio"
+      ),
     },
     recentActivity,
     ordersPerDay: computeOrdersPerDay(currentOrders),
@@ -408,5 +516,12 @@ export async function buildDashboard(
   const sales = computeSalesMetrics(currentOrders, previousOrders);
   const delivery = computeDeliveryMetrics(currentOrders, previousOrders);
 
-  return assembleDashboard(currentOrders, previousOrders, period, sales, delivery, productData);
+  return assembleDashboard(
+    currentOrders,
+    previousOrders,
+    period,
+    sales,
+    delivery,
+    productData
+  );
 }

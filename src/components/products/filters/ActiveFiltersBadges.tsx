@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 import type { ActiveFilters, FilterGroup } from "./FilterTypes";
 

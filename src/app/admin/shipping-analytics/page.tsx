@@ -16,8 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
-import { formatCurrency } from "@/lib/utils";
-import { escapeCsvCell } from "@/utils/formatters";
+import { escapeCsvCell, formatCurrency } from "@/utils/formatters";
 
 // ============================================================================
 // Types

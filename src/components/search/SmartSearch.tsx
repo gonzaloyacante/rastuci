@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Suspense } from "react";
 
-import { LoadingSpinner } from "@/components/ui/LoadingStates";
+import { LoadingSpinner } from "@/components/ui/Spinner";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { DURATION, FADE_IN_DOWN } from "@/lib/animations";
 

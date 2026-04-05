@@ -7,7 +7,7 @@ import SmartSearch from "@/components/search/SmartSearch";
 
 export default function HeaderSearch() {
   const [open, setOpen] = useState(false);
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape
   useEffect(() => {
@@ -19,53 +19,44 @@ export default function HeaderSearch() {
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
-  // Prevent body scroll when open
+  // Close on click outside
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
     };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Abrir buscador"
-        className="p-2 muted hover:text-primary transition-colors rounded-md hover:bg-surface"
+    <div ref={containerRef} className="relative flex items-center">
+      {/* Expanding search input */}
+      <div
+        className={`flex items-center overflow-hidden transition-all duration-300 ease-out ${
+          open ? "w-64 sm:w-80 opacity-100" : "w-0 opacity-0"
+        }`}
       >
-        <Search className="w-5 h-5" />
+        <SmartSearch
+          size="sm"
+          className="w-full"
+          onSearch={() => setOpen(false)}
+        />
+      </div>
+
+      {/* Search / Close toggle button */}
+      <button
+        onClick={() => setOpen(!open)}
+        aria-label={open ? "Cerrar buscador" : "Abrir buscador"}
+        className="p-2 muted hover:text-primary transition-colors rounded-md hover:bg-surface shrink-0"
+      >
+        {open ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
       </button>
-
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
-          {/* Backdrop */}
-          <div
-            ref={overlayRef}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Search panel */}
-          <div className="relative w-full max-w-2xl z-10">
-            <div className="relative surface rounded-xl shadow-2xl p-4">
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Cerrar buscador"
-                className="absolute top-3 right-3 p-1.5 muted hover:text-primary transition-colors rounded-md hover:bg-surface z-10"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <SmartSearch
-                size="lg"
-                className="w-full"
-                onSearch={() => setOpen(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }

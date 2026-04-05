@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
+import { fetcher } from "@/utils/fetcher";
+
 import {
   ActiveFilters,
   ActiveFiltersBadges,
@@ -35,11 +37,6 @@ interface AdvancedFiltersProps {
 // ==============================================================================
 // FETCHER
 // ==============================================================================
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch");
-  return res.json();
-};
 
 // ==============================================================================
 // FILTER GROUP BUILDERS (module-level to reduce component complexity)

@@ -1,56 +1,44 @@
+import useSWR from "swr";
+
 import { useCategories } from "@/hooks/useCategories";
-import useGlobalCache from "@/hooks/useGlobalCache";
 import { defaultHomeSettings, type HomeSettings } from "@/lib/validation/home";
 import { Product } from "@/types";
 
+const selectFeaturedProducts = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.success && data.data?.data ? data.data.data : []) as Product[];
+};
+
+const selectHomeSettings = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (
+    data.success && data.data ? data.data : defaultHomeSettings
+  ) as HomeSettings;
+};
+
 export function useHomeData() {
-  // Usar hooks optimizados con cache
   const { categories, isLoading: categoriesLoading } = useCategories();
 
-  // Cache para productos en oferta
-  const { data: products, isLoading: productsLoading } = useGlobalCache<
-    Product[]
-  >(
-    "featured-products",
-    async () => {
-      const response = await fetch("/api/products?onSale=true&limit=4");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data.success && data.data?.data ? data.data.data : [];
-    },
-    {
-      ttl: 5 * 60 * 1000, // 5 minutos para productos
-      revalidateOnMount: false,
-    }
+  const { data: products, isLoading: productsLoading } = useSWR(
+    "/api/products?onSale=true&limit=4",
+    selectFeaturedProducts,
+    { dedupingInterval: 5 * 60 * 1000, revalidateOnFocus: false }
   );
 
-  // Cache para configuración del home
-  const { data: home, isLoading: homeLoading } = useGlobalCache<HomeSettings>(
-    "home-settings",
-    async () => {
-      const response = await fetch("/api/home");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data.success && data.data
-        ? (data.data as HomeSettings)
-        : defaultHomeSettings;
-    },
-    {
-      ttl: 10 * 60 * 1000, // 10 minutos para settings
-      revalidateOnMount: false,
-    }
+  const { data: home, isLoading: homeLoading } = useSWR(
+    "/api/home",
+    selectHomeSettings,
+    { dedupingInterval: 10 * 60 * 1000, revalidateOnFocus: false }
   );
-
-  const loading = categoriesLoading || productsLoading || homeLoading;
 
   return {
     categories: categories || [],
     products: products || [],
     home: home || defaultHomeSettings,
-    loading,
+    loading: categoriesLoading || productsLoading || homeLoading,
   };
 }

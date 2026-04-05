@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { Product } from "@/types";
+import { fetcher } from "@/utils/fetcher";
 
 interface SearchFilters {
   search?: string;
@@ -30,14 +31,6 @@ interface UseProductSearchResult {
   reset: () => void;
   filters: SearchFilters;
 }
-
-const fetcher = async (url: string) => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error("Error al cargar productos");
-  }
-  return response.json();
-};
 
 export function useProductSearch(
   initialFilters: SearchFilters = {}

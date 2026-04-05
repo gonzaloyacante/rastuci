@@ -2,7 +2,7 @@ import React from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 import { FormatType, MetricData, MetricsDashboard } from "./metricsTypes";
 
@@ -84,8 +84,12 @@ export function MiniStat({ label, value, color = "default" }: MiniStatProps) {
 
   return (
     <div className="p-2 sm:p-3 surface-secondary rounded">
-      <p className="text-xs sm:text-sm text-content-secondary truncate">{label}</p>
-      <p className={`text-base sm:text-lg lg:text-xl font-bold ${colorClass[color]}`}>
+      <p className="text-xs sm:text-sm text-content-secondary truncate">
+        {label}
+      </p>
+      <p
+        className={`text-base sm:text-lg lg:text-xl font-bold ${colorClass[color]}`}
+      >
         {value}
       </p>
     </div>
@@ -127,7 +131,9 @@ export function TopProducts({ products }: TopProductsProps) {
 
   return (
     <Card className="p-3 sm:p-4">
-      <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Top Productos</h3>
+      <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+        Top Productos
+      </h3>
       <div className="space-y-2 sm:space-y-3">
         {products.map((product, index) => (
           <div
@@ -139,7 +145,9 @@ export function TopProducts({ products }: TopProductsProps) {
                 {index + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm sm:text-base truncate">{product.name}</h4>
+                <h4 className="font-medium text-sm sm:text-base truncate">
+                  {product.name}
+                </h4>
                 <p className="text-xs sm:text-sm text-content-secondary truncate">
                   {product.sales} unids • {product.orders} ord.
                 </p>
@@ -166,10 +174,13 @@ const activityIcons: Record<string, string> = {
   product: "📦",
 };
 
-function formatActivityValue(activity: MetricsDashboard["recentActivity"][0]): React.ReactNode {
+function formatActivityValue(
+  activity: MetricsDashboard["recentActivity"][0]
+): React.ReactNode {
   if (activity.value === undefined) return null;
   if (activity.type === "review") return `${activity.value}★`;
-  if (activity.type === "order") return formatCurrency(activity.value as number);
+  if (activity.type === "order")
+    return formatCurrency(activity.value as number);
   return activity.value;
 }
 
@@ -212,7 +223,9 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                 </p>
               </div>
               {activityValue && (
-                <Badge className="badge-default shrink-0">{activityValue}</Badge>
+                <Badge className="badge-default shrink-0">
+                  {activityValue}
+                </Badge>
               )}
             </div>
           );

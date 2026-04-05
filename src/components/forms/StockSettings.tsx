@@ -3,7 +3,7 @@
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { SettingsFormSkeleton } from "@/components/admin/skeletons";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -134,7 +134,7 @@ export default function StockSettings() {
     setSaving(false);
   };
 
-  if (loading) return <FormSkeleton rows={3} />;
+  if (loading) return <SettingsFormSkeleton rows={3} />;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">

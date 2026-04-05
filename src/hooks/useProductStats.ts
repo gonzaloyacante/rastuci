@@ -1,6 +1,7 @@
 import useSWR from "swr";
 
 import { ApiResponse } from "@/types";
+import { fetcher } from "@/utils/fetcher";
 
 export interface ProductInventoryStats {
   total: number;
@@ -43,13 +44,6 @@ const defaultStats: ProductStats = {
 };
 
 // Fetcher interno
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  return res.json();
-};
 
 /**
  * Hook para obtener estadísticas de productos incluyendo inventario

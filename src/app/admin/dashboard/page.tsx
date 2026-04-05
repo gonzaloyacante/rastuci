@@ -27,7 +27,7 @@ import {
 import { DashboardSkeleton } from "@/components/admin/skeletons";
 import { useDashboard } from "@/hooks";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 const quickActions: QuickAction[] = [
   {

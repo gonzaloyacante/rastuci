@@ -25,8 +25,8 @@ import {
 } from "@/components/admin/InventoryComponents";
 import { useToast } from "@/components/ui/Toast";
 import useDebounce from "@/hooks/useDebounce";
-import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types";
+import { formatCurrency } from "@/utils/formatters";
 
 const PLACEHOLDER = "https://placehold.co/800x800.png";
 
@@ -64,7 +64,9 @@ function productToInventoryItems(p: Product): InventoryItem[] {
       currentStock: v.stock,
       maxStock: Math.max(100, v.stock),
       availableStock: v.stock,
-      status: (v.stock > 0 ? "in_stock" : "out_of_stock") as InventoryItem["status"],
+      status: (v.stock > 0
+        ? "in_stock"
+        : "out_of_stock") as InventoryItem["status"],
     }));
   }
 
@@ -77,7 +79,9 @@ function productToInventoryItems(p: Product): InventoryItem[] {
       currentStock,
       maxStock: Math.max(100, currentStock),
       availableStock: currentStock,
-      status: (currentStock > 0 ? "in_stock" : "out_of_stock") as InventoryItem["status"],
+      status: (currentStock > 0
+        ? "in_stock"
+        : "out_of_stock") as InventoryItem["status"],
     },
   ];
 }
@@ -103,17 +107,23 @@ export function InventoryManagement() {
       );
       if (!res.ok) throw new Error("Error fetching products");
       const json = await res.json();
-      const products: Product[] = Array.isArray(json?.data?.data) ? json.data.data : [];
+      const products: Product[] = Array.isArray(json?.data?.data)
+        ? json.data.data
+        : [];
 
       const mapped = products.flatMap(productToInventoryItems);
 
       const computedStats: InventoryStats = {
         totalProducts: mapped.length,
-        totalValue: mapped.reduce((sum, it) => sum + it.currentStock * it.unitPrice, 0),
+        totalValue: mapped.reduce(
+          (sum, it) => sum + it.currentStock * it.unitPrice,
+          0
+        ),
         lowStockItems: mapped.filter(
           (item) => item.currentStock > 0 && item.currentStock <= item.minStock
         ).length,
-        outOfStockItems: mapped.filter((item) => item.currentStock === 0).length,
+        outOfStockItems: mapped.filter((item) => item.currentStock === 0)
+          .length,
         topMovingProducts: mapped.slice(0, 5),
         slowMovingProducts: mapped.slice(-5),
       };
@@ -161,7 +171,10 @@ export function InventoryManagement() {
       await loadInventoryData();
       setShowAdjustmentForm(false);
       setSelectedItem(null);
-      show({ type: "success", message: "Ajuste de stock realizado correctamente" });
+      show({
+        type: "success",
+        message: "Ajuste de stock realizado correctamente",
+      });
     } catch {
       show({ type: "error", message: "Error al realizar el ajuste de stock" });
     }

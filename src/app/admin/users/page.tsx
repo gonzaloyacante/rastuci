@@ -1,6 +1,7 @@
 "use client";
 
-import { Edit3, Trash2 } from "lucide-react";
+import { Edit3, Shield, Trash2, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -10,6 +11,7 @@ import {
   AdminPageHeader,
 } from "@/components/admin";
 import { UsersSkeleton } from "@/components/admin/skeletons";
+import { SearchBar } from "@/components/search";
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pagination } from "@/components/ui/Pagination";
@@ -18,6 +20,7 @@ import { User, useUsers } from "@/hooks/useUsers";
 
 export default function UsuariosPage() {
   useDocumentTitle({ title: "Usuarios" });
+  const router = useRouter();
   const {
     users,
     loading,
@@ -48,8 +51,9 @@ export default function UsuariosPage() {
   };
 
   // Búsqueda
-  const handleSearch = () => {
-    void fetchUsers({ page: 1, limit: 20, search: searchInput });
+  const handleSearch = (value?: string) => {
+    const term = value ?? searchInput;
+    void fetchUsers({ page: 1, limit: 20, search: term });
   };
 
   // Paginación
@@ -89,35 +93,61 @@ export default function UsuariosPage() {
         actions={[
           {
             label: "Crear Usuario",
-            onClick: () => {
-              window.location.href = "/admin/usuarios/nuevo";
-            },
+            onClick: () => router.push("/admin/usuarios/nuevo"),
             variant: "primary",
           },
         ]}
       />
 
+      {/* Stats resumidos */}
+      {Array.isArray(users) && users.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="bg-surface border border-border rounded-lg p-3 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Users className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-content-secondary">Total</p>
+              <p className="text-lg font-bold text-content-primary">
+                {users.length}
+              </p>
+            </div>
+          </div>
+          <div className="bg-surface border border-border rounded-lg p-3 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/10">
+              <Shield className="w-4 h-4 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs text-content-secondary">Admins</p>
+              <p className="text-lg font-bold text-content-primary">
+                {users.filter((u: User) => u.role === "ADMIN").length}
+              </p>
+            </div>
+          </div>
+          <div className="bg-surface border border-border rounded-lg p-3 flex items-center gap-3 col-span-2 sm:col-span-1">
+            <div className="p-2 rounded-lg bg-emerald-500/10">
+              <Users className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-xs text-content-secondary">Usuarios</p>
+              <p className="text-lg font-bold text-content-primary">
+                {users.filter((u: User) => u.role === "USER").length}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Barra de búsqueda */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSearch();
-            }
-          }}
-          placeholder="Buscar usuarios por nombre o email..."
-          className="w-full sm:w-96 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-        />
-        <Button
-          onClick={handleSearch}
-          className="bg-primary text-white hover:bg-primary-dark transition-colors"
-        >
-          Buscar
-        </Button>
-      </div>
+      <SearchBar
+        value={searchInput}
+        onChange={(value) => {
+          setSearchInput(value);
+          if (!value.trim()) handleSearch("");
+        }}
+        onSearch={handleSearch}
+        placeholder="Buscar usuarios por nombre o email..."
+      />
 
       {/* Mostrar AdminEmpty si no hay usuarios */}
       {Array.isArray(users) && users.length === 0 ? (
@@ -131,9 +161,7 @@ export default function UsuariosPage() {
           }
           action={{
             label: "Crear Primer Usuario",
-            onClick: () => {
-              window.location.href = "/admin/usuarios/nuevo";
-            },
+            onClick: () => router.push("/admin/usuarios/nuevo"),
             variant: "primary",
           }}
         />
@@ -143,68 +171,56 @@ export default function UsuariosPage() {
       {Array.isArray(users) && users.length > 0 && (
         <div className="card">
           {/* Vista de cards para mobile/tablet */}
-          <div className="block xl:hidden space-y-4">
+          <div className="block xl:hidden space-y-3">
             {users.map((user: User) => (
               <div
                 key={user.id}
-                className="border rounded-lg p-4 space-y-3 surface shadow-sm"
+                className="bg-surface border border-border rounded-xl p-4 space-y-3 hover:shadow-md transition-all duration-200 hover:border-primary/20"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-medium">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-content-primary truncate">
-                          {user.name}
-                        </h3>
-                        <p className="text-sm text-content-secondary truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`badge-${
-                            getRoleBadge(user.role).variant
-                          } text-xs`}
-                        >
-                          {getRoleBadge(user.role).label}
-                        </span>
-                      </div>
-                      <div className="text-xs text-content-tertiary space-y-1">
-                        <div>Creado: {formatDate(user.createdAt)}</div>
-                        {user.lastLoginAt && (
-                          <div>
-                            Último login: {formatDate(user.lastLoginAt)}
-                          </div>
-                        )}
-                        {user.loginCount !== undefined &&
-                          user.loginCount > 0 && (
-                            <div>Inicios de sesión: {user.loginCount}</div>
-                          )}
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold shrink-0">
+                    {user.name.charAt(0).toUpperCase()}
                   </div>
-                </div>
-                <div className="flex space-x-2 pt-2">
-                  <Button
-                    onClick={() => {
-                      window.location.href = `/admin/users/${user.id}/edit`;
-                    }}
-                    variant="secondary"
-                    className="flex-1 text-sm cursor-pointer bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-content-primary truncate">
+                      {user.name}
+                    </h3>
+                    <p className="text-sm text-content-secondary truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                  <span
+                    className={`badge-${getRoleBadge(user.role).variant} text-xs shrink-0`}
                   >
+                    {getRoleBadge(user.role).label}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-content-tertiary pt-2 border-t border-border">
+                  <span>Creado: {formatDate(user.createdAt)}</span>
+                  {user.lastLoginAt && (
+                    <span>Último login: {formatDate(user.lastLoginAt)}</span>
+                  )}
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    onClick={() =>
+                      router.push(`/admin/usuarios/${user.id}/editar`)
+                    }
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1 text-xs"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 mr-1" />
                     Editar
                   </Button>
                   <Button
                     onClick={() => handleDelete(user.id)}
                     disabled={user.role === "ADMIN"}
                     variant="destructive"
-                    className="flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    size="sm"
+                    className="flex-1 text-xs"
                   >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
                     Eliminar
                   </Button>
                 </div>
@@ -290,9 +306,9 @@ export default function UsuariosPage() {
                           variant="outline"
                           size="sm"
                           className="text-xs flex items-center gap-1"
-                          onClick={() => {
-                            window.location.href = `/admin/usuarios/${user.id}/editar`;
-                          }}
+                          onClick={() =>
+                            router.push(`/admin/usuarios/${user.id}/editar`)
+                          }
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                           <span>Editar</span>

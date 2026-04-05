@@ -9,19 +9,6 @@ import { Pagination as UIPagination } from "@/components/ui/Pagination";
 import { ProductCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
 
 // ==============================================================================
-// ProductGridSkeleton
-// ==============================================================================
-export function ProductGridSkeleton({ count = 12 }: { count?: number }) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
-      {Array.from({ length: count }).map((_, i) => (
-        <ProductCardSkeleton key={`skeleton-${i}`} />
-      ))}
-    </div>
-  );
-}
-
-// ==============================================================================
 // EmptyProductsState
 // ==============================================================================
 interface EmptyProductsStateProps {
@@ -381,5 +368,18 @@ export function ProductsCountLabel({
           ? "1 producto encontrado"
           : `${count} productos encontrados`}
     </span>
+  );
+}
+
+// ==============================================================================
+// ProductGridSkeleton
+// ==============================================================================
+export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <ProductCardSkeleton key={`product-skeleton-${i}`} />
+      ))}
+    </div>
   );
 }

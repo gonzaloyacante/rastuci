@@ -1,5 +1,5 @@
 // Servicio de notificaciones push para móvil
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 interface PushNotificationPayload {
   title: string;

@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/Label";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { logger } from "@/lib/logger";
-import { formatCurrency } from "@/lib/utils";
 import { ProductBulkUpdateItem } from "@/lib/validation/product";
+import { formatCurrency } from "@/utils/formatters";
 
 // ============================================================================
 // Module-level helpers (defined outside component for lower complexity)

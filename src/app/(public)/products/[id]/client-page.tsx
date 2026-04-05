@@ -157,12 +157,14 @@ function ProductInfoPanel({
       <p className="text-sm muted uppercase tracking-wide">
         {product.categories?.name}
       </p>
-      <h1 className="text-3xl font-bold text-primary">{product.name}</h1>
-      <ProductPriceDisplay
-        price={product.price}
-        salePrice={product.salePrice}
-        onSale={product.onSale}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-3xl font-bold text-primary">{product.name}</h1>
+        <ProductPriceDisplay
+          price={product.price}
+          salePrice={product.salePrice}
+          onSale={product.onSale}
+        />
+      </div>
       {shipping.freeShipping && (
         <div className="mt-2 animate-in fade-in slide-in-from-left-4 duration-500">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-semibold">
@@ -201,7 +203,11 @@ function ProductInfoPanel({
           quantity={quantity}
           maxStock={currentStock}
           onChange={onSetQuantity}
+          disabled={hasVariants && (!selectedColor || !selectedSize)}
         />
+        {hasVariants && (!selectedColor || !selectedSize) && (
+          <p className="text-xs muted mt-1">Seleccioná color y talle primero</p>
+        )}
       </div>
       <div className="text-sm">
         <StockBadge stock={currentStock} />
@@ -401,20 +407,20 @@ export default function ProductDetailClient({
           {/* Beneficios */}
           <ProductBenefitsRow shipping={shipping} />
         </div>
+
+        {/* Reseñas */}
+        <Suspense fallback={<ReviewsSkeleton />}>
+          <ProductReviews productId={productId} />
+        </Suspense>
+
+        {/* Productos relacionados */}
+        <Suspense fallback={<RelatedProductsSkeleton />}>
+          <RelatedProducts
+            categoryId={product.categories?.id}
+            currentProductId={productId}
+          />
+        </Suspense>
       </div>
-
-      {/* Reseñas */}
-      <Suspense fallback={<ReviewsSkeleton />}>
-        <ProductReviews productId={productId} />
-      </Suspense>
-
-      {/* Productos relacionados */}
-      <Suspense fallback={<RelatedProductsSkeleton />}>
-        <RelatedProducts
-          categoryId={product.categories?.id}
-          currentProductId={productId}
-        />
-      </Suspense>
     </div>
   );
 }

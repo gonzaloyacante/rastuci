@@ -7,9 +7,9 @@ import { COMMON_COLORS } from "@/components/products/forms/ProductFormComponents
 import { DynamicTags } from "@/components/products/variants/DynamicTags";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { LoadingSkeleton } from "@/components/ui/LoadingStates";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { ProductImagePlaceholder } from "@/components/ui/ProductImagePlaceholder";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { StockBadge } from "@/components/ui/StockBadge";
 import { Product } from "@/types";
 import { sortSizes } from "@/utils/sizes";
@@ -241,7 +241,7 @@ export function AdminProductCard({
             <ProductImagePlaceholder className="w-full h-full" />
           ) : (
             <div className="relative w-full h-full">
-              {imageLoading && <LoadingSkeleton className="absolute inset-0" />}
+              {imageLoading && <Skeleton className="absolute inset-0" />}
               <OptimizedImage
                 src={mainImage}
                 alt={product.name}

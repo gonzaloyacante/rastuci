@@ -1,7 +1,6 @@
 export { AdminCard } from "./AdminCard";
 export { AdminEmpty, AdminEmptyIcons } from "./AdminEmpty";
 export { AdminError } from "./AdminError";
-export { AdminLoading } from "./AdminLoading";
 export { AdminPageHeader } from "./AdminPageHeader";
 export { AdminTable } from "./AdminTable";
 

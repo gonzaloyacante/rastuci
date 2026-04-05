@@ -16,7 +16,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useCart } from "@/context/CartContext";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 // ---------------------------------------------------------------------------
 // Fetch helpers — reducen la complejidad de loadOrderInfo (complexity 16 → 4)

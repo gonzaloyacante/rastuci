@@ -12,7 +12,7 @@ import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 import { emailService } from "@/lib/resend";
 import { getStoreSettings } from "@/lib/store-settings";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 import type {
   CouponInput,

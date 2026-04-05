@@ -39,24 +39,20 @@ const _metaStatCard: Meta<typeof StatCard> = {
 
 export const RevenueStat: StoryObj<typeof StatCard> = {
   args: {
-    stat: {
-      icon: DollarSign,
-      label: "Total Revenue",
-      value: "$45,231.89",
-      change: "+20.1%",
-      color: "blue" as AdminColor,
-    },
+    icon: <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />,
+    label: "Total Revenue",
+    value: "$45,231.89",
+    change: "+20.1%",
+    color: "blue" as AdminColor,
   },
 };
 
 export const UsersStat: StoryObj<typeof StatCard> = {
   args: {
-    stat: {
-      icon: Users,
-      label: "Active Users",
-      value: "2,350",
-      change: "-5%",
-      color: "emerald" as AdminColor,
-    },
+    icon: <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />,
+    label: "Active Users",
+    value: "2,350",
+    change: "-5%",
+    color: "emerald" as AdminColor,
   },
 };
