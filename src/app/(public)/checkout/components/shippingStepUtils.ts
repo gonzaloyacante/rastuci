@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ShippingOption, useCart } from "@/context/CartContext";
 import { logger } from "@/lib/logger";
@@ -193,6 +193,13 @@ export function useShippingOptions(): UseShippingOptionsResult {
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryModeType>("home");
 
+  // Ref to read the current selectedShippingOption inside effects without
+  // adding it to the dependency array (avoids the infinite-fetch loop caused
+  // by: fetch → setSelectedShippingOption → selectedShippingOption changes →
+  // effect re-triggers → fetch again → …)
+  const selectedShippingOptionRef = useRef(selectedShippingOption);
+  selectedShippingOptionRef.current = selectedShippingOption;
+
   useEffect(() => {
     if (deliveryMode !== "agency") setSelectedAgency(null);
   }, [deliveryMode, setSelectedAgency]);
@@ -224,18 +231,23 @@ export function useShippingOptions(): UseShippingOptionsResult {
       deliveryMode,
       postalCode: guard.postalCode!,
       calculateShippingCost,
-      selectedShippingOption,
+      // Use ref to read current value without declaring it as a dependency.
+      // The ref always holds the latest value, so auto-select logic is correct.
+      selectedShippingOption: selectedShippingOptionRef.current,
       setShippingOptions,
       setSelectedShippingOption,
       setLoading,
       setError,
     });
+    // Intentionally excluded `selectedShippingOption` from deps — adding it
+    // causes an infinite loop because fetchAndSetShippingOptions calls
+    // setSelectedShippingOption, which changes selectedShippingOption, which
+    // would re-trigger this effect endlessly.
   }, [
     customerInfo?.postalCode,
     deliveryMode,
     selectedAgency,
     calculateShippingCost,
-    selectedShippingOption,
     setSelectedShippingOption,
   ]);
 
