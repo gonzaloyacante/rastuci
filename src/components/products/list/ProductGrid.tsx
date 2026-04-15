@@ -5,8 +5,9 @@ import { useMemo, useState } from "react";
 
 import ProductCard from "@/components/products/cards/ProductCard";
 import { Button } from "@/components/ui/Button";
-import { LoadingSkeleton, LoadingSpinner } from "@/components/ui/LoadingStates";
 import { Pagination, PaginationInfo } from "@/components/ui/Pagination";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { LoadingSpinner } from "@/components/ui/Spinner";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { Product } from "@/types";
 
@@ -118,11 +119,11 @@ export function ProductGrid({
             key={`loading-skeleton-${index}`}
             className="surface rounded-lg border border-muted overflow-hidden product-card"
           >
-            <LoadingSkeleton className="aspect-square" />
+            <Skeleton className="aspect-square" />
             <div className="p-4 space-y-3">
-              <LoadingSkeleton className="h-4 w-3/4" />
-              <LoadingSkeleton className="h-3 w-1/2" />
-              <LoadingSkeleton className="h-6 w-1/3" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+              <Skeleton className="h-6 w-1/3" />
             </div>
           </div>
         ))}
@@ -210,9 +211,9 @@ export function ProductGrid({
           <>
             {Array.from({ length: 8 }).map((_, index) => (
               <div key={`product-skeleton-${index}`} className="space-y-3">
-                <LoadingSkeleton className="aspect-square rounded-lg" />
-                <LoadingSkeleton className="h-4 w-full" />
-                <LoadingSkeleton className="h-4 w-3/4" />
+                <Skeleton className="aspect-square rounded-lg" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
               </div>
             ))}
           </>

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { FieldErrors, useFieldArray, useForm } from "react-hook-form";
 
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { SettingsFormSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/hooks/useSettings";
@@ -238,7 +238,7 @@ export default function HomeForm({ initial }: Props) {
     });
   };
 
-  if (loading) return <FormSkeleton rows={4} />;
+  if (loading) return <SettingsFormSkeleton rows={4} />;
 
   return (
     <form

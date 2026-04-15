@@ -76,3 +76,43 @@ export const DetailViewSkeleton = () => (
     </div>
   </div>
 );
+
+/**
+ * Settings form loading skeleton (for StoreForm, PaymentSettings, ShippingSettings, etc.)
+ * Uses a card+grid layout to reflect the actual settings form structure.
+ */
+export function SettingsFormSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div className="space-y-6">
+      {/* Title section */}
+      <div className="space-y-2">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-4 w-72" />
+      </div>
+
+      {/* Form fields */}
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={`settings-form-row-${i}`} className="space-y-4">
+          <div className="surface-secondary rounded-lg p-6 space-y-4">
+            <Skeleton className="h-5 w-32" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" rounded="md" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" rounded="md" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Action button */}
+      <div className="flex justify-end">
+        <Skeleton className="h-10 w-40" rounded="md" />
+      </div>
+    </div>
+  );
+}

@@ -2,7 +2,7 @@
 
 import React, { ComponentType, Suspense } from "react";
 
-import { LoadingSpinner } from "./LoadingStates";
+import { LoadingSpinner } from "./Spinner";
 
 interface LazyWrapperProps {
   fallback?: React.ReactNode;

@@ -3,7 +3,7 @@
 import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { SettingsFormSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -49,7 +49,7 @@ export default function StoreForm({ initial, onSave }: StoreFormProps) {
     if (loadingSettings && !initial) setLoading(true);
   }, [loadingSettings, initial]);
 
-  if (loading) return <FormSkeleton rows={3} />;
+  if (loading) return <SettingsFormSkeleton rows={3} />;
 
   const handleChange = (field: keyof StoreSettings, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));

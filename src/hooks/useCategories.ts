@@ -1,35 +1,31 @@
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 import { Category } from "@/types";
 
-import useGlobalCache from "./useGlobalCache";
+const CATEGORIES_URL = "/api/categories?includeProductCount=true";
+const SWR_OPTIONS = {
+  dedupingInterval: 10 * 60 * 1000,
+  revalidateOnMount: false,
+  revalidateOnFocus: false,
+} as const;
 
-// Hook optimizado para categorías con cache global
+async function fetchCategories(url: string): Promise<Category[]> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const result = await res.json();
+  return result.data?.data || [];
+}
+
 export function useCategories() {
   const {
     data: categories,
     isLoading,
     error,
     mutate,
-  } = useGlobalCache<Category[]>(
-    "categories",
-    async () => {
-      const response = await fetch("/api/categories?includeProductCount=true");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      return result.data?.data || [];
-    },
-    {
-      ttl: 10 * 60 * 1000, // 10 minutos para categorías
-      revalidateOnMount: false, // No revalidar en cada mount
-      revalidateOnFocus: false, // No revalidar en focus para mejor UX
-    }
-  );
+  } = useSWR<Category[]>(CATEGORIES_URL, fetchCategories, SWR_OPTIONS);
 
   const [isMounted, setIsMounted] = useState(false);
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -38,7 +34,7 @@ export function useCategories() {
     categories: categories || [],
     isLoading: !isMounted || isLoading,
     error: error?.message || null,
-    mutate: () => mutate(), // Forzar refetch si es necesario
+    mutate: () => mutate(),
   };
 }
 
@@ -47,11 +43,11 @@ export function useCategory(id: string) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Primero intentar obtener de categorías cacheadas
-  const { data: cachedCategories } = useGlobalCache<Category[]>(
-    "categories",
-    async () => [],
-    { ttl: 10 * 60 * 1000 }
+  // Access the shared SWR cache for categories list
+  const { data: cachedCategories } = useSWR<Category[]>(
+    CATEGORIES_URL,
+    fetchCategories,
+    { ...SWR_OPTIONS, revalidateOnMount: false }
   );
 
   useEffect(() => {
@@ -60,23 +56,17 @@ export function useCategory(id: string) {
       setError(null);
 
       try {
-        // Primero buscar en cache de categorías
         if (cachedCategories) {
-          const cachedCategory = cachedCategories.find((cat) => cat.id === id);
-          if (cachedCategory) {
-            setCategory(cachedCategory);
+          const found = cachedCategories.find((cat) => cat.id === id);
+          if (found) {
+            setCategory(found);
             setIsLoading(false);
             return;
           }
         }
 
-        // Si no está en cache, hacer fetch individual
         const response = await fetch(`/api/categories/${id}`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
         setCategory(result.data);
       } catch (err) {
@@ -88,9 +78,7 @@ export function useCategory(id: string) {
       }
     };
 
-    if (id) {
-      void fetchCategory();
-    }
+    if (id) void fetchCategory();
   }, [id, cachedCategories]);
 
   return { category, isLoading, error };

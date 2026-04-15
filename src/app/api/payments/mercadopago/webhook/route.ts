@@ -10,7 +10,7 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
 // import { ORDER_STATUS } from "@/lib/constants";
 // ...
-import { mpWebhookService } from "@/services/notification-service";
+import { mpWebhookService } from "@/services/mp-webhook-service";
 import { orderService } from "@/services/order-service";
 import type { OrderMetadata } from "@/services/order-service.types";
 import { shipmentService } from "@/services/shipment-service";

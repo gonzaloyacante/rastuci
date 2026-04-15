@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { LoadingSpinner } from "@/components/ui/LoadingStates";
 import {
   Select,
   SelectContent,
@@ -11,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
+import { LoadingSpinner } from "@/components/ui/Spinner";
 import { useCart } from "@/context/CartContext";
 import { scoreAgency } from "@/lib/agencyScoring";
 import {

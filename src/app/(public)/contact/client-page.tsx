@@ -21,8 +21,8 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
             </div>
             <div>
               <h3 className="text-lg mb-2 font-montserrat">Email</h3>
-              {contact.emails.map((em) => (
-                <p className="muted" key={`email-${em}`}>
+              {contact.emails.map((em, i) => (
+                <p className="muted" key={`email-${i}-${em}`}>
                   {em}
                 </p>
               ))}
@@ -39,8 +39,8 @@ const ContactInfo = ({ contact }: { contact: ContactSettings }) => (
             </div>
             <div>
               <h3 className="text-lg mb-2 font-montserrat">Teléfono</h3>
-              {contact.phones.map((ph) => (
-                <p className="muted" key={`phone-${ph}`}>
+              {contact.phones.map((ph, i) => (
+                <p className="muted" key={`phone-${i}-${ph}`}>
                   {ph}
                 </p>
               ))}
@@ -98,7 +98,7 @@ export default function ContactPageClient({
 
   return (
     <div className="min-h-screen surface">
-      <main className="max-w-[1200px] mx-auto py-8 px-6">
+      <main className="max-w-300 mx-auto py-8 px-6">
         {/* Page Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl mb-4 font-heading text-base-primary">

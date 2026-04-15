@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Suspense } from "react";
 
-import { LoadingSpinner } from "@/components/ui/LoadingStates";
+import { LoadingSpinner } from "@/components/ui/Spinner";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { DURATION, FADE_IN_DOWN } from "@/lib/animations";
 
@@ -43,9 +43,20 @@ function SmartSearchContent({
 }: SmartSearchProps) {
   const reduceMotion = useReducedMotion();
   const {
-    query, setQuery, isOpen, setIsOpen, isLoading,
-    suggestions, selectedIndex, recentSearches, trendingSearches,
-    inputRef, handleSearch, handleKeyDown, clearSearch, removeRecentSearch,
+    query,
+    setQuery,
+    isOpen,
+    setIsOpen,
+    isLoading,
+    suggestions,
+    selectedIndex,
+    recentSearches,
+    trendingSearches,
+    inputRef,
+    handleSearch,
+    handleKeyDown,
+    clearSearch,
+    removeRecentSearch,
   } = useSmartSearch({ showTrending, showRecent, onSearch });
 
   const sz = sizes[size];
@@ -114,15 +125,21 @@ function SmartSearchContent({
                       <Tag className="w-4 h-4 muted" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{suggestion.text}</div>
+                      <div className="text-sm font-medium truncate">
+                        {suggestion.text}
+                      </div>
                       {suggestion.subtitle && (
-                        <div className="text-xs muted">{suggestion.subtitle}</div>
+                        <div className="text-xs muted">
+                          {suggestion.subtitle}
+                        </div>
                       )}
                     </div>
                     {suggestion.rating && (
                       <div className="flex items-center space-x-1">
                         <Star className="w-3 h-3 text-warning fill-current" />
-                        <span className="text-xs muted">{suggestion.rating}</span>
+                        <span className="text-xs muted">
+                          {suggestion.rating}
+                        </span>
                       </div>
                     )}
                     {suggestion.price && (
@@ -154,10 +171,15 @@ function SmartSearchContent({
                         className="flex-1 flex items-center space-x-2 text-left"
                       >
                         <Clock className="w-4 h-4 muted" />
-                        <span className="text-sm text-primary">{recentSearch}</span>
+                        <span className="text-sm text-primary">
+                          {recentSearch}
+                        </span>
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); removeRecentSearch(recentSearch); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeRecentSearch(recentSearch);
+                        }}
                         className="p-1 hover:bg-surface rounded"
                         aria-label={`Eliminar búsqueda: ${recentSearch}`}
                       >
@@ -169,40 +191,46 @@ function SmartSearchContent({
               </div>
             )}
 
-            {showTrending && (!query || query.length < 2) && trendingSearches.length > 0 && (
-              <div className="p-2 border-t border-surface-secondary">
-                <div className="text-xs font-medium muted px-3 py-2 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  Búsquedas populares
+            {showTrending &&
+              (!query || query.length < 2) &&
+              trendingSearches.length > 0 && (
+                <div className="p-2 border-t border-surface-secondary">
+                  <div className="text-xs font-medium muted px-3 py-2 flex items-center">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    Búsquedas populares
+                  </div>
+                  {trendingSearches.map((trendingSearch, index) => {
+                    const currentIndex =
+                      suggestions.length + recentSearches.length + index;
+                    return (
+                      <button
+                        key={trendingSearch}
+                        onClick={() => handleSearch(trendingSearch)}
+                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors ${selectedIndex === currentIndex ? "bg-pink-50 text-pink-700" : "hover:bg-surface text-primary"}`}
+                      >
+                        <TrendingUp className="w-4 h-4 muted" />
+                        <span className="text-sm">{trendingSearch}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-                {trendingSearches.map((trendingSearch, index) => {
-                  const currentIndex = suggestions.length + recentSearches.length + index;
-                  return (
-                    <button
-                      key={trendingSearch}
-                      onClick={() => handleSearch(trendingSearch)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors ${selectedIndex === currentIndex ? "bg-pink-50 text-pink-700" : "hover:bg-surface text-primary"}`}
-                    >
-                      <TrendingUp className="w-4 h-4 muted" />
-                      <span className="text-sm">{trendingSearch}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+              )}
 
-            {query && query.length >= 2 && suggestions.length === 0 && !isLoading && (
-              <div className="p-6 text-center">
-                <Search className="w-8 h-8 muted mx-auto mb-2" />
-                <p className="text-sm muted">No se encontraron sugerencias</p>
-                <button
-                  onClick={() => handleSearch()}
-                  className="mt-2 text-sm text-pink-600 hover:text-pink-700"
-                >
-                  Buscar &quot;{query}&quot; en todos los productos
-                </button>
-              </div>
-            )}
+            {query &&
+              query.length >= 2 &&
+              suggestions.length === 0 &&
+              !isLoading && (
+                <div className="p-6 text-center">
+                  <Search className="w-8 h-8 muted mx-auto mb-2" />
+                  <p className="text-sm muted">No se encontraron sugerencias</p>
+                  <button
+                    onClick={() => handleSearch()}
+                    className="mt-2 text-sm text-pink-600 hover:text-pink-700"
+                  >
+                    Buscar &quot;{query}&quot; en todos los productos
+                  </button>
+                </div>
+              )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -214,7 +242,9 @@ function SmartSearchContent({
           tabIndex={0}
           aria-label="Cerrar búsqueda"
           onClick={() => setIsOpen(false)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setIsOpen(false); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") setIsOpen(false);
+          }}
         />
       )}
     </div>

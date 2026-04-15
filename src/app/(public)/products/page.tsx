@@ -1,8 +1,7 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 
-import { ProductGridSkeleton } from "@/components/products/list/ProductListComponents";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { ProductsPageSkeleton } from "@/components/public/skeletons";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
@@ -71,21 +70,6 @@ interface SearchParams {
 
 interface ProductsPageProps {
   searchParams: Promise<SearchParams>;
-}
-
-function ProductsPageSkeleton() {
-  return (
-    <div className="min-h-screen surface">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Skeleton className="h-8 w-48 mb-4" />
-          <Skeleton className="h-4 w-full max-w-md" />
-        </div>
-
-        <ProductGridSkeleton count={8} />
-      </div>
-    </div>
-  );
 }
 
 export default async function ProductsPage({

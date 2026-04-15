@@ -1,5 +1,7 @@
 import useSWR, { SWRConfiguration } from "swr";
 
+import { fetcher } from "@/utils/fetcher";
+
 export type SettingsSection =
   | "store"
   | "stock"
@@ -16,13 +18,6 @@ const ENDPOINT_MAP: Record<string, string> = {
 };
 
 // Generic fetcher
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  return res.json();
-};
 
 export function useSettings<T>(section: string, config?: SWRConfiguration) {
   const endpoint = ENDPOINT_MAP[section] || `/api/settings/${section}`;

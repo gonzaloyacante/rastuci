@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import useSWR, { SWRConfiguration } from "swr";
 
 import { Product } from "@/types";
+import { fetcher } from "@/utils/fetcher";
 
 interface UseProductsOptions {
   category?: string;
@@ -24,13 +25,6 @@ interface ProductsResponse {
 }
 
 // Fetcher genérico
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  return res.json();
-};
 
 export function useProducts(
   options: UseProductsOptions = {},

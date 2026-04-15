@@ -6,7 +6,7 @@ import { PageHeaderWithActions } from "@/components/admin";
 import LazyAdvancedCharts from "@/components/admin/dashboard/LazyAdvancedCharts";
 import { MetricsSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 import {
   MetricCard,

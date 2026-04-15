@@ -18,8 +18,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Spinner } from "@/components/ui/Spinner";
-import { formatCurrency } from "@/lib/utils";
 import { OrderStatus } from "@/types";
+import { formatCurrency } from "@/utils/formatters";
 
 // ─── Local types (shared between OrderTracking and this file) ─────────────────
 

@@ -1,6 +1,8 @@
 "use client";
 
-import { CreditCard, ShieldCheck, Truck } from "lucide-react";
+import * as Icons from "lucide-react";
+import { Truck } from "lucide-react";
+import useSWR from "swr";
 
 import { ColorSwatch } from "@/components/products/list/ProductHelpers";
 import {
@@ -52,7 +54,7 @@ export function StockBadge({ stock }: { stock: number }) {
   if (stock <= 5)
     return (
       <span className="text-warning font-semibold animate-pulse">
-        ⚡ ¡Últimas {stock} unidades!
+        ⚡ ¡Últimas unidades!
       </span>
     );
   return <span className="text-success font-medium">✓ Disponible</span>;
@@ -64,18 +66,22 @@ interface QuantityStepperProps {
   quantity: number;
   maxStock: number;
   onChange: (q: number) => void;
+  disabled?: boolean;
 }
 
 export function QuantityStepper({
   quantity,
   maxStock,
   onChange,
+  disabled,
 }: QuantityStepperProps) {
   return (
-    <div className="flex items-center space-x-2">
+    <div
+      className={`flex items-center space-x-2 ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+    >
       <Button
         onClick={() => onChange(Math.max(1, quantity - 1))}
-        disabled={quantity <= 1}
+        disabled={disabled || quantity <= 1}
         variant="outline"
         className={`w-8 h-8 p-0 border border-muted rounded flex items-center justify-center ${quantity <= 1 ? "opacity-50 cursor-not-allowed" : "hover:surface-secondary"}`}
       >
@@ -156,29 +162,58 @@ type ShippingInfo = {
   estimatedDelivery?: string;
 };
 
+interface Benefit {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+const benefitsFetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const defaultBenefits: Benefit[] = [
+  { icon: "Truck", title: "Envío a todo el país", description: "" },
+  { icon: "ShieldCheck", title: "Garantía", description: "" },
+  { icon: "CreditCard", title: "Múltiples medios de pago", description: "" },
+];
+
 export function ProductBenefitsRow({ shipping }: { shipping: ShippingInfo }) {
+  const { data } = useSWR<{ data?: { benefits?: Benefit[] } }>(
+    "/api/home",
+    benefitsFetcher,
+    { revalidateOnFocus: false, dedupingInterval: 60_000 }
+  );
+
+  const benefits = data?.data?.benefits?.length
+    ? data.data.benefits
+    : defaultBenefits;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-muted">
-      <div className="flex items-center space-x-2">
-        <Truck className="w-5 h-5 text-primary" />
-        <span className="text-sm">
-          {shipping.freeShipping ? (
-            <span className="text-success font-semibold">
-              {shipping.freeShippingLabel || "Envío Gratis"}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-muted col-span-full">
+      {benefits.slice(0, 3).map((benefit, idx) => {
+        const IconComponent =
+          (Icons as unknown as Record<string, React.ElementType>)[
+            benefit.icon
+          ] || Truck;
+
+        // For the first benefit, override with shipping info if available
+        const isShippingBenefit =
+          idx === 0 && benefit.icon === "Truck" && shipping.freeShipping;
+
+        return (
+          <div key={idx} className="flex items-center space-x-2">
+            <IconComponent className="w-5 h-5 text-primary shrink-0" />
+            <span className="text-sm">
+              {isShippingBenefit ? (
+                <span className="text-success font-semibold">
+                  {shipping.freeShippingLabel || "Envío Gratis"}
+                </span>
+              ) : (
+                benefit.title
+              )}
             </span>
-          ) : (
-            shipping.estimatedDelivery || "Envío a todo el país"
-          )}
-        </span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <ShieldCheck className="w-5 h-5 text-primary" />
-        <span className="text-sm">Garantía</span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <CreditCard className="w-5 h-5 text-primary" />
-        <span className="text-sm">Múltiples medios de pago</span>
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -319,12 +354,6 @@ export function SizeSelectorSection({
           selectedSize={selectedSize}
           onSelectSize={onSelectSize}
         />
-      ) : allSizes.length > 1 && hasVariants ? (
-        <SizeStockTable
-          sizes={allSizes}
-          variants={variants}
-          selectedColor={selectedColor}
-        />
       ) : null}
     </div>
   );
@@ -364,11 +393,6 @@ function SizeTableWithGuide({
                 Edad ref.
               </th>
             )}
-            {hasVariants && (
-              <th className="px-3 py-2 font-semibold text-muted-foreground text-center">
-                Stock
-              </th>
-            )}
           </tr>
         </thead>
         <tbody>
@@ -405,77 +429,6 @@ function SizeTableWithGuide({
                     {entry.ageRange || "—"}
                   </td>
                 )}
-                {variantStock !== null && (
-                  <td className="px-3 py-2 text-center">
-                    {variantStock > 0 ? (
-                      <span className="text-xs font-medium text-emerald-600">
-                        ✓ Disponible
-                      </span>
-                    ) : (
-                      <span className="text-xs font-medium text-red-500">
-                        Sin stock
-                      </span>
-                    )}
-                  </td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function SizeStockTable({
-  sizes,
-  variants,
-  selectedColor,
-}: {
-  sizes: string[];
-  variants?: ProductVariant[];
-  selectedColor: string;
-}) {
-  return (
-    <div className="mt-3 overflow-x-auto rounded-lg border border-muted/50">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-muted/20 text-left">
-            <th className="px-3 py-2 font-semibold text-muted-foreground">
-              Talle
-            </th>
-            <th className="px-3 py-2 font-semibold text-muted-foreground text-center">
-              Disponibilidad
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sizes.map((size, idx) => {
-            const totalStock =
-              variants
-                ?.filter(
-                  (v) =>
-                    v.size === size &&
-                    (!selectedColor || v.color === selectedColor)
-                )
-                .reduce((sum, v) => sum + v.stock, 0) ?? 0;
-            return (
-              <tr
-                key={idx}
-                className="border-t border-muted/30 hover:bg-muted/10 transition-colors"
-              >
-                <td className="px-3 py-2 font-semibold">{size}</td>
-                <td className="px-3 py-2 text-center">
-                  {totalStock > 0 ? (
-                    <span className="text-xs font-medium text-emerald-600">
-                      ✓ Disponible
-                    </span>
-                  ) : (
-                    <span className="text-xs font-medium text-red-500">
-                      Agotado
-                    </span>
-                  )}
-                </td>
               </tr>
             );
           })}

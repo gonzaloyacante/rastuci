@@ -16,7 +16,6 @@ import {
   ProductGridSkeleton,
   ProductsCountLabel,
   SearchInput,
-  ViewModeToggle,
 } from "@/components/products/list/ProductListComponents";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -41,7 +40,7 @@ export default function ProductsPageClient({
   const { categories, isLoading: categoriesLoading } = useCategories();
 
   // Local states
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.buscar || "");
   const [selectedCategory, setSelectedCategory] = useState(
@@ -299,11 +298,12 @@ export default function ProductsPageClient({
                   isLoading={isLoading}
                   count={totalProducts}
                 />
-                <ViewModeToggle
+                {/* ViewModeToggle comentado - siempre cuadrícula */}
+                {/* <ViewModeToggle
                   viewMode={viewMode}
                   onChange={setViewMode}
                   showLabel
-                />
+                /> */}
               </div>
               {renderProducts(false)}
             </main>
@@ -374,7 +374,8 @@ export default function ProductsPageClient({
           {/* Products Count & View Toggle */}
           <div className="flex justify-between items-center">
             <ProductsCountLabel isLoading={isLoading} count={totalProducts} />
-            <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
+            {/* ViewModeToggle comentado - siempre cuadrícula */}
+            {/* <ViewModeToggle viewMode={viewMode} onChange={setViewMode} /> */}
           </div>
 
           {/* Products */}

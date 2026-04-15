@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { SettingsFormSkeleton } from "@/components/admin/skeletons";
 import HomeForm from "@/components/forms/HomeForm";
 import { HomeSettings } from "@/lib/validation/home";
 
@@ -35,7 +35,7 @@ export default function AdminHomePage() {
     return (
       <div className="max-w-5xl mx-auto p-6">
         <h1 className="text-2xl font-bold mb-6">Inicio (Home)</h1>
-        <FormSkeleton rows={4} />
+        <SettingsFormSkeleton rows={4} />
       </div>
     );
   }

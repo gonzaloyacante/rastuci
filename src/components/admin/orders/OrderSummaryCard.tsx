@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Agency } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
-import { formatCurrency, formatDate } from "@/lib/utils";
 import { Order, OrderStatus } from "@/types";
+import { formatCurrency, formatDate } from "@/utils/formatters";
 
 interface OrderSummaryCardProps {
   order: Order;

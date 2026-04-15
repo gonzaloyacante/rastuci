@@ -3,7 +3,7 @@
 import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { FormSkeleton } from "@/components/admin/SettingsSkeletons";
+import { SettingsFormSkeleton } from "@/components/admin/skeletons";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -115,7 +115,7 @@ export default function ShippingSettings() {
     }
   };
 
-  if (loading) return <FormSkeleton rows={2} />;
+  if (loading) return <SettingsFormSkeleton rows={2} />;
 
   const { freeShipping } = data.shipping || {};
 

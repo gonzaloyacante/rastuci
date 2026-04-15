@@ -11,7 +11,7 @@ import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { useCart } from "@/context/CartContext";
 import { useComparison } from "@/context/ComparisonContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 // Extended product type for comparison features
 type ProductWithExtras = Record<string, unknown> & {

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 
-import { Skeleton } from "@/components/ui/Skeleton";
+import { ContactPageSkeleton } from "@/components/public/skeletons";
 import { prisma } from "@/lib/prisma";
 import { defaultContactSettings } from "@/lib/validation/contact";
 
@@ -90,23 +90,6 @@ async function getContactSettings() {
     return defaultContactSettings;
   }
 }
-
-const ContactPageSkeleton = () => (
-  <div className="min-h-screen surface">
-    <main className="max-w-[1200px] mx-auto py-8 px-6">
-      {/* Header Skeleton */}
-      <div className="text-center mb-12">
-        <Skeleton className="h-12 w-96 mx-auto mb-4" rounded="md" />
-        <Skeleton className="h-6 w-full max-w-2xl mx-auto" rounded="md" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <Skeleton className="h-96 w-full" rounded="md" />
-        <Skeleton className="h-96 w-full" rounded="md" />
-      </div>
-    </main>
-  </div>
-);
 
 export default async function ContactPage() {
   const contactSettings = await getContactSettings();

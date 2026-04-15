@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import useSWR from "swr";
 
 import { OrderStatus } from "@/types";
+import { fetcher } from "@/utils/fetcher";
 
 export interface OrderItem {
   id: string;
@@ -57,12 +58,6 @@ interface OrdersResponse {
   };
   error?: string;
 }
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Error al cargar pedidos");
-  return res.json();
-};
 
 export const useOrders = (initialParams?: UseOrdersParams) => {
   // Estado interno para manejar filtros y paginación

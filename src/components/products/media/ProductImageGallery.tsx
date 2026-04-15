@@ -66,10 +66,13 @@ export default function ProductImageGallery({
       if (isTransitioning) return;
       setSlideDirection(direction);
       setIsTransitioning(true);
-      setTimeout(() => {
+      // Use requestAnimationFrame for smoother transitions
+      requestAnimationFrame(() => {
         setSelectedImage(newIndex);
-        setTimeout(() => setIsTransitioning(false), 50);
-      }, 150);
+        requestAnimationFrame(() => {
+          setIsTransitioning(false);
+        });
+      });
     },
     [isTransitioning]
   );
@@ -147,7 +150,7 @@ export default function ProductImageGallery({
         onMouseLeave={handleMouseLeave}
       >
         <div
-          className={`absolute inset-0 transition-all duration-300 ease-out ${
+          className={`absolute inset-0 transition-all duration-150 ease-out ${
             isTransitioning
               ? slideDirection === "right"
                 ? "opacity-0 translate-x-4"

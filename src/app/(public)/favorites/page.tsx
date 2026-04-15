@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 
-import { ProductCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
+import { FavoritesPageSkeleton } from "@/components/public/skeletons";
 
 import FavoritosPageClient from "./client-page";
 
@@ -17,27 +17,9 @@ export const metadata: Metadata = {
   },
 };
 
-const FavoritosPageSkeleton = () => (
-  <div className="container mx-auto px-4 py-8">
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-      <div>
-        <Skeleton className="h-8 w-48 mb-2" />
-        <Skeleton className="h-4 w-64" />
-      </div>
-      <Skeleton className="h-10 w-32" />
-    </div>
-
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {[...Array(8)].map((_, i) => (
-        <ProductCardSkeleton key={`favorites-skeleton-${i}`} />
-      ))}
-    </div>
-  </div>
-);
-
 export default function FavoritosPage() {
   return (
-    <Suspense fallback={<FavoritosPageSkeleton />}>
+    <Suspense fallback={<FavoritesPageSkeleton />}>
       <FavoritosPageClient />
     </Suspense>
   );

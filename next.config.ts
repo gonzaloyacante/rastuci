@@ -9,7 +9,12 @@ const nextConfig: NextConfig = {
       "lucide-react",
       "@radix-ui/react-icons",
       "react-hook-form",
+      "@hookform/resolvers",
       "zod",
+      "date-fns",
+      "framer-motion",
+      "recharts",
+      "swr",
     ],
   },
   images: {
@@ -159,12 +164,6 @@ const nextConfig: NextConfig = {
       { source: "/pedidos/:path*", destination: "/orders/:path*" },
 
       // -- Reviews / Wishlist / Offline (páginas públicas adicionales)
-      { source: "/reseñas", destination: "/reviews" },
-      { source: "/reseñas/valorar/:id", destination: "/reviews/rate/:id" },
-      {
-        source: "/lista-de-deseos/:token",
-        destination: "/wishlist/shared/:token",
-      },
       { source: "/reseñas", destination: "/reviews" },
       { source: "/reseñas/valorar/:id", destination: "/reviews/rate/:id" },
       {

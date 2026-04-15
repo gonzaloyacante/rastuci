@@ -1,30 +1,8 @@
 import { useCallback } from "react";
 import useSWR, { SWRConfiguration, SWRResponse } from "swr";
 
-// Generic fetcher function
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  return res.json();
-};
-
-/**
- * Safely serializes a params object to a URL query string.
- * Handles number/boolean values without unsafe `as Record<string, string>` casts.
- */
-function buildQuery(
-  params: Record<string, string | number | boolean | undefined | null>
-): string {
-  const urlParams = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null) {
-      urlParams.set(key, String(value));
-    }
-  }
-  return urlParams.toString();
-}
+import { fetcher } from "@/utils/fetcher";
+import { buildQuery } from "@/utils/queryBuilder";
 
 // Custom hook for API calls with SWR
 export function useAPI<T = unknown>(

@@ -11,7 +11,10 @@ const ShippingCalculateSchema = z.object({
     .string()
     .min(4)
     .max(8)
-    .regex(/^\d{4}([A-Z]{3})?$/, "Código postal inválido"),
+    .regex(
+      /^[A-Za-z]?\d{4}([A-Za-z]{3})?$/,
+      "Código postal inválido (ej: 1842 o B1842)"
+    ),
   deliveredType: z.enum(["D", "S"]).optional(),
   dimensions: z
     .object({
