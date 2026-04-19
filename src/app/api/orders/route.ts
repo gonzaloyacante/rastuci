@@ -139,11 +139,9 @@ export const GET = withAdminAuth(
       ]);
 
       type OrderType = (typeof prismaOrders)[0];
-      // Cast to any because we are purposefully selecting a subset of fields
-      // that satisfies the public Order DTO but not the full strict Prisma type
+      // The select query returns a subset that satisfies mapOrderToDTO at runtime
       const orders: Order[] = prismaOrders.map((order: OrderType) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        mapOrderToDTO(order as unknown as any)
+        mapOrderToDTO(order as unknown as Parameters<typeof mapOrderToDTO>[0])
       );
 
       const totalPages = Math.ceil(total / limit);

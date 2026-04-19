@@ -9,6 +9,7 @@ import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import { trackingNotificationService } from "@/lib/tracking-notifications";
 
 function safeCompare(a: string, b: string): boolean {
@@ -18,6 +19,15 @@ function safeCompare(a: string, b: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = await checkRateLimit(request, {
+      key: "webhook-ca",
+      limit: 100,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     // Validar autenticación/firma del webhook
     const authHeader = request.headers.get("authorization") ?? "";
     const expectedSecret = process.env.CORREO_ARGENTINO_WEBHOOK_SECRET;

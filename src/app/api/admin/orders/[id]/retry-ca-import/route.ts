@@ -183,10 +183,7 @@ export const POST = withAdminAuth(
 
       // 9. Actualizar orden con datos del envío
       const trackingNumber = response.data?.trackingNumber;
-      // Usamos 'any' para propiedades no garantizadas por la interfaz estricta
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const responseData = response.data as any;
-      const shipmentId = responseData?.shipmentId || responseData?.id;
+      const shipmentId = response.data?.shipmentId || response.data?.id;
 
       const updatedOrder = await prisma.orders.update({
         where: { id: orderId },

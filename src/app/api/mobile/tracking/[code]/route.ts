@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limiter";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -40,6 +41,14 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
+    const rl = await checkRateLimit(request, RATE_LIMITS.api);
+    if (!rl.ok) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "Demasiadas solicitudes", data: null },
+        { status: 429 }
+      );
+    }
+
     const { code: trackingCode } = await params;
     // [C-02] Require authentication - endpoint exposes PII (customerAddress)
     const session = await getToken({

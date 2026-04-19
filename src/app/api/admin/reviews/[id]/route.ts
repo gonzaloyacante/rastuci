@@ -8,6 +8,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { fail, ok } from "@/lib/apiResponse";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limiter";
 import { ApiResponse } from "@/types";
 
 const UpdateReviewSchema = z.object({
@@ -20,6 +21,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<{ success: boolean }>>> {
   try {
+    const rl = await checkRateLimit(request, RATE_LIMITS.adminApi);
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Demasiadas solicitudes", 429);
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.isAdmin) {
       return fail("UNAUTHORIZED", "No autorizado", 401);
@@ -88,6 +94,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<unknown>>> {
   try {
+    const rl = await checkRateLimit(request, RATE_LIMITS.adminApi);
+    if (!rl.ok) {
+      return fail("RATE_LIMITED", "Demasiadas solicitudes", 429);
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.isAdmin) {
       return fail("UNAUTHORIZED", "No autorizado", 401);

@@ -7,12 +7,21 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limiter";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rl = await checkRateLimit(request, RATE_LIMITS.order);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Demasiadas solicitudes, intente más tarde" },
+        { status: 429 }
+      );
+    }
+
     const { id: orderId } = await params;
     // [C-01] Require an authenticated session before processing transfer proof
     const session = await getServerSession(authOptions);

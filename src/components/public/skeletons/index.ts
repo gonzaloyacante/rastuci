@@ -7,4 +7,5 @@ export * from "./OrderDetailSkeleton";
 export * from "./ProductDetailSkeleton";
 export * from "./ProductsPageSkeleton";
 export * from "./ReviewRateSkeleton";
+export * from "./SharedWishlistSkeleton";
 export * from "./TrackingPageSkeleton";

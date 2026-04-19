@@ -121,8 +121,7 @@ export function EnhancedForm<T extends FieldValues = FieldValues>({
     reset,
     watch,
   } = useForm<T>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(schema as any) as any,
+    resolver: zodResolver(schema) as ReturnType<typeof zodResolver>,
     mode: "onChange",
   });
 
