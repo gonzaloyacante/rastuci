@@ -8,8 +8,6 @@ import { getRequestId, logger } from "@/lib/logger";
 import prisma from "@/lib/prisma"; // Needed for direct lookups if not fully moved yet
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
-// import { ORDER_STATUS } from "@/lib/constants";
-// ...
 import { mpWebhookService } from "@/services/mp-webhook-service";
 import { orderService } from "@/services/order-service";
 import type { OrderMetadata } from "@/services/order-service.types";

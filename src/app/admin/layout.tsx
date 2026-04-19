@@ -19,7 +19,6 @@ import {
   User,
   X,
 } from "lucide-react";
-// import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import React, { useEffect, useState } from "react";

@@ -1,6 +1,7 @@
+import { Prisma } from "@prisma/client";
+
+import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
-// import { ORDER_STATUS, PAYMENT_METHODS } from "@/lib/constants";
-// import { logger } from "@/lib/logger";
 
 interface OrderItem {
   productId: string;
@@ -21,8 +22,8 @@ type ValidatedProduct = {
   id: string;
   name: string;
   stock: number;
-  price: unknown;
-  salePrice: unknown;
+  price: Prisma.Decimal;
+  salePrice: Prisma.Decimal | null;
   onSale: boolean;
   product_variants: ProductVariant[];
 };
@@ -60,6 +61,11 @@ export class CheckoutService {
       throw new Error("No hay productos en el carrito");
     }
 
+    logger.info("Validating stock for checkout", {
+      itemCount: items.length,
+      productIds: items.map((i) => i.productId),
+    });
+
     const productIds = items.map((item) => item.productId);
     const products = await prisma.products.findMany({
       where: { id: { in: productIds }, isActive: true },
@@ -89,6 +95,10 @@ export class CheckoutService {
         );
       }
     }
+
+    logger.info("Stock validation passed", {
+      validatedProducts: products.length,
+    });
 
     return products;
   }

@@ -5,28 +5,12 @@
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "overrides": {
-      "elliptic": "^6.6.0",
-      "micromatch>minimatch": "^3.1.4",
-      "fork-ts-checker-webpack-plugin>minimatch": "^9.0.7",
-      "flat-cache>minimatch": "^3.1.4",
-      "glob>minimatch": "^9.0.7",
-      "@sentry/node>minimatch": "^9.0.7",
-      "readdir-glob>minimatch": "^5.1.8",
-      "@typescript-eslint/typescript-estree>minimatch": "^9.0.7",
-      "rollup": "^4.59.0",
-      "serialize-javascript": "^7.0.3",
-      "braces": "^3.0.3"
-    },
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "@sentry/cli",
-      "core-js-pure",
-      "esbuild",
-      "prisma",
-      "sharp",
-      "unrs-resolver"
-    ]
+      "flatted": ">=3.4.2",
+      "micromatch": ">=4.0.8",
+      "brace-expansion@1": ">=1.1.13",
+      "brace-expansion@2": ">=2.0.3",
+      "path-to-regexp@>=8.0.0": ">=8.4.0"
+    }
   },
   "scripts": {
     "dev": "next dev",
@@ -98,7 +82,6 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/nextjs": "^10",
     "@tailwindcss/postcss": "^4.1.18",
-    "@tanstack/react-query": "^5.90.21",
     "@types/sanitize-html": "^2.16.0",
     "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "^1.35.8",
@@ -149,7 +132,6 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/dotenv": "^8.2.3",
     "@types/express": "^5",
-    "@types/jest": "^30.0.0",
     "@types/node": "^25.2.2",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.13",
@@ -172,15 +154,12 @@
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "husky": "^9.1.7",
-    "jest": "^26.5.3",
-    "jest-environment-jsdom": "^30.2.0",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
     "prisma": "~6.19.3",
     "storybook": "^10.2.10",
     "strip-ansi": "^7.1.2",
     "tailwindcss": "^4.1.18",
-    "ts-jest": "^26.5.6",
     "ts-node": "^1.7.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
@@ -195,14 +174,5 @@
     "*.{json,md,css,scss}": [
       "prettier --write"
     ]
-  },
-  "pnpm": {
-    "overrides": {
-      "flatted": ">=3.4.2",
-      "micromatch": ">=4.0.8",
-      "brace-expansion@1": ">=1.1.13",
-      "brace-expansion@2": ">=2.0.3",
-      "path-to-regexp@>=8.0.0": ">=8.4.0"
-    }
   }
 }

@@ -15,8 +15,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
 import { formatPriceARS } from "@/utils/formatters";
-// import { OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
-// import { PaymentProcessor } from "@/components/checkout/PaymentProcessor";
 
 interface ReviewStepProps {
   onPlaceOrder: () => Promise<void>;
@@ -353,7 +351,8 @@ export default function ReviewStep({
           >
             Política de Devoluciones
           </a>
-          . Tenés 10 días hábiles desde la recepción para ejercer tu derecho de arrepentimiento (Ley 24.240).
+          . Tenés 10 días hábiles desde la recepción para ejercer tu derecho de
+          arrepentimiento (Ley 24.240).
         </p>
       </div>
     </div>
