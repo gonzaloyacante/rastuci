@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid, List, ShoppingCart } from "lucide-react";
+import { Check, Grid, List, ShoppingCart } from "lucide-react";
 import { ReactNode } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -180,23 +180,24 @@ export function CategoryButtons({
   onSelect,
 }: CategoryButtonsProps) {
   return (
-    <div className="space-y-1">
-      {options.map((category) => (
-        <button
-          key={category.value}
-          onClick={() => onSelect(category.value)}
-          className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
-            selected === category.value
-              ? "bg-primary text-white shadow-sm"
-              : "hover:bg-pink-100 hover:text-pink-600"
-          }`}
-        >
-          {category.label}
-          {selected === category.value && (
-            <span className="float-right">✓</span>
-          )}
-        </button>
-      ))}
+    <div className="space-y-0.5">
+      {options.map((category) => {
+        const isActive = selected === category.value;
+        return (
+          <button
+            key={category.value}
+            onClick={() => onSelect(category.value)}
+            className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium flex items-center justify-between ${
+              isActive
+                ? "bg-primary-50 text-primary-700 border border-primary-200"
+                : "muted hover:bg-primary-50/50 hover:text-primary-600"
+            }`}
+          >
+            <span>{category.label}</span>
+            {isActive && <Check className="w-4 h-4 text-primary-500" />}
+          </button>
+        );
+      })}
     </div>
   );
 }
