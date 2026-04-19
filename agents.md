@@ -510,3 +510,28 @@ pnpm storybook             # Storybook en :6006
 - ❌ Usar el modelo `settings` (tabla genérica) para datos nuevos. Está deprecado.
 - ❌ Ignorar el pre-commit hook. Nunca usar `--no-verify` para saltear validaciones.
 - ❌ Exponer datos sensibles (teléfono, dirección exacta, CUIT) en respuestas públicas de API.
+
+---
+
+## 9. 🧠 MEMORIA ACTIVA
+
+> [!IMPORTANT] MEMORIA PERMANENTE Este proyecto está indexado en el Cerebro Digital. Antes de cada
+> sesión, el Agente DEBE ejecutar `obsidian_global_search` en `~/cerebro/Proyectos/rastuci` para
+> cargar el contexto de arquitectura, deuda técnica y decisiones cerradas.
+>
+> **Notas clave a consultar**:
+>
+> - `Proyectos/rastuci/SOP_Reglas.md` — Prohibiciones y reglas inquebrantables
+> - `Proyectos/rastuci/Auditoria_Calidad_2026-04-16.md` — Deuda técnica detectada
+> - `Proyectos/rastuci/Tareas_Pendientes.md` — Lista de tareas pendientes con prioridades
+> - `Memoria/Logs/rastuci_SNAPSHOT_2026-04-16.md` — Estado del proyecto al 16/04/2026
+
+### Correcciones pendientes documentadas en auditoría (2026-04-16)
+
+| Archivo                               | Bug                                                   | Fix requerido                                   |
+| ------------------------------------- | ----------------------------------------------------- | ----------------------------------------------- |
+| `src/services/checkout-service.ts:24` | `price: unknown`                                      | Cambiar a `Prisma.Decimal`                      |
+| `yarn.lock`                           | Solo pnpm permitido                                   | Eliminar + agregar al `.gitignore`              |
+| `src/lib/api-logger.ts`               | `console.log` sin guard de producción                 | Agregar `if (NODE_ENV === 'production') return` |
+| `prisma/models/orders.prisma`         | Campos OCA legacy (`ocaOrderId`, `ocaTrackingNumber`) | Migración de limpieza                           |
+| `src/components/ui/Dialog.tsx:72`     | `@ts-expect-error`                                    | Tipar correctamente                             |
