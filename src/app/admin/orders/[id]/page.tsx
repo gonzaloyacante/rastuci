@@ -9,6 +9,7 @@ import {
   OrderStatusBadge,
   STATUS_CONFIG,
 } from "@/components/admin/orders/OrderStatusBadge";
+import { OrderStatusTimeline } from "@/components/admin/orders/OrderStatusTimeline";
 import { OrderSummaryCard } from "@/components/admin/orders/OrderSummaryCard";
 import { ShipmentControlCard } from "@/components/admin/orders/ShipmentControlCard";
 import { DetailViewSkeleton } from "@/components/admin/skeletons";
@@ -99,6 +100,7 @@ export default function OrderDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Columna principal */}
         <div className="lg:col-span-2 space-y-6">
+          <OrderStatusTimeline order={order} />
           <OrderSummaryCard order={order} />
         </div>
 
