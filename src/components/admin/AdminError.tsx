@@ -46,9 +46,7 @@ export const AdminError: React.FC<AdminErrorProps> = ({
           </div>
         )}
 
-        <h3 className="text-lg font-medium mb-2 text-content-primary">
-          {title}
-        </h3>
+        <h3 className="text-lg font-medium mb-2 text-base-primary">{title}</h3>
 
         <p className="text-error text-sm mb-4">{message}</p>
 

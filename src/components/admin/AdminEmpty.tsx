@@ -106,9 +106,9 @@ export const AdminEmpty: React.FC<AdminEmptyProps> = ({
   return (
     <Card className={className}>
       <CardContent className="p-6 text-center">
-        <div className="text-content-secondary">
+        <div className="text-muted-foreground">
           {icon || defaultIcons.generic}
-          <h3 className="text-lg font-medium mb-2 text-content-primary">
+          <h3 className="text-lg font-medium mb-2 text-base-primary">
             {title}
           </h3>
           {description && <p className="text-sm mb-4">{description}</p>}

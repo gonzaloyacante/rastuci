@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+import { ORDER_STATUS_LABELS, OrderStatusKey } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limiter";
@@ -187,13 +188,5 @@ export async function GET(
 }
 
 function getStatusLabel(status: string): string {
-  const statusLabels: Record<string, string> = {
-    PENDING: "Pendiente",
-    PROCESSED: "Procesando",
-    SHIPPED: "Enviado",
-    DELIVERED: "Entregado",
-    CANCELLED: "Cancelado",
-  };
-
-  return statusLabels[status] || status;
+  return ORDER_STATUS_LABELS[status as OrderStatusKey] ?? status;
 }

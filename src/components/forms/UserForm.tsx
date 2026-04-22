@@ -128,7 +128,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-content-primary mb-2"
+            className="block text-sm font-medium text-base-primary mb-2"
           >
             Nombre completo *
           </label>
@@ -144,7 +144,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-content-primary mb-2"
+            className="block text-sm font-medium text-base-primary mb-2"
           >
             Email *
           </label>
@@ -157,7 +157,7 @@ export const UserForm: React.FC<UserFormProps> = ({
             disabled={loading || isEdit}
           />
           {isEdit && (
-            <p className="mt-1 text-xs text-content-secondary">
+            <p className="mt-1 text-xs text-muted-foreground">
               El email no se puede modificar en modo edición
             </p>
           )}
@@ -166,7 +166,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-content-primary mb-2"
+            className="block text-sm font-medium text-base-primary mb-2"
           >
             Contraseña {!isEdit && "*"}
           </label>
@@ -185,7 +185,7 @@ export const UserForm: React.FC<UserFormProps> = ({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-content-secondary hover:text-content-primary transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-base-primary transition-colors"
               tabIndex={-1}
             >
               {showPassword ? (
@@ -196,7 +196,7 @@ export const UserForm: React.FC<UserFormProps> = ({
             </button>
           </div>
           {isEdit && (
-            <p className="mt-1 text-xs text-content-secondary">
+            <p className="mt-1 text-xs text-muted-foreground">
               Deja vacío para mantener la contraseña actual
             </p>
           )}
@@ -206,7 +206,7 @@ export const UserForm: React.FC<UserFormProps> = ({
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-content-primary mb-2"
+              className="block text-sm font-medium text-base-primary mb-2"
             >
               Confirmar Contraseña *
             </label>
@@ -223,7 +223,7 @@ export const UserForm: React.FC<UserFormProps> = ({
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-content-secondary hover:text-content-primary transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-base-primary transition-colors"
                 tabIndex={-1}
               >
                 {showConfirmPassword ? (

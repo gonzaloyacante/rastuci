@@ -90,7 +90,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-content-primary mb-2"
+            className="block text-sm font-medium text-base-primary mb-2"
           >
             Nombre de la categoría *
           </label>
@@ -106,7 +106,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         <div>
           <label
             htmlFor="description"
-            className="block text-sm font-medium text-content-primary mb-2"
+            className="block text-sm font-medium text-base-primary mb-2"
           >
             Descripción
           </label>
@@ -133,7 +133,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center justify-between p-4 border border-border rounded-lg">
             <div>
-              <label className="text-sm font-medium text-content-primary">
+              <label className="text-sm font-medium text-base-primary">
                 Mostrar imagen
               </label>
               <p className="text-xs text-muted">Mostrar imagen de fondo</p>
@@ -156,7 +156,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
 
           <div className="flex items-center justify-between p-4 border border-border rounded-lg">
             <div>
-              <label className="text-sm font-medium text-content-primary">
+              <label className="text-sm font-medium text-base-primary">
                 Mostrar ícono
               </label>
               <p className="text-xs text-muted">Mostrar ícono personalizado</p>

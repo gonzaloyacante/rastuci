@@ -222,7 +222,7 @@ export function BulkImportModal({
             <Label htmlFor="csv-file">Seleccionar archivo CSV</Label>
             <div className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center gap-2 text-center hover:bg-surface-secondary transition-colors cursor-pointer relative">
               <FileSpreadsheet className="w-8 h-8 text-primary" />
-              <p className="text-sm text-content-secondary">
+              <p className="text-sm text-muted-foreground">
                 Arrastra tu archivo aquí o haz clic para buscar
               </p>
               <Input
@@ -235,7 +235,7 @@ export function BulkImportModal({
               />
             </div>
             {file && (
-              <p className="text-sm text-content-primary font-medium flex items-center gap-2">
+              <p className="text-sm text-base-primary font-medium flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
                 Archivo seleccionado: {file.name}
               </p>
@@ -244,7 +244,7 @@ export function BulkImportModal({
 
           {/* Parsing Loading State */}
           {isParsing && (
-            <div className="flex items-center gap-2 text-content-secondary">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Spinner size="sm" />
               <span className="text-sm">Analizando archivo...</span>
             </div>
@@ -257,7 +257,7 @@ export function BulkImportModal({
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-surface-secondary p-3 rounded-md text-center">
                   <div className="text-2xl font-bold">{summary.totalRows}</div>
-                  <div className="text-xs text-content-secondary">
+                  <div className="text-xs text-muted-foreground">
                     Filas Totales
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export function BulkImportModal({
               </h3>
               <div className="border rounded-md overflow-hidden text-sm">
                 <table className="w-full text-left">
-                  <thead className="bg-surface-secondary text-content-secondary border-b">
+                  <thead className="bg-surface-secondary text-muted-foreground border-b">
                     <tr>
                       <th className="p-2 font-medium">ID</th>
                       <th className="p-2 font-medium">Precio</th>
@@ -339,7 +339,7 @@ export function BulkImportModal({
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-content-secondary text-center">
+              <p className="text-xs text-muted-foreground text-center">
                 ... y {Math.max(0, parsedData.length - 5)} más
               </p>
             </div>

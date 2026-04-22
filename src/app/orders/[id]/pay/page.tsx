@@ -120,13 +120,13 @@ export default function TransferPaymentPage() {
               <h1 className="text-2xl font-bold text-primary">
                 Pago por Transferencia
               </h1>
-              <p className="text-content-secondary mt-1">
+              <p className="text-muted-foreground mt-1">
                 Orden #{order.id.slice(-6)}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-content-secondary">Total a Pagar</p>
-              <p className="text-2xl font-bold text-content-primary">
+              <p className="text-sm text-muted-foreground">Total a Pagar</p>
+              <p className="text-2xl font-bold text-base-primary">
                 ${order.total.toLocaleString("es-AR")}
               </p>
             </div>
@@ -141,13 +141,13 @@ export default function TransferPaymentPage() {
             </h3>
             <div className="bg-surface-secondary p-4 rounded-lg border border-border space-y-3">
               <div className="flex justify-between items-center pb-2 border-b border-border/50">
-                <span className="text-content-secondary">Banco</span>
+                <span className="text-muted-foreground">Banco</span>
                 <span className="font-medium">
                   {settings?.payments?.bankName || "Consultar"}
                 </span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-border/50">
-                <span className="text-content-secondary">Titular</span>
+                <span className="text-muted-foreground">Titular</span>
                 <span className="font-medium text-right">
                   {settings?.payments?.bankHolder || "-"}
                 </span>
@@ -158,12 +158,12 @@ export default function TransferPaymentPage() {
                   copyToClipboard(settings?.payments?.bankCbu || "")
                 }
               >
-                <span className="text-content-secondary">CBU / CVU</span>
+                <span className="text-muted-foreground">CBU / CVU</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-medium text-primary">
                     {settings?.payments?.bankCbu || "No configurado"}
                   </span>
-                  <Copy className="w-4 h-4 text-content-tertiary group-hover:text-primary transition-colors" />
+                  <Copy className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </div>
               <div
@@ -172,16 +172,16 @@ export default function TransferPaymentPage() {
                   copyToClipboard(settings?.payments?.bankAlias || "")
                 }
               >
-                <span className="text-content-secondary">Alias</span>
+                <span className="text-muted-foreground">Alias</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-medium text-primary">
                     {settings?.payments?.bankAlias || "No configurado"}
                   </span>
-                  <Copy className="w-4 h-4 text-content-tertiary group-hover:text-primary transition-colors" />
+                  <Copy className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </div>
             </div>
-            <p className="text-sm text-center text-content-secondary">
+            <p className="text-sm text-center text-muted-foreground">
               Realiza la transferencia por el monto exacto de{" "}
               <strong>${order.total.toLocaleString("es-AR")}</strong>
             </p>
@@ -218,7 +218,7 @@ export default function TransferPaymentPage() {
                     onChange={(e) => setTransactionId(e.target.value)}
                     required
                   />
-                  <p className="text-xs text-content-secondary">
+                  <p className="text-xs text-muted-foreground">
                     Ingresa el ID de la operación que figura en tu comprobante.
                   </p>
                 </div>

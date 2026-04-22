@@ -38,18 +38,18 @@ export default async function DefensaConsumidorPage() {
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-bold text-content-primary mb-8 font-heading">
+        <h1 className="text-3xl sm:text-4xl font-bold text-base-primary mb-8 font-heading">
           {policy.title}
         </h1>
 
-        <div className="prose prose-sm sm:prose lg:prose-lg max-w-none space-y-8 text-content-secondary">
+        <div className="prose prose-sm sm:prose lg:prose-lg max-w-none space-y-8 text-muted-foreground">
           <LegalPolicyRenderer
             htmlContent={policy.htmlContent}
             content={content as { sections?: PolicySection[] } | null}
           />
 
           <section className="pt-8 border-t border-muted">
-            <p className="text-sm text-content-tertiary">
+            <p className="text-sm text-muted-foreground">
               Última actualización:{" "}
               {new Date(policy.updatedAt).toLocaleDateString("es-AR", {
                 year: "numeric",

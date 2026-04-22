@@ -29,41 +29,46 @@ import SessionProvider from "@/components/providers/SessionProvider";
 import { Button } from "@/components/ui/Button";
 // import { LanguageSelector } from "@/components/ui/LanguageSelector"; // DISABLED: hidden until i18n is complete
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ADMIN_NAV } from "@/config/routes";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SPRING } from "@/lib/animations";
 
 const NAV_LINKS = [
-  { name: "Dashboard", href: "/admin/panel", icon: LayoutGrid },
-  { name: "Productos", href: "/admin/productos", icon: ShoppingBag },
-  { name: "Categorías", href: "/admin/categorias", icon: Tag },
-  { name: "Pedidos", href: "/admin/pedidos", icon: ClipboardList },
+  { name: "Dashboard", href: ADMIN_NAV.DASHBOARD, icon: LayoutGrid },
+  { name: "Productos", href: ADMIN_NAV.PRODUCTS, icon: ShoppingBag },
+  { name: "Categorías", href: ADMIN_NAV.CATEGORIES, icon: Tag },
+  { name: "Pedidos", href: ADMIN_NAV.ORDERS, icon: ClipboardList },
   {
     name: "Pedidos Pendientes",
-    href: "/admin/pedidos/pendientes",
+    href: ADMIN_NAV.ORDERS_PENDING,
     icon: Clock,
   },
-  { name: "Tracking", href: "/admin/seguimiento", icon: MapPin },
-  { name: "Logística", href: "/admin/logistica", icon: Terminal },
-  { name: "Métricas", href: "/admin/metricas", icon: BarChart3 },
-  { name: "Usuarios", href: "/admin/usuarios", icon: User },
-  { name: "Reseñas", href: "/admin/resenas", icon: Star },
-  { name: "Legales", href: "/admin/legales", icon: Shield },
-  { name: "Soporte", href: "/admin/soporte", icon: MessageCircle },
-  { name: "Configuración", href: "/admin/configuracion", icon: Settings },
-] as const;
+  { name: "Tracking", href: ADMIN_NAV.TRACKING, icon: MapPin },
+  { name: "Logística", href: ADMIN_NAV.LOGISTICS, icon: Terminal },
+  { name: "Métricas", href: ADMIN_NAV.METRICS, icon: BarChart3 },
+  { name: "Usuarios", href: ADMIN_NAV.USERS, icon: User },
+  { name: "Reseñas", href: ADMIN_NAV.REVIEWS, icon: Star },
+  { name: "Legales", href: ADMIN_NAV.LEGAL, icon: Shield },
+  { name: "Soporte", href: ADMIN_NAV.SUPPORT, icon: MessageCircle },
+  { name: "Configuración", href: ADMIN_NAV.SETTINGS, icon: Settings },
+] as const satisfies Array<{
+  name: string;
+  href: string;
+  icon: React.ElementType;
+}>;
 
 function isNavActive(pathname: string, href: string): boolean {
-  if (href === "/admin/pedidos") {
+  if (href === ADMIN_NAV.ORDERS) {
     return (
-      pathname === "/admin/pedidos" ||
-      (pathname.startsWith("/admin/pedidos/") &&
-        !pathname.startsWith("/admin/pedidos/pendientes"))
+      pathname === ADMIN_NAV.ORDERS ||
+      (pathname.startsWith(`${ADMIN_NAV.ORDERS}/`) &&
+        !pathname.startsWith(`${ADMIN_NAV.ORDERS_PENDING}`))
     );
   }
-  if (href === "/admin/pedidos/pendientes") {
+  if (href === ADMIN_NAV.ORDERS_PENDING) {
     return (
-      pathname === "/admin/pedidos/pendientes" ||
-      pathname.startsWith("/admin/pedidos/pendientes/")
+      pathname === ADMIN_NAV.ORDERS_PENDING ||
+      pathname.startsWith(`${ADMIN_NAV.ORDERS_PENDING}/`)
     );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -90,7 +95,7 @@ export default function AdminLayout({
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (pathname === "/admin")
+  if (pathname === ADMIN_NAV.ROOT)
     return <SessionProvider>{children}</SessionProvider>;
 
   const toggle = () => setIsOpen((o) => !o);
@@ -98,9 +103,9 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     try {
-      await signOut({ callbackUrl: "/admin" });
+      await signOut({ callbackUrl: ADMIN_NAV.ROOT });
     } catch {
-      window.location.href = "/admin";
+      window.location.href = ADMIN_NAV.ROOT;
     }
   };
 
@@ -241,7 +246,7 @@ export default function AdminLayout({
           <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
             {isMobile && (
               <div className="surface shadow-sm border-b border-muted p-3 flex items-center justify-between lg:hidden">
-                <h1 className="text-lg font-semibold text-content-primary">
+                <h1 className="text-lg font-semibold text-base-primary">
                   Panel de Administración
                 </h1>
                 <Button

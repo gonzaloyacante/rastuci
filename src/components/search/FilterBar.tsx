@@ -133,7 +133,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     <div
       className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-surface-secondary rounded-lg ${className}`}
     >
-      <div className="flex items-center gap-2 text-content-secondary shrink-0">
+      <div className="flex items-center gap-2 text-muted-foreground shrink-0">
         <Filter className="h-4 w-4" />
         <span className="text-xs sm:text-sm font-medium">Filtros:</span>
       </div>
@@ -144,7 +144,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             key={field.key}
             className="flex flex-col flex-1 min-w-[140px] sm:min-w-[150px]"
           >
-            <label className="text-xs text-content-secondary mb-1">
+            <label className="text-xs text-muted-foreground mb-1">
               {field.label}
             </label>
             {renderFilterField(field)}

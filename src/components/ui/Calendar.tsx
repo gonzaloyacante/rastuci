@@ -68,7 +68,7 @@ export function Calendar({
   return (
     <div className={cn("p-3 space-y-4", className)}>
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-lg capitalize text-content-primary">
+        <h2 className="font-semibold text-lg capitalize text-base-primary">
           {format(currentMonth, "MMMM yyyy", { locale: es })}
         </h2>
         <div className="flex items-center gap-1">

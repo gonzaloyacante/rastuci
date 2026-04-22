@@ -150,6 +150,20 @@ export const ORDER_STATUS = {
   CANCELLED: "CANCELLED",
 } as const;
 
+export type OrderStatusKey = keyof typeof ORDER_STATUS;
+
+/** Etiquetas en español para cada estado de orden. Única fuente de verdad. */
+export const ORDER_STATUS_LABELS: Record<OrderStatusKey, string> = {
+  PENDING: "Pendiente",
+  PENDING_PAYMENT: "Pago pendiente",
+  RESERVED: "Reservado",
+  WAITING_TRANSFER_PROOF: "Esperando comprobante",
+  PAYMENT_REVIEW: "En revisión",
+  PROCESSED: "Procesando",
+  DELIVERED: "Entregado",
+  CANCELLED: "Cancelado",
+} as const;
+
 export const PAYMENT_STATUS = {
   PENDING: "pending",
   APPROVED: "approved",

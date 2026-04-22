@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { ADMIN_ROUTES } from "@/config/routes";
 import { logger } from "@/lib/logger";
 
 export default function CatchAllNotFound() {
   useEffect(() => {
-    // Verificamos si estamos en modo de desarrollo
     if (process.env.NODE_ENV === "development") {
       logger.info("404 Admin - Ruta no encontrada", {
         path: window.location.pathname,
@@ -32,7 +32,7 @@ export default function CatchAllNotFound() {
           </p>
         </div>
         <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
-          <Link href="/admin/dashboard">
+          <Link href={ADMIN_ROUTES.DASHBOARD}>
             <Button variant="primary">Volver al Dashboard</Button>
           </Link>
           <Link href="/">

@@ -13,7 +13,7 @@ export function LegalPolicyRenderer({
   if (htmlContent) {
     return (
       <div
-        className="prose prose-sm sm:prose lg:prose-lg max-w-none text-content-secondary"
+        className="prose prose-sm sm:prose lg:prose-lg max-w-none text-muted-foreground"
         // [C-05] Sanitized — nosemgrep: react-dangerouslysetinnerhtml
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }}
       />
@@ -25,7 +25,7 @@ export function LegalPolicyRenderer({
       <>
         {content.sections.map((section, index) => (
           <section key={index} className="space-y-4">
-            <h2 className="text-xl sm:text-2xl font-semibold text-content-primary font-heading">
+            <h2 className="text-xl sm:text-2xl font-semibold text-base-primary font-heading">
               {section.title}
             </h2>
             {section.content && (

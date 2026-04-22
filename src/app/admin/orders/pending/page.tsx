@@ -67,16 +67,16 @@ export default function PendingOrdersPage() {
           <div className="flex items-center gap-2 mb-1">
             <button
               onClick={() => router.back()}
-              className="p-1 rounded-lg text-content-secondary hover:text-content-primary hover:bg-surface-secondary transition-all"
+              className="p-1 rounded-lg text-muted-foreground hover:text-base-primary hover:bg-surface-secondary transition-all"
               aria-label="Volver"
             >
               <ArrowLeft size={18} />
             </button>
-            <h1 className="text-2xl font-bold text-content-primary">
+            <h1 className="text-2xl font-bold text-base-primary">
               Pedidos Pendientes
             </h1>
           </div>
-          <p className="text-sm text-content-secondary pl-8">
+          <p className="text-sm text-muted-foreground pl-8">
             {config.description}
           </p>
         </div>
@@ -101,7 +101,7 @@ export default function PendingOrdersPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-150 ${
                 isActive
                   ? TAB_ACTIVE_STYLES[status]
-                  : "bg-surface border-border text-content-secondary hover:bg-surface-secondary hover:text-content-primary"
+                  : "bg-surface border-border text-muted-foreground hover:bg-surface-secondary hover:text-base-primary"
               }`}
             >
               <span
