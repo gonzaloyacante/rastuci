@@ -283,7 +283,7 @@ export const BreadcrumbsWithSchema: React.FC<BreadcrumbsProps> = (props) => {
         "@type": "ListItem",
         position: index + 1,
         name: item.label,
-        item: `${typeof window !== "undefined" ? window.location.origin : ""}${item.href}`,
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://rastuci.com"}${item.href}`,
       })),
   };
 

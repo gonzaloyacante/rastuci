@@ -14,6 +14,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { ORDER_STATUS } from "@/lib/constants";
 import { Order, OrderStatus } from "@/types";
@@ -120,7 +121,7 @@ export function OrderActionsCard({
               disabled={updating}
             >
               {updating ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+                <Spinner size="sm" color="white" />
               ) : (
                 <CreditCard size={16} />
               )}
@@ -138,7 +139,7 @@ export function OrderActionsCard({
               disabled={updating}
             >
               {updating ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+                <Spinner size="sm" color="white" />
               ) : (
                 <CreditCard size={16} />
               )}
@@ -154,7 +155,7 @@ export function OrderActionsCard({
               disabled={updating}
             >
               {updating ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+                <Spinner size="sm" color="white" />
               ) : (
                 <Eye size={16} />
               )}
@@ -170,7 +171,7 @@ export function OrderActionsCard({
               disabled={updating}
             >
               {updating ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+                <Spinner size="sm" color="white" />
               ) : (
                 <ShieldCheck size={16} />
               )}
@@ -186,7 +187,7 @@ export function OrderActionsCard({
               disabled={updating}
             >
               {updating ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+                <Spinner size="sm" color="white" />
               ) : (
                 <Package size={16} />
               )}
@@ -202,7 +203,7 @@ export function OrderActionsCard({
               disabled={updating}
             >
               {updating ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent" />
+                <Spinner size="sm" color="white" />
               ) : (
                 <Truck size={16} />
               )}

@@ -93,6 +93,7 @@ export const GET = withAdminAuth(
             updatedAt: true,
             mpPaymentId: true,
             mpStatus: true,
+            paymentMethod: true,
             // Critical Shipping Data
             shippingMethod: true,
             shippingAgency: true,

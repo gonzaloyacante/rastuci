@@ -1,16 +1,38 @@
 "use client";
 
-import { Package, Truck as TruckIcon } from "lucide-react";
+import {
+  Banknote,
+  Building2,
+  CheckCircle2,
+  CreditCard,
+  ExternalLink,
+  Eye,
+  MapPin,
+  Package,
+  Phone,
+  Truck as TruckIcon,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
 import { Button } from "@/components/ui/Button";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
+import { cn } from "@/lib/utils";
 import { formatCurrency as defaultFormatCurrency } from "@/utils/formatters";
 
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { shippingMethodLabels } from "./ShippingDisplay";
+
+const PAYMENT_METHOD_DISPLAY: Record<
+  string,
+  { label: string; Icon: React.ElementType }
+> = {
+  mercadopago: { label: "MercadoPago", Icon: CreditCard },
+  transfer: { label: "Transferencia bancaria", Icon: Building2 },
+  cash: { label: "Efectivo", Icon: Banknote },
+};
 
 export interface OrderCardData {
   id: string;
@@ -161,10 +183,7 @@ export function OrderCard({
   return (
     <div className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-xl transition-all duration-200 hover:border-primary/20">
       <CardHeader order={order} formatDate={formatDate} />
-      <CardContent
-        order={order}
-        formatCurrency={formatCurrency}
-      />
+      <CardContent order={order} formatCurrency={formatCurrency} />
       <CardActions
         order={order}
         isUpdating={isUpdating}
@@ -182,7 +201,10 @@ export function OrderCard({
 // ─── Private sub-components ───────────────────────────────────────────────────
 
 interface CardHeaderProps {
-  order: Pick<OrderCardData, "customerName" | "status" | "createdAt" | "relativeTime">;
+  order: Pick<
+    OrderCardData,
+    "customerName" | "status" | "createdAt" | "relativeTime"
+  >;
   formatDate: (date: string) => string;
 }
 
@@ -209,7 +231,16 @@ function CardHeader({ order, formatDate }: CardHeaderProps) {
 }
 
 interface CardContentProps {
-  order: Pick<OrderCardData, "customerPhone" | "customerAddress" | "itemsCount" | "total" | "caTrackingNumber" | "paymentMethod" | "shippingMethod">;
+  order: Pick<
+    OrderCardData,
+    | "customerPhone"
+    | "customerAddress"
+    | "itemsCount"
+    | "total"
+    | "caTrackingNumber"
+    | "paymentMethod"
+    | "shippingMethod"
+  >;
   formatCurrency: (value: number) => string;
 }
 
@@ -235,7 +266,7 @@ function ContactColumn({ order }: ContactColumnProps) {
         Información de contacto
       </h4>
       <div className="flex items-center gap-2">
-        <span className="text-lg">📞</span>
+        <Phone size={13} className="text-content-secondary shrink-0" />
         <a
           href={`tel:${order.customerPhone}`}
           className="text-sm text-primary hover:underline font-medium"
@@ -245,7 +276,10 @@ function ContactColumn({ order }: ContactColumnProps) {
       </div>
       {order.customerAddress && (
         <div className="flex items-start gap-2">
-          <span className="text-lg shrink-0">📍</span>
+          <MapPin
+            size={13}
+            className="text-content-secondary shrink-0 mt-0.5"
+          />
           <p className="text-xs text-content-primary leading-relaxed">
             {order.customerAddress}
           </p>
@@ -256,7 +290,14 @@ function ContactColumn({ order }: ContactColumnProps) {
 }
 
 interface SummaryColumnProps {
-  order: Pick<CardContentProps["order"], "itemsCount" | "total" | "caTrackingNumber" | "paymentMethod" | "shippingMethod">;
+  order: Pick<
+    CardContentProps["order"],
+    | "itemsCount"
+    | "total"
+    | "caTrackingNumber"
+    | "paymentMethod"
+    | "shippingMethod"
+  >;
   formatCurrency: (value: number) => string;
 }
 
@@ -272,7 +313,7 @@ function SummaryColumn({ order, formatCurrency }: SummaryColumnProps) {
             {order.itemsCount}{" "}
             {order.itemsCount === 1 ? "producto" : "productos"}
           </span>
-          <span className="text-lg font-bold text-primary">
+          <span className="text-xl font-bold text-primary">
             {formatCurrency(order.total)}
           </span>
         </div>
@@ -284,19 +325,23 @@ function SummaryColumn({ order, formatCurrency }: SummaryColumnProps) {
         )}
       </div>
       <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
-        <span>
-          {order.paymentMethod === "mercadopago" ? "💳" : "💵"}{" "}
-          {order.paymentMethod === "mercadopago"
-            ? "MercadoPago"
-            : "Efectivo / Transferencia"}
-        </span>
+        {(() => {
+          const pm =
+            PAYMENT_METHOD_DISPLAY[order.paymentMethod ?? "cash"] ??
+            PAYMENT_METHOD_DISPLAY.cash;
+          return (
+            <>
+              <pm.Icon size={12} className="shrink-0" />
+              <span>{pm.label}</span>
+            </>
+          );
+        })()}
       </div>
       {order.shippingMethod && (
         <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
           <Package size={12} className="shrink-0" />
           <span>
-            {shippingMethodLabels[order.shippingMethod] ||
-              order.shippingMethod}
+            {shippingMethodLabels[order.shippingMethod] || order.shippingMethod}
           </span>
         </div>
       )}
@@ -327,7 +372,7 @@ function CardActions({
     order.status !== "DELIVERED" && order.status !== "CANCELLED";
 
   return (
-    <div className="pt-3 border-t border-border space-y-2">
+    <div className="px-4 pb-4 pt-3 border-t border-border space-y-2">
       <PendingPaymentButtons
         order={order}
         isUpdating={isUpdating}
@@ -339,9 +384,10 @@ function CardActions({
         <Button
           onClick={onApproveTransfer}
           className="w-full text-xs py-2.5 font-semibold h-auto bg-green-600 hover:bg-green-700 text-white"
-          disabled={isUpdating}
+          loading={isUpdating}
+          leftIcon={<CheckCircle2 size={14} />}
         >
-          {isUpdating ? "⏳ Procesando..." : "✓ Aprobar Transferencia"}
+          Aprobar Transferencia
         </Button>
       )}
       {order.status === "PROCESSED" && (
@@ -349,29 +395,39 @@ function CardActions({
           onClick={onMarkDelivered}
           variant="primary"
           className="w-full text-xs py-2.5 font-semibold h-auto"
-          disabled={isUpdating}
+          loading={isUpdating}
+          leftIcon={<CheckCircle2 size={14} />}
         >
-          {isUpdating ? "⏳ Procesando..." : "✓ Marcar entregado"}
+          Marcar entregado
         </Button>
       )}
-      {isCancelable && (
-        <Button
-          onClick={onCancelOrder}
-          variant="destructive"
-          className="w-full text-xs py-2.5 font-semibold h-auto bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
-          disabled={isUpdating}
-        >
-          {isUpdating ? "⏳..." : "✕ Cancelar Orden"}
-        </Button>
-      )}
-      <Link href={`/admin/pedidos/${order.id}`} className="block">
-        <Button
-          variant="outline"
-          className="w-full text-xs py-2.5 font-semibold hover:bg-primary/5 hover:border-primary/30 h-auto"
-        >
-          Ver Detalles →
-        </Button>
-      </Link>
+      <div
+        className={cn(
+          "grid gap-2",
+          isCancelable ? "grid-cols-2" : "grid-cols-1"
+        )}
+      >
+        <Link href={`/admin/pedidos/${order.id}`} className="block">
+          <Button
+            variant="outline"
+            className="w-full text-xs py-2.5 font-semibold hover:bg-primary/5 hover:border-primary/30 h-auto"
+            leftIcon={<Eye size={14} />}
+          >
+            Ver Detalles
+          </Button>
+        </Link>
+        {isCancelable && (
+          <Button
+            onClick={onCancelOrder}
+            variant="destructive"
+            className="w-full text-xs py-2.5 font-semibold h-auto bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+            disabled={isUpdating}
+            leftIcon={<XCircle size={14} />}
+          >
+            Cancelar
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -402,19 +458,18 @@ function PendingPaymentButtons({
         variant="outline"
         className="text-xs py-2.5 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold h-auto"
         disabled={isUpdating}
+        leftIcon={<ExternalLink size={14} />}
       >
-        <span className="flex items-center justify-center gap-1.5">
-          <span>📦</span>
-          <span>Pagar en MiCorreo</span>
-        </span>
+        Pagar en MiCorreo
       </Button>
       <Button
         onClick={onMarkProcessed}
         variant="primary"
         className="text-xs py-2.5 font-semibold h-auto"
-        disabled={isUpdating}
+        loading={isUpdating}
+        leftIcon={<CheckCircle2 size={14} />}
       >
-        {isUpdating ? "⏳ Procesando..." : "✓ Marcar procesado"}
+        Marcar procesado
       </Button>
     </div>
   );

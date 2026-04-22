@@ -24,7 +24,9 @@ interface UseSmartSearchOptions {
   onSearch?: (query: string) => void;
 }
 
-async function fetchSuggestions(searchQuery: string): Promise<SearchSuggestion[]> {
+async function fetchSuggestions(
+  searchQuery: string
+): Promise<SearchSuggestion[]> {
   const productsRes = await fetch(
     `/api/products/search?q=${encodeURIComponent(searchQuery)}&limit=3`
   );
@@ -33,7 +35,8 @@ async function fetchSuggestions(searchQuery: string): Promise<SearchSuggestion[]
 
   const categoriesRes = await fetch("/api/categories");
   const categoriesData = await categoriesRes.json();
-  const categories: { id: string; name: string }[] = categoriesData.data?.data || [];
+  const categories: { id: string; name: string }[] =
+    categoriesData.data?.data || [];
 
   const suggestionsList: SearchSuggestion[] = [];
 
@@ -74,7 +77,11 @@ function saveRecentSearches(searches: string[]): void {
   }
 }
 
-export function useSmartSearch({ showTrending = true, showRecent = true, onSearch }: UseSmartSearchOptions) {
+export function useSmartSearch({
+  showTrending = true,
+  showRecent = true,
+  onSearch,
+}: UseSmartSearchOptions) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +112,9 @@ export function useSmartSearch({ showTrending = true, showRecent = true, onSearc
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        const recent = JSON.parse(localStorage.getItem("recentSearches") || "[]");
+        const recent = JSON.parse(
+          localStorage.getItem("recentSearches") || "[]"
+        );
         setRecentSearches(recent.slice(0, 5));
       } catch {
         setRecentSearches([]);
@@ -138,14 +147,17 @@ export function useSmartSearch({ showTrending = true, showRecent = true, onSearc
     (searchQuery: string = query) => {
       if (!searchQuery.trim()) return;
 
-      const newRecent = [searchQuery, ...recentSearches.filter((s) => s !== searchQuery)].slice(0, 5);
+      const newRecent = [
+        searchQuery,
+        ...recentSearches.filter((s) => s !== searchQuery),
+      ].slice(0, 5);
       setRecentSearches(newRecent);
       saveRecentSearches(newRecent);
 
       if (onSearch) {
         onSearch(searchQuery);
       } else {
-        router.push(`/productos?q=${encodeURIComponent(searchQuery)}`);
+        router.push(`/productos?buscar=${encodeURIComponent(searchQuery)}`);
       }
 
       setIsOpen(false);
@@ -182,10 +194,29 @@ export function useSmartSearch({ showTrending = true, showRecent = true, onSearc
       }
       if (e.key === "Enter") {
         e.preventDefault();
-        handleEnterKey(selectedIndex, suggestions, recentSearches, trendingSearches, showRecent, showTrending, router, handleSearch);
+        handleEnterKey(
+          selectedIndex,
+          suggestions,
+          recentSearches,
+          trendingSearches,
+          showRecent,
+          showTrending,
+          router,
+          handleSearch
+        );
       }
     },
-    [isOpen, suggestions, recentSearches, trendingSearches, showRecent, showTrending, selectedIndex, router, handleSearch]
+    [
+      isOpen,
+      suggestions,
+      recentSearches,
+      trendingSearches,
+      showRecent,
+      showTrending,
+      selectedIndex,
+      router,
+      handleSearch,
+    ]
   );
 
   const clearSearch = useCallback(() => {
@@ -195,11 +226,14 @@ export function useSmartSearch({ showTrending = true, showRecent = true, onSearc
     inputRef.current?.focus();
   }, []);
 
-  const removeRecentSearch = useCallback((searchToRemove: string) => {
-    const newRecent = recentSearches.filter((s) => s !== searchToRemove);
-    setRecentSearches(newRecent);
-    saveRecentSearches(newRecent);
-  }, [recentSearches]);
+  const removeRecentSearch = useCallback(
+    (searchToRemove: string) => {
+      const newRecent = recentSearches.filter((s) => s !== searchToRemove);
+      setRecentSearches(newRecent);
+      saveRecentSearches(newRecent);
+    },
+    [recentSearches]
+  );
 
   return {
     query,

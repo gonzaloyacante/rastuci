@@ -14,7 +14,12 @@ import {
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { useCart } from "@/context/CartContext";
+import {
+  type CheckoutData,
+  useCheckoutAutoSave,
+} from "@/hooks/useCheckoutAutoSave";
 import { useVacationSettings } from "@/hooks/useVacationSettings";
+import { isValidMercadoPagoUrl } from "@/lib/checkoutUtils";
 import { logger } from "@/lib/logger";
 
 export enum CheckoutStep {
@@ -47,6 +52,10 @@ export default function CheckoutPageClient() {
     getCartTotal,
     loadCheckoutSettings,
     selectedShippingOption,
+    selectedPaymentMethod,
+    customerInfo,
+    updateCustomerInfo,
+    setSelectedShippingOption,
     appliedCoupon,
   } = useCart();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(
@@ -55,6 +64,39 @@ export default function CheckoutPageClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-save checkout progress (PII stripped, 1h expiry, auto-restores on mount)
+  const autoSaveData = useMemo(
+    () => ({
+      customerInfo: customerInfo ?? undefined,
+      selectedShippingOption: selectedShippingOption ?? undefined,
+      selectedPaymentMethod: selectedPaymentMethod?.id,
+      currentStep,
+    }),
+    [customerInfo, selectedShippingOption, selectedPaymentMethod, currentStep]
+  );
+
+  const { clearSavedData } = useCheckoutAutoSave(autoSaveData, {
+    autoRestore: true,
+    onRestore: useCallback(
+      (saved: CheckoutData) => {
+        if (saved.customerInfo) {
+          updateCustomerInfo(saved.customerInfo);
+        }
+        if (saved.selectedShippingOption) {
+          setSelectedShippingOption(saved.selectedShippingOption);
+        }
+        if (saved.currentStep && saved.currentStep > 0) {
+          setCurrentStep(saved.currentStep as CheckoutStep);
+        }
+        show({
+          type: "info",
+          message: "Se restauró tu progreso de checkout anterior",
+        });
+      },
+      [updateCustomerInfo, setSelectedShippingOption, show]
+    ),
+  });
 
   // Calculate totals
   const subtotal = useMemo(() => getCartTotal(), [getCartTotal]);
@@ -133,9 +175,21 @@ export default function CheckoutPageClient() {
       const result = await placeOrder();
 
       if (result.success) {
-        // Handle MercadoPago redirect
+        // Handle MercadoPago redirect with URL validation
         if (result.paymentMethod === "mercadopago" && result.redirectUrl) {
+          if (!isValidMercadoPagoUrl(result.redirectUrl)) {
+            logger.error("[Checkout] Blocked suspicious redirect URL", {
+              redirectUrl: result.redirectUrl,
+            });
+            show({
+              type: "error",
+              message:
+                "Error al procesar el pago. Por favor contacta al soporte.",
+            });
+            return;
+          }
           show({ type: "success", message: "Redirigiendo a MercadoPago..." });
+          clearSavedData();
           window.location.href = result.redirectUrl;
           return;
         }
@@ -143,6 +197,7 @@ export default function CheckoutPageClient() {
         // Handle successful order
         if (result.orderId) {
           setOrderId(result.orderId);
+          clearSavedData();
           setCurrentStep(CheckoutStep.CONFIRMATION);
           show({ type: "success", message: "¡Pedido realizado con éxito!" });
         }

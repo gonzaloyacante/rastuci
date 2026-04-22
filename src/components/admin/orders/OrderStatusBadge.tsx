@@ -1,34 +1,80 @@
 "use client";
 
-import { ORDER_STATUS } from "@/lib/constants";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  FileSearch,
+  FileText,
+  Package,
+  Truck,
+  XCircle,
+} from "lucide-react";
+import React from "react";
 
-export const STATUS_CONFIG = {
-  [ORDER_STATUS.PENDING]: { label: "⚠️ Incompleto", variant: "warning" },
+import { ORDER_STATUS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+
+type StatusVariant =
+  | "warning"
+  | "info"
+  | "success"
+  | "error"
+  | "destructive"
+  | "primary"
+  | "secondary"
+  | "default";
+
+interface StatusEntry {
+  label: string;
+  variant: StatusVariant;
+  Icon: React.ElementType;
+}
+
+export const STATUS_CONFIG: Record<string, StatusEntry> = {
+  [ORDER_STATUS.PENDING]: {
+    label: "Incompleto",
+    variant: "warning",
+    Icon: AlertCircle,
+  },
   [ORDER_STATUS.PENDING_PAYMENT]: {
     label: "Aguardando Pago",
     variant: "warning",
+    Icon: Clock,
   },
   [ORDER_STATUS.RESERVED]: {
     label: "Reservado (Efectivo)",
     variant: "info",
+    Icon: Package,
   },
   [ORDER_STATUS.PROCESSED]: {
     label: "Listo para entregar",
     variant: "success",
+    Icon: CheckCircle2,
   },
-  [ORDER_STATUS.DELIVERED]: { label: "Entregado", variant: "default" },
-  [ORDER_STATUS.CANCELLED]: { label: "Cancelado", variant: "error" },
+  [ORDER_STATUS.DELIVERED]: {
+    label: "Entregado",
+    variant: "default",
+    Icon: Truck,
+  },
+  [ORDER_STATUS.CANCELLED]: {
+    label: "Cancelado",
+    variant: "error",
+    Icon: XCircle,
+  },
   [ORDER_STATUS.WAITING_TRANSFER_PROOF]: {
-    label: "📎 Esperando comprobante",
+    label: "Esperando comprobante",
     variant: "warning",
+    Icon: FileText,
   },
   [ORDER_STATUS.PAYMENT_REVIEW]: {
-    label: "🔍 Revisando comprobante",
+    label: "Revisando comprobante",
     variant: "info",
+    Icon: FileSearch,
   },
-} as const;
+};
 
-const variantClasses = {
+const variantClasses: Record<StatusVariant, string> = {
   warning: "bg-yellow-100 text-yellow-800 border-yellow-200 border",
   info: "bg-blue-100 text-blue-800 border-blue-200 border",
   success: "bg-emerald-100 text-emerald-800 border-emerald-200 border",
@@ -40,15 +86,21 @@ const variantClasses = {
 };
 
 export function OrderStatusBadge({ status }: { status: string }) {
-  const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || {
+  const config: StatusEntry = STATUS_CONFIG[status] ?? {
     label: "Desconocido",
-    variant: "info" as const,
+    variant: "info" as StatusVariant,
+    Icon: AlertCircle,
   };
+  const { Icon } = config;
 
   return (
     <span
-      className={`px-2 py-1 rounded-full text-xs font-semibold ${variantClasses[config.variant]}`}
+      className={cn(
+        "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap",
+        variantClasses[config.variant]
+      )}
     >
+      <Icon size={11} className="shrink-0" />
       {config.label}
     </span>
   );

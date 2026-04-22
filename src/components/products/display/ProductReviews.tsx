@@ -1,68 +1,20 @@
 "use client";
 
 import { Star, User } from "lucide-react";
-import { useEffect, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/Card";
 import { ReviewSkeleton } from "@/components/ui/Skeleton";
-import { logger } from "@/lib/logger";
-
-interface Review {
-  id: string;
-  userId: string;
-  userName: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
+import { useProductReviews } from "@/hooks/useReviews";
+import { formatDate } from "@/utils/formatters";
 
 interface ProductReviewsProps {
   productId: string;
 }
 
 export default function ProductReviews({ productId }: ProductReviewsProps) {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [averageRating, setAverageRating] = useState(0);
+  const { reviews, averageRating, isLoading } = useProductReviews(productId);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        // Obtener reseñas reales desde la API
-        const res = await fetch(`/api/products/${productId}/reviews`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch reviews");
-        }
-        const json = await res.json();
-        const data: Review[] = json.data || [];
-        setReviews(data);
-        if (data.length > 0) {
-          const avg =
-            data.reduce((sum, review) => sum + review.rating, 0) / data.length;
-          setAverageRating(avg);
-        } else {
-          setAverageRating(0);
-        }
-      } catch (error) {
-        logger.error("Error fetching reviews", { error });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchReviews();
-  }, [productId]);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-AR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
@@ -110,7 +62,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                     </div>
                     <div>
                       <p className="font-medium text-primary">
-                        {review.userName}
+                        {review.customerName}
                       </p>
                       <div className="flex items-center space-x-1">
                         {[...Array(5)].map((_, i) => (

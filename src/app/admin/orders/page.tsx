@@ -13,13 +13,12 @@ import {
   OrderCardData,
   Pagination,
 } from "@/components/admin";
+import { STATUS_CONFIG } from "@/components/admin/orders/OrderStatusBadge";
 import { OrdersSkeleton } from "@/components/admin/skeletons";
 import { FilterBar, SearchBar } from "@/components/search";
-import { useToast } from "@/components/ui/Toast";
-import { useDocumentTitle } from "@/hooks";
+import { useDocumentTitle, useOrderExport } from "@/hooks";
 import { type Order, useOrders } from "@/hooks/useOrders";
-import { logger } from "@/lib/logger";
-import { escapeCsvCell, formatCurrency } from "@/utils/formatters";
+import { formatCurrency, formatDateRelative } from "@/utils/formatters";
 
 type StatusFilter =
   | "ALL"
@@ -60,95 +59,9 @@ const FILTER_FIELDS = [
   },
 ];
 
-const CSV_HEADERS = [
-  "ID",
-  "Cliente",
-  "Email",
-  "Teléfono",
-  "Dirección",
-  "Total",
-  "Subtotal Productos",
-  "Costo Envío",
-  "Estado",
-  "Estado Pago MP",
-  "Método de Envío",
-  "Agencia / Sucursal",
-  "Tracking",
-  "Fecha Creación",
-  "Productos",
-  "Tallas/Colores",
-];
-
 // Helpers
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("es-AR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function timeAgo(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (days > 0) return `hace ${days} día${days > 1 ? "s" : ""}`;
-  if (hours > 0) return `hace ${hours} hora${hours > 1 ? "s" : ""}`;
-  if (minutes > 0) return `hace ${minutes} min`;
-  return "recién";
-}
-
 function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    PENDING: "incompleto",
-    PENDING_PAYMENT: "aguardando pago",
-    RESERVED: "reservado",
-    PROCESSED: "listo para entregar",
-    DELIVERED: "entregado",
-    CANCELLED: "cancelado",
-  };
-  return labels[status] || status;
-}
-
-function buildItemVariantLabel(item: Order["items"][number]): string {
-  const parts: string[] = [];
-  if (item.size) parts.push(`Talla: ${item.size}`);
-  if (item.color) parts.push(`Color: ${item.color}`);
-  return parts.length > 0 ? parts.join(", ") : "-";
-}
-
-function orderToCsvRow(order: Order): string {
-  const subtotalProducts = order.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const products = order.items
-    .map((item) => `${item.quantity}x ${item.product.name}`)
-    .join("; ");
-  const variants = order.items.map(buildItemVariantLabel).join("; ");
-
-  return [
-    escapeCsvCell(order.id),
-    escapeCsvCell(order.customerName),
-    escapeCsvCell(order.customerEmail || "No especificado"),
-    escapeCsvCell(order.customerPhone),
-    escapeCsvCell(order.customerAddress || "No especificada"),
-    escapeCsvCell(order.total),
-    escapeCsvCell(subtotalProducts),
-    escapeCsvCell(order.shippingCost || 0),
-    escapeCsvCell(getStatusLabel(order.status)),
-    escapeCsvCell(order.mpStatus || "N/A"),
-    escapeCsvCell(order.shippingMethod || "No especificado"),
-    escapeCsvCell(order.shippingAgency || "-"),
-    escapeCsvCell(order.caTrackingNumber || "Sin tracking"),
-    escapeCsvCell(formatDate(order.createdAt)),
-    escapeCsvCell(products),
-    escapeCsvCell(variants),
-  ].join(",");
+  return STATUS_CONFIG[status]?.label ?? status;
 }
 
 // Transform Order to OrderCardData
@@ -170,7 +83,6 @@ function toOrderCardData(order: Order): OrderCardData {
 }
 
 export default function OrdersPage() {
-  const { show } = useToast();
   const router = useRouter();
   useDocumentTitle({ title: "Pedidos" });
 
@@ -182,6 +94,9 @@ export default function OrdersPage() {
 
   // Data fetching
   const { orders, loading, error, totalPages, fetchOrders } = useOrders();
+
+  // CSV export logic delegada al hook
+  const { exportToCSV } = useOrderExport(orders);
 
   useEffect(() => {
     fetchOrders({
@@ -222,37 +137,6 @@ export default function OrdersPage() {
     },
     [totalPages]
   );
-
-  const exportToCSV = useCallback(() => {
-    try {
-      if (orders.length === 0) {
-        show({ type: "error", message: "No hay pedidos para exportar" });
-        return;
-      }
-
-      const csvContent = [
-        CSV_HEADERS.join(","),
-        ...orders.map(orderToCsvRow),
-      ].join("\n");
-
-      // Agregar BOM para UTF-8 y que Excel lo lea bien
-      const BOM = "\uFEFF";
-      const blob = new Blob([BOM + csvContent], {
-        type: "text/csv;charset=utf-8;",
-      });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `pedidos_rastuci_${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      show({ type: "success", message: "Pedidos exportados correctamente" });
-    } catch (err) {
-      logger.error("Error al exportar pedidos", { error: err });
-      show({ type: "error", message: "Error al exportar pedidos" });
-    }
-  }, [orders, show]);
 
   // Empty state message
   const getEmptyMessage = () => {
@@ -341,11 +225,10 @@ export default function OrdersPage() {
                 key={order.id}
                 order={{
                   ...toOrderCardData(order),
-                  relativeTime: timeAgo(order.createdAt.toString()),
+                  relativeTime: formatDateRelative(order.createdAt),
                 }}
-                formatDate={formatDate}
                 formatCurrency={formatCurrency}
-                onStatusChange={() => setCurrentPage(1)} // Recargar datos
+                onStatusChange={() => setCurrentPage(1)}
               />
             ))}
           </div>
