@@ -8,6 +8,7 @@ export {
   useLazyLoadWithDelay,
   usePreload,
 } from "./useLazyLoad";
+export { useOrderDetail } from "./useOrderDetail";
 export { useOrderExport } from "./useOrderExport";
 export { useOrders } from "./useOrders";
 export { usePendingOrders } from "./usePendingOrders";
