@@ -4,6 +4,10 @@ import { X } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/Button";
+import {
+  useFocusTrap,
+  useKeyboardNavigation,
+} from "@/hooks/useKeyboardNavigation";
 
 interface DialogContextType {
   open: boolean;
@@ -93,14 +97,24 @@ export function DialogContent({
   className?: string;
 }) {
   const { open, setOpen } = useDialog();
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const handleClose = React.useCallback(() => setOpen(false), [setOpen]);
+
+  useKeyboardNavigation({ isOpen: open, onClose: handleClose });
+  useFocusTrap({
+    isActive: open,
+    containerRef: containerRef as React.RefObject<HTMLElement>,
+  });
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
       <div
+        ref={containerRef}
         className={`bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 rounded-lg shadow-2xl w-full mx-auto relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-200 border border-slate-200 dark:border-slate-800 p-6 ${className}`}
         role="dialog"
+        aria-modal="true"
       >
         <Button
           onClick={() => setOpen(false)}

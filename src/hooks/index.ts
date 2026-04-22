@@ -2,6 +2,7 @@
 export { useCategories, useCategory } from "./useCategories";
 export { useInfiniteProducts } from "./useInfiniteProducts";
 export { useInfiniteScroll } from "./useInfiniteScroll";
+export { useFocusTrap, useKeyboardNavigation } from "./useKeyboardNavigation";
 export {
   useIntersectionObserver,
   useLazyLoad,
