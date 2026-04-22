@@ -13,7 +13,7 @@ export const shippingMethodLabels: Record<string, string> = {
 export function ShippingMethodLabel({ method }: { method?: string }) {
   if (!method) return null;
   return (
-    <div className="flex items-center gap-2 text-xs sm:text-sm text-content-secondary">
+    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
       <Package size={14} className="shrink-0" />
       <span className="wrap-break-word">
         {shippingMethodLabels[method] || method}

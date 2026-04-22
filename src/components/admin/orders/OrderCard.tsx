@@ -7,6 +7,7 @@ import {
   CreditCard,
   ExternalLink,
   Eye,
+  Hash,
   MapPin,
   Package,
   Phone,
@@ -22,16 +23,36 @@ import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import { formatCurrency as defaultFormatCurrency } from "@/utils/formatters";
 
-import { OrderStatusBadge } from "./OrderStatusBadge";
+import { OrderStatusBadge, STATUS_CONFIG } from "./OrderStatusBadge";
 import { shippingMethodLabels } from "./ShippingDisplay";
 
 const PAYMENT_METHOD_DISPLAY: Record<
   string,
-  { label: string; Icon: React.ElementType }
+  { label: string; Icon: React.ElementType; pill: string }
 > = {
-  mercadopago: { label: "MercadoPago", Icon: CreditCard },
-  transfer: { label: "Transferencia bancaria", Icon: Building2 },
-  cash: { label: "Efectivo", Icon: Banknote },
+  mercadopago: {
+    label: "MercadoPago",
+    Icon: CreditCard,
+    pill: "bg-sky-50 text-sky-700 border border-sky-200",
+  },
+  transfer: {
+    label: "Transferencia",
+    Icon: Building2,
+    pill: "bg-violet-50 text-violet-700 border border-violet-200",
+  },
+  cash: {
+    label: "Efectivo",
+    Icon: Banknote,
+    pill: "bg-amber-50 text-amber-700 border border-amber-200",
+  },
+};
+
+const STATUS_BORDER: Record<string, string> = {
+  warning: "border-l-amber-400",
+  info: "border-l-blue-400",
+  success: "border-l-emerald-500",
+  error: "border-l-red-400",
+  default: "border-l-gray-300",
 };
 
 export interface OrderCardData {
@@ -180,8 +201,18 @@ export function OrderCard({
     window.open("https://micorreo.correoargentino.com.ar/login", "_blank");
   };
 
+  const statusVariant = STATUS_CONFIG[order.status]?.variant ?? "default";
+  const borderClass = STATUS_BORDER[statusVariant] ?? "border-l-gray-300";
+
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-xl transition-all duration-200 hover:border-primary/20">
+    <div
+      className={cn(
+        "bg-surface border border-border rounded-xl overflow-hidden",
+        "hover:shadow-lg hover:border-primary/20 transition-all duration-200",
+        "border-l-4",
+        borderClass
+      )}
+    >
       <CardHeader order={order} formatDate={formatDate} />
       <CardContent order={order} formatCurrency={formatCurrency} />
       <CardActions
@@ -203,25 +234,34 @@ export function OrderCard({
 interface CardHeaderProps {
   order: Pick<
     OrderCardData,
-    "customerName" | "status" | "createdAt" | "relativeTime"
+    "id" | "customerName" | "status" | "createdAt" | "relativeTime"
   >;
   formatDate: (date: string) => string;
 }
 
 function CardHeader({ order, formatDate }: CardHeaderProps) {
+  const shortId = order.id.slice(-8).toUpperCase();
   return (
     <div className="bg-linear-to-r from-surface-secondary to-surface-secondary/50 p-4">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <h3 className="text-base font-bold text-content-primary leading-snug flex-1 min-w-0">
-          {order.customerName}
-        </h3>
+      <div className="flex items-start justify-between gap-3 mb-1.5">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base font-bold leading-snug truncate">
+            {order.customerName}
+          </h3>
+          <div className="flex items-center gap-1 mt-0.5">
+            <Hash size={10} className="text-muted-foreground shrink-0" />
+            <span className="text-xs font-mono text-muted-foreground tracking-wider">
+              {shortId}
+            </span>
+          </div>
+        </div>
         <OrderStatusBadge status={order.status} />
       </div>
-      <p className="text-xs text-content-secondary flex items-center gap-1">
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
         <span>{formatDate(order.createdAt)}</span>
         {order.relativeTime && (
           <>
-            <span className="text-content-secondary/50">•</span>
+            <span className="opacity-50">·</span>
             <span className="italic">{order.relativeTime}</span>
           </>
         )}
@@ -262,11 +302,11 @@ interface ContactColumnProps {
 function ContactColumn({ order }: ContactColumnProps) {
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">
+      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
         Información de contacto
       </h4>
       <div className="flex items-center gap-2">
-        <Phone size={13} className="text-content-secondary shrink-0" />
+        <Phone size={13} className="text-muted-foreground shrink-0" />
         <a
           href={`tel:${order.customerPhone}`}
           className="text-sm text-primary hover:underline font-medium"
@@ -276,11 +316,8 @@ function ContactColumn({ order }: ContactColumnProps) {
       </div>
       {order.customerAddress && (
         <div className="flex items-start gap-2">
-          <MapPin
-            size={13}
-            className="text-content-secondary shrink-0 mt-0.5"
-          />
-          <p className="text-xs text-content-primary leading-relaxed">
+          <MapPin size={13} className="text-muted-foreground shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground leading-relaxed">
             {order.customerAddress}
           </p>
         </div>
@@ -302,14 +339,18 @@ interface SummaryColumnProps {
 }
 
 function SummaryColumn({ order, formatCurrency }: SummaryColumnProps) {
+  const pm =
+    PAYMENT_METHOD_DISPLAY[order.paymentMethod ?? "cash"] ??
+    PAYMENT_METHOD_DISPLAY.cash;
+
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">
+      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
         Resumen del pedido
       </h4>
       <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-content-secondary">
+          <span className="text-xs text-muted-foreground">
             {order.itemsCount}{" "}
             {order.itemsCount === 1 ? "producto" : "productos"}
           </span>
@@ -324,27 +365,23 @@ function SummaryColumn({ order, formatCurrency }: SummaryColumnProps) {
           </div>
         )}
       </div>
-      <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
-        {(() => {
-          const pm =
-            PAYMENT_METHOD_DISPLAY[order.paymentMethod ?? "cash"] ??
-            PAYMENT_METHOD_DISPLAY.cash;
-          return (
-            <>
-              <pm.Icon size={12} className="shrink-0" />
-              <span>{pm.label}</span>
-            </>
-          );
-        })()}
-      </div>
-      {order.shippingMethod && (
-        <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
-          <Package size={12} className="shrink-0" />
-          <span>
+      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+            pm.pill
+          )}
+        >
+          <pm.Icon size={11} className="shrink-0" />
+          {pm.label}
+        </span>
+        {order.shippingMethod && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface-secondary border border-border text-muted-foreground">
+            <Package size={11} className="shrink-0" />
             {shippingMethodLabels[order.shippingMethod] || order.shippingMethod}
           </span>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

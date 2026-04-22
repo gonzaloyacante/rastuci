@@ -24,11 +24,11 @@ export function InfoRow({
 }: InfoRowProps) {
   return (
     <div className={`flex items-start gap-2 ${className}`}>
-      {Icon && <Icon className="w-4 h-4 text-content-secondary mt-0.5" />}
+      {Icon && <Icon className="w-4 h-4 text-muted-foreground mt-0.5" />}
       {emoji && <span>{emoji}</span>}
       <div className="flex-1">
-        <span className="text-sm text-content-secondary">{label}: </span>
-        <span className="text-sm text-content-primary">{value}</span>
+        <span className="text-sm text-muted-foreground">{label}: </span>
+        <span className="text-sm">{value}</span>
       </div>
     </div>
   );
@@ -51,9 +51,7 @@ export function SectionCard({
 }: SectionCardProps) {
   return (
     <div className={`card ${className}`}>
-      <h3 className="text-lg font-semibold text-content-primary mb-4">
-        {title}
-      </h3>
+      <h3 className="text-lg font-semibold mb-4">{title}</h3>
       {children}
     </div>
   );
