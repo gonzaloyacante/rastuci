@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useDocumentTitle } from "@/hooks";
+import { useTabWithUrl } from "@/hooks/useTabWithUrl";
 
 // ============================================================================
 // Types
@@ -68,7 +69,7 @@ interface ReturnRequest {
   createdAt: string;
 }
 
-type TabType = "suppliers" | "routes" | "returns";
+type TabType = "proveedores" | "rutas" | "devoluciones";
 
 // ============================================================================
 // Status Badge
@@ -358,10 +359,16 @@ function ReturnsGrid({ returns }: { returns: ReturnRequest[] }) {
 // ============================================================================
 
 const tabs = [
-  { id: "suppliers", label: "Proveedores", icon: <Package size={16} /> },
-  { id: "routes", label: "Rutas", icon: <Truck size={16} /> },
-  { id: "returns", label: "Devoluciones", icon: <RotateCcw size={16} /> },
+  { id: "proveedores", label: "Proveedores", icon: <Package size={16} /> },
+  { id: "rutas", label: "Rutas", icon: <Truck size={16} /> },
+  { id: "devoluciones", label: "Devoluciones", icon: <RotateCcw size={16} /> },
 ];
+
+const TAB_TO_API_TYPE: Record<TabType, string> = {
+  proveedores: "suppliers",
+  rutas: "routes",
+  devoluciones: "returns",
+};
 
 const supplierStatusOptions = [
   { value: "all", label: "Todos los estados" },
@@ -387,7 +394,10 @@ const returnStatusOptions = [
 
 export default function LogisticsPage() {
   useDocumentTitle({ title: "Logística" });
-  const [activeTab, setActiveTab] = useState<TabType>("suppliers");
+  const [activeTab, setActiveTab] = useTabWithUrl("proveedores") as [
+    TabType,
+    (t: TabType) => void,
+  ];
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [routes, setRoutes] = useState<OptimizedRoute[]>([]);
   const [returns, setReturns] = useState<ReturnRequest[]>([]);
@@ -399,20 +409,21 @@ export default function LogisticsPage() {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/admin/logistics?type=${activeTab}&status=${statusFilter}&search=${searchTerm}`
+        `/api/admin/logistics?type=${TAB_TO_API_TYPE[activeTab]}&status=${statusFilter}&search=${searchTerm}`
       );
       if (!response.ok) throw new Error("Error");
       const result = await response.json();
       if (result.success) {
-        if (activeTab === "suppliers")
+        if (activeTab === "proveedores")
           setSuppliers(result.data.suppliers || []);
-        else if (activeTab === "routes") setRoutes(result.data.routes || []);
-        else if (activeTab === "returns") setReturns(result.data.returns || []);
+        else if (activeTab === "rutas") setRoutes(result.data.routes || []);
+        else if (activeTab === "devoluciones")
+          setReturns(result.data.returns || []);
       }
     } catch {
-      if (activeTab === "suppliers") setSuppliers([]);
-      else if (activeTab === "routes") setRoutes([]);
-      else if (activeTab === "returns") setReturns([]);
+      if (activeTab === "proveedores") setSuppliers([]);
+      else if (activeTab === "rutas") setRoutes([]);
+      else if (activeTab === "devoluciones") setReturns([]);
     } finally {
       setLoading(false);
     }
@@ -423,16 +434,16 @@ export default function LogisticsPage() {
   }, [fetchData]);
 
   const getAddLabel = () => {
-    if (activeTab === "suppliers") return "Nuevo Proveedor";
-    if (activeTab === "routes") return "Nueva Ruta";
-    if (activeTab === "returns") return "Nueva Solicitud";
+    if (activeTab === "proveedores") return "Nuevo Proveedor";
+    if (activeTab === "rutas") return "Nueva Ruta";
+    if (activeTab === "devoluciones") return "Nueva Solicitud";
     return "";
   };
 
   const getStatusOptions = () => {
-    if (activeTab === "suppliers") return supplierStatusOptions;
-    if (activeTab === "routes") return routeStatusOptions;
-    if (activeTab === "returns") return returnStatusOptions;
+    if (activeTab === "proveedores") return supplierStatusOptions;
+    if (activeTab === "rutas") return routeStatusOptions;
+    if (activeTab === "devoluciones") return returnStatusOptions;
     return [];
   };
 
@@ -464,15 +475,15 @@ export default function LogisticsPage() {
           onRefresh={fetchData}
         />
 
-        <TabPanel id="suppliers" activeTab={activeTab}>
+        <TabPanel id="proveedores" activeTab={activeTab}>
           <SuppliersGrid suppliers={suppliers} />
         </TabPanel>
 
-        <TabPanel id="routes" activeTab={activeTab}>
+        <TabPanel id="rutas" activeTab={activeTab}>
           <RoutesGrid routes={routes} />
         </TabPanel>
 
-        <TabPanel id="returns" activeTab={activeTab}>
+        <TabPanel id="devoluciones" activeTab={activeTab}>
           <ReturnsGrid returns={returns} />
         </TabPanel>
       </TabLayout>

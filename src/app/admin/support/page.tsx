@@ -30,6 +30,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDocumentTitle } from "@/hooks";
+import { useTabWithUrl } from "@/hooks/useTabWithUrl";
 
 // ============================================================================
 // Types
@@ -366,7 +367,10 @@ const chatStatusOptions = [
 export default function SupportPage() {
   const { show } = useToast();
   useDocumentTitle({ title: "Soporte" });
-  const [activeTab, setActiveTab] = useState<TabType>("tickets");
+  const [activeTab, setActiveTab] = useTabWithUrl("tickets") as [
+    TabType,
+    (t: TabType) => void,
+  ];
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [loading, setLoading] = useState(true);
