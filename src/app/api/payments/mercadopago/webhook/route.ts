@@ -53,6 +53,7 @@ async function notifyParties(
       subtotal: order.subtotal ? Number(order.subtotal) : undefined,
       discount: order.discount ? Number(order.discount) : undefined,
       shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
+      paymentMethod: order.paymentMethod ?? "mercadopago",
     };
 
     // Customer Email

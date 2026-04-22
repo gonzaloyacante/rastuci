@@ -65,22 +65,16 @@ export const POST = withAdminAuth(
       revalidatePath("/admin/orders");
       revalidatePath(`/admin/orders/${orderId}`);
 
-      // Notificar al cliente que el pago fue recibido y la orden está procesada
+      // Notificar al cliente que el pago fue aprobado y la orden está procesada
       if (order.customerEmail) {
         try {
-          await emailService.sendOrderConfirmation(
+          await emailService.sendTransferApproved(
             {
               id: order.id,
               customerName: order.customerName,
               customerEmail: order.customerEmail,
-              customerPhone: order.customerPhone ?? undefined,
-              customerAddress: order.customerAddress ?? undefined,
               total: Number(order.total),
-              subtotal: order.subtotal ? Number(order.subtotal) : undefined,
-              discount: order.discount ? Number(order.discount) : undefined,
-              shippingCost: order.shippingCost
-                ? Number(order.shippingCost)
-                : undefined,
+              shippingMethod: order.shippingMethod ?? undefined,
             },
             order.order_items.map((item) => ({
               name: item.products?.name ?? "Producto",
@@ -91,7 +85,7 @@ export const POST = withAdminAuth(
             }))
           );
         } catch (emailErr) {
-          logger.warn("[Admin] Failed to send payment confirmation email", {
+          logger.warn("[Admin] Failed to send transfer approved email", {
             emailErr,
             orderId,
           });

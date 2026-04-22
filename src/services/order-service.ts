@@ -225,6 +225,7 @@ export class OrderService {
         total,
         shippingCost,
         status: mappedStatus,
+        paymentMethod: "mercadopago",
         mpPaymentId,
         mpPreferenceId: preferenceId,
         mpStatus,

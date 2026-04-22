@@ -284,6 +284,8 @@ export interface OrderEmailSummary {
   discount?: number;
   shippingCost?: number;
   couponCode?: string;
+  paymentMethod?: string;
+  shippingMethod?: string;
 }
 
 export interface OrderEmailItem {

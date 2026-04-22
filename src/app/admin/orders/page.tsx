@@ -78,7 +78,7 @@ function toOrderCardData(order: Order): OrderCardData {
     shippingMethod: order.shippingMethod,
     caTrackingNumber: order.caTrackingNumber,
     paymentMethod:
-      order.paymentMethod || (order.mpPaymentId ? "mercadopago" : "cash"),
+      order.paymentMethod ?? (order.mpPaymentId ? "mercadopago" : "cash"),
   };
 }
 
