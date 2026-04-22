@@ -49,8 +49,9 @@ model orders {
   declaredValue         Decimal?             @db.Decimal(10, 2)
   estimatedDeliveryMax  String?
   estimatedDeliveryMin  String?
-  ocaOrderId            String?
-  ocaTrackingNumber     String?
+  // OCA (Andreani) legacy fields — kept as fallback if Correo Argentino fails
+  // ocaOrderId            String?
+  // ocaTrackingNumber     String?
   packageHeight         Int?
   packageLength         Int?
   packageWeight         Int?
@@ -98,7 +99,7 @@ model orders {
   @@index([createdAt])
   @@index([mpPaymentId])
   @@index([mpPreferenceId])
-  @@index([ocaTrackingNumber])
+  // @@index([ocaTrackingNumber]) -- OCA legacy, commented along with fields
   @@index([shippingProvinceCode])
   @@index([status])
   @@index([trackingNumber])
