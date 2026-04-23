@@ -27,7 +27,6 @@ import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
 import { SidebarLink } from "@/components/admin/SidebarLink";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { Button } from "@/components/ui/Button";
-// import { LanguageSelector } from "@/components/ui/LanguageSelector"; // DISABLED: hidden until i18n is complete
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ADMIN_NAV } from "@/config/routes";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -203,19 +202,6 @@ export default function AdminLayout({
                     isOpen ? "" : "flex flex-col items-center"
                   }`}
                 >
-                  {/* DISABLED: Language Selector - hidden until i18n is complete
-                  <div
-                    className={`mb-2 w-full ${isOpen ? "" : "flex justify-center"}`}
-                  >
-                    <LanguageSelector
-                      variant={isOpen ? "inline" : "dropdown"}
-                      showFlag={true}
-                      showName={isOpen}
-                      className={isOpen ? "" : "w-full"}
-                    />
-                  </div>
-                  */}
-
                   {/* Theme Toggle */}
                   <div
                     className={`mb-3 w-full ${isOpen ? "" : "flex justify-center"}`}

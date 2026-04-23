@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useCategories } from "@/hooks/useCategories";
+import { useProductFacets } from "@/hooks/useProductFacets";
 import { useProductSearch } from "@/hooks/useProductSearch";
 
 import { ProductsPageClientProps, SORT_OPTIONS } from "./productsUtils";
@@ -29,6 +30,7 @@ export default function ProductsPageClient({
   searchParams,
 }: ProductsPageClientProps) {
   const { categories, isLoading: categoriesLoading } = useCategories();
+  const { sizes: availableSizes, colors: availableColors } = useProductFacets();
   const [viewMode] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -47,6 +49,10 @@ export default function ProductsPageClient({
     handleCategoryChange,
     handleSortChange,
     handlePageChange,
+    handlePriceChange,
+    handleSizeToggle,
+    handleColorToggle,
+    handleRatingChange,
     clearFilters,
     buildFilterChips,
   } = useProductSearch(searchParams);
@@ -67,10 +73,29 @@ export default function ProductsPageClient({
       ...chip,
       onRemove: () => {
         if (chip.id === "search") setSearchInput("");
-        if (chip.id === "category") handleCategoryChange("");
+        else if (chip.id === "category") handleCategoryChange("");
+        else if (chip.id === "price") {
+          handlePriceChange("", "");
+        } else if (chip.id.startsWith("size-")) {
+          handleSizeToggle(chip.id.replace("size-", ""));
+        } else if (chip.id.startsWith("color-")) {
+          handleColorToggle(chip.id.replace("color-", ""));
+        } else if (chip.id === "rating") {
+          handleRatingChange(filters.minRating);
+        }
       },
     }));
-  }, [buildFilterChips, categoryOptions, setSearchInput, handleCategoryChange]);
+  }, [
+    buildFilterChips,
+    categoryOptions,
+    filters.minRating,
+    setSearchInput,
+    handleCategoryChange,
+    handlePriceChange,
+    handleSizeToggle,
+    handleColorToggle,
+    handleRatingChange,
+  ]);
 
   // Loading state
   if (categoriesLoading) {
@@ -164,6 +189,17 @@ export default function ProductsPageClient({
                 onSortChange={handleSortChange}
                 hasActiveFilters={hasActiveFilters}
                 onClearFilters={clearFilters}
+                minPrice={filters.minPrice}
+                maxPrice={filters.maxPrice}
+                onPriceChange={handlePriceChange}
+                selectedSizes={filters.sizes}
+                onSizeToggle={handleSizeToggle}
+                availableSizes={availableSizes}
+                selectedColors={filters.colors}
+                onColorToggle={handleColorToggle}
+                availableColors={availableColors}
+                minRating={filters.minRating}
+                onRatingChange={handleRatingChange}
               />
             </aside>
 
@@ -274,6 +310,17 @@ export default function ProductsPageClient({
           hasActiveFilters={hasActiveFilters}
           onClearFilters={clearFilters}
           onApply={() => handlePageChange(1)}
+          minPrice={filters.minPrice}
+          maxPrice={filters.maxPrice}
+          onPriceChange={handlePriceChange}
+          selectedSizes={filters.sizes}
+          onSizeToggle={handleSizeToggle}
+          availableSizes={availableSizes}
+          selectedColors={filters.colors}
+          onColorToggle={handleColorToggle}
+          availableColors={availableColors}
+          minRating={filters.minRating}
+          onRatingChange={handleRatingChange}
         />
       </div>
     </div>

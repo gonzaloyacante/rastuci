@@ -38,11 +38,12 @@ const PAYMENT_META: Record<
     color: "text-sky-600",
   },
   transfer: {
-    label: "Transferencia",
+    label: "Transferencia Bancaria",
     Icon: Building2,
     color: "text-violet-600",
   },
   cash: { label: "Efectivo", Icon: Banknote, color: "text-amber-600" },
+  unknown: { label: "Sin registrar", Icon: CreditCard, color: "text-gray-400" },
 };
 
 function getFlow(paymentMethod?: string | null): Step[] {
@@ -67,8 +68,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
   const steps = getFlow(order.paymentMethod);
   const activeIdx = getActiveIndex(steps, order.status);
   const pm =
-    PAYMENT_META[order.paymentMethod ?? "mercadopago"] ??
-    PAYMENT_META.mercadopago;
+    PAYMENT_META[order.paymentMethod ?? "unknown"] ?? PAYMENT_META.unknown;
 
   return (
     <div className="rounded-xl border border-border bg-surface-secondary px-4 py-3">

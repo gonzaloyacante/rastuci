@@ -1,13 +1,21 @@
 "use client";
 
 import { Bell, BellOff, Check, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useToast } from "@/components/ui/Toast";
-import { useTranslation } from "@/lib/i18n";
+import { useNotificationManager } from "@/hooks/useNotificationManager";
 import { useNotifications } from "@/lib/pwa";
+
+const PREFERENCE_LABELS: Record<string, string> = {
+  orderUpdates: "Actualizaciones de pedidos",
+  promotions: "Promociones",
+  newProducts: "Nuevos productos",
+  priceDrops: "Bajas de precio",
+  stockAlerts: "Alertas de stock",
+  newsletter: "Novedades",
+};
 
 interface NotificationManagerProps {
   className?: string;
@@ -16,102 +24,15 @@ interface NotificationManagerProps {
 export function NotificationManager({
   className = "",
 }: NotificationManagerProps) {
-  const { permission, requestPermission, showNotification } =
-    useNotifications();
-  const { t } = useTranslation();
-  const { show } = useToast();
+  const {
+    permission,
+    preferences,
+    permissionStatus,
+    handleRequestPermission,
+    handleTestNotification,
+    savePreferences,
+  } = useNotificationManager();
   const [isOpen, setIsOpen] = useState(false);
-  const [preferences, setPreferences] = useState({
-    orderUpdates: true,
-    promotions: false,
-    newProducts: true,
-    priceDrops: true,
-    stockAlerts: true,
-    newsletter: false,
-  });
-
-  useEffect(() => {
-    // Load preferences from localStorage
-    try {
-      const saved = localStorage.getItem("notification-preferences");
-      if (saved) {
-        setPreferences(JSON.parse(saved));
-      }
-    } catch {
-      // noop — use defaults if stored preferences are corrupted
-    }
-  }, []);
-
-  const savePreferences = (newPrefs: typeof preferences) => {
-    setPreferences(newPrefs);
-    try {
-      localStorage.setItem(
-        "notification-preferences",
-        JSON.stringify(newPrefs)
-      );
-    } catch {
-      // noop — QuotaExceededError possible in iOS private mode
-    }
-  };
-
-  const handleRequestPermission = async () => {
-    const result = await requestPermission();
-    if (result === "granted") {
-      show({ type: "success", message: t("notifications.permission.granted") });
-      // Send welcome notification
-      await showNotification({
-        title: t("notifications.welcome.title"),
-        body: t("notifications.welcome.body"),
-        tag: "welcome",
-      });
-    } else {
-      show({ type: "error", message: t("notifications.permission.denied") });
-    }
-  };
-
-  const handleTestNotification = async () => {
-    if (permission !== "granted") {
-      show({ type: "error", message: t("notifications.permission.required") });
-      return;
-    }
-
-    await showNotification({
-      title: t("notifications.test.title"),
-      body: t("notifications.test.body"),
-      tag: "test",
-      actions: [
-        {
-          action: "view",
-          title: t("common.view"),
-        },
-        {
-          action: "dismiss",
-          title: t("common.dismiss"),
-        },
-      ],
-    });
-
-    show({ type: "success", message: t("notifications.test.sent") });
-  };
-
-  const getPermissionStatus = () => {
-    switch (permission) {
-      case "granted":
-        return {
-          color: "success",
-          text: t("notifications.permission.granted"),
-        };
-      case "denied":
-        return { color: "error", text: t("notifications.permission.denied") };
-      default:
-        return {
-          color: "warning",
-          text: t("notifications.permission.default"),
-        };
-    }
-  };
-
-  const status = getPermissionStatus();
 
   return (
     <div className={`relative ${className}`}>
@@ -125,14 +46,18 @@ export function NotificationManager({
         ) : (
           <BellOff className="w-4 h-4" />
         )}
-        <span className="hidden sm:inline">{t("notifications.title")}</span>
+        <span className="hidden sm:inline">Notificaciones</span>
         <Badge
           variant={
-            status.color as "default" | "secondary" | "destructive" | "outline"
+            permissionStatus.color as
+              | "default"
+              | "secondary"
+              | "destructive"
+              | "outline"
           }
           className="ml-1"
         >
-          {status.text}
+          {permissionStatus.text}
         </Badge>
       </Button>
 
@@ -140,9 +65,7 @@ export function NotificationManager({
         <div className="absolute top-full right-0 mt-2 w-80 surface border border-muted rounded-lg shadow-lg z-50">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">
-                {t("notifications.settings.title")}
-              </h3>
+              <h3 className="font-semibold">Configuración de Notificaciones</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -152,28 +75,25 @@ export function NotificationManager({
               </Button>
             </div>
 
-            {/* Permission Status */}
             <div className="mb-4 p-3 rounded-lg border border-muted">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">
-                  {t("notifications.permission.title")}
-                </span>
+                <span className="font-medium">Permisos</span>
                 <Badge
                   variant={
-                    status.color as
+                    permissionStatus.color as
                       | "default"
                       | "secondary"
                       | "destructive"
                       | "outline"
                   }
                 >
-                  {status.text}
+                  {permissionStatus.text}
                 </Badge>
               </div>
 
               {permission === "default" && (
                 <Button onClick={handleRequestPermission} className="w-full">
-                  {t("notifications.permission.request")}
+                  Activar notificaciones
                 </Button>
               )}
 
@@ -183,43 +103,38 @@ export function NotificationManager({
                   onClick={handleTestNotification}
                   className="w-full"
                 >
-                  {t("notifications.test.button")}
+                  Enviar prueba
                 </Button>
               )}
 
               {permission === "denied" && (
                 <p className="text-sm text-muted">
-                  {t("notifications.permission.deniedHelp")}
+                  Para activarlas, cambiá los permisos desde la configuración de
+                  tu navegador
                 </p>
               )}
             </div>
 
-            {/* Notification Preferences */}
             {permission === "granted" && (
               <div className="space-y-3">
-                <h4 className="font-medium">
-                  {t("notifications.preferences.title")}
-                </h4>
-
+                <h4 className="font-medium">Mis preferencias</h4>
                 {Object.entries(preferences).map(([key, enabled]) => (
                   <div key={key} className="flex items-center justify-between">
                     <span className="text-sm">
-                      {t(`notifications.types.${key}`)}
+                      {PREFERENCE_LABELS[key] ?? key}
                     </span>
                     <button
                       onClick={() =>
                         savePreferences({ ...preferences, [key]: !enabled })
                       }
-                      className={`
-                        w-10 h-6 rounded-full transition-colors relative
-                        ${enabled ? "bg-primary" : "bg-muted"}
-                      `}
+                      className={`w-10 h-6 rounded-full transition-colors relative ${
+                        enabled ? "bg-primary" : "bg-muted"
+                      }`}
                     >
                       <div
-                        className={`
-                        w-4 h-4 bg-white rounded-full absolute top-1 transition-transform
-                        ${enabled ? "translate-x-5" : "translate-x-1"}
-                      `}
+                        className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
+                          enabled ? "translate-x-5" : "translate-x-1"
+                        }`}
                       />
                     </button>
                   </div>
@@ -230,7 +145,6 @@ export function NotificationManager({
         </div>
       )}
 
-      {/* Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40"
@@ -239,9 +153,7 @@ export function NotificationManager({
           aria-label="Cerrar notificaciones"
           onClick={() => setIsOpen(false)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              setIsOpen(false);
-            }
+            if (e.key === "Enter" || e.key === " ") setIsOpen(false);
           }}
         />
       )}
@@ -249,14 +161,10 @@ export function NotificationManager({
   );
 }
 
-// Notification permission prompt
 export function NotificationPrompt({ onDismiss }: { onDismiss?: () => void }) {
   const { permission, requestPermission } = useNotifications();
-  const { t } = useTranslation();
 
-  if (permission !== "default") {
-    return null;
-  }
+  if (permission !== "default") return null;
 
   const handleAllow = async () => {
     await requestPermission();
@@ -267,17 +175,18 @@ export function NotificationPrompt({ onDismiss }: { onDismiss?: () => void }) {
     <div className="surface border border-muted rounded-lg p-4 flex items-start gap-3">
       <Bell className="w-5 h-5 text-primary mt-0.5" />
       <div className="flex-1">
-        <h3 className="font-medium mb-1">{t("notifications.prompt.title")}</h3>
+        <h3 className="font-medium mb-1">¿Querés recibir notificaciones?</h3>
         <p className="text-sm text-muted mb-3">
-          {t("notifications.prompt.description")}
+          Activá las notificaciones para recibir actualizaciones de tus pedidos
+          y ofertas especiales
         </p>
         <div className="flex gap-2">
           <Button size="sm" onClick={handleAllow}>
             <Check className="w-3 h-3 mr-1" />
-            {t("notifications.prompt.allow")}
+            Activar
           </Button>
           <Button variant="outline" size="sm" onClick={onDismiss}>
-            {t("notifications.prompt.later")}
+            Ahora no
           </Button>
         </div>
       </div>

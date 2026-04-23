@@ -42,6 +42,13 @@ export async function GET(
       search: searchParams.get("search") ?? undefined,
       minPrice: searchParams.get("minPrice") ?? undefined,
       maxPrice: searchParams.get("maxPrice") ?? undefined,
+      sizes: searchParams.getAll("sizes").length
+        ? searchParams.getAll("sizes")
+        : undefined,
+      colors: searchParams.getAll("colors").length
+        ? searchParams.getAll("colors")
+        : undefined,
+      minRating: searchParams.get("minRating") ?? undefined,
       onSale: searchParams.get("onSale") ?? undefined,
       page: searchParams.get("page") ?? undefined,
       limit: searchParams.get("limit") ?? undefined,
@@ -77,6 +84,32 @@ export async function GET(
       if (filters.maxPrice) {
         (where.price as Record<string, number>).lte = filters.maxPrice;
       }
+    }
+
+    if (filters.sizes?.length) {
+      where.product_variants = {
+        some: { size: { in: filters.sizes } },
+      };
+    }
+
+    if (filters.colors?.length) {
+      const colorFilter = {
+        some: { color: { in: filters.colors, mode: "insensitive" as const } },
+      };
+      if (where.product_variants) {
+        // Merge with existing size filter using AND on the relation
+        where.AND = [
+          { product_variants: where.product_variants },
+          { product_variants: colorFilter },
+        ];
+        delete where.product_variants;
+      } else {
+        where.product_variants = colorFilter;
+      }
+    }
+
+    if (filters.minRating) {
+      where.rating = { gte: filters.minRating };
     }
 
     const session = await getServerSession(authOptions);

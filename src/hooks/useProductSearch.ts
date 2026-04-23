@@ -16,6 +16,11 @@ export interface ProductFilters {
   categoryId: string;
   sortBy: string;
   sortOrder: "asc" | "desc";
+  minPrice: string;
+  maxPrice: string;
+  sizes: string[];
+  colors: string[];
+  minRating: number;
   page: number;
 }
 
@@ -41,12 +46,30 @@ interface InitialSearchParams {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   pagina?: string;
+  minPrecio?: string;
+  maxPrecio?: string;
+  talles?: string | string[];
+  colores?: string | string[];
+  minRating?: string;
 }
 
 interface CategoryOption {
   value: string;
   label: string;
 }
+
+const EMPTY_FILTERS: ProductFilters = {
+  search: "",
+  categoryId: "",
+  sortBy: "createdAt",
+  sortOrder: "desc",
+  minPrice: "",
+  maxPrice: "",
+  sizes: [],
+  colors: [],
+  minRating: 0,
+  page: 1,
+};
 
 // ---------------------------------------------------------------------------
 // URL Builders
@@ -60,6 +83,11 @@ function buildApiUrl(filters: ProductFilters): string {
   qs.set("sortOrder", filters.sortOrder);
   if (filters.search) qs.set("search", filters.search);
   if (filters.categoryId) qs.set("categoryId", filters.categoryId);
+  if (filters.minPrice) qs.set("minPrice", filters.minPrice);
+  if (filters.maxPrice) qs.set("maxPrice", filters.maxPrice);
+  filters.sizes.forEach((s) => qs.append("sizes", s));
+  filters.colors.forEach((c) => qs.append("colors", c));
+  if (filters.minRating > 0) qs.set("minRating", filters.minRating.toString());
   return `/api/products?${qs.toString()}`;
 }
 
@@ -69,6 +97,11 @@ function buildPageUrl(filters: ProductFilters): string {
   if (filters.categoryId) qs.set("categoria", filters.categoryId);
   if (filters.sortBy !== "createdAt") qs.set("sortBy", filters.sortBy);
   if (filters.sortOrder !== "desc") qs.set("sortOrder", filters.sortOrder);
+  if (filters.minPrice) qs.set("minPrecio", filters.minPrice);
+  if (filters.maxPrice) qs.set("maxPrecio", filters.maxPrice);
+  filters.sizes.forEach((s) => qs.append("talles", s));
+  filters.colors.forEach((c) => qs.append("colores", c));
+  if (filters.minRating > 0) qs.set("minRating", filters.minRating.toString());
   if (filters.page > 1) qs.set("pagina", filters.page.toString());
   return qs.toString() ? `/productos?${qs.toString()}` : "/productos";
 }
@@ -81,17 +114,24 @@ export function useProductSearch(initialParams: InitialSearchParams = {}) {
   const router = useRouter();
   const isPageNavigationRef = useRef(false);
 
-  // State derived from URL search params
+  const normArray = (v?: string | string[]): string[] => {
+    if (!v) return [];
+    return Array.isArray(v) ? v : [v];
+  };
+
   const [filters, setFilters] = useState<ProductFilters>({
     search: initialParams.buscar || "",
     categoryId: initialParams.categoria || "",
     sortBy: initialParams.sortBy || "createdAt",
     sortOrder: initialParams.sortOrder || "desc",
+    minPrice: initialParams.minPrecio || "",
+    maxPrice: initialParams.maxPrecio || "",
+    sizes: normArray(initialParams.talles),
+    colors: normArray(initialParams.colores),
+    minRating: Number(initialParams.minRating) || 0,
     page: Number(initialParams.pagina) || 1,
   });
 
-  // Debounced search: the filter uses the raw input for the input field,
-  // but the API call uses the debounced value.
   const [searchInput, setSearchInput] = useState(filters.search);
   const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
 
@@ -100,7 +140,6 @@ export function useProductSearch(initialParams: InitialSearchParams = {}) {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // When debounced search changes, update filters
   useEffect(() => {
     setFilters((prev) => {
       if (prev.search === debouncedSearch) return prev;
@@ -108,10 +147,8 @@ export function useProductSearch(initialParams: InitialSearchParams = {}) {
     });
   }, [debouncedSearch]);
 
-  // Compute the API URL from current filters
   const apiUrl = useMemo(() => buildApiUrl(filters), [filters]);
 
-  // SWR data fetching
   const { data, isLoading, error } = useSWR<ProductsApiResponse>(
     apiUrl,
     fetcher,
@@ -125,13 +162,11 @@ export function useProductSearch(initialParams: InitialSearchParams = {}) {
   const totalProducts = data?.data?.total || 0;
   const totalPages = data?.data?.totalPages || 1;
 
-  // URL sync — update browser URL when filters change
   useEffect(() => {
     const newUrl = buildPageUrl(filters);
     router.replace(newUrl, { scroll: false });
   }, [filters, router]);
 
-  // Scroll to top after page navigation completes
   useEffect(() => {
     if (!isPageNavigationRef.current) return;
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -170,42 +205,107 @@ export function useProductSearch(initialParams: InitialSearchParams = {}) {
     setFilters((prev) => ({ ...prev, page: 1 }));
   }, []);
 
-  const clearFilters = useCallback(() => {
-    setSearchInput("");
-    setDebouncedSearch("");
-    setFilters({
-      search: "",
-      categoryId: "",
-      sortBy: "createdAt",
-      sortOrder: "desc",
-      page: 1,
+  const handlePriceChange = useCallback(
+    (minPrice: string, maxPrice: string) => {
+      setFilters((prev) => ({ ...prev, minPrice, maxPrice, page: 1 }));
+    },
+    []
+  );
+
+  const handleSizeToggle = useCallback((size: string) => {
+    setFilters((prev) => {
+      const exists = prev.sizes.includes(size);
+      return {
+        ...prev,
+        sizes: exists
+          ? prev.sizes.filter((s) => s !== size)
+          : [...prev.sizes, size],
+        page: 1,
+      };
     });
   }, []);
 
-  // Computed values
-  const hasActiveFilters = Boolean(debouncedSearch || filters.categoryId);
+  const handleColorToggle = useCallback((color: string) => {
+    setFilters((prev) => {
+      const exists = prev.colors.includes(color);
+      return {
+        ...prev,
+        colors: exists
+          ? prev.colors.filter((c) => c !== color)
+          : [...prev.colors, color],
+        page: 1,
+      };
+    });
+  }, []);
+
+  const handleRatingChange = useCallback((minRating: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      minRating: prev.minRating === minRating ? 0 : minRating,
+      page: 1,
+    }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setSearchInput("");
+    setDebouncedSearch("");
+    setFilters({ ...EMPTY_FILTERS });
+  }, []);
+
+  const hasActiveFilters = Boolean(
+    debouncedSearch ||
+    filters.categoryId ||
+    filters.minPrice ||
+    filters.maxPrice ||
+    filters.sizes.length ||
+    filters.colors.length ||
+    filters.minRating > 0
+  );
+
   const sortValue = `${filters.sortBy}-${filters.sortOrder}`;
 
-  // Filter chips (label only — the page maps onRemove per chip)
   const buildFilterChips = useCallback(
     (categories: CategoryOption[]): FilterChip[] => {
       const chips: FilterChip[] = [];
       if (debouncedSearch) {
-        chips.push({
-          id: "search",
-          label: `Búsqueda: "${debouncedSearch}"`,
-        });
+        chips.push({ id: "search", label: `Búsqueda: "${debouncedSearch}"` });
       }
       if (filters.categoryId) {
-        const categoryName =
+        const name =
           categories.find((c) => c.value === filters.categoryId)?.label || "";
-        if (categoryName) {
-          chips.push({ id: "category", label: categoryName });
-        }
+        if (name) chips.push({ id: "category", label: name });
+      }
+      if (filters.minPrice && filters.maxPrice) {
+        chips.push({
+          id: "price",
+          label: `$${filters.minPrice} – $${filters.maxPrice}`,
+        });
+      } else if (filters.minPrice) {
+        chips.push({ id: "price", label: `Desde $${filters.minPrice}` });
+      } else if (filters.maxPrice) {
+        chips.push({ id: "price", label: `Hasta $${filters.maxPrice}` });
+      }
+      filters.sizes.forEach((s) =>
+        chips.push({ id: `size-${s}`, label: `Talle ${s}` })
+      );
+      filters.colors.forEach((c) => chips.push({ id: `color-${c}`, label: c }));
+      if (filters.minRating > 0) {
+        chips.push({
+          id: "rating",
+          label: `${filters.minRating}★ o más`,
+        });
       }
       return chips;
     },
-    [debouncedSearch, filters.categoryId]
+    [
+      debouncedSearch,
+      filters.categoryId,
+      filters.minPrice,
+      filters.maxPrice,
+      filters.sizes,
+      filters.colors,
+      filters.minRating,
+    ]
   );
 
   return {
@@ -228,6 +328,10 @@ export function useProductSearch(initialParams: InitialSearchParams = {}) {
     handleCategoryChange,
     handleSortChange,
     handlePageChange,
+    handlePriceChange,
+    handleSizeToggle,
+    handleColorToggle,
+    handleRatingChange,
     clearFilters,
 
     // Utilities

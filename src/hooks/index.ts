@@ -13,6 +13,7 @@ export { useOrderDetail } from "./useOrderDetail";
 export { useOrderExport } from "./useOrderExport";
 export { useOrders } from "./useOrders";
 export { usePendingOrders } from "./usePendingOrders";
+export { useProductFacets } from "./useProductFacets";
 export { useProduct } from "./useProducts";
 export { useProductStats } from "./useProductStats";
 export { useUsers } from "./useUsers";
@@ -26,4 +27,7 @@ export { useSession } from "next-auth/react";
 export { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Tipos
+export { useNotificationManager } from "./useNotificationManager";
+export { useOfflineIndicator } from "./useOfflineIndicator";
+export { usePWAInstall } from "./usePWAInstall";
 export type { Category, Order, Product, User } from "@/types";

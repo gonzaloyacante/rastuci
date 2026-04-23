@@ -64,6 +64,7 @@ export class OrderService {
           mpPaymentId: data.mpPaymentId,
           mpStatus: data.mpStatus,
           status: data.mappedStatus,
+          ...(data.paymentMethod ? { paymentMethod: data.paymentMethod } : {}),
           updatedAt: new Date(),
         },
       });

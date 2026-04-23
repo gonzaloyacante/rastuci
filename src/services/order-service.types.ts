@@ -24,6 +24,7 @@ export type OrderUpdateData = {
   mpPaymentId: string;
   mpStatus: string;
   mappedStatus: OrderStatus;
+  paymentMethod?: string;
 };
 
 export type ShippingFields = {

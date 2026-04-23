@@ -77,8 +77,7 @@ function toOrderCardData(order: Order): OrderCardData {
     itemsCount: order.items.length,
     shippingMethod: order.shippingMethod,
     caTrackingNumber: order.caTrackingNumber,
-    paymentMethod:
-      order.paymentMethod ?? (order.mpPaymentId ? "mercadopago" : "cash"),
+    paymentMethod: order.paymentMethod ?? "unknown",
   };
 }
 
@@ -219,7 +218,7 @@ export default function OrdersPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {orders.map((order) => (
               <OrderCard
                 key={order.id}

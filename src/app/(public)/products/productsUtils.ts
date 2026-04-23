@@ -11,6 +11,11 @@ export interface ProductsPageClientProps {
     pagina?: string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
+    minPrecio?: string;
+    maxPrecio?: string;
+    talles?: string | string[];
+    colores?: string | string[];
+    minRating?: string;
   };
 }
 

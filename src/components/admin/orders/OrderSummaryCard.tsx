@@ -39,6 +39,11 @@ const PAYMENT_INFO: Record<
     Icon: Banknote,
     pill: "bg-amber-50 text-amber-700 border border-amber-200",
   },
+  unknown: {
+    label: "Sin registrar",
+    Icon: CreditCard,
+    pill: "bg-gray-50 text-gray-500 border border-gray-200",
+  },
 };
 
 // A compact data-pair component for the general info grid
@@ -133,7 +138,8 @@ const getDetailedStatus = (order: OrderSummaryCardProps["order"]) => {
 
 export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
   const status = getDetailedStatus(order);
-  const pm = PAYMENT_INFO[order.paymentMethod ?? "cash"] ?? PAYMENT_INFO.cash;
+  const pm =
+    PAYMENT_INFO[order.paymentMethod ?? "unknown"] ?? PAYMENT_INFO.unknown;
 
   const [agencyDetails, setAgencyDetails] = useState<Agency | null>(null);
 

@@ -95,7 +95,7 @@ export default function ProductForm({
     handleCancel,
     handleFormError,
     onSubmit,
-  } = useProductForm({ initialData, categories });
+  } = useProductForm({ initialData });
 
   return (
     <div className="min-h-screen surface py-8 px-4 relative">

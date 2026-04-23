@@ -1,15 +1,18 @@
 "use client";
 
-import { Check, Grid, List, ShoppingCart } from "lucide-react";
-import { ReactNode } from "react";
+import { Check, Grid, List, ShoppingCart, Star } from "lucide-react";
+import { ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import EmptyState from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { Pagination as UIPagination } from "@/components/ui/Pagination";
 import { ProductCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
+import { getColorHex, isLightColor } from "@/utils/colors";
 
 // ==============================================================================
 // EmptyProductsState
+// Usa el EmptyState compartido para evitar duplicación
 // ==============================================================================
 interface EmptyProductsStateProps {
   hasFilters: boolean;
@@ -21,24 +24,17 @@ export function EmptyProductsState({
   onClearFilters,
 }: EmptyProductsStateProps) {
   return (
-    <div className="text-center py-16">
-      <div className="w-24 h-24 mx-auto mb-6 surface rounded-full flex items-center justify-center">
-        <ShoppingCart className="w-12 h-12 muted" />
-      </div>
-      <h3 className="text-xl font-medium text-primary mb-2">
-        No se encontraron productos
-      </h3>
-      <p className="muted mb-6 max-w-md mx-auto">
-        {hasFilters
+    <EmptyState
+      icon={ShoppingCart}
+      title="No se encontraron productos"
+      description={
+        hasFilters
           ? "Intenta ajustar los filtros de búsqueda o explorar otras categorías"
-          : "No hay productos disponibles en este momento"}
-      </p>
-      {hasFilters && (
-        <Button onClick={onClearFilters} variant="hero">
-          Ver todos los productos
-        </Button>
-      )}
-    </div>
+          : "No hay productos disponibles en este momento"
+      }
+      actionText={hasFilters ? "Ver todos los productos" : undefined}
+      onAction={hasFilters ? onClearFilters : undefined}
+    />
   );
 }
 
@@ -217,6 +213,18 @@ interface FilterSidebarProps {
   onSortChange: (value: string) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  // New filter props
+  minPrice: string;
+  maxPrice: string;
+  onPriceChange: (minPrice: string, maxPrice: string) => void;
+  selectedSizes: string[];
+  onSizeToggle: (size: string) => void;
+  availableSizes: string[];
+  selectedColors: string[];
+  onColorToggle: (color: string) => void;
+  availableColors: string[];
+  minRating: number;
+  onRatingChange: (rating: number) => void;
 }
 
 export function FilterSidebar({
@@ -231,13 +239,31 @@ export function FilterSidebar({
   onSortChange,
   hasActiveFilters,
   onClearFilters,
+  minPrice,
+  maxPrice,
+  onPriceChange,
+  selectedSizes,
+  onSizeToggle,
+  availableSizes,
+  selectedColors,
+  onColorToggle,
+  availableColors,
+  minRating,
+  onRatingChange,
 }: FilterSidebarProps) {
+  const [localMin, setLocalMin] = useState(minPrice ?? "");
+  const [localMax, setLocalMax] = useState(maxPrice ?? "");
+
+  const applyPrice = () => {
+    onPriceChange(localMin, localMax);
+  };
+
   return (
-    <div className="surface border border-muted rounded-lg p-6">
-      <h2 className="text-lg font-semibold text-primary mb-6">Filtros</h2>
+    <div className="surface border border-muted rounded-lg p-6 space-y-6">
+      <h2 className="text-lg font-semibold text-primary">Filtros</h2>
 
       {/* Búsqueda */}
-      <div className="mb-6">
+      <div>
         <label className="block text-sm font-medium text-primary mb-2">
           Buscar productos
         </label>
@@ -250,7 +276,7 @@ export function FilterSidebar({
       </div>
 
       {/* Categorías */}
-      <div className="mb-6">
+      <div>
         <label className="block text-sm font-medium text-primary mb-2">
           Categoría
         </label>
@@ -261,8 +287,122 @@ export function FilterSidebar({
         />
       </div>
 
+      {/* Rango de precio */}
+      <div>
+        <label className="block text-sm font-medium text-primary mb-2">
+          Precio
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={0}
+            placeholder="Mín"
+            value={localMin}
+            onChange={(e) => setLocalMin(e.target.value)}
+            onBlur={applyPrice}
+            onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-muted surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-muted"
+          />
+          <span className="text-muted text-sm shrink-0">—</span>
+          <input
+            type="number"
+            min={0}
+            placeholder="Máx"
+            value={localMax}
+            onChange={(e) => setLocalMax(e.target.value)}
+            onBlur={applyPrice}
+            onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-muted surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-muted"
+          />
+        </div>
+      </div>
+
+      {/* Talles */}
+      {availableSizes.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-primary mb-2">
+            Talle
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {availableSizes.map((size) => {
+              const isActive = selectedSizes.includes(size);
+              return (
+                <button
+                  key={size}
+                  onClick={() => onSizeToggle(size)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${
+                    isActive
+                      ? "bg-primary text-white border-primary"
+                      : "surface text-primary border-muted hover:border-primary"
+                  }`}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Colores */}
+      {availableColors.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-primary mb-2">
+            Color
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {availableColors.map((color) => {
+              const hex = getColorHex(color);
+              const isLight = isLightColor(hex);
+              const isActive = selectedColors.includes(color);
+              return (
+                <button
+                  key={color}
+                  onClick={() => onColorToggle(color)}
+                  title={color.charAt(0).toUpperCase() + color.slice(1)}
+                  className={`w-7 h-7 rounded-full border-2 transition-all duration-150 ${
+                    isActive
+                      ? "ring-2 ring-primary ring-offset-2 border-transparent"
+                      : isLight
+                        ? "border-muted hover:border-primary"
+                        : "border-transparent hover:border-primary"
+                  }`}
+                  style={{ backgroundColor: hex }}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Rating */}
+      <div>
+        <label className="block text-sm font-medium text-primary mb-2">
+          Calificación mínima
+        </label>
+        <div className="flex gap-1.5">
+          {[2, 3, 4, 5].map((stars) => {
+            const isActive = minRating === stars;
+            return (
+              <button
+                key={stars}
+                onClick={() => onRatingChange(stars)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${
+                  isActive
+                    ? "bg-primary text-white border-primary"
+                    : "surface text-primary border-muted hover:border-primary"
+                }`}
+              >
+                <Star className="w-3 h-3 fill-current" />
+                {stars}+
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Ordenar */}
-      <div className="mb-6">
+      <div>
         <label className="block text-sm font-medium text-primary mb-2">
           Ordenar por
         </label>
@@ -275,7 +415,7 @@ export function FilterSidebar({
 
       {/* Limpiar filtros */}
       {hasActiveFilters && (
-        <div className="pt-4 border-t border-muted">
+        <div className="pt-2 border-t border-muted">
           <Button onClick={onClearFilters} variant="outline" fullWidth>
             Limpiar todos los filtros
           </Button>

@@ -141,6 +141,7 @@ async function resolveOrderFromPayment(
       mpPaymentId,
       mpStatus,
       mappedStatus,
+      paymentMethod: "mercadopago",
     });
     if (result) return result;
   }
@@ -153,6 +154,7 @@ async function resolveOrderFromPayment(
         mpPaymentId,
         mpStatus,
         mappedStatus,
+        paymentMethod: "mercadopago",
       });
       if (result) return result;
     }
