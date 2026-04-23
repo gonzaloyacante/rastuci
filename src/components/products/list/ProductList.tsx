@@ -222,7 +222,7 @@ export default function ProductList() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pr-10"
             />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-content-tertiary w-4 h-4" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
           </div>
 
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -348,7 +348,7 @@ export default function ProductList() {
 
           {/* End of list message */}
           {!hasMore && products.length > 0 && (
-            <div className="text-center py-8 text-content-secondary">
+            <div className="text-center py-8 text-muted-foreground">
               <p>Has visto todos los {total} productos</p>
             </div>
           )}

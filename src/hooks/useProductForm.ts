@@ -21,7 +21,6 @@ import { validateProductData } from "@/utils/validateProductData";
 
 interface UseProductFormProps {
   initialData?: Product | null;
-  categories: ProductFormCategory[];
 }
 
 type SetState<T> = React.Dispatch<React.SetStateAction<T>>;

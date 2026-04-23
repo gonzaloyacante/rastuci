@@ -64,7 +64,7 @@ export default function MetricasPage() {
           <p className="text-error font-medium mb-2">
             Error al cargar métricas
           </p>
-          <p className="text-content-secondary text-sm mb-4">
+          <p className="text-muted-foreground text-sm mb-4">
             {error || "No hay datos"}
           </p>
           <Button onClick={fetchData} variant="outline" size="sm">
@@ -159,13 +159,13 @@ export default function MetricasPage() {
           <div className="p-3 surface-secondary rounded">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-content-secondary">Stock Bajo</p>
+                <p className="text-sm text-muted-foreground">Stock Bajo</p>
                 <p className="text-xl font-bold text-warning">
                   {dashboard.productMetrics.lowStockProducts}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-content-secondary">Sin Stock</p>
+                <p className="text-sm text-muted-foreground">Sin Stock</p>
                 <p className="text-xl font-bold text-error">
                   {dashboard.productMetrics.outOfStockProducts}
                 </p>
@@ -199,7 +199,7 @@ export default function MetricasPage() {
       </div>
 
       {/* Footer */}
-      <div className="text-center text-xs text-content-tertiary py-4">
+      <div className="text-center text-xs text-muted-foreground py-4">
         <p>📊 Datos en tiempo real desde la base de datos</p>
         <p className="mt-1">
           Período: {periodLabels[period]} • Actualizado:{" "}

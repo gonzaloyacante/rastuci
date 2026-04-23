@@ -265,7 +265,7 @@ function ShippingCostLabel({
     );
   }
   return (
-    <span className="text-xs sm:text-sm text-content-secondary font-medium text-right max-w-[50%]">
+    <span className="text-xs sm:text-sm text-muted-foreground font-medium text-right max-w-[50%]">
       {shippingSettings.shippingCostDescription ??
         "Se calculará en el checkout"}
     </span>
@@ -320,13 +320,11 @@ export const OrderSummary = ({
       </h2>
       <div className="space-y-3 mb-4 sm:mb-6">
         <div className="flex justify-between text-sm sm:text-base">
-          <span className="text-content-secondary">
-            Productos ({itemCount})
-          </span>
+          <span className="text-muted-foreground">Productos ({itemCount})</span>
           <span className="font-semibold">{formatPriceARS(total)}</span>
         </div>
         <div className="flex justify-between text-sm sm:text-base">
-          <span className="text-content-secondary">
+          <span className="text-muted-foreground">
             {shippingSettings.shippingLabel ?? "Envío"}
           </span>
           <ShippingCostLabel

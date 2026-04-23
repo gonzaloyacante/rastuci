@@ -1,383 +1,219 @@
 "use client";
 
-import { Package, Truck as TruckIcon } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  Eye,
+  MapPin,
+  Package,
+  Phone,
+  Truck as TruckIcon,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
-import React from "react";
 
 import { Button } from "@/components/ui/Button";
-import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useToast } from "@/components/ui/Toast";
+import {
+  formatOrderDate,
+  type OrderCardData,
+  useOrderCard,
+} from "@/hooks/useOrderCard";
+import { cn } from "@/lib/utils";
 import { formatCurrency as defaultFormatCurrency } from "@/utils/formatters";
 
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { shippingMethodLabels } from "./ShippingDisplay";
 
-export interface OrderCardData {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  customerAddress?: string | null;
-  status: string;
-  total: number;
-  createdAt: string;
-  itemsCount: number;
-  shippingMethod?: string;
-  caTrackingNumber?: string;
-  relativeTime?: string;
-  paymentMethod?: string;
-}
+export type { OrderCardData };
 
 interface OrderCardProps {
   order: OrderCardData;
-  formatDate?: (date: string) => string;
   formatCurrency?: (value: number) => string;
   onStatusChange?: () => void;
 }
 
-const defaultFormatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("es-AR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-interface OrderActionOptions {
-  url: string;
-  method: "PATCH" | "POST";
-  title: string;
-  message: string;
-  confirmText: string;
-  successMessage: string;
-}
-
-async function executeOrderAction(
-  options: OrderActionOptions,
-  deps: {
-    confirm: ReturnType<typeof useConfirmDialog>["confirm"];
-    show: ReturnType<typeof useToast>["show"];
-    setIsUpdating: React.Dispatch<React.SetStateAction<boolean>>;
-    onStatusChange?: () => void;
-  }
-): Promise<void> {
-  const confirmed = await deps.confirm({
-    title: options.title,
-    message: options.message,
-    confirmText: options.confirmText,
-    variant: "danger",
-  });
-  if (!confirmed) return;
-
-  deps.setIsUpdating(true);
-  try {
-    const response = await fetch(options.url, { method: options.method });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || "Error al procesar la acción");
-    }
-    deps.onStatusChange?.();
-    deps.show({ type: "success", message: options.successMessage });
-  } catch (error) {
-    deps.show({
-      type: "error",
-      message: error instanceof Error ? error.message : "Error desconocido",
-    });
-  } finally {
-    deps.setIsUpdating(false);
-  }
-}
-
 export function OrderCard({
   order,
-  formatDate = defaultFormatDate,
   formatCurrency = defaultFormatCurrency,
   onStatusChange,
 }: OrderCardProps) {
-  const [isUpdating, setIsUpdating] = React.useState(false);
-  const { show } = useToast();
-  const { confirm, ConfirmDialog } = useConfirmDialog();
-
-  const actionDeps = { confirm, show, setIsUpdating, onStatusChange };
-
-  const handleMarkProcessed = () =>
-    executeOrderAction(
-      {
-        url: `/api/admin/orders/${order.id}/mark-processed`,
-        method: "PATCH",
-        title: "Marcar como procesado",
-        message: "¿Confirmas que ya pagaste el envío en MiCorreo?",
-        confirmText: "Confirmar",
-        successMessage: "Pedido marcado como procesado",
-      },
-      actionDeps
-    );
-
-  const handleMarkDelivered = () =>
-    executeOrderAction(
-      {
-        url: `/api/admin/orders/${order.id}/mark-delivered`,
-        method: "PATCH",
-        title: "Marcar como entregado",
-        message: "¿Confirmas que este pedido fue entregado al cliente?",
-        confirmText: "Confirmar entrega",
-        successMessage: "Pedido marcado como entregado",
-      },
-      actionDeps
-    );
-
-  const handleApproveTransfer = () =>
-    executeOrderAction(
-      {
-        url: `/api/admin/orders/${order.id}/approve-transfer`,
-        method: "POST",
-        title: "Aprobar transferencia",
-        message: "¿Confirmas que recibiste el pago de esta transferencia?",
-        confirmText: "Aprobar",
-        successMessage: "Transferencia aprobada correctamente",
-      },
-      actionDeps
-    );
-
-  const handleCancelOrder = () =>
-    executeOrderAction(
-      {
-        url: `/api/admin/orders/${order.id}/cancel`,
-        method: "POST",
-        title: "Cancelar orden",
-        message:
-          "¿Seguro que querés CANCELAR esta orden? Se restaurará el stock.",
-        confirmText: "Cancelar orden",
-        successMessage: "Orden cancelada correctamente",
-      },
-      actionDeps
-    );
-
-  const openMiCorreo = () => {
-    window.open("https://micorreo.correoargentino.com.ar/login", "_blank");
-  };
+  const {
+    isUpdating,
+    handleMarkProcessed,
+    handleMarkDelivered,
+    handleApproveTransfer,
+    handleCancelOrder,
+    openMiCorreo,
+    borderClass,
+    headerBgClass,
+    pm,
+    shortId,
+    ConfirmDialog,
+  } = useOrderCard(order, onStatusChange);
 
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-xl transition-all duration-200 hover:border-primary/20">
-      <CardHeader order={order} formatDate={formatDate} />
-      <CardContent
-        order={order}
-        formatCurrency={formatCurrency}
-      />
-      <CardActions
-        order={order}
-        isUpdating={isUpdating}
-        onMiCorreo={openMiCorreo}
-        onMarkProcessed={handleMarkProcessed}
-        onMarkDelivered={handleMarkDelivered}
-        onApproveTransfer={handleApproveTransfer}
-        onCancelOrder={handleCancelOrder}
-      />
+    <div
+      className={cn(
+        "group bg-surface border border-border rounded-xl overflow-hidden",
+        "hover:shadow-md hover:border-border/80 transition-all duration-150",
+        "border-l-4",
+        borderClass
+      )}
+    >
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div
+        className={cn(
+          "flex items-start justify-between gap-3 px-4 pt-4 pb-3",
+          headerBgClass
+        )}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold leading-tight truncate max-w-[180px]">
+              {order.customerName}
+            </h3>
+            <span className="text-[10px] font-mono text-muted-foreground bg-surface border border-border px-1.5 py-0.5 rounded shrink-0">
+              {shortId}
+            </span>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {formatOrderDate(order.createdAt)}
+            {order.relativeTime && (
+              <span className="ml-1.5 text-muted-foreground/60 italic">
+                · {order.relativeTime}
+              </span>
+            )}
+          </p>
+        </div>
+        <OrderStatusBadge status={order.status} />
+      </div>
+
+      {/* ── Data rows ──────────────────────────────────────────── */}
+      <div className="px-4 pb-3 space-y-2 pt-3">
+        {/* Contact */}
+        <div className="flex items-center gap-4 flex-wrap">
+          <a
+            href={`tel:${order.customerPhone}`}
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+          >
+            <Phone size={11} className="shrink-0 text-muted-foreground" />
+            {order.customerPhone}
+          </a>
+          {order.customerAddress && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground truncate max-w-[260px]">
+              <MapPin size={11} className="shrink-0 text-muted-foreground/60" />
+              {order.customerAddress}
+            </span>
+          )}
+        </div>
+
+        {/* Pills: payment + shipping */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium",
+              pm.pill
+            )}
+          >
+            <pm.Icon size={10} className="shrink-0" />
+            {pm.label}
+          </span>
+          {order.shippingMethod && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface-secondary border border-border text-muted-foreground">
+              <Package size={10} className="shrink-0" />
+              {shippingMethodLabels[order.shippingMethod] ??
+                order.shippingMethod}
+            </span>
+          )}
+          {order.caTrackingNumber && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <TruckIcon size={10} className="shrink-0" />
+              <span className="font-mono">{order.caTrackingNumber}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Total + item count */}
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs text-muted-foreground">
+            {order.itemsCount}{" "}
+            {order.itemsCount === 1 ? "producto" : "productos"}
+          </span>
+          <span className="text-xl font-bold tabular-nums tracking-tight text-foreground">
+            {formatCurrency(order.total)}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Actions ────────────────────────────────────────────── */}
+      <div className="px-4 pb-4 pt-2 border-t border-border space-y-2">
+        <PendingPaymentButtons
+          order={order}
+          isUpdating={isUpdating}
+          onMiCorreo={openMiCorreo}
+          onMarkProcessed={handleMarkProcessed}
+        />
+        {(order.status === "WAITING_TRANSFER_PROOF" ||
+          order.status === "PAYMENT_REVIEW") && (
+          <Button
+            onClick={handleApproveTransfer}
+            className="w-full text-xs py-2 font-semibold h-auto bg-emerald-600 hover:bg-emerald-700 text-white"
+            loading={isUpdating}
+            leftIcon={<CheckCircle2 size={13} />}
+          >
+            Aprobar Transferencia
+          </Button>
+        )}
+        {order.status === "PROCESSED" && (
+          <Button
+            onClick={handleMarkDelivered}
+            variant="primary"
+            className="w-full text-xs py-2 font-semibold h-auto"
+            loading={isUpdating}
+            leftIcon={<CheckCircle2 size={13} />}
+          >
+            Marcar entregado
+          </Button>
+        )}
+        <div
+          className={cn(
+            "grid gap-2",
+            order.status !== "DELIVERED" && order.status !== "CANCELLED"
+              ? "grid-cols-2"
+              : "grid-cols-1"
+          )}
+        >
+          <Link href={`/admin/orders/${order.id}`} className="block">
+            <Button
+              variant="outline"
+              className="w-full text-xs py-2 font-medium hover:bg-surface-secondary h-auto"
+              leftIcon={<Eye size={12} />}
+            >
+              Ver detalles
+            </Button>
+          </Link>
+          {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
+            <Button
+              onClick={handleCancelOrder}
+              variant="destructive"
+              className="w-full text-xs py-2 font-medium h-auto bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:text-red-700"
+              disabled={isUpdating}
+              leftIcon={<XCircle size={12} />}
+            >
+              Cancelar
+            </Button>
+          )}
+        </div>
+      </div>
       {ConfirmDialog}
     </div>
   );
 }
 
-// ─── Private sub-components ───────────────────────────────────────────────────
-
-interface CardHeaderProps {
-  order: Pick<OrderCardData, "customerName" | "status" | "createdAt" | "relativeTime">;
-  formatDate: (date: string) => string;
-}
-
-function CardHeader({ order, formatDate }: CardHeaderProps) {
-  return (
-    <div className="bg-linear-to-r from-surface-secondary to-surface-secondary/50 p-4">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <h3 className="text-base font-bold text-content-primary leading-snug flex-1 min-w-0">
-          {order.customerName}
-        </h3>
-        <OrderStatusBadge status={order.status} />
-      </div>
-      <p className="text-xs text-content-secondary flex items-center gap-1">
-        <span>{formatDate(order.createdAt)}</span>
-        {order.relativeTime && (
-          <>
-            <span className="text-content-secondary/50">•</span>
-            <span className="italic">{order.relativeTime}</span>
-          </>
-        )}
-      </p>
-    </div>
-  );
-}
-
-interface CardContentProps {
-  order: Pick<OrderCardData, "customerPhone" | "customerAddress" | "itemsCount" | "total" | "caTrackingNumber" | "paymentMethod" | "shippingMethod">;
-  formatCurrency: (value: number) => string;
-}
-
-function CardContent({ order, formatCurrency }: CardContentProps) {
-  return (
-    <div className="p-4 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ContactColumn order={order} />
-        <SummaryColumn order={order} formatCurrency={formatCurrency} />
-      </div>
-    </div>
-  );
-}
-
-interface ContactColumnProps {
-  order: Pick<CardContentProps["order"], "customerPhone" | "customerAddress">;
-}
-
-function ContactColumn({ order }: ContactColumnProps) {
-  return (
-    <div className="space-y-2">
-      <h4 className="text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">
-        Información de contacto
-      </h4>
-      <div className="flex items-center gap-2">
-        <span className="text-lg">📞</span>
-        <a
-          href={`tel:${order.customerPhone}`}
-          className="text-sm text-primary hover:underline font-medium"
-        >
-          {order.customerPhone}
-        </a>
-      </div>
-      {order.customerAddress && (
-        <div className="flex items-start gap-2">
-          <span className="text-lg shrink-0">📍</span>
-          <p className="text-xs text-content-primary leading-relaxed">
-            {order.customerAddress}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface SummaryColumnProps {
-  order: Pick<CardContentProps["order"], "itemsCount" | "total" | "caTrackingNumber" | "paymentMethod" | "shippingMethod">;
-  formatCurrency: (value: number) => string;
-}
-
-function SummaryColumn({ order, formatCurrency }: SummaryColumnProps) {
-  return (
-    <div className="space-y-2">
-      <h4 className="text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">
-        Resumen del pedido
-      </h4>
-      <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-content-secondary">
-            {order.itemsCount}{" "}
-            {order.itemsCount === 1 ? "producto" : "productos"}
-          </span>
-          <span className="text-lg font-bold text-primary">
-            {formatCurrency(order.total)}
-          </span>
-        </div>
-        {order.caTrackingNumber && (
-          <div className="flex items-center gap-1.5 text-xs text-success mt-2 pt-2 border-t border-success/20">
-            <TruckIcon size={12} className="shrink-0" />
-            <span className="font-mono">{order.caTrackingNumber}</span>
-          </div>
-        )}
-      </div>
-      <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
-        <span>
-          {order.paymentMethod === "mercadopago" ? "💳" : "💵"}{" "}
-          {order.paymentMethod === "mercadopago"
-            ? "MercadoPago"
-            : "Efectivo / Transferencia"}
-        </span>
-      </div>
-      {order.shippingMethod && (
-        <div className="flex items-center gap-1.5 text-xs text-content-secondary mt-1">
-          <Package size={12} className="shrink-0" />
-          <span>
-            {shippingMethodLabels[order.shippingMethod] ||
-              order.shippingMethod}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface CardActionsProps {
-  order: Pick<OrderCardData, "id" | "status" | "paymentMethod">;
-  isUpdating: boolean;
-  onMiCorreo: () => void;
-  onMarkProcessed: () => void;
-  onMarkDelivered: () => void;
-  onApproveTransfer: () => void;
-  onCancelOrder: () => void;
-}
-
-function CardActions({
-  order,
-  isUpdating,
-  onMiCorreo,
-  onMarkProcessed,
-  onMarkDelivered,
-  onApproveTransfer,
-  onCancelOrder,
-}: CardActionsProps) {
-  const isCancelable =
-    order.status !== "DELIVERED" && order.status !== "CANCELLED";
-
-  return (
-    <div className="pt-3 border-t border-border space-y-2">
-      <PendingPaymentButtons
-        order={order}
-        isUpdating={isUpdating}
-        onMiCorreo={onMiCorreo}
-        onMarkProcessed={onMarkProcessed}
-      />
-      {(order.status === "WAITING_TRANSFER_PROOF" ||
-        order.status === "PAYMENT_REVIEW") && (
-        <Button
-          onClick={onApproveTransfer}
-          className="w-full text-xs py-2.5 font-semibold h-auto bg-green-600 hover:bg-green-700 text-white"
-          disabled={isUpdating}
-        >
-          {isUpdating ? "⏳ Procesando..." : "✓ Aprobar Transferencia"}
-        </Button>
-      )}
-      {order.status === "PROCESSED" && (
-        <Button
-          onClick={onMarkDelivered}
-          variant="primary"
-          className="w-full text-xs py-2.5 font-semibold h-auto"
-          disabled={isUpdating}
-        >
-          {isUpdating ? "⏳ Procesando..." : "✓ Marcar entregado"}
-        </Button>
-      )}
-      {isCancelable && (
-        <Button
-          onClick={onCancelOrder}
-          variant="destructive"
-          className="w-full text-xs py-2.5 font-semibold h-auto bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
-          disabled={isUpdating}
-        >
-          {isUpdating ? "⏳..." : "✕ Cancelar Orden"}
-        </Button>
-      )}
-      <Link href={`/admin/pedidos/${order.id}`} className="block">
-        <Button
-          variant="outline"
-          className="w-full text-xs py-2.5 font-semibold hover:bg-primary/5 hover:border-primary/30 h-auto"
-        >
-          Ver Detalles →
-        </Button>
-      </Link>
-    </div>
-  );
-}
+// ─── Private sub-component (pure render, no logic) ────────────────────────────
 
 interface PendingPaymentButtonsProps {
-  order: Pick<CardActionsProps["order"], "status" | "paymentMethod">;
+  order: Pick<OrderCardData, "status" | "paymentMethod">;
   isUpdating: boolean;
   onMiCorreo: () => void;
   onMarkProcessed: () => void;
@@ -400,21 +236,20 @@ function PendingPaymentButtons({
       <Button
         onClick={onMiCorreo}
         variant="outline"
-        className="text-xs py-2.5 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold h-auto"
+        className="text-xs py-2 bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-medium h-auto"
         disabled={isUpdating}
+        leftIcon={<ExternalLink size={12} />}
       >
-        <span className="flex items-center justify-center gap-1.5">
-          <span>📦</span>
-          <span>Pagar en MiCorreo</span>
-        </span>
+        Pagar en MiCorreo
       </Button>
       <Button
         onClick={onMarkProcessed}
         variant="primary"
-        className="text-xs py-2.5 font-semibold h-auto"
-        disabled={isUpdating}
+        className="text-xs py-2 font-medium h-auto"
+        loading={isUpdating}
+        leftIcon={<CheckCircle2 size={12} />}
       >
-        {isUpdating ? "⏳ Procesando..." : "✓ Marcar procesado"}
+        Marcar procesado
       </Button>
     </div>
   );

@@ -34,7 +34,7 @@ export function MetricCard({ metric, format = "number" }: MetricCardProps) {
   const trendColor = isPositiveTrend
     ? "text-success"
     : metric.trend === "stable"
-      ? "text-content-secondary"
+      ? "text-muted-foreground"
       : "text-error";
   const bgColor = isPositiveTrend
     ? "badge-success"
@@ -45,7 +45,7 @@ export function MetricCard({ metric, format = "number" }: MetricCardProps) {
   return (
     <Card className="p-3 sm:p-4">
       <div className="space-y-2">
-        <h3 className="text-xs sm:text-sm font-medium text-content-secondary">
+        <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
           {metric.label}
         </h3>
         <div className="flex items-end justify-between gap-2">
@@ -59,7 +59,7 @@ export function MetricCard({ metric, format = "number" }: MetricCardProps) {
             </span>
           </Badge>
         </div>
-        <p className="text-xs text-content-tertiary">
+        <p className="text-xs text-muted-foreground">
           {metric.change >= 0 ? "+" : "-"}
           {formatValue(Math.abs(metric.change), format)} vs anterior
         </p>
@@ -84,7 +84,7 @@ export function MiniStat({ label, value, color = "default" }: MiniStatProps) {
 
   return (
     <div className="p-2 sm:p-3 surface-secondary rounded">
-      <p className="text-xs sm:text-sm text-content-secondary truncate">
+      <p className="text-xs sm:text-sm text-muted-foreground truncate">
         {label}
       </p>
       <p
@@ -122,7 +122,7 @@ export function TopProducts({ products }: TopProductsProps) {
     return (
       <Card className="p-4">
         <h3 className="text-lg font-semibold mb-4">Top Productos Vendidos</h3>
-        <div className="text-center py-8 text-content-secondary">
+        <div className="text-center py-8 text-muted-foreground">
           <p>No hay ventas en este período</p>
         </div>
       </Card>
@@ -148,7 +148,7 @@ export function TopProducts({ products }: TopProductsProps) {
                 <h4 className="font-medium text-sm sm:text-base truncate">
                   {product.name}
                 </h4>
-                <p className="text-xs sm:text-sm text-content-secondary truncate">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   {product.sales} unids • {product.orders} ord.
                 </p>
               </div>
@@ -189,7 +189,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
     return (
       <Card className="p-4">
         <h3 className="text-lg font-semibold mb-4">Actividad Reciente</h3>
-        <div className="text-center py-8 text-content-secondary">
+        <div className="text-center py-8 text-muted-foreground">
           <p>No hay actividad reciente</p>
         </div>
       </Card>
@@ -212,7 +212,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">{activity.description}</p>
-                <p className="text-xs text-content-tertiary">
+                <p className="text-xs text-muted-foreground">
                   {new Date(activity.timestamp).toLocaleString("es-AR", {
                     day: "2-digit",
                     month: "2-digit",

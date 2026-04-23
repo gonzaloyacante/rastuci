@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logger } from "@/lib/logger";
+import { checkRateLimit, rlPresets } from "@/lib/rate-limiter";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -35,6 +36,14 @@ function okResponse<T>(
 // GET - Obtener estado de registro
 export async function GET(request: NextRequest) {
   try {
+    const rl = await checkRateLimit(request, {
+      key: "mobile-notifications",
+      ...rlPresets.mutatingLow,
+    });
+    if (!rl.ok) {
+      return errResponse("Demasiadas solicitudes, intente más tarde", 429);
+    }
+
     // [C-02] Require authentication to check notification registration
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -90,6 +99,14 @@ export async function GET(request: NextRequest) {
 // POST - Registrar token para push notifications
 export async function POST(request: NextRequest) {
   try {
+    const rl = await checkRateLimit(request, {
+      key: "mobile-notifications",
+      ...rlPresets.mutatingLow,
+    });
+    if (!rl.ok) {
+      return errResponse("Demasiadas solicitudes, intente más tarde", 429);
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return errResponse("No autorizado", 401);
@@ -186,6 +203,14 @@ function isUnauthorizedEmailAccess(
 // DELETE - Desregistrar token
 export async function DELETE(request: NextRequest) {
   try {
+    const rl = await checkRateLimit(request, {
+      key: "mobile-notifications",
+      ...rlPresets.mutatingLow,
+    });
+    if (!rl.ok) {
+      return errResponse("Demasiadas solicitudes, intente más tarde", 429);
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return errResponse("No autorizado", 401);

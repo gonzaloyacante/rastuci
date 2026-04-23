@@ -3,6 +3,8 @@
 import { AlertTriangle, CheckCircle, Info, X } from "lucide-react";
 import React, { ReactNode, useCallback, useState } from "react";
 
+import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
+
 import { Button } from "./Button";
 
 interface ConfirmDialogProps {
@@ -63,6 +65,8 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   const variantConfig = variantStyles[variant];
   const IconComponent = icon || variantConfig.defaultIcon;
+
+  useKeyboardNavigation({ isOpen, onClose });
 
   if (!isOpen) {
     return null;

@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import useSWR from "swr";
@@ -34,7 +34,8 @@ type PolicyForm = z.infer<typeof _policySchema>;
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function EditPolicyPage({ params }: { params: { id: string } }) {
+export default function EditPolicyPage() {
+  const params = useParams<{ id: string }>();
   const isNew = params.id === "new";
   const router = useRouter();
   const { show } = useToast();

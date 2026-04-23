@@ -1,5 +1,3 @@
-// import { sortSizes } from "@/utils/sizes";
-
 export interface ColorOption {
   name: string;
   hex: string;

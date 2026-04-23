@@ -134,15 +134,6 @@ export function generateBreadcrumbJsonLd(
   };
 }
 
-export function formatPrice(value: number, currency: string = "ARS"): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export function generateStoreJsonLd() {
   const baseUrl = "https://rastuci.com";
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { logger } from "@/lib/logger";
+import type { CustomerInfo, ShippingOption } from "@/types/cart";
 
 // Implementación simple de debounce específica para CheckoutData
 function createDebounce(
@@ -28,9 +29,9 @@ function createDebounce(
   return debounced;
 }
 
-interface CheckoutData {
-  customerInfo?: Record<string, unknown>;
-  selectedShippingOption?: Record<string, unknown>;
+export interface CheckoutData {
+  customerInfo?: CustomerInfo;
+  selectedShippingOption?: ShippingOption;
   selectedPaymentMethod?: string;
   cardData?: Record<string, unknown>;
   currentStep?: number;
@@ -40,6 +41,7 @@ interface AutoSaveOptions {
   key?: string;
   debounceMs?: number;
   enabled?: boolean;
+  autoRestore?: boolean;
   onSave?: (data: CheckoutData) => void;
   onRestore?: (data: CheckoutData) => void;
 }
@@ -52,11 +54,13 @@ export function useCheckoutAutoSave(
     key = "checkout-autosave",
     debounceMs = 1000,
     enabled = true,
+    autoRestore = false,
     onSave,
     onRestore,
   } = options;
 
   const isInitialized = useRef(false);
+  const hasAutoRestored = useRef(false);
   const lastSavedData = useRef<string>("");
 
   // Función para guardar datos en localStorage
@@ -177,6 +181,16 @@ export function useCheckoutAutoSave(
 
     return false;
   }, [key]);
+
+  // Auto-restore on mount when autoRestore is enabled
+  useEffect(() => {
+    if (!autoRestore || hasAutoRestored.current) return;
+    hasAutoRestored.current = true;
+
+    if (hasSavedData()) {
+      restoreFromStorage();
+    }
+  }, [autoRestore, hasSavedData, restoreFromStorage]);
 
   // Efecto para auto-guardar cuando los datos cambien
   useEffect(() => {

@@ -54,9 +54,11 @@ export function mapOrderToDTO(order: OrderWithItems): Order {
     customerProvince: order.shippingProvince ?? undefined,
     customerPostalCode: order.shippingPostalCode ?? undefined,
     status: order.status as OrderStatus,
+    // Priority: mpPaymentId presence → "mercadopago"; else use stored paymentMethod.
+    // Never blindly fall back to "cash" — use "unknown" to surface missing data.
     paymentMethod: order.mpPaymentId
       ? "mercadopago"
-      : (order.paymentMethod ?? "cash"),
+      : (order.paymentMethod ?? "unknown"),
     items: order.order_items.map((item: OrderItem) => ({
       id: item.id,
       quantity: item.quantity,

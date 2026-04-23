@@ -234,7 +234,7 @@ export default function ShippingSettings() {
               className="w-5 h-5 rounded border-muted text-primary focus:ring-primary"
             />
             <div>
-              <div className="font-medium text-content-primary">
+              <div className="font-medium text-base-primary">
                 Activar Envío Gratis Global
               </div>
               <div className="text-sm text-muted">

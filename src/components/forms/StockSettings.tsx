@@ -142,7 +142,7 @@ export default function StockSettings() {
       <div className="surface-secondary rounded-lg p-6 border border-muted">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-lg text-content-primary">
+            <h3 className="font-semibold text-lg text-base-primary">
               Activar Indicadores de Stock
             </h3>
             <p className="text-sm text-muted">
@@ -158,7 +158,7 @@ export default function StockSettings() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-bold text-content-primary">
+            <h3 className="text-xl font-bold text-base-primary">
               Reglas de Estado de Stock
             </h3>
             <p className="text-muted text-sm">

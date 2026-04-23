@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+import { ORDER_STATUS_LABELS, OrderStatusKey } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimiter";
 
 // Tipos para OrderStatus (directos desde schema)
-type OrderStatus = "PENDING" | "PROCESSED" | "DELIVERED";
+type OrderStatus = OrderStatusKey;
 
 interface ApiResponse<T> {
   success: boolean;
@@ -198,21 +199,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function getStatusLabel(status: string): string {
-  const statusLabels: Record<string, string> = {
-    PENDING: "Pendiente",
-    PROCESSED: "Procesando",
-    SHIPPED: "Enviado",
-    DELIVERED: "Entregado",
-    CANCELLED: "Cancelado",
-    // Estados de tracking específicos
-    pending: "Pendiente",
-    "in-transit": "En tránsito",
-    "out-for-delivery": "En reparto",
-    delivered: "Entregado",
-    delayed: "Retrasado",
-    error: "Error",
-  };
+const CA_TRACKING_LABELS: Record<string, string> = {
+  pending: "Pendiente",
+  "in-transit": "En tránsito",
+  "out-for-delivery": "En reparto",
+  delivered: "Entregado",
+  delayed: "Retrasado",
+  error: "Error",
+};
 
-  return statusLabels[status] || status;
+function getStatusLabel(status: string): string {
+  return (
+    ORDER_STATUS_LABELS[status as OrderStatusKey] ??
+    CA_TRACKING_LABELS[status] ??
+    status
+  );
 }

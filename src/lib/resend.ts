@@ -8,6 +8,10 @@ import {
   getLowStockAlertEmail,
   getNewOrderAdminEmail,
   getOrderConfirmationEmail,
+  getOrderOnHoldEmail,
+  getOrderProcessedEmail,
+  getTransferApprovedEmail,
+  getTransferProofSubmittedEmail,
   getWelcomeEmail,
 } from "./email-templates";
 import { logger } from "./logger";
@@ -161,6 +165,8 @@ export const emailService = {
         customerAddress: order.customerAddress,
         orderId: order.id,
         total: order.total,
+        paymentMethod: order.paymentMethod,
+        shippingMethod: order.shippingMethod,
         items,
       }),
       type: "DEFAULT",
@@ -296,7 +302,7 @@ export const emailService = {
     return sendEmail({
       to: email,
       subject: "¡Volvimos! La tienda está abierta de nuevo",
-      html: getVacationReopeningEmail({ customerEmail: email }),
+      html: getVacationReopeningEmail({}),
       type: "DEFAULT",
     });
   },
@@ -321,6 +327,103 @@ export const emailService = {
       html: getContactNotificationEmail(templateParams),
       type: "ADMIN",
       ...(params.email && { replyTo: params.email }),
+    });
+  },
+
+  async sendTransferApproved(
+    order: {
+      id: string;
+      customerName: string;
+      customerEmail: string;
+      total: number;
+      shippingMethod?: string;
+    },
+    items: OrderEmailItem[]
+  ) {
+    return sendEmail({
+      to: order.customerEmail,
+      subject: `✅ Transferencia aprobada - Pedido #${order.id.slice(0, 8)}`,
+      html: getTransferApprovedEmail({
+        customerName: order.customerName,
+        orderId: order.id,
+        total: order.total,
+        shippingMethod: order.shippingMethod,
+        items: items.map((i) => ({
+          name: i.name,
+          quantity: i.quantity,
+          price: i.price,
+          color: i.color,
+          size: i.size,
+        })),
+      }),
+      type: "SALES",
+    });
+  },
+
+  async sendTransferProofSubmittedAdmin(params: {
+    orderId: string;
+    customerName: string;
+    customerEmail: string;
+    total: number;
+    senderName: string;
+    transactionId: string;
+    adminEmail: string;
+  }) {
+    const { adminEmail, ...templateParams } = params;
+    return sendEmail({
+      to: adminEmail,
+      subject: `📄 Comprobante recibido - Pedido #${params.orderId.slice(0, 8)}`,
+      html: getTransferProofSubmittedEmail(templateParams),
+      type: "ADMIN",
+    });
+  },
+
+  async sendOrderProcessed(
+    order: {
+      id: string;
+      customerName: string;
+      customerEmail: string;
+      total: number;
+      shippingMethod?: string;
+    },
+    items: OrderEmailItem[]
+  ) {
+    return sendEmail({
+      to: order.customerEmail,
+      subject: `✅ Pago confirmado - Pedido #${order.id.slice(0, 8)}`,
+      html: getOrderProcessedEmail({
+        customerName: order.customerName,
+        orderId: order.id,
+        total: order.total,
+        shippingMethod: order.shippingMethod,
+        items: items.map((i) => ({
+          name: i.name,
+          quantity: i.quantity,
+          price: i.price,
+          color: i.color,
+          size: i.size,
+        })),
+      }),
+      type: "SALES",
+    });
+  },
+
+  async sendOnHoldConfirmation(order: {
+    id: string;
+    customerName: string;
+    customerEmail: string;
+    total: number;
+    reason: "transfer_proof_uploaded" | "payment_review";
+  }) {
+    return sendEmail({
+      to: order.customerEmail,
+      subject: `⏳ Comprobante recibido - Pedido #${order.id.slice(0, 8)}`,
+      html: getOrderOnHoldEmail({
+        customerName: order.customerName,
+        orderId: order.id,
+        reason: order.reason,
+      }),
+      type: "SALES",
     });
   },
 };

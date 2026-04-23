@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "./Button";
 import { ProductImagePlaceholder } from "./ProductImagePlaceholder";
+import { Spinner } from "./Spinner";
 
 interface ImageUploaderProps {
   value?: string | null;
@@ -186,7 +187,7 @@ export function ImageUploader({
 
             {uploading && (
               <div className="absolute inset-0 bg-background/80 flex items-center justify-center backdrop-blur-sm z-20">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <Spinner size="md" />
               </div>
             )}
           </>
@@ -197,7 +198,7 @@ export function ImageUploader({
           >
             <div className="mx-auto w-10 h-10 rounded-full bg-muted flex items-center justify-center cursor-pointer group-hover:bg-background transition-colors border border-border">
               {uploading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                <Spinner size="sm" />
               ) : (
                 <ImageIcon className="w-5 h-5 text-muted-foreground" />
               )}

@@ -116,11 +116,11 @@ export default function PaymentSettings({
       <div className="surface-secondary rounded-lg p-4 space-y-4 border border-border">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xl">🏷️</span>
-          <h3 className="font-semibold text-lg text-content-primary">
+          <h3 className="font-semibold text-lg text-base-primary">
             Descuentos por Método de Pago
           </h3>
         </div>
-        <p className="text-sm text-content-secondary mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Define el porcentaje de descuento automático que se aplicará en el
           Checkout según el método elegido. Si es 0%, no se mostrará descuento.
         </p>
@@ -147,7 +147,7 @@ export default function PaymentSettings({
                     className="pl-8"
                     error={fieldErrors["payments.cashDiscount"]}
                   />
-                  <span className="absolute left-3 top-2.5 text-content-tertiary">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">
                     %
                   </span>
                 </div>
@@ -171,7 +171,7 @@ export default function PaymentSettings({
                     className="h-8 text-sm"
                     error={fieldErrors["payments.cashExpirationHours"]}
                   />
-                  <span className="absolute right-3 top-2 text-xs text-content-tertiary">
+                  <span className="absolute right-3 top-2 text-xs text-muted-foreground">
                     hs
                   </span>
                 </div>
@@ -200,7 +200,7 @@ export default function PaymentSettings({
                     className="pl-8"
                     error={fieldErrors["payments.transferDiscount"]}
                   />
-                  <span className="absolute left-3 top-2.5 text-content-tertiary">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">
                     %
                   </span>
                 </div>
@@ -224,7 +224,7 @@ export default function PaymentSettings({
                     className="h-8 text-sm"
                     error={fieldErrors["payments.transferExpirationHours"]}
                   />
-                  <span className="absolute right-3 top-2 text-xs text-content-tertiary">
+                  <span className="absolute right-3 top-2 text-xs text-muted-foreground">
                     hs
                   </span>
                 </div>
@@ -253,7 +253,7 @@ export default function PaymentSettings({
                     className="pl-8"
                     error={fieldErrors["payments.mpDiscount"]}
                   />
-                  <span className="absolute left-3 top-2.5 text-content-tertiary">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">
                     %
                   </span>
                 </div>
@@ -277,7 +277,7 @@ export default function PaymentSettings({
                     className="h-8 text-sm"
                     error={fieldErrors["payments.mpExpirationMinutes"]}
                   />
-                  <span className="absolute right-3 top-2 text-xs text-content-tertiary">
+                  <span className="absolute right-3 top-2 text-xs text-muted-foreground">
                     min
                   </span>
                 </div>
@@ -291,7 +291,7 @@ export default function PaymentSettings({
       <div className="surface-secondary rounded-lg p-4 space-y-4 border border-border">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xl">🏛️</span>
-          <h3 className="font-semibold text-lg text-content-primary">
+          <h3 className="font-semibold text-lg text-base-primary">
             Datos Bancarios (Para Email Automático)
           </h3>
         </div>

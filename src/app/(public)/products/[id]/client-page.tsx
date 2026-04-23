@@ -24,6 +24,10 @@ import {
 } from "@/components/products/display/ProductDetailSections";
 import ProductImageGallery from "@/components/products/media/ProductImageGallery";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
+import {
+  breadcrumbPatterns,
+  BreadcrumbsWithSchema,
+} from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/Button";
 import { ProductDetailSkeleton } from "@/components/ui/Skeleton";
 import { useProductDetail } from "@/hooks/useProductDetail";
@@ -354,24 +358,14 @@ export default function ProductDetailClient({
   return (
     <div className="min-h-screen surface">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Breadcrumb ... (omitido, sin cambios) */}
-        <nav className="mb-6" aria-label="Breadcrumb">
-          <ol className="flex items-center space-x-2 text-sm muted">
-            <li>
-              <Link href="/" className="hover:text-primary">
-                Inicio
-              </Link>
-            </li>
-            <li>/</li>
-            <li>
-              <Link href="/productos" className="hover:text-primary">
-                Productos
-              </Link>
-            </li>
-            <li>/</li>
-            <li className="text-primary font-medium">{product.name}</li>
-          </ol>
-        </nav>
+        {/* Breadcrumb con SEO JSON-LD para Google rich results */}
+        <BreadcrumbsWithSchema
+          items={breadcrumbPatterns.productDetail(
+            product.name,
+            product.categories?.name
+          )}
+          className="mb-6"
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Galería de imágenes (Dinámica) */}

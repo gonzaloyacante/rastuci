@@ -1,110 +1,52 @@
 "use client";
 
-import { ArrowLeft, Printer } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Printer } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 import { CustomerInfoCard } from "@/components/admin/orders/CustomerInfoCard";
 import { OrderActionsCard } from "@/components/admin/orders/OrderActionsCard";
+import {
+  OrderStatusBadge,
+  STATUS_CONFIG,
+} from "@/components/admin/orders/OrderStatusBadge";
+import { OrderStatusTimeline } from "@/components/admin/orders/OrderStatusTimeline";
 import { OrderSummaryCard } from "@/components/admin/orders/OrderSummaryCard";
 import { ShipmentControlCard } from "@/components/admin/orders/ShipmentControlCard";
 import { DetailViewSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
-import { Order, OrderItem } from "@/types";
+import { PAYMENT_METHOD_DISPLAY, STATUS_HEADER_BG } from "@/hooks/useOrderCard";
+import { useOrderDetail } from "@/hooks/useOrderDetail";
+import { cn } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/utils/formatters";
 
-// Use generic Order from types since it now includes all admin fields
+const STATUS_HERO_BG: Record<string, string> = {
+  warning: "bg-amber-50 border-b border-amber-200",
+  info: "bg-blue-50 border-b border-blue-200",
+  success: "bg-emerald-50 border-b border-emerald-200",
+  error: "bg-red-50 border-b border-red-200",
+  default: "bg-surface-secondary border-b border-border",
+};
 
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const orderId = params.id as string;
+  const { order, loading, error, handleOrderUpdate } = useOrderDetail(orderId);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/orders/${orderId}`);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError("Pedido no encontrado");
-          } else {
-            throw new Error("Error al cargar el pedido");
-          }
-          return;
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-          // Formatear imágenes de productos si es necesario
-          const formattedOrder = {
-            ...data.data,
-            items: (data.data.items || []).map((item: OrderItem) => ({
-              ...item,
-              product: {
-                ...item.product!,
-                images:
-                  typeof item.product!.images === "string"
-                    ? JSON.parse(item.product!.images)
-                    : item.product!.images,
-              },
-            })),
-          };
-          // Ensure required fields like paymentMethod have defaults if missing in API
-          if (!formattedOrder.paymentMethod)
-            formattedOrder.paymentMethod = "N/A";
-
-          setOrder(formattedOrder as Order);
-        } else {
-          setError(data.error || "No se pudo cargar el pedido");
-        }
-      } catch {
-        setError("Ocurrió un error al conectar con el servidor");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (orderId) {
-      void fetchOrder();
-    }
-  }, [orderId]);
-
-  const handleOrderUpdate = (updates: Partial<Order>) => {
-    if (order) {
-      setOrder({ ...order, ...updates });
-    }
-  };
-
-  if (loading) {
-    return <DetailViewSkeleton />;
-  }
+  if (loading) return <DetailViewSkeleton />;
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="text-error text-2xl mb-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-12 w-12 mx-auto mb-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-          {error}
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 border border-red-200">
+          <AlertTriangle size={22} className="text-red-500" />
         </div>
-        <Button className="btn-hero" onClick={() => router.back()}>
+        <p className="text-base font-medium">{error}</p>
+        <p className="text-sm text-muted-foreground">
+          Verificá el ID del pedido o intentá nuevamente.
+        </p>
+        <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft size={14} className="mr-2" />
           Volver
         </Button>
       </div>
@@ -113,48 +55,102 @@ export default function OrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="muted text-2xl mb-4">Pedido no encontrado</div>
-        <Button className="btn-hero" onClick={() => router.back()}>
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <p className="text-muted-foreground">Pedido no encontrado</p>
+        <Button variant="outline" onClick={() => router.back()}>
           Volver
         </Button>
       </div>
     );
   }
 
+  const statusEntry = STATUS_CONFIG[order.status];
+  const statusVariant = statusEntry?.variant ?? "default";
+  const heroBg = STATUS_HERO_BG[statusVariant] ?? STATUS_HERO_BG.default;
+  const pm =
+    PAYMENT_METHOD_DISPLAY[order.paymentMethod ?? "unknown"] ??
+    PAYMENT_METHOD_DISPLAY.unknown;
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      {/* ── Status Hero Banner ───────────────────────────────── */}
+      <div
+        className={cn("rounded-xl mb-6 overflow-hidden border border-border")}
+      >
+        {/* Back nav */}
+        <div className="px-5 pt-4">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center muted hover:text-primary mb-2"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
           >
-            <ArrowLeft size={16} className="mr-2" />
-            Volver
+            <ArrowLeft size={13} />
+            Volver a pedidos
           </button>
-          <h1 className="text-2xl font-bold text-primary">
-            Detalles del Pedido #{order.id.substring(0, 8)}
-          </h1>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => window.print()}
-          className="hidden sm:flex items-center gap-2"
-        >
-          <Printer size={16} />
-          Imprimir
-        </Button>
+
+        {/* Hero content */}
+        <div className={cn("px-5 py-4", heroBg)}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Order ID + status */}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight font-mono">
+                  #{order.id.slice(-8).toUpperCase()}
+                </h1>
+                <OrderStatusBadge status={order.status} />
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {order.customerName}
+                </span>
+                <span className="text-muted-foreground/40">·</span>
+                <span>{formatDate(order.createdAt)}</span>
+                <span className="text-muted-foreground/40">·</span>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                    pm.pill
+                  )}
+                >
+                  <pm.Icon size={10} className="shrink-0" />
+                  {pm.label}
+                </span>
+              </div>
+            </div>
+
+            {/* Total + print */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
+                  Total
+                </p>
+                <p className="text-3xl font-bold tabular-nums tracking-tight">
+                  {formatCurrency(order.total)}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => window.print()}
+                className="hidden sm:flex items-center gap-2 h-auto py-2 bg-surface/80"
+              >
+                <Printer size={14} />
+                <span className="text-xs">Imprimir</span>
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* ── Content grid ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Columna principal */}
+        {/* Main column */}
         <div className="lg:col-span-2 space-y-6">
+          <OrderStatusTimeline order={order} />
           <OrderSummaryCard order={order} />
         </div>
 
-        {/* Columna lateral */}
-        <div className="space-y-6">
+        {/* Sidebar */}
+        <div className="space-y-4">
           <CustomerInfoCard order={order} />
           <ShipmentControlCard
             order={order}

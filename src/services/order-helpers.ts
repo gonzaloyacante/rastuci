@@ -287,14 +287,16 @@ type EmailableOrder = {
   id: string;
   customerName: string;
   customerEmail: string | null;
-  total: unknown;
-  subtotal?: unknown;
-  discount?: unknown;
-  shippingCost?: unknown;
+  total: Prisma.Decimal | number | string;
+  subtotal?: Prisma.Decimal | number | string | null;
+  discount?: Prisma.Decimal | number | string | null;
+  shippingCost?: Prisma.Decimal | number | string | null;
+  paymentMethod?: string | null;
+  shippingMethod?: string | null;
   order_items?: Array<{
     productId: string;
     quantity: number;
-    price: unknown;
+    price: Prisma.Decimal | number | string;
     products?: { name: string } | null;
     size: string | null;
     color: string | null;
@@ -358,26 +360,48 @@ export function determineUpdateActions(
   isFirstApproval: boolean;
   shouldShip: boolean;
 } {
-  const STOCK_RESERVED = new Set<string>([
-    ORDER_STATUS.PROCESSED,
-    ORDER_STATUS.RESERVED,
-    ORDER_STATUS.PENDING_PAYMENT,
-    ORDER_STATUS.DELIVERED,
-  ]);
-  const RESTORABLE = new Set<string>([
-    ORDER_STATUS.PENDING_PAYMENT,
-    ORDER_STATUS.RESERVED,
+  // States where stock is already held (decremented at order creation).
+  // Each payment method decrements stock immediately:
+  //   MP → PENDING_PAYMENT (createFullOrder pre-decrements)
+  //   Cash → RESERVED (createCashOrder pre-decrements)
+  //   Transfer → WAITING_TRANSFER_PROOF (createTransferOrder pre-decrements)
+  // Subsequent transitions from any of these must NOT decrement again.
+  // CANCELLED is excluded because stock is restored when an order is cancelled.
+  const STOCK_HELD = new Set<string>([
+    ORDER_STATUS.PENDING_PAYMENT, // MP: stock held before webhook fires
+    ORDER_STATUS.RESERVED, // Cash: stock held awaiting cash collection
+    ORDER_STATUS.WAITING_TRANSFER_PROOF, // Transfer: stock held awaiting proof
+    ORDER_STATUS.PAYMENT_REVIEW, // Transfer: proof uploaded, admin reviewing
+    ORDER_STATUS.PROCESSED, // Payment confirmed
+    ORDER_STATUS.DELIVERED, // Delivered (stock already consumed)
   ]);
 
-  const isStockAlreadyReserved = STOCK_RESERVED.has(order.status);
+  // States where PAYMENT was already confirmed — prevents duplicate notifications and CA shipments.
+  // NOTE: PENDING_PAYMENT means "payment not yet confirmed" — it must NOT be in this set!
+  // That's the core bug fix: PENDING_PAYMENT → PROCESSED via MP webhook IS the "first approval".
+  const PAYMENT_CONFIRMED = new Set<string>([
+    ORDER_STATUS.PROCESSED,
+    ORDER_STATUS.DELIVERED,
+  ]);
+
+  // States from which stock should be restored when an order is cancelled via MP webhook.
+  // Transfer/WAITING states are cancelled via admin routes (not webhook), so not included here.
+  const RESTORABLE = new Set<string>([
+    ORDER_STATUS.PENDING_PAYMENT, // MP: restore if webhook returns rejected/cancelled
+    ORDER_STATUS.RESERVED, // Cash (edge case): restore if cancelled
+  ]);
+
+  const isStockAlreadyHeld = STOCK_HELD.has(order.status);
   const shouldDecrement =
-    mappedStatus === ORDER_STATUS.PROCESSED && !isStockAlreadyReserved;
+    mappedStatus === ORDER_STATUS.PROCESSED && !isStockAlreadyHeld;
   const shouldRestore =
     (mappedStatus as string) === ORDER_STATUS.CANCELLED &&
     RESTORABLE.has(order.status);
+  // isFirstApproval uses PAYMENT_CONFIRMED (not STOCK_HELD) because PENDING_PAYMENT
+  // means "payment not yet confirmed" — the MP webhook is the first time payment is approved.
   const isFirstApproval =
     mappedStatus === ORDER_STATUS.PROCESSED &&
-    !STOCK_RESERVED.has(order.status);
+    !PAYMENT_CONFIRMED.has(order.status);
 
   const isPickup = order.shippingMethod === "pickup";
   return {
@@ -541,6 +565,7 @@ async function flagOrderForReview(
 
 /**
  * Envía el email de confirmación de orden (cash) de forma no bloqueante.
+ * También notifica al admin de la nueva venta.
  */
 export function sendCashOrderEmailAsync(order: EmailableOrder): void {
   const emailItems = (order.order_items ?? []).map((oi) => ({
@@ -551,23 +576,45 @@ export function sendCashOrderEmailAsync(order: EmailableOrder): void {
     size: oi.size ?? undefined,
     color: oi.color ?? undefined,
   }));
+
+  const orderSummary = {
+    id: order.id,
+    customerName: order.customerName,
+    customerEmail: order.customerEmail || "",
+    total: Number(order.total),
+    subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+    discount: order.discount ? Number(order.discount) : undefined,
+    shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
+    paymentMethod: order.paymentMethod ?? "cash",
+    shippingMethod: order.shippingMethod ?? undefined,
+  };
+
   emailService
-    .sendOrderConfirmation(
-      {
-        id: order.id,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail || "",
-        total: Number(order.total),
-        subtotal: order.subtotal ? Number(order.subtotal) : undefined,
-        discount: order.discount ? Number(order.discount) : undefined,
-        shippingCost: order.shippingCost
-          ? Number(order.shippingCost)
-          : undefined,
-      },
-      emailItems
-    )
+    .sendOrderConfirmation(orderSummary, emailItems)
     .catch((err: unknown) =>
-      logger.error("[OrderService] Error enviando email de confirmación:", {
+      logger.error(
+        "[OrderService] Error enviando email de confirmación (cash):",
+        {
+          err,
+          orderId: order.id,
+        }
+      )
+    );
+
+  getStoreSettings()
+    .then((settings) => {
+      const adminEmail = (settings as Record<string, unknown>)?.adminEmail as
+        | string
+        | undefined;
+      if (!adminEmail) return;
+      return emailService.sendAdminNewOrderAlert(
+        orderSummary,
+        emailItems,
+        adminEmail
+      );
+    })
+    .catch((err: unknown) =>
+      logger.error("[OrderService] Error notificando admin (cash):", {
         err,
         orderId: order.id,
       })
@@ -576,26 +623,58 @@ export function sendCashOrderEmailAsync(order: EmailableOrder): void {
 
 /**
  * Envía el email de instrucciones de transferencia de forma no bloqueante.
+ * También notifica al admin de la nueva venta.
  */
-export function sendTransferOrderEmailAsync(order: {
-  id: string;
-  customerName: string;
-  customerEmail: string | null;
-  total: unknown;
-}): void {
+export function sendTransferOrderEmailAsync(order: EmailableOrder): void {
   if (!order.customerEmail) return;
+
+  const orderSummary = {
+    id: order.id,
+    customerName: order.customerName,
+    customerEmail: order.customerEmail,
+    total: Number(order.total),
+    subtotal: order.subtotal ? Number(order.subtotal) : undefined,
+    discount: order.discount ? Number(order.discount) : undefined,
+    shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
+    paymentMethod: order.paymentMethod ?? "transfer",
+    shippingMethod: order.shippingMethod ?? undefined,
+  };
+
+  const emailItems = (order.order_items ?? []).map((oi) => ({
+    productId: oi.productId,
+    quantity: oi.quantity,
+    price: Number(oi.price),
+    name: oi.products?.name ?? "Producto",
+    size: oi.size ?? undefined,
+    color: oi.color ?? undefined,
+  }));
+
   emailService
-    .sendBankTransferInstructions({
-      id: order.id,
-      customerName: order.customerName,
-      customerEmail: order.customerEmail,
-      total: Number(order.total),
-    })
+    .sendBankTransferInstructions(orderSummary)
     .catch((err: unknown) =>
       logger.error(
         "[OrderService] Error enviando instrucciones de transferencia:",
         { err, orderId: order.id }
       )
+    );
+
+  getStoreSettings()
+    .then((settings) => {
+      const adminEmail = (settings as Record<string, unknown>)?.adminEmail as
+        | string
+        | undefined;
+      if (!adminEmail) return;
+      return emailService.sendAdminNewOrderAlert(
+        orderSummary,
+        emailItems,
+        adminEmail
+      );
+    })
+    .catch((err: unknown) =>
+      logger.error("[OrderService] Error notificando admin (transfer):", {
+        err,
+        orderId: order.id,
+      })
     );
 }
 

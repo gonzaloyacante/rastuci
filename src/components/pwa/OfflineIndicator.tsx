@@ -1,12 +1,10 @@
 "use client";
 
 import { AlertCircle, RefreshCw, Wifi, WifiOff } from "lucide-react";
-import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useToast } from "@/components/ui/Toast";
-import { useTranslation } from "@/lib/i18n";
+import { useOfflineIndicator } from "@/hooks/useOfflineIndicator";
 import { usePWA } from "@/lib/pwa";
 
 interface OfflineIndicatorProps {
@@ -20,64 +18,21 @@ export function OfflineIndicator({
   showRetry = true,
   position = "top",
 }: OfflineIndicatorProps) {
-  const { isOnline } = usePWA();
-  const { t } = useTranslation();
-  const { show } = useToast();
-  const [wasOffline, setWasOffline] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
+  const { isOnline, isRetrying, handleRetry } = useOfflineIndicator();
 
-  useEffect(() => {
-    if (!isOnline) {
-      setWasOffline(true);
-      show({
-        type: "error",
-        message: t("pwa.offline.message"),
-        duration: 5000,
-        // icon: <WifiOff className="w-4 h-4" />, // Toast doesn't support custom icon prop yet in show(), handled by type
-      });
-    } else if (wasOffline) {
-      show({
-        type: "success",
-        message: t("pwa.online.message"),
-        duration: 3000,
-        // icon: <Wifi className="w-4 h-4" />,
-      });
-      setWasOffline(false);
-    }
-  }, [isOnline, wasOffline, t, show]);
-
-  const handleRetry = async () => {
-    setIsRetrying(true);
-    try {
-      // Try to fetch a simple endpoint to test connectivity
-      await fetch("/api/health", { cache: "no-cache" });
-      const successMsg = t("pwa.retry.success");
-      show({ type: "success", message: successMsg });
-    } catch {
-      const errorMsg = t("pwa.retry.failed");
-      show({ type: "error", message: errorMsg });
-    } finally {
-      setIsRetrying(false);
-    }
-  };
-
-  if (isOnline) {
-    return null;
-  }
+  if (isOnline) return null;
 
   return (
     <div
-      className={`
-      fixed left-1/2 transform -translate-x-1/2 z-50
-      ${position === "top" ? "top-4" : "bottom-4"}
-      ${className}
-    `}
+      className={`fixed left-1/2 -translate-x-1/2 z-50 ${
+        position === "top" ? "top-4" : "bottom-4"
+      } ${className}`}
     >
       <div className="surface border border-muted rounded-lg shadow-lg p-3 flex items-center gap-3 max-w-sm">
         <WifiOff className="w-5 h-5 text-error" />
         <div className="flex-1">
-          <p className="text-sm font-medium">{t("pwa.offline.title")}</p>
-          <p className="text-xs text-muted">{t("pwa.offline.description")}</p>
+          <p className="text-sm font-medium">Sin conexión</p>
+          <p className="text-xs text-muted">Verificá tu conexión a internet</p>
         </div>
         {showRetry && (
           <Button
@@ -90,7 +45,7 @@ export function OfflineIndicator({
             <RefreshCw
               className={`w-3 h-3 ${isRetrying ? "animate-spin" : ""}`}
             />
-            {t("pwa.retry.button")}
+            Reintentar
           </Button>
         )}
       </div>
@@ -98,10 +53,8 @@ export function OfflineIndicator({
   );
 }
 
-// Network status badge for header
 export function NetworkStatus({ className = "" }: { className?: string }) {
   const { isOnline } = usePWA();
-  const { t } = useTranslation();
 
   return (
     <Badge
@@ -111,19 +64,18 @@ export function NetworkStatus({ className = "" }: { className?: string }) {
       {isOnline ? (
         <>
           <Wifi className="w-3 h-3" />
-          {t("pwa.status.online")}
+          En línea
         </>
       ) : (
         <>
           <WifiOff className="w-3 h-3" />
-          {t("pwa.status.offline")}
+          Sin conexión
         </>
       )}
     </Badge>
   );
 }
 
-// Offline banner for critical actions
 export function OfflineBanner({
   message,
   action,
@@ -136,11 +88,8 @@ export function OfflineBanner({
   className?: string;
 }) {
   const { isOnline } = usePWA();
-  const { t } = useTranslation();
 
-  if (isOnline) {
-    return null;
-  }
+  if (isOnline) return null;
 
   return (
     <div
@@ -150,10 +99,11 @@ export function OfflineBanner({
         <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
         <div className="flex-1">
           <p className="font-medium text-warning">
-            {message || t("pwa.offline.actionBlocked")}
+            {message ?? "Acción no disponible sin conexión"}
           </p>
           <p className="text-sm text-muted mt-1">
-            {t("pwa.offline.actionDescription")}
+            Esta acción requiere conexión a internet. Verificá tu conexión e
+            intentá de nuevo.
           </p>
         </div>
         {action && onAction && (

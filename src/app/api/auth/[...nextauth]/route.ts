@@ -5,9 +5,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
-// import { JWT } from "next-auth/jwt";
-// import { Session } from "next-auth";
-// import { User } from "@prisma/client";
 
 // Configuración "Profesional" y estricta basada en variables de entorno.
 // NO hay lógica hardcodeada ni mágica. El comportamiento depende de la configuración del entorno.

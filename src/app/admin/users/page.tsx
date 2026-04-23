@@ -107,8 +107,8 @@ export default function UsuariosPage() {
               <Users className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-content-secondary">Total</p>
-              <p className="text-lg font-bold text-content-primary">
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-lg font-bold text-base-primary">
                 {users.length}
               </p>
             </div>
@@ -118,8 +118,8 @@ export default function UsuariosPage() {
               <Shield className="w-4 h-4 text-amber-600" />
             </div>
             <div>
-              <p className="text-xs text-content-secondary">Admins</p>
-              <p className="text-lg font-bold text-content-primary">
+              <p className="text-xs text-muted-foreground">Admins</p>
+              <p className="text-lg font-bold text-base-primary">
                 {users.filter((u: User) => u.role === "ADMIN").length}
               </p>
             </div>
@@ -129,8 +129,8 @@ export default function UsuariosPage() {
               <Users className="w-4 h-4 text-emerald-600" />
             </div>
             <div>
-              <p className="text-xs text-content-secondary">Usuarios</p>
-              <p className="text-lg font-bold text-content-primary">
+              <p className="text-xs text-muted-foreground">Usuarios</p>
+              <p className="text-lg font-bold text-base-primary">
                 {users.filter((u: User) => u.role === "USER").length}
               </p>
             </div>
@@ -182,10 +182,10 @@ export default function UsuariosPage() {
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-content-primary truncate">
+                    <h3 className="font-semibold text-base-primary truncate">
                       {user.name}
                     </h3>
-                    <p className="text-sm text-content-secondary truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {user.email}
                     </p>
                   </div>
@@ -195,7 +195,7 @@ export default function UsuariosPage() {
                     {getRoleBadge(user.role).label}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-content-tertiary pt-2 border-t border-border">
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
                   <span>Creado: {formatDate(user.createdAt)}</span>
                   {user.lastLoginAt && (
                     <span>Último login: {formatDate(user.lastLoginAt)}</span>
@@ -233,16 +233,16 @@ export default function UsuariosPage() {
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-surface-secondary">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Usuario
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Rol
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Actividad
                   </th>
                   <th className="relative px-6 py-3">
@@ -261,14 +261,14 @@ export default function UsuariosPage() {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-content-primary">
+                          <div className="text-sm font-medium text-base-primary">
                             {user.name}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-content-primary">
+                      <div className="text-sm text-base-primary">
                         {user.email}
                       </div>
                     </td>
@@ -283,17 +283,17 @@ export default function UsuariosPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm space-y-1">
-                        <div className="text-content-secondary">
+                        <div className="text-muted-foreground">
                           Creado: {formatDate(user.createdAt)}
                         </div>
                         {user.lastLoginAt && (
-                          <div className="text-content-tertiary text-xs">
+                          <div className="text-muted-foreground text-xs">
                             Último login: {formatDate(user.lastLoginAt)}
                           </div>
                         )}
                         {user.loginCount !== undefined &&
                           user.loginCount > 0 && (
-                            <div className="text-content-tertiary text-xs">
+                            <div className="text-muted-foreground text-xs">
                               {user.loginCount} inicio
                               {user.loginCount > 1 ? "s" : ""}
                             </div>

@@ -30,11 +30,11 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
       className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6 ${className}`}
     >
       <div className="flex-1">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-content-primary">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-base-primary">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-sm text-content-secondary mt-1">{subtitle}</p>
+          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
         )}
         {children && <div className="mt-2">{children}</div>}
       </div>

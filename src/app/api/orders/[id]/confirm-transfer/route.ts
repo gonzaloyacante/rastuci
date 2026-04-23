@@ -7,12 +7,23 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { ORDER_STATUS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limiter";
+import { emailService } from "@/lib/resend";
+import { getAdminEmail } from "@/lib/store-settings";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rl = await checkRateLimit(request, RATE_LIMITS.order);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Demasiadas solicitudes, intente más tarde" },
+        { status: 429 }
+      );
+    }
+
     const { id: orderId } = await params;
     // [C-01] Require an authenticated session before processing transfer proof
     const session = await getServerSession(authOptions);
@@ -44,7 +55,13 @@ export async function POST(
     // 1. Fetch Order to validate status AND ownership
     const order = await prisma.orders.findUnique({
       where: { id: orderId },
-      select: { id: true, status: true, customerEmail: true },
+      select: {
+        id: true,
+        status: true,
+        customerEmail: true,
+        customerName: true,
+        total: true,
+      },
     });
 
     if (!order) {
@@ -97,6 +114,45 @@ export async function POST(
 
     revalidatePath("/admin/orders");
     revalidatePath(`/admin/orders/${orderId}`);
+
+    // 3. Notify customer (proof received, under review) + admin (action required)
+    const total = Number(order.total);
+    if (order.customerEmail) {
+      emailService
+        .sendOnHoldConfirmation({
+          id: order.id,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          total,
+          reason: "transfer_proof_uploaded",
+        })
+        .catch((err: unknown) =>
+          logger.warn("[Transfer] Failed to send customer ack email", {
+            err,
+            orderId,
+          })
+        );
+    }
+
+    getAdminEmail()
+      .then((adminEmail) => {
+        if (!adminEmail) return;
+        return emailService.sendTransferProofSubmittedAdmin({
+          orderId: order.id,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail ?? "",
+          total,
+          senderName,
+          transactionId,
+          adminEmail,
+        });
+      })
+      .catch((err: unknown) =>
+        logger.warn("[Transfer] Failed to send admin proof-submitted email", {
+          err,
+          orderId,
+        })
+      );
 
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error) {

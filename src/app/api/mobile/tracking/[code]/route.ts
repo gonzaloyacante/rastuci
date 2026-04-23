@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+import { ORDER_STATUS_LABELS, OrderStatusKey } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limiter";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -40,6 +42,14 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
+    const rl = await checkRateLimit(request, RATE_LIMITS.api);
+    if (!rl.ok) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, message: "Demasiadas solicitudes", data: null },
+        { status: 429 }
+      );
+    }
+
     const { code: trackingCode } = await params;
     // [C-02] Require authentication - endpoint exposes PII (customerAddress)
     const session = await getToken({
@@ -178,13 +188,5 @@ export async function GET(
 }
 
 function getStatusLabel(status: string): string {
-  const statusLabels: Record<string, string> = {
-    PENDING: "Pendiente",
-    PROCESSED: "Procesando",
-    SHIPPED: "Enviado",
-    DELIVERED: "Entregado",
-    CANCELLED: "Cancelado",
-  };
-
-  return statusLabels[status] || status;
+  return ORDER_STATUS_LABELS[status as OrderStatusKey] ?? status;
 }

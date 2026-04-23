@@ -9,6 +9,7 @@ import { getToken } from "next-auth/jwt";
 
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limiter";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -26,6 +27,10 @@ function errResp(message: string, status: number) {
 // GET /api/mobile/offline/sync - Sincronizar datos para modo offline
 export async function GET(request: NextRequest) {
   try {
+    const rl = await checkRateLimit(request, RATE_LIMITS.api);
+    if (!rl.ok)
+      return errResp("Demasiadas solicitudes, intente más tarde", 429);
+
     const searchParams = request.nextUrl.searchParams;
     const customerEmail = searchParams.get("customerEmail");
 
@@ -111,6 +116,10 @@ export async function GET(request: NextRequest) {
 // POST /api/mobile/offline/sync - Enviar datos offline al servidor
 export async function POST(request: NextRequest) {
   try {
+    const rl = await checkRateLimit(request, RATE_LIMITS.api);
+    if (!rl.ok)
+      return errResp("Demasiadas solicitudes, intente más tarde", 429);
+
     const body = await request.json();
     const { customerEmail } = body;
 

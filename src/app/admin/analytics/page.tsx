@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import useSWR from "swr";
 
 import { AnalyticsHeader } from "@/components/admin/analytics/AnalyticsHeader";
 import { DevicesCard } from "@/components/admin/analytics/DevicesCard";
@@ -12,22 +12,25 @@ import { TopLists } from "@/components/admin/analytics/TopLists";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { type DashboardData } from "@/services/analytics-service";
+import { fetcher } from "@/utils/fetcher";
 import { escapeCsvCell } from "@/utils/formatters";
-
-async function fetchAnalytics(range: string): Promise<DashboardData> {
-  const res = await fetch(`/api/admin/analytics/dashboard?range=${range}`);
-  if (!res.ok) throw new Error("Failed to fetch data");
-  return res.json();
-}
 
 export default function AnalyticsPage() {
   const [range, setRange] = useState<string>("week");
 
-  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
-    queryKey: ["analytics", range],
-    queryFn: () => fetchAnalytics(range),
-    staleTime: 60 * 1000, // 1 minute
-  });
+  const {
+    data,
+    isLoading,
+    error: isError,
+    isValidating: isRefetching,
+    mutate,
+  } = useSWR<DashboardData>(
+    `/api/admin/analytics/dashboard?range=${range}`,
+    fetcher,
+    { dedupingInterval: 60_000 }
+  );
+
+  const refetch = useCallback(() => mutate(), [mutate]);
 
   const handleExport = () => {
     if (!data) return;

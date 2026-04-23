@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPriceARS } from "@/utils/formatters";
 
 interface Props {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
 export async function generateMetadata({
@@ -53,7 +53,8 @@ async function getSharedWishlist(token: string) {
 }
 
 export default async function SharedWishlistPage({ params }: Props) {
-  const wishlist = await getSharedWishlist(params.token);
+  const { token } = await params;
+  const wishlist = await getSharedWishlist(token);
 
   if (!wishlist) {
     notFound();

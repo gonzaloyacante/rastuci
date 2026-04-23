@@ -8,8 +8,6 @@ import { getRequestId, logger } from "@/lib/logger";
 import prisma from "@/lib/prisma"; // Needed for direct lookups if not fully moved yet
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { getPreset, makeKey } from "@/lib/rateLimiterConfig";
-// import { ORDER_STATUS } from "@/lib/constants";
-// ...
 import { mpWebhookService } from "@/services/mp-webhook-service";
 import { orderService } from "@/services/order-service";
 import type { OrderMetadata } from "@/services/order-service.types";
@@ -55,6 +53,7 @@ async function notifyParties(
       subtotal: order.subtotal ? Number(order.subtotal) : undefined,
       discount: order.discount ? Number(order.discount) : undefined,
       shippingCost: order.shippingCost ? Number(order.shippingCost) : undefined,
+      paymentMethod: order.paymentMethod ?? "mercadopago",
     };
 
     // Customer Email
@@ -142,6 +141,7 @@ async function resolveOrderFromPayment(
       mpPaymentId,
       mpStatus,
       mappedStatus,
+      paymentMethod: "mercadopago",
     });
     if (result) return result;
   }
@@ -154,6 +154,7 @@ async function resolveOrderFromPayment(
         mpPaymentId,
         mpStatus,
         mappedStatus,
+        paymentMethod: "mercadopago",
       });
       if (result) return result;
     }

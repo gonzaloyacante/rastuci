@@ -1,188 +1,141 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
+import { AdminEmpty, AdminEmptyIcons, AdminError } from "@/components/admin";
+import { OrderCard } from "@/components/admin/orders/OrderCard";
 import { OrdersSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { logger } from "@/lib/logger";
-import { Order } from "@/types";
+import { useDocumentTitle } from "@/hooks";
+import {
+  PENDING_STATUS_CONFIG,
+  PENDING_STATUSES,
+  type PendingStatusFilter,
+  usePendingOrders,
+} from "@/hooks/usePendingOrders";
 import { formatCurrency } from "@/utils/formatters";
 
+const TAB_ACTIVE_STYLES: Record<PendingStatusFilter, string> = {
+  PENDING_PAYMENT:
+    "bg-amber-50 border-amber-300 text-amber-900 shadow-sm shadow-amber-100",
+  WAITING_TRANSFER_PROOF:
+    "bg-blue-50 border-blue-300 text-blue-900 shadow-sm shadow-blue-100",
+  PAYMENT_REVIEW:
+    "bg-violet-50 border-violet-300 text-violet-900 shadow-sm shadow-violet-100",
+  RESERVED:
+    "bg-emerald-50 border-emerald-300 text-emerald-900 shadow-sm shadow-emerald-100",
+};
+
+const TAB_DOT_STYLES: Record<PendingStatusFilter, string> = {
+  PENDING_PAYMENT: "bg-amber-500",
+  WAITING_TRANSFER_PROOF: "bg-blue-500",
+  PAYMENT_REVIEW: "bg-violet-500",
+  RESERVED: "bg-emerald-500",
+};
+
 export default function PendingOrdersPage() {
-  // Use Order directly, ensuring compatibility or casting if API response differs slightly locally
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  useDocumentTitle({ title: "Pedidos Pendientes" });
+  const router = useRouter();
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/orders?status=PENDING");
-
-        if (!response.ok) {
-          throw new Error("Error al cargar pedidos");
-        }
-
-        const data = await response.json();
-        setOrders(data.data?.data || []);
-      } catch (error) {
-        logger.error("Error al cargar pedidos:", { error: error });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchOrders();
-  }, []);
-
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    try {
-      const response = await fetch(`/api/orders/${orderId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al actualizar pedido");
-      }
-
-      // Actualizar la lista local de pedidos
-      setOrders(orders.filter((order) => order.id !== orderId));
-    } catch (error) {
-      logger.error("Error al actualizar pedido:", { error: error });
-    }
-  };
-
-  const formatDate = (dateString: string | Date) => {
-    const date =
-      typeof dateString === "string" ? new Date(dateString) : dateString;
-    return date.toLocaleDateString("es-AR", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const {
+    activeStatus,
+    config,
+    orders,
+    ordersCount,
+    loading,
+    error,
+    handleStatusChange,
+    handleRetry,
+    handleOrderUpdate,
+  } = usePendingOrders();
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-primary">Pedidos Pendientes</h1>
-        <p className="muted">
-          Gestiona los pedidos que necesitan ser procesados
-        </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <button
+              onClick={() => router.back()}
+              className="p-1 rounded-lg text-muted-foreground hover:text-base-primary hover:bg-surface-secondary transition-all"
+              aria-label="Volver"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <h1 className="text-2xl font-bold text-base-primary">
+              Pedidos Pendientes
+            </h1>
+          </div>
+          <p className="text-sm text-muted-foreground pl-8">
+            {config.description}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          className="shrink-0 text-sm"
+          onClick={() => router.push("/admin/pedidos")}
+        >
+          Ver todos los pedidos
+        </Button>
       </div>
 
+      {/* Status Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {PENDING_STATUSES.map((status) => {
+          const isActive = status === activeStatus;
+          const cfg = PENDING_STATUS_CONFIG[status];
+          return (
+            <button
+              key={status}
+              onClick={() => handleStatusChange(status)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-150 ${
+                isActive
+                  ? TAB_ACTIVE_STYLES[status]
+                  : "bg-surface border-border text-muted-foreground hover:bg-surface-secondary hover:text-base-primary"
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${TAB_DOT_STYLES[status]}`}
+              />
+              {cfg.label}
+              {isActive && !loading && ordersCount > 0 && (
+                <span className="ml-0.5 bg-white/60 rounded-md px-1.5 py-0.5 text-xs font-semibold">
+                  {ordersCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
       {loading ? (
         <OrdersSkeleton />
-      ) : orders.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      ) : error ? (
+        <AdminError
+          message={error}
+          actions={[
+            { label: "Reintentar", onClick: handleRetry, variant: "primary" },
+          ]}
+        />
+      ) : orders.length === 0 ? (
+        <AdminEmpty
+          icon={AdminEmptyIcons.orders}
+          title={config.emptyTitle}
+          description="No hay pedidos en este estado. ¡Todo está al día!"
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {orders.map((order) => (
-            <Card key={order.id} className="overflow-hidden">
-              <CardHeader className="surface-secondary border-b border-muted">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">
-                    {order.customerName}
-                  </CardTitle>
-                  <span className="badge-warning text-xs">Pendiente</span>
-                </div>
-                <div className="text-sm muted mt-1">
-                  {formatDate(order.createdAt)}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium muted">
-                      Información de contacto
-                    </h3>
-                    <p className="text-sm">{order.customerPhone}</p>
-                    {order.customerAddress && (
-                      <p className="text-sm">{order.customerAddress}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium muted">Productos</h3>
-                    <ul className="mt-2 space-y-2">
-                      {(order.items || []).map((item) => (
-                        <li
-                          key={item.id}
-                          className="flex justify-between text-sm"
-                        >
-                          <span>
-                            {item.quantity} x {item.product?.name || "Producto"}
-                          </span>
-                          <span className="font-medium">
-                            {formatCurrency(item.price * item.quantity)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="flex justify-between pt-3 border-t border-muted">
-                    <span className="font-medium">Total:</span>
-                    <span className="font-bold text-primary">
-                      {formatCurrency(order.total)}
-                    </span>
-                  </div>
-
-                  <div className="flex space-x-3 pt-3">
-                    <Button
-                      className="flex-1"
-                      onClick={() => updateOrderStatus(order.id, "PROCESSED")}
-                    >
-                      Marcar como Procesado
-                    </Button>
-                    <Link
-                      href={`/admin/pedidos/${order.id}`}
-                      className="flex-1"
-                    >
-                      <Button variant="outline" className="w-full">
-                        Ver Detalles
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <OrderCard
+              key={order.id}
+              order={order}
+              formatCurrency={formatCurrency}
+              onStatusChange={handleOrderUpdate}
+            />
           ))}
         </div>
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 muted mb-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-              />
-            </svg>
-            <h2 className="text-xl font-medium text-primary mb-2">
-              No hay pedidos pendientes
-            </h2>
-            <p className="muted mb-6 text-center max-w-md">
-              Todos los pedidos han sido procesados. ¡Buen trabajo!
-            </p>
-            <Link href="/admin/pedidos">
-              <Button variant="outline">Ver todos los pedidos</Button>
-            </Link>
-          </CardContent>
-        </Card>
       )}
     </div>
   );

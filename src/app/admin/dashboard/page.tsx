@@ -25,34 +25,35 @@ import {
   QuickActionsGrid,
 } from "@/components/admin/dashboard/QuickActionCard";
 import { DashboardSkeleton } from "@/components/admin/skeletons";
+import { ADMIN_NAV } from "@/config/routes";
 import { useDashboard } from "@/hooks";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { formatCurrency } from "@/utils/formatters";
 
 const quickActions: QuickAction[] = [
   {
-    href: "/admin/productos/nuevo",
+    href: ADMIN_NAV.PRODUCT_NEW,
     icon: Plus,
     title: "Nuevo Producto",
     description: "Agregar producto al catálogo",
     color: "blue",
   },
   {
-    href: "/admin/productos",
+    href: ADMIN_NAV.PRODUCTS,
     icon: Package,
     title: "Gestionar Productos",
     description: "Ver y editar productos",
     color: "emerald",
   },
   {
-    href: "/admin/pedidos",
+    href: ADMIN_NAV.ORDERS,
     icon: ShoppingCart,
     title: "Ver Pedidos",
     description: "Gestionar pedidos recibidos",
     color: "amber",
   },
   {
-    href: "/admin/categorias",
+    href: ADMIN_NAV.CATEGORIES,
     icon: Tag,
     title: "Categorías",
     description: "Organizar categorías",

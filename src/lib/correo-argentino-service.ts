@@ -20,7 +20,6 @@ import {
   ValidateUserParams,
   ValidateUserResponse,
 } from "./correo-argentino/types";
-// import { logger } from "@/lib/logger";
 
 /**
  * Servicio FACADE para integración con API MiCorreo de Correo Argentino

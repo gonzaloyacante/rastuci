@@ -119,6 +119,8 @@ export interface Order {
   caOrderNumber?: string | null;
   caImportStatus?: string | null;
   caImportError?: string | null;
+  // Coupon
+  couponCode?: string | null;
 }
 
 // Tipos serializados para el frontend
@@ -284,6 +286,8 @@ export interface OrderEmailSummary {
   discount?: number;
   shippingCost?: number;
   couponCode?: string;
+  paymentMethod?: string;
+  shippingMethod?: string;
 }
 
 export interface OrderEmailItem {

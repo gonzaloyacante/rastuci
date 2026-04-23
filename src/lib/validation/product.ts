@@ -5,6 +5,16 @@ export const ProductsQuerySchema = z.object({
   search: z.string().trim().max(100).optional(),
   minPrice: z.coerce.number().finite().nonnegative().optional(),
   maxPrice: z.coerce.number().finite().nonnegative().optional(),
+  // sizes / colors come as repeated query params: ?sizes=XS&sizes=M
+  sizes: z
+    .union([z.string().max(20), z.array(z.string().max(20))])
+    .transform((v) => (Array.isArray(v) ? v : [v]))
+    .optional(),
+  colors: z
+    .union([z.string().max(50), z.array(z.string().max(50))])
+    .transform((v) => (Array.isArray(v) ? v : [v]))
+    .optional(),
+  minRating: z.coerce.number().min(1).max(5).optional(),
   onSale: z
     .union([z.literal("true"), z.literal("false")])
     .transform((v) => v === "true")

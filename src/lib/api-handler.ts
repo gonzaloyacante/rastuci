@@ -51,9 +51,23 @@ export async function apiHandler<T>(
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const status = (error as any).status || 500;
-    // const message = (error as any).message || "Internal Server Error"; // Unused
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: errorMessage,
+        },
+        { status: error.status }
+      );
+    }
+
+    const status =
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error &&
+      typeof (error as { status: unknown }).status === "number"
+        ? (error as { status: number }).status
+        : 500;
 
     return NextResponse.json(
       {

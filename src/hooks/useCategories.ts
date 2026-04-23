@@ -6,7 +6,7 @@ import { Category } from "@/types";
 const CATEGORIES_URL = "/api/categories?includeProductCount=true";
 const SWR_OPTIONS = {
   dedupingInterval: 10 * 60 * 1000,
-  revalidateOnMount: false,
+  revalidateOnMount: true,
   revalidateOnFocus: false,
 } as const;
 
