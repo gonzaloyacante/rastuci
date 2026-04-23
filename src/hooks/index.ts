@@ -29,5 +29,7 @@ export { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // Tipos
 export { useNotificationManager } from "./useNotificationManager";
 export { useOfflineIndicator } from "./useOfflineIndicator";
+export type { OrderCardData } from "./useOrderCard";
+export { useOrderCard } from "./useOrderCard";
 export { usePWAInstall } from "./usePWAInstall";
 export type { Category, Order, Product, User } from "@/types";

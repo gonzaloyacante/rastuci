@@ -1,10 +1,7 @@
 "use client";
 
 import {
-  Banknote,
-  Building2,
   CheckCircle2,
-  CreditCard,
   ExternalLink,
   Eye,
   MapPin,
@@ -14,203 +11,45 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import React from "react";
 
 import { Button } from "@/components/ui/Button";
-import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useToast } from "@/components/ui/Toast";
+import {
+  formatOrderDate,
+  type OrderCardData,
+  useOrderCard,
+} from "@/hooks/useOrderCard";
 import { cn } from "@/lib/utils";
 import { formatCurrency as defaultFormatCurrency } from "@/utils/formatters";
 
-import { OrderStatusBadge, STATUS_CONFIG } from "./OrderStatusBadge";
+import { OrderStatusBadge } from "./OrderStatusBadge";
 import { shippingMethodLabels } from "./ShippingDisplay";
 
-const PAYMENT_METHOD_DISPLAY: Record<
-  string,
-  { label: string; Icon: React.ElementType; pill: string }
-> = {
-  mercadopago: {
-    label: "MercadoPago",
-    Icon: CreditCard,
-    pill: "bg-sky-50 text-sky-700 border border-sky-200",
-  },
-  transfer: {
-    label: "Transferencia Bancaria",
-    Icon: Building2,
-    pill: "bg-violet-50 text-violet-700 border border-violet-200",
-  },
-  cash: {
-    label: "Efectivo",
-    Icon: Banknote,
-    pill: "bg-amber-50 text-amber-700 border border-amber-200",
-  },
-  unknown: {
-    label: "Sin registrar",
-    Icon: CreditCard,
-    pill: "bg-gray-50 text-gray-500 border border-gray-200",
-  },
-};
-
-const STATUS_BORDER: Record<string, string> = {
-  warning: "border-l-amber-400",
-  info: "border-l-blue-400",
-  success: "border-l-emerald-500",
-  error: "border-l-red-400",
-  default: "border-l-gray-300",
-};
-
-export interface OrderCardData {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  customerAddress?: string | null;
-  status: string;
-  total: number;
-  createdAt: string;
-  itemsCount: number;
-  shippingMethod?: string;
-  caTrackingNumber?: string;
-  relativeTime?: string;
-  paymentMethod?: string;
-}
+export type { OrderCardData };
 
 interface OrderCardProps {
   order: OrderCardData;
-  formatDate?: (date: string) => string;
   formatCurrency?: (value: number) => string;
   onStatusChange?: () => void;
 }
 
-const defaultFormatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("es-AR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-interface OrderActionOptions {
-  url: string;
-  method: "PATCH" | "POST";
-  title: string;
-  message: string;
-  confirmText: string;
-  successMessage: string;
-}
-
-async function executeOrderAction(
-  options: OrderActionOptions,
-  deps: {
-    confirm: ReturnType<typeof useConfirmDialog>["confirm"];
-    show: ReturnType<typeof useToast>["show"];
-    setIsUpdating: React.Dispatch<React.SetStateAction<boolean>>;
-    onStatusChange?: () => void;
-  }
-): Promise<void> {
-  const confirmed = await deps.confirm({
-    title: options.title,
-    message: options.message,
-    confirmText: options.confirmText,
-    variant: "danger",
-  });
-  if (!confirmed) return;
-
-  deps.setIsUpdating(true);
-  try {
-    const response = await fetch(options.url, { method: options.method });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || "Error al procesar la acción");
-    }
-    deps.onStatusChange?.();
-    deps.show({ type: "success", message: options.successMessage });
-  } catch (error) {
-    deps.show({
-      type: "error",
-      message: error instanceof Error ? error.message : "Error desconocido",
-    });
-  } finally {
-    deps.setIsUpdating(false);
-  }
-}
-
 export function OrderCard({
   order,
-  formatDate = defaultFormatDate,
   formatCurrency = defaultFormatCurrency,
   onStatusChange,
 }: OrderCardProps) {
-  const [isUpdating, setIsUpdating] = React.useState(false);
-  const { show } = useToast();
-  const { confirm, ConfirmDialog } = useConfirmDialog();
-
-  const actionDeps = { confirm, show, setIsUpdating, onStatusChange };
-
-  const handleMarkProcessed = () =>
-    executeOrderAction(
-      {
-        url: `/api/admin/orders/${order.id}/mark-processed`,
-        method: "PATCH",
-        title: "Marcar como procesado",
-        message: "¿Confirmas que ya pagaste el envío en MiCorreo?",
-        confirmText: "Confirmar",
-        successMessage: "Pedido marcado como procesado",
-      },
-      actionDeps
-    );
-
-  const handleMarkDelivered = () =>
-    executeOrderAction(
-      {
-        url: `/api/admin/orders/${order.id}/mark-delivered`,
-        method: "PATCH",
-        title: "Marcar como entregado",
-        message: "¿Confirmas que este pedido fue entregado al cliente?",
-        confirmText: "Confirmar entrega",
-        successMessage: "Pedido marcado como entregado",
-      },
-      actionDeps
-    );
-
-  const handleApproveTransfer = () =>
-    executeOrderAction(
-      {
-        url: `/api/admin/orders/${order.id}/approve-transfer`,
-        method: "POST",
-        title: "Aprobar transferencia",
-        message: "¿Confirmas que recibiste el pago de esta transferencia?",
-        confirmText: "Aprobar",
-        successMessage: "Transferencia aprobada correctamente",
-      },
-      actionDeps
-    );
-
-  const handleCancelOrder = () =>
-    executeOrderAction(
-      {
-        url: `/api/admin/orders/${order.id}/cancel`,
-        method: "POST",
-        title: "Cancelar orden",
-        message:
-          "¿Seguro que querés CANCELAR esta orden? Se restaurará el stock.",
-        confirmText: "Cancelar orden",
-        successMessage: "Orden cancelada correctamente",
-      },
-      actionDeps
-    );
-
-  const openMiCorreo = () => {
-    window.open("https://micorreo.correoargentino.com.ar/login", "_blank");
-  };
-
-  const statusVariant = STATUS_CONFIG[order.status]?.variant ?? "default";
-  const borderClass = STATUS_BORDER[statusVariant] ?? "border-l-gray-300";
-  const pm =
-    PAYMENT_METHOD_DISPLAY[order.paymentMethod ?? "unknown"] ??
-    PAYMENT_METHOD_DISPLAY.unknown;
-  const shortId = `#${order.id.slice(-8).toUpperCase()}`;
+  const {
+    isUpdating,
+    handleMarkProcessed,
+    handleMarkDelivered,
+    handleApproveTransfer,
+    handleCancelOrder,
+    openMiCorreo,
+    borderClass,
+    headerBgClass,
+    pm,
+    shortId,
+    ConfirmDialog,
+  } = useOrderCard(order, onStatusChange);
 
   return (
     <div
@@ -222,18 +61,23 @@ export function OrderCard({
       )}
     >
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
+      <div
+        className={cn(
+          "flex items-start justify-between gap-3 px-4 pt-4 pb-3",
+          headerBgClass
+        )}
+      >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-sm font-semibold leading-tight truncate max-w-[180px]">
               {order.customerName}
             </h3>
-            <span className="text-[10px] font-mono text-muted-foreground bg-surface-secondary border border-border px-1.5 py-0.5 rounded shrink-0">
+            <span className="text-[10px] font-mono text-muted-foreground bg-surface border border-border px-1.5 py-0.5 rounded shrink-0">
               {shortId}
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground mt-1">
-            {defaultFormatDate(order.createdAt)}
+            {formatOrderDate(order.createdAt)}
             {order.relativeTime && (
               <span className="ml-1.5 text-muted-foreground/60 italic">
                 · {order.relativeTime}
@@ -245,7 +89,7 @@ export function OrderCard({
       </div>
 
       {/* ── Data rows ──────────────────────────────────────────── */}
-      <div className="px-4 pb-3 space-y-2">
+      <div className="px-4 pb-3 space-y-2 pt-3">
         {/* Contact */}
         <div className="flex items-center gap-4 flex-wrap">
           <a
@@ -277,7 +121,7 @@ export function OrderCard({
           {order.shippingMethod && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface-secondary border border-border text-muted-foreground">
               <Package size={10} className="shrink-0" />
-              {shippingMethodLabels[order.shippingMethod] ||
+              {shippingMethodLabels[order.shippingMethod] ??
                 order.shippingMethod}
             </span>
           )}
@@ -295,7 +139,7 @@ export function OrderCard({
             {order.itemsCount}{" "}
             {order.itemsCount === 1 ? "producto" : "productos"}
           </span>
-          <span className="text-lg font-bold tabular-nums text-foreground">
+          <span className="text-xl font-bold tabular-nums tracking-tight text-foreground">
             {formatCurrency(order.total)}
           </span>
         </div>
@@ -339,7 +183,7 @@ export function OrderCard({
               : "grid-cols-1"
           )}
         >
-          <Link href={`/admin/pedidos/${order.id}`} className="block">
+          <Link href={`/admin/orders/${order.id}`} className="block">
             <Button
               variant="outline"
               className="w-full text-xs py-2 font-medium hover:bg-surface-secondary h-auto"
@@ -366,7 +210,7 @@ export function OrderCard({
   );
 }
 
-// ─── Private sub-components ───────────────────────────────────────────────────
+// ─── Private sub-component (pure render, no logic) ────────────────────────────
 
 interface PendingPaymentButtonsProps {
   order: Pick<OrderCardData, "status" | "paymentMethod">;
@@ -381,7 +225,6 @@ function PendingPaymentButtons({
   onMiCorreo,
   onMarkProcessed,
 }: PendingPaymentButtonsProps) {
-  // Only show for non-MP pending orders (cash = pickup, transfer = needs processing)
   if (
     order.status !== "PENDING_PAYMENT" ||
     order.paymentMethod === "mercadopago"

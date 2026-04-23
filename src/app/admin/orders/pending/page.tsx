@@ -34,15 +34,6 @@ const TAB_DOT_STYLES: Record<PendingStatusFilter, string> = {
   RESERVED: "bg-emerald-500",
 };
 
-const formatDate = (dateString: string): string =>
-  new Date(dateString).toLocaleDateString("es-AR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
 export default function PendingOrdersPage() {
   useDocumentTitle({ title: "Pedidos Pendientes" });
   const router = useRouter();
@@ -140,7 +131,6 @@ export default function PendingOrdersPage() {
             <OrderCard
               key={order.id}
               order={order}
-              formatDate={formatDate}
               formatCurrency={formatCurrency}
               onStatusChange={handleOrderUpdate}
             />
