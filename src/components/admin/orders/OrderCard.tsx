@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
+import { ADMIN_ROUTES } from "@/config/routes";
 import {
   formatOrderDate,
   type OrderCardData,
@@ -44,7 +45,6 @@ export function OrderCard({
     handleApproveTransfer,
     handleCancelOrder,
     openMiCorreo,
-    borderClass,
     headerBgClass,
     pm,
     shortId,
@@ -54,29 +54,27 @@ export function OrderCard({
   return (
     <div
       className={cn(
-        "group bg-surface border border-border rounded-xl overflow-hidden",
-        "hover:shadow-md hover:border-border/80 transition-all duration-150",
-        "border-l-4",
-        borderClass
+        "group bg-surface border border-border rounded-2xl overflow-hidden",
+        "hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
       )}
     >
-      {/* ── Header ─────────────────────────────────────────────── */}
+      {/* ── Header: customer + financials ──────────────────────── */}
       <div
         className={cn(
-          "flex items-start justify-between gap-3 px-4 pt-4 pb-3",
+          "flex items-start justify-between gap-3 px-5 pt-4 pb-3 border-b border-border/60",
           headerBgClass
         )}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm font-semibold leading-tight truncate max-w-[180px]">
+            <h3 className="text-sm font-bold leading-tight truncate max-w-[180px]">
               {order.customerName}
             </h3>
             <span className="text-[10px] font-mono text-muted-foreground bg-surface border border-border px-1.5 py-0.5 rounded shrink-0">
               {shortId}
             </span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1">
+          <p className="text-[11px] text-muted-foreground mt-0.5">
             {formatOrderDate(order.createdAt)}
             {order.relativeTime && (
               <span className="ml-1.5 text-muted-foreground/60 italic">
@@ -85,16 +83,38 @@ export function OrderCard({
             )}
           </p>
         </div>
+        <div className="text-right shrink-0">
+          <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground leading-none">
+            {formatCurrency(order.total)}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 text-right">
+            {order.itemsCount}{" "}
+            {order.itemsCount === 1 ? "producto" : "productos"}
+          </p>
+        </div>
+      </div>
+
+      {/* ── Status + payment method ─────────────────────────────── */}
+      <div className="flex items-center justify-between gap-2 px-5 py-2 border-b border-border/60">
         <OrderStatusBadge status={order.status} />
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium",
+            pm.pill
+          )}
+        >
+          <pm.Icon size={10} className="shrink-0" />
+          {pm.label}
+        </span>
       </div>
 
       {/* ── Data rows ──────────────────────────────────────────── */}
-      <div className="px-4 pb-3 space-y-2 pt-3">
+      <div className="px-5 pb-3 space-y-2 pt-3">
         {/* Contact */}
         <div className="flex items-center gap-4 flex-wrap">
           <a
             href={`tel:${order.customerPhone}`}
-            className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+            className="flex items-center gap-1.5 text-xs text-foreground hover:underline font-medium"
           >
             <Phone size={11} className="shrink-0 text-muted-foreground" />
             {order.customerPhone}
@@ -107,46 +127,28 @@ export function OrderCard({
           )}
         </div>
 
-        {/* Pills: payment + shipping */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium",
-              pm.pill
+        {/* Shipping pills */}
+        {(order.shippingMethod || order.caTrackingNumber) && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {order.shippingMethod && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface-secondary border border-border text-muted-foreground">
+                <Package size={10} className="shrink-0" />
+                {shippingMethodLabels[order.shippingMethod] ??
+                  order.shippingMethod}
+              </span>
             )}
-          >
-            <pm.Icon size={10} className="shrink-0" />
-            {pm.label}
-          </span>
-          {order.shippingMethod && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface-secondary border border-border text-muted-foreground">
-              <Package size={10} className="shrink-0" />
-              {shippingMethodLabels[order.shippingMethod] ??
-                order.shippingMethod}
-            </span>
-          )}
-          {order.caTrackingNumber && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <TruckIcon size={10} className="shrink-0" />
-              <span className="font-mono">{order.caTrackingNumber}</span>
-            </span>
-          )}
-        </div>
-
-        {/* Total + item count */}
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-xs text-muted-foreground">
-            {order.itemsCount}{" "}
-            {order.itemsCount === 1 ? "producto" : "productos"}
-          </span>
-          <span className="text-xl font-bold tabular-nums tracking-tight text-foreground">
-            {formatCurrency(order.total)}
-          </span>
-        </div>
+            {order.caTrackingNumber && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-success-50 text-success-700 border border-success-100">
+                <TruckIcon size={10} className="shrink-0" />
+                <span className="font-mono">{order.caTrackingNumber}</span>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Actions ────────────────────────────────────────────── */}
-      <div className="px-4 pb-4 pt-2 border-t border-border space-y-2">
+      <div className="px-5 pb-5 pt-2 border-t border-border space-y-2">
         <PendingPaymentButtons
           order={order}
           isUpdating={isUpdating}
@@ -157,7 +159,7 @@ export function OrderCard({
           order.status === "PAYMENT_REVIEW") && (
           <Button
             onClick={handleApproveTransfer}
-            className="w-full text-xs py-2 font-semibold h-auto bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="w-full text-xs py-2 font-semibold h-auto bg-success-600 hover:bg-success-700 text-white border-0"
             loading={isUpdating}
             leftIcon={<CheckCircle2 size={13} />}
           >
@@ -183,7 +185,7 @@ export function OrderCard({
               : "grid-cols-1"
           )}
         >
-          <Link href={`/admin/orders/${order.id}`} className="block">
+          <Link href={ADMIN_ROUTES.ORDER_DETAIL(order.id)} className="block">
             <Button
               variant="outline"
               className="w-full text-xs py-2 font-medium hover:bg-surface-secondary h-auto"
@@ -196,7 +198,7 @@ export function OrderCard({
             <Button
               onClick={handleCancelOrder}
               variant="destructive"
-              className="w-full text-xs py-2 font-medium h-auto bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:text-red-700"
+              className="w-full text-xs py-2 font-medium h-auto bg-error-50 text-error-600 border border-error-100 hover:bg-error-100 hover:text-error-700"
               disabled={isUpdating}
               leftIcon={<XCircle size={12} />}
             >

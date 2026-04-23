@@ -1,12 +1,13 @@
-import { useCategories } from "@/hooks/useCategories";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock useGlobalCache (usar vi.hoisted para evitar errores de inicialización)
-const mockUseGlobalCache = vi.hoisted(() => vi.fn());
+import { useCategories } from "@/hooks/useCategories";
 
-vi.mock("@/hooks/useGlobalCache", () => ({
-  default: mockUseGlobalCache,
+// Mock SWR (implementación actual de useCategories)
+const mockUseSWR = vi.hoisted(() => vi.fn());
+
+vi.mock("swr", () => ({
+  default: mockUseSWR,
 }));
 
 describe("useCategories Hook", () => {
@@ -31,11 +32,11 @@ describe("useCategories Hook", () => {
     vi.clearAllMocks();
   });
 
-  it("debe retornar categorías desde el cache", async () => {
-    mockUseGlobalCache.mockReturnValue({
+  it("debe retornar categorías desde SWR", async () => {
+    mockUseSWR.mockReturnValue({
       data: mockCategories,
       isLoading: false,
-      error: null,
+      error: undefined,
       mutate: vi.fn(),
     });
 
@@ -49,10 +50,10 @@ describe("useCategories Hook", () => {
     expect(result.current.error).toBeNull();
   });
 
-  it("debe manejar errores desde el cache", async () => {
+  it("debe manejar errores de SWR", async () => {
     const mockError = new Error("Network error");
-    mockUseGlobalCache.mockReturnValue({
-      data: null,
+    mockUseSWR.mockReturnValue({
+      data: undefined,
       isLoading: false,
       error: mockError,
       mutate: vi.fn(),
@@ -68,11 +69,11 @@ describe("useCategories Hook", () => {
     expect(result.current.error).toBe("Network error");
   });
 
-  it("debe iniciar con loading true", () => {
-    mockUseGlobalCache.mockReturnValue({
-      data: null,
+  it("debe iniciar con loading true mientras carga", () => {
+    mockUseSWR.mockReturnValue({
+      data: undefined,
       isLoading: true,
-      error: null,
+      error: undefined,
       mutate: vi.fn(),
     });
 
@@ -83,10 +84,10 @@ describe("useCategories Hook", () => {
   });
 
   it("debe retornar array vacío si no hay data", () => {
-    mockUseGlobalCache.mockReturnValue({
-      data: null,
+    mockUseSWR.mockReturnValue({
+      data: undefined,
       isLoading: false,
-      error: null,
+      error: undefined,
       mutate: vi.fn(),
     });
 
@@ -97,10 +98,10 @@ describe("useCategories Hook", () => {
 
   it("debe proporcionar función mutate para refetch", () => {
     const mockMutate = vi.fn();
-    mockUseGlobalCache.mockReturnValue({
+    mockUseSWR.mockReturnValue({
       data: mockCategories,
       isLoading: false,
-      error: null,
+      error: undefined,
       mutate: mockMutate,
     });
 
@@ -112,10 +113,10 @@ describe("useCategories Hook", () => {
   });
 
   it("debe manejar array vacío de categorías", () => {
-    mockUseGlobalCache.mockReturnValue({
+    mockUseSWR.mockReturnValue({
       data: [],
       isLoading: false,
-      error: null,
+      error: undefined,
       mutate: vi.fn(),
     });
 
@@ -125,31 +126,30 @@ describe("useCategories Hook", () => {
     expect(result.current.error).toBeNull();
   });
 
-  it("debe usar cache para optimizar rendimiento", () => {
-    mockUseGlobalCache.mockReturnValue({
+  it("debe usar dedupingInterval de 10 minutos en SWR", () => {
+    mockUseSWR.mockReturnValue({
       data: mockCategories,
       isLoading: false,
-      error: null,
+      error: undefined,
       mutate: vi.fn(),
     });
 
-    const { result } = renderHook(() => useCategories());
+    renderHook(() => useCategories());
 
-    expect(result.current.categories).toBe(mockCategories);
-    expect(mockUseGlobalCache).toHaveBeenCalledWith(
-      "categories",
+    expect(mockUseSWR).toHaveBeenCalledWith(
+      expect.stringContaining("/api/categories"),
       expect.any(Function),
       expect.objectContaining({
-        ttl: 600000, // 10 minutos
+        dedupingInterval: 10 * 60 * 1000,
       })
     );
   });
 
   it("debe mantener referencia de categorías entre renders", () => {
-    mockUseGlobalCache.mockReturnValue({
+    mockUseSWR.mockReturnValue({
       data: mockCategories,
       isLoading: false,
-      error: null,
+      error: undefined,
       mutate: vi.fn(),
     });
 

@@ -1,5 +1,6 @@
-import { Banknote, Building2, Check, CreditCard, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 
+import { PAYMENT_METHOD_DISPLAY } from "@/hooks/useOrderCard";
 import { ORDER_STATUS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Order } from "@/types";
@@ -28,24 +29,6 @@ const TRANSFER_FLOW: Step[] = [
   { key: ORDER_STATUS.DELIVERED, label: "Entregado" },
 ];
 
-const PAYMENT_META: Record<
-  string,
-  { label: string; Icon: React.ElementType; color: string }
-> = {
-  mercadopago: {
-    label: "MercadoPago",
-    Icon: CreditCard,
-    color: "text-sky-600",
-  },
-  transfer: {
-    label: "Transferencia Bancaria",
-    Icon: Building2,
-    color: "text-violet-600",
-  },
-  cash: { label: "Efectivo", Icon: Banknote, color: "text-amber-600" },
-  unknown: { label: "Sin registrar", Icon: CreditCard, color: "text-gray-400" },
-};
-
 function getFlow(paymentMethod?: string | null): Step[] {
   if (paymentMethod === "transfer") return TRANSFER_FLOW;
   if (paymentMethod === "cash") return CASH_FLOW;
@@ -68,7 +51,8 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
   const steps = getFlow(order.paymentMethod);
   const activeIdx = getActiveIndex(steps, order.status);
   const pm =
-    PAYMENT_META[order.paymentMethod ?? "unknown"] ?? PAYMENT_META.unknown;
+    PAYMENT_METHOD_DISPLAY[order.paymentMethod ?? "unknown"] ??
+    PAYMENT_METHOD_DISPLAY.unknown;
 
   return (
     <div className="rounded-xl border border-border bg-surface-secondary px-4 py-3">

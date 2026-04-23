@@ -7,6 +7,7 @@ import { AdminEmpty, AdminEmptyIcons, AdminError } from "@/components/admin";
 import { OrderCard } from "@/components/admin/orders/OrderCard";
 import { OrdersSkeleton } from "@/components/admin/skeletons";
 import { Button } from "@/components/ui/Button";
+import { ADMIN_ROUTES } from "@/config/routes";
 import { useDocumentTitle } from "@/hooks";
 import {
   PENDING_STATUS_CONFIG,
@@ -74,7 +75,7 @@ export default function PendingOrdersPage() {
         <Button
           variant="outline"
           className="shrink-0 text-sm"
-          onClick={() => router.push("/admin/pedidos")}
+          onClick={() => router.push(ADMIN_ROUTES.ORDERS)}
         >
           Ver todos los pedidos
         </Button>

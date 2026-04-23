@@ -16,6 +16,7 @@ import {
 import { STATUS_CONFIG } from "@/components/admin/orders/OrderStatusBadge";
 import { OrdersSkeleton } from "@/components/admin/skeletons";
 import { FilterBar, SearchBar } from "@/components/search";
+import { ADMIN_ROUTES } from "@/config/routes";
 import { useDocumentTitle, useOrderExport } from "@/hooks";
 import { type Order, useOrders } from "@/hooks/useOrders";
 import { formatCurrency, formatDateRelative } from "@/utils/formatters";
@@ -161,7 +162,7 @@ export default function OrdersPage() {
             },
             {
               label: "Ver Pendientes",
-              onClick: () => router.push("/admin/pedidos/pendientes"),
+              onClick: () => router.push(ADMIN_ROUTES.ORDERS_PENDING),
               variant: "primary",
             },
           ]}

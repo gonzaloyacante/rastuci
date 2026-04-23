@@ -1,15 +1,9 @@
-import {
-  Banknote,
-  Building2,
-  CreditCard,
-  Package,
-  Tag,
-  Truck,
-} from "lucide-react";
+import { Package, Tag, Truck } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { PAYMENT_METHOD_DISPLAY } from "@/hooks/useOrderCard";
 import { Agency } from "@/lib/correo-argentino-service";
 import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
@@ -19,32 +13,6 @@ import { formatCurrency, formatDate } from "@/utils/formatters";
 interface OrderSummaryCardProps {
   order: Order;
 }
-
-const PAYMENT_INFO: Record<
-  string,
-  { label: string; Icon: React.ElementType; pill: string }
-> = {
-  mercadopago: {
-    label: "MercadoPago",
-    Icon: CreditCard,
-    pill: "bg-sky-50 text-sky-700 border border-sky-200",
-  },
-  transfer: {
-    label: "Transferencia Bancaria",
-    Icon: Building2,
-    pill: "bg-violet-50 text-violet-700 border border-violet-200",
-  },
-  cash: {
-    label: "Efectivo",
-    Icon: Banknote,
-    pill: "bg-amber-50 text-amber-700 border border-amber-200",
-  },
-  unknown: {
-    label: "Sin registrar",
-    Icon: CreditCard,
-    pill: "bg-gray-50 text-gray-500 border border-gray-200",
-  },
-};
 
 // A compact data-pair component for the general info grid
 function InfoPair({
@@ -139,7 +107,8 @@ const getDetailedStatus = (order: OrderSummaryCardProps["order"]) => {
 export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
   const status = getDetailedStatus(order);
   const pm =
-    PAYMENT_INFO[order.paymentMethod ?? "unknown"] ?? PAYMENT_INFO.unknown;
+    PAYMENT_METHOD_DISPLAY[order.paymentMethod ?? "unknown"] ??
+    PAYMENT_METHOD_DISPLAY.unknown;
 
   const [agencyDetails, setAgencyDetails] = useState<Agency | null>(null);
 

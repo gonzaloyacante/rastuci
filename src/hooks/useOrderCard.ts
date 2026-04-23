@@ -28,44 +28,40 @@ export interface OrderCardData {
 
 export const PAYMENT_METHOD_DISPLAY: Record<
   string,
-  { label: string; Icon: React.ElementType; pill: string }
+  { label: string; Icon: React.ElementType; pill: string; color: string }
 > = {
   mercadopago: {
     label: "MercadoPago",
     Icon: CreditCard,
-    pill: "bg-sky-50 text-sky-700 border border-sky-200",
+    pill: "bg-blue-100 text-blue-700 border border-blue-200",
+    color: "text-blue-600",
   },
   transfer: {
     label: "Transferencia Bancaria",
     Icon: Building2,
-    pill: "bg-violet-50 text-violet-700 border border-violet-200",
+    pill: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+    color: "text-emerald-600",
   },
   cash: {
     label: "Efectivo",
     Icon: Banknote,
-    pill: "bg-amber-50 text-amber-700 border border-amber-200",
+    pill: "bg-yellow-100 text-yellow-800 border border-yellow-200",
+    color: "text-yellow-700",
   },
   unknown: {
     label: "Sin registrar",
     Icon: CreditCard,
-    pill: "bg-gray-50 text-gray-500 border border-gray-200",
+    pill: "bg-gray-100 text-gray-600 border border-gray-200",
+    color: "text-muted-foreground",
   },
 };
 
-export const STATUS_BORDER: Record<string, string> = {
-  warning: "border-l-amber-400",
-  info: "border-l-blue-400",
-  success: "border-l-emerald-500",
-  error: "border-l-red-400",
-  default: "border-l-gray-300",
-};
-
 export const STATUS_HEADER_BG: Record<string, string> = {
-  warning: "bg-amber-50/70",
-  info: "bg-blue-50/70",
-  success: "bg-emerald-50/60",
-  error: "bg-red-50/60",
-  default: "bg-surface-secondary/60",
+  warning: "bg-warning-50",
+  info: "bg-blue-50",
+  success: "bg-success-50",
+  error: "bg-error-50",
+  default: "bg-surface-secondary",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -194,7 +190,6 @@ export function useOrderCard(
     window.open("https://micorreo.correoargentino.com.ar/login", "_blank");
 
   const statusVariant = STATUS_CONFIG[order.status]?.variant ?? "default";
-  const borderClass = STATUS_BORDER[statusVariant] ?? STATUS_BORDER.default;
   const headerBgClass =
     STATUS_HEADER_BG[statusVariant] ?? STATUS_HEADER_BG.default;
   const pm =
@@ -210,7 +205,6 @@ export function useOrderCard(
     handleCancelOrder,
     openMiCorreo,
     statusVariant,
-    borderClass,
     headerBgClass,
     pm,
     shortId,
