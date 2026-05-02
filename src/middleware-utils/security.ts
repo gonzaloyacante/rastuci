@@ -26,7 +26,7 @@ export function applySecurityHeaders(response: NextResponse, nonce: string) {
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     "img-src 'self' data: https: blob: res.cloudinary.com images.unsplash.com placehold.co via.placeholder.com picsum.photos",
     "font-src 'self' https://fonts.gstatic.com data:",
-    "connect-src 'self' https://api.mercadopago.com https://*.sentry.io https://*.google-analytics.com https://www.googletagmanager.com wss://localhost:* ws://localhost:*",
+    "connect-src 'self' https://res.cloudinary.com https://api.mercadopago.com https://*.sentry.io https://*.google-analytics.com https://www.googletagmanager.com wss://localhost:* ws://localhost:*",
     "worker-src 'self' blob:",
     // MercadoPago uses redirect flow (not iframes), so frame-src 'none' is correct
     "frame-src 'none'",

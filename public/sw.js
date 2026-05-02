@@ -1,9 +1,9 @@
 // Service Worker for PWA functionality
 // VERSION: bump this string on every deploy to evict stale caches
-const CACHE_NAME = "rastuci-v2";
-const STATIC_CACHE = "rastuci-static-v2";
-const DYNAMIC_CACHE = "rastuci-dynamic-v2";
-const API_CACHE = "rastuci-api-v2";
+const CACHE_NAME = "rastuci-v3";
+const STATIC_CACHE = "rastuci-static-v3";
+const DYNAMIC_CACHE = "rastuci-dynamic-v3";
+const API_CACHE = "rastuci-api-v3";
 
 // Files to cache immediately
 const STATIC_ASSETS = [
@@ -82,6 +82,13 @@ self.addEventListener("fetch", (event) => {
 
   // Skip non-GET requests
   if (request.method !== "GET") {
+    return;
+  }
+
+  // Cloudinary (y otros CDN de imagen): no interceptar. El SW hace fetch() sujeto a
+  // connect-src del documento; sin allowlist rompe CSP. Además no conviene cachear
+  // URLs transformadas (w_, q_) en masa.
+  if (url.hostname === "res.cloudinary.com") {
     return;
   }
 
